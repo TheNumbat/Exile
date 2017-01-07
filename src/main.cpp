@@ -11,21 +11,24 @@ int main(int, char**) {
 	LOG_INFO("STARTED MAIN");
 
     window_manager wm;
-    gl_manager gl;
+	gl_manager gl;
 
-    wm.init();
+	wm.init();
+	gl.init();
 
     LOG_INFO("Done with initialization!");
     LOG_INFO("...");
 
 	while (!wm.shouldClose()) {
+		glfwPollEvents();
 		gl.clear_frame();
-		glfwWaitEvents();
+		gl.render_box();
 		wm.swap();
 	}
 
 	LOG_INFO("Shutting down...");
 
+	gl.kill();
     wm.kill();
 
     LOG_POP_CONTEXT();

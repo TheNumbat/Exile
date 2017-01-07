@@ -18,7 +18,13 @@ public:
 	void kill();
 	void clear_frame();
 
+	//test
+	void render_box();
+		GLuint VAO, VBO, program;
+
 private:
+	bool initialized;
+	
 	PFNGLBINDVERTEXARRAYPROC			glBindVertexArray;
 	PFNGLDELETEBUFFERSPROC				glDeleteBuffers;
 	PFNGLBINDBUFFERPROC					glBindBuffer;
