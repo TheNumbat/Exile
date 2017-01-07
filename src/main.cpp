@@ -1,6 +1,7 @@
 
 #include "common.hpp"
 #include "window_manager/window_manager.hpp"
+#include "gl/gl.hpp"
 
 int main(int, char**) {
 
@@ -10,6 +11,7 @@ int main(int, char**) {
 	LOG_INFO("STARTED MAIN");
 
     window_manager wm;
+    gl_manager gl;
 
     wm.init();
 
@@ -17,6 +19,7 @@ int main(int, char**) {
     LOG_INFO("...");
 
 	while (!wm.shouldClose()) {
+		gl.clear_frame();
 		glfwWaitEvents();
 		wm.swap();
 	}

@@ -52,6 +52,9 @@ void window_manager::init() {
 	glfwSwapInterval(-1);
 
 	LOG_INFO("Done initializing window system");
+	LOG_INFO((std::string)"GLFW: " + glfwGetVersionString());
+	LOG_INFO((std::string)"OpenGL: " + (const char*)glGetString(GL_VERSION));
+	LOG_INFO((std::string)"Renderer: " + (const char*)glGetString(GL_RENDERER));
 	LOG_POP_SEC();
 	LOG_POP_CONTEXT();
 
