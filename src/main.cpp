@@ -1,39 +1,18 @@
 
-#include <GLFW/glfw3.h>
+#include "window_manager/window_manager.hpp"
 
-int main(int, char**)
-{
-    GLFWwindow* window;
+int main(int, char**) {
 
-    /* Initialize the library */
-    if (!glfwInit())
-        return -1;
+    window_manager wm;
 
-    /* Create a windowed mode window and its OpenGL context */
-    window = glfwCreateWindow(640, 480, "Hello World", NULL, NULL);
-    if (!window)
-    {
-        glfwTerminate();
-        return -1;
-    }
+    wm.init();
 
-    /* Make the window's context current */
-    glfwMakeContextCurrent(window);
+	while (!wm.shouldClose()) {
+		glfwPollEvents();
+		wm.swap();
+	}
 
-    /* Loop until the user closes the window */
-    while (!glfwWindowShouldClose(window))
-    {
-        /* Render here */
-        glClearColor(0.0f, 1.0f, 0.0f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
+    wm.kill();
 
-        /* Swap front and back buffers */
-        glfwSwapBuffers(window);
-
-        /* Poll for and process events */
-        glfwPollEvents();
-    }
-
-    glfwTerminate();
     return 0;
 }
