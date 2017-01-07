@@ -5,18 +5,23 @@
 int main(int, char**) {
 
 	LOG_BEGIN_THIS_THREAD();
-	LOG_PUSH_CONTEXT(main);
+	LOG_PUSH_CONTEXT(MAIN);
 
-	LOG_INFO("lmao");
+	LOG_INFO("STARTED MAIN");
 
     window_manager wm;
 
     wm.init();
 
+    LOG_INFO("Done with initialization!");
+    LOG_INFO("...");
+
 	while (!wm.shouldClose()) {
 		glfwWaitEvents();
 		wm.swap();
 	}
+
+	LOG_INFO("Shutting down...");
 
     wm.kill();
 

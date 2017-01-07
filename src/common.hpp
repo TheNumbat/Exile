@@ -2,10 +2,11 @@
 #pragma once
 
 #include <stdint.h>
-#include "log/log.hpp"
+#include "logger/log.hpp"
 
 #ifdef ASSERTIONS
 #include <assert.h>
+#define INVALID_CODE_PATH assert(false);
 #elif
 #define assert(a)
 #endif
