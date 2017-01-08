@@ -17,6 +17,11 @@ int main(int, char**) {
 	gl.init();
 
 	input_state state("default");
+	state.key_button = [&glfw](int key, int, int, int) {
+		if(key == GLFW_KEY_ESCAPE) {
+			glfw.close_window();
+		}
+	};
 	state.cursor_pos = [&gl](double x, double y) -> void {
 		static double mx = x, my = y;
 		gl.cam.move(x - mx, y - my);

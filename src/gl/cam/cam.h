@@ -26,7 +26,7 @@ struct cam_3d {
 	void reset() {
 		pitch = -45.0f;
 		yaw = 225.0f;
-		speed = 0.5f;
+		speed = 0.1f;
 		pos = glm::vec3(5, 5, 5);
 		globalUp = glm::vec3(0, 1, 0);
 		lastUpdate = (float)glfwGetTime();

@@ -150,6 +150,7 @@ void gl_manager::clear_frame() {
 
 void gl_manager::render_box() {
     glm::mat4 model, view, proj;
+    model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(1, 1, 1));
     view = cam.getView();
     proj = glm::perspective(glm::radians(60.0f), (GLfloat)1280 / (GLfloat)720, 0.1f, 100.0f);
     glm::mat4 modelviewproj = proj * view * model;
