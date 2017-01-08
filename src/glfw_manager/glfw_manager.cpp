@@ -162,6 +162,10 @@ bool glfw_manager::window_should_close() {
 	return !!glfwWindowShouldClose(window);
 }
 
+void glfw_manager::close_window() {
+	glfwSetWindowShouldClose(window, true);
+}
+
 void glfw_manager::swap_window() {
 	glfwSwapBuffers(window);
 }

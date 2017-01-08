@@ -29,6 +29,7 @@ public:
 
 	void swap_window();
 	bool window_should_close();
+	void close_window();
 
 	void events();
 	void input_set_state(std::string state);
