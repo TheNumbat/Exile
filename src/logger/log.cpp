@@ -1,6 +1,6 @@
 
 #include "log.hpp"
-#include "..\common.hpp"
+#include "../common.hpp"
 
 #include <iostream>
 #include <fstream>
@@ -163,10 +163,14 @@ void logger::logging_thread() {
 
 void logger::output_message(message msg) {
 	for(std::ostream* out : out_streams) {
-		std::time_t t(NULL);
+		std::time_t t(0);
 		time(&t);
 		struct tm buf;
+#ifdef _WIN32
 		localtime_s(&buf, &t);
+#else
+		localtime_r(&t, &buf);
+#endif
 		*out << std::put_time(&buf, "%H:%M:%S");
 		for(int i = 0; i < msg.indent_level; i++) {
 			*out << "\t";
@@ -174,3 +178,4 @@ void logger::output_message(message msg) {
 		*out << " [" << msg.id << "/" << msg.context << "/" << LEVEL_STR(msg.lvl) << "] " << msg.msg << std::endl;
 	}
 }
+

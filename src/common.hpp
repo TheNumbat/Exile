@@ -7,8 +7,9 @@
 #ifdef ASSERTIONS
 #include <assert.h>
 #define INVALID_CODE_PATH assert(false);
-#elif
+#else
 #define assert(a)
+#define INVALID_CODE_PATH
 #endif
 
 typedef float		r32;

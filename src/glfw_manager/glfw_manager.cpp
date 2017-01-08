@@ -1,5 +1,5 @@
 
-#include "..\common.hpp"
+#include "../common.hpp"
 #include "glfw_manager.hpp"
 
 #include <iostream>
@@ -55,7 +55,10 @@ void dropfun(GLFWwindow*, int count, const char** paths) {
 	if(input_current_state.size()) {
 		auto state_entry = input_states.find(input_current_state);
 		assert(state_entry != input_states.end());
-		state_entry->second.file_drop(count, paths);
+		std::vector<std::string> vec;
+		for(int i = 0; i < count; i++)
+			vec.push_back(std::string(paths[i]));
+		state_entry->second.file_drop(vec);
 	}
 }
 
@@ -66,7 +69,7 @@ input_state::input_state(std::string name) {
 	cursor_enter = [](int) -> void {};
 	mouse_scroll = [](double, double) -> void {};
 	key_button = [](int,int,int,int) -> void {};
-	file_drop = [](int,const char **) -> void {};
+	file_drop = [](std::vector<std::string>) -> void {};
 	every_frame = []() -> void {};
 }
 

@@ -9,6 +9,7 @@
 #include <vector>
 #include <mutex>
 #include <string>
+#include <condition_variable>
 // ...that's a _lot_ of STL
 
 enum message_level {
@@ -67,6 +68,8 @@ private:
 	std::map<std::thread::id, std::stack<std::string>> thread_current_context;
 };
 
+extern logger glog;
+
 #define LOG_BEGIN_THIS_THREAD()	glog.begin_on_thread();
 #define LOG_PUSH_SEC() 			glog.pushSec();
 #define LOG_POP_SEC()  			glog.popSec();
@@ -79,4 +82,3 @@ private:
 #define LOG_MSG_RW(msg)			glog.msg(msg);
 #define LOG_SET_EMIT_LVL(emit)	glog.set_emit_level(emit);
 
-extern logger glog;

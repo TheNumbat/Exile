@@ -2,7 +2,7 @@
 #pragma once
 
 #include <glm.hpp>
-#include "..\..\common.hpp"
+#include "../../common.hpp"
 
 struct cam_3d {
 	glm::vec3 pos, front, up, right, globalUp;
