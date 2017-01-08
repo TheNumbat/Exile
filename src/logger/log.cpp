@@ -51,10 +51,11 @@ logger::~logger() {
 #endif
 }
 
-void logger::begin_on_thread() {
+void logger::begin_on_thread(std::string name) {
 	std::thread::id id = std::this_thread::get_id();
 	thread_indent_levels.insert({id, 0});
 	thread_current_context.insert({id, std::stack<std::string>()});
+	thread_names.insert({id, name});
 }
 
 void logger::pushSec() {
@@ -149,6 +150,8 @@ void logger::set_emit_level(int emit) {
 }
 
 void logger::logging_thread() {
+	LOG_BEGIN_THIS_THREAD(LOG);
+	std::cout << "Log format: HH:MM:SS [thread/context/level] message" << std::endl << std::endl;
 	output_message(message(0, std::this_thread::get_id(), message_info, "LOGGING", "Started logging thread."));
 	while(!end_thread) {
 		std::unique_lock<std::mutex> lock(q_mutex);
@@ -175,7 +178,9 @@ void logger::output_message(message msg) {
 		for(int i = 0; i < msg.indent_level; i++) {
 			*out << "\t";
 		}
-		*out << " [" << msg.id << "/" << msg.context << "/" << LEVEL_STR(msg.lvl) << "] " << msg.msg << std::endl;
+		auto thread_name_entry = thread_names.find(msg.id);
+		assert(thread_name_entry != thread_names.end());
+		*out << " [" << thread_name_entry->second << "/" << msg.context << "/" << LEVEL_STR(msg.lvl) << "] " << msg.msg << std::endl;
 	}
 }
 
