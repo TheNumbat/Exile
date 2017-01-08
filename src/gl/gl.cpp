@@ -42,7 +42,7 @@ GLfloat vertices[] = {
 };
 
 gl_manager::gl_manager() {
-
+	initialized = false;
 }
 
 void gl_manager::kill() {

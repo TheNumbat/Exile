@@ -18,9 +18,8 @@ public:
 	void kill();
 	void clear_frame();
 
-	//test
 	void render_box();
-		GLuint VAO, VBO, program;
+	GLuint VAO, VBO, program;
 
 private:
 	bool initialized;
