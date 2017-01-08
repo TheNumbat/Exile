@@ -67,6 +67,7 @@ input_state::input_state(std::string name) {
 	mouse_scroll = [](double, double) -> void {};
 	key_button = [](int,int,int,int) -> void {};
 	file_drop = [](int,const char **) -> void {};
+	every_frame = []() -> void {};
 }
 
 glfw_manager::glfw_manager() {
@@ -80,6 +81,11 @@ glfw_manager::~glfw_manager() {
 
 void glfw_manager::events() {
 	glfwPollEvents();
+	if(input_current_state.size()) {
+		auto state_entry = input_states.find(input_current_state);
+		assert(state_entry != input_states.end());
+		state_entry->second.every_frame();
+	}
 }
 
 void glfw_manager::init() {
@@ -130,6 +136,8 @@ void glfw_manager::init() {
 	glfwMakeContextCurrent(window);
 	glfwSwapInterval(-1);
 
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
 	LOG_INFO("Done initializing window system");
 	LOG_INFO((std::string)"GLFW: " + glfwGetVersionString());
 	LOG_INFO((std::string)"OpenGL: " + (const char*)glGetString(GL_VERSION));
@@ -156,6 +164,10 @@ void glfw_manager::kill() {
 
 		initialized = false;
 	}
+}
+
+bool glfw_manager::keydown(int key) {
+	return !!glfwGetKey(window, key);
 }
 
 bool glfw_manager::window_should_close() {

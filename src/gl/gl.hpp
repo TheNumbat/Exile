@@ -9,6 +9,8 @@
 #include <GLFW/glfw3.h>
 #include <glext.h>
 
+#include "cam/cam.h"
+
 class gl_manager {
 public:
 	gl_manager();
@@ -20,6 +22,8 @@ public:
 
 	void render_box();
 	GLuint VAO, VBO, program;
+
+	cam_3d cam;
 
 private:
 	bool initialized;

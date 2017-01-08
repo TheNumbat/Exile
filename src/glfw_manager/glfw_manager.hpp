@@ -17,6 +17,7 @@ struct input_state {
 	std::function<void(double, double)>		mouse_scroll;
 	std::function<void(int,int,int,int)>	key_button;
 	std::function<void(int,const char **)>	file_drop;
+	std::function<void()>					every_frame;
 };
 
 class glfw_manager {
@@ -34,6 +35,7 @@ public:
 	void events();
 	void input_set_state(std::string state);
 	void input_add_state(input_state state, bool use = true);
+	bool keydown(int key);
 
 	void window_size(int* w, int* h);
 	void window_resize(int w, int h);

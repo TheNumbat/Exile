@@ -43,6 +43,7 @@ GLfloat vertices[] = {
 
 gl_manager::gl_manager() {
 	initialized = false;
+	cam.reset();
 }
 
 void gl_manager::kill() {
@@ -149,7 +150,7 @@ void gl_manager::clear_frame() {
 
 void gl_manager::render_box() {
     glm::mat4 model, view, proj;
-    view = glm::lookAt(glm::vec3(3, 3, 3), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
+    view = cam.getView();
     proj = glm::perspective(glm::radians(60.0f), (GLfloat)1280 / (GLfloat)720, 0.1f, 100.0f);
     glm::mat4 modelviewproj = proj * view * model;
     

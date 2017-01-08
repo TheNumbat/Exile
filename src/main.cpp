@@ -3,12 +3,6 @@
 #include "glfw_manager/glfw_manager.hpp"
 #include "gl/gl.hpp"
 
-void key(int key, int, int action, int) {
-	if(key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
-		LOG_INFO("ESC");
-	}
-}
-
 int main(int, char**) {
 
 	LOG_BEGIN_THIS_THREAD();
@@ -23,7 +17,25 @@ int main(int, char**) {
 	gl.init();
 
 	input_state state("default");
-	state.key_button = key;
+	state.cursor_pos = [&gl](double x, double y) -> void {
+		static double mx = x, my = y;
+		gl.cam.move(x - mx, y - my);
+		mx = x; my = y;
+	};
+	state.every_frame = [&gl, &glfw]() -> void {
+		if(glfw.keydown(GLFW_KEY_W)) {
+			gl.cam.pos += gl.cam.front * gl.cam.speed;
+		}
+		else if(glfw.keydown(GLFW_KEY_S)) {
+			gl.cam.pos -= gl.cam.front * gl.cam.speed;
+		}
+		else if(glfw.keydown(GLFW_KEY_D)) {
+			gl.cam.pos += gl.cam.right * gl.cam.speed;
+		}
+		else if(glfw.keydown(GLFW_KEY_A)) {
+			gl.cam.pos -= gl.cam.right * gl.cam.speed;
+		}
+	};
 	glfw.input_add_state(state);
 
     LOG_INFO("Done with initialization!");
