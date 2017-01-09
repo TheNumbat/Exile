@@ -1,6 +1,46 @@
 
 #include "state.hpp"
 
+// testing testing testing
+GLfloat vertices[] = {
+    -0.5f, -0.5f, -0.5f,
+     0.5f, -0.5f, -0.5f,
+     0.5f,  0.5f, -0.5f,
+     0.5f,  0.5f, -0.5f,
+    -0.5f,  0.5f, -0.5f,
+    -0.5f, -0.5f, -0.5f,
+    -0.5f, -0.5f,  0.5f,
+     0.5f, -0.5f,  0.5f,
+     0.5f,  0.5f,  0.5f,
+     0.5f,  0.5f,  0.5f,
+    -0.5f,  0.5f,  0.5f,
+    -0.5f, -0.5f,  0.5f,
+    -0.5f,  0.5f,  0.5f,
+    -0.5f,  0.5f, -0.5f,
+    -0.5f, -0.5f, -0.5f,
+    -0.5f, -0.5f, -0.5f,
+    -0.5f, -0.5f,  0.5f,
+    -0.5f,  0.5f,  0.5f,
+     0.5f,  0.5f,  0.5f,
+     0.5f,  0.5f, -0.5f,
+     0.5f, -0.5f, -0.5f,
+     0.5f, -0.5f, -0.5f,
+     0.5f, -0.5f,  0.5f,
+     0.5f,  0.5f,  0.5f,
+    -0.5f, -0.5f, -0.5f,
+     0.5f, -0.5f, -0.5f,
+     0.5f, -0.5f,  0.5f,
+     0.5f, -0.5f,  0.5f,
+    -0.5f, -0.5f,  0.5f,
+    -0.5f, -0.5f, -0.5f,
+    -0.5f,  0.5f, -0.5f,
+     0.5f,  0.5f, -0.5f,
+     0.5f,  0.5f,  0.5f,
+     0.5f,  0.5f,  0.5f,
+    -0.5f,  0.5f,  0.5f,
+    -0.5f,  0.5f, -0.5f
+};
+
 game_state::game_state() {
 	running = false;
 	initialized = false;
@@ -12,8 +52,20 @@ game_state::~game_state() {
 
 void game_state::init() {
 
+	cam.reset();
 	glfw.init();
 	gl.init();
+
+	gl.load_shader("basic", "shaders/basic_vertex.v", "shaders/basic_fragment.f",
+		[this]() -> void {
+		    glm::mat4 model, view, proj;
+		    model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(1, 1, 1));
+		    view = cam.getView();
+		    proj = glm::perspective(glm::radians(60.0f), (GLfloat)1280 / (GLfloat)720, 0.1f, 100.0f);
+		    glm::mat4 modelviewproj = proj * view * model;
+			glUniformMatrix4fv(gl.get_uniform_loc("basic", "modelviewproj"), 1, GL_FALSE, glm::value_ptr(modelviewproj));
+    		glUniform4f(gl.get_uniform_loc("basic", "vcolor"), 0.5f, 0.2f, 0.3f, 1.0f);
+	});
 
 	input_state state("default");
 	state.key_button = [this](int key, int, int, int) {
@@ -23,25 +75,38 @@ void game_state::init() {
 	};
 	state.cursor_pos = [this](double x, double y) -> void {
 		static double mx = x, my = y;
-		gl.cam.move(x - mx, y - my);
+		cam.move(x - mx, y - my);
 		mx = x; my = y;
 	};
 	state.every_frame = [this]() -> void {
 		if(glfw.keydown(GLFW_KEY_W)) {
-			gl.cam.pos += gl.cam.front * gl.cam.speed;
+			cam.pos += cam.front * cam.speed;
 		}
 		else if(glfw.keydown(GLFW_KEY_S)) {
-			gl.cam.pos -= gl.cam.front * gl.cam.speed;
+			cam.pos -= cam.front * cam.speed;
 		}
 		else if(glfw.keydown(GLFW_KEY_D)) {
-			gl.cam.pos += gl.cam.right * gl.cam.speed;
+			cam.pos += cam.right * cam.speed;
 		}
 		else if(glfw.keydown(GLFW_KEY_A)) {
-			gl.cam.pos -= gl.cam.right * gl.cam.speed;
+			cam.pos -= cam.right * cam.speed;
 		}
 	};
 	state.close_window = [this]() -> void {running = false;};
 	glfw.input_add_state(state);
+
+	glGenVertexArrays(1, &VAO);
+	glGenBuffers(1, &VBO);
+
+    glBindVertexArray(VAO);
+
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
+    glEnableVertexAttribArray(0);
+
+    glBindVertexArray(0);
 
 	running = true;
 	initialized = true;
@@ -51,6 +116,10 @@ void game_state::kill() {
 	if(initialized) {
 		gl.kill();
 	    glfw.kill();
+
+		glDeleteVertexArrays(1, &VAO);
+		glDeleteBuffers(1, &VBO);
+
 		initialized = false;
 	}
 }
@@ -60,7 +129,11 @@ void game_state::run() {
 		glfw.events();
 
 		gl.clear_frame();
-		gl.render_box();
+
+		gl.use_shader("basic");
+    	glBindVertexArray(VAO);
+    	glDrawArrays(GL_TRIANGLES, 0, 36);
+    	glBindVertexArray(0);
 
 		glfw.swap_window();
 	}

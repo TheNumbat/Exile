@@ -2,56 +2,15 @@
 #include "gl.hpp"
 
 #include <glm.hpp>
-
-GLfloat vertices[] = {
-    -0.5f, -0.5f, -0.5f,
-     0.5f, -0.5f, -0.5f,
-     0.5f,  0.5f, -0.5f,
-     0.5f,  0.5f, -0.5f,
-    -0.5f,  0.5f, -0.5f,
-    -0.5f, -0.5f, -0.5f,
-    -0.5f, -0.5f,  0.5f,
-     0.5f, -0.5f,  0.5f,
-     0.5f,  0.5f,  0.5f,
-     0.5f,  0.5f,  0.5f,
-    -0.5f,  0.5f,  0.5f,
-    -0.5f, -0.5f,  0.5f,
-    -0.5f,  0.5f,  0.5f,
-    -0.5f,  0.5f, -0.5f,
-    -0.5f, -0.5f, -0.5f,
-    -0.5f, -0.5f, -0.5f,
-    -0.5f, -0.5f,  0.5f,
-    -0.5f,  0.5f,  0.5f,
-     0.5f,  0.5f,  0.5f,
-     0.5f,  0.5f, -0.5f,
-     0.5f, -0.5f, -0.5f,
-     0.5f, -0.5f, -0.5f,
-     0.5f, -0.5f,  0.5f,
-     0.5f,  0.5f,  0.5f,
-    -0.5f, -0.5f, -0.5f,
-     0.5f, -0.5f, -0.5f,
-     0.5f, -0.5f,  0.5f,
-     0.5f, -0.5f,  0.5f,
-    -0.5f, -0.5f,  0.5f,
-    -0.5f, -0.5f, -0.5f,
-    -0.5f,  0.5f, -0.5f,
-     0.5f,  0.5f, -0.5f,
-     0.5f,  0.5f,  0.5f,
-     0.5f,  0.5f,  0.5f,
-    -0.5f,  0.5f,  0.5f,
-    -0.5f,  0.5f, -0.5f
-};
+#include <fstream>
 
 gl_manager::gl_manager() {
 	initialized = false;
-	cam.reset();
 }
 
 void gl_manager::kill() {
 	if(initialized) {
-		glDeleteVertexArrays(1, &VAO);
-		glDeleteBuffers(1, &VBO);
-		glDeleteProgram(program);
+		remove_shaders();
 		initialized = false;
 	}
 }	
@@ -72,59 +31,6 @@ void gl_manager::init() {
 	LOG_POP_CONTEXT();
 
 	initialized = true;
-
-	// testing testing testing
-	const GLchar* vertex = {
-		"#version 330 core\n"
-
-		"layout (location = 0) in vec3 position;\n"
-
-		"uniform mat4 modelviewproj;\n"
-
-		"void main() {\n"
-		"	gl_Position = modelviewproj * vec4(position, 1.0f);\n"
-		"}\n"
-	};
-	const GLchar* fragment = {
-		"#version 330 core\n"
-
-		"uniform vec4 vcolor;\n"
-		"out vec4 color;\n"
-
-		"void main() {\n"
-		"	color = vcolor;\n"
-		"}\n"
-	};
-
-	glEnable(GL_DEPTH_TEST);
-	glViewport(0, 0, 1280, 720);
-
-	GLuint v, f;
-	v = glCreateShader(GL_VERTEX_SHADER);
-	f = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(v, 1, &vertex, NULL);
-	glShaderSource(f, 1, &fragment, NULL);
-	glCompileShader(v);
-	glCompileShader(f);
-	program = glCreateProgram();
-	glAttachShader(program, v);
-	glAttachShader(program, f);
-	glLinkProgram(program);
-	glDeleteShader(v);
-	glDeleteShader(f);
-
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
-
-    glBindVertexArray(VAO);
-
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
-    glEnableVertexAttribArray(0);
-
-    glBindVertexArray(0); // Unbind VAO
 }
 
 gl_manager::~gl_manager() {
@@ -136,18 +42,84 @@ void gl_manager::clear_frame() {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
-void gl_manager::render_box() {
-    glm::mat4 model, view, proj;
-    model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(1, 1, 1));
-    view = cam.getView();
-    proj = glm::perspective(glm::radians(60.0f), (GLfloat)1280 / (GLfloat)720, 0.1f, 100.0f);
-    glm::mat4 modelviewproj = proj * view * model;
-    
-    glUseProgram(program);
-    glUniformMatrix4fv(glGetUniformLocation(program,"modelviewproj"), 1, GL_FALSE, glm::value_ptr(modelviewproj));
-    glUniform4f(glGetUniformLocation(program, "vcolor"), 0.5f, 0.2f, 0.3f, 1.0f);
+void gl_manager::load_shader(std::string name, file_path v, file_path f, std::function<void()> u) {
+	LOG_PUSH_CONTEXT(GL_MANAGER);
+	LOG_INFO("Loading shader " + name + " from " + v.string() + " and " + f.string());
+	SHADER s;
+	s.vertex_path = v;
+	s.fragment_path = f;
+	s.set_uniforms = u;
 
-    glBindVertexArray(VAO);
-    glDrawArrays(GL_TRIANGLES, 0, 36);
-    glBindVertexArray(0);
+	std::string vertex_text = load_file_str(v);
+	std::string fragment_text = load_file_str(f);
+	const char* vertex_c_str = vertex_text.c_str();
+	const char* fragment_c_str = fragment_text.c_str();
+
+	s.program = glCreateProgram();
+	GLuint v_shader = glCreateShader(GL_VERTEX_SHADER);
+	GLuint f_shader = glCreateShader(GL_FRAGMENT_SHADER);
+	glShaderSource(v_shader, 1, &vertex_c_str, nullptr);
+	glShaderSource(f_shader, 1, &fragment_c_str, nullptr);
+	glCompileShader(v_shader);
+	glCompileShader(f_shader);
+	glAttachShader(s.program, v_shader);
+	glAttachShader(s.program, f_shader);
+	glLinkProgram(s.program);
+	glDeleteShader(v_shader);
+	glDeleteShader(f_shader);
+
+	assert(shaders.find(name) == shaders.end());
+
+	shaders.insert({name, s});
+
+	LOG_POP_CONTEXT();
+}
+
+void gl_manager::reload_shader(std::string name) {
+	LOG_PUSH_CONTEXT(GL_MANAGER);
+	LOG_INFO("Reloading shader " + name);
+	auto shader_entry = shaders.find(name);
+	assert(shader_entry != shaders.end());
+	file_path v = shader_entry->second.vertex_path;
+	file_path f = shader_entry->second.fragment_path;
+	remove_shader(name);
+	load_shader(name, v, f);
+	LOG_POP_CONTEXT();
+}
+
+void gl_manager::remove_shader(std::string name) {
+	auto shader_entry = shaders.find(name);
+	assert(shader_entry != shaders.end());
+	glDeleteProgram(shader_entry->second.program);
+	shaders.erase(shader_entry);
+}
+
+void gl_manager::remove_shaders() {
+	while(shaders.size()) {
+		remove_shader(shaders.begin()->first);
+	}
+}
+
+void gl_manager::use_shader(std::string name) {
+	auto shader_entry = shaders.find(name);
+	assert(shader_entry != shaders.end());
+	glUseProgram(shader_entry->second.program);
+	shader_entry->second.set_uniforms();
+}
+
+GLuint gl_manager::get_uniform_loc(std::string shader, std::string name) {
+	auto shader_entry = shaders.find(shader);
+	assert(shader_entry != shaders.end());
+	return glGetUniformLocation(shader_entry->second.program, name.c_str());
+}
+
+std::string gl_manager::load_file_str(file_path file) {
+	std::ifstream fin(file.string());
+	std::string file_str;
+	while(fin.good()) {
+		std::string line;
+		std::getline(fin, line);
+		file_str.append(line + "\n");
+	}
+	return file_str;
 }

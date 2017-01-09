@@ -149,8 +149,6 @@ void glfw_manager::init() {
 	glfwMakeContextCurrent(window);
 	glfwSwapInterval(-1);
 
-	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-
 	LOG_INFO("Done initializing window system");
 	LOG_INFO((std::string)"GLFW: " + glfwGetVersionString());
 	LOG_INFO((std::string)"OpenGL: " + (const char*)glGetString(GL_VERSION));

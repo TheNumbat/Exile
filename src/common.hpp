@@ -23,3 +23,4 @@ typedef uint32_t	u32;
 typedef int64_t		s64;
 typedef uint64_t	u64;
 
+#define file_path std::experimental::filesystem::v1::path
