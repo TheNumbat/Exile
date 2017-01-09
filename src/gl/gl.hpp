@@ -6,8 +6,7 @@
 #include <string>
 #include <map>
 
-#include <GLFW/glfw3.h>
-#include <glext.h>
+#include <gl.hpp>
 
 #include "cam/cam.h"
 
@@ -27,31 +26,4 @@ public:
 
 private:
 	bool initialized;
-	
-	PFNGLBINDVERTEXARRAYPROC			glBindVertexArray;
-	PFNGLDELETEBUFFERSPROC				glDeleteBuffers;
-	PFNGLBINDBUFFERPROC					glBindBuffer;
-	PFNGLBUFFERDATAPROC					glBufferData;
-	PFNGLUSEPROGRAMPROC					glUseProgram;
-	PFNGLENABLEVERTEXATTRIBARRAYPROC	glEnableVertexAttribArray;
-	PFNGLVERTEXATTRIBPOINTERPROC		glVertexAttribPointer;
-	PFNGLUNIFORMMATRIX4FVPROC			glUniformMatrix4fv;
-	PFNGLGETUNIFORMLOCATIONPROC			glGetUniformLocation;
-	PFNGLUNIFORM4FPROC					glUniform4f;
-	PFNGLUNIFORM3FPROC					glUniform3f;
-	PFNGLCREATESHADERPROC				glCreateShader;
-	PFNGLSHADERSOURCEPROC				glShaderSource;
-	PFNGLCOMPILESHADERPROC				glCompileShader;
-	PFNGLCREATEPROGRAMPROC				glCreateProgram;
-	PFNGLDELETESHADERPROC				glDeleteShader;
-	PFNGLATTACHSHADERPROC				glAttachShader;
-	PFNGLLINKPROGRAMPROC				glLinkProgram;
-	PFNGLGENVERTEXARRAYSPROC			glGenVertexArrays;
-	PFNGLGENBUFFERSPROC					glGenBuffers;
-	PFNGLDELETEVERTEXARRAYSPROC			glDeleteVertexArrays;
-	PFNGLDELETEPROGRAMPROC				glDeleteProgram;
-	PFNGLACTIVETEXTUREPROC				glActiveTexture; 
-	PFNGLUNIFORM1IPROC					glUniform1i;
-	PFNGLDISABLEVERTEXATTRIBARRAYPROC	glDisableVertexAttribArray;
-	PFNGLUNIFORM1FPROC					glUniform1f;
 };

@@ -1,8 +1,8 @@
 
-FLAGS= -g3 -std=c++11 -I../deps/include/ -o CaveGame
+FLAGS= -g3 -std=c++11 -I../deps/include/ -o ../build/CaveGame
 DEFINES= -DASSERTIONS -DEMIT_LEVEL=3 -DLOG_CONSOLE
-FILES=  main.cpp gl/gl.cpp glfw_manager/glfw_manager.cpp logger/log.cpp
-LINK= -lglfw -lGL -pthread
+FILES=  main.cpp gl/gl.cpp glfw/glfw_manager.cpp logger/log.cpp state.cpp
+LINK= -lglfw -lGL -pthread -lGLEW
 
 all:
 	g++ $(FLAGS) $(DEFINES) $(FILES) $(LINK)

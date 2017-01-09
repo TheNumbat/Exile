@@ -62,6 +62,14 @@ void dropfun(GLFWwindow*, int count, const char** paths) {
 	}
 }
 
+void closefun(GLFWwindow*) {
+	if(input_current_state.size()) {
+		auto state_entry = input_states.find(input_current_state);
+		assert(state_entry != input_states.end());
+		state_entry->second.close_window();
+	}
+}
+
 input_state::input_state(std::string name) {
 	state = name;
 	mouse_button = [](int,int,int) -> void {};
@@ -71,6 +79,7 @@ input_state::input_state(std::string name) {
 	key_button = [](int,int,int,int) -> void {};
 	file_drop = [](std::vector<std::string>) -> void {};
 	every_frame = []() -> void {};
+	close_window = []() -> void {};
 }
 
 glfw_manager::glfw_manager() {
@@ -133,6 +142,7 @@ void glfw_manager::init() {
  	glfwSetCursorEnterCallback(window, &cursorenterfun);
  	glfwSetScrollCallback(window, &scrollfun);
  	glfwSetDropCallback(window, &dropfun);
+ 	glfwSetWindowCloseCallback(window, &closefun);
 
  	LOG_INFO("Set GLFW input callbacks");
 
@@ -179,6 +189,7 @@ bool glfw_manager::window_should_close() {
 
 void glfw_manager::close_window() {
 	glfwSetWindowShouldClose(window, true);
+	closefun(window);
 }
 
 void glfw_manager::swap_window() {

@@ -1,9 +1,9 @@
-
+ 
 #pragma once
 
 #include "../common.hpp"
 
-#include <GLFW/glfw3.h>
+#include <gl.hpp>
 #include <string>
 #include <map>
 #include <functional>
@@ -19,6 +19,7 @@ struct input_state {
 	std::function<void(int,int,int,int)>			key_button;
 	std::function<void(std::vector<std::string>)>	file_drop;
 	std::function<void()>							every_frame;
+	std::function<void()>							close_window;
 };
 
 class glfw_manager {
