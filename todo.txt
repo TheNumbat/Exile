@@ -7,3 +7,8 @@ Basic Systems
 	World
 	Input
 	Sound
+
+Possibly Make Own Version of
+	GLEW
+	GLM
+	STB_IMAGE
