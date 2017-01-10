@@ -19,23 +19,35 @@ public:
 	void kill();
 	void clear_frame();
 
-	void load_shader(std::string name, file_path v, file_path f, std::function<void()> u = []()->void{});
+	void load_shader(std::string name, std_file_path v, std_file_path f, std::function<void()> u = []()->void{});
 	void reload_shader(std::string name);
 	void remove_shader(std::string name);
 	void remove_shaders();
 	void use_shader(std::string name);
 	GLuint get_uniform_loc(std::string shader, std::string name);
 
+	void load_texture(std::string name, std_file_path path);
+	void reload_texture(std::string name);
+	void remove_texture(std::string name);
+	void remove_textures();
+	void use_texture(std::string name, int index);
+
 private:
 	struct SHADER {
-		file_path vertex_path;
-		file_path fragment_path;
+		std_file_path vertex_path;
+		std_file_path fragment_path;
 		std::function<void()> set_uniforms;
 		GLuint program;
 	};
+	struct TEXTURE {
+		std_file_path path;
+		int w, h;
+		GLuint texture;
+	};
 
 private:
-	std::string load_file_str(file_path file);
+	std::string load_file_str(std_file_path file);
 	std::map<std::string, SHADER> shaders;
+	std::map<std::string, TEXTURE> textures;
 	bool initialized;
 };

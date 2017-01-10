@@ -55,7 +55,7 @@ private:
 	void output_message(message msg);
 
 	std::thread* thread;
-	std::mutex   q_mutex;
+	std::mutex   log_mutex;
 	std::condition_variable var;
 	bool end_thread;
 

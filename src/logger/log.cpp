@@ -52,6 +52,7 @@ logger::~logger() {
 }
 
 void logger::begin_on_thread(std::string name) {
+	std::unique_lock<std::mutex> lock(log_mutex);
 	std::thread::id id = std::this_thread::get_id();
 	thread_indent_levels.insert({id, 0});
 	thread_current_context.insert({id, std::stack<std::string>()});
@@ -59,6 +60,7 @@ void logger::begin_on_thread(std::string name) {
 }
 
 void logger::pushSec() {
+	std::unique_lock<std::mutex> lock(log_mutex);
 	std::thread::id id = std::this_thread::get_id();
 	auto level_entry = thread_indent_levels.find(id);
 	assert(level_entry != thread_indent_levels.end());
@@ -66,6 +68,7 @@ void logger::pushSec() {
 }
 
 void logger::popSec() {
+	std::unique_lock<std::mutex> lock(log_mutex);
 	std::thread::id id = std::this_thread::get_id();
 	auto level_entry = thread_indent_levels.find(id);
 	assert(level_entry != thread_indent_levels.end());
@@ -74,6 +77,7 @@ void logger::popSec() {
 }
 
 void logger::pushContext(std::string context) {
+	std::unique_lock<std::mutex> lock(log_mutex);
 	std::thread::id id = std::this_thread::get_id();
 	auto context_entry = thread_current_context.find(id);
 	assert(context_entry != thread_current_context.end());
@@ -81,6 +85,7 @@ void logger::pushContext(std::string context) {
 }
 
 void logger::popContext() {
+	std::unique_lock<std::mutex> lock(log_mutex);
 	std::thread::id id = std::this_thread::get_id();
 	auto context_entry = thread_current_context.find(id);
 	assert(context_entry != thread_current_context.end());
@@ -90,6 +95,7 @@ void logger::popContext() {
 
 void logger::info(std::string msg) {
 	if(emit_level >= 3) {
+		std::unique_lock<std::mutex> lock(log_mutex);
 		std::thread::id id = std::this_thread::get_id();
 		auto level_entry = thread_indent_levels.find(id);
 		auto context_entry = thread_current_context.find(id);
@@ -103,6 +109,7 @@ void logger::info(std::string msg) {
 
 void logger::warn(std::string msg) {
 	if(emit_level >= 2) {
+		std::unique_lock<std::mutex> lock(log_mutex);
 		std::thread::id id = std::this_thread::get_id();
 		auto level_entry = thread_indent_levels.find(id);
 		auto context_entry = thread_current_context.find(id);
@@ -116,6 +123,7 @@ void logger::warn(std::string msg) {
 
 void logger::error(std::string msg) {
 	if(emit_level >= 1) {
+		std::unique_lock<std::mutex> lock(log_mutex);
 		std::thread::id id = std::this_thread::get_id();
 		auto level_entry = thread_indent_levels.find(id);
 		auto context_entry = thread_current_context.find(id);
@@ -129,6 +137,7 @@ void logger::error(std::string msg) {
 
 void logger::fatal(std::string msg) {
 	if(emit_level >= 0) {
+		std::unique_lock<std::mutex> lock(log_mutex);
 		std::thread::id id = std::this_thread::get_id();
 		auto level_entry = thread_indent_levels.find(id);
 		auto context_entry = thread_current_context.find(id);
@@ -141,6 +150,7 @@ void logger::fatal(std::string msg) {
 }
 
 void logger::msg(message msg) {
+	std::unique_lock<std::mutex> lock(log_mutex);
 	message_q.push(msg);
 	var.notify_all();
 }
@@ -154,7 +164,7 @@ void logger::logging_thread() {
 	std::cout << "Log format: HH:MM:SS [thread/context/level] message" << std::endl << std::endl;
 	output_message(message(0, std::this_thread::get_id(), message_info, "LOGGING", "Started logging thread."));
 	while(!end_thread) {
-		std::unique_lock<std::mutex> lock(q_mutex);
+		std::unique_lock<std::mutex> lock(log_mutex);
 		var.wait(lock);
 		while(message_q.size()) {
 			output_message(message_q.front());

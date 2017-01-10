@@ -2,6 +2,10 @@
 #include "gl.hpp"
 
 #include <glm.hpp>
+
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb/stb_image.h>
+
 #include <fstream>
 
 gl_manager::gl_manager() {
@@ -11,6 +15,7 @@ gl_manager::gl_manager() {
 void gl_manager::kill() {
 	if(initialized) {
 		remove_shaders();
+		remove_textures();
 		initialized = false;
 	}
 }	
@@ -27,6 +32,9 @@ void gl_manager::init() {
 	assert(error == GLEW_OK);
 	LOG_INFO("Initialized GLEW");
 
+	glEnable(GL_DEPTH_TEST);
+	// ...
+
 	LOG_POP_SEC();
 	LOG_POP_CONTEXT();
 
@@ -42,7 +50,7 @@ void gl_manager::clear_frame() {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
-void gl_manager::load_shader(std::string name, file_path v, file_path f, std::function<void()> u) {
+void gl_manager::load_shader(std::string name, std_file_path v, std_file_path f, std::function<void()> u) {
 	LOG_PUSH_CONTEXT(GL_MANAGER);
 	LOG_INFO("Loading shader " + name + " from " + v.string() + " and " + f.string());
 	SHADER s;
@@ -80,8 +88,8 @@ void gl_manager::reload_shader(std::string name) {
 	LOG_INFO("Reloading shader " + name);
 	auto shader_entry = shaders.find(name);
 	assert(shader_entry != shaders.end());
-	file_path v = shader_entry->second.vertex_path;
-	file_path f = shader_entry->second.fragment_path;
+	std_file_path v = shader_entry->second.vertex_path;
+	std_file_path f = shader_entry->second.fragment_path;
 	remove_shader(name);
 	load_shader(name, v, f);
 	LOG_POP_CONTEXT();
@@ -113,7 +121,7 @@ GLuint gl_manager::get_uniform_loc(std::string shader, std::string name) {
 	return glGetUniformLocation(shader_entry->second.program, name.c_str());
 }
 
-std::string gl_manager::load_file_str(file_path file) {
+std::string gl_manager::load_file_str(std_file_path file) {
 	std::ifstream fin(file.string());
 	std::string file_str;
 	while(fin.good()) {
@@ -122,4 +130,54 @@ std::string gl_manager::load_file_str(file_path file) {
 		file_str.append(line + "\n");
 	}
 	return file_str;
+}
+
+void gl_manager::load_texture(std::string name, std_file_path path) {
+	LOG_PUSH_CONTEXT(GL_MANAGER);
+	LOG_INFO("Loading texture " + name + " from " + path.string());
+	TEXTURE tex;
+	tex.path = path;
+	glGenTextures(1, &tex.texture);
+
+	u8* image = stbi_load(path.string().c_str(), &tex.w, &tex.h, nullptr, 0);
+
+	assert(image);
+	if(!image) {
+		LOG_ERROR("Failed to load texture " + name + " from " + path.string());
+	}
+
+	glBindTexture(GL_TEXTURE_2D, tex.texture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tex.w, tex.h, 0, GL_RGBA, GL_UNSIGNED_BYTE, image);
+	glGenerateMipmap(GL_TEXTURE_2D);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+	stbi_image_free(image);
+
+	assert(textures.find(name) == textures.end());
+
+	textures.insert({name, tex});
+
+	LOG_POP_CONTEXT();
+}
+
+void gl_manager::reload_texture(std::string name) {
+
+}
+
+void gl_manager::remove_texture(std::string name) {
+
+}
+
+void gl_manager::remove_textures() {
+
+}
+
+void gl_manager::use_texture(std::string name, int index) {
+	auto texture_entry = textures.find(name);
+	assert(texture_entry != textures.end());
+	glActiveTexture(GL_TEXTURE0 + index);
+	glBindTexture(GL_TEXTURE_2D, texture_entry->second.texture);
 }
