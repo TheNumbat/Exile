@@ -164,15 +164,27 @@ void gl_manager::load_texture(std::string name, std_file_path path) {
 }
 
 void gl_manager::reload_texture(std::string name) {
-
+	LOG_PUSH_CONTEXT(GL_MANAGER);
+	LOG_INFO("Reloading texture " + name);
+	auto texture_entry = textures.find(name);
+	assert(texture_entry != textures.end());
+	std_file_path path = texture_entry->second.path;
+	remove_texture(name);
+	load_texture(name, path);
+	LOG_POP_CONTEXT();
 }
 
 void gl_manager::remove_texture(std::string name) {
-
+	auto texture_entry = textures.find(name);
+	assert(texture_entry != textures.end());
+	glDeleteTextures(1, &texture_entry->second.texture);
+	textures.erase(texture_entry);
 }
 
 void gl_manager::remove_textures() {
-
+	while(textures.size()) {
+		remove_texture(textures.begin()->first);
+	}
 }
 
 void gl_manager::use_texture(std::string name, int index) {

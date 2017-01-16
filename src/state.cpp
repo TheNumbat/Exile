@@ -88,13 +88,13 @@ void game_state::init() {
 		if(glfw.keydown(GLFW_KEY_W)) {
 			cam.pos += cam.front * cam.speed;
 		}
-		else if(glfw.keydown(GLFW_KEY_S)) {
+		if(glfw.keydown(GLFW_KEY_S)) {
 			cam.pos -= cam.front * cam.speed;
 		}
-		else if(glfw.keydown(GLFW_KEY_D)) {
+		if(glfw.keydown(GLFW_KEY_D)) {
 			cam.pos += cam.right * cam.speed;
 		}
-		else if(glfw.keydown(GLFW_KEY_A)) {
+		if(glfw.keydown(GLFW_KEY_A)) {
 			cam.pos -= cam.right * cam.speed;
 		}
 	};
@@ -140,8 +140,8 @@ void game_state::run() {
 		gl.clear_frame();
 
 		gl.use_shader("tex");
-
 		gl.use_texture("test", 0);
+		
     	glBindVertexArray(VAO);
     	glDrawArrays(GL_TRIANGLES, 0, 36);
     	glBindVertexArray(0);
