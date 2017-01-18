@@ -4,7 +4,7 @@
 #include <thread>
 #include <queue>
 #include <stack>
-#include <map>
+#include <unordered_map>
 #include <ostream>
 #include <vector>
 #include <mutex>
@@ -54,19 +54,19 @@ private:
 	void logging_thread();
 	void output_message(message msg);
 
-	std::thread* thread;
-	std::mutex   log_mutex;
+	std::thread* 			thread;
+	std::mutex   			log_mutex;
 	std::condition_variable var;
-	bool end_thread;
+	bool 					end_thread;
 
 	int emit_level;
 
-	std::map<std::thread::id, int> 	thread_indent_levels;
-	std::vector<std::ostream*> 		out_streams;
-	std::queue<message> 			message_q;
+	std::unordered_map<std::thread::id, int> 	thread_indent_levels;
+	std::vector<std::ostream*> 					out_streams;
+	std::queue<message> 						message_q;
 
-	std::map<std::thread::id, std::string> thread_names;
-	std::map<std::thread::id, std::stack<std::string>> thread_current_context;
+	std::unordered_map<std::thread::id, std::string> 			 thread_names;
+	std::unordered_map<std::thread::id, std::stack<std::string>> thread_current_context;
 };
 
 extern logger glog;

@@ -5,7 +5,7 @@
 #include <iostream>
 
 static std::string input_current_state = "";
-static std::map<std::string, input_state> input_states;
+static std::unordered_map<std::string, input_state> input_states;
 
 void errorfun(int err, const char* what) {
 	LOG_ERROR("GLFW Error #" + std::to_string(err) +  ": " + what);

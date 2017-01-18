@@ -4,7 +4,7 @@
 #include "../common.hpp"
 
 #include <string>
-#include <map>
+#include <unordered_map>
 #include <experimental/filesystem>
 #include <functional>
 
@@ -47,7 +47,7 @@ private:
 
 private:
 	std::string load_file_str(std_file_path file);
-	std::map<std::string, SHADER> shaders;
-	std::map<std::string, TEXTURE> textures;
+	std::unordered_map<std::string, SHADER> shaders;
+	std::unordered_map<std::string, TEXTURE> textures;
 	bool initialized;
 };

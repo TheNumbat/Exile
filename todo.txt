@@ -1,10 +1,18 @@
 
+Custom Allocator for tracking, block-based allocation w/ free lists, debug memory tracking - see EASTL
+
+Intel Thread Building Blocks? Seemsgood
+
+https://github.com/greg7mdp/sparsepp
+http://stackoverflow.com/questions/826569/compelling-examples-of-custom-c-allocators
+http://stackoverflow.com/questions/2196995/is-there-any-advantage-of-using-map-over-unordered-map-in-case-of-trivial-keys
 
 Basic Systems
 	Assets
 	OpenGL
 	Rendering
 	World
+	Simulation
 	Input
 	Sound
 
@@ -12,3 +20,12 @@ Possibly Make Own Version of
 	GLEW
 	GLM
 	STB_IMAGE
+	STL containers/allocators/threading/file IO
+	Platform layer (glfw)
+
+Things To Measure Performance/Memory:
+	hash map vs map for most dictionaries
+	hash map vs arrays for chunk representation
+	Basically anything vs. STL data structures 
+	Custom Allocators
+	Templates, lambdas, and functors in regards to std::function conversions

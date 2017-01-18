@@ -5,7 +5,6 @@
 
 #include <gl.hpp>
 #include <string>
-#include <map>
 #include <functional>
 #include <vector>
 
