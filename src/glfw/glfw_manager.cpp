@@ -3,6 +3,7 @@
 #include "glfw_manager.hpp"
 
 #include <iostream>
+#include <unordered_map>
 
 static std::string input_current_state = "";
 static std::unordered_map<std::string, input_state> input_states;

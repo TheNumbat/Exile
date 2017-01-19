@@ -2,15 +2,14 @@
 #pragma once
 
 #include <thread>
-#include <queue>
 #include <stack>
-#include <unordered_map>
 #include <ostream>
 #include <vector>
-#include <mutex>
 #include <string>
+#include <mutex>
 #include <condition_variable>
-// ...that's a _lot_ of STL
+#include <tbb/concurrent_hash_map.h>
+#include <tbb/concurrent_queue.h>
 
 enum message_level {
 	message_info  = 3,
@@ -20,6 +19,7 @@ enum message_level {
 };
 
 struct message {
+	message();
 	message(int indent, std::thread::id id, message_level level, std::string c, std::string m);
 	
 	std::thread::id id;
@@ -28,6 +28,10 @@ struct message {
 	std::string context;
 	std::string msg;
 };
+
+typedef tbb::concurrent_hash_map<std::thread::id, int> id_int_map;
+typedef tbb::concurrent_hash_map<std::thread::id, std::string> id_str_map;
+typedef tbb::concurrent_hash_map<std::thread::id, std::stack<std::string>> id_stack_str_map;
 
 class logger {
 public:
@@ -61,12 +65,12 @@ private:
 
 	int emit_level;
 
-	std::unordered_map<std::thread::id, int> 	thread_indent_levels;
-	std::vector<std::ostream*> 					out_streams;
-	std::queue<message> 						message_q;
+	id_int_map					 	thread_indent_levels;
+	std::vector<std::ostream*> 		out_streams;
+	tbb::concurrent_queue<message> 	message_q;
 
-	std::unordered_map<std::thread::id, std::string> 			 thread_names;
-	std::unordered_map<std::thread::id, std::stack<std::string>> thread_current_context;
+	id_str_map			thread_names;
+	id_stack_str_map 	thread_current_context;
 };
 
 extern logger glog;

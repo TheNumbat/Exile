@@ -9,6 +9,14 @@
 
 logger glog(EMIT_LEVEL);
 
+namespace tbb {
+namespace interface5 {
+template<>
+inline size_t tbb_hasher<std::thread::id> (const std::thread::id& t) {
+    return static_cast<size_t>( std::hash<std::thread::id>()(t) );
+}
+}}
+
 inline const char* LEVEL_STR(message_level lvl) {
 	switch(lvl) {
 		case message_info: return "INFO";
@@ -19,6 +27,14 @@ inline const char* LEVEL_STR(message_level lvl) {
 	}
 }
 	
+message::message() {
+	indent_level = 0;
+	lvl = message_fatal;
+	context = "NONE";
+	msg = "";
+	id = std::this_thread::get_id();
+}
+
 message::message(int indent, std::thread::id i, message_level level, std::string c, std::string m) { 
 	indent_level = indent;
 	lvl = level;
@@ -52,7 +68,6 @@ logger::~logger() {
 }
 
 void logger::begin_on_thread(std::string name) {
-	std::unique_lock<std::mutex> lock(log_mutex);
 	std::thread::id id = std::this_thread::get_id();
 	thread_indent_levels.insert({id, 0});
 	thread_current_context.insert({id, std::stack<std::string>()});
@@ -60,97 +75,100 @@ void logger::begin_on_thread(std::string name) {
 }
 
 void logger::pushSec() {
-	std::unique_lock<std::mutex> lock(log_mutex);
 	std::thread::id id = std::this_thread::get_id();
-	auto level_entry = thread_indent_levels.find(id);
-	assert(level_entry != thread_indent_levels.end());
-	level_entry->second++;
+	id_int_map::accessor lacc;
+	bool found = thread_indent_levels.find(lacc, id);
+	assert(found);
+	lacc->second++;
 }
 
 void logger::popSec() {
-	std::unique_lock<std::mutex> lock(log_mutex);
 	std::thread::id id = std::this_thread::get_id();
-	auto level_entry = thread_indent_levels.find(id);
-	assert(level_entry != thread_indent_levels.end());
-	assert(level_entry->second > 0);
-	level_entry->second--;
+	id_int_map::accessor lacc;
+	bool found = thread_indent_levels.find(lacc, id);
+	assert(found);
+	assert(lacc->second > 0);
+	lacc->second--;
 }
 
 void logger::pushContext(std::string context) {
-	std::unique_lock<std::mutex> lock(log_mutex);
 	std::thread::id id = std::this_thread::get_id();
-	auto context_entry = thread_current_context.find(id);
-	assert(context_entry != thread_current_context.end());
-	context_entry->second.push(context);
+	id_stack_str_map::accessor cacc;
+	bool found = thread_current_context.find(cacc, id);
+	assert(found);
+	cacc->second.push(context);
 }
 
 void logger::popContext() {
-	std::unique_lock<std::mutex> lock(log_mutex);
 	std::thread::id id = std::this_thread::get_id();
-	auto context_entry = thread_current_context.find(id);
-	assert(context_entry != thread_current_context.end());
-	assert(context_entry->second.size() > 0);
-	context_entry->second.pop();
+	id_stack_str_map::accessor cacc;
+	bool found = thread_current_context.find(cacc, id);
+	assert(found);
+	assert(cacc->second.size() > 0);
+	cacc->second.pop();
 }
 
 void logger::info(std::string msg) {
 	if(emit_level >= 3) {
-		std::unique_lock<std::mutex> lock(log_mutex);
 		std::thread::id id = std::this_thread::get_id();
-		auto level_entry = thread_indent_levels.find(id);
-		auto context_entry = thread_current_context.find(id);
-		assert(level_entry != thread_indent_levels.end());
-		assert(context_entry != thread_current_context.end());
-		assert(context_entry->second.size() > 0);
-		message_q.push(message(level_entry->second, id, message_info, context_entry->second.top(), msg));
+		id_int_map::accessor lacc;
+		id_stack_str_map::accessor cacc;
+		bool found = thread_indent_levels.find(lacc, id);
+		assert(found);
+		found = thread_current_context.find(cacc, id);
+		assert(found);
+		assert(cacc->second.size() > 0);
+		message_q.push(message(lacc->second, id, message_info, cacc->second.top(), msg));
 		var.notify_all();
 	}
 }
 
 void logger::warn(std::string msg) {
 	if(emit_level >= 2) {
-		std::unique_lock<std::mutex> lock(log_mutex);
 		std::thread::id id = std::this_thread::get_id();
-		auto level_entry = thread_indent_levels.find(id);
-		auto context_entry = thread_current_context.find(id);
-		assert(level_entry != thread_indent_levels.end());
-		assert(context_entry != thread_current_context.end());
-		assert(context_entry->second.size() > 0);
-		message_q.push(message(level_entry->second, id, message_warn, context_entry->second.top(), msg));
+		id_int_map::accessor lacc;
+		id_stack_str_map::accessor cacc;
+		bool found = thread_indent_levels.find(lacc, id);
+		assert(found);
+		found = thread_current_context.find(cacc, id);
+		assert(found);
+		assert(cacc->second.size() > 0);
+		message_q.push(message(lacc->second, id, message_warn, cacc->second.top(), msg));
 		var.notify_all();
 	}
 }
 
 void logger::error(std::string msg) {
 	if(emit_level >= 1) {
-		std::unique_lock<std::mutex> lock(log_mutex);
 		std::thread::id id = std::this_thread::get_id();
-		auto level_entry = thread_indent_levels.find(id);
-		auto context_entry = thread_current_context.find(id);
-		assert(level_entry != thread_indent_levels.end());
-		assert(context_entry != thread_current_context.end());
-		assert(context_entry->second.size() > 0);
-		message_q.push(message(level_entry->second, id, message_error, context_entry->second.top(), msg));
+		id_int_map::accessor lacc;
+		id_stack_str_map::accessor cacc;
+		bool found = thread_indent_levels.find(lacc, id);
+		assert(found);
+		found = thread_current_context.find(cacc, id);
+		assert(found);
+		assert(cacc->second.size() > 0);
+		message_q.push(message(lacc->second, id, message_error, cacc->second.top(), msg));
 		var.notify_all();
 	}
 }
 
 void logger::fatal(std::string msg) {
 	if(emit_level >= 0) {
-		std::unique_lock<std::mutex> lock(log_mutex);
 		std::thread::id id = std::this_thread::get_id();
-		auto level_entry = thread_indent_levels.find(id);
-		auto context_entry = thread_current_context.find(id);
-		assert(level_entry != thread_indent_levels.end());
-		assert(context_entry != thread_current_context.end());
-		assert(context_entry->second.size() > 0);
-		message_q.push(message(level_entry->second, id, message_fatal, context_entry->second.top(), msg));
+		id_int_map::accessor lacc;
+		id_stack_str_map::accessor cacc;
+		bool found = thread_indent_levels.find(lacc, id);
+		assert(found);
+		found = thread_current_context.find(cacc, id);
+		assert(found);
+		assert(cacc->second.size() > 0);
+		message_q.push(message(lacc->second, id, message_fatal, cacc->second.top(), msg));
 		var.notify_all();
 	}
 }
 
 void logger::msg(message msg) {
-	std::unique_lock<std::mutex> lock(log_mutex);
 	message_q.push(msg);
 	var.notify_all();
 }
@@ -166,9 +184,9 @@ void logger::logging_thread() {
 	while(!end_thread) {
 		std::unique_lock<std::mutex> lock(log_mutex);
 		var.wait(lock);
-		while(message_q.size()) {
-			output_message(message_q.front());
-			message_q.pop();
+		message m;
+		while(message_q.try_pop(m)) {
+			output_message(m);
 		}
 	}
 	output_message(message(0, std::this_thread::get_id(), message_info, "LOGGING", "Ended logging thread."));
@@ -188,9 +206,10 @@ void logger::output_message(message msg) {
 		for(int i = 0; i < msg.indent_level; i++) {
 			*out << "\t";
 		}
-		auto thread_name_entry = thread_names.find(msg.id);
-		assert(thread_name_entry != thread_names.end());
-		*out << " [" << thread_name_entry->second << "/" << msg.context << "/" << LEVEL_STR(msg.lvl) << "] " << msg.msg << std::endl;
+		id_str_map::accessor nacc;
+		bool found = thread_names.find(nacc, msg.id);
+		assert(found);
+		*out << " [" << nacc->second << "/" << msg.context << "/" << LEVEL_STR(msg.lvl) << "] " << msg.msg << std::endl;
 	}
 }
 
