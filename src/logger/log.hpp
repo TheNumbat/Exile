@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include "..\common.hpp"
+
 #include <thread>
 #include <stack>
 #include <ostream>
@@ -8,6 +10,7 @@
 #include <string>
 #include <mutex>
 #include <condition_variable>
+
 #include <tbb/concurrent_hash_map.h>
 #include <tbb/concurrent_queue.h>
 
@@ -65,9 +68,9 @@ private:
 
 	int emit_level;
 
-	id_int_map					 	thread_indent_levels;
-	std::vector<std::ostream*> 		out_streams;
-	tbb::concurrent_queue<message> 	message_q;
+	id_int_map					 					thread_indent_levels;
+	std::vector<std::ostream*, alloc<std::ostream*>>		out_streams;
+	tbb::concurrent_queue<message, alloc<message>> 	message_q;
 
 	id_str_map			thread_names;
 	id_stack_str_map 	thread_current_context;
@@ -75,6 +78,7 @@ private:
 
 extern logger glog;
 
+#if EMIT_LEVEL != 0
 #define LOG_BEGIN_THIS_THREAD(str)	glog.begin_on_thread(#str);
 #define LOG_PUSH_SEC() 				glog.pushSec();
 #define LOG_POP_SEC()  				glog.popSec();
@@ -86,4 +90,16 @@ extern logger glog;
 #define LOG_FATAL(str)				glog.fatal(str);
 #define LOG_MSG_RW(msg)				glog.msg(msg);
 #define LOG_SET_EMIT_LVL(emit)		glog.set_emit_level(emit);
-
+#else
+#define LOG_BEGIN_THIS_THREAD(str)	
+#define LOG_PUSH_SEC() 				
+#define LOG_POP_SEC()  				
+#define LOG_PUSH_CONTEXT(str)		
+#define LOG_POP_CONTEXT()			
+#define LOG_INFO(str)				
+#define LOG_WARN(str)				
+#define LOG_ERROR(str)				
+#define LOG_FATAL(str)				
+#define LOG_MSG_RW(msg)				
+#define LOG_SET_EMIT_LVL(emit)		
+#endif

@@ -43,8 +43,10 @@ message::message(int indent, std::thread::id i, message_level level, std::string
 	id = i;
 }
 
-logger::logger(int emit) {
-
+logger::logger(int emit) 
+	: message_q(alloc<message>("message alloc")),
+	  out_streams(alloc<message>("out stream alloc"))
+{
 	end_thread = false;
 	emit_level = emit;
 #ifdef LOG_FILE
@@ -208,8 +210,8 @@ void logger::output_message(message msg) {
 		}
 		id_str_map::accessor nacc;
 		bool found = thread_names.find(nacc, msg.id);
-		assert(found);
-		*out << " [" << nacc->second << "/" << msg.context << "/" << LEVEL_STR(msg.lvl) << "] " << msg.msg << std::endl;
+		if(found)
+			*out << " [" << nacc->second << "/" << msg.context << "/" << LEVEL_STR(msg.lvl) << "] " << msg.msg << std::endl;
 	}
 }
 

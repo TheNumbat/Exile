@@ -31,5 +31,5 @@ Things To Measure Performance/Memory:
 	hash map vs map for most dictionaries
 	hash map vs arrays for chunk representation
 	Basically anything vs. STL data structures
-	Custom Allocators
+	Custom Allocators - tbb cache aligned allocator, scalable allocator, default allocator, etc
 	Templates, lambdas, and functors in regards to std::function conversions

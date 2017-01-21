@@ -1,6 +1,8 @@
 @echo off
 
-set CommonCompilerFlags=-Od -MTd -nologo -GR -EHa -Zo -Oi -WX -W4 -FC -Z7 -I..\deps\include\ -Fe:CaveGame.exe
+REM -MTd debug -MT release
+
+set CommonCompilerFlags=-Od -MTd -nologo -GR -EHa -Zo -Oi -WX -W4 -FC -Z7 -I..\deps\include\ -Fe:CaveGame.exe -wd4100
 set CommonCompilerFlags= -DASSERTIONS -DEMIT_LEVEL=3 -DLOG_CONSOLE %CommonCompilerFlags% 
 set CommonLinkerFlags= -LIBPATH:w:\deps\lib\ /NODEFAULTLIB:MSVCRT -incremental:no -opt:ref opengl32.lib glfw3dll.lib glew32.lib tbb.lib
 

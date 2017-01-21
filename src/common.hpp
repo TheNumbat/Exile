@@ -2,6 +2,7 @@
 #pragma once
 
 #include <stdint.h>
+#include "alloc/alloc.hpp"
 #include "logger/log.hpp"
 
 #ifdef ASSERTIONS
