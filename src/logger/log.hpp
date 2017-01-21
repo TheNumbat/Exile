@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "..\common.hpp"
+#include "../common.hpp"
 
 #include <thread>
 #include <stack>
@@ -32,9 +32,12 @@ struct message {
 	std::string msg;
 };
 
-typedef tbb::concurrent_hash_map<std::thread::id, int> id_int_map;
-typedef tbb::concurrent_hash_map<std::thread::id, std::string> id_str_map;
-typedef tbb::concurrent_hash_map<std::thread::id, std::stack<std::string>> id_stack_str_map;
+typedef alloc<std::pair<std::thread::id,int>> alloc_pair_id_int;
+typedef alloc<std::pair<std::thread::id, std::string>> alloc_pair_id_str;
+typedef alloc<std::pair<std::thread::id,std::stack<std::string>>> alloc_pair_id_str_stack;
+typedef tbb::concurrent_hash_map<std::thread::id, int, tbb::tbb_hash_compare<std::thread::id>, alloc_pair_id_int> id_int_map;
+typedef tbb::concurrent_hash_map<std::thread::id, std::string, tbb::tbb_hash_compare<std::thread::id>, alloc_pair_id_str> id_str_map;
+typedef tbb::concurrent_hash_map<std::thread::id, std::stack<std::string>, tbb::tbb_hash_compare<std::thread::id>, alloc_pair_id_str_stack> id_stack_str_map;
 
 class logger {
 public:
@@ -44,16 +47,16 @@ public:
 	void begin_on_thread(std::string name);
 	
 	void pushSec();
-	void popSec ();
+	void popSec();
 
 	void pushContext(std::string context);
-	void popContext ();
+	void popContext();
 
 	void info (std::string msg);
 	void warn (std::string msg);
 	void error(std::string msg);
 	void fatal(std::string msg);
-	void msg  (message msg);
+	void msg(message msg);
 
 	void set_emit_level(int emit);
 
@@ -61,19 +64,23 @@ private:
 	void logging_thread();
 	void output_message(message msg);
 
-	std::thread* 			thread;
+	bool 					end_thread;
+	std::thread				thread;
 	std::mutex   			log_mutex;
 	std::condition_variable var;
-	bool 					end_thread;
 
 	int emit_level;
 
-	id_int_map					 					thread_indent_levels;
-	std::vector<std::ostream*, alloc<std::ostream*>>		out_streams;
-	tbb::concurrent_queue<message, alloc<message>> 	message_q;
-
 	id_str_map			thread_names;
 	id_stack_str_map 	thread_current_context;
+	id_int_map			thread_indent_levels;
+
+	std::vector<std::ostream*, alloc<std::ostream*>>	out_streams;
+	tbb::concurrent_queue<message, alloc<message>> 		message_q;
+
+#ifdef LOG_FILE
+	std::ofstream filestream;
+#endif
 };
 
 extern logger glog;

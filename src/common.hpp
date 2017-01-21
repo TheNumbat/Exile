@@ -1,10 +1,6 @@
 
 #pragma once
 
-#include <stdint.h>
-#include "alloc/alloc.hpp"
-#include "logger/log.hpp"
-
 #ifdef ASSERTIONS
 #include <assert.h>
 #define INVALID_CODE_PATH assert(false);
@@ -12,6 +8,11 @@
 #define assert(a)
 #define INVALID_CODE_PATH
 #endif
+
+#include <stdint.h>
+#include "debug/debug.hpp"
+#include "alloc.hpp"
+#include "logger/log.hpp"
 
 typedef float		r32;
 typedef double		r64;

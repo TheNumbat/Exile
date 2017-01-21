@@ -13,6 +13,8 @@ int main(int, char**) {
 
     LOG_INFO("Done with initialization!");
 
+    gdebug.print_tree();
+
 	state.run();
 
 	LOG_INFO("Shutting down...");

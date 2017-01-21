@@ -44,29 +44,28 @@ message::message(int indent, std::thread::id i, message_level level, std::string
 }
 
 logger::logger(int emit) 
-	: message_q(alloc<message>("message alloc")),
-	  out_streams(alloc<message>("out stream alloc"))
+	: message_q(alloc<message>("LOG/MESSAGE_QUEUE")),
+	  out_streams(alloc<std::ostream*>("LOG/OSTREAM")),
+	  thread_indent_levels(alloc_pair_id_int("LOG/TTHREAD_INDENTS")),
+	  thread_names(alloc_pair_id_str("LOG/THREAD_NAMES")),
+	  thread_current_context(alloc_pair_id_str_stack("LOG/THREAD_CONTEXTS"))
 {
 	end_thread = false;
 	emit_level = emit;
 #ifdef LOG_FILE
-	out_streams.push_back(new std::ofstream("log.txt"));
+	filestream.open("log.txt");
+	out_streams.push_back(&filestream);
 #endif
 #ifdef LOG_CONSOLE
 	out_streams.push_back(&std::cout);
 #endif
-
-	thread = new std::thread(&logger::logging_thread, this);
+	thread = std::move(std::thread(&logger::logging_thread, this));
 }
 
 logger::~logger() {
 	end_thread = true;
 	var.notify_all();
-	thread->join();
-	delete thread;
-#ifdef LOG_FILE
-	delete out_streams[0];
-#endif
+	thread.join();
 }
 
 void logger::begin_on_thread(std::string name) {
