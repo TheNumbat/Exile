@@ -10,7 +10,7 @@
 #endif
 
 #include <stdint.h>
-#include "debug/debug.hpp"
+#include "dbg/debug.hpp"
 #include "alloc.hpp"
 #include "logger/log.hpp"
 
