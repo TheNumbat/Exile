@@ -17,7 +17,8 @@ struct allocators_node_base {
 	}
 	tbb::concurrent_hash_map<std::string, allocators_node_base*> children;
 	bool occupied;
-	virtual size_t size() = 0;
+	virtual size_t size() {return 0;}
+	virtual size_t allocs() {return 0;}
 	virtual std::string name() = 0;
 };
 
@@ -33,7 +34,12 @@ struct allocators_node : public allocators_node_base {
 		return allocator->size;
 	}
 	std::string name() {
-		return allocator->name;
+		std::string n = allocator->name;
+		size_t pos = n.find_last_of("\\/");
+		return n.substr(pos == std::string::npos ? 0 : pos + 1, n.size());
+	}
+	size_t allocs() {
+		return allocator->num_allocs;
 	}
 };
 
@@ -43,7 +49,6 @@ struct allocators_node<void> : public allocators_node_base {
 		occupied = false;
 		n = _n;
 	}
-	size_t size() {return 0;}
 	std::string name() {return n;}
 	std::string n;
 };
@@ -57,11 +62,13 @@ public:
 		delete allocators_root;
 	}
 
-	void print_tree() {print_tree_rec(allocators_root);}
-	void print_tree_rec(allocators_node_base* current) {
+	void print_tree() {print_tree_rec(allocators_root, 0);}
+	void print_tree_rec(allocators_node_base* current, int indent) {
+		for(int i = 0; i < indent; i++)
+			std::cerr << "\t";
+		std::cerr << std::endl << current->name() << " " << current->size() << " " << current->allocs() << std::endl;
 		for(auto& e : current->children)
-			print_tree_rec(e.second);
-		std::cout << std::endl << current->name() << " " << current->size() << std::endl;
+			print_tree_rec(e.second, indent + 1);
 	}
 
 	template<typename T> void add_allocator(alloc<T>* a) {

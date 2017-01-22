@@ -23,11 +23,11 @@ public:
     alloc(std::string n) : name(n), size(0), num_allocs(0) {
         gdebug.add_allocator<T>(this);
     }
-    alloc(const alloc& a) : name(a.name), size(0), num_allocs(0) {
+    alloc(const alloc& a) : name(a.name), size(a.size), num_allocs(a.num_allocs) {
         gdebug.rem_allocator(name);
         gdebug.add_allocator<T>(this);
     }
-    template<typename U> alloc(const alloc<U>& a) : name(a.name), size(0), num_allocs(0) {
+    template<typename U> alloc(const alloc<U>& a) : name(a.name), size(a.size), num_allocs(a.num_allocs) {
         gdebug.rem_allocator(name);
         gdebug.add_allocator<T>(this);   
     }
@@ -41,6 +41,7 @@ public:
         if (!p)
             throw(std::bad_alloc());
         size += n * sizeof(value_type);
+        num_allocs++;
         return p;
     }
     void deallocate(pointer p, size_type n) {
