@@ -20,17 +20,9 @@ public:
         typedef alloc<U> other;
     };
 
-    alloc(std::string n) : name(n), size(0), num_allocs(0) {
-        gdebug.add_allocator<T>(this);
-    }
-    alloc(const alloc& a) : name(a.name), size(a.size), num_allocs(a.num_allocs) {
-        gdebug.rem_allocator(name);
-        gdebug.add_allocator<T>(this);
-    }
-    template<typename U> alloc(const alloc<U>& a) : name(a.name), size(a.size), num_allocs(a.num_allocs) {
-        gdebug.rem_allocator(name);
-        gdebug.add_allocator<T>(this);   
-    }
+    alloc(std::string n) : name(n) {}
+    alloc(const alloc& a) : name(a.name) {}
+    template<typename U> alloc(const alloc<U>& a) : name(a.name) {}
 
     pointer address(reference x) const {return &x;}
     const_pointer address(const_reference x) const {return &x;}
