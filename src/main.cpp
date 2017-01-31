@@ -13,7 +13,7 @@ int main(int, char**) {
 
     LOG_INFO("Done with initialization!");
 
-    gdebug.print_tree();
+    //gdebug.print_tree();
 
 	state.run();
 
