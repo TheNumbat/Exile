@@ -1,15 +1,21 @@
 
+ToDo: the ToDo list
+
+I want to wait for a JAI release, but I also want to start this now....
+
 Custom Allocator for tracking, block-based allocation w/ free lists, debug memory tracking - see EASTL
 
-Intel Thread Building Blocks? Seemsgood
+Stop using so many hash maps. Use arrays.
 
+Intel Thread Building Blocks? Seemsgood
 Boost?
 
-https://github.com/greg7mdp/sparsepp
-http://stackoverflow.com/questions/826569/compelling-examples-of-custom-c-allocators
-http://stackoverflow.com/questions/2196995/is-there-any-advantage-of-using-map-over-unordered-map-in-case-of-trivial-keys
-https://www.threadingbuildingblocks.org/intel-tbb-tutorial
-https://software.intel.com/en-us/articles/optimizing-game-architectures-with-intel-threading-building-blocks
+Links
+	https://github.com/greg7mdp/sparsepp
+	http://stackoverflow.com/questions/826569/compelling-examples-of-custom-c-allocators
+	http://stackoverflow.com/questions/2196995/is-there-any-advantage-of-using-map-over-unordered-map-in-case-of-trivial-keys
+	https://www.threadingbuildingblocks.org/intel-tbb-tutorial
+	https://software.intel.com/en-us/articles/optimizing-game-architectures-with-intel-threading-building-blocks
 
 Basic Systems
 	Assets
@@ -20,12 +26,19 @@ Basic Systems
 	Input
 	Sound
 
-Possibly Make Own Version of
+Get rid of libs
+	GLEW
+	GLM
+	STL
+	TBB?
+
+Libs
 	GLEW
 	GLM
 	STB_IMAGE
 	STL containers/allocators/threading/file IO
 	Platform layer (glfw)
+	TBB
 
 Things To Measure Performance/Memory:
 	hash map vs map for most dictionaries
