@@ -18,13 +18,19 @@ node :: union {
 main :: proc() {
 	
 	n : node.Branch;
+	e : node.End;
 
 	println(n.visited);
 	println(n.children);
+	println(e.visited);
+	println(e.msg);
 
-	match n {
+	a : any = n;
+	println(a);
 
+	match b in cast(node)n {
+		case node.Branch: println("branch");
+		case node.End:	println("end");
 	}
-
 }
 
