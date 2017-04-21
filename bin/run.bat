@@ -1,2 +1,2 @@
 @echo off
-w:/build/text.exe
+w:/build/cave.exe
