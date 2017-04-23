@@ -2,6 +2,8 @@
 #import "strings.odin";
 #import . "sys/windows.odin";
 
+global_running := true;
+
 window :: struct {
 	width, height:		i32,
 	class:				WndClassExA,
@@ -10,7 +12,14 @@ window :: struct {
 	device_context:		Hdc,
 }
 
+wait :: proc() {
+	WaitMessage();
+}
+
 process_messages :: proc(w : window) -> bool {
+	if(!global_running) {
+		return false;
+	}
 	m : Msg;
 	for PeekMessageA(^m, w.handle, 0, 0, PM_REMOVE) != 0 {
 		TranslateMessage(^m);
@@ -21,7 +30,7 @@ process_messages :: proc(w : window) -> bool {
 
 window_proc :: proc(handle : Hwnd, msg : u32, wparam : Wparam, lparam : Lparam) -> Lresult #cc_c {
 	if msg == WM_DESTROY || msg == WM_CLOSE || msg == WM_QUIT {
-		ExitProcess(0);
+		global_running = false;
 		return 0;
 	}
 	return DefWindowProcA(handle, msg, wparam, lparam);

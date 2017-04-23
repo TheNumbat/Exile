@@ -9,9 +9,13 @@ main :: proc() {
 	if(error != 0) {
 		fmt.println("Failed to create window! Error: ", error);
 	}
-	defer platform.destroy_window(window);
+	defer {
+		platform.destroy_window(window);
+	} 
 
 	fmt.println(window);
 
-	for platform.process_messages(window) {}
+	for platform.process_messages(window) {
+		platform.wait();
+	}
 }
