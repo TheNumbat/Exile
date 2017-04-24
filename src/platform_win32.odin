@@ -1,6 +1,7 @@
 
 #import "strings.odin";
 #import . "sys/windows.odin";
+#import wgl "sys/wgl.odin";
 
 global_running := true;
 
@@ -10,6 +11,13 @@ window :: struct {
 	handle:				Hwnd,
 	title:				string,
 	device_context:		Hdc,
+	pixel_format:		PIXELFORMATDESCRIPTOR,
+	gl_temp,
+	gl_context:			wgl.Hglrc,
+}
+
+swap_window :: proc(w : window) {
+	SwapBuffers(w.device_context);
 }
 
 wait :: proc() {
@@ -75,13 +83,74 @@ make_window :: proc(t : string, w, h : i32) -> (window, i32) {
 		return win, GetLastError();
 	}
 
+	win.pixel_format = PIXELFORMATDESCRIPTOR{
+		size 			= size_of(PIXELFORMATDESCRIPTOR),
+		version 		= 1,
+		flags			= PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER,
+		pixel_type		= PFD_TYPE_RGBA,
+		color_bits		= 32,
+		alpha_bits		= 8,
+		depth_bits		= 24,
+		stencil_bits	= 8,
+		layer_type 		= PFD_MAIN_PLANE,
+	};
+
+	format_index := ChoosePixelFormat(win.device_context, ^win.pixel_format);
+	if format_index == 0 {
+		return win, GetLastError();
+	}
+
+	if SetPixelFormat(win.device_context, format_index, nil) == 0 {
+		return win, GetLastError();
+	}
+
+	win.gl_temp = wgl.CreateContext(win.device_context);
+
+	if win.gl_temp == nil {
+		return win, GetLastError();
+	}
+
+	if wgl.MakeCurrent(win.device_context, win.gl_temp) == 0 {
+		return win, GetLastError();
+	}
+
+	attribs := [9]i32{
+		wgl.CONTEXT_MAJOR_VERSION_ARB, 3,
+		wgl.CONTEXT_MINOR_VERSION_ARB, 3,
+		wgl.CONTEXT_PROFILE_MASK_ARB, wgl.CONTEXT_CORE_PROFILE_BIT_ARB,
+		wgl.CONTEXT_FLAGS_ARB, wgl.CONTEXT_FORWARD_COMPATIBLE_BIT_ARB,
+		0
+	};
+
+	modern_context_func := "wglCreateContextAttribsARB";
+	c_modern_context_func := strings.new_c_string(modern_context_func);
+	defer free(c_modern_context_func);
+
+	wglCreateContextAttribsARB := cast(wgl.CreateContextAttribsARB_Type)wgl.GetProcAddress(c_modern_context_func);
+
+	win.gl_context = wglCreateContextAttribsARB(win.device_context, nil, ^attribs[0]);
+
+	if win.gl_context == nil {
+		return win, GetLastError();
+	}
+
+	if wgl.MakeCurrent(win.device_context, win.gl_context) == 0 {
+		return win, GetLastError();
+	}
+
 	return win, 0;
 }
 
 destroy_window :: proc(w : window) -> i32 {
-	if DestroyWindow(w.handle) != 0 {
-		return 0;
+	if wgl.DeleteContext(w.gl_temp) == 0 {
+		return GetLastError();
 	}
-	return GetLastError();
+	if wgl.DeleteContext(w.gl_context) == 0 {
+		return GetLastError();
+	}
+	if DestroyWindow(w.handle) == 0 {
+		return GetLastError();
+	}
+	return 0;
 }
 
