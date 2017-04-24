@@ -1,0 +1,55 @@
+
+Systems
+	Debug
+		Logging
+		Profiling
+			Threading
+		Console
+		Visualization
+	Rendering
+		Chunks
+			Meshing
+			Texturing 
+				Atlases
+			Reducing polygon count
+		UI
+			Metaprogramming (QT)
+		Animation
+			Skeletal
+			Procedural
+		Text
+			Distance Fields?
+			Atlases
+		Minimum draw calls
+		OpenGL
+			Shaders
+			lots and lots more here
+	Memory
+		Allocators
+		Arena-based
+		Allocate at startup?
+		Profiling
+	Platform
+		Windowing
+		Events
+			Translation
+		File IO
+		Threading
+		Code reloading
+	Sound
+		Positional Audio
+	Assets
+		Compression?
+		Swapping
+	Input
+		Abstracted input?
+	Networking
+		Server/Client Architecture
+		Serialization
+	World Storage
+		Chunks
+		Paging
+		Serialization
+	Simulation
+		Logistics
+		Physics

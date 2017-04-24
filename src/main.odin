@@ -1,6 +1,7 @@
 
 #import "platform.odin";
 #import "fmt.odin";
+
 #import gl "opengl.odin";
 #import . "strings.odin";
 
@@ -24,9 +25,9 @@ main :: proc() {
 	renderer 	:= to_odin_string(gl.GetString(gl.RENDERER));
 	version 	:= to_odin_string(gl.GetString(gl.VERSION));
 
-	fmt.println("Vendor:   ", vendor);
-	fmt.println("Renderer: ", renderer);
-	fmt.println("Version:  ", version);
+	fmt.println("Vendor:  ", vendor);
+	fmt.println("Renderer:", renderer);
+	fmt.println("Version: ", version);
 
 	for platform.process_messages(window) {
 		gl.ClearColor(0, 0, 0, 1);
