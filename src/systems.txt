@@ -4,26 +4,41 @@ Systems
 		Logging
 		Profiling
 			Threading
+			Minimum Overhead
+			Metaprogramming
 		Console
+			Metapgramming
 		Visualization
+		Storage
+		Memory
 	Rendering
 		Chunks
 			Meshing
 			Texturing 
 				Atlases
 			Reducing polygon count
+			Culling
+			Render distance
 		UI
-			Metaprogramming (QT)
+			Metaprogramming
+				QT sig/slot?
+				Tags?
+			Menus
+			Inventory System
 		Animation
 			Skeletal
 			Procedural
+		Model Loading
+			Animation
+			Formats
 		Text
 			Distance Fields?
 			Atlases
+			Internationalization
 		Minimum draw calls
 		OpenGL
-			Shaders
-			lots and lots more here
+			Abstraction layer
+			Good shaders
 	Memory
 		Allocators
 		Arena-based
@@ -36,21 +51,39 @@ Systems
 		File IO
 		Threading
 		Code reloading
+		Library loading 
 	Sound
 		Positional Audio
+		Music
 	Assets
 		Compression?
 		Swapping
+		Modularity
 	Input
 		Abstracted input?
+		Key bindings
+		Controllers
 	Networking
 		Server/Client Architecture
 		Serialization
+			Metaprogramming
 	World Storage
 		Chunks
 		Paging
 		Serialization
+			Metaprogramming
 	Simulation
 		Logistics
 		Physics
-		
+	Mods
+		Architecture
+		Libraries
+		API
+	Gameplay
+		Movement
+		Stats
+		Inventory
+		Building
+		Crafting
+		Fighting
+		Settings

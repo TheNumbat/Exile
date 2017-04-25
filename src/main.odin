@@ -6,7 +6,7 @@
 #import . "strings.odin";
 
 main :: proc() {
-	
+
 	window, error := platform.make_window("Game", 1280, 720);
 
 	if error != 0 {
