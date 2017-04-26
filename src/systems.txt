@@ -7,7 +7,7 @@ Systems
 			Minimum Overhead
 			Metaprogramming
 		Console
-			Metapgramming
+			Metaprogramming
 		Visualization
 		Storage
 		Memory
