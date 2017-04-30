@@ -1,6 +1,7 @@
 
 #import "strings.odin";
 #import . "windows.odin";
+#import . "sys/windows.odin";
 #import wgl "sys/wgl.odin";
 
 global_running := true;
@@ -38,7 +39,7 @@ process_messages :: proc(w : window) -> bool {
 
 window_proc :: proc(handle : Hwnd, msg : u32, wparam : Wparam, lparam : Lparam) -> Lresult #cc_c {
 	if msg == WM_DESTROY || msg == WM_CLOSE || msg == WM_QUIT {
-		global_running = false;
+		global_running = false; // this was being strange
 		return 0;
 	}
 	return DefWindowProcA(handle, msg, wparam, lparam);
