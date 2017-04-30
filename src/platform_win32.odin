@@ -1,6 +1,6 @@
 
 #import "strings.odin";
-#import . "sys/windows.odin";
+#import . "windows.odin";
 #import wgl "sys/wgl.odin";
 
 global_running := true;
@@ -29,9 +29,9 @@ process_messages :: proc(w : window) -> bool {
 		return false;
 	}
 	m : Msg;
-	for PeekMessageA(^m, w.handle, 0, 0, PM_REMOVE) != 0 {
-		TranslateMessage(^m);
-		_ = DispatchMessageA(^m);
+	for PeekMessageA(&m, w.handle, 0, 0, PM_REMOVE) != 0 {
+		TranslateMessage(&m);
+		_ = DispatchMessageA(&m);
 	}
 	return true;
 }
@@ -52,7 +52,7 @@ make_window :: proc(t : string, w, h : i32) -> (window, i32) {
 	win.height = h;
 	win.title = t;
 
-	instance := cast(Hinstance)GetModuleHandleA(nil);
+	instance := Hinstance(GetModuleHandleA(nil));
 	class_name := strings.new_c_string(win.title);
 	defer free(class_name);
 
@@ -64,7 +64,7 @@ make_window :: proc(t : string, w, h : i32) -> (window, i32) {
 		class_name	= class_name,
 	};
 
-	if RegisterClassExA(^win.class) == 0 {
+	if RegisterClassExA(&win.class) == 0 {
 		return win, GetLastError();
 	}
 
@@ -95,7 +95,7 @@ make_window :: proc(t : string, w, h : i32) -> (window, i32) {
 		layer_type 		= PFD_MAIN_PLANE,
 	};
 
-	format_index := ChoosePixelFormat(win.device_context, ^win.pixel_format);
+	format_index := ChoosePixelFormat(win.device_context, &win.pixel_format);
 	if format_index == 0 {
 		return win, GetLastError();
 	}
@@ -126,9 +126,9 @@ make_window :: proc(t : string, w, h : i32) -> (window, i32) {
 	c_modern_context_func := strings.new_c_string(modern_context_func);
 	defer free(c_modern_context_func);
 
-	wglCreateContextAttribsARB := cast(wgl.CreateContextAttribsARB_Type)wgl.GetProcAddress(c_modern_context_func);
+	wglCreateContextAttribsARB := wgl.CreateContextAttribsARB_Type(wgl.GetProcAddress(c_modern_context_func));
 
-	win.gl_context = wglCreateContextAttribsARB(win.device_context, nil, ^attribs[0]);
+	win.gl_context = wglCreateContextAttribsARB(win.device_context, nil, &attribs[0]);
 
 	if win.gl_context == nil {
 		return win, GetLastError();
