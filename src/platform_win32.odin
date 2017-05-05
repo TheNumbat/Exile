@@ -127,7 +127,8 @@ make_window :: proc(t : string, w, h : i32) -> (window, i32) {
 	c_modern_context_func := strings.new_c_string(modern_context_func);
 	defer free(c_modern_context_func);
 
-	wglCreateContextAttribsARB := wgl.CreateContextAttribsARB_Type(wgl.GetProcAddress(c_modern_context_func));
+	wglCreateContextAttribsARB := wgl.CreateContextAttribsARB_Type(
+										wgl.GetProcAddress(c_modern_context_func));
 
 	win.gl_context = wglCreateContextAttribsARB(win.device_context, nil, &attribs[0]);
 
