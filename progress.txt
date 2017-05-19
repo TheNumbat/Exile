@@ -1,0 +1,5 @@
+Day 00
+	Dev environment
+	Start platform API
+	Win32 windowing, OpenGL context
+	
