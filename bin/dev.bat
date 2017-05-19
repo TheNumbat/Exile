@@ -1,3 +1,3 @@
 @echo off
 
-devenv
+devenv w:\bin\main.sln 
