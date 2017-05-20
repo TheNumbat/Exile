@@ -3,7 +3,7 @@
 
 struct string {
 	char* c_str = NULL;
-	i32 cap	    = 0;
+	i32 cap	    = 0;	// capacity
 	i32 len		= 0;	// including null terminator
 };
 
@@ -42,6 +42,10 @@ string string_from_c_str(char* c_str) {
 void free_string(string s, void	(*platform_heap_free)(void* mem)) {
 
 	(*platform_heap_free)(s.c_str);
+
+	s.c_str = NULL;
+	s.cap = 0;
+	s.len = 0;
 }
 
 string make_string(i32 cap, void* (*platform_heap_alloc)(u64 bytes)) {
