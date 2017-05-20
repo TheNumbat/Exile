@@ -1,6 +1,65 @@
 
 #include "platform_win32.h"
 
+platform_api platform_build_api() {
+
+	platform_api ret;
+
+	ret.platform_create_window		= &platform_create_window;
+	ret.platform_destroy_window		= &platform_destroy_window;
+	ret.platform_swap_buffers		= &platform_swap_buffers;
+	ret.platform_process_messages	= &platform_process_messages;
+	ret.platform_wait_message		= &platform_wait_message;
+	ret.platform_load_library		= &platform_load_library;
+	ret.platform_free_library		= &platform_free_library;
+	ret.platform_get_proc_address 	= &platform_get_proc_address;
+
+	return ret;
+}
+
+platform_error platform_get_proc_address(void** address, platform_dll* dll, const char* name) {
+
+	platform_error ret;
+
+	*address = GetProcAddress(dll->dll_handle, name);
+
+	if(*address == NULL) {
+		ret.good = false;
+		ret.error = GetLastError();
+		return ret;				
+	}
+
+	return ret;
+}
+
+platform_error platform_load_library(platform_dll* dll, const char* file_path) {
+
+	platform_error ret;
+
+	dll->dll_handle = LoadLibraryA(file_path);
+
+	if(dll->dll_handle == NULL) {
+		ret.good = false;
+		ret.error = GetLastError();
+		return ret;				
+	}
+
+	return ret;
+}
+
+platform_error platform_free_library(platform_dll* dll) {
+	
+	platform_error ret;
+
+	if(FreeLibrary(dll->dll_handle) == 0) {
+		ret.good = false;
+		ret.error = GetLastError();
+		return ret;				
+	}
+
+	return ret;
+}
+
 platform_error platform_wait_message() {
 
 	platform_error ret;

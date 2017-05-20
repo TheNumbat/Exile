@@ -3,6 +3,12 @@
 
 #include <stdint.h>
 
+#ifdef ASSERTS
+#include <assert.h>
+#else
+#define assert(t) 
+#endif
+
 typedef uint8_t u8;
 typedef int8_t i8;
 typedef uint16_t u16;

@@ -1,16 +1,11 @@
-
 #pragma once
-
-#include "platform_api.h"
 
 #ifdef _WIN32
 
-#include "platform_win32.h"
+#include "platform_win32_api.h"
 
 #else
 
 #error "Unsupported platform."
 
 #endif
-
-
