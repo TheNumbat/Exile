@@ -5,14 +5,62 @@ platform_api platform_build_api() {
 
 	platform_api ret;
 
-	ret.platform_create_window		= &platform_create_window;
-	ret.platform_destroy_window		= &platform_destroy_window;
-	ret.platform_swap_buffers		= &platform_swap_buffers;
-	ret.platform_process_messages	= &platform_process_messages;
-	ret.platform_wait_message		= &platform_wait_message;
-	ret.platform_load_library		= &platform_load_library;
-	ret.platform_free_library		= &platform_free_library;
-	ret.platform_get_proc_address 	= &platform_get_proc_address;
+	ret.platform_create_window			= &platform_create_window;
+	ret.platform_destroy_window			= &platform_destroy_window;
+	ret.platform_swap_buffers			= &platform_swap_buffers;
+	ret.platform_process_messages		= &platform_process_messages;
+	ret.platform_wait_message			= &platform_wait_message;
+	ret.platform_load_library			= &platform_load_library;
+	ret.platform_free_library			= &platform_free_library;
+	ret.platform_get_proc_address 		= &platform_get_proc_address;
+	ret.platform_get_file_attributes 	= &platform_get_file_attributes;
+	ret.platform_test_file_written		= &platform_test_file_written;
+	ret.platform_copy_file				= &platform_copy_file;
+	ret.platform_heap_alloc				= &platform_heap_alloc;
+	ret.platform_heap_free				= &platform_heap_free;
+
+	return ret;
+}
+
+void* platform_heap_alloc(u64 bytes) {
+
+	HANDLE heap = GetProcessHeap();
+	return HeapAlloc(heap, HEAP_ZERO_MEMORY, bytes);
+}
+
+void platform_heap_free(void* mem) {
+
+	HANDLE heap = GetProcessHeap();
+	HeapFree(heap, 0, mem);
+}
+
+platform_error platform_copy_file(const char* source, const char* dest, bool overwrite) {
+
+	platform_error ret;
+
+	if(CopyFile(source, dest, !overwrite) == 0) {
+		ret.good = false;
+		ret.error = GetLastError();
+		return ret;			
+	}
+
+	return ret;
+}
+
+bool platform_test_file_written(platform_file_attributes* first, platform_file_attributes* second) {
+
+	return CompareFileTime(&first->attrib.ftLastWriteTime, &second->attrib.ftLastWriteTime) == -1;
+}
+
+platform_error platform_get_file_attributes(platform_file_attributes* attrib, const char* file_path) {
+
+	platform_error ret;
+
+	if(GetFileAttributesExA(file_path, GetFileExInfoStandard, (LPVOID)&attrib->attrib) == 0) {
+		ret.good = false;
+		ret.error = GetLastError();
+		return ret;				
+	}
 
 	return ret;
 }

@@ -12,10 +12,9 @@ using std::endl;
 
 #define DLL_OUT extern "C" __declspec(dllexport)
 
-DLL_OUT void* start_up(platform_api* api) {
+DLL_OUT game_state* start_up(platform_api* api) {
 	
-	// TODO(max): platform-based allocation
-	game_state* state = new game_state;
+	game_state* state = (game_state*)api->platform_heap_alloc(sizeof(game_state));
 
 	state->api = api;
 
@@ -37,27 +36,23 @@ DLL_OUT void* start_up(platform_api* api) {
 	return state;
 }
 
-DLL_OUT bool main_loop(void* void_state) {
-
-	game_state* state = (game_state*)void_state;
+DLL_OUT bool main_loop(game_state* state) {
 
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 	state->api->platform_swap_buffers(&state->window);
-	state->api->platform_wait_message();
 	
 	return state->api->platform_process_messages(&state->window);
 }
 
-DLL_OUT void shut_down(void* void_state) {
+DLL_OUT void shut_down(platform_api* api, game_state* state) {
 
-	game_state* state = (game_state*)void_state;
-
-	platform_error err = state->api->platform_destroy_window(&state->window);
+	platform_error err = api->platform_destroy_window(&state->window);
 
 	if(!err.good) {
 		cout << "Error destroying window: " << err.error << endl;
 	}
 
-	delete state;
+	api->platform_heap_free(state);
 }
+

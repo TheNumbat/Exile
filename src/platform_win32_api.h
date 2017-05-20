@@ -23,6 +23,10 @@ struct platform_error {
 
 struct platform_dll {
 	// Opaque
-	HMODULE dll_handle;
+	HMODULE dll_handle = {};
 };
 
+struct platform_file_attributes {
+	// Opaque
+	WIN32_FILE_ATTRIBUTE_DATA attrib = {};
+};
