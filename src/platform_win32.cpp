@@ -54,7 +54,7 @@ LRESULT CALLBACK window_proc(HWND handle, UINT msg, WPARAM wParam, LPARAM lParam
 	return DefWindowProcA(handle, msg, wParam, lParam);
 }
 
-platform_error platform_create_window(platform_window* window, char* title, u32 width, u32 height) {
+platform_error platform_create_window(platform_window* window, const char* title, u32 width, u32 height) {
 
 	platform_error ret;
 
