@@ -9,4 +9,5 @@ struct game_state {
 
 	// TODO(max): thread-local
 	stack<allocator> global_alloc_context; // global, but we can't have dll-local globals
+	allocator default_platform_allocator;
 };

@@ -15,10 +15,11 @@ stack<allocator>* global_alloc_context;
 
 #include "stack.h"
 
-#define ALLOCATOR(a, f) 	make_allocator(a, f, CONTEXT)
-#define PUSH_ALLOC(a, f) 	stack_push(global_alloc_context,ALLOCATOR(a, f));
-#define POP_ALLOC() 		stack_pop(global_alloc_context);
-#define CURRENT_ALLOC() 	stack_top(global_alloc_context)
+#define ALLOCATOR(a, f) 		make_allocator(a, f, CONTEXT)
+#define PUSH_ALLOC(a)			stack_push(global_alloc_context,a);
+#define PUSH_ALLOC_FUNC(a, f) 	stack_push(global_alloc_context,ALLOCATOR(a, f));
+#define POP_ALLOC() 			stack_pop(global_alloc_context);
+#define CURRENT_ALLOC() 		stack_top(global_alloc_context)
 
 inline allocator make_allocator(void* (*allocate)(u64 bytes), void  (*free)(void* mem), code_context context) {
 

@@ -13,7 +13,8 @@ extern "C" game_state* start_up(platform_api* api) {
 	game_state* state = (game_state*)api->platform_heap_alloc(sizeof(game_state));
 
 	state->api = api;
-	state->global_alloc_context = make_stack<allocator>(0, ALLOCATOR(state->api->platform_heap_alloc, state->api->platform_heap_free));
+	state->default_platform_allocator = ALLOCATOR(state->api->platform_heap_alloc, state->api->platform_heap_free);
+	state->global_alloc_context = make_stack<allocator>(0, state->default_platform_allocator);
 
 	platform_error err = state->api->platform_create_window(&state->window, string_literal("Window"), 
 													  		1280, 720);
@@ -37,7 +38,7 @@ extern "C" game_state* start_up(platform_api* api) {
 
 extern "C" bool main_loop(game_state* state) {
 
-	PUSH_ALLOC(state->api->platform_heap_alloc, state->api->platform_heap_free) {
+	PUSH_ALLOC(state->default_platform_allocator) {
 
 		//void* test = malloc(1024);
 		string test = make_string(1024);
