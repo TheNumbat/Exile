@@ -5,6 +5,8 @@
 #include <gl\gl.h>
 #include "wglext.h"
 
+// API Structures (mark opaque/transparent)
+
 struct platform_window {
 	const char* title	= "";
 	u32 width, height	= 0;
@@ -22,11 +24,7 @@ struct platform_error {
 	DWORD error  = 0;		// something printable (for other platform layers)
 };
 
-typedef HGLRC WINAPI wgl_create_context_attribs_arb(HDC hDC, HGLRC hShareContext,
-    												const int* attribList);
-
-static wgl_create_context_attribs_arb* wglCreateContextAttribsARB;
-static bool global_platform_running = true;
+// API
 
 platform_error platform_create_window(platform_window* window, const char* title, u32 width, u32 height);
 platform_error platform_destroy_window(platform_window* window);
@@ -35,6 +33,14 @@ platform_error platform_swap_buffers(platform_window* window);
 
 bool platform_process_messages(platform_window* window);
 platform_error platform_wait_message();
+
+// Platform specific stuff
+
+typedef HGLRC WINAPI wgl_create_context_attribs_arb(HDC hDC, HGLRC hShareContext,
+    												const int* attribList);
+
+static wgl_create_context_attribs_arb* wglCreateContextAttribsARB;
+static bool global_platform_running = true;
 
 static LRESULT CALLBACK window_proc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 

@@ -16,9 +16,9 @@ int main() {
 		cout << "Error creating window: " << err.error << endl;
 	}
 
-	char* version  = (char*)glGetString(GL_VERSION);
-	char* renderer = (char*)glGetString(GL_RENDERER);
-	char* vendor   = (char*)glGetString(GL_VENDOR);
+	const char* version  = (const char*)glGetString(GL_VERSION);
+	const char* renderer = (const char*)glGetString(GL_RENDERER);
+	const char* vendor   = (const char*)glGetString(GL_VENDOR);
 
 	cout << "Vendor  : " << vendor << endl;
 	cout << "Version : " << version << endl;
