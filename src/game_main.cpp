@@ -1,13 +1,12 @@
 
 #include <iostream>
+using std::cout;
+using std::endl;
 
 #include "common.h"
 #include "game.h"
 
 #include <gl/gl.h>
-
-using std::cout;
-using std::endl;
 
 extern "C" game_state* start_up(platform_api* api) {
 	
@@ -40,13 +39,15 @@ extern "C" bool main_loop(game_state* state) {
 
 	PUSH_ALLOC(state->api->platform_heap_alloc, state->api->platform_heap_free) {
 
-		void* test = malloc(1024);
+		//void* test = malloc(1024);
+		string test = make_string(1024);
 		
 		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		state->api->platform_swap_buffers(&state->window);
 
-		free(test);
+		//free(test);
+		free_string(test);
 
 	} POP_ALLOC();
 
