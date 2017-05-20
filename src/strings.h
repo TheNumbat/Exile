@@ -1,20 +1,22 @@
 
 #pragma once
 
+// be wary of using code reloading with this, it's shared between platform and game
+
 struct string {
 	char* c_str = NULL;
 	i32 cap	    = 0;	// capacity
 	i32 len		= 0;	// including null terminator
 };
 
-string make_string_from_c_str(char* c_str, void* (*platform_heap_alloc)(u64 bytes)) {
+string make_string_from_c_str(char* c_str, void* (*allocator)(u64 bytes)) {
 
 	string ret;
 
 	i32 len;
 	for(len = 0; c_str[len] != '\0'; len++);
 
-	ret.c_str = (char*)(*platform_heap_alloc)(len);
+	ret.c_str = (char*)(*allocator)(len);
 	ret.cap = len;
 	ret.len = len;
 
@@ -48,19 +50,19 @@ void free_string(string s, void	(*platform_heap_free)(void* mem)) {
 	s.len = 0;
 }
 
-string make_string(i32 cap, void* (*platform_heap_alloc)(u64 bytes)) {
+string make_string(i32 cap, void* (*allocator)(u64 bytes)) {
 
 	string ret;
 
-	ret.c_str = (char*)(*platform_heap_alloc)(cap);
+	ret.c_str = (char*)(*allocator)(cap);
 	ret.cap = cap;
 
 	return ret;
 }
 
-string make_copy_string(string src, void* (*platform_heap_alloc)(u64 bytes)) {
+string make_copy_string(string src, void* (*allocator)(u64 bytes)) {
 
-	string ret = make_string(src.cap, platform_heap_alloc);
+	string ret = make_string(src.cap, allocator);
 
 	ret.len = src.len;
 
@@ -88,9 +90,9 @@ i32 string_last_slash(string str) {
 }
 
 // end inclusive
-string make_substring(string str, i32 start, i32 end, void* (*platform_heap_alloc)(u64 bytes)) {
+string make_substring(string str, i32 start, i32 end, void* (*allocator)(u64 bytes)) {
 
-	string ret = make_string(end - start + 1, platform_heap_alloc);
+	string ret = make_string(end - start + 1, allocator);
 
 	ret.len = end - start + 1;
 
@@ -101,9 +103,9 @@ string make_substring(string str, i32 start, i32 end, void* (*platform_heap_allo
 	return ret;
 }
 
-string make_cat_string(string first, string second, void* (*platform_heap_alloc)(u64 bytes)) {
+string make_cat_string(string first, string second, void* (*allocator)(u64 bytes)) {
 
-	string ret = make_string(first.len + second.len - 1, platform_heap_alloc);
+	string ret = make_string(first.len + second.len - 1, allocator);
 
 	ret.len = first.len + second.len - 1;
 

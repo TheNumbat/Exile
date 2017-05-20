@@ -10,14 +10,20 @@ using std::endl;
 // here we treat game_state* as void* so this doesn't have to know anything about the game
 typedef void* (*startup_type)(platform_api*);
 typedef bool  (*main_loop_type)(void*);
-typedef void  (*shutdown_type)(platform_api*, void*);
+typedef void  (*shut_down_type)(platform_api*, void*);
+typedef shut_down_type on_load_type;
+typedef shut_down_type on_unload_type;
 
 startup_type	start_up  = NULL;
 main_loop_type	main_loop = NULL;
-shutdown_type	shut_down = NULL;
+shut_down_type	shut_down = NULL;
+on_load_type 	on_load   = NULL;
+on_unload_type  on_unload = NULL;
 
 platform_dll 				game_dll;
 platform_file_attributes 	attrib;
+platform_api 				api;
+void* 						game_state;
 
 string exe_folder;
 string dll_path;
@@ -29,7 +35,7 @@ bool try_reload();
 
 int main() {
 
-	platform_api api = platform_build_api();
+	api = platform_build_api();
 
 	string exe_path;
 	platform_error err = platform_get_bin_path(&exe_path);
@@ -39,8 +45,8 @@ int main() {
 	}
 
 	int idx = string_last_slash(exe_path);
-	exe_folder = make_substring(exe_path, 0, idx, &platform_heap_alloc);
-	dll_path = make_cat_string(exe_folder, string_literal("game.dll"), &platform_heap_alloc);
+	exe_folder 	  = make_substring(exe_path, 0, idx, &platform_heap_alloc);
+	dll_path 	  = make_cat_string(exe_folder, string_literal("game.dll"), &platform_heap_alloc);
 	temp_dll_path = make_cat_string(exe_folder, string_literal("game_temp.dll"), &platform_heap_alloc);
 
 	free_string(exe_path, api.platform_heap_free);
@@ -59,7 +65,13 @@ int main() {
 		return 1;
 	}
 
-	void* game_state = (*start_up)(&api);
+	game_state = (*start_up)(&api);
+	(*on_load)(&api, game_state);
+
+	if(game_state == NULL) {
+		cout << "Error in startup!" << endl;
+		return 1;
+	}
 
 	while((*main_loop)(game_state)) {
 		if(!try_reload()) {
@@ -80,7 +92,8 @@ int main() {
 
 bool load_lib() {
 
-	// we just spinlock here waiting for the file to unlock. This should probably be improved
+	// we just spinlock here waiting for the file to unlock
+	// TODO(max): cap infinite loop
 	platform_error err;
 	do {
 		err = platform_copy_file(dll_path, temp_dll_path, true);
@@ -117,11 +130,15 @@ bool try_reload() {
 
 		attrib = to_test;
 
+		(*on_unload)(&api, game_state);
+
 		platform_free_library(&game_dll);
 
 		if(!load_lib()) return false;
 
 		if(!load_funcs()) return false;
+
+		(*on_load)(&api, game_state);
 	}
 
 	return true;
@@ -144,6 +161,18 @@ bool load_funcs() {
 	err = platform_get_proc_address((void**)&shut_down, &game_dll, string_literal("shut_down"));
 	if(!err.good) {
 		cout << "Error loading shut_down: " << err.error << endl;
+		return false;
+	}
+
+	err = platform_get_proc_address((void**)&on_load, &game_dll, string_literal("on_load"));
+	if(!err.good) {
+		cout << "Error loading on_load: " << err.error << endl;
+		return false;
+	}
+
+	err = platform_get_proc_address((void**)&on_unload, &game_dll, string_literal("on_unload"));
+	if(!err.good) {
+		cout << "Error loading on_unload: " << err.error << endl;
 		return false;
 	}
 

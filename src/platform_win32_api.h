@@ -6,6 +6,7 @@
 // API Structures (mark opaque/transparent)
 
 struct platform_window {
+	// Transparent
 	string title;
 	u32 width, height	= 0;
 
@@ -18,6 +19,7 @@ struct platform_window {
 };
 
 struct platform_error {
+	// Transparent
 	bool good	 = true;
 	DWORD error  = 0;		// something printable (for other platform layers)
 };
