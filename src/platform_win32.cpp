@@ -18,6 +18,38 @@ platform_api platform_build_api() {
 	ret.platform_copy_file				= &platform_copy_file;
 	ret.platform_heap_alloc				= &platform_heap_alloc;
 	ret.platform_heap_free				= &platform_heap_free;
+	ret.platform_get_bin_path			= &platform_get_bin_path;
+
+	return ret;
+}
+
+platform_error platform_get_bin_path(string* path) {
+
+	platform_error ret;
+
+	*path = make_string(MAX_PATH, &platform_heap_alloc);
+
+	DWORD len = GetModuleFileNameA(NULL, (LPSTR)path->c_str, MAX_PATH);
+
+	if(len == 0) {
+		ret.good = false;
+		ret.error = GetLastError();
+
+		free_string(*path, &platform_heap_free);
+
+		return ret;
+	}
+
+	if(path->c_str[len - 1] == '\0') {
+		ret.good = false;
+		ret.error = GetLastError();
+
+		free_string(*path, &platform_heap_free);
+
+		return ret;
+	}
+
+	path->len = len;
 
 	return ret;
 }
@@ -34,11 +66,11 @@ void platform_heap_free(void* mem) {
 	HeapFree(heap, 0, mem);
 }
 
-platform_error platform_copy_file(const char* source, const char* dest, bool overwrite) {
+platform_error platform_copy_file(string source, string dest, bool overwrite) {
 
 	platform_error ret;
 
-	if(CopyFile(source, dest, !overwrite) == 0) {
+	if(CopyFile(source.c_str, dest.c_str, !overwrite) == 0) {
 		ret.good = false;
 		ret.error = GetLastError();
 		return ret;			
@@ -52,11 +84,11 @@ bool platform_test_file_written(platform_file_attributes* first, platform_file_a
 	return CompareFileTime(&first->attrib.ftLastWriteTime, &second->attrib.ftLastWriteTime) == -1;
 }
 
-platform_error platform_get_file_attributes(platform_file_attributes* attrib, const char* file_path) {
+platform_error platform_get_file_attributes(platform_file_attributes* attrib, string file_path) {
 
 	platform_error ret;
 
-	if(GetFileAttributesExA(file_path, GetFileExInfoStandard, (LPVOID)&attrib->attrib) == 0) {
+	if(GetFileAttributesExA(file_path.c_str, GetFileExInfoStandard, (LPVOID)&attrib->attrib) == 0) {
 		ret.good = false;
 		ret.error = GetLastError();
 		return ret;				
@@ -65,11 +97,11 @@ platform_error platform_get_file_attributes(platform_file_attributes* attrib, co
 	return ret;
 }
 
-platform_error platform_get_proc_address(void** address, platform_dll* dll, const char* name) {
+platform_error platform_get_proc_address(void** address, platform_dll* dll, string name) {
 
 	platform_error ret;
 
-	*address = GetProcAddress(dll->dll_handle, name);
+	*address = GetProcAddress(dll->dll_handle, name.c_str);
 
 	if(*address == NULL) {
 		ret.good = false;
@@ -80,11 +112,11 @@ platform_error platform_get_proc_address(void** address, platform_dll* dll, cons
 	return ret;
 }
 
-platform_error platform_load_library(platform_dll* dll, const char* file_path) {
+platform_error platform_load_library(platform_dll* dll, string file_path) {
 
 	platform_error ret;
 
-	dll->dll_handle = LoadLibraryA(file_path);
+	dll->dll_handle = LoadLibraryA(file_path.c_str);
 
 	if(dll->dll_handle == NULL) {
 		ret.good = false;
@@ -161,11 +193,11 @@ LRESULT CALLBACK window_proc(HWND handle, UINT msg, WPARAM wParam, LPARAM lParam
 	return DefWindowProcA(handle, msg, wParam, lParam);
 }
 
-platform_error platform_create_window(platform_window* window, const char* title, u32 width, u32 height) {
+platform_error platform_create_window(platform_window* window, string title, u32 width, u32 height) {
 
 	platform_error ret;
 
-	window->title = title;
+	window->title = make_copy_string(title, &platform_heap_alloc);
 	window->width = width;
 	window->height = height;
 
@@ -184,7 +216,7 @@ platform_error platform_create_window(platform_window* window, const char* title
 		0, 0,
 		instance,
 		0, 0, 0, 0,
-		window->title, 0
+		window->title.c_str, 0
 	};
 
 	if(RegisterClassExA(&window->window_class) == 0) {
@@ -193,7 +225,7 @@ platform_error platform_create_window(platform_window* window, const char* title
 		return ret;
 	}
 
-	window->handle = CreateWindowExA(WS_EX_ACCEPTFILES, window->title, window->title, WS_VISIBLE | WS_OVERLAPPEDWINDOW,
+	window->handle = CreateWindowExA(WS_EX_ACCEPTFILES, window->title.c_str, window->title.c_str, WS_VISIBLE | WS_OVERLAPPEDWINDOW,
 			           				 CW_USEDEFAULT, CW_USEDEFAULT, window->width, window->height, 0, 0,
 			           				 instance, 0);
 
@@ -285,6 +317,8 @@ platform_error platform_create_window(platform_window* window, const char* title
 platform_error platform_destroy_window(platform_window* window) {
 
 	platform_error ret;
+
+	free_string(window->title, &platform_heap_free);
 
 	if(wglDeleteContext(window->gl_temp) == 0) {
 		ret.good = false;

@@ -1,11 +1,12 @@
 #pragma once
 
 #include <windows.h>
+#include "common.h"
 
 // API Structures (mark opaque/transparent)
 
 struct platform_window {
-	const char* title	= "";
+	string title;
 	u32 width, height	= 0;
 
 	// Opaque block, do not use outside of platform code

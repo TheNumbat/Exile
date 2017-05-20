@@ -10,15 +10,13 @@
 using std::cout;
 using std::endl;
 
-#define DLL_OUT extern "C" __declspec(dllexport)
-
-DLL_OUT game_state* start_up(platform_api* api) {
+extern "C" game_state* start_up(platform_api* api) {
 	
 	game_state* state = (game_state*)api->platform_heap_alloc(sizeof(game_state));
 
 	state->api = api;
 
-	platform_error err = state->api->platform_create_window(&state->window, "Window", 
+	platform_error err = state->api->platform_create_window(&state->window, string_literal("Window"), 
 													  		1280, 720);
 
 	if(!err.good) {
@@ -36,16 +34,16 @@ DLL_OUT game_state* start_up(platform_api* api) {
 	return state;
 }
 
-DLL_OUT bool main_loop(game_state* state) {
+extern "C" bool main_loop(game_state* state) {
 
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-	glClear(GL_COLOR_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	state->api->platform_swap_buffers(&state->window);
-	
+
 	return state->api->platform_process_messages(&state->window);
 }
 
-DLL_OUT void shut_down(platform_api* api, game_state* state) {
+extern "C" void shut_down(platform_api* api, game_state* state) {
 
 	platform_error err = api->platform_destroy_window(&state->window);
 

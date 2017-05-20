@@ -3,6 +3,12 @@
 
 #include <stdint.h>
 
+#ifdef DEBUG
+#define ASSERTS
+#define PROFILING
+#define LOGGING
+#endif
+
 #ifdef ASSERTS
 #include <assert.h>
 #else
@@ -21,3 +27,4 @@ typedef int64_t i64;
 typedef float f32;
 typedef double f64;
 
+#include "strings.h"
