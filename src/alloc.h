@@ -20,7 +20,7 @@ stack<allocator>* global_alloc_context;
 #define POP_ALLOC() 		stack_pop(global_alloc_context);
 #define CURRENT_ALLOC() 	stack_top(global_alloc_context)
 
-allocator make_allocator(void* (*allocate)(u64 bytes), void  (*free)(void* mem), code_context context) {
+inline allocator make_allocator(void* (*allocate)(u64 bytes), void  (*free)(void* mem), code_context context) {
 
 	allocator ret;
 	ret.allocate = allocate;
@@ -31,7 +31,7 @@ allocator make_allocator(void* (*allocate)(u64 bytes), void  (*free)(void* mem),
 }
 
 #define malloc(b) _malloc(b, CONTEXT)
-void* _malloc(u64 bytes, code_context context) {
+inline void* _malloc(u64 bytes, code_context context) {
 
 	allocator current = stack_top(global_alloc_context);
 
@@ -39,7 +39,7 @@ void* _malloc(u64 bytes, code_context context) {
 }
 
 #define free(m) _free(m, CONTEXT)
-void _free(void* mem, code_context context) {
+inline void _free(void* mem, code_context context) {
 
 	allocator current = stack_top(global_alloc_context);
 

@@ -38,7 +38,7 @@ struct code_context {
 	i32 line = 0;
 };
 
-code_context make_context(string file, string function, i32 line) {
+inline code_context make_context(string file, string function, i32 line) {
 
 	code_context ret;
 	ret.file = file;
