@@ -3,11 +3,21 @@
 
 template<typename T>
 struct vector {
-	T* memory 	 = NULL;
-	i32 size 	 = 0;
-	i32 capacity = 0;
-	allocator* alloc;
+	T* memory 	 	 = NULL;
+	i32 size 	 	 = 0;
+	i32 capacity 	 = 0;
+	allocator* alloc = NULL;
 };
+
+template<typename T>
+i32 vector_len(vector<T>* v) {
+	return v->size;
+}
+
+template<typename T>
+i32 vector_capacity(vector<T>* v) {
+	return v->capacity;
+}
 
 // operator[] but not a member
 template<typename T>

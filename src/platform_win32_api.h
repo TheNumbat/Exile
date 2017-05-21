@@ -33,3 +33,16 @@ struct platform_file_attributes {
 	// Opaque
 	WIN32_FILE_ATTRIBUTE_DATA attrib = {};
 };
+
+struct platform_thread_id {
+	// Opaque
+	DWORD id 	= NULL;
+};
+
+struct platform_thread {
+	// transparent
+	platform_thread_id id;
+
+	// Opaque
+	HANDLE handle 	= {};
+};

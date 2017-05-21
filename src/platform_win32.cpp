@@ -19,6 +19,57 @@ platform_api platform_build_api() {
 	ret.platform_heap_alloc				= &platform_heap_alloc;
 	ret.platform_heap_free				= &platform_heap_free;
 	ret.platform_get_bin_path			= &platform_get_bin_path;
+	ret.platform_create_thread			= &platform_create_thread;
+	ret.platform_this_thread_id			= &platform_this_thread_id;
+	ret.platform_terminate_thread		= &platform_terminate_thread;
+	ret.platform_exit_this_thread		= &platform_exit_this_thread;
+	ret.platform_thread_sleep			= &platform_thread_sleep;
+
+	return ret;
+}
+
+void platform_thread_sleep(i32 ms) {
+	Sleep(ms);
+}
+
+platform_error platform_terminate_thread(platform_thread* thread, i32 exit_code) {
+
+	platform_error ret;
+
+	if(TerminateThread(thread->handle, (DWORD)exit_code) == 0) {
+		ret.good = false;
+		ret.error = GetLastError();
+		return ret;		
+	}
+
+	return ret;
+}
+
+void platform_exit_this_thread(i32 exit_code) {
+	
+	ExitThread((DWORD)exit_code);
+}
+
+platform_thread_id platform_this_thread_id() {
+
+	platform_thread_id ret;
+
+	ret.id = GetCurrentThreadId();
+
+	return ret;
+}
+
+platform_error platform_create_thread(platform_thread* thread, i32 (*proc)(void*), void* param, bool start_suspended) {
+
+	platform_error ret;
+
+	thread->handle = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)proc, param, start_suspended ? CREATE_SUSPENDED : 0, &thread->id.id);
+
+	if(thread->handle == NULL) {
+		ret.good = false;
+		ret.error = GetLastError();
+		return ret;			
+	}
 
 	return ret;
 }

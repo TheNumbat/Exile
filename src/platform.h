@@ -30,6 +30,12 @@ void	  	   platform_heap_free(void* mem);
 // allocates a string
 platform_error platform_get_bin_path(string* path);
 
+platform_error     platform_create_thread(platform_thread* thread, i32 (*proc)(void*), void* param, bool start_suspended = false);
+platform_thread_id platform_this_thread_id();
+platform_error	   platform_terminate_thread(platform_thread* thread, i32 exit_code);
+void 	 		   platform_exit_this_thread(i32 exit_code);
+void			   platform_thread_sleep(i32 ms);
+
 #ifdef _WIN32
 
 #include "platform_win32.h"

@@ -11,7 +11,7 @@ struct allocator {
 	code_context context;
 };
 
-stack<allocator*>* global_alloc_context_stack;
+static stack<allocator*>* global_alloc_context_stack;
 
 #define PUSH_ALLOC(a)			stack_push(global_alloc_context_stack,(allocator*)a);
 #define POP_ALLOC() 			(*CURRENT_ALLOC()->destroy)(CURRENT_ALLOC()); stack_pop(global_alloc_context_stack);
