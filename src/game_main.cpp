@@ -45,7 +45,9 @@ extern "C" bool main_loop(game_state* state) {
 		//assert(test)
 		//string test = make_string(1024);
 		//assert(test.c_str);
-		array<int> a = make_array<int>(1024);
+		void* mem = malloc(1024);
+		array<int> a = make_array_memory<int>(1024, mem);
+		for(int i = 0; i < 1024; i++) get(&a, i) = i;
 
 		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

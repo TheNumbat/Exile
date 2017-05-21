@@ -18,7 +18,7 @@ i32 array_len(array<T>* a) {
 template<typename T>
 void destroy_array(array<T>* a) {
 
-	if(a->memory) {
+	if(a->alloc && a->memory) {
 
 		a->alloc->free_(a->memory, a->alloc);
 	}
@@ -58,9 +58,8 @@ array<T> make_array_memory(i32 capacity, void* memory) {
 
 	array<T> ret;
 
-	a->alloc = a;
-	a->capacity = capacity;
-	a->memory = memory;
+	ret.capacity = capacity;
+	ret.memory = (T*)memory;
 
 	return ret;
 }
