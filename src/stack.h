@@ -7,7 +7,7 @@ template<typename T>
 using stack = vector<T>;
 
 template<typename T>
-stack<T> make_stack(i32 capacity, allocator a) {
+stack<T> make_stack(i32 capacity, allocator* a) {
 
 	stack<T> ret;
 
@@ -20,7 +20,7 @@ template<typename T>
 stack<T> make_stack(i32 capacity = 0) {
 
 	stack<T> ret;
-TEMP
+
 	ret = make_vector(capacity);
 
 	return ret;

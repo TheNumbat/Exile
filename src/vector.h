@@ -6,11 +6,11 @@ struct vector {
 	T* memory 	 = NULL;
 	i32 size 	 = 0;
 	i32 capacity = 0;
-	allocator alloc;
+	allocator* alloc;
 };
 
 template<typename T>
-vector<T> make_vector(i32 capacity, allocator a) {
+vector<T> make_vector(i32 capacity, allocator* a) {
 
 	vector<T> ret;
 
@@ -38,7 +38,7 @@ void vector_resize(vector<T>* v, i32 capacity) {
 
 	if(capacity > 0) {
 
-		new_memory = (T*)v->alloc.allocate(capacity * sizeof(T));
+		new_memory = (T*)v->alloc->allocate(capacity * sizeof(T), v->alloc);
 	}
 
 	if(v->memory && new_memory) {
@@ -48,7 +48,7 @@ void vector_resize(vector<T>* v, i32 capacity) {
 
 	if(v->memory) {
 
-		v->alloc.free(v->memory);
+		v->alloc->free(v->memory, v->alloc);
 	}
 	
 	v->memory = new_memory;

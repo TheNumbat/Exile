@@ -8,6 +8,6 @@ struct game_state {
 	platform_window window 	= {};
 
 	// TODO(max): thread-local
-	stack<allocator> global_alloc_context; // global, but we can't have dll-local globals
-	allocator default_platform_allocator;
+	stack<allocator*> global_alloc_context; // global, but we can't have dll-local globals
+	platform_allocator default_platform_allocator;
 };
