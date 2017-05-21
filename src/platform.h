@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "common.h"
+#include "strings.h"
 #include "platform_api.h"
 
 platform_error platform_create_window(platform_window* window, string title, u32 width, u32 height);

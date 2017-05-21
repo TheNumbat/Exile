@@ -1,7 +1,7 @@
 #pragma once
 
 #include <windows.h>
-#include "common.h"
+#include "strings.h"
 
 // API Structures (mark opaque/transparent)
 

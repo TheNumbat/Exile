@@ -1,6 +1,5 @@
 #pragma once
 
-#include "common.h"
 #include "strings.h"
 
 struct platform_window;

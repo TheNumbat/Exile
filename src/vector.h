@@ -128,6 +128,6 @@ T vector_back(vector<T>* v) {
 	}
 
 	// TODO(max): errors
-	T ret;
+	T ret = {};
 	return ret;
 }

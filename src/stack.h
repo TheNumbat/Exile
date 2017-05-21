@@ -51,7 +51,7 @@ T stack_pop(stack<T>* s) {
 	}
 
 	// TODO(max): errors
-	T ret;
+	T ret = {};
 	return ret;
 }
 
@@ -65,6 +65,6 @@ T stack_top(stack<T>* s) {
 	}
 
 	// TODO(max): errors
-	T ret;
+	T ret = {};
 	return ret;
 }
