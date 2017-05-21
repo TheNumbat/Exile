@@ -12,13 +12,13 @@ struct allocator {
 	code_context context;
 };
 
-stack<allocator*>* global_alloc_context;
+stack<allocator*>* global_alloc_context_stack;
 
 #include "stack.h"
 
-#define PUSH_ALLOC(a)			stack_push(global_alloc_context,(allocator*)a);
-#define POP_ALLOC() 			(*CURRENT_ALLOC()->destroy)(CURRENT_ALLOC()); stack_pop(global_alloc_context);
-#define CURRENT_ALLOC() 		stack_top(global_alloc_context)
+#define PUSH_ALLOC(a)			stack_push(global_alloc_context_stack,(allocator*)a);
+#define POP_ALLOC() 			(*CURRENT_ALLOC()->destroy)(CURRENT_ALLOC()); stack_pop(global_alloc_context_stack);
+#define CURRENT_ALLOC() 		stack_top(global_alloc_context_stack)
 
 struct platform_allocator : public allocator {
 	void* (*platform_allocate)(u64 bytes) = NULL;
@@ -126,7 +126,7 @@ inline arena_allocator make_arena_allocator(u64 size, allocator* backing, code_c
 #define malloc(b) _malloc(b, CONTEXT)
 inline void* _malloc(u64 bytes, code_context context) {
 
-	allocator* current = stack_top(global_alloc_context);
+	allocator* current = stack_top(global_alloc_context_stack);
 
 	return (*current->allocate)(bytes, current);
 }
@@ -134,7 +134,7 @@ inline void* _malloc(u64 bytes, code_context context) {
 #define free(m) _free(m, CONTEXT)
 inline void _free(void* mem, code_context context) {
 
-	allocator* current = stack_top(global_alloc_context);
+	allocator* current = stack_top(global_alloc_context_stack);
 
 	return (*current->free)(mem, current);
 }

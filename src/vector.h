@@ -10,6 +10,19 @@ struct vector {
 };
 
 template<typename T>
+void destroy_vector(vector<T>* v) {
+
+	if(v->memory) {
+
+		v->alloc->free(v->memory, v->alloc);
+	}
+
+	v->memory = NULL;
+	v->size = 0;
+	v->capacity = 0;
+}
+
+template<typename T>
 vector<T> make_vector(i32 capacity, allocator* a) {
 
 	vector<T> ret;

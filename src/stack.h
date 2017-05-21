@@ -7,6 +7,12 @@ template<typename T>
 using stack = vector<T>;
 
 template<typename T>
+void destroy_stack(stack<T>* s) {
+
+	destroy_vector<T>(s);
+}
+
+template<typename T>
 stack<T> make_stack(i32 capacity, allocator* a) {
 
 	stack<T> ret;

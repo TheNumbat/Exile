@@ -14,7 +14,7 @@ extern "C" game_state* start_up(platform_api* api) {
 
 	state->api = api;
 	state->default_platform_allocator = MAKE_PLATFORM_ALLOCATOR(api);
-	state->global_alloc_context = make_stack<allocator*>(0, &state->default_platform_allocator);
+	state->global_alloc_context_stack = make_stack<allocator*>(0, &state->default_platform_allocator);
 
 	platform_error err = state->api->platform_create_window(&state->window, string_literal("Window"), 
 													  		1280, 720);
@@ -60,6 +60,8 @@ extern "C" bool main_loop(game_state* state) {
 
 extern "C" void shut_down(platform_api* api, game_state* state) {
 
+	destroy_stack(&state->global_alloc_context_stack);
+
 	platform_error err = api->platform_destroy_window(&state->window);
 
 	if(!err.good) {
@@ -71,7 +73,7 @@ extern "C" void shut_down(platform_api* api, game_state* state) {
 
 extern "C" void on_load(platform_api* api, game_state* state) {
 
-	global_alloc_context = &state->global_alloc_context;
+	global_alloc_context_stack = &state->global_alloc_context_stack;
 
 }
 
