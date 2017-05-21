@@ -37,7 +37,7 @@ void destroy_vector(vector<T>* v) {
 
 	if(v->memory) {
 
-		v->alloc->free(v->memory, v->alloc);
+		v->alloc->free_(v->memory, v->alloc);
 	}
 
 	v->memory = NULL;
@@ -74,7 +74,7 @@ void vector_resize(vector<T>* v, i32 capacity) {
 
 	if(capacity > 0) {
 
-		new_memory = (T*)v->alloc->allocate(capacity * sizeof(T), v->alloc);
+		new_memory = (T*)v->alloc->allocate_(capacity * sizeof(T), v->alloc);
 	}
 
 	if(v->memory && new_memory) {
@@ -84,7 +84,7 @@ void vector_resize(vector<T>* v, i32 capacity) {
 
 	if(v->memory) {
 
-		v->alloc->free(v->memory, v->alloc);
+		v->alloc->free_(v->memory, v->alloc);
 	}
 	
 	v->memory = new_memory;

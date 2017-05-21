@@ -45,7 +45,7 @@ extern "C" bool main_loop(game_state* state) {
 		//assert(test)
 		//string test = make_string(1024);
 		//assert(test.c_str);
-		vector<int> a = make_vector<int>(1024);
+		array<int> a = make_array<int>(1024);
 
 		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -53,7 +53,7 @@ extern "C" bool main_loop(game_state* state) {
 
 		//free(test);
 		//free_string(test);
-		destroy_vector(&a);
+		destroy_array(&a);
 
 	} POP_ALLOC();
 

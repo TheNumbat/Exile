@@ -20,7 +20,7 @@ void destroy_array(array<T>* a) {
 
 	if(a->memory) {
 
-		a->alloc->free(a->memory, a->alloc);
+		a->alloc->free_(a->memory, a->alloc);
 	}
 
 	a->memory = NULL;
@@ -32,12 +32,12 @@ array<T> make_array(i32 capacity, allocator* a) {
 
 	array<T> ret;
 
-	a->alloc = a;
-	a->capacity = capacity;
+	ret.alloc = a;
+	ret.capacity = capacity;
 
 	if(capacity > 0) {
 
-		a->memory = a->alloc->allocate(capacity * sizeof(T), a->alloc);
+		ret.memory = (T*)ret.alloc->allocate_(capacity * sizeof(T), &ret.alloc);
 	}
 	
 	return ret;
@@ -48,7 +48,7 @@ array<T> make_array(i32 capacity) {
 
 	array<T> ret;
 
-	ret = make_array(capacity, CURRENT_ALLOC());
+	ret = make_array<T>(capacity, CURRENT_ALLOC());
 
 	return ret;
 }

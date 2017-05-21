@@ -5,8 +5,8 @@
 template<typename T> struct stack;
 
 struct allocator {
-	void* (*allocate)(u64 bytes, void* this_data) = NULL;
-	void  (*free)(void* mem, void* this_data)	  = NULL;
+	void* (*allocate_)(u64 bytes, void* this_data) = NULL;
+	void  (*free_)(void* mem, void* this_data)	  = NULL;
 	void  (*destroy)(void* this_data)			  = NULL;
 	code_context context;
 };
@@ -52,8 +52,8 @@ inline platform_allocator make_platform_allocator(platform_api* api, code_contex
 	ret.platform_allocate = api->platform_heap_alloc;
 	ret.platform_free	  = api->platform_heap_free;
 	ret.context  		  = context;
-	ret.allocate 		  = &platform_allocate;
-	ret.free 			  = &platform_free;
+	ret.allocate_ 		  = &platform_allocate;
+	ret.free_ 			  = &platform_free;
 	ret.destroy 		  = &platform_destroy;
 
 	return ret;
@@ -90,7 +90,7 @@ void arena_destroy(void* this_data) {
 
 	if(this_->memory) {
 
-		this_->backing->free(this_->memory, this_->backing);
+		this_->backing->free_(this_->memory, this_->backing);
 	}
 }
 
@@ -99,14 +99,14 @@ inline allocator make_arena_allocator_from_context(u64 size, code_context contex
 
 	arena_allocator ret;
 
-	ret.size 	 = size;
-	ret.context  = context;
-	ret.backing  = CURRENT_ALLOC();
-	ret.allocate = &arena_allocate;
-	ret.free 	 = &arena_free;
-	ret.destroy  = &arena_destroy;
+	ret.size 	  = size;
+	ret.context   = context;
+	ret.backing   = CURRENT_ALLOC();
+	ret.allocate_ = &arena_allocate;
+	ret.free_ 	  = &arena_free;
+	ret.destroy   = &arena_destroy;
 	if(size > 0) {
-		ret.memory   = ret.backing->allocate(size, ret.backing);
+		ret.memory   = ret.backing->allocate_(size, ret.backing);
 	}
 
 	return ret;
@@ -117,14 +117,14 @@ inline arena_allocator make_arena_allocator(u64 size, allocator* backing, code_c
 
 	arena_allocator ret;
 
-	ret.size 	 = size;
-	ret.context  = context;
-	ret.backing  = backing;
-	ret.allocate = &arena_allocate;
-	ret.free 	 = &arena_free;
-	ret.destroy  = &arena_destroy;
+	ret.size 	  = size;
+	ret.context   = context;
+	ret.backing   = backing;
+	ret.allocate_ = &arena_allocate;
+	ret.free_ 	  = &arena_free;
+	ret.destroy   = &arena_destroy;
 	if(size > 0) {
-		ret.memory   = ret.backing->allocate(size, ret.backing);
+		ret.memory   = ret.backing->allocate_(size, ret.backing);
 	}
 
 	return ret;
@@ -135,7 +135,7 @@ inline void* _malloc(u64 bytes, code_context context) {
 
 	allocator* current = stack_top(global_alloc_context_stack);
 
-	return (*current->allocate)(bytes, current);
+	return (*current->allocate_)(bytes, current);
 }
 
 #define free(m) _free(m, CONTEXT)
@@ -143,7 +143,7 @@ inline void _free(void* mem, code_context context) {
 
 	allocator* current = stack_top(global_alloc_context_stack);
 
-	return (*current->free)(mem, current);
+	return (*current->free_)(mem, current);
 }
 
 void memcpy(void* source, void* dest, u64 size) {
