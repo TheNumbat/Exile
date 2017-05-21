@@ -54,3 +54,4 @@ inline code_context make_context(string file, string function, i32 line) {
 #include "vector.h"
 #include "stack.h"
 #include "context_strings.h"
+#include "array.h"

@@ -9,6 +9,19 @@ struct vector {
 	allocator* alloc;
 };
 
+// operator[] but not a member
+template<typename T>
+T& get(vector<T>* v, i32 idx) {
+
+	if(v->memory && idx >= 0 && idx < v->size) {
+		return v->memory[idx];
+	}
+
+	// TODO(max): error
+	T ret = {};
+	return ret;
+}
+
 template<typename T>
 void destroy_vector(vector<T>* v) {
 
@@ -34,11 +47,11 @@ vector<T> make_vector(i32 capacity, allocator* a) {
 }
 
 template<typename T>
-vector<T> make_vector(i32 capacity = 0) {
+vector<T> make_vector(i32 capacity = 4) {
 
 	vector<T> ret;
 
-	ret.allocator = CURRENT_ALLOC();
+	ret.alloc = CURRENT_ALLOC();
 	vector_resize(&ret, capacity);
 
 	return ret;

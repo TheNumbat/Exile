@@ -29,8 +29,8 @@ extern "C" game_state* start_up(platform_api* api) {
 	string renderer = string_from_c_str((char*)glGetString(GL_RENDERER));
 	string vendor   = string_from_c_str((char*)glGetString(GL_VENDOR));
 
-	cout << "Vendor  : " << vendor.c_str << endl;
-	cout << "Version : " << version.c_str << endl;
+	cout << "Vendor  : " << vendor.c_str   << endl;
+	cout << "Version : " << version.c_str  << endl;
 	cout << "Renderer: " << renderer.c_str << endl;
 
 	return state;
@@ -38,20 +38,22 @@ extern "C" game_state* start_up(platform_api* api) {
 
 extern "C" bool main_loop(game_state* state) {
 
-	arena_allocator arena = MAKE_ARENA_ALLOCATOR(1024, &state->default_platform_allocator);
+	arena_allocator arena = MAKE_ARENA_ALLOCATOR(MEGABYTES(0), &state->default_platform_allocator);
 	PUSH_ALLOC(&arena) {
 
 		//void* test = malloc(1024);
 		//assert(test)
-		string test = make_string(1024);
-		assert(test.c_str);
-		
+		//string test = make_string(1024);
+		//assert(test.c_str);
+		vector<int> a = make_vector<int>(1024);
+
 		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		state->api->platform_swap_buffers(&state->window);
 
 		//free(test);
-		free_string(test);
+		//free_string(test);
+		destroy_vector(&a);
 
 	} POP_ALLOC();
 

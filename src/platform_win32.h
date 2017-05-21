@@ -9,7 +9,8 @@
 // Platform specific stuff
 
 typedef HGLRC WINAPI wgl_create_context_attribs_arb(HDC hDC, HGLRC hShareContext,
-    												const int* attribList);
+													const int* attribList);
+
 static wgl_create_context_attribs_arb* wglCreateContextAttribsARB;
 static bool global_platform_running = true;
 

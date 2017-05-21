@@ -2,8 +2,7 @@
 #pragma once
 
 // forward declarations ... thanks c++
-template<typename T> struct vector;
-template<typename T> using stack = vector<T>;
+template<typename T> struct stack;
 
 struct allocator {
 	void* (*allocate)(u64 bytes, void* this_data) = NULL;
@@ -14,11 +13,15 @@ struct allocator {
 
 stack<allocator*>* global_alloc_context_stack;
 
-#include "stack.h"
-
 #define PUSH_ALLOC(a)			stack_push(global_alloc_context_stack,(allocator*)a);
 #define POP_ALLOC() 			(*CURRENT_ALLOC()->destroy)(CURRENT_ALLOC()); stack_pop(global_alloc_context_stack);
 #define CURRENT_ALLOC() 		stack_top(global_alloc_context_stack)
+
+#define KILOBYTES(m) (m*1024)
+#define MEGABYTES(m) (KILOBYTES(m*1024))
+#define GIGABYTES(m) (MEGABYTES(m*1024))
+
+#include "stack.h"
 
 struct platform_allocator : public allocator {
 	void* (*platform_allocate)(u64 bytes) = NULL;
@@ -99,10 +102,12 @@ inline allocator make_arena_allocator_from_context(u64 size, code_context contex
 	ret.size 	 = size;
 	ret.context  = context;
 	ret.backing  = CURRENT_ALLOC();
-	ret.memory   = ret.backing->allocate(size, ret.backing);
 	ret.allocate = &arena_allocate;
 	ret.free 	 = &arena_free;
 	ret.destroy  = &arena_destroy;
+	if(size > 0) {
+		ret.memory   = ret.backing->allocate(size, ret.backing);
+	}
 
 	return ret;
 }
@@ -115,10 +120,12 @@ inline arena_allocator make_arena_allocator(u64 size, allocator* backing, code_c
 	ret.size 	 = size;
 	ret.context  = context;
 	ret.backing  = backing;
-	ret.memory   = ret.backing->allocate(size, ret.backing);
 	ret.allocate = &arena_allocate;
 	ret.free 	 = &arena_free;
 	ret.destroy  = &arena_destroy;
+	if(size > 0) {
+		ret.memory   = ret.backing->allocate(size, ret.backing);
+	}
 
 	return ret;
 }
