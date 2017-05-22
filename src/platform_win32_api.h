@@ -46,3 +46,27 @@ struct platform_thread {
 	// Opaque
 	HANDLE handle 	= {};
 };
+
+struct platform_semaphore {
+	// Opaque
+	HANDLE handle 	= {};
+};
+
+struct platform_mutex {
+	HANDLE handle 	= {};
+};
+
+struct platform_semaphore_state {
+	_platform_semaphore_state state;
+	platform_error error;
+};
+
+struct platform_mutex_state {
+	_platform_mutex_state state;
+	platform_error error;
+};
+
+struct platform_thread_join_state {
+	_platform_thread_join_state state;
+	platform_error error;
+};

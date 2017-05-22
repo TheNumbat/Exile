@@ -1,5 +1,6 @@
 
 #include "platform_win32.h"
+#include <assert.h>
 
 platform_api platform_build_api() {
 
@@ -24,6 +25,197 @@ platform_api platform_build_api() {
 	ret.platform_terminate_thread		= &platform_terminate_thread;
 	ret.platform_exit_this_thread		= &platform_exit_this_thread;
 	ret.platform_thread_sleep			= &platform_thread_sleep;
+	ret.platform_create_semaphore		= &platform_create_semaphore;
+	ret.platform_destroy_semaphore		= &platform_destroy_semaphore;
+	ret.platform_signal_semaphore		= &platform_signal_semaphore;
+	ret.platform_wait_semaphore			= &platform_wait_semaphore;
+	ret.platform_create_mutex			= &platform_create_mutex;
+	ret.platform_destroy_mutex			= &platform_destroy_mutex;
+	ret.platform_aquire_mutex			= &platform_aquire_mutex;
+	ret.platform_release_mutex			= &platform_release_mutex;
+	ret.platform_destroy_thread			= &platform_destroy_thread;
+	ret.platform_get_num_cpus			= &platform_get_num_cpus;
+	ret.platform_join_thread			= &platform_join_thread;
+
+	return ret;
+}
+
+platform_thread_join_state platform_join_thread(platform_thread* thread, i32 ms) {
+	
+	platform_thread_join_state ret;
+
+	switch(WaitForSingleObject(thread->handle, ms == -1 ? INFINITE : (DWORD)ms)) {
+	case WAIT_OBJECT_0:
+		ret.state = thread_joined;
+		return ret;
+	case WAIT_TIMEOUT:
+		ret.state = thread_timed_out;
+		return ret;
+	case WAIT_FAILED:
+		ret.state = thread_failed;
+		ret.error.good = false;
+		ret.error.error = GetLastError();
+		return ret;		
+	default: // should never happen
+		assert(false);
+	}
+
+	return ret;
+}
+
+i32 platform_get_num_cpus() {
+
+	SYSTEM_INFO info;
+	GetSystemInfo(&info);
+	return info.dwNumberOfProcessors;
+}
+
+platform_error platform_create_semaphore(platform_semaphore* sem, i32 initial_count, i32 max_count) {
+
+	platform_error ret;
+
+	sem->handle = CreateSemaphoreExA(NULL, initial_count, max_count, NULL, 0, SEMAPHORE_ALL_ACCESS);
+
+	if(sem->handle == NULL) {
+		ret.good = false;
+		ret.error = GetLastError();
+		return ret;				
+	}
+
+	return ret;
+}
+
+platform_error platform_destroy_semaphore(platform_semaphore* sem) {
+	
+	platform_error ret;
+
+	if(CloseHandle(sem->handle) == 0) {
+		ret.good = false;
+		ret.error = GetLastError();
+		return ret;		
+	}
+
+	sem->handle = NULL;
+
+	return ret;
+}
+
+platform_error platform_signal_semaphore(platform_semaphore* sem, i32 times) {
+
+	platform_error ret;
+
+	if(ReleaseSemaphore(sem->handle, (LONG)times, NULL) == 0) {
+		ret.good = false;
+		ret.error = GetLastError();
+		return ret;		
+	}
+
+	return ret;
+}
+
+platform_semaphore_state platform_wait_semaphore(platform_semaphore* sem, i32 ms) {
+
+	platform_semaphore_state ret;
+
+	switch(WaitForSingleObject(sem->handle, ms == -1 ? INFINITE : (DWORD)ms)) {
+	case WAIT_OBJECT_0:
+		ret.state = semaphore_signaled;
+		return ret;
+	case WAIT_TIMEOUT:
+		ret.state = semaphore_timed_out;
+		return ret;
+	case WAIT_FAILED:
+		ret.state = semaphore_failed;
+		ret.error.good = false;
+		ret.error.error = GetLastError();
+		return ret;		
+	default: // should never happen
+		assert(false);
+	}
+
+	return ret;
+}
+
+platform_error platform_create_mutex(platform_mutex* mut, bool aquire) {
+
+	platform_error ret;
+
+	mut->handle = CreateMutexExA(NULL, NULL, aquire ? CREATE_MUTEX_INITIAL_OWNER : 0, MUTEX_ALL_ACCESS);
+
+	if(mut->handle == NULL) {
+		ret.good = false;
+		ret.error = GetLastError();
+		return ret;				
+	}
+
+	return ret;
+}
+
+platform_error platform_destroy_mutex(platform_mutex* mut) {
+	
+	platform_error ret;
+
+	if(CloseHandle(mut->handle) == 0) {
+		ret.good = false;
+		ret.error = GetLastError();
+		return ret;		
+	}
+
+	mut->handle = NULL;
+
+	return ret;
+}
+
+platform_mutex_state platform_aquire_mutex(platform_mutex* mut, i32 ms) {
+
+	platform_mutex_state ret;
+
+	switch(WaitForSingleObject(mut->handle, ms == -1 ? INFINITE : (DWORD)ms)) {
+	case WAIT_ABANDONED:
+		ret.state = mutex_abandoned;
+		return ret;
+	case WAIT_OBJECT_0:
+		ret.state = mutex_aquired;
+		return ret;
+	case WAIT_TIMEOUT:
+		ret.state = mutex_timed_out;
+		return ret;
+	case WAIT_FAILED:
+		ret.state = mutex_failed;
+		ret.error.good = false;
+		ret.error.error = GetLastError();
+		return ret;		
+	default: // should never happen
+		assert(false);
+	}
+
+	return ret;
+}
+
+platform_error platform_release_mutex(platform_mutex* mut) {
+
+	platform_error ret;
+
+	if(ReleaseMutex(mut->handle) == 0) {
+		ret.good = false;
+		ret.error = GetLastError();
+		return ret;		
+	}
+
+	return ret;	
+}
+
+platform_error platform_destroy_thread(platform_thread* thread) {
+
+	platform_error ret;
+
+	if(CloseHandle(thread->handle) == 0) {
+		ret.good = false;
+		ret.error = GetLastError();
+		return ret;		
+	}
+
+	thread->handle = NULL;
 
 	return ret;
 }

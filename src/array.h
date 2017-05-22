@@ -10,6 +10,16 @@ struct array {
 	allocator* alloc = NULL;
 };
 
+
+template<typename T> array<T> make_array(i32 capacity, allocator* a);
+template<typename T> array<T> make_array(i32 capacity);
+template<typename T> array<T> make_array_memory(i32 capacity, void* memory);
+template<typename T> void destroy_array(array<T>* a);
+
+template<typename T> i32 array_len(array<T>* a);
+template<typename T> T& get(array<T>* a, i32 idx);
+
+
 template<typename T> 
 i32 array_len(array<T>* a) {
 	return a->capacity;
@@ -37,7 +47,7 @@ array<T> make_array(i32 capacity, allocator* a) {
 
 	if(capacity > 0) {
 
-		ret.memory = (T*)ret.alloc->allocate_(capacity * sizeof(T), &ret.alloc);
+		ret.memory = (T*)ret.alloc->allocate_(capacity * sizeof(T), ret.alloc);
 	}
 	
 	return ret;
@@ -73,6 +83,7 @@ T& get(array<T>* a, i32 idx) {
 	}
 
 	// TODO(max): error
+	assert(false);
 	T ret = {};
 	return ret;
 }

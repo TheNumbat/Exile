@@ -9,6 +9,24 @@ struct vector {
 	allocator* alloc = NULL;
 };
 
+template<typename T> vector<T> make_vector(i32 capacity, allocator* a);
+template<typename T> vector<T> make_vector(i32 capacity = 4);
+template<typename T> vector<T> make_vector_copy(vector<T> source);
+template<typename T> void destroy_vector(vector<T>* v);
+
+template<typename T> void vector_resize(vector<T>* v, i32 capacity);
+template<typename T> void vector_push(vector<T>* v, T value);
+template<typename T> void vector_pop(vector<T>* v);
+template<typename T> void vector_pop_front(vector<T>* v);
+
+template<typename T> T& get(vector<T>* v, i32 idx);
+template<typename T> T vector_front(vector<T>* v);
+template<typename T> T vector_back(vector<T>* v);
+
+template<typename T> i32 vector_len(vector<T>* v);
+template<typename T> i32 vector_capacity(vector<T>* v);
+template<typename T> bool vector_empty(vector<T>* v);
+
 template<typename T>
 i32 vector_len(vector<T>* v) {
 	return v->size;
@@ -28,6 +46,7 @@ T& get(vector<T>* v, i32 idx) {
 	}
 
 	// TODO(max): error
+	assert(false);
 	T ret = {};
 	return ret;
 }
@@ -57,7 +76,7 @@ vector<T> make_vector(i32 capacity, allocator* a) {
 }
 
 template<typename T>
-vector<T> make_vector(i32 capacity = 4) {
+vector<T> make_vector(i32 capacity) {
 
 	vector<T> ret;
 
@@ -111,8 +130,8 @@ void vector_push(vector<T>* v, T value) {
 
 	if(v->size < v->capacity) {
 
-		v->size++;
 		v->memory[v->size] = value;
+		v->size++;
 
 	} else {
 
@@ -139,6 +158,7 @@ T vector_front(vector<T>* v) {
 	}
 
 	// TODO(max): errors
+	assert(false);
 	T ret;
 	return ret;
 }
@@ -151,6 +171,25 @@ T vector_back(vector<T>* v) {
 	}
 
 	// TODO(max): errors
+	assert(false);
 	T ret = {};
 	return ret;
+}
+
+template<typename T>
+void vector_pop_front(vector<T>* v) {
+
+	if(v->size > 0) {
+
+		for(i32 i = 1; i < v->size; i++) {
+			v->memory[i - 1] = v->memory[i];
+		}
+
+		v->size--;
+	}
+}
+
+template<typename T>
+bool vector_empty(vector<T>* v) {
+	return v->size == 0;
 }

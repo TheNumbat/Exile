@@ -23,13 +23,13 @@ typedef double f64;
 typedef void* (*startup_type)(platform_api*);
 typedef bool  (*main_loop_type)(void*);
 typedef void  (*shut_down_type)(platform_api*, void*);
-typedef shut_down_type on_load_type;
+typedef shut_down_type on_reload_type;
 typedef shut_down_type on_unload_type;
 
 startup_type	start_up  = NULL;
 main_loop_type	main_loop = NULL;
 shut_down_type	shut_down = NULL;
-on_load_type 	on_load   = NULL;
+on_reload_type 	on_reload   = NULL;
 on_unload_type  on_unload = NULL;
 
 platform_dll 				game_dll;
@@ -78,7 +78,7 @@ int main() {
 	}
 
 	game_state = (*start_up)(&api);
-	(*on_load)(&api, game_state);
+	(*on_reload)(&api, game_state);
 
 	if(game_state == NULL) {
 		cout << "Error in startup!" << endl;
@@ -150,7 +150,7 @@ bool try_reload() {
 
 		if(!load_funcs()) return false;
 
-		(*on_load)(&api, game_state);
+		(*on_reload)(&api, game_state);
 	}
 
 	return true;
@@ -176,9 +176,9 @@ bool load_funcs() {
 		return false;
 	}
 
-	err = platform_get_proc_address((void**)&on_load, &game_dll, string_literal("on_load"));
+	err = platform_get_proc_address((void**)&on_reload, &game_dll, string_literal("on_reload"));
 	if(!err.good) {
-		cout << "Error loading on_load: " << err.error << endl;
+		cout << "Error loading on_reload: " << err.error << endl;
 		return false;
 	}
 

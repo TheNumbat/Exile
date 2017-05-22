@@ -29,8 +29,14 @@ typedef int64_t 	i64;
 typedef float  f32;
 typedef double f64;
 
+#include <iostream>
+using std::cout;
+using std::endl;
+
 #include "platform_api.h"
 #include "strings.h"
+
+static platform_api* global_platform_api = NULL;
 
 struct code_context {
 	string file;
@@ -55,3 +61,4 @@ inline code_context make_context(string file, string function, i32 line) {
 #include "stack.h"
 #include "context_strings.h"
 #include "array.h"
+#include "queue.h"

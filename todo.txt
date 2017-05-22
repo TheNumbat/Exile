@@ -1,0 +1,10 @@
+
+For overall : see #high_level_systems
+
+immediate to do:
+	logging (threaded)
+	error to-dos (w/ logging)
+	hash map
+	concurrent vector/array/stack/hash map
+
+	

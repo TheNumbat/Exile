@@ -10,6 +10,30 @@ struct platform_dll;
 struct platform_file_attributes;
 struct platform_thread_id;
 struct platform_thread;
+struct platform_semaphore;
+struct platform_mutex;
+struct platform_semaphore_state;
+struct platform_mutex_state;
+struct platform_thread_join_state;
+
+enum _platform_semaphore_state {
+	semaphore_signaled,
+	semaphore_timed_out,
+	semaphore_failed,
+};
+
+enum _platform_mutex_state {
+	mutex_abandoned,
+	mutex_aquired,
+	mutex_timed_out,
+	mutex_failed,
+};
+
+enum _platform_thread_join_state {
+	thread_joined,
+	thread_timed_out,
+	thread_failed,
+};
 
 struct platform_api {
 	platform_error (*platform_create_window)(platform_window* window, string title, u32 width, u32 height)					 = NULL;
@@ -31,6 +55,17 @@ struct platform_api {
 	platform_error (*platform_terminate_thread)(platform_thread* thread, i32 exit_code)										 = NULL;
 	void 		   (*platform_exit_this_thread)(i32 exit_code)																 = NULL;
 	void		   (*platform_thread_sleep)(i32 ms)																			 = NULL;
+	platform_error (*platform_destroy_thread)(platform_thread* thread)														 = NULL;
+	platform_error (*platform_create_semaphore)(platform_semaphore* sem, i32 initial_count, i32 max_count)					 = NULL;
+	platform_error (*platform_destroy_semaphore)(platform_semaphore* sem)													 = NULL;
+	platform_error (*platform_signal_semaphore)(platform_semaphore* sem, i32 times)											 = NULL;
+	platform_semaphore_state (*platform_wait_semaphore)(platform_semaphore* sem, i32 ms)									 = NULL;
+	platform_error (*platform_create_mutex)(platform_mutex* mut, bool aquire)												 = NULL;
+	platform_error (*platform_destroy_mutex)(platform_mutex* mut)															 = NULL;
+	platform_mutex_state (*platform_aquire_mutex)(platform_mutex* mut, i32 ms)												 = NULL;
+	platform_error (*platform_release_mutex)(platform_mutex* mut)															 = NULL;
+	i32   		   (*platform_get_num_cpus)()																				 = NULL;
+	platform_thread_join_state (*platform_join_thread)(platform_thread* thread, i32 ms)										 = NULL;
 };
 
 #ifdef _WIN32

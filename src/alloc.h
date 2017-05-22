@@ -11,7 +11,7 @@ struct allocator {
 	code_context context;
 };
 
-static stack<allocator*>* global_alloc_context_stack;
+static stack<allocator*>* global_alloc_context_stack = NULL;
 
 #define PUSH_ALLOC(a)			stack_push(global_alloc_context_stack,(allocator*)a);
 #define POP_ALLOC() 			(*CURRENT_ALLOC()->destroy)(CURRENT_ALLOC()); stack_pop(global_alloc_context_stack);
@@ -44,13 +44,13 @@ void platform_free(void* mem, void* this_data) {
 
 void platform_destroy(void*) {}
 
-#define MAKE_PLATFORM_ALLOCATOR(api) make_platform_allocator(api, CONTEXT)
-inline platform_allocator make_platform_allocator(platform_api* api, code_context context) {
+#define MAKE_PLATFORM_ALLOCATOR() make_platform_allocator(CONTEXT)
+inline platform_allocator make_platform_allocator(code_context context) {
 
 	platform_allocator ret;
 	
-	ret.platform_allocate = api->platform_heap_alloc;
-	ret.platform_free	  = api->platform_heap_free;
+	ret.platform_allocate = global_platform_api->platform_heap_alloc;
+	ret.platform_free	  = global_platform_api->platform_heap_free;
 	ret.context  		  = context;
 	ret.allocate_ 		  = &platform_allocate;
 	ret.free_ 			  = &platform_free;
@@ -72,7 +72,7 @@ void* arena_allocate(u64 bytes, void* this_data) {
 
 	if(bytes <= this_->size - this_->used) {
 
-		void* ret = (void*)((char*)this_->memory + this_->used);
+		void* ret = (void*)((u8*)this_->memory + this_->used);
 
 		this_->used += bytes;
 

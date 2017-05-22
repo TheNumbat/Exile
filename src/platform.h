@@ -30,11 +30,28 @@ void	  	   platform_heap_free(void* mem);
 // allocates a string
 platform_error platform_get_bin_path(string* path);
 
-platform_error     platform_create_thread(platform_thread* thread, i32 (*proc)(void*), void* param, bool start_suspended = false);
+platform_error     platform_create_thread(platform_thread* thread, i32 (*proc)(void*), void* param, bool start_suspended);
+platform_error	   platform_destroy_thread(platform_thread* thread);
 platform_thread_id platform_this_thread_id();
 platform_error	   platform_terminate_thread(platform_thread* thread, i32 exit_code);
 void 	 		   platform_exit_this_thread(i32 exit_code);
 void			   platform_thread_sleep(i32 ms);
+i32  			   platform_get_num_cpus();
+platform_thread_join_state platform_join_thread(platform_thread* thread, i32 ms); // ms = -1 for infinite
+
+// may wait to add 
+	// WaitMultipleObjects
+	// InterlockedCompareExchange
+
+platform_error platform_create_semaphore(platform_semaphore* sem, i32 initial_count, i32 max_count);
+platform_error platform_destroy_semaphore(platform_semaphore* sem);
+platform_error platform_signal_semaphore(platform_semaphore* sem, i32 times); 
+platform_semaphore_state platform_wait_semaphore(platform_semaphore* sem, i32 ms); // ms = -1 for infinite
+
+platform_error platform_create_mutex(platform_mutex* mut, bool aquire);
+platform_error platform_destroy_mutex(platform_mutex* mut);
+platform_mutex_state platform_aquire_mutex(platform_mutex* mut, i32 ms); // ms = -1 for infinite
+platform_error platform_release_mutex(platform_mutex* mut);
 
 #ifdef _WIN32
 

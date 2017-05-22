@@ -1,23 +1,32 @@
 
-#include <iostream>
-using std::cout;
-using std::endl;
-
 #include "common.h"
 #include "game.h"
 
 #include <gl/gl.h>
 
+i32 test_job(void*) {
+	cout << "job" << endl;
+	return 0;
+}
+
 extern "C" game_state* start_up(platform_api* api) {
 	
 	game_state* state = (game_state*)api->platform_heap_alloc(sizeof(game_state));
 
-	state->api = api;
-	state->default_platform_allocator = MAKE_PLATFORM_ALLOCATOR(api);
-	state->global_alloc_context_stack = make_stack<allocator*>(0, &state->default_platform_allocator);
+	global_platform_api = api;
+	global_alloc_context_stack = &state->global_alloc_context_stack;
 
-	platform_error err = state->api->platform_create_window(&state->window, string_literal("Window"), 
-													  		1280, 720);
+	state->api = api;
+	state->default_platform_allocator = MAKE_PLATFORM_ALLOCATOR();
+	state->global_alloc_context_stack = make_stack<allocator*>(0, &state->default_platform_allocator);
+	state->thread_pool = make_threadpool(&state->default_platform_allocator);
+
+	threadpool_start_all(&state->thread_pool);
+
+	threadpool_queue_job(&state->thread_pool, &test_job, NULL);
+
+	platform_error err = api->platform_create_window(&state->window, string_literal("Window"), 
+						  					  		 1280, 720);
 
 	if(!err.good) {
 		cout << "Error creating window: " << err.error << endl;
@@ -38,14 +47,14 @@ extern "C" game_state* start_up(platform_api* api) {
 
 extern "C" bool main_loop(game_state* state) {
 
-	arena_allocator arena = MAKE_ARENA_ALLOCATOR(MEGABYTES(0), &state->default_platform_allocator);
+	arena_allocator arena = MAKE_ARENA_ALLOCATOR(MEGABYTES(1), &state->default_platform_allocator);
 	PUSH_ALLOC(&arena) {
 
 		//void* test = malloc(1024);
 		//assert(test)
 		//string test = make_string(1024);
 		//assert(test.c_str);
-		void* mem = malloc(1024);
+		void* mem = malloc(1024 * sizeof(int));
 		array<int> a = make_array_memory<int>(1024, mem);
 		for(int i = 0; i < 1024; i++) get(&a, i) = i;
 
@@ -64,6 +73,7 @@ extern "C" bool main_loop(game_state* state) {
 
 extern "C" void shut_down(platform_api* api, game_state* state) {
 
+	destroy_threadpool(&state->thread_pool);
 	destroy_stack(&state->global_alloc_context_stack);
 
 	platform_error err = api->platform_destroy_window(&state->window);
@@ -75,12 +85,17 @@ extern "C" void shut_down(platform_api* api, game_state* state) {
 	api->platform_heap_free(state);
 }
 
-extern "C" void on_load(platform_api* api, game_state* state) {
+extern "C" void on_reload(platform_api* api, game_state* state) {
 
 	global_alloc_context_stack = &state->global_alloc_context_stack;
+	global_platform_api		   = state->api;
+
+	threadpool_start_all(&state->thread_pool);
 
 }
 
 extern "C" void on_unload(platform_api* api, game_state* state) {
 	
+	threadpool_stop_all(&state->thread_pool);
+
 }
