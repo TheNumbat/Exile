@@ -29,7 +29,7 @@ typedef shut_down_type on_unload_type;
 startup_type	start_up  = NULL;
 main_loop_type	main_loop = NULL;
 shut_down_type	shut_down = NULL;
-on_reload_type 	on_reload   = NULL;
+on_reload_type 	on_reload = NULL;
 on_unload_type  on_unload = NULL;
 
 platform_dll 				game_dll;

@@ -15,4 +15,7 @@ Day 02
 	context allocation system
 
 Day 03
+	platform threading 
+	thread pool system
+	queue
 	
