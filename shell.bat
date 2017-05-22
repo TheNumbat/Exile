@@ -8,5 +8,3 @@ IF NOT EXIST "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\" echo "You
 IF EXIST "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\" call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x64
 
 set path=%cd%bin;%path%
-
-cls
