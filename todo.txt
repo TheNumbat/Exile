@@ -4,7 +4,11 @@ For overall : see #high_level_systems
 immediate to do:
 	logging (threaded)
 	error to-dos (w/ logging)
+	metaprogramming - type introspection?
+		make own string format functions
+		use for logging
 	hash map
 	concurrent vector/array/stack/hash map
 
+possibly imitate : loguru, dear imgui
 	

@@ -44,29 +44,41 @@ struct platform_thread {
 	platform_thread_id id;
 
 	// Opaque
-	HANDLE handle 	= {};
+	HANDLE handle 	= NULL;
 };
 
 struct platform_semaphore {
 	// Opaque
-	HANDLE handle 	= {};
+	HANDLE handle 	= NULL;
 };
 
 struct platform_mutex {
-	HANDLE handle 	= {};
+	// Opaque
+	HANDLE handle 	= NULL;
 };
 
 struct platform_semaphore_state {
+	// Transparent
 	_platform_semaphore_state state;
 	platform_error error;
 };
 
 struct platform_mutex_state {
+	// Transparent
 	_platform_mutex_state state;
 	platform_error error;
 };
 
 struct platform_thread_join_state {
+	// Transparent
 	_platform_thread_join_state state;
 	platform_error error;
+};
+
+struct platform_file {
+	// Transparent
+	string path;
+
+	// Opaque
+	HANDLE handle 	= NULL;
 };

@@ -36,6 +36,71 @@ platform_api platform_build_api() {
 	ret.platform_destroy_thread			= &platform_destroy_thread;
 	ret.platform_get_num_cpus			= &platform_get_num_cpus;
 	ret.platform_join_thread			= &platform_join_thread;
+	ret.platform_create_file			= &platform_create_file;
+	ret.platform_close_file				= &platform_close_file;
+	ret.platform_wrte_file				= &platform_wrte_file;
+
+	return ret;
+}
+
+platform_error platform_wrte_file(platform_file* file, void* mem, i32 bytes) {
+
+	platform_error ret;
+
+	if(WriteFile(file->handle, mem, (DWORD)bytes, NULL, NULL) == FALSE) {
+		ret.good = false;
+		ret.error = GetLastError();
+		return ret;		
+	}
+
+	return ret;
+}
+
+platform_error platform_create_file(platform_file* file, string path, platform_file_open_op mode) {
+
+	platform_error ret;
+
+	DWORD creation = 0;
+	switch(mode) {
+		case open_file_existing:
+		creation = OPEN_EXISTING;
+		break;
+		case open_file_existing_or_create:
+		creation = OPEN_ALWAYS;
+		break;
+		case open_file_create:
+		creation = CREATE_ALWAYS;
+		break;
+		case open_file_clear_existing:
+		creation = TRUNCATE_EXISTING;
+		break;
+		default:
+		INVALID_PATH;
+		break;
+	}
+
+	file->handle = CreateFile(path.c_str, GENERIC_READ | GENERIC_WRITE, 0, NULL, creation);
+
+	if(file->handle == NULL) {
+		ret.good = false;
+		ret.error = GetLastError();
+		return ret;		
+	}
+
+	return ret;
+}
+
+platform_error platform_close_file(platform_file* file) {
+
+	platform_error ret;
+
+	if(CloseHandle(file->handle) == 0) {
+		ret.good = false;
+		ret.error = GetLastError();
+		return ret;		
+	}
+
+	file->handle = NULL;
 
 	return ret;
 }

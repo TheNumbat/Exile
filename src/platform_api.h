@@ -15,6 +15,14 @@ struct platform_mutex;
 struct platform_semaphore_state;
 struct platform_mutex_state;
 struct platform_thread_join_state;
+struct platform_file;
+
+enum platform_file_open_op {
+	open_file_existing,
+	open_file_existing_or_create,
+	open_file_create,
+	open_file_clear_existing,
+};
 
 enum _platform_semaphore_state {
 	semaphore_signaled,
@@ -66,6 +74,9 @@ struct platform_api {
 	platform_error (*platform_release_mutex)(platform_mutex* mut)															 = NULL;
 	i32   		   (*platform_get_num_cpus)()																				 = NULL;
 	platform_thread_join_state (*platform_join_thread)(platform_thread* thread, i32 ms)										 = NULL;
+	platform_error (*platform_create_file)(platform_file* file, string path, platform_file_open_op mode)					 = NULL;
+	platform_error (*platform_close_file)(platform_file* file)																 = NULL;
+	platform_error (*platform_wrte_file)(platform_file* file, void* mem, i32 bytes)											 = NULL;
 };
 
 #ifdef _WIN32

@@ -13,8 +13,10 @@
 
 #ifdef ASSERTS
 #include <assert.h>
+#define INVALID_PATH assert(false);
 #else
 #define assert(t) 
+#define INVALID_PATH
 #endif
 
 typedef uint8_t 	u8;

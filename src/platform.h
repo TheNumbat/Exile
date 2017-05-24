@@ -22,6 +22,9 @@ platform_error platform_get_proc_address(void** address, platform_dll* dll, stri
 platform_error platform_copy_file(string source, string dest, bool overwrite);
 platform_error platform_get_file_attributes(platform_file_attributes* attrib, string file_path);
 bool 		   platform_test_file_written(platform_file_attributes* first, platform_file_attributes* second);
+platform_error platform_create_file(platform_file* file, string path, platform_file_open_op mode);
+platform_error platform_close_file(platform_file* file);
+platform_error platform_wrte_file(platform_file* file, void* mem, i32 bytes);
 
 // if this fails, we're having big problems
 void*		   platform_heap_alloc(u64 bytes);
