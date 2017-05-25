@@ -25,9 +25,10 @@ bool 		   platform_test_file_written(platform_file_attributes* first, platform_f
 platform_error platform_create_file(platform_file* file, string path, platform_file_open_op mode);
 platform_error platform_close_file(platform_file* file);
 platform_error platform_wrte_file(platform_file* file, void* mem, i32 bytes);
+platform_error platform_get_stdout_as_file(platform_file* file);
 
 // if this fails, we're having big problems
-void*		   platform_heap_alloc(u64 bytes);
+void*		   platform_heap_alloc(u64 bytes); // initialize memory to zero
 void	  	   platform_heap_free(void* mem);
 
 // allocates a string
@@ -42,7 +43,7 @@ void			   platform_thread_sleep(i32 ms);
 i32  			   platform_get_num_cpus();
 platform_thread_join_state platform_join_thread(platform_thread* thread, i32 ms); // ms = -1 for infinite
 
-// may wait to add 
+// may want to add 
 	// WaitMultipleObjects
 	// InterlockedCompareExchange
 

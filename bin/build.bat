@@ -5,11 +5,11 @@ pushd w:\build
 
 del *.pdb > NUL 2> NUL
 
-set Game_DebugCompilerFlags=-Od -MTd -nologo -Gr -EHa -Oi -W4 -Z7 -FC -Fegame.dll -LD -DDEBUG -wd4100
+set Game_DebugCompilerFlags=-Od -MTd -nologo -Gr -EHa -Oi -W4 -Z7 -FC -Fegame.dll -LD -wd4100
 set Game_ReleaseCompilerFlags=-O2 -MTd -nologo -Gr -EHa -W4 -FC -Fegame.dll -LD -wd4100
 set Game_LinkerFlags=/NODEFAULTLIB:MSVCRT /SUBSYSTEM:windows opengl32.lib -PDB:game_%random%.pdb -EXPORT:start_up -EXPORT:main_loop -EXPORT:shut_down -EXPORT:on_reload -EXPORT:on_unload
 
-set Platform_DebugCompilerFlags=-Od -MTd -nologo -Gr -EHa -Oi -W4 -Z7 -FC -Femain.exe -DDEBUG -wd4100
+set Platform_DebugCompilerFlags=-Od -MTd -nologo -Gr -EHa -Oi -W4 -Z7 -FC -Femain.exe -wd4100
 set Platform_ReleaseCompilerFlags=-O2 -MTd -nologo -Gr -EHa -W4 -FC -Femain.exe -wd4100
 set Platform_LinkerFlags=/NODEFAULTLIB:MSVCRT /SUBSYSTEM:console kernel32.lib user32.lib gdi32.lib opengl32.lib 
 

@@ -1,14 +1,25 @@
 
 For overall : see #high_level_systems
 
+are get() references really a good idea? 
+	to make it work, we need to crash if we can't return a valid reference
+	these references also need to not be stored. Either copy or explicitly take address
+	can use try_get() or something if the get might not be there
+
 immediate to do:
+	hash map
 	logging (threaded)
-	error to-dos (w/ logging)
+		error to-dos (w/ logging)
+		move assert/invalid_path
+	windows input
 	metaprogramming - type introspection?
 		make own string format functions
 		use for logging
-	hash map
-	concurrent vector/array/stack/hash map
+	concurrent vector/array/stack/hash map - this will be important
+	OpenGl + basic voxels
+	UI
+	Profiling/debugging/visualization
+	Actual voxel stuff
 
-possibly imitate : loguru, dear imgui
+possibly imitate: loguru, dear imgui, str.h
 	

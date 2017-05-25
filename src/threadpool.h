@@ -58,11 +58,11 @@ threadpool make_threadpool(allocator* a, i32 num_threads_) {
 
 	platform_error err = global_platform_api->platform_create_mutex(&ret.queue_mutex, false);
 	if(!err.good) {
-		cout << "Error creating mutex: " << err.error << endl;
+
 	}
 	err = global_platform_api->platform_create_semaphore(&ret.jobs_semaphore, 0, ret.num_threads);
 	if(!err.good) {
-		cout << "Error creating semaphore: " << err.error << endl;	
+		
 	}
 
 	return ret;
@@ -93,19 +93,19 @@ void threadpool_queue_job(threadpool* tp, job j) {
 
 	platform_mutex_state state = global_platform_api->platform_aquire_mutex(&tp->queue_mutex, -1);
 	if(!state.error.good) {
-		cout << "error acquiring mutex: " << state.error.error << endl;
+		
 	}
 
 	queue_push(&tp->jobs, j);
 
 	platform_error err = global_platform_api->platform_release_mutex(&tp->queue_mutex);
 	if(!err.good) {
-		cout << "error releasing mutex: " << err.error << endl;
+		
 	}
 
 	err = global_platform_api->platform_signal_semaphore(&tp->jobs_semaphore, 1);
 	if(!err.good) {
-		cout << "error signaling semaphore: " << err.error << endl;
+		
 	}
 }
 
@@ -115,15 +115,15 @@ void threadpool_stop_all(threadpool* tp) {
 	
 		for(i32 i = 0; i < tp->num_threads; i++) {
 
-			get(&tp->data, i).running = false;
+			array_get(&tp->data, i).running = false;
 		}
 
 		global_platform_api->platform_signal_semaphore(&tp->jobs_semaphore, tp->num_threads);
 
 		for(i32 i = 0; i < tp->num_threads; i++) {
 
-			global_platform_api->platform_join_thread(&get(&tp->threads, i), -1);
-			global_platform_api->platform_destroy_thread(&get(&tp->threads, i));
+			global_platform_api->platform_join_thread(&array_get(&tp->threads, i), -1);
+			global_platform_api->platform_destroy_thread(&array_get(&tp->threads, i));
 		}
 
 		tp->running = false;
@@ -136,12 +136,12 @@ void threadpool_start_all(threadpool* tp) {
 	
 		for(i32 i = 0; i < tp->num_threads; i++) {
 
-			get(&tp->data, i).job_queue 	 = &tp->jobs;
-			get(&tp->data, i).queue_mutex 	 = &tp->queue_mutex;
-			get(&tp->data, i).jobs_semaphore = &tp->jobs_semaphore;
-			get(&tp->data, i).running = true;
+			array_get(&tp->data, i).job_queue 	 	= &tp->jobs;
+			array_get(&tp->data, i).queue_mutex 	= &tp->queue_mutex;
+			array_get(&tp->data, i).jobs_semaphore  = &tp->jobs_semaphore;
+			array_get(&tp->data, i).running 		= true;
 
-			global_platform_api->platform_create_thread(&get(&tp->threads, i), &worker, &get(&tp->data, i), false);
+			global_platform_api->platform_create_thread(&array_get(&tp->threads, i), &worker, &array_get(&tp->data, i), false);
 		}
 
 		tp->running = true;
@@ -154,14 +154,14 @@ i32 worker(void* data_) {
 
 	// TODO(max): errors
 
-	cout << "starting thread" << endl;
+	
 
 	while(data->running) {
 		job current_job;
 
 		platform_mutex_state state = global_platform_api->platform_aquire_mutex(data->queue_mutex, -1);
 		if(!state.error.good) {
-			cout << "error acquiring mutex: " << state.error.error << endl;
+			
 		}
 
 		if(!queue_empty(data->job_queue)) {
@@ -170,22 +170,22 @@ i32 worker(void* data_) {
 
 		platform_error err = global_platform_api->platform_release_mutex(data->queue_mutex);
 		if(!err.good) {
-			cout << "error releasing mutex: " << err.error << endl;
+			
 		}
 
 		if(current_job.proc) {
 			(*current_job.proc)(current_job.data);
 		}
 
-		//cout << "waiting" << endl;
+		
 
 		platform_semaphore_state state_ = global_platform_api->platform_wait_semaphore(data->jobs_semaphore, -1);
 		if(!state_.error.good) {
-			cout << "error waiting semaphore: " << state_.error.error << endl;
+			
 		}
 	}
 
-	cout << "done" << endl;
+	
 
 	return 0;
 }

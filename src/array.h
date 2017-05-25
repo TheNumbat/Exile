@@ -1,27 +1,25 @@
 
 #pragma once
 
-#include "vector.h"
-
 template<typename T>
 struct array {
 	T* memory 		 = NULL;
-	i32 capacity 	 = 0;
+	u32 capacity 	 = 0;
 	allocator* alloc = NULL;
 };
 
 
-template<typename T> array<T> make_array(i32 capacity, allocator* a);
-template<typename T> array<T> make_array(i32 capacity);
-template<typename T> array<T> make_array_memory(i32 capacity, void* memory);
+template<typename T> array<T> make_array(u32 capacity, allocator* a);
+template<typename T> array<T> make_array(u32 capacity);
+template<typename T> array<T> make_array_memory(u32 capacity, void* memory);
 template<typename T> void destroy_array(array<T>* a);
 
-template<typename T> i32 array_len(array<T>* a);
-template<typename T> T& get(array<T>* a, i32 idx);
+template<typename T> u32 array_len(array<T>* a);
+template<typename T> T& array_get(array<T>* a, u32 idx);
 
 
 template<typename T> 
-i32 array_len(array<T>* a) {
+u32 array_len(array<T>* a) {
 	return a->capacity;
 }
 
@@ -38,7 +36,7 @@ void destroy_array(array<T>* a) {
 }
 
 template<typename T>
-array<T> make_array(i32 capacity, allocator* a) {
+array<T> make_array(u32 capacity, allocator* a) {
 
 	array<T> ret;
 
@@ -54,7 +52,7 @@ array<T> make_array(i32 capacity, allocator* a) {
 }
 
 template<typename T>
-array<T> make_array(i32 capacity) {
+array<T> make_array(u32 capacity) {
 
 	array<T> ret;
 
@@ -64,7 +62,7 @@ array<T> make_array(i32 capacity) {
 }
 
 template<typename T>
-array<T> make_array_memory(i32 capacity, void* memory) {
+array<T> make_array_memory(u32 capacity, void* memory) {
 
 	array<T> ret;
 
@@ -76,11 +74,15 @@ array<T> make_array_memory(i32 capacity, void* memory) {
 
 // operator[] but not a member
 template<typename T>
-T& get(array<T>* a, i32 idx) {
+inline T& array_get(array<T>* a, u32 idx) {
 
+#ifdef BOUNDS_CHECK
 	if(a->memory && idx >= 0 && idx < a->capacity) {
 		return a->memory[idx];
 	}
+#else
+	return a->memory[idx];
+#endif
 
 	// TODO(max): error
 	assert(false);

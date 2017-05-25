@@ -77,6 +77,7 @@ struct platform_api {
 	platform_error (*platform_create_file)(platform_file* file, string path, platform_file_open_op mode)					 = NULL;
 	platform_error (*platform_close_file)(platform_file* file)																 = NULL;
 	platform_error (*platform_wrte_file)(platform_file* file, void* mem, i32 bytes)											 = NULL;
+	platform_error (*platform_get_stdout_as_file)(platform_file* file)														 = NULL;
 };
 
 #ifdef _WIN32

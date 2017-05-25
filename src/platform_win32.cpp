@@ -39,6 +39,24 @@ platform_api platform_build_api() {
 	ret.platform_create_file			= &platform_create_file;
 	ret.platform_close_file				= &platform_close_file;
 	ret.platform_wrte_file				= &platform_wrte_file;
+	ret.platform_get_stdout_as_file		= &platform_get_stdout_as_file;
+
+	return ret;
+}
+
+platform_error platform_get_stdout_as_file(platform_file* file) {
+
+	platform_error ret;
+
+	HANDLE std = GetStdHandle(STD_OUTPUT_HANDLE);
+
+	if(std == INVALID_HANDLE_VALUE || std == NULL) {
+		ret.good = false;
+		ret.error = GetLastError();
+		return ret;		
+	}
+
+	file->handle = std;
 
 	return ret;
 }
@@ -75,17 +93,20 @@ platform_error platform_create_file(platform_file* file, string path, platform_f
 		creation = TRUNCATE_EXISTING;
 		break;
 		default:
-		INVALID_PATH;
+		ret.good = false;
+		return ret;	
 		break;
 	}
 
-	file->handle = CreateFile(path.c_str, GENERIC_READ | GENERIC_WRITE, 0, NULL, creation);
+	file->handle = CreateFileA(path.c_str, GENERIC_READ | GENERIC_WRITE, 0, NULL, creation, FILE_ATTRIBUTE_NORMAL, NULL);
 
 	if(file->handle == NULL) {
 		ret.good = false;
 		ret.error = GetLastError();
 		return ret;		
 	}
+
+	file->path = path;
 
 	return ret;
 }

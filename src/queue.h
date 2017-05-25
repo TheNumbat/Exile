@@ -7,8 +7,8 @@ template<typename T>
 struct queue {vector<T> contents;};
 
 
-template<typename T> queue<T> make_queue(i32 capacity, allocator* a);
-template<typename T> queue<T> make_queue(i32 capacity = 0);
+template<typename T> queue<T> make_queue(u32 capacity, allocator* a);
+template<typename T> queue<T> make_queue(u32 capacity = 0);
 template<typename T> void destroy_queue(queue<T>* q);
 
 template<typename T> void queue_push(queue<T>* q, T value);
@@ -25,7 +25,7 @@ void destroy_queue(queue<T>* q) {
 }
 
 template<typename T>
-queue<T> make_queue(i32 capacity, allocator* a) {
+queue<T> make_queue(u32 capacity, allocator* a) {
 
 	queue<T> ret;
 
@@ -35,7 +35,7 @@ queue<T> make_queue(i32 capacity, allocator* a) {
 }
 
 template<typename T>
-queue<T> make_queue(i32 capacity) {
+queue<T> make_queue(u32 capacity) {
 
 	queue<T> ret;
 

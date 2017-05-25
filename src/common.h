@@ -5,18 +5,15 @@
 
 #include <stdint.h>
 
-#ifdef DEBUG
-#define ASSERTS
-#define PROFILING
-#define LOGGING
-#endif
+#define DEBUG
 
-#ifdef ASSERTS
-#include <assert.h>
-#define INVALID_PATH assert(false);
+#ifdef DEBUG
+	#include <assert.h>
+	#define INVALID_PATH assert(false);
+	#define BOUNDS_CHECK
 #else
-#define assert(t) 
-#define INVALID_PATH
+	#define assert(t) 
+	#define INVALID_PATH
 #endif
 
 typedef uint8_t 	u8;
@@ -31,12 +28,9 @@ typedef int64_t 	i64;
 typedef float  f32;
 typedef double f64;
 
-#include <iostream>
-using std::cout;
-using std::endl;
-
 #include "platform_api.h"
 #include "strings.h"
+#include "math.h"
 
 static platform_api* global_platform_api = NULL;
 
@@ -64,3 +58,5 @@ inline code_context make_context(string file, string function, i32 line) {
 #include "context_strings.h"
 #include "array.h"
 #include "queue.h"
+#include "map.h"
+#include "log.h"

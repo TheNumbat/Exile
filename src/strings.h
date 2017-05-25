@@ -5,32 +5,32 @@
 
 struct string {
 	char* c_str = NULL;
-	i32 cap	    = 0;	// capacity
-	i32 len		= 0;	// including null terminator
+	u32 cap	    = 0;	// capacity
+	u32 len		= 0;	// including null terminator
 };
 
 string make_string_from_c_str(char* c_str, void* (*allocator)(u64 bytes));
 string string_from_c_str(char* c_str);
 void   free_string(string s, void (*platform_heap_free)(void* mem));
-string make_string(i32 cap, void* (*allocator)(u64 bytes));
+string make_string(u32 cap, void* (*allocator)(u64 bytes));
 string make_copy_string(string src, void* (*allocator)(u64 bytes));
 string string_literal(const char* literal);
 i32    string_last_slash(string str);
-string make_substring(string str, i32 start, i32 end, void* (*allocator)(u64 bytes));
+string make_substring(string str, u32 start, u32 end, void* (*allocator)(u64 bytes));
 string make_cat_string(string first, string second, void* (*allocator)(u64 bytes));
 
 string make_string_from_c_str(char* c_str, void* (*allocator)(u64 bytes)) {
 
 	string ret;
 
-	i32 len;
+	u32 len;
 	for(len = 0; c_str[len] != '\0'; len++);
 
 	ret.c_str = (char*)(*allocator)(len);
 	ret.cap = len;
 	ret.len = len;
 
-	for(i32 i = 0; i <= len; i++) { // will copy null terminator
+	for(u32 i = 0; i <= len; i++) { // will copy null terminator
 		ret.c_str[i] = c_str[i];
 	}
 
@@ -41,7 +41,7 @@ string string_from_c_str(char* c_str) {
 
 	string ret;
 
-	i32 len;
+	u32 len;
 	for(len = 0; c_str[len] != '\0'; len++);
 
 	ret.c_str = c_str;
@@ -60,7 +60,7 @@ void free_string(string s, void	(*platform_heap_free)(void* mem)) {
 	s.len = 0;
 }
 
-string make_string(i32 cap, void* (*allocator)(u64 bytes)) {
+string make_string(u32 cap, void* (*allocator)(u64 bytes)) {
 
 	string ret;
 
@@ -76,7 +76,7 @@ string make_copy_string(string src, void* (*allocator)(u64 bytes)) {
 
 	ret.len = src.len;
 
-	for(i32 i = 0; i <= ret.len; i++) { // will copy null terminator
+	for(u32 i = 0; i <= ret.len; i++) { // will copy null terminator
 		ret.c_str[i] = src.c_str[i];
 	}
 
@@ -90,7 +90,7 @@ string string_literal(const char* literal) {
 
 i32 string_last_slash(string str) {
 
-	for(i32 i = str.len; i >= 0; i--) {
+	for(u32 i = str.len; i >= 0; i--) {
 		if(str.c_str[i] == '\\' || str.c_str[i] == '/') {
 			return i;
 		}
@@ -100,13 +100,13 @@ i32 string_last_slash(string str) {
 }
 
 // end inclusive
-string make_substring(string str, i32 start, i32 end, void* (*allocator)(u64 bytes)) {
+string make_substring(string str, u32 start, u32 end, void* (*allocator)(u64 bytes)) {
 
 	string ret = make_string(end - start + 1, allocator);
 
 	ret.len = end - start + 1;
 
-	for(i32 i = 0, s_i = start; s_i <= end; i++, s_i++) {
+	for(u32 i = 0, s_i = start; s_i <= end; i++, s_i++) {
 		ret.c_str[i] = str.c_str[s_i];
 	}
 
@@ -119,13 +119,13 @@ string make_cat_string(string first, string second, void* (*allocator)(u64 bytes
 
 	ret.len = first.len + second.len - 1;
 
-	i32 c_i = 0;
+	u32 c_i = 0;
 
-	for(i32 i = 0; i < first.len; i++, c_i++) {
+	for(u32 i = 0; i < first.len; i++, c_i++) {
 		ret.c_str[c_i] = first.c_str[i];
 	}
 
-	for(i32 i = 0; i <= second.len; i++, c_i++) {
+	for(u32 i = 0; i <= second.len; i++, c_i++) {
 		ret.c_str[c_i] = second.c_str[i];
 	}
 
