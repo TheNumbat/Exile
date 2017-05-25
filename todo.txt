@@ -7,7 +7,6 @@ are get() references really a good idea?
 	can use try_get() or something if the get might not be there
 
 immediate to do:
-	hash map
 	logging (threaded)
 		error to-dos (w/ logging)
 		move assert/invalid_path

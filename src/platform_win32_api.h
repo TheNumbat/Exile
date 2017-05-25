@@ -39,6 +39,10 @@ struct platform_thread_id {
 	DWORD id 	= NULL;
 };
 
+bool operator==(platform_thread_id& first, platform_thread_id& second) {
+	return first.id == second.id;
+}
+
 struct platform_thread {
 	// transparent
 	platform_thread_id id;

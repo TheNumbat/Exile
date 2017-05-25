@@ -17,6 +17,8 @@ struct platform_mutex_state;
 struct platform_thread_join_state;
 struct platform_file;
 
+bool operator==(platform_thread_id& first, platform_thread_id& second);
+
 enum platform_file_open_op {
 	open_file_existing,
 	open_file_existing_or_create,

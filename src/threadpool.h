@@ -12,6 +12,7 @@ struct worker_data {
 	queue<job>* job_queue 			   = NULL;
 	platform_mutex* queue_mutex 	   = NULL;
 	platform_semaphore* jobs_semaphore = NULL;
+	allocator* alloc 				   = NULL;
 	volatile bool running			   = false;
 };
 
@@ -140,6 +141,7 @@ void threadpool_start_all(threadpool* tp) {
 			array_get(&tp->data, i).queue_mutex 	= &tp->queue_mutex;
 			array_get(&tp->data, i).jobs_semaphore  = &tp->jobs_semaphore;
 			array_get(&tp->data, i).running 		= true;
+			array_get(&tp->data, i).alloc  			= tp->alloc;
 
 			global_platform_api->platform_create_thread(&array_get(&tp->threads, i), &worker, &array_get(&tp->data, i), false);
 		}
@@ -154,7 +156,9 @@ i32 worker(void* data_) {
 
 	// TODO(max): errors
 
-	
+	global_platform_api->platform_aquire_mutex(global_alloc_contexts_mutex, -1);
+	map_insert(global_alloc_contexts, global_platform_api->platform_this_thread_id(), make_stack<allocator*>(0, data->alloc));
+	global_platform_api->platform_release_mutex(global_alloc_contexts_mutex);
 
 	while(data->running) {
 		job current_job;
@@ -185,7 +189,10 @@ i32 worker(void* data_) {
 		}
 	}
 
-	
+	global_platform_api->platform_aquire_mutex(global_alloc_contexts_mutex, -1);
+	destroy_stack(&map_get(global_alloc_contexts, global_platform_api->platform_this_thread_id()));
+	map_erase(global_alloc_contexts, global_platform_api->platform_this_thread_id());
+	global_platform_api->platform_release_mutex(global_alloc_contexts_mutex);
 
 	return 0;
 }

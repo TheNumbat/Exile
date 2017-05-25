@@ -3,6 +3,7 @@
 
 // forward declarations ... thanks c++
 template<typename T> struct stack;
+template<typename K, typename V> struct map;
 
 struct allocator {
 	void* (*allocate_)(u64 bytes, void* this_data) = NULL;
@@ -11,17 +12,41 @@ struct allocator {
 	code_context context;
 };
 
-static stack<allocator*>* global_alloc_context_stack = NULL;
+static map<platform_thread_id, stack<allocator*>>* global_alloc_contexts = NULL;
+static platform_mutex* global_alloc_contexts_mutex 						 = NULL;
 
-#define PUSH_ALLOC(a)			stack_push(global_alloc_context_stack,(allocator*)a);
-#define POP_ALLOC() 			(*CURRENT_ALLOC()->destroy)(CURRENT_ALLOC()); stack_pop(global_alloc_context_stack);
-#define CURRENT_ALLOC() 		stack_top(global_alloc_context_stack)
+#define PUSH_ALLOC(a)			_push_alloc(a);
+#define POP_ALLOC() 			_pop_alloc()
+#define CURRENT_ALLOC()			_current_alloc()
 
 #define KILOBYTES(m) (m*1024)
 #define MEGABYTES(m) (KILOBYTES(m*1024))
 #define GIGABYTES(m) (MEGABYTES(m*1024))
 
+allocator* _current_alloc();
+
 #include "stack.h"
+#include "map.h"
+
+void _pop_alloc() {
+	global_platform_api->platform_aquire_mutex(global_alloc_contexts_mutex, -1);
+	(*CURRENT_ALLOC()->destroy)(CURRENT_ALLOC()); 
+	stack_pop(&map_get(global_alloc_contexts, global_platform_api->platform_this_thread_id()));
+	global_platform_api->platform_release_mutex(global_alloc_contexts_mutex);
+}
+
+void _push_alloc(allocator* a) {
+	global_platform_api->platform_aquire_mutex(global_alloc_contexts_mutex, -1);
+	stack_push(&map_get(global_alloc_contexts, global_platform_api->platform_this_thread_id()),a);
+	global_platform_api->platform_release_mutex(global_alloc_contexts_mutex);
+}
+
+allocator* _current_alloc() {
+	global_platform_api->platform_aquire_mutex(global_alloc_contexts_mutex, -1);
+	allocator* ret = stack_top(&map_get(global_alloc_contexts, global_platform_api->platform_this_thread_id()));
+	global_platform_api->platform_release_mutex(global_alloc_contexts_mutex);
+	return ret;
+}
 
 struct platform_allocator : public allocator {
 	void* (*platform_allocate)(u64 bytes) = NULL;

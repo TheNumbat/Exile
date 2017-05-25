@@ -42,8 +42,8 @@ template<typename K, typename V> map<K,V> make_map(i32 capacity = 16, u32 (*hash
 template<typename K, typename V> map<K,V> make_map(i32 capacity, allocator* a, u32 (*hash)(K) = NULL);
 template<typename K, typename V> void destroy_map(map<K,V>* m);
 
-template<typename K, typename V> void map_insert(map<K,V>* m, K key, V value);
-template<typename K, typename V> void map_insert_if_unique(map<K,V>* m, K key, V value);
+template<typename K, typename V> V* map_insert(map<K,V>* m, K key, V value);
+template<typename K, typename V> V* map_insert_if_unique(map<K,V>* m, K key, V value);
 template<typename K, typename V> void map_erase(map<K,V>* m, K key);
 
 template<typename K, typename V> V& map_get(map<K,V>* m, K key);
@@ -107,7 +107,7 @@ void map_grow_rehash_elements(map<K,V>* m) {
 }
 
 template<typename K, typename V>
-void map_insert(map<K,V>* m, K key, V value) {
+V* map_insert(map<K,V>* m, K key, V value) {
 
 	if(m->size >= m->contents.capacity * MAP_MAX_LOAD_FACTOR) {
 
@@ -157,21 +157,20 @@ void map_insert(map<K,V>* m, K key, V value) {
 			}
 		} else {
 			vector_get(&m->contents, index) = ele;
-			break;
+			m->size++;
+			return &(vector_get(&m->contents, index).value);
 		}
 	}
-
-	m->size++;
 }
 
 template<typename K, typename V>
-void map_insert_if_unique(map<K,V>* m, K key, V value) {
+V* map_insert_if_unique(map<K,V>* m, K key, V value) {
 	
 	V* result = map_try_get(m, key);
 	
 	if(!result) {
 		
-		map_insert(m, key, value);
+		return map_insert(m, key, value);
 	}
 }
 
@@ -201,7 +200,7 @@ V* map_try_get(map<K,V>* m, K key) {	// can return NULL
 	for(;;) {
 
 		if(vector_get(&m->contents, index).key == key) {
-			return &vector_get(&m->contents, index).value;
+			return &(vector_get(&m->contents, index).value);
 		}
 
 		probe_length++;

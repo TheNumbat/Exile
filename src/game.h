@@ -10,8 +10,8 @@ struct game_state {
 
 	threadpool 	thread_pool;
 
-	// TODO(max): thread-local
-	stack<allocator*> global_alloc_context_stack; // global, but we can't have dll-local globals
+	platform_mutex alloc_contexts_mutex;
+	map<platform_thread_id, stack<allocator*>> global_alloc_contexts;
 	
 	platform_allocator default_platform_allocator;
 };
