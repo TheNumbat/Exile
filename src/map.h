@@ -33,19 +33,26 @@ struct map {
 	u32 size	 		= 0;
 	allocator* alloc 	= NULL;
 	u32 (*hash)(K key) 	= NULL;
-	bool use_u32hash = false;
+	bool use_u32hash 	= false;
+	u32 max_probe		= 0;
 };
 
 
 template<typename K, typename V> map<K,V> make_map(i32 capacity = 16, u32 (*hash)(K) = NULL);
 template<typename K, typename V> map<K,V> make_map(i32 capacity, allocator* a, u32 (*hash)(K) = NULL);
 template<typename K, typename V> void destroy_map(map<K,V>* m);
-template<typename K, typename V> void map_rehash_elements(map<K,V>* m);
+
 template<typename K, typename V> void map_insert(map<K,V>* m, K key, V value);
-template<typename K, typename V> void map_insert_or_find(map<K,V>* m, K key, V value);
+template<typename K, typename V> void map_insert_if_unique(map<K,V>* m, K key, V value);
+template<typename K, typename V> void map_erase(map<K,V>* m, K key);
+
 template<typename K, typename V> V& map_get(map<K,V>* m, K key);
 template<typename K, typename V> V* map_try_get(map<K,V>* m, K key);
-template<typename K, typename V> void map_erase(map<K,V>* m, K key);
+
+// this is expensive, avoid at all costs. Try to create maps with enough capacity in the first place.
+// it will allocate & free another map-sized block for copying from the map's allocator
+// this is called from map_insert if the map needs to grow...be wary
+template<typename K, typename V> void map_grow_rehash_elements(map<K,V>* m);
 
 
 template<typename K, typename V>
@@ -82,8 +89,21 @@ void destroy_map(map<K,V>* m) {
 }
 
 template<typename K, typename V>
-void map_rehash_elements(map<K,V>* m) {	
+void map_grow_rehash_elements(map<K,V>* m) {	
 
+	vector<map_element<K,V>> temp = make_vector_copy(m->contents);
+
+	vector_grow(&m->contents, false);
+
+	m->size = 0;
+
+	for(u32 i = 0; i < temp.capacity; i++) {
+		if(vector_get(&temp, i).occupied == true) {
+			map_insert(m, vector_get(&temp, i).key, vector_get(&temp, i).value);
+		}
+	}
+
+	destroy_vector(&temp);
 }
 
 template<typename K, typename V>
@@ -91,9 +111,7 @@ void map_insert(map<K,V>* m, K key, V value) {
 
 	if(m->size >= m->contents.capacity * MAP_MAX_LOAD_FACTOR) {
 
-		vector_grow(&m->contents);
-
-		map_rehash_elements(m); // this is super expensive, avoid at all costs
+		map_grow_rehash_elements(m); // this is super expensive, avoid at all costs
 	}
 
 	map_element<K,V> ele;
@@ -133,29 +151,99 @@ void map_insert(map<K,V>* m, K key, V value) {
 			if (index == m->contents.capacity) {
 				index = 0;
 			}
+
+			if(probe_length > m->max_probe) {
+				m->max_probe = probe_length;
+			}
 		} else {
 			vector_get(&m->contents, index) = ele;
 			break;
 		}
 	}
+
+	m->size++;
 }
 
 template<typename K, typename V>
-void map_insert_or_find(map<K,V>* m, K key, V value) {
+void map_insert_if_unique(map<K,V>* m, K key, V value) {
 	
+	V* result = map_try_get(m, key);
+	
+	if(!result) {
+		
+		map_insert(m, key, value);
+	}
 }
 
 template<typename K, typename V>
 V& map_get(map<K,V>* m, K key) {
+
+	// TODO(max): errors
 	
+	V* result = map_try_get(m, key);
+	assert(result);
+	return *result;
 }
 
 template<typename K, typename V>
 V* map_try_get(map<K,V>* m, K key) {	// can return NULL
 
+	u32 hash_bucket;
+
+	if(m->use_u32hash) {
+		hash_bucket = mod(hash_u32(*((u32*)&key)), m->contents.capacity);
+	} else {
+		hash_bucket = mod((*m->hash)(key), m->contents.capacity);
+	}
+
+	u32 index = hash_bucket;
+	u32 probe_length = 0;
+	for(;;) {
+
+		if(vector_get(&m->contents, index).key == key) {
+			return &vector_get(&m->contents, index).value;
+		}
+
+		probe_length++;
+		if(probe_length > m->max_probe) {
+			return NULL;
+		}
+
+		index++;
+		if (index == m->contents.capacity) {
+			index = 0;
+		}
+	}
 }
 
 template<typename K, typename V>
 void map_erase(map<K,V>* m, K key) {
 	
+	u32 hash_bucket;
+
+	if(m->use_u32hash) {
+		hash_bucket = mod(hash_u32(*((u32*)&key)), m->contents.capacity);
+	} else {
+		hash_bucket = mod((*m->hash)(key), m->contents.capacity);
+	}
+
+	u32 index = hash_bucket;
+	u32 probe_length = 0;
+	for(;;) {
+
+		if(vector_get(&m->contents, index).key == key) {
+			vector_get(&m->contents, index).occupied = false;
+			m->size--;
+		}
+
+		probe_length++;
+		if(probe_length > m->max_probe) {
+			return;
+		}
+
+		index++;
+		if (index == m->contents.capacity) {
+			index = 0;
+		}
+	}
 }

@@ -130,21 +130,9 @@ inline arena_allocator make_arena_allocator(u64 size, allocator* backing, code_c
 	return ret;
 }
 
-#define malloc(b) _malloc(b, CONTEXT)
-inline void* _malloc(u64 bytes, code_context context) {
-
-	allocator* current = stack_top(global_alloc_context_stack);
-
-	return (*current->allocate_)(bytes, current);
-}
-
-#define free(m) _free(m, CONTEXT)
-inline void _free(void* mem, code_context context) {
-
-	allocator* current = stack_top(global_alloc_context_stack);
-
-	return (*current->free_)(mem, current);
-}
+// USE THESE TO USE CONTEXT SYSTEM - ALWAYS USE THEM UNELSS YOU HAVE YOUR OWN ALLOCATOR STRUCT
+#define _malloc(b) ((*CURRENT_ALLOC()->allocate_)(b, CURRENT_ALLOC()))
+#define _free(m) ((*CURRENT_ALLOC()->free_)(m, CURRENT_ALLOC()))
 
 void memcpy(void* source, void* dest, u64 size) {
 

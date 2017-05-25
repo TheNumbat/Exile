@@ -78,7 +78,6 @@ int main() {
 	}
 
 	game_state = (*start_up)(&api);
-	(*on_reload)(&api, game_state);
 
 	if(game_state == NULL) {
 		cout << "Error in startup!" << endl;

@@ -14,8 +14,8 @@ template<typename T> vector<T> make_vector(u32 capacity = 4);
 template<typename T> vector<T> make_vector_copy(vector<T> source);
 template<typename T> void destroy_vector(vector<T>* v);
 
-template<typename T> void vector_grow(vector<T>* v);
-template<typename T> void vector_resize(vector<T>* v, u32 capacity);
+template<typename T> void vector_grow(vector<T>* v, bool copy = true);
+template<typename T> void vector_resize(vector<T>* v, u32 capacity, bool copy = true);
 template<typename T> void vector_push(vector<T>* v, T value);
 template<typename T> void vector_pop(vector<T>* v);
 template<typename T> void vector_pop_front(vector<T>* v);
@@ -57,9 +57,9 @@ inline T& vector_get(vector<T>* v, u32 idx) {
 }
 
 template<typename T>
-void vector_grow(vector<T>* v) {
+void vector_grow(vector<T>* v, bool copy) {
 	
-	vector_resize(v, v->capacity > 0 ? 2 * v->capacity : 4);
+	vector_resize(v, v->capacity > 0 ? 2 * v->capacity : 4, copy);
 }
 
 template<typename T>
@@ -98,7 +98,7 @@ vector<T> make_vector(u32 capacity) {
 }
 
 template<typename T>
-void vector_resize(vector<T>* v, u32 capacity) {
+void vector_resize(vector<T>* v, u32 capacity, bool copy) {
 
 	T* new_memory = NULL;
 
@@ -107,7 +107,7 @@ void vector_resize(vector<T>* v, u32 capacity) {
 		new_memory = (T*)v->alloc->allocate_(capacity * sizeof(T), v->alloc);
 	}
 
-	if(v->memory && new_memory) {
+	if(copy && v->memory && new_memory) {
 
 		memcpy(v->memory, new_memory, v->capacity * sizeof(T));
 	}
@@ -124,11 +124,11 @@ void vector_resize(vector<T>* v, u32 capacity) {
 template<typename T>
 vector<T> make_vector_copy(vector<T> source) {
 
-	vector ret = make_vector(source.capacity, source.alloc);
+	vector<T> ret = make_vector<T>(source.capacity, source.alloc);
 
 	if(source.memory) {
 
-		memcpy(source.memroy, ret.memory, source.capacity * sizeof(T));
+		memcpy(source.memory, ret.memory, source.capacity * sizeof(T));
 	}
 
 	ret.size = source.size;

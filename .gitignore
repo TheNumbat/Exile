@@ -1,3 +1,4 @@
 build/
 bin/main.VC.db
 bin/.vs
+bin/main.VC.VC.opendb
