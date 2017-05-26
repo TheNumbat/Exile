@@ -53,9 +53,8 @@ struct logger {
 logger make_logger(allocator* a);
 void destroy_logger(logger* log); // calls logger_stop if needed, call log_end_thread() everywhere first
 
-void logger_init_thread(logger* log, string name); // initializes logging for this thread. call before start in main
+void logger_init_thread(logger* log, string name, code_context context);  // initializes logging for this thread. call before start in main
 void logger_start(logger* log); // begin thread
 void logger_stop(logger* log);  // end thread
-void logger_init_thread(logger* log, string name, code_context context);
-void destroy_logger(logger* log);
+
 i32 logging_thread(void* data_);
