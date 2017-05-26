@@ -14,4 +14,4 @@ template<typename T> array<T> make_array_memory(u32 capacity, void* memory);
 template<typename T> void destroy_array(array<T>* a);
 
 template<typename T> u32 array_len(array<T>* a);
-template<typename T> T& array_get(array<T>* a, u32 idx);
+template<typename T> T* array_get(array<T>* a, u32 idx);

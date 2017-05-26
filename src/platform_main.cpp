@@ -18,8 +18,8 @@ typedef int64_t 	i64;
 typedef float  f32;
 typedef double f64;
 
-#include "str/strings.h"
-#include "str/strings.cpp"
+#include "str/platform_strings.h"
+#include "str/platform_strings.cpp"
 
 #include "platform_api.h"
 #include "platform.h"

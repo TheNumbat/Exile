@@ -17,14 +17,8 @@ threadpool make_threadpool(allocator* a, i32 num_threads_) {
 	ret.data    = make_array<worker_data>(ret.num_threads, a);
 	ret.jobs    = make_queue<job>(ret.num_threads, a);
 
-	platform_error err = global_state->api->platform_create_mutex(&ret.queue_mutex, false);
-	if(!err.good) {
-
-	}
-	err = global_state->api->platform_create_semaphore(&ret.jobs_semaphore, 0, ret.num_threads);
-	if(!err.good) {
-		
-	}
+	global_state->api->platform_create_mutex(&ret.queue_mutex, false);
+	global_state->api->platform_create_semaphore(&ret.jobs_semaphore, 0, ret.num_threads);
 
 	return ret;
 }
@@ -76,15 +70,15 @@ void threadpool_stop_all(threadpool* tp) {
 	
 		for(i32 i = 0; i < tp->num_threads; i++) {
 
-			array_get(&tp->data, i).running = false;
+			array_get(&tp->data, i)->running = false;
 		}
 
 		global_state->api->platform_signal_semaphore(&tp->jobs_semaphore, tp->num_threads);
 
 		for(i32 i = 0; i < tp->num_threads; i++) {
 
-			global_state->api->platform_join_thread(&array_get(&tp->threads, i), -1);
-			global_state->api->platform_destroy_thread(&array_get(&tp->threads, i));
+			global_state->api->platform_join_thread(array_get(&tp->threads, i), -1);
+			global_state->api->platform_destroy_thread(array_get(&tp->threads, i));
 		}
 
 		tp->running = false;
@@ -97,13 +91,13 @@ void threadpool_start_all(threadpool* tp) {
 	
 		for(i32 i = 0; i < tp->num_threads; i++) {
 
-			array_get(&tp->data, i).job_queue 	 	= &tp->jobs;
-			array_get(&tp->data, i).queue_mutex 	= &tp->queue_mutex;
-			array_get(&tp->data, i).jobs_semaphore  = &tp->jobs_semaphore;
-			array_get(&tp->data, i).running 		= true;
-			array_get(&tp->data, i).alloc  			= tp->alloc;
+			array_get(&tp->data, i)->job_queue 	 	= &tp->jobs;
+			array_get(&tp->data, i)->queue_mutex 	= &tp->queue_mutex;
+			array_get(&tp->data, i)->jobs_semaphore = &tp->jobs_semaphore;
+			array_get(&tp->data, i)->running 		= true;
+			array_get(&tp->data, i)->alloc  		= tp->alloc;
 
-			global_state->api->platform_create_thread(&array_get(&tp->threads, i), &worker, &array_get(&tp->data, i), false);
+			global_state->api->platform_create_thread(array_get(&tp->threads, i), &worker, array_get(&tp->data, i), false);
 		}
 
 		tp->running = true;
@@ -114,43 +108,38 @@ i32 worker(void* data_) {
 
 	worker_data* data = (worker_data*)data_;
 
-	// TODO(max): errors
-
 	global_state->api->platform_aquire_mutex(&global_state->alloc_contexts_mutex, -1);
 	map_insert(&global_state->alloc_contexts, global_state->api->platform_this_thread_id(), make_stack<allocator*>(0, data->alloc));
 	global_state->api->platform_release_mutex(&global_state->alloc_contexts_mutex);
 
-	while(data->running) {
-		job current_job;
-
-		platform_mutex_state state = global_state->api->platform_aquire_mutex(data->queue_mutex, -1);
-		if(!state.error.good) {
-			
-		}
-
-		if(!queue_empty(data->job_queue)) {
-			current_job = queue_pop(data->job_queue);
-		}
-
-		platform_error err = global_state->api->platform_release_mutex(data->queue_mutex);
-		if(!err.good) {
-			
-		}
-
-		if(current_job.proc) {
-			(*current_job.proc)(current_job.data);
-		}
-
+	PUSH_ALLOC(&global_state->default_platform_allocator) {
 		
+		string thread_name = make_stringf(string_literal("thread %i"), global_state->api->platform_this_thread_id().id);
+		LOG_INIT_THREAD(thread_name);
 
-		platform_semaphore_state state_ = global_state->api->platform_wait_semaphore(data->jobs_semaphore, -1);
-		if(!state_.error.good) {
-			
+		while(data->running) {
+			job current_job;
+
+			global_state->api->platform_aquire_mutex(data->queue_mutex, -1);
+			if(!queue_empty(data->job_queue)) {
+				current_job = queue_pop(data->job_queue);
+			}
+			global_state->api->platform_release_mutex(data->queue_mutex);
+
+			if(current_job.proc) {
+				(*current_job.proc)(current_job.data);
+			}
+
+			global_state->api->platform_wait_semaphore(data->jobs_semaphore, -1);
 		}
-	}
+
+		LOG_END_THREAD();
+		free_string(thread_name);
+
+	} POP_ALLOC();
 
 	global_state->api->platform_aquire_mutex(&global_state->alloc_contexts_mutex, -1);
-	destroy_stack(&map_get(&global_state->alloc_contexts, global_state->api->platform_this_thread_id()));
+	destroy_stack(map_get(&global_state->alloc_contexts, global_state->api->platform_this_thread_id()));
 	map_erase(&global_state->alloc_contexts, global_state->api->platform_this_thread_id());
 	global_state->api->platform_release_mutex(&global_state->alloc_contexts_mutex);
 

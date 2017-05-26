@@ -21,6 +21,7 @@ void logger_start(logger* log) {
 	log->thread_param.queue_mutex		= &log->queue_mutex;
 	log->thread_param.logging_semaphore = &log->logging_semaphore;
 	log->thread_param.running 			= true;
+	log->thread_param.alloc 			= log->alloc;
 
 	global_state->api->platform_create_thread(&log->logging_thread, &logging_thread, &log->thread_param, false);
 }
@@ -37,8 +38,18 @@ void logger_stop(logger* log) {
 	log->thread_param.message_queue 	= NULL;
 	log->thread_param.queue_mutex		= NULL;
 	log->thread_param.logging_semaphore = NULL;
+	log->thread_param.alloc 			= NULL;
 }
 
+void logger_end_thread(logger* log) {
+
+	global_state->api->platform_aquire_mutex(&log->thread_data_mutex, -1);
+	
+	log_thread_data* data = map_get(&log->thread_data, global_state->api->platform_this_thread_id());
+	destroy_stack(&data->context_name);
+
+	global_state->api->platform_release_mutex(&log->thread_data_mutex);
+}
 
 void logger_init_thread(logger* log, string name, code_context context) {
 
@@ -68,11 +79,105 @@ void destroy_logger(logger* log) {
 	log->alloc = NULL;
 }
 
+void logger_push_context(logger* log, string context) {
 
+	global_state->api->platform_aquire_mutex(&log->thread_data_mutex, -1);
+	log_thread_data* data = map_get(&log->thread_data, global_state->api->platform_this_thread_id());
+	stack_push(&data->context_name, context);
+	data->indent_level++;
+	global_state->api->platform_release_mutex(&log->thread_data_mutex);
+}
+
+void logger_pop_context(logger* log) {
+
+	global_state->api->platform_aquire_mutex(&log->thread_data_mutex, -1);
+	log_thread_data* data = map_get(&log->thread_data, global_state->api->platform_this_thread_id());
+	stack_pop(&data->context_name);
+	data->indent_level--;
+	global_state->api->platform_release_mutex(&log->thread_data_mutex);
+}
+
+void logger_add_file(logger* log, platform_file file, log_level level) {
+
+	log_file lfile;
+	lfile.file = file;
+	lfile.level = level;
+	vector_push(&log->out, lfile);
+}
+
+void logger_msgf(logger* log, string fmt, log_level level, code_context context, ...) {
+
+	va_list args;
+	va_start(args, context);
+	string msg;
+	PUSH_ALLOC(log->alloc) {
+		msg = make_vstringf(fmt, args);
+	} POP_ALLOC();
+	va_end(args);
+
+	logger_msg(log, msg, level, context, false);
+}
+
+void logger_msg(logger* log, string msg, log_level level, code_context context, bool copy) {
+
+	log_message lmsg;
+	if(copy) {
+		PUSH_ALLOC(log->alloc) {
+			lmsg.msg = make_copy_string(msg);
+		} POP_ALLOC();
+	} else {
+		lmsg.msg = msg;
+	}
+	lmsg.msg = msg;
+	lmsg.publisher = context;
+
+	global_state->api->platform_aquire_mutex(&log->thread_data_mutex, -1);
+	lmsg.data = *map_get(&log->thread_data, global_state->api->platform_this_thread_id());
+	global_state->api->platform_release_mutex(&log->thread_data_mutex);
+
+	global_state->api->platform_aquire_mutex(&log->queue_mutex, -1);
+	queue_push(&log->message_queue, lmsg);
+	global_state->api->platform_release_mutex(&log->queue_mutex);
+	global_state->api->platform_signal_semaphore(&log->logging_semaphore, 1);
+}
+
+#include <iostream>
+using std::cout;
+using std::endl;
 
 i32 logging_thread(void* data_) {
 
 	log_thread_param* data = (log_thread_param*)data_;	
+
+	global_state->api->platform_aquire_mutex(&global_state->alloc_contexts_mutex, -1);
+	map_insert(&global_state->alloc_contexts, global_state->api->platform_this_thread_id(), make_stack<allocator*>(0, data->alloc));
+	global_state->api->platform_release_mutex(&global_state->alloc_contexts_mutex);
+
+	while(data->running) {
+
+		global_state->api->platform_aquire_mutex(data->queue_mutex, -1);
+		log_message msg;
+		if(!queue_empty(data->message_queue)) {
+			msg = queue_pop(data->message_queue);
+		} 
+		global_state->api->platform_release_mutex(data->queue_mutex);
+
+		if(msg.msg.c_str != NULL) {
+			
+			cout << msg.msg.c_str << endl;
+
+			PUSH_ALLOC(data->alloc) {
+				free_string(msg.msg);
+			} POP_ALLOC();
+		}
+
+		global_state->api->platform_wait_semaphore(data->logging_semaphore, -1);
+	}
+
+	global_state->api->platform_aquire_mutex(&global_state->alloc_contexts_mutex, -1);
+	destroy_stack(map_get(&global_state->alloc_contexts, global_state->api->platform_this_thread_id()));
+	map_erase(&global_state->alloc_contexts, global_state->api->platform_this_thread_id());
+	global_state->api->platform_release_mutex(&global_state->alloc_contexts_mutex);
 
 	return 0;
 }

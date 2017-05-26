@@ -55,18 +55,19 @@ array<T> make_array_memory(u32 capacity, void* memory) {
 
 // operator[] but not a member
 template<typename T>
-inline T& array_get(array<T>* a, u32 idx) {
+inline T* array_get(array<T>* a, u32 idx) {
 
 #ifdef BOUNDS_CHECK
 	if(a->memory && idx >= 0 && idx < a->capacity) {
-		return a->memory[idx];
+
+		return a->memory + idx;
+	} else {
+
+		LOG_FATAL_F("array_get out of bounds, %u < 0 || %u > %u", idx, idx, a->capacity);
+		return NULL;
 	}
 #else
-	return a->memory[idx];
+	return a->memory + idx;
 #endif
-
-	// TODO(max): error
-	assert(false);
-	T ret = {};
-	return ret;
 }
+

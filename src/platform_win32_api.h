@@ -21,7 +21,8 @@ struct platform_window {
 struct platform_error {
 	// Transparent
 	bool good	 = true;
-	DWORD error  = 0;		// something printable (for other platform layers)
+	// Transparent - printf %i able
+	DWORD error  = 0;		
 };
 
 struct platform_dll {
@@ -35,7 +36,7 @@ struct platform_file_attributes {
 };
 
 struct platform_thread_id {
-	// Opaque
+	// Transparent - printf %i able
 	DWORD id 	= NULL;
 };
 

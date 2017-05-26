@@ -7,9 +7,9 @@ are get() references really a good idea?
 	can use try_get() or something if the get might not be there
 
 immediate to do:
-	logging (threaded)
-		error to-dos (w/ logging)
-		move assert/invalid_path
+	finish logging thread
+	use contexts to call allocators
+
 	windows input
 	metaprogramming - type introspection?
 		make own string format functions

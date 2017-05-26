@@ -11,20 +11,19 @@ u32 vector_capacity(vector<T>* v) {
 
 // operator[] but not a member
 template<typename T>
-inline T& vector_get(vector<T>* v, u32 idx) {
+inline T* vector_get(vector<T>* v, u32 idx) {
 
 #ifdef BOUNDS_CHECK
 	if(v->memory && idx >= 0 && idx < v->capacity) {
-		return v->memory[idx];
+		return v->memory + idx;
+	} else {
+		
+		LOG_FATAL_F("vector_get out of bounds, %u < 0 || %u > %u", idx, idx, v->capacity);
+		return NULL;
 	}
 #else
-	return v->memory[idx];
+	return v->memory + idx;
 #endif
-
-	// TODO(max): error
-	assert(false);
-	T ret = {};
-	return ret;
 }
 
 template<typename T>
@@ -139,8 +138,7 @@ T vector_front(vector<T>* v) {
 		return v->memory[0];
 	}
 
-	// TODO(max): errors
-	assert(false);
+	LOG_FATAL("Trying to get empty vector back!");
 	T ret;
 	return ret;
 }
@@ -152,8 +150,7 @@ T vector_back(vector<T>* v) {
 		return v->memory[v->size];
 	}
 
-	// TODO(max): errors
-	assert(false);
+	LOG_FATAL("Trying to get empty vector back!");
 	T ret = {};
 	return ret;
 }

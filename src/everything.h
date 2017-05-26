@@ -8,12 +8,7 @@
 #define DEBUG
 
 #ifdef DEBUG
-	#include <assert.h>
-	#define INVALID_PATH assert(false);
-	#define BOUNDS_CHECK
-#else
-	#define assert(t) 
-	#define INVALID_PATH
+#define BOUNDS_CHECK
 #endif
 
 typedef uint8_t 	u8;
@@ -29,7 +24,6 @@ typedef float  f32;
 typedef double f64;
 
 #include "str/strings.h"
-#include "str/context_strings.h"
 
 #include "platform_api.h"
 
@@ -59,7 +53,6 @@ inline code_context make_context(string file, string function, i32 line);
 static game_state* global_state = NULL;
 
 #include "str/strings.cpp"
-#include "str/context_strings.cpp"
 
 #include "alloc.cpp"
 #include "log.cpp"

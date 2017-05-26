@@ -22,7 +22,7 @@ map<K,V> make_map(i32 capacity, allocator* a, u32 (*hash)(K)) {
 	ret.alloc 	 = a;
 	ret.contents = make_vector<map_element<K,V>>(capacity, ret.alloc);
 	if(!hash) {
-		assert(sizeof(K) == sizeof(u32));
+		LOG_DEBUG_ASSERT(sizeof(K) == sizeof(u32));
 		ret.use_u32hash = true;
 	} else {
 		ret.hash = hash;
@@ -52,8 +52,8 @@ void map_grow_rehash(map<K,V>* m) {
 	m->max_probe = 0;
 
 	for(u32 i = 0; i < temp.capacity; i++) {
-		if(vector_get(&temp, i).occupied == true) {
-			map_insert(m, vector_get(&temp, i).key, vector_get(&temp, i).value);
+		if(vector_get(&temp, i)->occupied == true) {
+			map_insert(m, vector_get(&temp, i)->key, vector_get(&temp, i)->value);
 		}
 	}
 
@@ -71,8 +71,8 @@ void map_trim_rehash(map<K,V>* m) {
 	m->max_probe = 0;
 	
 	for(u32 i = 0; i < temp.capacity; i++) {
-		if(vector_get(&temp, i).occupied == true) {
-			map_insert(m, vector_get(&temp, i).key, vector_get(&temp, i).value);
+		if(vector_get(&temp, i)->occupied == true) {
+			map_insert(m, vector_get(&temp, i)->key, vector_get(&temp, i)->value);
 		}
 	}
 
@@ -107,17 +107,17 @@ V* map_insert(map<K,V>* m, K key, V value, bool grow_if_needed) {
 	u32 index = ele.hash_bucket;
 	u32 probe_length = 0;
 	for(;;) {
-		if(vector_get(&m->contents, index).occupied) {
+		if(vector_get(&m->contents, index)->occupied) {
 
-			i32 occupied_probe_length = index - vector_get(&m->contents, index).hash_bucket;
+			i32 occupied_probe_length = index - vector_get(&m->contents, index)->hash_bucket;
 			if(occupied_probe_length < 0) {
 				occupied_probe_length += m->contents.capacity;
 			}
 
 			if((u32)occupied_probe_length < probe_length) {
 
-				map_element<K,V> temp = vector_get(&m->contents, index);
-				vector_get(&m->contents, index) = ele;
+				map_element<K,V> temp = *vector_get(&m->contents, index);
+				*vector_get(&m->contents, index) = ele;
 				ele = temp;
 
 				probe_length = occupied_probe_length;
@@ -133,9 +133,9 @@ V* map_insert(map<K,V>* m, K key, V value, bool grow_if_needed) {
 				m->max_probe = probe_length;
 			}
 		} else {
-			vector_get(&m->contents, index) = ele;
+			*vector_get(&m->contents, index) = ele;
 			m->size++;
-			return &(vector_get(&m->contents, index).value);
+			return &(vector_get(&m->contents, index)->value);
 		}
 	}
 }
@@ -154,13 +154,11 @@ V* map_insert_if_unique(map<K,V>* m, K key, V value, bool grow_if_needed) {
 }
 
 template<typename K, typename V>
-V& map_get(map<K,V>* m, K key) {
+V* map_get(map<K,V>* m, K key) {
 
-	// TODO(max): errors
-	
 	V* result = map_try_get(m, key);
-	assert(result);
-	return *result;
+	LOG_ASSERT(result != NULL);
+	return result;
 }
 
 template<typename K, typename V>
@@ -178,8 +176,8 @@ V* map_try_get(map<K,V>* m, K key) {	// can return NULL
 	u32 probe_length = 0;
 	for(;;) {
 
-		if(vector_get(&m->contents, index).key == key) {
-			return &(vector_get(&m->contents, index).value);
+		if(vector_get(&m->contents, index)->key == key) {
+			return &(vector_get(&m->contents, index)->value);
 		}
 
 		probe_length++;
@@ -209,8 +207,8 @@ void map_erase(map<K,V>* m, K key) {
 	u32 probe_length = 0;
 	for(;;) {
 
-		if(vector_get(&m->contents, index).key == key) {
-			vector_get(&m->contents, index).occupied = false;
+		if(vector_get(&m->contents, index)->key == key) {
+			vector_get(&m->contents, index)->occupied = false;
 			m->size--;
 		}
 

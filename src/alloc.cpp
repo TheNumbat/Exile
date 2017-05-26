@@ -2,19 +2,19 @@
 void _pop_alloc() {
 	global_state->api->platform_aquire_mutex(&global_state->alloc_contexts_mutex, -1);
 	(*CURRENT_ALLOC()->destroy)(CURRENT_ALLOC()); 
-	stack_pop(&map_get(&global_state->alloc_contexts, global_state->api->platform_this_thread_id()));
+	stack_pop(map_get(&global_state->alloc_contexts, global_state->api->platform_this_thread_id()));
 	global_state->api->platform_release_mutex(&global_state->alloc_contexts_mutex);
 }
 
 void _push_alloc(allocator* a) {
 	global_state->api->platform_aquire_mutex(&global_state->alloc_contexts_mutex, -1);
-	stack_push(&map_get(&global_state->alloc_contexts, global_state->api->platform_this_thread_id()),a);
+	stack_push(map_get(&global_state->alloc_contexts, global_state->api->platform_this_thread_id()),a);
 	global_state->api->platform_release_mutex(&global_state->alloc_contexts_mutex);
 }
 
 allocator* _current_alloc() {
 	global_state->api->platform_aquire_mutex(&global_state->alloc_contexts_mutex, -1);
-	allocator* ret = stack_top(&map_get(&global_state->alloc_contexts, global_state->api->platform_this_thread_id()));
+	allocator* ret = stack_top(map_get(&global_state->alloc_contexts, global_state->api->platform_this_thread_id()));
 	global_state->api->platform_release_mutex(&global_state->alloc_contexts_mutex);
 	return ret;
 }

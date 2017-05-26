@@ -39,7 +39,7 @@ template<typename K, typename V> V* map_insert(map<K,V>* m, K key, V value, bool
 template<typename K, typename V> V* map_insert_if_unique(map<K,V>* m, K key, V value, bool grow_if_needed = true);
 template<typename K, typename V> void map_erase(map<K,V>* m, K key);
 
-template<typename K, typename V> V& map_get(map<K,V>* m, K key);
+template<typename K, typename V> V* map_get(map<K,V>* m, K key);
 template<typename K, typename V> V* map_try_get(map<K,V>* m, K key);
 
 // this is expensive, avoid at all costs. Try to create maps with enough capacity in the first place.
