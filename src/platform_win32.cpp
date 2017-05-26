@@ -1,7 +1,4 @@
 
-#include "platform_win32.h"
-#include <assert.h>
-
 platform_api platform_build_api() {
 
 	platform_api ret;

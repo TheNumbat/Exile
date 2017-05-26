@@ -2,8 +2,6 @@
 
 // this file is for both the platform layer and the game - this defines the interface for the game
 
-#include "strings.h"
-
 struct platform_window;
 struct platform_error;
 struct platform_dll;

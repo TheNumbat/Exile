@@ -1,8 +1,5 @@
 
 #include "common.h"
-#include "game.h"
-
-#include <gl/gl.h>
 
 extern "C" game_state* start_up(platform_api* api) {
 

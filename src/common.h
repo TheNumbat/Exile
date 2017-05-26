@@ -28,9 +28,10 @@ typedef int64_t 	i64;
 typedef float  f32;
 typedef double f64;
 
-#include "platform_api.h"
 #include "strings.h"
-#include "math.h"
+#include "context_strings.h"
+
+#include "platform_api.h"
 
 static platform_api* global_platform_api = NULL;
 
@@ -40,23 +41,33 @@ struct code_context {
 	i32 line = 0;
 };
 
-inline code_context make_context(string file, string function, i32 line) {
-
-	code_context ret;
-	ret.file = file;
-	ret.function = function;
-	ret.line = line;
-
-	return ret;
-}
+inline code_context make_context(string file, string function, i32 line);
 
 #define CONTEXT make_context(string_literal(__FILE__), string_literal(__func__), __LINE__)
 
 #include "alloc.h"
+#include "math.h"
+
 #include "vector.h"
 #include "stack.h"
-#include "context_strings.h"
 #include "array.h"
 #include "queue.h"
 #include "map.h"
+#include "threadpool.h"
+
 #include "log.h"
+#include "game.h"
+
+#include "strings.cpp"
+#include "context_strings.cpp"
+
+#include "alloc.cpp"
+#include "log.cpp"
+
+#include "vector.cpp"
+#include "stack.cpp"
+#include "array.cpp"
+#include "queue.cpp"
+#include "map.cpp"
+#include "threadpool.cpp"
+#include "common.cpp"

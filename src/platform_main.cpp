@@ -1,5 +1,6 @@
 
 #include <iostream>
+#include <assert.h>
 using std::cout;
 using std::endl;
 
@@ -16,6 +17,9 @@ typedef int64_t 	i64;
 
 typedef float  f32;
 typedef double f64;
+
+#include "strings.h"
+#include "strings.cpp"
 
 #include "platform.h"
 

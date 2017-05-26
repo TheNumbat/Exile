@@ -1,9 +1,6 @@
 
 #pragma once
 
-#include "common.h"
-#include "threadpool.h"
-
 struct game_state {
 	platform_api* 	api 	= NULL;
 	platform_window window 	= {};

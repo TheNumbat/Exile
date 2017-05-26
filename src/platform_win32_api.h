@@ -1,7 +1,7 @@
 #pragma once
 
 #include <windows.h>
-#include "strings.h"
+#include <gl/gl.h>
 
 // API Structures (mark opaque/transparent)
 
