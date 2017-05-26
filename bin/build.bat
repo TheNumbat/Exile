@@ -13,12 +13,22 @@ set Platform_DebugCompilerFlags=-Od -MTd -nologo -Gr -EHa -Oi -W4 -Z7 -FC -Femai
 set Platform_ReleaseCompilerFlags=-O2 -MTd -nologo -Gr -EHa -W4 -FC -Femain.exe -wd4100
 set Platform_LinkerFlags=/NODEFAULTLIB:MSVCRT /SUBSYSTEM:console kernel32.lib user32.lib gdi32.lib opengl32.lib 
 
-cl %Game_DebugCompilerFlags% w:\src\game_main.cpp /link %Game_LinkerFlags%
+if "%1"=="release" (
+	cl %Game_ReleaseCompilerFlags% w:\src\game_main.cpp /link %Game_LinkerFlags%
+) else if "%2"=="release" (
+	cl %Game_ReleaseCompilerFlags% w:\src\game_main.cpp /link %Game_LinkerFlags%
+) else (
+	cl %Game_DebugCompilerFlags% w:\src\game_main.cpp /link %Game_LinkerFlags%
+)
 
 if "%1"=="platform" goto platform
 goto :eof
 
 :platform
-cl %Platform_DebugCompilerFlags% w:\src\platform_main.cpp /link %Platform_LinkerFlags%
+if "%2"=="release" (
+	cl %Platform_ReleaseCompilerFlags% w:\src\platform_main.cpp /link %Platform_LinkerFlags%
+) else (
+	cl %Platform_DebugCompilerFlags% w:\src\platform_main.cpp /link %Platform_LinkerFlags%
+)
 
 popd

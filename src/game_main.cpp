@@ -44,6 +44,15 @@ extern "C" game_state* start_up(platform_api* api) {
 	string renderer = string_from_c_str((char*)glGetString(GL_RENDERER));
 	string vendor   = string_from_c_str((char*)glGetString(GL_VENDOR));
 
+	map<i32,i32> test = make_map<i32,i32>(0, &state->default_platform_allocator);
+	for(i32 i = 0; i < 1000000; i++)
+		map_insert(&test, i, i);
+	for(i32 i = 0; i < 1000000; i++)
+		map_erase(&test, i);
+
+	map_trim_rehash(&test);
+	destroy_map(&test);
+
 	return state;
 }
 

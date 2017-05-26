@@ -1,6 +1,9 @@
 
 #pragma once
 
+// don't take addresses of elements in a vector, they will be invalidated if the vector grows
+// (unless you know the map will never grow)
+
 #include "vector.h"
 #include "alloc.h"
 #include "math.h"
@@ -42,8 +45,8 @@ template<typename K, typename V> map<K,V> make_map(i32 capacity = 16, u32 (*hash
 template<typename K, typename V> map<K,V> make_map(i32 capacity, allocator* a, u32 (*hash)(K) = NULL);
 template<typename K, typename V> void destroy_map(map<K,V>* m);
 
-template<typename K, typename V> V* map_insert(map<K,V>* m, K key, V value);
-template<typename K, typename V> V* map_insert_if_unique(map<K,V>* m, K key, V value);
+template<typename K, typename V> V* map_insert(map<K,V>* m, K key, V value, bool grow_if_needed = true);
+template<typename K, typename V> V* map_insert_if_unique(map<K,V>* m, K key, V value, bool grow_if_needed = true);
 template<typename K, typename V> void map_erase(map<K,V>* m, K key);
 
 template<typename K, typename V> V& map_get(map<K,V>* m, K key);
@@ -52,8 +55,8 @@ template<typename K, typename V> V* map_try_get(map<K,V>* m, K key);
 // this is expensive, avoid at all costs. Try to create maps with enough capacity in the first place.
 // it will allocate & free another map-sized block for copying from the map's allocator
 // this is called from map_insert if the map needs to grow...be wary
-template<typename K, typename V> void map_grow_rehash_elements(map<K,V>* m);
-
+template<typename K, typename V> void map_grow_rehash(map<K,V>* m);
+template<typename K, typename V> void map_trim_rehash(map<K,V>* m);
 
 template<typename K, typename V>
 map<K,V> make_map(i32 capacity, u32 (*hash)(K)) {
@@ -89,7 +92,7 @@ void destroy_map(map<K,V>* m) {
 }
 
 template<typename K, typename V>
-void map_grow_rehash_elements(map<K,V>* m) {	
+void map_grow_rehash(map<K,V>* m) {	
 
 	vector<map_element<K,V>> temp = make_vector_copy(m->contents);
 
@@ -106,12 +109,34 @@ void map_grow_rehash_elements(map<K,V>* m) {
 	destroy_vector(&temp);
 }
 
+template<typename K, typename V> 
+void map_trim_rehash(map<K,V>* m) {
+
+	vector<map_element<K,V>> temp = make_vector_copy(m->contents);
+
+	vector_resize(&m->contents, m->size, false);
+
+	m->size = 0;
+	
+	for(u32 i = 0; i < temp.capacity; i++) {
+		if(vector_get(&temp, i).occupied == true) {
+			map_insert(m, vector_get(&temp, i).key, vector_get(&temp, i).value);
+		}
+	}
+
+	destroy_vector(&temp);
+}
+
 template<typename K, typename V>
-V* map_insert(map<K,V>* m, K key, V value) {
+V* map_insert(map<K,V>* m, K key, V value, bool grow_if_needed) {
 
 	if(m->size >= m->contents.capacity * MAP_MAX_LOAD_FACTOR) {
 
-		map_grow_rehash_elements(m); // this is super expensive, avoid at all costs
+		if(grow_if_needed) {
+			map_grow_rehash(m); // this is super expensive, avoid at all costs
+		} else {
+			return NULL;
+		}
 	}
 
 	map_element<K,V> ele;
@@ -164,14 +189,16 @@ V* map_insert(map<K,V>* m, K key, V value) {
 }
 
 template<typename K, typename V>
-V* map_insert_if_unique(map<K,V>* m, K key, V value) {
+V* map_insert_if_unique(map<K,V>* m, K key, V value, bool grow_if_needed) {
 	
 	V* result = map_try_get(m, key);
 	
 	if(!result) {
 		
-		return map_insert(m, key, value);
+		return map_insert(m, key, value, grow_if_needed);
 	}
+
+	return result;
 }
 
 template<typename K, typename V>
