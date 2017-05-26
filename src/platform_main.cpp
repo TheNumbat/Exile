@@ -18,9 +18,10 @@ typedef int64_t 	i64;
 typedef float  f32;
 typedef double f64;
 
-#include "strings.h"
-#include "strings.cpp"
+#include "str/strings.h"
+#include "str/strings.cpp"
 
+#include "platform_api.h"
 #include "platform.h"
 
 // here we treat game_state* as void* so this doesn't have to know anything about the game

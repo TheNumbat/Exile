@@ -28,8 +28,8 @@ typedef int64_t 	i64;
 typedef float  f32;
 typedef double f64;
 
-#include "strings.h"
-#include "context_strings.h"
+#include "str/strings.h"
+#include "str/context_strings.h"
 
 #include "platform_api.h"
 
@@ -46,28 +46,29 @@ inline code_context make_context(string file, string function, i32 line);
 #include "alloc.h"
 #include "math.h"
 
-#include "vector.h"
-#include "stack.h"
-#include "array.h"
-#include "queue.h"
-#include "map.h"
-#include "threadpool.h"
+#include "ds/vector.h"
+#include "ds/stack.h"
+#include "ds/array.h"
+#include "ds/queue.h"
+#include "ds/map.h"
+#include "ds/threadpool.h"
 
 #include "log.h"
 #include "game.h"
 
 static game_state* global_state = NULL;
 
-#include "strings.cpp"
-#include "context_strings.cpp"
+#include "str/strings.cpp"
+#include "str/context_strings.cpp"
 
 #include "alloc.cpp"
 #include "log.cpp"
 
-#include "vector.cpp"
-#include "stack.cpp"
-#include "array.cpp"
-#include "queue.cpp"
-#include "map.cpp"
-#include "threadpool.cpp"
+#include "ds/vector.cpp"
+#include "ds/stack.cpp"
+#include "ds/array.cpp"
+#include "ds/queue.cpp"
+#include "ds/map.cpp"
+#include "ds/threadpool.cpp"
+
 #include "everything.cpp"
