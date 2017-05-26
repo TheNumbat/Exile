@@ -33,7 +33,7 @@ extern "C" game_state* start_up(platform_api* api) {
 	string vendor   = string_from_c_str((char*)glGetString(GL_VENDOR));
 
 #if 0 // basic map vs unordered_map performance testing
-	map<i32,i32> test = make_map<i32,i32>(1111112, &state->default_platform_allocator);
+	map<i32,i32> test = make_map<i32,i32>(MAP_CAPACITY(1000000), &state->default_platform_allocator);
 	for(i32 i = 0; i < 1000000; i++)
 		map_insert(&test, i, i);		
 	for(i32 i = 0; i < 1000000; i++)	// 212

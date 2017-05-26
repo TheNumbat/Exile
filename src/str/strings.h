@@ -1,8 +1,6 @@
 
 #pragma once
 
-// be wary of using code reloading with this, it's shared between platform and game
-
 struct string {
 	char* c_str = NULL;
 	u32 cap	    = 0;	// capacity

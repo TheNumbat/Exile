@@ -49,6 +49,7 @@ void map_grow_rehash(map<K,V>* m) {
 	vector_grow(&m->contents, false);
 
 	m->size = 0;
+	m->max_probe = 0;
 
 	for(u32 i = 0; i < temp.capacity; i++) {
 		if(vector_get(&temp, i).occupied == true) {
@@ -67,6 +68,7 @@ void map_trim_rehash(map<K,V>* m) {
 	vector_resize(&m->contents, m->size, false);
 
 	m->size = 0;
+	m->max_probe = 0;
 	
 	for(u32 i = 0; i < temp.capacity; i++) {
 		if(vector_get(&temp, i).occupied == true) {
