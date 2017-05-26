@@ -7,8 +7,8 @@ template<typename K, typename V> struct map;
 
 struct allocator {
 	void* (*allocate_)(u64 bytes, void* this_data) = NULL;
-	void  (*free_)(void* mem, void* this_data)	  = NULL;
-	void  (*destroy)(void* this_data)			  = NULL;
+	void  (*free_)(void* mem, void* this_data)	   = NULL;
+	void  (*destroy)(void* this_data)			   = NULL;
 	code_context context;
 };
 

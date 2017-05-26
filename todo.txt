@@ -10,6 +10,7 @@ immediate to do:
 	logging (threaded)
 		error to-dos (w/ logging)
 		move assert/invalid_path
+	REFACTOR FILE ORGANIZATION
 	windows input
 	metaprogramming - type introspection?
 		make own string format functions

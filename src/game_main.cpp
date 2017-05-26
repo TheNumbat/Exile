@@ -9,29 +9,24 @@ extern "C" game_state* start_up(platform_api* api) {
 	game_state* state = (game_state*)api->platform_heap_alloc(sizeof(game_state));
 
 	global_platform_api = api;
-
+	
 	state->api = api;
 	state->default_platform_allocator = MAKE_PLATFORM_ALLOCATOR();
-	state->thread_pool = make_threadpool(&state->default_platform_allocator);
 
-	platform_error err = api->platform_create_mutex(&state->alloc_contexts_mutex, true);
-	if(!err.good) {
+	state->log = make_logger(&state->default_platform_allocator);
 
-		api->platform_heap_free(state);
-		return NULL;
-	}
-
+	api->platform_create_mutex(&state->alloc_contexts_mutex, false);
 	state->global_alloc_contexts = make_map<platform_thread_id,stack<allocator*>>(api->platform_get_num_cpus(), &state->default_platform_allocator);
+
 	global_alloc_contexts = &state->global_alloc_contexts;
-	map_insert(global_alloc_contexts, api->platform_this_thread_id(), make_stack<allocator*>(0, &state->default_platform_allocator));
-
-	api->platform_release_mutex(&state->alloc_contexts_mutex);
-
 	global_alloc_contexts_mutex = &state->alloc_contexts_mutex;
 
+	map_insert(global_alloc_contexts, api->platform_this_thread_id(), make_stack<allocator*>(0, &state->default_platform_allocator));
+
+	state->thread_pool = make_threadpool(&state->default_platform_allocator);
 	threadpool_start_all(&state->thread_pool);
 
-	err = api->platform_create_window(&state->window, string_literal("Window"), 
+	platform_error err = api->platform_create_window(&state->window, string_literal("Window"), 
 						  			  1280, 720);
 
 	if(!err.good) {
@@ -43,15 +38,6 @@ extern "C" game_state* start_up(platform_api* api) {
 	string version  = string_from_c_str((char*)glGetString(GL_VERSION));
 	string renderer = string_from_c_str((char*)glGetString(GL_RENDERER));
 	string vendor   = string_from_c_str((char*)glGetString(GL_VENDOR));
-
-	map<i32,i32> test = make_map<i32,i32>(0, &state->default_platform_allocator);
-	for(i32 i = 0; i < 1000000; i++)
-		map_insert(&test, i, i);
-	for(i32 i = 0; i < 1000000; i++)
-		map_erase(&test, i);
-
-	map_trim_rehash(&test);
-	destroy_map(&test);
 
 	return state;
 }
