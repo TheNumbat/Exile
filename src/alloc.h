@@ -12,9 +12,6 @@ struct allocator {
 	code_context context;
 };
 
-static map<platform_thread_id, stack<allocator*>>* global_alloc_contexts = NULL;
-static platform_mutex* global_alloc_contexts_mutex 						 = NULL;
-
 #define PUSH_ALLOC(a)			_push_alloc(a);
 #define POP_ALLOC() 			_pop_alloc()
 #define CURRENT_ALLOC()			_current_alloc()

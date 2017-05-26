@@ -4,21 +4,17 @@
 extern "C" game_state* start_up(platform_api* api) {
 
 	game_state* state = (game_state*)api->platform_heap_alloc(sizeof(game_state));
+	global_state = state;
 
-	global_platform_api = api;
-	
 	state->api = api;
 	state->default_platform_allocator = MAKE_PLATFORM_ALLOCATOR();
 
 	state->log = make_logger(&state->default_platform_allocator);
 
 	api->platform_create_mutex(&state->alloc_contexts_mutex, false);
-	state->global_alloc_contexts = make_map<platform_thread_id,stack<allocator*>>(api->platform_get_num_cpus(), &state->default_platform_allocator);
+	state->alloc_contexts = make_map<platform_thread_id,stack<allocator*>>(api->platform_get_num_cpus(), &state->default_platform_allocator);
 
-	global_alloc_contexts = &state->global_alloc_contexts;
-	global_alloc_contexts_mutex = &state->alloc_contexts_mutex;
-
-	map_insert(global_alloc_contexts, api->platform_this_thread_id(), make_stack<allocator*>(0, &state->default_platform_allocator));
+	map_insert(&state->alloc_contexts, api->platform_this_thread_id(), make_stack<allocator*>(0, &state->default_platform_allocator));
 
 	state->thread_pool = make_threadpool(&state->default_platform_allocator);
 	threadpool_start_all(&state->thread_pool);
@@ -54,9 +50,9 @@ extern "C" void shut_down(platform_api* api, game_state* state) {
 	destroy_threadpool(&state->thread_pool);
 
 	api->platform_aquire_mutex(&state->alloc_contexts_mutex, -1);
-	destroy_stack(&map_get(global_alloc_contexts, global_platform_api->platform_this_thread_id()));
-	map_erase(global_alloc_contexts, global_platform_api->platform_this_thread_id());
-	destroy_map(&state->global_alloc_contexts);
+	destroy_stack(&map_get(&state->alloc_contexts, state->api->platform_this_thread_id()));
+	map_erase(&state->alloc_contexts, state->api->platform_this_thread_id());
+	destroy_map(&state->alloc_contexts);
 	api->platform_release_mutex(&state->alloc_contexts_mutex);
 	api->platform_destroy_mutex(&state->alloc_contexts_mutex);
 
@@ -71,9 +67,7 @@ extern "C" void shut_down(platform_api* api, game_state* state) {
 
 extern "C" void on_reload(platform_api* api, game_state* state) {
 
-	global_alloc_contexts 		= &state->global_alloc_contexts;
-	global_platform_api			= state->api;
-	global_alloc_contexts_mutex = &state->alloc_contexts_mutex;
+	global_state = state;
 
 	threadpool_start_all(&state->thread_pool);
 }

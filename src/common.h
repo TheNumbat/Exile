@@ -33,8 +33,6 @@ typedef double f64;
 
 #include "platform_api.h"
 
-static platform_api* global_platform_api = NULL;
-
 struct code_context {
 	string file;
 	string function;
@@ -57,6 +55,8 @@ inline code_context make_context(string file, string function, i32 line);
 
 #include "log.h"
 #include "game.h"
+
+static game_state* global_state = NULL;
 
 #include "strings.cpp"
 #include "context_strings.cpp"

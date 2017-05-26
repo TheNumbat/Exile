@@ -1,21 +1,21 @@
 
 void _pop_alloc() {
-	global_platform_api->platform_aquire_mutex(global_alloc_contexts_mutex, -1);
+	global_state->api->platform_aquire_mutex(&global_state->alloc_contexts_mutex, -1);
 	(*CURRENT_ALLOC()->destroy)(CURRENT_ALLOC()); 
-	stack_pop(&map_get(global_alloc_contexts, global_platform_api->platform_this_thread_id()));
-	global_platform_api->platform_release_mutex(global_alloc_contexts_mutex);
+	stack_pop(&map_get(&global_state->alloc_contexts, global_state->api->platform_this_thread_id()));
+	global_state->api->platform_release_mutex(&global_state->alloc_contexts_mutex);
 }
 
 void _push_alloc(allocator* a) {
-	global_platform_api->platform_aquire_mutex(global_alloc_contexts_mutex, -1);
-	stack_push(&map_get(global_alloc_contexts, global_platform_api->platform_this_thread_id()),a);
-	global_platform_api->platform_release_mutex(global_alloc_contexts_mutex);
+	global_state->api->platform_aquire_mutex(&global_state->alloc_contexts_mutex, -1);
+	stack_push(&map_get(&global_state->alloc_contexts, global_state->api->platform_this_thread_id()),a);
+	global_state->api->platform_release_mutex(&global_state->alloc_contexts_mutex);
 }
 
 allocator* _current_alloc() {
-	global_platform_api->platform_aquire_mutex(global_alloc_contexts_mutex, -1);
-	allocator* ret = stack_top(&map_get(global_alloc_contexts, global_platform_api->platform_this_thread_id()));
-	global_platform_api->platform_release_mutex(global_alloc_contexts_mutex);
+	global_state->api->platform_aquire_mutex(&global_state->alloc_contexts_mutex, -1);
+	allocator* ret = stack_top(&map_get(&global_state->alloc_contexts, global_state->api->platform_this_thread_id()));
+	global_state->api->platform_release_mutex(&global_state->alloc_contexts_mutex);
 	return ret;
 }
 
@@ -39,8 +39,8 @@ inline platform_allocator make_platform_allocator(code_context context) {
 
 	platform_allocator ret;
 	
-	ret.platform_allocate = global_platform_api->platform_heap_alloc;
-	ret.platform_free	  = global_platform_api->platform_heap_free;
+	ret.platform_allocate = global_state->api->platform_heap_alloc;
+	ret.platform_free	  = global_state->api->platform_heap_free;
 	ret.context  		  = context;
 	ret.allocate_ 		  = &platform_allocate;
 	ret.free_ 			  = &platform_free;
