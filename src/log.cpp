@@ -68,6 +68,8 @@ void destroy_logger(logger* log) {
 	log->alloc = NULL;
 }
 
+
+
 i32 logging_thread(void* data_) {
 
 	log_thread_param* data = (log_thread_param*)data_;	

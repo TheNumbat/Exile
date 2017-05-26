@@ -32,6 +32,24 @@ extern "C" game_state* start_up(platform_api* api) {
 	string renderer = string_from_c_str((char*)glGetString(GL_RENDERER));
 	string vendor   = string_from_c_str((char*)glGetString(GL_VENDOR));
 
+#if 0 // basic map vs unordered_map performance testing
+	map<i32,i32> test = make_map<i32,i32>(1111112, &state->default_platform_allocator);
+	for(i32 i = 0; i < 1000000; i++)
+		map_insert(&test, i, i);		
+	for(i32 i = 0; i < 1000000; i++)	// 212
+		map_erase(&test, i);
+	destroy_map(&test);					// 434
+
+	{
+		std::unordered_map<i32, i32> test2;
+		test2.reserve(1000000);
+		for(i32 i = 0; i < 1000000; i++)
+			test2.insert({i, i});
+		for(i32 i = 0; i < 1000000; i++)
+			test2.erase(i);
+	}
+#endif
+
 	return state;
 }
 
@@ -49,11 +67,11 @@ extern "C" void shut_down(platform_api* api, game_state* state) {
 	threadpool_stop_all(&state->thread_pool);
 	destroy_threadpool(&state->thread_pool);
 
-	api->platform_aquire_mutex(&state->alloc_contexts_mutex, -1);
+	destroy_logger(&state->log);
+
 	destroy_stack(&map_get(&state->alloc_contexts, state->api->platform_this_thread_id()));
 	map_erase(&state->alloc_contexts, state->api->platform_this_thread_id());
 	destroy_map(&state->alloc_contexts);
-	api->platform_release_mutex(&state->alloc_contexts_mutex);
 	api->platform_destroy_mutex(&state->alloc_contexts_mutex);
 
 	platform_error err = api->platform_destroy_window(&state->window);

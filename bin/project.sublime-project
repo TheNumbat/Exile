@@ -1,0 +1,45 @@
+{
+    "folders":
+    [
+        {
+            "path": "w:",
+        }
+    ],
+    "settings":
+    {
+        "tab_size": 4
+    },
+    "build_systems":
+    [
+        {
+            "shell_cmd": "build",
+            "file_regex": "^[.\\\\/]*([a-z]?:?[\\w.\\\\/]+)[(:]([0-9]+)[):]([0-9]+)?:?(.*)$",
+            "variants":
+            [
+                {
+                    "name": "Run",
+                    "shell_cmd": "run"
+                },
+                {
+                    "name": "Debug",
+                    "shell_cmd": "dev"
+                },
+                {
+                    "name": "Platform",
+                    "shell_cmd": "build platform",
+                    "file_regex": "^[.\\\\/]*([a-z]?:?[\\w.\\\\/]+)[(:]([0-9]+)[):]([0-9]+)?:?(.*)$"
+                },
+                {
+                    "name": "Release",
+                    "shell_cmd": "build release",
+                    "file_regex": "^[.\\\\/]*([a-z]?:?[\\w.\\\\/]+)[(:]([0-9]+)[):]([0-9]+)?:?(.*)$"
+                },
+                {
+                    "name": "Release Platform",
+                    "shell_cmd": "build platform release",
+                    "file_regex": "^[.\\\\/]*([a-z]?:?[\\w.\\\\/]+)[(:]([0-9]+)[):]([0-9]+)?:?(.*)$"
+                }
+            ]
+        }
+    ]
+}
