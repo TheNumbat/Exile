@@ -14,11 +14,11 @@ set Platform_ReleaseCompilerFlags=-O2 -MTd -nologo -Gr -EHa -W4 -FC -Femain.exe 
 set Platform_LinkerFlags=/NODEFAULTLIB:MSVCRT /SUBSYSTEM:console kernel32.lib user32.lib gdi32.lib opengl32.lib 
 
 if "%1"=="release" (
-	cl %Game_ReleaseCompilerFlags% w:\src\game_main.cpp /link %Game_LinkerFlags%
+	cl %Game_ReleaseCompilerFlags% w:\src\game.cpp /link %Game_LinkerFlags%
 ) else if "%2"=="release" (
-	cl %Game_ReleaseCompilerFlags% w:\src\game_main.cpp /link %Game_LinkerFlags%
+	cl %Game_ReleaseCompilerFlags% w:\src\game.cpp /link %Game_LinkerFlags%
 ) else (
-	cl %Game_DebugCompilerFlags% w:\src\game_main.cpp /link %Game_LinkerFlags%
+	cl %Game_DebugCompilerFlags% w:\src\game.cpp /link %Game_LinkerFlags%
 )
 
 if "%1"=="platform" goto platform
