@@ -109,8 +109,6 @@ void logger_add_file(logger* log, platform_file file, log_level level) {
 
 void logger_print_header(logger* log, log_file file) {
 
-	// [time(10)] [thread(32)] [file:line(32)] [level(5)] [message] 
-
 	PUSH_ALLOC(log->alloc) {
 		
 		string header = make_stringf(string_literal("%-10s [%-24s] [%-32s] [%-5s] %-2s\r\n"), "time", "thread/context", "file:line", "level", "message");
@@ -159,6 +157,7 @@ void logger_msg(logger* log, string msg, log_level level, code_context context, 
 	global_state->api->platform_signal_semaphore(&log->logging_semaphore, 1);
 
 	if(level == log_fatal) {
+		// we will never return
 		global_state->api->platform_join_thread(&log->logging_thread, -1);
 	}
 }
@@ -217,7 +216,7 @@ i32 logging_thread(void* data_) {
 						break;
 					}
 
-					string final_output = make_stringf(string_literal("%-10s [%-24s] [%-32s] [%-5s] %s \n"), time.c_str, thread_contexts.c_str, file_line.c_str, level.c_str, msg.msg.c_str);
+					string final_output = make_stringf(string_literal("%-10s [%-24s] [%-32s] [%-5s] %s\r\n"), time.c_str, thread_contexts.c_str, file_line.c_str, level.c_str, msg.msg.c_str);
 
 					free_string(file_line);
 					free_string(thread_contexts);
