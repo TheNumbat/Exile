@@ -54,6 +54,8 @@ platform_error platform_destroy_mutex(platform_mutex* mut);
 platform_mutex_state platform_aquire_mutex(platform_mutex* mut, i32 ms); // ms = -1 for infinite
 platform_error platform_release_mutex(platform_mutex* mut);
 
+// allocates a string
+string platform_get_timef(string fmt);
 
 #ifdef _WIN32
 

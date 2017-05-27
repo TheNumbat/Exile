@@ -1,7 +1,8 @@
 
 void _pop_alloc() {
 	global_state->api->platform_aquire_mutex(&global_state->alloc_contexts_mutex, -1);
-	(*CURRENT_ALLOC()->destroy)(CURRENT_ALLOC()); 
+	allocator* a = _current_alloc();
+	a->destroy(a);
 	stack_pop(map_get(&global_state->alloc_contexts, global_state->api->platform_this_thread_id()));
 	global_state->api->platform_release_mutex(&global_state->alloc_contexts_mutex);
 }
@@ -60,6 +61,9 @@ void* arena_allocate(u64 bytes, void* this_data) {
 		this_->used += bytes;
 
 		return ret;
+	} else {
+
+		LOG_ERR_F("Failed to allocate %u bytes in allocator from %s:%u", bytes, this_->context.file.c_str, this_->context.line);
 	}
 
 	return NULL;
@@ -77,7 +81,7 @@ void arena_destroy(void* this_data) {
 	}
 }
 
-inline allocator make_arena_allocator_from_context(u64 size, code_context context) {
+inline arena_allocator make_arena_allocator_from_context(u64 size, code_context context) {
 
 	arena_allocator ret;
 
@@ -113,8 +117,8 @@ inline arena_allocator make_arena_allocator(u64 size, allocator* backing, code_c
 
 void memcpy(void* source, void* dest, u64 size) {
 
-	char* csource = (char*)source;
-	char* cdest   = (char*)dest;
+	u8* csource = (u8*)source;
+	u8* cdest   = (u8*)dest;
 
 	for(int i = 0; i < size; i++)
 		cdest[i] = csource[i];

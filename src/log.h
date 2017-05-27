@@ -8,7 +8,7 @@ enum log_level : u8 {
 	log_info,		// relevant info
 	log_warn,		// shouldn't happen, debug later
 	log_error,		// shouldn't happen, debug now
-	log_fatal,		// we are about to crash
+	log_fatal,		// basically assert(false), hangs the thread and will exit the program after output
 };
 
 struct log_file {
@@ -62,12 +62,13 @@ void logger_end_thread(logger* log);
 void logger_start(logger* log); // begin logging thread - call from one thread
 void logger_stop(logger* log);  // end logging thread - call from one thread
 
-#define LOG_PUSH_CONTEXT(str) logger_push_context(&global_state->log, str);
+#define LOG_PUSH_CONTEXT(str) logger_push_context(&global_state->log, string_literal(str));
 void logger_push_context(logger* log, string context);
 #define LOG_POP_CONTEXT() logger_pop_context(&global_state->log);
 void logger_pop_context(logger* log);
 
 void logger_add_file(logger* log, platform_file file, log_level level); // call from one thread before starting
+void logger_print_header(logger* log, log_file file);
 
 // when you log a string unformatted, it makes a copy
 // when you log a string formatted, it allocates a new string (to format)

@@ -60,7 +60,7 @@ void logger_init_thread(logger* log, string name, code_context context) {
 	this_data.start_context = context;
 
 	global_state->api->platform_aquire_mutex(&log->thread_data_mutex, -1);
-	map_insert_if_unique(&log->thread_data, global_state->api->platform_this_thread_id(), this_data);
+	map_insert(&log->thread_data, global_state->api->platform_this_thread_id(), this_data);
 	global_state->api->platform_release_mutex(&log->thread_data_mutex);
 }
 
@@ -103,6 +103,23 @@ void logger_add_file(logger* log, platform_file file, log_level level) {
 	lfile.file = file;
 	lfile.level = level;
 	vector_push(&log->out, lfile);
+
+	logger_print_header(log, lfile);
+}
+
+void logger_print_header(logger* log, log_file file) {
+
+	// [time(10)] [thread(32)] [file:line(32)] [level(5)] [message] 
+
+	PUSH_ALLOC(log->alloc) {
+		
+		string header = make_stringf(string_literal("%-10s [%-24s] [%-32s] [%-5s] %-2s\r\n"), "time", "thread/context", "file:line", "level", "message");
+
+		global_state->api->platform_write_file(&file.file, (void*)header.c_str, header.len - 1);
+
+		free_string(header);
+
+	} POP_ALLOC();
 }
 
 void logger_msgf(logger* log, string fmt, log_level level, code_context context, ...) {
@@ -128,17 +145,22 @@ void logger_msg(logger* log, string msg, log_level level, code_context context, 
 	} else {
 		lmsg.msg = msg;
 	}
-	lmsg.msg = msg;
 	lmsg.publisher = context;
+	lmsg.level = level;
 
 	global_state->api->platform_aquire_mutex(&log->thread_data_mutex, -1);
 	lmsg.data = *map_get(&log->thread_data, global_state->api->platform_this_thread_id());
+	lmsg.data.context_name = make_stack_copy(lmsg.data.context_name);
 	global_state->api->platform_release_mutex(&log->thread_data_mutex);
 
 	global_state->api->platform_aquire_mutex(&log->queue_mutex, -1);
 	queue_push(&log->message_queue, lmsg);
 	global_state->api->platform_release_mutex(&log->queue_mutex);
 	global_state->api->platform_signal_semaphore(&log->logging_semaphore, 1);
+
+	if(level == log_fatal) {
+		global_state->api->platform_join_thread(&log->logging_thread, -1);
+	}
 }
 
 i32 logging_thread(void* data_) {
@@ -151,26 +173,81 @@ i32 logging_thread(void* data_) {
 
 	while(data->running) {
 
-		global_state->api->platform_aquire_mutex(data->queue_mutex, -1);
 		log_message msg;
-		if(!queue_empty(data->message_queue)) {
-			msg = queue_pop(data->message_queue);
-		} 
-		global_state->api->platform_release_mutex(data->queue_mutex);
 
-		if(msg.msg.c_str != NULL) {
+		global_state->api->platform_aquire_mutex(data->queue_mutex, -1);
+		while(!queue_empty(data->message_queue)) {
 			
-			PUSH_ALLOC(data->alloc) {
+			msg = queue_pop(data->message_queue);
+			
+			global_state->api->platform_release_mutex(data->queue_mutex);
 
-				for(u32 i = 0; i < data->out->size; i++) {
+			if(msg.msg.c_str != NULL) {
+				
+				PUSH_ALLOC(data->alloc) {
+				arena_allocator arena = MAKE_ARENA_ALLOCATOR_FROM_CONTEXT(2048);
+				PUSH_ALLOC(&arena) {
 
-					//global_state->api->platform_write_file(&vector_get(data->out, i)->file, (void*)msg.msg.c_str, msg.msg.len);
-				}
+					string time = global_state->api->platform_get_timef(string_literal("hh:mm:ss"));
+					
+					string thread_contexts = make_cat_string(msg.data.name, string_literal("/"));
+					for(u32 j = 0; j < msg.data.context_name.contents.size; j++) {
+						string temp = make_cat_strings(3, thread_contexts, *vector_get(&msg.data.context_name.contents, j), string_literal("/"));
+						free_string(thread_contexts);
+						thread_contexts = temp;
+					}
 
-				free_string(msg.msg);
+					string file_line = make_stringf(string_literal("%s:%u"), msg.publisher.file.c_str, msg.publisher.line);
+					string level;
+					switch(msg.level) {
+					case log_debug:
+						level = string_literal("DEBUG");
+						break;
+					case log_info:
+						level = string_literal("INFO");
+						break;
+					case log_warn:
+						level = string_literal("WARN");
+						break;
+					case log_error:
+						level = string_literal("ERROR");
+						break;
+					case log_fatal:
+						level = string_literal("FATAL");
+						break;
+					}
 
-			} POP_ALLOC();
+					string final_output = make_stringf(string_literal("%-10s [%-24s] [%-32s] [%-5s] %s \n"), time.c_str, thread_contexts.c_str, file_line.c_str, level.c_str, msg.msg.c_str);
+
+					free_string(file_line);
+					free_string(thread_contexts);
+
+					for(u32 i = 0; i < data->out->size; i++) {
+
+						if(vector_get(data->out, i)->level <= msg.level) {
+
+							global_state->api->platform_write_file(&vector_get(data->out, i)->file, (void*)final_output.c_str, final_output.len - 1);
+						}
+					}
+
+					free_string(final_output);
+					global_state->api->platform_heap_free(time.c_str); // allocated from platform, must be freed from platform
+
+					destroy_stack(&msg.data.context_name);
+
+
+					if(msg.level == log_fatal) {
+						// die
+						exit(1);
+					}
+				} POP_ALLOC();
+
+					free_string(msg.msg);
+
+				} POP_ALLOC();
+			}
 		}
+		global_state->api->platform_release_mutex(data->queue_mutex);
 
 		global_state->api->platform_wait_semaphore(data->logging_semaphore, -1);
 	}

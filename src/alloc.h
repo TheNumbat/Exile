@@ -49,7 +49,7 @@ void arena_free(void*, void*);
 void arena_destroy(void* this_data);
 
 #define MAKE_ARENA_ALLOCATOR_FROM_CONTEXT(size) make_arena_allocator_from_context(size, CONTEXT)
-inline allocator make_arena_allocator_from_context(u64 size, code_context context);
+inline arena_allocator make_arena_allocator_from_context(u64 size, code_context context);
 
 #define MAKE_ARENA_ALLOCATOR(size, a) make_arena_allocator(size, a, CONTEXT)
 inline arena_allocator make_arena_allocator(u64 size, allocator* backing, code_context context);

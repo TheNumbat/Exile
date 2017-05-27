@@ -18,7 +18,8 @@
             [
                 {
                     "name": "Run",
-                    "shell_cmd": "run"
+                    "shell_cmd": "run",
+                    "encoding": "UTF-16LE"
                 },
                 {
                     "name": "Debug",

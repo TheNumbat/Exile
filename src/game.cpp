@@ -22,7 +22,7 @@ extern "C" game_state* start_up(platform_api* api) {
 
 	platform_file stdout_file;
 	api->platform_get_stdout_as_file(&stdout_file);
-	logger_add_file(&state->log, stdout_file, log_debug);
+	logger_add_file(&state->log, stdout_file, log_info);
 	LOG_INIT_THREAD(string_literal("main"));
 
 	logger_start(&state->log);
@@ -77,7 +77,7 @@ extern "C" void shut_down(platform_api* api, game_state* state) {
 	threadpool_stop_all(&state->thread_pool);
 	destroy_threadpool(&state->thread_pool);
 
-	LOG_END_THREAD();	
+	LOG_END_THREAD();
 	logger_stop(&state->log);
 	destroy_logger(&state->log);
 

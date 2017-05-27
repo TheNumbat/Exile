@@ -133,8 +133,8 @@ T vector_front(vector<T>* v) {
 		return v->memory[0];
 	}
 
-	LOG_FATAL("Trying to get empty vector back!");
-	T ret;
+	LOG_FATAL("Trying to get empty vector front!");
+	T ret = {};
 	return ret;
 }
 
@@ -142,7 +142,7 @@ template<typename T>
 T vector_back(vector<T>* v) { 
 
 	if(v->size) {
-		return v->memory[v->size];
+		return v->memory[v->size - 1];
 	}
 
 	LOG_FATAL("Trying to get empty vector back!");

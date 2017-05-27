@@ -46,22 +46,12 @@ void threadpool_queue_job(threadpool* tp, i32 (*proc)(void*), void* data) {
 
 void threadpool_queue_job(threadpool* tp, job j) {
 
-	platform_mutex_state state = global_state->api->platform_aquire_mutex(&tp->queue_mutex, -1);
-	if(!state.error.good) {
-		
-	}
-
+	global_state->api->platform_aquire_mutex(&tp->queue_mutex, -1);
+	
 	queue_push(&tp->jobs, j);
 
-	platform_error err = global_state->api->platform_release_mutex(&tp->queue_mutex);
-	if(!err.good) {
-		
-	}
-
-	err = global_state->api->platform_signal_semaphore(&tp->jobs_semaphore, 1);
-	if(!err.good) {
-		
-	}
+	global_state->api->platform_release_mutex(&tp->queue_mutex);
+	global_state->api->platform_signal_semaphore(&tp->jobs_semaphore, 1);
 }
 
 void threadpool_stop_all(threadpool* tp) {
@@ -112,12 +102,15 @@ i32 worker(void* data_) {
 	map_insert(&global_state->alloc_contexts, global_state->api->platform_this_thread_id(), make_stack<allocator*>(0, data->alloc));
 	global_state->api->platform_release_mutex(&global_state->alloc_contexts_mutex);
 
-	PUSH_ALLOC(&global_state->default_platform_allocator) {
-		
+	PUSH_ALLOC(data->alloc) {
+
 		string thread_name = make_stringf(string_literal("thread %i"), global_state->api->platform_this_thread_id().id);
 		LOG_INIT_THREAD(thread_name);
 
+		LOG_DEBUG("Starting worker thread!");
+
 		while(data->running) {
+
 			job current_job;
 
 			global_state->api->platform_aquire_mutex(data->queue_mutex, -1);
@@ -132,6 +125,8 @@ i32 worker(void* data_) {
 
 			global_state->api->platform_wait_semaphore(data->jobs_semaphore, -1);
 		}
+
+		LOG_DEBUG("Ending worker thread!");
 
 		LOG_END_THREAD();
 		free_string(thread_name);

@@ -37,6 +37,19 @@ platform_api platform_build_api() {
 	ret.platform_close_file				= &platform_close_file;
 	ret.platform_write_file				= &platform_write_file;
 	ret.platform_get_stdout_as_file		= &platform_get_stdout_as_file;
+	ret.platform_get_timef				= &platform_get_timef;
+
+	return ret;
+}
+
+string platform_get_timef(string fmt) {
+
+	i32 len = GetTimeFormat(LOCALE_USER_DEFAULT, 0, NULL, fmt.c_str, NULL, 0);
+
+	string ret = make_string(len, &platform_heap_alloc);
+	ret.len = ret.cap;
+
+	GetTimeFormat(LOCALE_USER_DEFAULT, 0, NULL, fmt.c_str, ret.c_str, len);	
 
 	return ret;
 }
