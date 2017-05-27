@@ -19,7 +19,7 @@ struct threadpool {
 	bool running    = false;
 	array<platform_thread> threads;
 	array<worker_data> 	   data;
-	queue<job>	   	 	   jobs; 		// TODO(max): make a concurrent queue
+	queue<job>	   	 	   jobs; 		
 	platform_mutex		   queue_mutex; 
 	platform_semaphore	   jobs_semaphore;
 	allocator* 			   alloc = NULL;

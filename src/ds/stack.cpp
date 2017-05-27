@@ -52,7 +52,7 @@ T stack_pop(stack<T>* s) {
 		return top;	
 	}
 
-	// TODO(max): errors
+	LOG_FATAL("Trying to pop empty stack!");
 	T ret = {};
 	return ret;
 }
@@ -65,7 +65,7 @@ T stack_top(stack<T>* s) {
 		return vector_back(&s->contents);
 	}
 
-	// TODO(max): errors
+	LOG_FATAL("Trying to get top of empty stack!");
 	T ret = {};
 	return ret;
 }

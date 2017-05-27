@@ -6,8 +6,6 @@ threadpool make_threadpool(i32 num_threads_) {
 
 threadpool make_threadpool(allocator* a, i32 num_threads_) {
 
-	// TODO(max): errors
-
 	threadpool ret;
 
 	ret.num_threads = num_threads_ == 0 ? global_state->api->platform_get_num_cpus() : num_threads_;
@@ -104,10 +102,10 @@ i32 worker(void* data_) {
 
 	PUSH_ALLOC(data->alloc) {
 
-		string thread_name = make_stringf(string_literal("thread %i"), global_state->api->platform_this_thread_id().id);
+		string thread_name = make_stringf(string_literal("worker %i"), global_state->api->platform_this_thread_id().id);
 		LOG_INIT_THREAD(thread_name);
 
-		LOG_DEBUG("Starting worker thread!");
+		LOG_DEBUG("Starting worker thread");
 
 		while(data->running) {
 
@@ -126,7 +124,7 @@ i32 worker(void* data_) {
 			global_state->api->platform_wait_semaphore(data->jobs_semaphore, -1);
 		}
 
-		LOG_DEBUG("Ending worker thread!");
+		LOG_DEBUG("Ending worker thread");
 
 		LOG_END_THREAD();
 		free_string(thread_name);

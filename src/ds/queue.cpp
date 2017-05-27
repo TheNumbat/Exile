@@ -43,7 +43,7 @@ T queue_pop(queue<T>* q) {
 		return top;	
 	}
 
-	// TODO(max): errors
+	LOG_FATAL("Trying to pop empty queue!");
 	T ret = {};
 	return ret;
 }
@@ -56,7 +56,7 @@ T queue_front(queue<T>* q) {
 		return vector_front(&q->contents);
 	}
 
-	// TODO(max): errors
+	LOG_FATAL("Trying to get front of empty queue!");
 	T ret = {};
 	return ret;
 }
