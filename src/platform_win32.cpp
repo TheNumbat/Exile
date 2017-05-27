@@ -152,8 +152,6 @@ platform_thread_join_state platform_join_thread(platform_thread* thread, i32 ms)
 		ret.error.good = false;
 		ret.error.error = GetLastError();
 		return ret;		
-	default: // should never happen
-		assert(false);
 	}
 
 	return ret;
@@ -225,8 +223,6 @@ platform_semaphore_state platform_wait_semaphore(platform_semaphore* sem, i32 ms
 		ret.error.good = false;
 		ret.error.error = GetLastError();
 		return ret;		
-	default: // should never happen
-		assert(false);
 	}
 
 	return ret;
@@ -281,8 +277,6 @@ platform_mutex_state platform_aquire_mutex(platform_mutex* mut, i32 ms) {
 		ret.error.good = false;
 		ret.error.error = GetLastError();
 		return ret;		
-	default: // should never happen
-		assert(false);
 	}
 
 	return ret;

@@ -1,10 +1,7 @@
 
-#include <iostream>
-#include <assert.h>
-using std::cout;
-using std::endl;
-
 // platform layer setup + game code loading/reloading
+
+#include <stdint.h>
 
 typedef uint8_t 	u8;
 typedef int8_t 		i8;
@@ -57,7 +54,6 @@ int main() {
 	string exe_path;
 	platform_error err = platform_get_bin_path(&exe_path);
 	if(!err.good) {
-		cout << "Error getting exe path: " << err.error << endl;
 		return 1;
 	}
 
@@ -74,7 +70,6 @@ int main() {
 
 	err = platform_get_file_attributes(&attrib, dll_path);
 	if(!err.good) {
-		cout << "Error getting DLL attributes: " << err.error << endl;
 		return 1;
 	}
 
@@ -85,7 +80,6 @@ int main() {
 	game_state = (*start_up)(&api);
 
 	if(game_state == NULL) {
-		cout << "Error in startup!" << endl;
 		return 1;
 	}
 
@@ -117,13 +111,11 @@ bool load_lib() {
 
 	err = platform_load_library(&game_dll, temp_dll_path);
 	if(!err.good) {
-		cout << "Error loading game DLL: " << err.error << endl;
 		return false;
 	}
 
 	err = platform_get_file_attributes(&attrib, dll_path);
 	if(!err.good) {
-		cout << "Error getting DLL attributes: " << err.error << endl;
 		return false;
 	}
 
@@ -136,14 +128,11 @@ bool try_reload() {
 
 	platform_error err = platform_get_file_attributes(&to_test, dll_path);
 	if(!err.good) {
-		cout << "Error getting DLL attributes: " << err.error << endl;
 		return false;
 	}
 
 	if(platform_test_file_written(&attrib, &to_test)) {
 		
-		cout << "Reloading Game Code" << endl;
-
 		attrib = to_test;
 
 		(*on_unload)(&api, game_state);
@@ -164,31 +153,26 @@ bool load_funcs() {
 
 	platform_error err = platform_get_proc_address((void**)&start_up, &game_dll, string_literal("start_up"));
 	if(!err.good) {
-		cout << "Error loading start_up: " << err.error << endl;
 		return false;
 	}
 
 	err = platform_get_proc_address((void**)&main_loop, &game_dll, string_literal("main_loop"));
 	if(!err.good) {
-		cout << "Error loading main_loop: " << err.error << endl;
 		return false;
 	}
 
 	err = platform_get_proc_address((void**)&shut_down, &game_dll, string_literal("shut_down"));
 	if(!err.good) {
-		cout << "Error loading shut_down: " << err.error << endl;
 		return false;
 	}
 
 	err = platform_get_proc_address((void**)&on_reload, &game_dll, string_literal("on_reload"));
 	if(!err.good) {
-		cout << "Error loading on_reload: " << err.error << endl;
 		return false;
 	}
 
 	err = platform_get_proc_address((void**)&on_unload, &game_dll, string_literal("on_unload"));
 	if(!err.good) {
-		cout << "Error loading on_unload: " << err.error << endl;
 		return false;
 	}
 

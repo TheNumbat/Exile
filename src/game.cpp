@@ -1,10 +1,6 @@
 
 #include "everything.h"
 
-#include <iostream>
-using std::cout;
-using std::endl;
-
 extern "C" game_state* start_up(platform_api* api) {
 
 	game_state* state = (game_state*)api->platform_heap_alloc(sizeof(game_state));
@@ -106,10 +102,14 @@ extern "C" void on_reload(platform_api* api, game_state* state) {
 
 	logger_start(&state->log);
 	threadpool_start_all(&state->thread_pool);
+
+	LOG_INFO("End reloading game code");
 }
 
 extern "C" void on_unload(platform_api* api, game_state* state) {
 	
+	LOG_INFO("Begin reloading game code");
+
 	threadpool_stop_all(&state->thread_pool);
 	logger_stop(&state->log);
 }
