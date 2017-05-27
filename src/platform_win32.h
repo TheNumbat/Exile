@@ -3,7 +3,6 @@
 
 #include <windows.h>
 #include <gl/gl.h>
-#include "wglext.h"
 #include "platform_win32_api.h"
 
 // Platform specific stuff
