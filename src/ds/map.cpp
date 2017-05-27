@@ -19,6 +19,8 @@ map<K,V> make_map(i32 capacity, allocator* a, u32 (*hash)(K)) {
 
 	map<K,V> ret;
 
+	capacity = (i32)ceilf(capacity / MAP_MAX_LOAD_FACTOR);
+
 	ret.alloc 	 = a;
 	ret.contents = make_vector<map_element<K,V>>(capacity, ret.alloc);
 	if(!hash) {

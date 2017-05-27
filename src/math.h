@@ -21,7 +21,12 @@ f64 _fabs(f64 value) {
 	return value > 0.0f ? value : -value;	
 }
 
-i32 _roundf(f32 value) {
-	return (i32)roundf(value);
+f32 _roundf(f32 value) {
+	return roundf(value);
 }
 #define roundf(v) _roundf(v)
+
+f32 _ceilf(f32 value) {
+	return ceilf(value);
+}
+#define ceilf(v) _ceilf(v)

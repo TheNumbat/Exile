@@ -5,7 +5,6 @@
 // (unless you know the map will never grow)
 
 const f32 MAP_MAX_LOAD_FACTOR = 0.9f;
-#define MAP_CAPACITY(n) roundf(n/MAP_MAX_LOAD_FACTOR)
 
 // from Thomas Wang, http://burtleburtle.net/bob/hash/integer.html
 inline u32 hash_u32(u32 key);
