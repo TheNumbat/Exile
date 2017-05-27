@@ -21,7 +21,7 @@ platform_error platform_get_file_attributes(platform_file_attributes* attrib, st
 bool 		   platform_test_file_written(platform_file_attributes* first, platform_file_attributes* second);
 platform_error platform_create_file(platform_file* file, string path, platform_file_open_op mode);
 platform_error platform_close_file(platform_file* file);
-platform_error platform_wrte_file(platform_file* file, void* mem, i32 bytes);
+platform_error platform_write_file(platform_file* file, void* mem, i32 bytes);
 platform_error platform_get_stdout_as_file(platform_file* file);
 
 // if this fails, we're having big problems
@@ -53,6 +53,7 @@ platform_error platform_create_mutex(platform_mutex* mut, bool aquire);
 platform_error platform_destroy_mutex(platform_mutex* mut);
 platform_mutex_state platform_aquire_mutex(platform_mutex* mut, i32 ms); // ms = -1 for infinite
 platform_error platform_release_mutex(platform_mutex* mut);
+
 
 #ifdef _WIN32
 

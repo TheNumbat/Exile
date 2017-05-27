@@ -109,18 +109,13 @@ vector<T> make_vector_copy(vector<T> source) {
 template<typename T>
 void vector_push(vector<T>* v, T value) { 
 
-	if(v->size < v->capacity) {
-
-		v->memory[v->size] = value;
-		v->size++;
-
-	} else {
+	if(v->size == v->capacity) {
 
 		vector_grow(v);
-	
-		v->size++;
-		v->memory[v->size] = value;		
-	}
+	} 
+
+	v->memory[v->size] = value;
+	v->size++;
 }
 
 template<typename T>

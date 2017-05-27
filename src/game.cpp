@@ -14,11 +14,15 @@ extern "C" game_state* start_up(platform_api* api) {
 	state->default_platform_allocator = MAKE_PLATFORM_ALLOCATOR();
 
 	api->platform_create_mutex(&state->alloc_contexts_mutex, false);
-	state->alloc_contexts = make_map<platform_thread_id,stack<allocator*>>(api->platform_get_num_cpus(), &state->default_platform_allocator);
+	state->alloc_contexts = make_map<platform_thread_id,stack<allocator*>>(MAP_CAPACITY(api->platform_get_num_cpus() + 2), &state->default_platform_allocator);
 
 	map_insert(&state->alloc_contexts, api->platform_this_thread_id(), make_stack<allocator*>(0, &state->default_platform_allocator));
 
 	state->log = make_logger(&state->default_platform_allocator);
+
+	platform_file stdout_file;
+	api->platform_get_stdout_as_file(&stdout_file);
+	logger_add_file(&state->log, stdout_file, log_debug);
 	LOG_INIT_THREAD(string_literal("main"));
 
 	logger_start(&state->log);

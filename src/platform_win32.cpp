@@ -35,7 +35,7 @@ platform_api platform_build_api() {
 	ret.platform_join_thread			= &platform_join_thread;
 	ret.platform_create_file			= &platform_create_file;
 	ret.platform_close_file				= &platform_close_file;
-	ret.platform_wrte_file				= &platform_wrte_file;
+	ret.platform_write_file				= &platform_write_file;
 	ret.platform_get_stdout_as_file		= &platform_get_stdout_as_file;
 
 	return ret;
@@ -58,7 +58,7 @@ platform_error platform_get_stdout_as_file(platform_file* file) {
 	return ret;
 }
 
-platform_error platform_wrte_file(platform_file* file, void* mem, i32 bytes) {
+platform_error platform_write_file(platform_file* file, void* mem, i32 bytes) {
 
 	platform_error ret;
 

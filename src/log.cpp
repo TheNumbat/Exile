@@ -141,10 +141,6 @@ void logger_msg(logger* log, string msg, log_level level, code_context context, 
 	global_state->api->platform_signal_semaphore(&log->logging_semaphore, 1);
 }
 
-#include <iostream>
-using std::cout;
-using std::endl;
-
 i32 logging_thread(void* data_) {
 
 	log_thread_param* data = (log_thread_param*)data_;	
@@ -164,10 +160,15 @@ i32 logging_thread(void* data_) {
 
 		if(msg.msg.c_str != NULL) {
 			
-			cout << msg.msg.c_str << endl;
-
 			PUSH_ALLOC(data->alloc) {
+
+				for(u32 i = 0; i < data->out->size; i++) {
+
+					//global_state->api->platform_write_file(&vector_get(data->out, i)->file, (void*)msg.msg.c_str, msg.msg.len);
+				}
+
 				free_string(msg.msg);
+
 			} POP_ALLOC();
 		}
 

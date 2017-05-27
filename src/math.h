@@ -20,3 +20,8 @@ f32 _fabs(f32 value) {
 f64 _fabs(f64 value) {
 	return value > 0.0f ? value : -value;	
 }
+
+i32 _roundf(f32 value) {
+	return (i32)roundf(value);
+}
+#define roundf(v) _roundf(v)
