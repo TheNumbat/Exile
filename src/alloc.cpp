@@ -18,14 +18,14 @@ inline allocator* _current_alloc() {
 	return ret;
 }
 
-inline void* platform_allocate(u64 bytes, void* this_data) {
+inline void* platform_allocate(u64 bytes, void* this_data, code_context context) {
 
 	platform_allocator* this_ = (platform_allocator*)this_data;
 
 	return this_->platform_allocate(bytes);
 }
 
-inline void platform_free(void* mem, void* this_data) {
+inline void platform_free(void* mem, void* this_data, code_context context) {
 
 	platform_allocator* this_ = (platform_allocator*)this_data;
 
@@ -45,7 +45,7 @@ inline platform_allocator make_platform_allocator(code_context context) {
 	return ret;
 }
 
-inline void* arena_allocate(u64 bytes, void* this_data) {
+inline void* arena_allocate(u64 bytes, void* this_data, code_context context) {
 		
 	arena_allocator* this_ = (arena_allocator*)this_data;
 
@@ -64,13 +64,13 @@ inline void* arena_allocate(u64 bytes, void* this_data) {
 	return NULL;
 }
 
-inline void arena_free(void*, void*) {}
+inline void arena_free(void*, void*, code_context context) {}
 
-inline void arena_destroy(arena_allocator* a) {
+inline void arena_destroy(arena_allocator* a, code_context context) {
 
 	if(a->memory) {
 
-		a->backing->free_(a->memory, a->backing);
+		a->backing->free_(a->memory, a->backing, CONTEXT);
 	}
 }
 
@@ -85,7 +85,7 @@ inline arena_allocator make_arena_allocator_from_context(u64 size, code_context 
 	ret.free_ 	  = &arena_free;
 	
 	if(size > 0) {
-		ret.memory   = ret.backing->allocate_(size, ret.backing);
+		ret.memory   = ret.backing->allocate_(size, ret.backing, CONTEXT);
 	}
 
 	return ret;
@@ -102,7 +102,7 @@ inline arena_allocator make_arena_allocator(u64 size, allocator* backing, code_c
 	ret.free_ 	  = &arena_free;
 
 	if(size > 0) {
-		ret.memory   = ret.backing->allocate_(size, ret.backing);
+		ret.memory   = ret.backing->allocate_(size, ret.backing, CONTEXT);
 	}
 
 	return ret;

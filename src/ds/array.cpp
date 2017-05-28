@@ -9,7 +9,7 @@ void destroy_array(array<T>* a) {
 
 	if(a->alloc && a->memory) {
 
-		a->alloc->free_(a->memory, a->alloc);
+		a->alloc->free_(a->memory, a->alloc, CONTEXT);
 	}
 
 	a->memory = NULL;
@@ -26,7 +26,7 @@ array<T> make_array(u32 capacity, allocator* a) {
 
 	if(capacity > 0) {
 
-		ret.memory = (T*)ret.alloc->allocate_(capacity * sizeof(T), ret.alloc);
+		ret.memory = (T*)ret.alloc->allocate_(capacity * sizeof(T), ret.alloc, CONTEXT);
 	}
 	
 	return ret;

@@ -7,10 +7,8 @@ are get() references really a good idea?
 	can use try_get() or something if the get might not be there
 
 immediate to do:
-	Replace direct calls to allocators with _malloc and _free
-		data structures - push owned allocator then use _malloc and _free
 	
-	Add contexts back to _malloc and _free for allocation profiling 
+	Add contexts to allocators for allocation profiling 
 
 	windows input
 	metaprogramming - type introspection?
