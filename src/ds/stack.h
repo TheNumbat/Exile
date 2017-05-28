@@ -7,6 +7,7 @@ struct stack {vector<T> contents;};
 template<typename T> stack<T> make_stack(u32 capacity, allocator* a);
 template<typename T> stack<T> make_stack(u32 capacity = 0);
 template<typename T> stack<T> make_stack_copy(stack<T> src);
+template<typename T> stack<T> make_stack_copy(stack<T> src, allocator* a);
 template<typename T> void destroy_stack(stack<T>* s);
 
 template<typename T> void stack_push(stack<T>* s, T value);

@@ -9,6 +9,21 @@ u32 vector_capacity(vector<T>* v) {
 	return v->capacity;
 }
 
+template<typename T>
+vector<T> make_vector_copy(vector<T> source, allocator* a) {
+
+	vector<T> ret = make_vector<T>(source.capacity, a);
+
+	if(source.memory) {
+
+		memcpy(source.memory, ret.memory, source.capacity * sizeof(T));
+	}
+
+	ret.size = source.size;
+
+	return ret;	
+}
+
 // operator[] but not a member
 template<typename T>
 inline T* vector_get(vector<T>* v, u32 idx) {

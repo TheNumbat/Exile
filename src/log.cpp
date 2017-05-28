@@ -148,7 +148,7 @@ void logger_msg(logger* log, string msg, log_level level, code_context context, 
 
 	global_state->api->platform_aquire_mutex(&log->thread_data_mutex, -1);
 	lmsg.data = *map_get(&log->thread_data, global_state->api->platform_this_thread_id());
-	lmsg.data.context_name = make_stack_copy(lmsg.data.context_name);
+	lmsg.data.context_name = make_stack_copy(lmsg.data.context_name, log->alloc);
 	global_state->api->platform_release_mutex(&log->thread_data_mutex);
 
 	global_state->api->platform_aquire_mutex(&log->queue_mutex, -1);
@@ -184,7 +184,7 @@ i32 logging_thread(void* data_) {
 			if(msg.msg.c_str != NULL) {
 				
 				PUSH_ALLOC(data->alloc) {
-				arena_allocator arena = MAKE_ARENA_ALLOCATOR_FROM_CONTEXT(2048);
+				arena_allocator arena = MAKE_ARENA_FROM_CONTEXT(2048);
 				PUSH_ALLOC(&arena) {
 
 					string time = global_state->api->platform_get_timef(string_literal("hh:mm:ss"));
@@ -240,6 +240,7 @@ i32 logging_thread(void* data_) {
 						exit(1);
 					}
 				} POP_ALLOC();
+				DESTROY_ARENA(&arena);
 
 					free_string(msg.msg);
 

@@ -14,6 +14,7 @@ struct vector {
 template<typename T> vector<T> make_vector(u32 capacity, allocator* a);
 template<typename T> vector<T> make_vector(u32 capacity = 4);
 template<typename T> vector<T> make_vector_copy(vector<T> source);
+template<typename T> vector<T> make_vector_copy(vector<T> source, allocator* a);
 template<typename T> void destroy_vector(vector<T>* v);
 
 template<typename T> void vector_grow(vector<T>* v, bool copy = true);
@@ -29,3 +30,4 @@ template<typename T> T vector_back(vector<T>* v);
 template<typename T> u32 vector_len(vector<T>* v);
 template<typename T> u32 vector_capacity(vector<T>* v);
 template<typename T> bool vector_empty(vector<T>* v);
+

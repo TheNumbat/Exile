@@ -65,7 +65,7 @@ string make_string_from_c_str(char* c_str) {
 
 void free_string(string s) {
 
-	_free(s.c_str);
+	free(s.c_str);
 
 	s.c_str = NULL;
 	s.cap = 0;
@@ -76,7 +76,7 @@ string make_string(u32 cap) {
 
 	string ret;
 
-	ret.c_str = (char*)_malloc(cap);
+	ret.c_str = (char*)malloc(cap);
 	ret.cap = cap;
 
 	return ret;

@@ -6,6 +6,16 @@ void destroy_stack(stack<T>* s) {
 }
 
 template<typename T>
+stack<T> make_stack_copy(stack<T> src, allocator* a) {
+
+	stack<T> ret;
+
+	ret.contents = make_vector_copy(src.contents, a);
+
+	return ret;
+}
+
+template<typename T>
 stack<T> make_stack(u32 capacity, allocator* a) {
 
 	stack<T> ret;

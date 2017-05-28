@@ -1,40 +1,36 @@
 
-void _pop_alloc() {
+inline void _pop_alloc() {
 	global_state->api->platform_aquire_mutex(&global_state->alloc_contexts_mutex, -1);
-	allocator* a = _current_alloc();
-	a->destroy(a);
 	stack_pop(map_get(&global_state->alloc_contexts, global_state->api->platform_this_thread_id()));
 	global_state->api->platform_release_mutex(&global_state->alloc_contexts_mutex);
 }
 
-void _push_alloc(allocator* a) {
+inline void _push_alloc(allocator* a) {
 	global_state->api->platform_aquire_mutex(&global_state->alloc_contexts_mutex, -1);
 	stack_push(map_get(&global_state->alloc_contexts, global_state->api->platform_this_thread_id()),a);
 	global_state->api->platform_release_mutex(&global_state->alloc_contexts_mutex);
 }
 
-allocator* _current_alloc() {
+inline allocator* _current_alloc() {
 	global_state->api->platform_aquire_mutex(&global_state->alloc_contexts_mutex, -1);
 	allocator* ret = stack_top(map_get(&global_state->alloc_contexts, global_state->api->platform_this_thread_id()));
 	global_state->api->platform_release_mutex(&global_state->alloc_contexts_mutex);
 	return ret;
 }
 
-void* platform_allocate(u64 bytes, void* this_data) {
+inline void* platform_allocate(u64 bytes, void* this_data) {
 
 	platform_allocator* this_ = (platform_allocator*)this_data;
 
 	return this_->platform_allocate(bytes);
 }
 
-void platform_free(void* mem, void* this_data) {
+inline void platform_free(void* mem, void* this_data) {
 
 	platform_allocator* this_ = (platform_allocator*)this_data;
 
 	return this_->platform_free(mem);
 }
-
-void platform_destroy(void*) {}
 
 inline platform_allocator make_platform_allocator(code_context context) {
 
@@ -45,12 +41,11 @@ inline platform_allocator make_platform_allocator(code_context context) {
 	ret.context  		  = context;
 	ret.allocate_ 		  = &platform_allocate;
 	ret.free_ 			  = &platform_free;
-	ret.destroy 		  = &platform_destroy;
 
 	return ret;
 }
 
-void* arena_allocate(u64 bytes, void* this_data) {
+inline void* arena_allocate(u64 bytes, void* this_data) {
 		
 	arena_allocator* this_ = (arena_allocator*)this_data;
 
@@ -69,15 +64,13 @@ void* arena_allocate(u64 bytes, void* this_data) {
 	return NULL;
 }
 
-void arena_free(void*, void*) {}
+inline void arena_free(void*, void*) {}
 
-void arena_destroy(void* this_data) {
+inline void arena_destroy(arena_allocator* a) {
 
-	arena_allocator* this_ = (arena_allocator*)this_data;
+	if(a->memory) {
 
-	if(this_->memory) {
-
-		this_->backing->free_(this_->memory, this_->backing);
+		a->backing->free_(a->memory, a->backing);
 	}
 }
 
@@ -90,7 +83,7 @@ inline arena_allocator make_arena_allocator_from_context(u64 size, code_context 
 	ret.backing   = CURRENT_ALLOC();
 	ret.allocate_ = &arena_allocate;
 	ret.free_ 	  = &arena_free;
-	ret.destroy   = &arena_destroy;
+	
 	if(size > 0) {
 		ret.memory   = ret.backing->allocate_(size, ret.backing);
 	}
@@ -107,7 +100,7 @@ inline arena_allocator make_arena_allocator(u64 size, allocator* backing, code_c
 	ret.backing   = backing;
 	ret.allocate_ = &arena_allocate;
 	ret.free_ 	  = &arena_free;
-	ret.destroy   = &arena_destroy;
+
 	if(size > 0) {
 		ret.memory   = ret.backing->allocate_(size, ret.backing);
 	}
