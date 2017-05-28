@@ -2,6 +2,7 @@
 #pragma once
 
 // TODO(max): test flushing every frame instead of every message
+// TODO(max): have messages use a pool allocator or something (remove allocation per message)
 
 enum log_level : i8 {
 	log_alloc = -1,	// super gratuitous allocation info
@@ -39,6 +40,7 @@ struct log_thread_param {
 	platform_mutex*		queue_mutex			= NULL;
 	platform_semaphore*	logging_semaphore 	= NULL;
 	allocator* alloc 						= NULL;
+	arena_allocator* scratch				= NULL;
 };
 
 struct logger {
@@ -49,7 +51,8 @@ struct logger {
 	platform_thread		logging_thread;
 	map<platform_thread_id,log_thread_data> thread_data;
 	log_thread_param 	thread_param;
-	allocator* alloc = NULL;
+	allocator* alloc 	= NULL;
+	arena_allocator 	scratch;
 };
 
 

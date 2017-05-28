@@ -8,6 +8,8 @@ are get() references really a good idea?
 
 immediate to do:
 
+	add names to allocators?
+
 	windows input
 	metaprogramming - type introspection?
 		replace vsnprintf

@@ -25,7 +25,7 @@ platform_error platform_write_file(platform_file* file, void* mem, i32 bytes);
 platform_error platform_get_stdout_as_file(platform_file* file);
 
 // if this fails, we're having big problems
-void*		   platform_heap_alloc(u64 bytes); // initialize memory to zero
+void*		   platform_heap_alloc(u64 bytes); // initializes memory to zero
 void	  	   platform_heap_free(void* mem);
 
 // allocates a string

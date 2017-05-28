@@ -80,7 +80,24 @@ inline void* arena_allocate(u64 bytes, void* this_data, code_context context) {
 
 inline void arena_free(void*, void*, code_context context) {}
 
+inline void arena_reset(arena_allocator* a, code_context context) {
+
+	if(!a->suppress_messages) {
+		logger_msgf(&global_state->log, string_literal("reseting arena %s:%u"), log_alloc, CONTEXT, a->context.file.c_str, a->context.line);
+	}
+
+	a->used = 0;
+
+#ifdef DEBUG
+	memset(a->memory, a->size, 0);
+#endif
+}
+
 inline void arena_destroy(arena_allocator* a, code_context context) {
+
+	if(!a->suppress_messages) {
+		logger_msgf(&global_state->log, string_literal("destroying arena %s:%u"), log_alloc, CONTEXT, a->context.file.c_str, a->context.line);
+	}
 
 	if(a->memory) {
 
@@ -127,6 +144,16 @@ void memcpy(void* source, void* dest, u64 size) {
 	u8* csource = (u8*)source;
 	u8* cdest   = (u8*)dest;
 
-	for(int i = 0; i < size; i++)
+	for(u64 i = 0; i < size; i++) {
 		cdest[i] = csource[i];
+	}
+}
+
+void memset(void* mem, u64 size, u8 val) {
+
+	u8* cmem = (u8*)mem;
+
+	for(u64 i = 0; i < size; i++) {
+		cmem[i] = val;
+	}
 }

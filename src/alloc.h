@@ -49,6 +49,9 @@ inline void arena_free(void*, void*, code_context, bool); // does nothing
 #define DESTROY_ARENA(a) arena_destroy(a, CONTEXT)
 inline void arena_destroy(arena_allocator* a, code_context context);
 
+#define	RESET_ARENA(a) arena_reset(a, CONTEXT)
+inline void arena_reset(arena_allocator* a, code_context context);
+
 #define MAKE_ARENA_FROM_CONTEXT(size) make_arena_allocator_from_context(size, CONTEXT)
 inline arena_allocator make_arena_allocator_from_context(u64 size, code_context context);
 
@@ -60,3 +63,4 @@ inline arena_allocator make_arena_allocator(u64 size, allocator* backing, code_c
 #define free(m) ((*CURRENT_ALLOC()->free_)(m, CURRENT_ALLOC(), CONTEXT))
 
 void memcpy(void* source, void* dest, u64 size);
+void memset(void* mem, u64 size, u8 val);

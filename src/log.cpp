@@ -10,6 +10,8 @@ logger make_logger(allocator* a) {
 	global_state->api->platform_create_semaphore(&ret.logging_semaphore, 0, UINT32_MAX);
 	ret.thread_data = make_map<platform_thread_id,log_thread_data>(8, a);
 	ret.alloc = a;
+	ret.scratch = MAKE_ARENA(2048, a);
+	ret.scratch.suppress_messages = true;
 
 	return ret;
 }
@@ -22,6 +24,7 @@ void logger_start(logger* log) {
 	log->thread_param.logging_semaphore = &log->logging_semaphore;
 	log->thread_param.running 			= true;
 	log->thread_param.alloc 			= log->alloc;
+	log->thread_param.scratch			= &log->scratch;
 
 	global_state->api->platform_create_thread(&log->logging_thread, &logging_thread, &log->thread_param, false);
 }
@@ -39,6 +42,7 @@ void logger_stop(logger* log) {
 	log->thread_param.queue_mutex		= NULL;
 	log->thread_param.logging_semaphore = NULL;
 	log->thread_param.alloc 			= NULL;
+	log->thread_param.scratch			= NULL;
 }
 
 void logger_end_thread(logger* log) {
@@ -76,6 +80,7 @@ void destroy_logger(logger* log) {
 	global_state->api->platform_destroy_mutex(&log->thread_data_mutex);
 	global_state->api->platform_destroy_semaphore(&log->logging_semaphore);
 	destroy_map(&log->thread_data);
+	DESTROY_ARENA(&log->scratch);
 	log->alloc = NULL;
 }
 
@@ -111,7 +116,7 @@ void logger_print_header(logger* log, log_file file) {
 
 	PUSH_ALLOC(log->alloc) {
 		
-		string header = make_stringf(string_literal("%-10s [%-24s] [%-20s] [%-5s] %-2s\r\n"), "time", "thread/context", "file:line", "level", "message");
+		string header = make_stringf(string_literal("%-8s [%-24s] [%-20s] [%-5s] %-2s\r\n"), "time", "thread/context", "file:line", "level", "message");
 
 		global_state->api->platform_write_file(&file.file, (void*)header.c_str, header.len - 1);
 
@@ -146,7 +151,7 @@ void logger_msg(logger* log, string msg, log_level level, code_context context, 
 
 	global_state->api->platform_aquire_mutex(&log->thread_data_mutex, -1);
 	lmsg.data = *map_get(&log->thread_data, global_state->api->platform_this_thread_id());
-	lmsg.data.context_name = make_stack_copy(lmsg.data.context_name, &global_state->suppressed_platform_allocator);
+	//lmsg.data.context_name = make_stack_copy(lmsg.data.context_name, &global_state->suppressed_platform_allocator);
 	global_state->api->platform_release_mutex(&log->thread_data_mutex);
 
 	global_state->api->platform_aquire_mutex(&log->queue_mutex, -1);
@@ -181,10 +186,7 @@ i32 logging_thread(void* data_) {
 
 			if(msg.msg.c_str != NULL) {
 				
-				PUSH_ALLOC(data->alloc) {
-				arena_allocator arena = MAKE_ARENA_FROM_CONTEXT(2048);
-				arena.suppress_messages = true;
-				PUSH_ALLOC(&arena) {
+				PUSH_ALLOC(data->scratch) {
 
 					string time = global_state->api->platform_get_timef(string_literal("hh:mm:ss"));
 					
@@ -218,7 +220,7 @@ i32 logging_thread(void* data_) {
 						break;
 					}
 
-					string final_output = make_stringf(string_literal("%-10s [%-24s] [%-20s] [%-5s] %s\r\n"), time.c_str, thread_contexts.c_str, file_line.c_str, level.c_str, msg.msg.c_str);
+					string final_output = make_stringf(string_literal("%-8s [%-24s] [%-20s] [%-5s] %s\r\n"), time.c_str, thread_contexts.c_str, file_line.c_str, level.c_str, msg.msg.c_str);
 
 					free_string(file_line);
 					free_string(thread_contexts);
@@ -241,10 +243,10 @@ i32 logging_thread(void* data_) {
 						exit(1);
 					}
 				} POP_ALLOC();
-				DESTROY_ARENA(&arena);
+				RESET_ARENA(data->scratch);
 
+				PUSH_ALLOC(data->alloc) {
 					free_string(msg.msg);
-
 				} POP_ALLOC();
 			}
 		}

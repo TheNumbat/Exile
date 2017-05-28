@@ -1,6 +1,5 @@
 
 #include "everything.h"
-#include <crtdbg.h>
 
 extern "C" game_state* start_up(platform_api* api) {
 
@@ -34,7 +33,7 @@ extern "C" game_state* start_up(platform_api* api) {
 
 	LOG_DEBUG("Starting thread pool");
 	state->thread_pool = make_threadpool(&state->default_platform_allocator);
-	threadpool_start_all(&state->thread_pool);
+	// threadpool_start_all(&state->thread_pool);
 
 	LOG_DEBUG("Creating window");
 	platform_error err = api->platform_create_window(&state->window, string_literal("CaveGame"), 1280, 720);
@@ -61,12 +60,7 @@ extern "C" game_state* start_up(platform_api* api) {
 
 extern "C" bool main_loop(game_state* state) {
 
-	// LOG_DEBUG("frame");
-	// LOG_DEBUG("frame");
-	// LOG_DEBUG("frame");
-	// LOG_DEBUG("frame");
-	// LOG_DEBUG("frame");
-	// LOG_DEBUG("frame");
+	LOG_DEBUG("frame");
 	PUSH_ALLOC(&state->default_platform_allocator) {
 
 		{
