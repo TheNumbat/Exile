@@ -59,6 +59,19 @@ string make_stringf(string fmt, ...) {
 	return ret;
 }
 
+string make_vstringf_a(allocator* a, string fmt, va_list args) {
+
+	string ret;
+
+	PUSH_ALLOC(a) {
+
+		ret = make_vstringf(fmt, args);
+
+	} POP_ALLOC();
+
+	return ret;	
+}
+
 #include <cstdio>
 #pragma warning(push)
 #pragma warning(disable : 4996)

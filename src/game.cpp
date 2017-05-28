@@ -1,5 +1,6 @@
 
 #include "everything.h"
+#include <crtdbg.h>
 
 extern "C" game_state* start_up(platform_api* api) {
 
@@ -36,8 +37,7 @@ extern "C" game_state* start_up(platform_api* api) {
 	threadpool_start_all(&state->thread_pool);
 
 	LOG_DEBUG("Creating window");
-	platform_error err = api->platform_create_window(&state->window, string_literal("Window"), 
-						  			  				 1280, 720);
+	platform_error err = api->platform_create_window(&state->window, string_literal("CaveGame"), 1280, 720);
 
 	if(!err.good) {
 		LOG_FATAL_F("Failed to create window, error: %i", err.error);
@@ -60,6 +60,33 @@ extern "C" game_state* start_up(platform_api* api) {
 }
 
 extern "C" bool main_loop(game_state* state) {
+
+	// LOG_DEBUG("frame");
+	// LOG_DEBUG("frame");
+	// LOG_DEBUG("frame");
+	// LOG_DEBUG("frame");
+	// LOG_DEBUG("frame");
+	// LOG_DEBUG("frame");
+	PUSH_ALLOC(&state->default_platform_allocator) {
+
+		{
+		void* test = malloc(1024);
+		free(test);
+		}
+		{
+		void* test = malloc(1024);
+		free(test);
+		}
+		{
+		void* test = malloc(1024);
+		free(test);
+		}
+		{
+		void* test = malloc(1024);
+		free(test);
+		}
+
+	} POP_ALLOC();
 
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

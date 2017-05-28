@@ -125,9 +125,7 @@ void logger_msgf(logger* log, string fmt, log_level level, code_context context,
 	va_list args;
 	va_start(args, context);
 	string msg;
-	PUSH_ALLOC(log->alloc) {
-		msg = make_vstringf(fmt, args);
-	} POP_ALLOC();
+	msg = make_vstringf_a(log->alloc, fmt, args);
 	va_end(args);
 
 	logger_msg(log, msg, level, context, false);
@@ -148,7 +146,7 @@ void logger_msg(logger* log, string msg, log_level level, code_context context, 
 
 	global_state->api->platform_aquire_mutex(&log->thread_data_mutex, -1);
 	lmsg.data = *map_get(&log->thread_data, global_state->api->platform_this_thread_id());
-	lmsg.data.context_name = make_stack_copy(lmsg.data.context_name, log->alloc);
+	lmsg.data.context_name = make_stack_copy(lmsg.data.context_name, &global_state->suppressed_platform_allocator);
 	global_state->api->platform_release_mutex(&log->thread_data_mutex);
 
 	global_state->api->platform_aquire_mutex(&log->queue_mutex, -1);
@@ -237,7 +235,6 @@ i32 logging_thread(void* data_) {
 					global_state->api->platform_heap_free(time.c_str); // allocated from platform, must be freed from platform
 
 					destroy_stack(&msg.data.context_name);
-
 
 					if(msg.level == log_fatal) {
 						// die

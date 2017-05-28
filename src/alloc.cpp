@@ -39,7 +39,7 @@ inline void platform_free(void* mem, void* this_data, code_context context) {
 		logger_msgf(&global_state->log, string_literal("freeing %p from %s:%u with platform alloc %s:%u"), log_alloc, CONTEXT, mem, context.file.c_str, context.line, this_->context.file.c_str, this_->context.line);
 	}
 
-	return this_->platform_free(mem);
+	this_->platform_free(mem);
 }
 
 inline platform_allocator make_platform_allocator(code_context context) {

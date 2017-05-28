@@ -26,3 +26,4 @@ string make_vstringf(string fmt, va_list args);
 
 void free_string(string s, allocator* a);
 string make_stringf_a(allocator* a, string fmt, ...);
+string make_vstringf_a(allocator* a, string fmt, va_list args);

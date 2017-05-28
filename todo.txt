@@ -7,8 +7,6 @@ are get() references really a good idea?
 	can use try_get() or something if the get might not be there
 
 immediate to do:
-	
-	Add contexts to allocators for allocation profiling 
 
 	windows input
 	metaprogramming - type introspection?
