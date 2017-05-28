@@ -8,18 +8,20 @@ extern "C" game_state* start_up(platform_api* api) {
 
 	state->api = api;
 	state->default_platform_allocator = MAKE_PLATFORM_ALLOCATOR();
+	state->suppressed_platform_allocator = state->default_platform_allocator;
+	state->suppressed_platform_allocator.suppress_messages = true;
 
 	api->platform_create_mutex(&state->alloc_contexts_mutex, false);
-	state->alloc_contexts = make_map<platform_thread_id,stack<allocator*>>(api->platform_get_num_cpus() + 2, &state->default_platform_allocator);
+	state->alloc_contexts = make_map<platform_thread_id,stack<allocator*>>(api->platform_get_num_cpus() + 2, &state->suppressed_platform_allocator);
 
-	map_insert(&state->alloc_contexts, api->platform_this_thread_id(), make_stack<allocator*>(0, &state->default_platform_allocator));
+	map_insert(&state->alloc_contexts, api->platform_this_thread_id(), make_stack<allocator*>(0, &state->suppressed_platform_allocator));
 
-	state->log = make_logger(&state->default_platform_allocator);
+	state->log = make_logger(&state->suppressed_platform_allocator);
 
 	platform_file stdout_file, log_all_file;
 	api->platform_get_stdout_as_file(&stdout_file);
 	api->platform_create_file(&log_all_file, string_literal("log_all.txt"), open_file_create);
-	logger_add_file(&state->log, log_all_file, log_debug);
+	logger_add_file(&state->log, log_all_file, log_alloc);
 	logger_add_file(&state->log, stdout_file, log_info);
 
 	LOG_INIT_THREAD(string_literal("main"));

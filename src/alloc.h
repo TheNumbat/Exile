@@ -6,9 +6,10 @@ template<typename T> struct stack;
 template<typename K, typename V> struct map;
 
 struct allocator {
-	void* (*allocate_)(u64 bytes, void* this_data, code_context context) = NULL;
-	void  (*free_)(void* mem, void* this_data, code_context context)	 = NULL;
+	void* (*allocate_)(u64 bytes, void* this_data, code_context context)  = NULL;
+	void  (*free_)(void* mem, void* this_data, code_context context)	  = NULL;
 	code_context context;
+	bool suppress_messages = false;
 };
 
 #define PUSH_ALLOC(a)			_push_alloc(a);
@@ -43,7 +44,7 @@ struct arena_allocator : public allocator {
 };
 
 inline void* arena_allocate(u64 bytes, void* this_data, code_context context);
-inline void arena_free(void*, void*, code_context); // does nothing
+inline void arena_free(void*, void*, code_context, bool); // does nothing
 
 #define DESTROY_ARENA(a) arena_destroy(a, CONTEXT)
 inline void arena_destroy(arena_allocator* a, code_context context);

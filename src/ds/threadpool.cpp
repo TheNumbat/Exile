@@ -97,39 +97,35 @@ i32 worker(void* data_) {
 	worker_data* data = (worker_data*)data_;
 
 	global_state->api->platform_aquire_mutex(&global_state->alloc_contexts_mutex, -1);
-	map_insert(&global_state->alloc_contexts, global_state->api->platform_this_thread_id(), make_stack<allocator*>(0, data->alloc));
+	map_insert(&global_state->alloc_contexts, global_state->api->platform_this_thread_id(), make_stack<allocator*>(0, &global_state->suppressed_platform_allocator));
 	global_state->api->platform_release_mutex(&global_state->alloc_contexts_mutex);
 
-	PUSH_ALLOC(data->alloc) {
+	string thread_name = make_stringf_a(&global_state->suppressed_platform_allocator, string_literal("worker %i"), global_state->api->platform_this_thread_id().id);
+	LOG_INIT_THREAD(thread_name);
 
-		string thread_name = make_stringf(string_literal("worker %i"), global_state->api->platform_this_thread_id().id);
-		LOG_INIT_THREAD(thread_name);
+	LOG_DEBUG("Starting worker thread");
 
-		LOG_DEBUG("Starting worker thread");
+	while(data->running) {
 
-		while(data->running) {
+		job current_job;
 
-			job current_job;
+		global_state->api->platform_aquire_mutex(data->queue_mutex, -1);
+		if(!queue_empty(data->job_queue)) {
+			current_job = queue_pop(data->job_queue);
+		}
+		global_state->api->platform_release_mutex(data->queue_mutex);
 
-			global_state->api->platform_aquire_mutex(data->queue_mutex, -1);
-			if(!queue_empty(data->job_queue)) {
-				current_job = queue_pop(data->job_queue);
-			}
-			global_state->api->platform_release_mutex(data->queue_mutex);
-
-			if(current_job.proc) {
-				(*current_job.proc)(current_job.data);
-			}
-
-			global_state->api->platform_wait_semaphore(data->jobs_semaphore, -1);
+		if(current_job.proc) {
+			(*current_job.proc)(current_job.data);
 		}
 
-		LOG_DEBUG("Ending worker thread");
+		global_state->api->platform_wait_semaphore(data->jobs_semaphore, -1);
+	}
 
-		LOG_END_THREAD();
-		free_string(thread_name);
+	LOG_DEBUG("Ending worker thread");
 
-	} POP_ALLOC();
+	LOG_END_THREAD();
+	free_string(thread_name, &global_state->suppressed_platform_allocator);
 
 	global_state->api->platform_aquire_mutex(&global_state->alloc_contexts_mutex, -1);
 	destroy_stack(map_get(&global_state->alloc_contexts, global_state->api->platform_this_thread_id()));

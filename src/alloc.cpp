@@ -22,12 +22,22 @@ inline void* platform_allocate(u64 bytes, void* this_data, code_context context)
 
 	platform_allocator* this_ = (platform_allocator*)this_data;
 
-	return this_->platform_allocate(bytes);
+	void* mem = this_->platform_allocate(bytes);
+
+	if(!this_->suppress_messages) {
+		logger_msgf(&global_state->log, string_literal("allocating %u bytes to %p from %s:%u with platform alloc %s:%u"), log_alloc, CONTEXT, bytes, mem, context.file.c_str, context.line, this_->context.file.c_str, this_->context.line);
+	}
+
+	return mem;
 }
 
 inline void platform_free(void* mem, void* this_data, code_context context) {
 
 	platform_allocator* this_ = (platform_allocator*)this_data;
+
+	if(!this_->suppress_messages) {
+		logger_msgf(&global_state->log, string_literal("freeing %p from %s:%u with platform alloc %s:%u"), log_alloc, CONTEXT, mem, context.file.c_str, context.line, this_->context.file.c_str, this_->context.line);
+	}
 
 	return this_->platform_free(mem);
 }
@@ -49,19 +59,23 @@ inline void* arena_allocate(u64 bytes, void* this_data, code_context context) {
 		
 	arena_allocator* this_ = (arena_allocator*)this_data;
 
+	void* mem = NULL;
+
 	if(bytes <= this_->size - this_->used) {
 
-		void* ret = (void*)((u8*)this_->memory + this_->used);
+		mem = (void*)((u8*)this_->memory + this_->used);
 
 		this_->used += bytes;
-
-		return ret;
 	} else {
 
 		LOG_ERR_F("Failed to allocate %u bytes in allocator from %s:%u", bytes, this_->context.file.c_str, this_->context.line);
 	}
 
-	return NULL;
+	if(!this_->suppress_messages) {
+		logger_msgf(&global_state->log, string_literal("allocating %u bytes (used:%u/%u) to %p from %s:%u with arena alloc %s:%u"), log_alloc, CONTEXT, bytes, this_->used, this_->size, mem, context.file.c_str, context.line, this_->context.file.c_str, this_->context.line);
+	}
+
+	return mem;
 }
 
 inline void arena_free(void*, void*, code_context context) {}

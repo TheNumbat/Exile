@@ -3,8 +3,9 @@
 
 // TODO(max): test flushing every frame instead of every message
 
-enum log_level : u8 {
-	log_debug = 0,	// gratuitous info
+enum log_level : i8 {
+	log_alloc = -1,	// super gratuitous allocation info
+	log_debug,		// gratuitous info
 	log_info,		// relevant info
 	log_warn,		// shouldn't happen, debug later
 	log_error,		// shouldn't happen, debug now
@@ -52,7 +53,7 @@ struct logger {
 };
 
 
-logger make_logger(allocator* a);
+logger make_logger(allocator* a); // allocator must have suppress_messages set
 void destroy_logger(logger* log); // calls logger_stop if needed, call log_end_thread() everywhere first
 
 #define LOG_INIT_THREAD(n) logger_init_thread(&global_state->log, n, CONTEXT)

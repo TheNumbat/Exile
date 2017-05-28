@@ -1,4 +1,52 @@
 
+string substring(string str, u32 start, u32 end) {
+
+	string ret;
+
+	ret.len = end - start + 1;
+	ret.cap = end - start + 1;
+
+	ret.c_str = str.c_str + start;
+
+	return ret;
+}
+
+
+i32 string_last_slash(string str) {
+
+	for(u32 i = str.len; i >= 0; i--) {
+		if(str.c_str[i] == '\\' || str.c_str[i] == '/') {
+			return i;
+		}
+	}
+
+	return -1;
+}
+
+void free_string(string s, allocator* a) {
+	PUSH_ALLOC(a) {
+
+		free_string(s);
+
+	} POP_ALLOC();
+}
+
+string make_stringf_a(allocator* a, string fmt, ...) {
+	
+	string ret;
+
+	PUSH_ALLOC(a) {
+
+		va_list args;
+		va_start(args, fmt);
+		ret = make_vstringf(fmt, args);
+		va_end(args);
+
+	} POP_ALLOC();
+
+	return ret;
+}
+
 string make_stringf(string fmt, ...) {
 
 	va_list args;

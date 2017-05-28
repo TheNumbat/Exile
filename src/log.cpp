@@ -111,7 +111,7 @@ void logger_print_header(logger* log, log_file file) {
 
 	PUSH_ALLOC(log->alloc) {
 		
-		string header = make_stringf(string_literal("%-10s [%-24s] [%-32s] [%-5s] %-2s\r\n"), "time", "thread/context", "file:line", "level", "message");
+		string header = make_stringf(string_literal("%-10s [%-24s] [%-20s] [%-5s] %-2s\r\n"), "time", "thread/context", "file:line", "level", "message");
 
 		global_state->api->platform_write_file(&file.file, (void*)header.c_str, header.len - 1);
 
@@ -185,6 +185,7 @@ i32 logging_thread(void* data_) {
 				
 				PUSH_ALLOC(data->alloc) {
 				arena_allocator arena = MAKE_ARENA_FROM_CONTEXT(2048);
+				arena.suppress_messages = true;
 				PUSH_ALLOC(&arena) {
 
 					string time = global_state->api->platform_get_timef(string_literal("hh:mm:ss"));
@@ -214,9 +215,12 @@ i32 logging_thread(void* data_) {
 					case log_fatal:
 						level = string_literal("FATAL");
 						break;
+					case log_alloc:
+						level = string_literal("ALLOC");
+						break;
 					}
 
-					string final_output = make_stringf(string_literal("%-10s [%-24s] [%-32s] [%-5s] %s\r\n"), time.c_str, thread_contexts.c_str, file_line.c_str, level.c_str, msg.msg.c_str);
+					string final_output = make_stringf(string_literal("%-10s [%-24s] [%-20s] [%-5s] %s\r\n"), time.c_str, thread_contexts.c_str, file_line.c_str, level.c_str, msg.msg.c_str);
 
 					free_string(file_line);
 					free_string(thread_contexts);
