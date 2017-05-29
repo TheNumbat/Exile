@@ -24,9 +24,11 @@ inline void* platform_allocate(u64 bytes, void* this_data, code_context context)
 
 	void* mem = this_->platform_allocate(bytes);
 
+#ifdef _DEBUG
 	if(!this_->suppress_messages) {
 		logger_msgf(&global_state->log, string_literal("allocating %u bytes to %p from %s:%u with platform alloc %s:%u"), log_alloc, CONTEXT, bytes, mem, context.file.c_str, context.line, this_->context.file.c_str, this_->context.line);
 	}
+#endif
 
 	return mem;
 }
@@ -35,9 +37,11 @@ inline void platform_free(void* mem, void* this_data, code_context context) {
 
 	platform_allocator* this_ = (platform_allocator*)this_data;
 
+#ifdef _DEBUG
 	if(!this_->suppress_messages) {
 		logger_msgf(&global_state->log, string_literal("freeing %p from %s:%u with platform alloc %s:%u"), log_alloc, CONTEXT, mem, context.file.c_str, context.line, this_->context.file.c_str, this_->context.line);
 	}
+#endif
 
 	this_->platform_free(mem);
 }
@@ -71,9 +75,11 @@ inline void* arena_allocate(u64 bytes, void* this_data, code_context context) {
 		LOG_ERR_F("Failed to allocate %u bytes in allocator from %s:%u", bytes, this_->context.file.c_str, this_->context.line);
 	}
 
+#ifdef _DEBUG
 	if(!this_->suppress_messages) {
 		logger_msgf(&global_state->log, string_literal("allocating %u bytes (used:%u/%u) to %p from %s:%u with arena alloc %s:%u"), log_alloc, CONTEXT, bytes, this_->used, this_->size, mem, context.file.c_str, context.line, this_->context.file.c_str, this_->context.line);
 	}
+#endif
 
 	return mem;
 }
@@ -82,22 +88,26 @@ inline void arena_free(void*, void*, code_context context) {}
 
 inline void arena_reset(arena_allocator* a, code_context context) {
 
+#ifdef _DEBUG
 	if(!a->suppress_messages) {
 		logger_msgf(&global_state->log, string_literal("reseting arena %s:%u"), log_alloc, CONTEXT, a->context.file.c_str, a->context.line);
 	}
+#endif
 
 	a->used = 0;
 
-#ifdef DEBUG
+#ifdef _DEBUG
 	memset(a->memory, a->size, 0);
 #endif
 }
 
 inline void arena_destroy(arena_allocator* a, code_context context) {
 
+#ifdef _DEBUG
 	if(!a->suppress_messages) {
 		logger_msgf(&global_state->log, string_literal("destroying arena %s:%u"), log_alloc, CONTEXT, a->context.file.c_str, a->context.line);
 	}
+#endif
 
 	if(a->memory) {
 

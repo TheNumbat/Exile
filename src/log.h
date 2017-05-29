@@ -3,7 +3,7 @@
 
 // TODO(max): test flushing every frame instead of every message
 
-// currently, each message enqueues allocates one 256-byte arena allocation to hold
+// currently, each message enqueue allocates one 256-byte arena allocation to hold
 // a copy of the message, the thread context stack, and the thread name. 
 // the arena is freed after the message is output.
 
@@ -76,37 +76,37 @@ void logger_pop_context(logger* log);
 void logger_add_file(logger* log, platform_file file, log_level level); // call from one thread before starting
 void logger_print_header(logger* log, log_file file);
 
-// when you log a string unformatted, it makes a copy
-// when you log a string formatted, it allocates a new string (to format)
-// these are freed after being printed out
+void logger_msgf(logger* log, string fmt, log_level level, code_context context, ...);
+void logger_msg(logger* log, string msg, log_level level, code_context context);
 
-#define LOG_DEBUG(msg) 	logger_msg(&global_state->log, string_literal(msg), log_debug, CONTEXT);
 #define LOG_INFO(msg) 	logger_msg(&global_state->log, string_literal(msg), log_info,  CONTEXT);
 #define LOG_WARN(msg) 	logger_msg(&global_state->log, string_literal(msg), log_warn,  CONTEXT);
 #define LOG_ERR(msg) 	logger_msg(&global_state->log, string_literal(msg), log_error, CONTEXT);
 #define LOG_FATAL(msg) 	logger_msg(&global_state->log, string_literal(msg), log_fatal, CONTEXT);
-void logger_msg(logger* log, string msg, log_level level, code_context context);
 
-#define LOG_DEBUG_F(fmt, ...) 	logger_msgf(&global_state->log, string_literal(fmt), log_debug, CONTEXT, __VA_ARGS__);
 #define LOG_INFO_F(fmt, ...) 	logger_msgf(&global_state->log, string_literal(fmt), log_info,  CONTEXT, __VA_ARGS__);
 #define LOG_WARN_F(fmt, ...) 	logger_msgf(&global_state->log, string_literal(fmt), log_warn,  CONTEXT, __VA_ARGS__);
 #define LOG_ERR_F(fmt, ...) 	logger_msgf(&global_state->log, string_literal(fmt), log_error, CONTEXT, __VA_ARGS__);
 #define LOG_FATAL_F(fmt, ...) 	logger_msgf(&global_state->log, string_literal(fmt), log_fatal, CONTEXT, __VA_ARGS__);
-void logger_msgf(logger* log, string fmt, log_level level, code_context context, ...);
 
 #define LOG_ASSERT(cond) __pragma(warning(push)) \
 						 __pragma(warning(disable:4127)) \
 						 {if(!(cond)) LOG_FATAL_F("Assertion %s failed!", #cond);} \
 						 __pragma(warning(pop))
-#ifdef DEBUG
-#define LOG_DEBUG_ASSERT(cond) __pragma(warning(push)) \
-						 	   __pragma(warning(disable:4127)) \
-						 	   {if(!(cond)) LOG_FATAL_F("Debug assertion %s failed!", #cond);} \
-						 	   __pragma(warning(pop))
-#define INVALID_PATH 		   LOG_FATAL("Invalid path taken!");
+
+#ifdef _DEBUG
+	#define LOG_DEBUG(msg) 			logger_msg(&global_state->log, string_literal(msg), log_debug, CONTEXT);
+	#define LOG_DEBUG_F(fmt, ...) 	logger_msgf(&global_state->log, string_literal(fmt), log_debug, CONTEXT, __VA_ARGS__);
+	#define LOG_DEBUG_ASSERT(cond) 	__pragma(warning(push)) \
+							 	   	__pragma(warning(disable:4127)) \
+							 	   	{if(!(cond)) LOG_FATAL_F("Debug assertion %s failed!", #cond);} \
+							 	   	__pragma(warning(pop))
+	#define INVALID_PATH 		   	LOG_FATAL("Invalid path taken!");
 #else
-#define LOG_DEBUG_ASSERT(cond)
-#define INVALID_PATH
+	#define LOG_DEBUG(msg)
+	#define LOG_DEBUG_F(fmt, ...)
+	#define LOG_DEBUG_ASSERT(cond)
+	#define INVALID_PATH
 #endif
 
 i32 logging_thread(void* data_);

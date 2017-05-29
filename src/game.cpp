@@ -22,20 +22,20 @@ extern "C" game_state* start_up(platform_api* api) {
 	api->platform_get_stdout_as_file(&stdout_file);
 	api->platform_create_file(&log_all_file, string_literal("log_all.txt"), open_file_create);
 	logger_add_file(&state->log, log_all_file, log_alloc);
-	logger_add_file(&state->log, stdout_file, log_info);
+	logger_add_file(&state->log, stdout_file, log_warn);
 
 	LOG_INIT_THREAD(string_literal("main"));
 
 	logger_start(&state->log);
 
-	LOG_DEBUG("Beginning startup...");
+	LOG_INFO("Beginning startup...");
 	LOG_PUSH_CONTEXT("startup");
 
-	LOG_DEBUG("Starting thread pool");
+	LOG_INFO("Starting thread pool");
 	state->thread_pool = make_threadpool(&state->default_platform_allocator);
 	threadpool_start_all(&state->thread_pool);
 
-	LOG_DEBUG("Creating window");
+	LOG_INFO("Creating window");
 	platform_error err = api->platform_create_window(&state->window, string_literal("CaveGame"), 1280, 720);
 
 	if(!err.good) {
@@ -52,7 +52,7 @@ extern "C" game_state* start_up(platform_api* api) {
 	LOG_INFO_F("GL renderer: %s", renderer.c_str);
 	LOG_INFO_F("GL vendor  : %s", vendor.c_str);
 
-	LOG_DEBUG("Done with startup!");
+	LOG_INFO("Done with startup!");
 	LOG_POP_CONTEXT();
 
 	return state;
@@ -69,20 +69,20 @@ extern "C" bool main_loop(game_state* state) {
 
 extern "C" void shut_down(platform_api* api, game_state* state) {
 
-	LOG_DEBUG("Beginning shutdown...");
+	LOG_INFO("Beginning shutdown...");
 	LOG_PUSH_CONTEXT("shutdown");
 
-	LOG_DEBUG("Stopping thread pool");
+	LOG_INFO("Stopping thread pool");
 	threadpool_stop_all(&state->thread_pool);
 	destroy_threadpool(&state->thread_pool);
 
-	LOG_DEBUG("Destroying window");
+	LOG_INFO("Destroying window");
 	platform_error err = api->platform_destroy_window(&state->window);
 	if(!err.good) {
 		LOG_ERR_F("Failed to destroy window, error: %i", err.error);	
 	}
 
-	LOG_DEBUG("Done with shutdown!");
+	LOG_INFO("Done with shutdown!");
 
 	// not actually quite done but we can't log anything after this
 	LOG_END_THREAD();

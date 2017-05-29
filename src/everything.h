@@ -5,9 +5,7 @@
 
 #include <stdint.h>
 
-#define DEBUG
-
-#ifdef DEBUG
+#ifdef _DEBUG
 #define BOUNDS_CHECK
 #endif
 
