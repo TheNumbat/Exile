@@ -396,12 +396,13 @@ void* platform_heap_alloc(u64 bytes) {
 	// cout << "alloc" << endl;
 
 	HANDLE heap = GetProcessHeap();
-	return HeapAlloc(heap, HEAP_ZERO_MEMORY, bytes);
+	return HeapAlloc(heap, HEAP_ZERO_MEMORY | HEAP_GENERATE_EXCEPTIONS, bytes);
 }
 
 void platform_heap_free(void* mem) {
 
 	// cout << "free" << endl;
+	*((u8*)mem) = 0;
 
 	HANDLE heap = GetProcessHeap();
 	HeapFree(heap, 0, mem);

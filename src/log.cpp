@@ -151,7 +151,7 @@ void logger_msg(logger* log, string msg, log_level level, code_context context, 
 
 	global_state->api->platform_aquire_mutex(&log->thread_data_mutex, -1);
 	lmsg.data = *map_get(&log->thread_data, global_state->api->platform_this_thread_id());
-	//lmsg.data.context_name = make_stack_copy(lmsg.data.context_name, &global_state->suppressed_platform_allocator);
+	lmsg.data.context_name = make_stack_copy(lmsg.data.context_name);
 	global_state->api->platform_release_mutex(&log->thread_data_mutex);
 
 	global_state->api->platform_aquire_mutex(&log->queue_mutex, -1);
@@ -175,12 +175,15 @@ i32 logging_thread(void* data_) {
 
 	while(data->running) {
 
-		log_message msg;
+		for(;;) {
+		
+			global_state->api->platform_aquire_mutex(data->queue_mutex, -1);
 
-		global_state->api->platform_aquire_mutex(data->queue_mutex, -1);
-		while(!queue_empty(data->message_queue)) {
-			
-			msg = queue_pop(data->message_queue);
+			if(queue_empty(data->message_queue)) {
+				global_state->api->platform_release_mutex(data->queue_mutex);
+				break;
+			}
+			log_message msg = queue_pop(data->message_queue);
 			
 			global_state->api->platform_release_mutex(data->queue_mutex);
 
@@ -250,7 +253,6 @@ i32 logging_thread(void* data_) {
 				} POP_ALLOC();
 			}
 		}
-		global_state->api->platform_release_mutex(data->queue_mutex);
 
 		global_state->api->platform_wait_semaphore(data->logging_semaphore, -1);
 	}

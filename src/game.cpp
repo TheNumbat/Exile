@@ -33,7 +33,7 @@ extern "C" game_state* start_up(platform_api* api) {
 
 	LOG_DEBUG("Starting thread pool");
 	state->thread_pool = make_threadpool(&state->default_platform_allocator);
-	// threadpool_start_all(&state->thread_pool);
+	threadpool_start_all(&state->thread_pool);
 
 	LOG_DEBUG("Creating window");
 	platform_error err = api->platform_create_window(&state->window, string_literal("CaveGame"), 1280, 720);
@@ -59,28 +59,6 @@ extern "C" game_state* start_up(platform_api* api) {
 }
 
 extern "C" bool main_loop(game_state* state) {
-
-	LOG_DEBUG("frame");
-	PUSH_ALLOC(&state->default_platform_allocator) {
-
-		{
-		void* test = malloc(1024);
-		free(test);
-		}
-		{
-		void* test = malloc(1024);
-		free(test);
-		}
-		{
-		void* test = malloc(1024);
-		free(test);
-		}
-		{
-		void* test = malloc(1024);
-		free(test);
-		}
-
-	} POP_ALLOC();
 
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
