@@ -2,15 +2,10 @@
 #pragma once
 
 // TODO(max): test flushing every frame instead of every message
-// TODO(max): improve allocation scheme
-	// currently, each message sent does three allocations
-		// copying the message 				- 	I don't think we can avoid this. Likely can optimize with pool allocator
-		// 										at the cost of more complexity
-		// copying the thread name string 	- for snapshotting
-			// this is really only relevant for when a thread queues messages that aren't output before it shuts down
-			// should we just force a thread in that situation to LOG_SYNC() or something? - probably
-		// copying the tread context stack	- for snapshotting
-	// We can jointly allocate the stack + the name. Do we want to offload the context concatenation work to the publisher?
+
+// currently, each message enqueues allocates one 256-byte arena allocation to hold
+// a copy of the message, the thread context stack, and the thread name. 
+// the arena is freed after the message is output.
 
 enum log_level : i8 {
 	log_alloc = -1,	// super gratuitous allocation info
@@ -37,7 +32,7 @@ struct log_message {
 	log_level level;
 	log_thread_data data; // snapshot
 	code_context publisher;
-	bool needs_free = false;
+	arena_allocator arena; // joint allocation of msg, data.context_name, data.name
 };
 
 struct log_thread_param {
@@ -85,12 +80,12 @@ void logger_print_header(logger* log, log_file file);
 // when you log a string formatted, it allocates a new string (to format)
 // these are freed after being printed out
 
-#define LOG_DEBUG(msg) 	logger_msg(&global_state->log, string_literal(msg), log_debug, CONTEXT, true);
-#define LOG_INFO(msg) 	logger_msg(&global_state->log, string_literal(msg), log_info,  CONTEXT, true);
-#define LOG_WARN(msg) 	logger_msg(&global_state->log, string_literal(msg), log_warn,  CONTEXT, true);
-#define LOG_ERR(msg) 	logger_msg(&global_state->log, string_literal(msg), log_error, CONTEXT, true);
-#define LOG_FATAL(msg) 	logger_msg(&global_state->log, string_literal(msg), log_fatal, CONTEXT, true);
-void logger_msg(logger* log, string msg, log_level level, code_context context, bool copy);
+#define LOG_DEBUG(msg) 	logger_msg(&global_state->log, string_literal(msg), log_debug, CONTEXT);
+#define LOG_INFO(msg) 	logger_msg(&global_state->log, string_literal(msg), log_info,  CONTEXT);
+#define LOG_WARN(msg) 	logger_msg(&global_state->log, string_literal(msg), log_warn,  CONTEXT);
+#define LOG_ERR(msg) 	logger_msg(&global_state->log, string_literal(msg), log_error, CONTEXT);
+#define LOG_FATAL(msg) 	logger_msg(&global_state->log, string_literal(msg), log_fatal, CONTEXT);
+void logger_msg(logger* log, string msg, log_level level, code_context context);
 
 #define LOG_DEBUG_F(fmt, ...) 	logger_msgf(&global_state->log, string_literal(fmt), log_debug, CONTEXT, __VA_ARGS__);
 #define LOG_INFO_F(fmt, ...) 	logger_msgf(&global_state->log, string_literal(fmt), log_info,  CONTEXT, __VA_ARGS__);

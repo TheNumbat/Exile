@@ -126,43 +126,68 @@ void logger_print_header(logger* log, log_file file) {
 
 void logger_msgf(logger* log, string fmt, log_level level, code_context context, ...) {
 
-	va_list args;
-	va_start(args, context);
-	string msg;
-	msg = make_vstringf_a(log->alloc, fmt, args);
-	va_end(args);
+	log_message lmsg;
 
-	logger_msg(log, msg, level, context, false);
+	lmsg.arena = MAKE_ARENA(256, log->alloc);
+	lmsg.arena.suppress_messages = true;
+	PUSH_ALLOC(&lmsg.arena) {
+
+		va_list args;
+		va_start(args, context);
+		lmsg.msg = make_vstringf(fmt, args);
+		va_end(args);
+
+		lmsg.publisher = context;
+		lmsg.level = level;
+
+		global_state->api->platform_aquire_mutex(&log->thread_data_mutex, -1);
+		lmsg.data = *map_get(&log->thread_data, global_state->api->platform_this_thread_id());
+		lmsg.data.context_name = make_stack_copy(lmsg.data.context_name, &lmsg.arena);
+		lmsg.data.name = make_copy_string(lmsg.data.name);
+		global_state->api->platform_release_mutex(&log->thread_data_mutex);
+
+		global_state->api->platform_aquire_mutex(&log->queue_mutex, -1);
+		queue_push(&log->message_queue, lmsg);
+		global_state->api->platform_release_mutex(&log->queue_mutex);
+		global_state->api->platform_signal_semaphore(&log->logging_semaphore, 1);
+
+		if(level == log_fatal) {
+			// we will never return
+			global_state->api->platform_join_thread(&log->logging_thread, -1);
+		}
+
+	} POP_ALLOC();
 }
 
-void logger_msg(logger* log, string msg, log_level level, code_context context, bool copy) {
+void logger_msg(logger* log, string msg, log_level level, code_context context) {
 
 	log_message lmsg;
-	if(copy) {
-		PUSH_ALLOC(log->alloc) {
-			lmsg.msg = make_copy_string(msg);
-		} POP_ALLOC();
-	} else {
-		lmsg.msg = msg;
-	}
-	lmsg.publisher = context;
-	lmsg.level = level;
 
-	global_state->api->platform_aquire_mutex(&log->thread_data_mutex, -1);
-	lmsg.data = *map_get(&log->thread_data, global_state->api->platform_this_thread_id());
-	lmsg.data.context_name = make_stack_copy(lmsg.data.context_name);
-	lmsg.data.name = make_copy_string(lmsg.data.name, log->alloc);
-	global_state->api->platform_release_mutex(&log->thread_data_mutex);
+	lmsg.arena = MAKE_ARENA(256, log->alloc);
+	lmsg.arena.suppress_messages = true;
+	PUSH_ALLOC(&lmsg.arena) {
 
-	global_state->api->platform_aquire_mutex(&log->queue_mutex, -1);
-	queue_push(&log->message_queue, lmsg);
-	global_state->api->platform_release_mutex(&log->queue_mutex);
-	global_state->api->platform_signal_semaphore(&log->logging_semaphore, 1);
+		lmsg.msg = make_copy_string(msg);
+		lmsg.publisher = context;
+		lmsg.level = level;
 
-	if(level == log_fatal) {
-		// we will never return
-		global_state->api->platform_join_thread(&log->logging_thread, -1);
-	}
+		global_state->api->platform_aquire_mutex(&log->thread_data_mutex, -1);
+		lmsg.data = *map_get(&log->thread_data, global_state->api->platform_this_thread_id());
+		lmsg.data.context_name = make_stack_copy(lmsg.data.context_name, &lmsg.arena);
+		lmsg.data.name = make_copy_string(lmsg.data.name);
+		global_state->api->platform_release_mutex(&log->thread_data_mutex);
+
+		global_state->api->platform_aquire_mutex(&log->queue_mutex, -1);
+		queue_push(&log->message_queue, lmsg);
+		global_state->api->platform_release_mutex(&log->queue_mutex);
+		global_state->api->platform_signal_semaphore(&log->logging_semaphore, 1);
+
+		if(level == log_fatal) {
+			// we will never return
+			global_state->api->platform_join_thread(&log->logging_thread, -1);
+		}
+
+	} POP_ALLOC();
 }
 
 i32 logging_thread(void* data_) {
@@ -226,10 +251,6 @@ i32 logging_thread(void* data_) {
 
 					string final_output = make_stringf(string_literal("%-8s [%-24s] [%-20s] [%-5s] %*s\r\n"), time.c_str, thread_contexts.c_str, file_line.c_str, level.c_str, 3 * msg.data.context_name.contents.size + msg.msg.len, msg.msg.c_str);
 
-					free_string(time);
-					free_string(file_line);
-					free_string(thread_contexts);
-
 					for(u32 i = 0; i < data->out->size; i++) {
 
 						if(vector_get(data->out, i)->level <= msg.level) {
@@ -238,9 +259,11 @@ i32 logging_thread(void* data_) {
 						}
 					}
 
-					free_string(final_output);
-
-					destroy_stack(&msg.data.context_name);
+					/*unnecessary, as they are allocated on the scratch arena
+					free_string(time);
+					free_string(file_line);
+					free_string(thread_contexts);
+					free_string(final_output);*/
 
 					if(msg.level == log_fatal) {
 						// die
@@ -249,10 +272,7 @@ i32 logging_thread(void* data_) {
 				} POP_ALLOC();
 				RESET_ARENA(data->scratch);
 
-				PUSH_ALLOC(data->alloc) {
-					free_string(msg.msg);
-					free_string(msg.data.name);
-				} POP_ALLOC();
+				DESTROY_ARENA(&msg.arena);
 			}
 		}
 
