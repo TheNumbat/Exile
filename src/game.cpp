@@ -7,7 +7,7 @@ extern "C" game_state* start_up(platform_api* api) {
 	global_state = state;
 
 	state->api = api;
-	state->default_platform_allocator = MAKE_PLATFORM_ALLOCATOR();
+	state->default_platform_allocator = MAKE_PLATFORM_ALLOCATOR("default");
 	state->suppressed_platform_allocator = state->default_platform_allocator;
 	state->suppressed_platform_allocator.suppress_messages = true;
 
@@ -29,7 +29,7 @@ extern "C" game_state* start_up(platform_api* api) {
 	logger_start(&state->log);
 
 	LOG_INFO("Beginning startup...");
-	LOG_PUSH_CONTEXT("startup");
+	LOG_PUSH_CONTEXT_L("startup");
 
 	LOG_INFO("Starting thread pool");
 	state->thread_pool = make_threadpool(&state->default_platform_allocator);
@@ -70,7 +70,7 @@ extern "C" bool main_loop(game_state* state) {
 extern "C" void shut_down(platform_api* api, game_state* state) {
 
 	LOG_INFO("Beginning shutdown...");
-	LOG_PUSH_CONTEXT("shutdown");
+	LOG_PUSH_CONTEXT_L("shutdown");
 
 	LOG_INFO("Stopping thread pool");
 	threadpool_stop_all(&state->thread_pool);

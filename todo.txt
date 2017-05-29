@@ -2,13 +2,10 @@
 For overall : see #high_level_systems
 
 are get() references really a good idea? 
-	to make it work, we need to crash if we can't return a valid reference
-	these references also need to not be stored. Either copy or explicitly take address
-	can use try_get() or something if the get might not be there
+	decided: they're not. Return pointers, but still crash if get() fails.
+	Don't store these pointers unless you know the structure will never grow!
 
 immediate to do:
-
-	add names to allocators?
 
 	windows input
 	metaprogramming - type introspection?

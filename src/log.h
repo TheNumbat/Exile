@@ -68,7 +68,8 @@ void logger_end_thread(logger* log);
 void logger_start(logger* log); // begin logging thread - call from one thread
 void logger_stop(logger* log);  // end logging thread - call from one thread
 
-#define LOG_PUSH_CONTEXT(str) logger_push_context(&global_state->log, string_literal(str));
+#define LOG_PUSH_CONTEXT(str) logger_push_context(&global_state->log, str);
+#define LOG_PUSH_CONTEXT_L(str) logger_push_context(&global_state->log, string_literal(str));
 void logger_push_context(logger* log, string context);
 #define LOG_POP_CONTEXT() logger_pop_context(&global_state->log);
 void logger_pop_context(logger* log);

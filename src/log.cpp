@@ -10,8 +10,7 @@ logger make_logger(allocator* a) {
 	global_state->api->platform_create_semaphore(&ret.logging_semaphore, 0, UINT32_MAX);
 	ret.thread_data = make_map<platform_thread_id,log_thread_data>(8, a);
 	ret.alloc = a;
-	ret.scratch = MAKE_ARENA(2048, a);
-	ret.scratch.suppress_messages = true;
+	ret.scratch = MAKE_ARENA("log scratch", 2048, a, true);
 
 	return ret;
 }
@@ -128,8 +127,7 @@ void logger_msgf(logger* log, string fmt, log_level level, code_context context,
 
 	log_message lmsg;
 
-	lmsg.arena = MAKE_ARENA(256, log->alloc);
-	lmsg.arena.suppress_messages = true;
+	lmsg.arena = MAKE_ARENA("msg arena", 256, log->alloc, true);
 	PUSH_ALLOC(&lmsg.arena) {
 
 		va_list args;
@@ -163,8 +161,7 @@ void logger_msg(logger* log, string msg, log_level level, code_context context) 
 
 	log_message lmsg;
 
-	lmsg.arena = MAKE_ARENA(256, log->alloc);
-	lmsg.arena.suppress_messages = true;
+	lmsg.arena = MAKE_ARENA("msg arena", 256, log->alloc, true);
 	PUSH_ALLOC(&lmsg.arena) {
 
 		lmsg.msg = make_copy_string(msg);
