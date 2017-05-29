@@ -22,7 +22,7 @@ extern "C" game_state* start_up(platform_api* api) {
 	api->platform_get_stdout_as_file(&stdout_file);
 	api->platform_create_file(&log_all_file, string_literal("log_all.txt"), open_file_create);
 	logger_add_file(&state->log, log_all_file, log_alloc);
-	logger_add_file(&state->log, stdout_file, log_warn);
+	logger_add_file(&state->log, stdout_file, log_debug);
 
 	LOG_INIT_THREAD(string_literal("main"));
 
@@ -35,8 +35,13 @@ extern "C" game_state* start_up(platform_api* api) {
 	state->thread_pool = make_threadpool(&state->default_platform_allocator);
 	threadpool_start_all(&state->thread_pool);
 
+	LOG_DEBUG("Setting up events");
+	setup_events(state);
+
 	LOG_INFO("Creating window");
 	platform_error err = api->platform_create_window(&state->window, string_literal("CaveGame"), 1280, 720);
+	state->window_w = 1280;
+	state->window_h = 720;
 
 	if(!err.good) {
 		LOG_FATAL_F("Failed to create window, error: %i", err.error);
@@ -60,11 +65,13 @@ extern "C" game_state* start_up(platform_api* api) {
 
 extern "C" bool main_loop(game_state* state) {
 
-	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+	glEnable(GL_SCISSOR_TEST);
+	glScissor(0, 0, state->window_w, state->window_h);
+	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	state->api->platform_swap_buffers(&state->window);
 	
-	return state->api->platform_process_messages(&state->window);
+	return run_events(state);
 }
 
 extern "C" void shut_down(platform_api* api, game_state* state) {
@@ -81,6 +88,9 @@ extern "C" void shut_down(platform_api* api, game_state* state) {
 	if(!err.good) {
 		LOG_ERR_F("Failed to destroy window, error: %i", err.error);	
 	}
+
+	LOG_DEBUG("Ending events");
+	end_events(state);
 
 	LOG_INFO("Done with shutdown!");
 

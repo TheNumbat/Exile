@@ -1,4 +1,7 @@
 
+void (*global_enqueue)(void* queue_param, platform_event evt) = NULL;
+void* global_enqueue_param = NULL;
+
 platform_api platform_build_api() {
 
 	platform_api ret;
@@ -6,7 +9,8 @@ platform_api platform_build_api() {
 	ret.platform_create_window			= &platform_create_window;
 	ret.platform_destroy_window			= &platform_destroy_window;
 	ret.platform_swap_buffers			= &platform_swap_buffers;
-	ret.platform_process_messages		= &platform_process_messages;
+	ret.platform_set_queue_callback		= &platform_set_queue_callback;
+	ret.platform_queue_messages			= &platform_queue_messages;
 	ret.platform_wait_message			= &platform_wait_message;
 	ret.platform_load_library			= &platform_load_library;
 	ret.platform_free_library			= &platform_free_library;
@@ -39,6 +43,25 @@ platform_api platform_build_api() {
 	ret.platform_get_stdout_as_file		= &platform_get_stdout_as_file;
 	ret.platform_get_timef				= &platform_get_timef;
 	ret.platform_make_timef				= &platform_make_timef;
+	ret.platform_get_window_size		= &platform_get_window_size;
+
+	return ret;
+}
+
+platform_error platform_get_window_size(platform_window* window, i32* w, i32* h) {
+
+	platform_error ret;
+
+	RECT rect;
+
+	if(GetWindowRect(window->handle, &rect) == 0) {
+		ret.good = false;
+		ret.error = GetLastError();
+		return ret;	
+	}
+
+	*w = rect.right - rect.left;
+	*h = rect.bottom - rect.top;
 
 	return ret;
 }
@@ -518,31 +541,406 @@ platform_error platform_swap_buffers(platform_window* window) {
 	return ret;
 }
 
-bool platform_process_messages(platform_window* window) {
-	
-	if(!global_platform_running) {
-		return false;
-	}
+// we may need to enqueue events both here and in window_proc
 
+void platform_set_queue_callback(void (*enqueue)(void* queue_param, platform_event evt), void* queue_param) {
+
+	global_enqueue = enqueue;
+	global_enqueue_param = queue_param;
+}
+
+void platform_queue_messages(platform_window* window) {
+	
 	MSG msg;
 
 	while(PeekMessageA(&msg, window->handle, 0, 0, PM_REMOVE) != 0) {
 		TranslateMessage(&msg);
 		DispatchMessageA(&msg);
 	}
+}
 
-	return true;
+platform_keycode translate_key_code(WPARAM wParam) {
+	switch(wParam) {
+	case '0': return key_0;
+	case '1': return key_1;
+	case '2': return key_2;
+	case '3': return key_3;
+	case '4': return key_4;
+	case '5': return key_5;
+	case '6': return key_6;
+	case '7': return key_7;
+	case '8': return key_8;
+	case '9': return key_9;
+	case 'A': return key_a;
+	case 'B': return key_b;
+	case 'C': return key_c;
+	case 'D': return key_d;
+	case 'E': return key_e;
+	case 'F': return key_f;
+	case 'G': return key_g;
+	case 'H': return key_h;
+	case 'I': return key_i;
+	case 'J': return key_j;
+	case 'K': return key_k;
+	case 'L': return key_l;
+	case 'M': return key_m;
+	case 'N': return key_n;
+	case 'O': return key_o;
+	case 'P': return key_p;
+	case 'Q': return key_q;
+	case 'R': return key_r;
+	case 'S': return key_s;
+	case 'T': return key_t;
+	case 'U': return key_u;
+	case 'V': return key_v;
+	case 'W': return key_w;
+	case 'X': return key_x;
+	case 'Y': return key_y;
+	case 'Z': return key_z;
+	case VK_TAB: return key_tab;
+	case VK_OEM_3: return key_grave;
+	case VK_OEM_MINUS: return key_dash;
+	case VK_OEM_COMMA: return key_comma;
+	case VK_OEM_2: return key_slash;
+	case VK_SPACE: return key_space;
+	case VK_OEM_PLUS: return key_equals;
+	case VK_RETURN: return key_enter;
+	case VK_OEM_PERIOD: return key_period;
+	case VK_OEM_6: return key_rbracket;
+	case VK_OEM_4: return key_lbracket;
+	case VK_OEM_1: return key_semicolon;
+	case VK_OEM_5: return key_backslash;
+	case VK_NUMPAD0: return key_np_0;
+	case VK_NUMPAD1: return key_np_1;
+	case VK_NUMPAD2: return key_np_2;
+	case VK_NUMPAD3: return key_np_3;
+	case VK_NUMPAD4: return key_np_4;
+	case VK_NUMPAD5: return key_np_5;
+	case VK_NUMPAD6: return key_np_6;
+	case VK_NUMPAD7: return key_np_7;
+	case VK_NUMPAD8: return key_np_8;
+	case VK_NUMPAD9: return key_np_9;
+	case VK_ADD: return key_np_add;
+	case VK_DECIMAL: return key_np_period;
+	case VK_DIVIDE: return key_np_divide;
+	case VK_MULTIPLY: return key_np_multiply;
+	case VK_SUBTRACT: return key_np_subtract;
+	case VK_BACK: return key_backspace;
+	case VK_CAPITAL: return key_capslock;
+	case VK_DELETE: return key_delete;
+	case VK_DOWN: return key_down;
+	case VK_UP: return key_up;
+	case VK_LEFT: return key_left;
+	case VK_RIGHT: return key_right;
+	case VK_END: return key_end;
+	case VK_ESCAPE: return key_escape;
+	case VK_F1: return key_f1;
+	case VK_F2: return key_f2;
+	case VK_F3: return key_f3;
+	case VK_F4: return key_f4;
+	case VK_F5: return key_f5;
+	case VK_F6: return key_f6;
+	case VK_F7: return key_f7;
+	case VK_F8: return key_f8;
+	case VK_F9: return key_f9;
+	case VK_F10: return key_f10;
+	case VK_F11: return key_f11;
+	case VK_F12: return key_f12;
+	case VK_HOME: return key_home;
+	case VK_INSERT: return key_insert;
+	case VK_LMENU: return key_lalt;
+	case VK_RMENU: return key_ralt;
+	case VK_LCONTROL: return key_lctrl;
+	case VK_RCONTROL: return key_rctrl;
+	case VK_LSHIFT: return key_lshift;
+	case VK_RSHIFT: return key_rshift;
+	case VK_NUMLOCK: return key_numlock;
+	case VK_PRIOR: return key_pgup;
+	case VK_NEXT: return key_pgdown;
+	case VK_SCROLL: return key_scrolllock;
+	default:  return key_none;
+	}
 }
 
 LRESULT CALLBACK window_proc(HWND handle, UINT msg, WPARAM wParam, LPARAM lParam) {
 	
-	if(msg == WM_DESTROY || msg == WM_CLOSE || msg == WM_QUIT) {
-		
-		global_platform_running = false;
-		return 0;
-	}
+	platform_event evt;
 
-	return DefWindowProcA(handle, msg, wParam, lParam);
+	switch(msg) {
+
+		// window messages
+		case WM_ACTIVATEAPP: {
+			evt.type = event_window;
+			if(wParam == TRUE) {
+				evt.window.op = window_focused;
+			} else {
+				evt.window.op = window_unfocused;
+			}
+			global_enqueue(global_enqueue_param, evt);
+			return 0;
+		}
+		case WM_QUIT:
+		case WM_CLOSE:
+		case WM_DESTROY: {
+			evt.type = event_window;
+			evt.window.op = window_close;
+			global_enqueue(global_enqueue_param, evt);
+			return 0;
+		}
+		case WM_MOVE: {
+			evt.type = event_window;
+			evt.window.op = window_moved;
+			evt.window.x = (i16)LOWORD(lParam);
+			evt.window.y = (i16)HIWORD(lParam);
+			global_enqueue(global_enqueue_param, evt);
+			return 0;
+		}
+		case WM_SHOWWINDOW: {
+			evt.type = event_window;
+			if(wParam == TRUE) {
+				evt.window.op = window_shown;
+			} else {
+				evt.window.op = window_hidden;
+			}
+			switch(lParam) {
+			case SW_OTHERUNZOOM:
+				evt.window.op = window_shown;
+				break;
+			case SW_OTHERZOOM:
+				evt.window.op = window_hidden;
+				break;
+			case SW_PARENTCLOSING:
+				evt.window.op = window_minimized;
+				break;
+			case SW_PARENTOPENING:
+				evt.window.op = window_restored;
+				break;
+			}
+			global_enqueue(global_enqueue_param, evt);
+			return 0;
+		}
+		case WM_SIZE: {
+			evt.type = event_window;
+			switch(wParam) {
+			case SIZE_MAXHIDE: return 0;
+			case SIZE_MAXIMIZED:
+				evt.window.op = window_maximized;
+				break;
+			case SIZE_MAXSHOW: return 0;
+			case SIZE_MINIMIZED: 
+				evt.window.op = window_minimized;
+				break;
+			case SIZE_RESTORED:
+				evt.window.op = window_resized;
+				break;
+			}
+			evt.window.x = (i16)LOWORD(lParam);
+			evt.window.y = (i16)HIWORD(lParam);
+			global_enqueue(global_enqueue_param, evt);
+			return 0;
+		}
+
+		// keyboard messages
+		case WM_KEYDOWN:
+		case WM_SYSKEYDOWN: {
+			evt.type = event_key;
+			evt.key.flags |= key_flag_press;
+			evt.key.code = translate_key_code(wParam);
+			if(lParam & 1<<30) {
+				evt.key.flags &= ~key_flag_press;
+				evt.key.flags |= key_flag_repeat;
+			}
+			if(GetKeyState(VK_LSHIFT) & 0x8000) 	evt.key.flags |= key_flag_lshift;
+			if(GetKeyState(VK_RSHIFT) & 0x8000) 	evt.key.flags |= key_flag_rshift;
+			if(GetKeyState(VK_LCONTROL) & 0x8000) 	evt.key.flags |= key_flag_lctrl;
+			if(GetKeyState(VK_RCONTROL) & 0x8000) 	evt.key.flags |= key_flag_rctrl;
+			if(GetKeyState(VK_LMENU) & 0x8000) 		evt.key.flags |= key_flag_lalt;
+			if(GetKeyState(VK_RMENU) & 0x8000) 		evt.key.flags |= key_flag_ralt;
+			if(GetKeyState(VK_NUMLOCK) & 1)	evt.key.flags |= key_flag_numlock_on;
+			if(GetKeyState(VK_CAPITAL) & 1)	evt.key.flags |= key_flag_capslock_on;
+			global_enqueue(global_enqueue_param, evt);
+
+			i16 repeat = lParam & 0xFFFF;
+			for(i16 i = 1; i < repeat; i++) {
+				platform_event r_evt = evt;
+				r_evt.key.flags |= key_flag_repeat;
+				evt.key.flags &= ~key_flag_press;
+				if(GetKeyState(VK_LSHIFT) & 0x8000) 	r_evt.key.flags |= key_flag_lshift;
+				if(GetKeyState(VK_RSHIFT) & 0x8000) 	r_evt.key.flags |= key_flag_rshift;
+				if(GetKeyState(VK_LCONTROL) & 0x8000) 	r_evt.key.flags |= key_flag_lctrl;
+				if(GetKeyState(VK_RCONTROL) & 0x8000) 	r_evt.key.flags |= key_flag_rctrl;
+				if(GetKeyState(VK_LMENU) & 0x8000) 		r_evt.key.flags |= key_flag_lalt;
+				if(GetKeyState(VK_RMENU) & 0x8000) 		r_evt.key.flags |= key_flag_ralt;
+				if(GetKeyState(VK_NUMLOCK) & 1)	evt.key.flags |= key_flag_numlock_on;
+				if(GetKeyState(VK_CAPITAL) & 1)	evt.key.flags |= key_flag_capslock_on;
+				global_enqueue(global_enqueue_param, r_evt);
+			}
+			return 0;
+		}
+		case WM_KEYUP:
+		case WM_SYSKEYUP: {
+			evt.type = event_key;
+			evt.key.flags |= key_flag_release;
+			evt.key.code = translate_key_code(wParam);
+			if(GetKeyState(VK_LSHIFT) & 0x8000) 	evt.key.flags |= key_flag_lshift;
+			if(GetKeyState(VK_RSHIFT) & 0x8000) 	evt.key.flags |= key_flag_rshift;
+			if(GetKeyState(VK_LCONTROL) & 0x8000) 	evt.key.flags |= key_flag_lctrl;
+			if(GetKeyState(VK_RCONTROL) & 0x8000) 	evt.key.flags |= key_flag_rctrl;
+			if(GetKeyState(VK_LMENU) & 0x8000) 		evt.key.flags |= key_flag_lalt;
+			if(GetKeyState(VK_RMENU) & 0x8000) 		evt.key.flags |= key_flag_ralt;
+			if(GetKeyState(VK_NUMLOCK) & 1)	evt.key.flags |= key_flag_numlock_on;
+			if(GetKeyState(VK_CAPITAL) & 1)	evt.key.flags |= key_flag_capslock_on;			
+			global_enqueue(global_enqueue_param, evt);
+			return 0;
+		}
+
+		// mouse messages
+		case WM_LBUTTONDOWN: {
+			evt.type = event_mouse;
+			evt.mouse.flags |= mouse_flag_press;
+			evt.mouse.flags |= mouse_flag_lclick;
+			evt.mouse.x = GET_X_LPARAM(lParam);
+			evt.mouse.y = GET_Y_LPARAM(lParam);
+			global_enqueue(global_enqueue_param, evt);
+			return 0;
+		}
+		case WM_LBUTTONUP: {
+			evt.type = event_mouse;
+			evt.mouse.flags |= mouse_flag_release;
+			evt.mouse.flags |= mouse_flag_lclick;
+			evt.mouse.x = GET_X_LPARAM(lParam);
+			evt.mouse.y = GET_Y_LPARAM(lParam);
+			global_enqueue(global_enqueue_param, evt);
+			return 0;
+		}
+		case WM_LBUTTONDBLCLK: {
+			evt.type = event_mouse;
+			evt.mouse.flags |= mouse_flag_double;
+			evt.mouse.flags |= mouse_flag_lclick;
+			evt.mouse.x = GET_X_LPARAM(lParam);
+			evt.mouse.y = GET_Y_LPARAM(lParam);
+			global_enqueue(global_enqueue_param, evt);
+			return 0;			
+		}
+		case WM_RBUTTONDOWN: {
+			evt.type = event_mouse;
+			evt.mouse.flags |= mouse_flag_press;
+			evt.mouse.flags |= mouse_flag_rclick;
+			evt.mouse.x = GET_X_LPARAM(lParam);
+			evt.mouse.y = GET_Y_LPARAM(lParam);
+			global_enqueue(global_enqueue_param, evt);
+			return 0;
+		}
+		case WM_RBUTTONUP: {
+			evt.type = event_mouse;
+			evt.mouse.flags |= mouse_flag_release;
+			evt.mouse.flags |= mouse_flag_rclick;
+			evt.mouse.x = GET_X_LPARAM(lParam);
+			evt.mouse.y = GET_Y_LPARAM(lParam);
+			global_enqueue(global_enqueue_param, evt);
+			return 0;
+		}
+		case WM_RBUTTONDBLCLK: {
+			evt.type = event_mouse;
+			evt.mouse.flags |= mouse_flag_double;
+			evt.mouse.flags |= mouse_flag_rclick;
+			evt.mouse.x = GET_X_LPARAM(lParam);
+			evt.mouse.y = GET_Y_LPARAM(lParam);
+			global_enqueue(global_enqueue_param, evt);
+			return 0;			
+		}
+		case WM_MBUTTONDOWN: {
+			evt.type = event_mouse;
+			evt.mouse.flags |= mouse_flag_press;
+			evt.mouse.flags |= mouse_flag_mclick;
+			evt.mouse.x = GET_X_LPARAM(lParam);
+			evt.mouse.y = GET_Y_LPARAM(lParam);
+			global_enqueue(global_enqueue_param, evt);
+			return 0;
+		}
+		case WM_MBUTTONUP: {
+			evt.type = event_mouse;
+			evt.mouse.flags |= mouse_flag_release;
+			evt.mouse.flags |= mouse_flag_mclick;
+			evt.mouse.x = GET_X_LPARAM(lParam);
+			evt.mouse.y = GET_Y_LPARAM(lParam);
+			global_enqueue(global_enqueue_param, evt);
+			return 0;
+		}
+		case WM_MBUTTONDBLCLK: {
+			evt.type = event_mouse;
+			evt.mouse.flags |= mouse_flag_double;
+			evt.mouse.flags |= mouse_flag_mclick;
+			evt.mouse.x = GET_X_LPARAM(lParam);
+			evt.mouse.y = GET_Y_LPARAM(lParam);
+			global_enqueue(global_enqueue_param, evt);
+			return 0;
+		}
+		case WM_MOUSEWHEEL: {
+			evt.type = event_mouse;
+			evt.mouse.flags |= mouse_flag_wheel;
+			evt.mouse.x = GET_X_LPARAM(lParam);
+			evt.mouse.y = GET_Y_LPARAM(lParam);
+			evt.mouse.w = (u8)(GET_WHEEL_DELTA_WPARAM(wParam) / WHEEL_DELTA);
+			global_enqueue(global_enqueue_param, evt);
+			return 0;
+		}
+		case WM_XBUTTONDOWN: {
+			evt.type = event_mouse;
+			evt.mouse.flags |= mouse_flag_press;
+			i16 xbutton = GET_XBUTTON_WPARAM(wParam);
+			if(xbutton == XBUTTON1) {
+				evt.mouse.flags |= mouse_flag_x1click;
+			} else {
+				evt.mouse.flags |= mouse_flag_x2click;
+			}
+			evt.mouse.x = GET_X_LPARAM(lParam);
+			evt.mouse.y = GET_Y_LPARAM(lParam);
+			global_enqueue(global_enqueue_param, evt);
+			return 0;
+		}
+		case WM_XBUTTONUP: {
+			evt.type = event_mouse;
+			evt.mouse.flags |= mouse_flag_release;
+			i16 xbutton = GET_XBUTTON_WPARAM(wParam);
+			if(xbutton == XBUTTON1) {
+				evt.mouse.flags |= mouse_flag_x1click;
+			} else {
+				evt.mouse.flags |= mouse_flag_x2click;
+			}
+			evt.mouse.x = GET_X_LPARAM(lParam);
+			evt.mouse.y = GET_Y_LPARAM(lParam);
+			global_enqueue(global_enqueue_param, evt);
+			return 0;
+		}
+		case WM_XBUTTONDBLCLK: {
+			evt.type = event_mouse;
+			evt.mouse.flags |= mouse_flag_double;
+			i16 xbutton = GET_XBUTTON_WPARAM(wParam);
+			if(xbutton == XBUTTON1) {
+				evt.mouse.flags |= mouse_flag_x1click;
+			} else {
+				evt.mouse.flags |= mouse_flag_x2click;
+			}
+			evt.mouse.x = GET_X_LPARAM(lParam);
+			evt.mouse.y = GET_Y_LPARAM(lParam);
+			global_enqueue(global_enqueue_param, evt);
+			return 0;
+		}
+		case WM_MOUSEMOVE: {
+			evt.type = event_mouse;
+			evt.mouse.flags |= mouse_flag_move;
+			evt.mouse.x = GET_X_LPARAM(lParam);
+			evt.mouse.y = GET_Y_LPARAM(lParam);
+			global_enqueue(global_enqueue_param, evt);
+			return 0;
+		}
+
+		// all others
+		default: {
+			return DefWindowProcA(handle, msg, wParam, lParam);
+		}
+	}
 }
 
 #define WGL_CONTEXT_MAJOR_VERSION_ARB     0x2091
@@ -557,8 +955,6 @@ platform_error platform_create_window(platform_window* window, string title, u32
 	platform_error ret;
 
 	window->title = make_copy_string(title, &platform_heap_alloc);
-	window->width = width;
-	window->height = height;
 
 	HINSTANCE instance = GetModuleHandleA(NULL);
 
@@ -570,7 +966,7 @@ platform_error platform_create_window(platform_window* window, string title, u32
 
 	window->window_class = {
 		sizeof(WNDCLASSEX),
-		CS_HREDRAW | CS_VREDRAW | CS_OWNDC,
+		CS_HREDRAW | CS_VREDRAW | CS_OWNDC | CS_DBLCLKS,
 		(WNDPROC)window_proc,
 		0, 0,
 		instance,
@@ -585,8 +981,7 @@ platform_error platform_create_window(platform_window* window, string title, u32
 	}
 
 	window->handle = CreateWindowExA(WS_EX_ACCEPTFILES, window->title.c_str, window->title.c_str, WS_VISIBLE | WS_OVERLAPPEDWINDOW,
-			           				 CW_USEDEFAULT, CW_USEDEFAULT, window->width, window->height, 0, 0,
-			           				 instance, 0);
+			           				 CW_USEDEFAULT, CW_USEDEFAULT, width, height, 0, 0, instance, 0);
 
 	if(window->handle == NULL) {
 		ret.good = false;

@@ -12,5 +12,7 @@ struct game_state {
 	threadpool thread_pool;
 
 	// don't touch these globally
+	i32 window_w = 0, window_h = 0;
 	platform_window window 	= {};
+	queue<platform_event> event_queue;
 };

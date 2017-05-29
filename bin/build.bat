@@ -22,6 +22,7 @@ if "%1"=="release" (
 )
 
 if "%1"=="platform" goto platform
+popd
 goto :eof
 
 :platform

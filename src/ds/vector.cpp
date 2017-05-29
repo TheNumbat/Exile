@@ -33,7 +33,7 @@ inline T* vector_get(vector<T>* v, u32 idx) {
 		return v->memory + idx;
 	} else {
 		
-		LOG_FATAL_F("vector_get out of bounds, %u < 0 || %u > %u", idx, idx, v->capacity);
+		LOG_FATAL_F("vector_get out of bounds, %u < 0 || %u >= %u", idx, idx, v->capacity);
 		return NULL;
 	}
 #else
@@ -144,7 +144,7 @@ void vector_pop(vector<T>* v) {
 template<typename T>
 T vector_front(vector<T>* v) { 
 
-	if(v->size) {
+	if(v->size > 0) {
 		return v->memory[0];
 	}
 
@@ -166,16 +166,34 @@ T vector_back(vector<T>* v) {
 }
 
 template<typename T>
+void vector_erase(vector<T>* v, u32 index, u32 num) {
+
+#ifdef BOUNDS_CHECK
+	if(v->size >= num) {
+		if(index >= 0 && index < v->size) {
+			for(u32 i = index + num; i < v->size; i++) {
+				v->memory[i - num] = v->memory[i];
+			}
+
+			v->size -= num;
+		} else {
+			LOG_FATAL_F("vector_erase out of bounds %u < 0 || %u >= %u", index, index, v->capacity);
+		}
+	} else {
+		LOG_FATAL_F("vector_erase trying to erase %u elements, %u left", num, v->size);
+	}
+#else
+	for(u32 i = index + num; i < v->size; i++) {
+		v->memory[i - num] = v->memory[i];
+	}
+	v->size -= num;
+#endif
+}
+
+template<typename T>
 void vector_pop_front(vector<T>* v) {
 
-	if(v->size > 0) {
-
-		for(u32 i = 1; i < v->size; i++) {
-			v->memory[i - 1] = v->memory[i];
-		}
-
-		v->size--;
-	}
+	vector_erase(v, 0);
 }
 
 template<typename T>

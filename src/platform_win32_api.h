@@ -1,6 +1,7 @@
 #pragma once
 
 #include <windows.h>
+#include <windowsx.h>
 #include <gl/gl.h>
 
 // API Structures (mark opaque/transparent)
@@ -8,7 +9,6 @@
 struct platform_window {
 	// Transparent
 	string title;
-	u32 width, height	= 0;
 
 	// Opaque block, do not use outside of platform code
 	WNDCLASSEX window_class				= {};

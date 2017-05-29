@@ -151,6 +151,7 @@ void logger_msgf(logger* log, string fmt, log_level level, code_context context,
 
 		if(level == log_fatal) {
 			// we will never return
+			__debugbreak();
 			global_state->api->platform_join_thread(&log->logging_thread, -1);
 		}
 
@@ -181,6 +182,7 @@ void logger_msg(logger* log, string msg, log_level level, code_context context) 
 
 		if(level == log_fatal) {
 			// we will never return
+			__debugbreak();
 			global_state->api->platform_join_thread(&log->logging_thread, -1);
 		}
 

@@ -3,10 +3,12 @@
 
 platform_error platform_create_window(platform_window* window, string title, u32 width, u32 height);
 platform_error platform_destroy_window(platform_window* window);
+platform_error platform_get_window_size(platform_window* window, i32* w, i32* h);
 
 platform_error platform_swap_buffers(platform_window* window);
 
-bool 		   platform_process_messages(platform_window* window);
+void		   platform_set_queue_callback(void (*enqueue)(void* queue_param, platform_event evt), void* queue_param);
+void 		   platform_queue_messages(platform_window* window);
 platform_error platform_wait_message();
 
 platform_error platform_load_library(platform_dll* dll, string file_path);
@@ -25,7 +27,7 @@ platform_error platform_write_file(platform_file* file, void* mem, i32 bytes);
 platform_error platform_get_stdout_as_file(platform_file* file);
 
 // if this fails, we're having big problems
-void*		   platform_heap_alloc(u64 bytes); // initializes memory to zero
+void*		   platform_heap_alloc(u64 bytes); // initializes memory to zero (important! the data structures assume this!)
 void	  	   platform_heap_free(void* mem);
 
 // allocates a string

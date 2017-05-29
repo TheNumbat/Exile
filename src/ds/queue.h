@@ -4,6 +4,8 @@
 template<typename T>
 struct queue {vector<T> contents;};
 
+// TODO(max): circular queue instead of vector_pop_front
+
 template<typename T> queue<T> make_queue(u32 capacity, allocator* a);
 template<typename T> queue<T> make_queue(u32 capacity = 0);
 template<typename T> void destroy_queue(queue<T>* q);
