@@ -402,8 +402,8 @@ void* platform_heap_alloc(u64 bytes) {
 void platform_heap_free(void* mem) {
 
 	// cout << "free" << endl;
-	*((u8*)mem) = 0;
 
+	// *(u8*)mem = 0;
 	HANDLE heap = GetProcessHeap();
 	HeapFree(heap, 0, mem);
 }

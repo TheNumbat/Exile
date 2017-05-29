@@ -24,6 +24,8 @@ string string_from_c_str(char* c_str);
 string make_stringf(string fmt, ...);
 string make_vstringf(string fmt, va_list args);
 
+string make_string(u32 cap, allocator* a);
+string make_copy_string(string src, allocator* a);
 void free_string(string s, allocator* a);
 string make_stringf_a(allocator* a, string fmt, ...);
 string make_vstringf_a(allocator* a, string fmt, va_list args);

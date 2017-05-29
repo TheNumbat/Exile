@@ -51,6 +51,7 @@ void logger_end_thread(logger* log) {
 	
 	log_thread_data* data = map_get(&log->thread_data, global_state->api->platform_this_thread_id());
 	destroy_stack(&data->context_name);
+	map_erase(&log->thread_data, global_state->api->platform_this_thread_id());
 
 	global_state->api->platform_release_mutex(&log->thread_data_mutex);
 }
@@ -152,6 +153,7 @@ void logger_msg(logger* log, string msg, log_level level, code_context context, 
 	global_state->api->platform_aquire_mutex(&log->thread_data_mutex, -1);
 	lmsg.data = *map_get(&log->thread_data, global_state->api->platform_this_thread_id());
 	lmsg.data.context_name = make_stack_copy(lmsg.data.context_name);
+	lmsg.data.name = make_copy_string(lmsg.data.name, log->alloc);
 	global_state->api->platform_release_mutex(&log->thread_data_mutex);
 
 	global_state->api->platform_aquire_mutex(&log->queue_mutex, -1);
@@ -250,6 +252,7 @@ i32 logging_thread(void* data_) {
 
 				PUSH_ALLOC(data->alloc) {
 					free_string(msg.msg);
+					free_string(msg.data.name);
 				} POP_ALLOC();
 			}
 		}

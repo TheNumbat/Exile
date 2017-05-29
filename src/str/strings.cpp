@@ -1,4 +1,17 @@
 
+string make_copy_string(string src, allocator* a) {
+
+	string ret = make_string(src.cap, a);
+
+	ret.len = src.len;
+
+	for(u32 i = 0; i < ret.len; i++) { // will copy null terminator
+		ret.c_str[i] = src.c_str[i];
+	}
+
+	return ret;
+}
+
 string substring(string str, u32 start, u32 end) {
 
 	string ret;
@@ -131,6 +144,16 @@ void free_string(string s) {
 	s.c_str = NULL;
 	s.cap = 0;
 	s.len = 0;
+}
+
+string make_string(u32 cap, allocator* a) {
+
+	string ret;
+
+	ret.c_str = (char*)a->allocate_(cap, a, CONTEXT);
+	ret.cap = cap;
+
+	return ret;
 }
 
 string make_string(u32 cap) {
