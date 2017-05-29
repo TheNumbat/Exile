@@ -90,7 +90,6 @@ void logger_push_context(logger* log, string context) {
 	global_state->api->platform_aquire_mutex(&log->thread_data_mutex, -1);
 	log_thread_data* data = map_get(&log->thread_data, global_state->api->platform_this_thread_id());
 	stack_push(&data->context_name, context);
-	data->indent_level++;
 	global_state->api->platform_release_mutex(&log->thread_data_mutex);
 }
 
@@ -99,7 +98,6 @@ void logger_pop_context(logger* log) {
 	global_state->api->platform_aquire_mutex(&log->thread_data_mutex, -1);
 	log_thread_data* data = map_get(&log->thread_data, global_state->api->platform_this_thread_id());
 	stack_pop(&data->context_name);
-	data->indent_level--;
 	global_state->api->platform_release_mutex(&log->thread_data_mutex);
 }
 
@@ -226,7 +224,7 @@ i32 logging_thread(void* data_) {
 						break;
 					}
 
-					string final_output = make_stringf(string_literal("%-8s [%-24s] [%-20s] [%-5s] %s\r\n"), time.c_str, thread_contexts.c_str, file_line.c_str, level.c_str, msg.msg.c_str);
+					string final_output = make_stringf(string_literal("%-8s [%-24s] [%-20s] [%-5s] %*s\r\n"), time.c_str, thread_contexts.c_str, file_line.c_str, level.c_str, 3 * msg.data.context_name.contents.size + msg.msg.len, msg.msg.c_str);
 
 					free_string(time);
 					free_string(file_line);

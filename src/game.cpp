@@ -28,8 +28,8 @@ extern "C" game_state* start_up(platform_api* api) {
 
 	logger_start(&state->log);
 
-	LOG_PUSH_CONTEXT("startup");
 	LOG_DEBUG("Beginning startup...");
+	LOG_PUSH_CONTEXT("startup");
 
 	LOG_DEBUG("Starting thread pool");
 	state->thread_pool = make_threadpool(&state->default_platform_allocator);
@@ -69,8 +69,8 @@ extern "C" bool main_loop(game_state* state) {
 
 extern "C" void shut_down(platform_api* api, game_state* state) {
 
-	LOG_PUSH_CONTEXT("shutdown");
 	LOG_DEBUG("Beginning shutdown...");
+	LOG_PUSH_CONTEXT("shutdown");
 
 	LOG_DEBUG("Stopping thread pool");
 	threadpool_stop_all(&state->thread_pool);

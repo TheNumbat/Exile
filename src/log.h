@@ -6,7 +6,9 @@
 	// currently, each message sent does three allocations
 		// copying the message 				- 	I don't think we can avoid this. Likely can optimize with pool allocator
 		// 										at the cost of more complexity
-		// copying the thread name string 	- for snapshotting 
+		// copying the thread name string 	- for snapshotting
+			// this is really only relevant for when a thread queues messages that aren't output before it shuts down
+			// should we just force a thread in that situation to LOG_SYNC() or something? - probably
 		// copying the tread context stack	- for snapshotting
 	// We can jointly allocate the stack + the name. Do we want to offload the context concatenation work to the publisher?
 
@@ -26,7 +28,6 @@ struct log_file {
 
 struct log_thread_data {
 	stack<string> context_name;
-	i32 indent_level = 0; // depth of context_name
 	string name;
 	code_context start_context;
 };
