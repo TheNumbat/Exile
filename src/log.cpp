@@ -249,7 +249,7 @@ i32 logging_thread(void* data_) {
 						break;
 					}
 
-					string final_output = make_stringf(string_literal("%-8s [%-24s] [%-20s] [%-5s] %*s\r\n"), time.c_str, thread_contexts.c_str, file_line.c_str, level.c_str, 3 * msg.data.context_name.contents.size + msg.msg.len, msg.msg.c_str);
+					string final_output = make_stringf(string_literal("%-8s [%-24s] [%-20s] [%-5s] %*s\r\n"), time.c_str, thread_contexts.c_str, file_line.c_str, level.c_str, 3 * msg.data.context_name.contents.size + msg.msg.len - 1, msg.msg.c_str);
 
 					for(u32 i = 0; i < data->out->size; i++) {
 
