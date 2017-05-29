@@ -193,7 +193,8 @@ i32 logging_thread(void* data_) {
 				
 				PUSH_ALLOC(data->scratch) {
 
-					string time = global_state->api->platform_get_timef(string_literal("hh:mm:ss"));
+					string time = make_string(9);
+					global_state->api->platform_get_timef(string_literal("hh:mm:ss"), &time);
 					
 					string thread_contexts = make_cat_string(msg.data.name, string_literal("/"));
 					for(u32 j = 0; j < msg.data.context_name.contents.size; j++) {
@@ -227,6 +228,7 @@ i32 logging_thread(void* data_) {
 
 					string final_output = make_stringf(string_literal("%-8s [%-24s] [%-20s] [%-5s] %s\r\n"), time.c_str, thread_contexts.c_str, file_line.c_str, level.c_str, msg.msg.c_str);
 
+					free_string(time);
 					free_string(file_line);
 					free_string(thread_contexts);
 
@@ -239,7 +241,6 @@ i32 logging_thread(void* data_) {
 					}
 
 					free_string(final_output);
-					global_state->api->platform_heap_free(time.c_str); // allocated from platform, must be freed from platform
 
 					destroy_stack(&msg.data.context_name);
 

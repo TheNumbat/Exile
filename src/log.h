@@ -3,14 +3,12 @@
 
 // TODO(max): test flushing every frame instead of every message
 // TODO(max): improve allocation scheme
-	// currently, each message sent does four allocations
+	// currently, each message sent does three allocations
 		// copying the message 				- 	I don't think we can avoid this. Likely can optimize with pool allocator
 		// 										at the cost of more complexity
 		// copying the thread name string 	- for snapshotting 
 		// copying the tread context stack	- for snapshotting
-		// getting the time string from the platform layer
 	// We can jointly allocate the stack + the name. Do we want to offload the context concatenation work to the publisher?
-	// We can remove the time string allocation by passing an already-sized string (from scratch arena) to the platform layer
 
 enum log_level : i8 {
 	log_alloc = -1,	// super gratuitous allocation info

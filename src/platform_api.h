@@ -78,7 +78,8 @@ struct platform_api {
 	platform_error (*platform_close_file)(platform_file* file)																 = NULL;
 	platform_error (*platform_write_file)(platform_file* file, void* mem, i32 bytes)										 = NULL;
 	platform_error (*platform_get_stdout_as_file)(platform_file* file)														 = NULL;
-	string (*platform_get_timef)(string fmt)																				 = NULL;
+	string (*platform_make_timef)(string fmt)																				 = NULL;
+	void (*platform_get_timef)(string fmt, string* out)																		 = NULL;
 };
 
 #ifdef _WIN32

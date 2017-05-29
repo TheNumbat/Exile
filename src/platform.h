@@ -55,7 +55,9 @@ platform_mutex_state platform_aquire_mutex(platform_mutex* mut, i32 ms); // ms =
 platform_error platform_release_mutex(platform_mutex* mut);
 
 // allocates a string
-string platform_get_timef(string fmt);
+string platform_make_timef(string fmt);
+// takes a preallocated string, assumes enough space
+void   platform_get_timef(string fmt, string* out);
 
 #ifdef _WIN32
 

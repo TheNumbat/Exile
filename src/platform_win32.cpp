@@ -38,11 +38,21 @@ platform_api platform_build_api() {
 	ret.platform_write_file				= &platform_write_file;
 	ret.platform_get_stdout_as_file		= &platform_get_stdout_as_file;
 	ret.platform_get_timef				= &platform_get_timef;
+	ret.platform_make_timef				= &platform_make_timef;
 
 	return ret;
 }
 
-string platform_get_timef(string fmt) {
+void platform_get_timef(string fmt, string* out) {
+
+	i32 len = GetTimeFormat(LOCALE_USER_DEFAULT, 0, NULL, fmt.c_str, NULL, 0);
+
+	out->len = len;
+
+	GetTimeFormat(LOCALE_USER_DEFAULT, 0, NULL, fmt.c_str, out->c_str, len);
+}
+
+string platform_make_timef(string fmt) {
 
 	i32 len = GetTimeFormat(LOCALE_USER_DEFAULT, 0, NULL, fmt.c_str, NULL, 0);
 
