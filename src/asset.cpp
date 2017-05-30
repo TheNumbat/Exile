@@ -22,6 +22,19 @@ void destroy_asset_store(asset_store* am) {
 	}
 }
 
+asset get_asset(asset_store* as, string name) {
+
+	asset* a = map_try_get(&as->assets, name);
+
+	if(!a) {
+		LOG_ERR_F("Failed to get asset %s", name.c_str);
+		asset ret;
+		return ret;
+	}
+
+	return *a;
+}
+
 void load_asset_store(asset_store* am, string path) {
 
 	platform_file store;

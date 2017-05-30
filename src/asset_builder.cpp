@@ -82,14 +82,14 @@ int main(int argc, char** argv) {
 	platform_error err = platform_create_file(&def_file, string_from_c_str(argv[1]), open_file_existing);
 
 	if(!err.good) {
-		cout << "Failed to open file" << argv[1] << endl;
+		cout << "Failed to open file " << argv[1] << endl;
 		return 1;
 	}
 
 	err = platform_create_file(&assets_out, string_from_c_str(argv[2]), open_file_create);
 
 	if(!err.good) {
-		cout << "Failed to create file" << argv[2] << endl;
+		cout << "Failed to create file " << argv[2] << endl;
 		return 1;
 	}
 

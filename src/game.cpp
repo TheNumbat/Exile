@@ -76,10 +76,6 @@ extern "C" game_state* start_up(platform_api* api) {
 
 extern "C" bool main_loop(game_state* state) {
 
-	glEnable(GL_SCISSOR_TEST);
-	glScissor(0, 0, state->window_w, state->window_h);
-	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	state->api->platform_swap_buffers(&state->window);
 	
 	return run_events(&state->events);

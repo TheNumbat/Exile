@@ -2,6 +2,7 @@
 #pragma once
 
 enum asset_type : u8 {
+	asset_none,
 	asset_bitmap,
 	asset_font, 	// TODO(max)
 };
@@ -27,7 +28,7 @@ struct file_asset_bitmap {
 };
 
 struct file_asset {
-	asset_type type;
+	asset_type type = asset_none;
 	char name[128] = {};
 	union {
 		file_asset_bitmap bitmap;
@@ -40,7 +41,7 @@ struct file_asset {
 
 struct asset {
 	string name;
-	asset_type type;
+	asset_type type = asset_none;
 	union {
 		_asset_bitmap 	bitmap;
 		_asset_font 	font;
@@ -60,7 +61,8 @@ struct asset_store {
 };
 
 asset_store make_asset_store(allocator* a); // allocations are done in load
-void destroy_asset_store(asset_store* am);
+void destroy_asset_store(asset_store* as);
 
-void load_asset_store(asset_store* am, string path);
+void load_asset_store(asset_store* as, string path);
+asset get_asset(asset_store* as, string name);
 #endif

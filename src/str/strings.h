@@ -9,6 +9,7 @@ struct string {
 struct allocator;
 
 u32 hash_string(string str);
+bool operator==(string& first, string& second);
 
 string make_string_from_c_str(char* c_str);
 void free_string(string s);

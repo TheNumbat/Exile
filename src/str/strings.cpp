@@ -1,4 +1,19 @@
 
+bool operator==(string& first, string& second) {
+
+	if(first.len != second.len) {
+		return false;
+	}
+
+	for(u32 i = 0; i < first.len; i++) {
+		if(first.c_str[i] != second.c_str[i]) {
+			return false;
+		}
+	}
+	
+	return true;
+}
+
 // http://www.cse.yorku.ca/~oz/hash.html
 u32 hash_string(string str) {
 

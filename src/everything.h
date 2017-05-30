@@ -34,6 +34,7 @@ inline code_context make_context(string file, string function, i32 line);
 #include "log.h"
 #include "events.h"
 #include "asset.h"
+#include "opengl.h"
 
 #include "game.h"
 static game_state* global_state = NULL;
@@ -44,6 +45,7 @@ static game_state* global_state = NULL;
 #include "log.cpp"
 #include "events.cpp"
 #include "asset.cpp"
+#include "opengl.cpp"
 
 #include "ds/vector.cpp"
 #include "ds/stack.cpp"
