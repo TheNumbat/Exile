@@ -1,4 +1,15 @@
 
+// http://www.cse.yorku.ca/~oz/hash.html
+u32 hash_string(string str) {
+
+    u32 hash = 5381;
+
+    for(u32 i = 0; i < str.len; i++)
+        hash = ((hash << 5) + hash) ^ str.c_str[i]; /* hash * 33 + c */
+
+    return hash;
+}
+
 string make_copy_string(string src, allocator* a) {
 
 	string ret = make_string(src.cap, a);

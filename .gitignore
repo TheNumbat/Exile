@@ -1,6 +1,7 @@
 build/
-bin/main.VC.db
+bin/*.db
 bin/.vs
-bin/main.VC.VC.opendb
+bin/*.opendb
 bin/project.sublime-workspace
 data/log_all.txt
+data/*.asset

@@ -17,6 +17,21 @@ using std::endl;
 
 u32 num_strings = 0;
 
+#pragma pack(push, 1)
+struct bitmap_header {
+	u16 type; // "BM"
+	u32 size;
+	u16 zero;
+	u16 zero_;
+	u32 memoffset;
+	u32 second_header_size;
+	i32 width;
+	i32 height;
+	u16 planes;
+	u16 bitsperpipxel;
+};
+#pragma pack(pop)
+
 bool whitespace(char c) {
 	return c == '\n' || c == '\r' || c == ' ' || c == '\t';
 }
@@ -40,7 +55,6 @@ void extract_strings(char* mem, u32 size, string strings[]) {
 
 		u32 length = cursor - strstart + 1;
 
-		// just leak this
 		strings[num_strings] = make_string(length, &platform_heap_alloc);
 		memcpy(strings[num_strings].c_str, mem + strstart, length - 1);
 		strings[num_strings].c_str[length] = 0;
@@ -101,26 +115,53 @@ int main(int argc, char** argv) {
 	for(u32 i = 0; i < num_strings; i += 3) {
 		file_asset asset;
 
-		if(strcmp(def_strings[i].c_str, "bitmap") == 0) {
-			if(def_strings[i + 1].len > 128) {
-				cout << "Name too long! Max 128" << endl;
-				return 1;
-			}
+		if(def_strings[i + 1].len > 128) {
+			cout << "Name too long! Max 128" << endl;
+			return 1;
+		}
 
-			memcpy(asset.name, def_strings[i + 1].c_str, def_strings[i + 1].len);
+		memcpy(asset.name, def_strings[i + 1].c_str, def_strings[i + 1].len);
+
+		if(strcmp(def_strings[i].c_str, "bitmap") == 0) {
+
 			asset.type = asset_bitmap;
 
 			// load bitmap
+			platform_file bmp_in;
+			err = platform_create_file(&bmp_in, def_strings[i + 2], open_file_existing);
+			if (!err.good) {
+				cout << "Failed to open file " << def_strings[i + 2].c_str << endl;
+				return 1;
+			}
+
+			u32 bmp_size = platform_file_size(&bmp_in);
+			void* bmp_mem = platform_heap_alloc(bmp_size);
+			platform_read_file(&bmp_in, bmp_mem, bmp_size);
+			platform_close_file(&bmp_in);
+
+			bitmap_header* bmp_header = (bitmap_header*)bmp_mem;
+			u8* pixels = (u8*)bmp_mem + bmp_header->memoffset;
+
+			asset.bitmap.width = bmp_header->width;
+			asset.bitmap.height = bmp_header->height;
 
 			// calculate total asset size for next asset member
+			u32 pixel_size = (bmp_header->width * bmp_header->height * bmp_header->bitsperpipxel / 8);
+			asset.next = sizeof(file_asset) + pixel_size;
 
 			// write asset
+			platform_write_file(&assets_out, (void*)&asset, sizeof(file_asset));
+			platform_write_file(&assets_out, (void*)pixels, pixel_size);
 
+			platform_heap_free(bmp_mem);
 		} else {
 			cout << "Only bitmaps for now!" << endl;
 			return 1;
 		}
 	}
+
+	for(u32 i = 0; i < num_strings; i++)
+		free_string(def_strings[i], &platform_heap_free);
 
 	platform_close_file(&assets_out);
 	cout << "Done!" << endl;

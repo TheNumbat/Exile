@@ -1,13 +1,21 @@
 
-void setup_events(game_state* state) {
+event_manager make_event_manager(allocator* a) {
 	
-	state->event_queue = make_queue<platform_event>(256, &state->default_platform_allocator);
-	state->api->platform_set_queue_callback(&event_enqueue, &state->event_queue);
+	event_manager ret;
+
+	ret.event_queue = make_queue<platform_event>(256, a);
+
+	return ret;
 }
 
-void end_events(game_state* state) {
+void start_event_manger(event_manager* em) {
 
-	destroy_queue(&state->event_queue);
+	global_state->api->platform_set_queue_callback(&event_enqueue, &em->event_queue);
+}
+
+void destroy_event_manager(event_manager* em) {
+
+	destroy_queue(&em->event_queue);
 }
 
 void filter_dupe_window_events(queue<platform_event>* queue) {
@@ -36,14 +44,14 @@ void filter_dupe_window_events(queue<platform_event>* queue) {
 	}
 }
 
-bool run_events(game_state* state) {
+bool run_events(event_manager* em) {
 
-	state->api->platform_queue_messages(&state->window);
-	filter_dupe_window_events(&state->event_queue);
+	global_state->api->platform_queue_messages(&global_state->window);
+	filter_dupe_window_events(&em->event_queue);
 
-	while(!queue_empty(&state->event_queue)) {
+	while(!queue_empty(&em->event_queue)) {
 
-		platform_event evt = queue_pop(&state->event_queue);
+		platform_event evt = queue_pop(&em->event_queue);
 
 		if(evt.type == event_window && evt.window.op == window_close) {
 			return false;
@@ -62,8 +70,8 @@ bool run_events(game_state* state) {
 
 		else if(evt.type == event_window && evt.window.op == window_resized) {
 			LOG_DEBUG_F("window resized w: %i h: %i", evt.window.x, evt.window.y);
-			state->window_w = evt.window.x;
-			state->window_h = evt.window.y;
+			global_state->window_w = evt.window.x;
+			global_state->window_h = evt.window.y;
 		}
 
 		else if(evt.type == event_window && evt.window.op == window_moved) {

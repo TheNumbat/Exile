@@ -28,17 +28,28 @@ extern "C" game_state* start_up(platform_api* api) {
 
 	logger_start(&state->log);
 
-	LOG_INFO("Beginning startup...");
+	LOG_DEBUG("Beginning startup...");
 	LOG_PUSH_CONTEXT_L("startup");
 
-	LOG_INFO("Starting thread pool");
+	LOG_DEBUG("Starting thread pool");
+	LOG_PUSH_CONTEXT_L("threadpool");
 	state->thread_pool = make_threadpool(&state->default_platform_allocator);
 	threadpool_start_all(&state->thread_pool);
+	LOG_POP_CONTEXT();
 
 	LOG_DEBUG("Setting up events");
-	setup_events(state);
+	LOG_PUSH_CONTEXT_L("events");
+	state->events = make_event_manager(&state->default_platform_allocator);
+	start_event_manger(&state->events);
+	LOG_POP_CONTEXT();
 
-	LOG_INFO("Creating window");
+	LOG_DEBUG("Setting up asset system");
+	LOG_PUSH_CONTEXT_L("assets");
+	state->assets = make_asset_manager(&state->default_platform_allocator);
+	load_asset_store(&state->assets, string_literal("cats.asset"));
+	LOG_POP_CONTEXT();
+
+	LOG_DEBUG("Creating window");
 	platform_error err = api->platform_create_window(&state->window, string_literal("CaveGame"), 1280, 720);
 	state->window_w = 1280;
 	state->window_h = 720;
@@ -71,7 +82,7 @@ extern "C" bool main_loop(game_state* state) {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	state->api->platform_swap_buffers(&state->window);
 	
-	return run_events(state);
+	return run_events(&state->events);
 }
 
 extern "C" void shut_down(platform_api* api, game_state* state) {
@@ -79,20 +90,23 @@ extern "C" void shut_down(platform_api* api, game_state* state) {
 	LOG_INFO("Beginning shutdown...");
 	LOG_PUSH_CONTEXT_L("shutdown");
 
-	LOG_INFO("Stopping thread pool");
+	LOG_DEBUG("Ending asset system");
+	destroy_asset_manager(&state->assets);
+
+	LOG_DEBUG("Stopping thread pool");
 	threadpool_stop_all(&state->thread_pool);
 	destroy_threadpool(&state->thread_pool);
 
-	LOG_INFO("Destroying window");
+	LOG_DEBUG("Destroying window");
 	platform_error err = api->platform_destroy_window(&state->window);
 	if(!err.good) {
 		LOG_ERR_F("Failed to destroy window, error: %i", err.error);	
 	}
 
 	LOG_DEBUG("Ending events");
-	end_events(state);
+	destroy_event_manager(&state->events);
 
-	LOG_INFO("Done with shutdown!");
+	LOG_DEBUG("Done with shutdown!");
 
 	// not actually quite done but we can't log anything after this
 	LOG_END_THREAD();

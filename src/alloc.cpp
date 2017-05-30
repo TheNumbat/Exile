@@ -110,9 +110,11 @@ inline void arena_destroy(arena_allocator* a, code_context context) {
 	}
 #endif
 
-	if(a->memory) {
 
+	if(a->memory) {
+		if(!a->suppress_messages) LOG_PUSH_CONTEXT(a->name);
 		a->backing->free_(a->memory, a->backing, CONTEXT);
+		if (!a->suppress_messages) LOG_POP_CONTEXT();
 	}
 }
 

@@ -9,14 +9,14 @@ enum asset_type : u8 {
 struct _asset_bitmap {
 	i32 width = 0;
 	i32 height = 0;
-	i32 pitch = 0;
-	u8* memory = NULL;
+	u8* mem = NULL; // RGBA8888
 };
 
 struct _asset_font {
 	// lots of font stuff
 };
 
+#pragma pack(push, 1)
 struct file_asset_font {
 
 };
@@ -24,18 +24,19 @@ struct file_asset_font {
 struct file_asset_bitmap {
 	i32 width = 0;
 	i32 height = 0;
-	i32 pitch = 0;
-	u64 memory = 0; // byte offset
 };
 
 struct file_asset {
+	asset_type type;
 	char name[128] = {};
 	union {
 		file_asset_bitmap bitmap;
 		file_asset_font   font;
 	};
-	u64 next = 0; // byte offset;
+	u64 next = 0; // byte offset from start of file_asset
+	file_asset() : bitmap(), font() {};
 };
+#pragma pack(pop)
 
 struct asset {
 	string name;
@@ -44,6 +45,7 @@ struct asset {
 		_asset_bitmap 	bitmap;
 		_asset_font 	font;
 	};
+	asset() : bitmap(), font() {};
 };
 
 struct asset_file_header {
@@ -53,12 +55,12 @@ struct asset_file_header {
 #ifndef BUILDER
 struct asset_manager {
 	map<string, asset> 	assets;
-	vector<void*>		asset_stores;
-	arena_allocator 	arena;
+	vector<void*> 		stores;
+	arena_allocator 	arena;	// TODO(Max): general purpose allocator to free assets (stores?)
 };
 
 asset_manager make_asset_manager(allocator* a);
-void destroy_asset_manager();
+void destroy_asset_manager(asset_manager* am);
 
 void load_asset_store(asset_manager* am, string path);
 #endif

@@ -7,6 +7,11 @@ are get() references really a good idea?
 
 immediate to do:
 
+	better asset stuff
+	asset fonts
+	call asset.exe to re/build (do path stuff, platform_exec_cmd)
+	better allocator names
+
 	metaprogramming - type introspection?
 		replace vsnprintf
 
@@ -14,8 +19,6 @@ immediate to do:
 		usage: allocator stacks, logging contexts, job/logging queue
 		basically wherever we use a mutex right now.
 	
-	Assets
-	Fonts
 	UI
 	Profiling/debugging/visualization
 	OpenGL and voxel rendering
