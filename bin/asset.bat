@@ -1,6 +1,6 @@
 @echo off
 
-pushd w:\data
+pushd w:\data\assets
 
 w:\build\asset.exe %*
 

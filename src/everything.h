@@ -1,10 +1,9 @@
 
 #pragma once
 
-// be wary of using code reloading with this, it's shared between platform and game
-
 #ifdef _DEBUG
 #define BOUNDS_CHECK
+// #define BREAK_ERROR
 #endif
 
 #include "basic_types.h"

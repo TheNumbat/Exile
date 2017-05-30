@@ -17,6 +17,7 @@ platform_error platform_free_library(platform_dll* dll);
 platform_api   platform_build_api();
 
 platform_error platform_get_proc_address(void** address, platform_dll* dll, string name);
+void*		   platform_get_glproc(string name);
 
 platform_error platform_copy_file(string source, string dest, bool overwrite);
 platform_error platform_get_file_attributes(platform_file_attributes* attrib, string file_path);
@@ -63,14 +64,4 @@ platform_error platform_release_mutex(platform_mutex* mut);
 string platform_make_timef(string fmt);
 // takes a preallocated string, assumes enough space
 void   platform_get_timef(string fmt, string* out);
-
-#ifdef _WIN32
-
-#include "platform_win32.h"
-
-#else
-
-#error "Unsupported platform."
-
-#endif
 

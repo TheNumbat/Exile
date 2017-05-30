@@ -242,6 +242,7 @@ struct platform_api {
 	platform_error 	(*platform_load_library)(platform_dll* dll, string file_path)												= NULL;
 	platform_error 	(*platform_free_library)(platform_dll* dll)																	= NULL;
 	platform_error 	(*platform_get_proc_address)(void** address, platform_dll* dll, string name)								= NULL;
+	void*		   	(*platform_get_glproc)(string name)																			= NULL;
 	platform_error 	(*platform_get_file_attributes)(platform_file_attributes* attrib, string file_path)							= NULL;
 	bool 		   	(*platform_test_file_written)(platform_file_attributes* first, platform_file_attributes* second) 			= NULL;
 	platform_error 	(*platform_copy_file)(string source, string dest, bool overwrite)											= NULL;

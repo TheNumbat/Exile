@@ -13,6 +13,7 @@ struct game_state {
 	logger log;
 	threadpool thread_pool;
 	event_manager events;
+	opengl ogl;
 
 	asset_store test_store;
 

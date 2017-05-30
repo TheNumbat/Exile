@@ -1,6 +1,12 @@
 
-void (*global_enqueue)(void* queue_param, platform_event evt) = NULL;
-void* global_enqueue_param = NULL;
+typedef HGLRC WINAPI wgl_create_context_attribs_arb(HDC hDC, HGLRC hShareContext,
+													const int* attribList);
+
+static wgl_create_context_attribs_arb* wglCreateContextAttribsARB;
+static bool global_platform_running = true;
+
+static void (*global_enqueue)(void* queue_param, platform_event evt) = NULL;
+static void* global_enqueue_param = NULL;
 
 platform_api platform_build_api() {
 
@@ -47,6 +53,7 @@ platform_api platform_build_api() {
 	ret.platform_get_window_size		= &platform_get_window_size;
 	ret.platform_write_stdout			= &platform_write_stdout;
 	ret.platform_file_size				= &platform_file_size;
+	ret.platform_get_glproc				= &platform_get_glproc;
 
 	return ret;
 }
@@ -503,6 +510,10 @@ platform_error platform_get_file_attributes(platform_file_attributes* attrib, st
 	}
 
 	return ret;
+}
+
+void* platform_get_glproc(string name) {
+	return wglGetProcAddress(name.c_str);
 }
 
 platform_error platform_get_proc_address(void** address, platform_dll* dll, string name) {

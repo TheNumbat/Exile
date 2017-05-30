@@ -6,6 +6,7 @@
 
 #include "platform_api.h"
 #include "platform.h"
+#include "platform_win32.cpp"
 
 #define BUILDER
 #include "asset.h"

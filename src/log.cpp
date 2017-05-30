@@ -127,7 +127,7 @@ void logger_msgf(logger* log, string fmt, log_level level, code_context context,
 
 	log_message lmsg;
 
-	lmsg.arena = MAKE_ARENA("msg arena", 256, log->alloc, true);
+	lmsg.arena = MAKE_ARENA("msg arena", 512, log->alloc, true);
 	PUSH_ALLOC(&lmsg.arena) {
 
 		va_list args;
@@ -149,6 +149,11 @@ void logger_msgf(logger* log, string fmt, log_level level, code_context context,
 		global_state->api->platform_release_mutex(&log->queue_mutex);
 		global_state->api->platform_signal_semaphore(&log->logging_semaphore, 1);
 
+#ifdef BREAK_ERROR
+		if(level == log_error) {
+			__debugbreak();
+		}
+#endif
 		if(level == log_fatal) {
 			// we will never return
 			__debugbreak();
@@ -180,6 +185,11 @@ void logger_msg(logger* log, string msg, log_level level, code_context context) 
 		global_state->api->platform_release_mutex(&log->queue_mutex);
 		global_state->api->platform_signal_semaphore(&log->logging_semaphore, 1);
 
+#ifdef BREAK_ERROR
+		if(level == log_error) {
+			__debugbreak();
+		}
+#endif
 		if(level == log_fatal) {
 			// we will never return
 			__debugbreak();

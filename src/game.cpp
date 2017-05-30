@@ -46,7 +46,7 @@ extern "C" game_state* start_up(platform_api* api) {
 	LOG_DEBUG("Setting up asset system");
 	LOG_PUSH_CONTEXT_L("assets");
 	state->test_store = make_asset_store(&state->default_platform_allocator);
-	load_asset_store(&state->test_store, string_literal("cats.asset"));
+	load_asset_store(&state->test_store, string_literal("assets/cats.asset"));
 	LOG_POP_CONTEXT();
 
 	LOG_DEBUG("Creating window");
@@ -60,17 +60,16 @@ extern "C" game_state* start_up(platform_api* api) {
 		return NULL;
 	}
 
-	string version  = string_from_c_str((char*)glGetString(GL_VERSION));
-	string renderer = string_from_c_str((char*)glGetString(GL_RENDERER));
-	string vendor   = string_from_c_str((char*)glGetString(GL_VENDOR));
-
-	LOG_INFO_F("GL version : %s", version.c_str);
-	LOG_INFO_F("GL renderer: %s", renderer.c_str);
-	LOG_INFO_F("GL vendor  : %s", vendor.c_str);
+	LOG_DEBUG("Setting up OpenGL");
+	LOG_PUSH_CONTEXT_L("ogl");
+	ogl_load_global_funcs();
+	state->ogl = make_opengl(&state->default_platform_allocator);
+	ogl_add_program(&state->ogl, string_literal("basic_2D"), string_literal("shaders/basic_2D.v"), string_literal("shaders/basic_2D.f"));
+	LOG_POP_CONTEXT();
 
 	LOG_INFO("Done with startup!");
 	LOG_POP_CONTEXT();
-
+	
 	return state;
 }
 
@@ -86,10 +85,13 @@ extern "C" void shut_down(platform_api* api, game_state* state) {
 	LOG_INFO("Beginning shutdown...");
 	LOG_PUSH_CONTEXT_L("shutdown");
 
-	LOG_DEBUG("Ending asset system");
+	LOG_DEBUG("Destroying OpenGL")
+	destroy_opengl(&state->ogl);
+
+	LOG_DEBUG("Destroying asset system");
 	destroy_asset_store(&state->test_store);
 
-	LOG_DEBUG("Stopping thread pool");
+	LOG_DEBUG("Destroying thread pool");
 	threadpool_stop_all(&state->thread_pool);
 	destroy_threadpool(&state->thread_pool);
 
@@ -99,7 +101,7 @@ extern "C" void shut_down(platform_api* api, game_state* state) {
 		LOG_ERR_F("Failed to destroy window, error: %i", err.error);	
 	}
 
-	LOG_DEBUG("Ending events");
+	LOG_DEBUG("Destroying events");
 	destroy_event_manager(&state->events);
 
 	LOG_DEBUG("Done with shutdown!");
@@ -120,6 +122,7 @@ extern "C" void shut_down(platform_api* api, game_state* state) {
 extern "C" void on_reload(platform_api* api, game_state* state) {
 
 	global_state = state;
+	ogl_load_global_funcs();
 
 	logger_start(&state->log);
 	threadpool_start_all(&state->thread_pool);
