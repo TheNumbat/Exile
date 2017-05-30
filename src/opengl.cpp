@@ -155,6 +155,68 @@ void ogl_select_program(opengl* ogl, string name) {
 	glUseProgram(p->handle);
 }
 
+texture make_texture(texture_wrap wrap) {
+
+	texture ret;
+
+	ret.wrap = wrap;
+	glGenTextures(1, &ret.handle);
+
+	glBindTexture(GL_TEXTURE_2D, ret.handle);
+	
+	switch(wrap) {
+	case wrap_repeat:
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		break;
+	case wrap_mirror:
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+		break;
+	case wrap_clamp:
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		break;
+	case wrap_clamp_border:
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+		float borderColor[] = { 0.0f, 0.0f, 0.0f, 1.0f };
+		glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);  
+		break;
+	}
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	return ret;
+}
+
+void texture_load_bitmap(texture* tex, asset_store* as, string name) {
+
+	asset a = get_asset(as, name);
+
+	LOG_DEBUG_ASSERT(a.type == asset_bitmap);
+
+	glBindTexture(GL_TEXTURE_2D, tex->handle);
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, a.bitmap.width, a.bitmap.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, a.bitmap.mem);
+	glGenerateMipmap(GL_TEXTURE_2D);
+
+	glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+void destroy_texture(texture* tex) {
+
+	glDeleteTextures(1, &tex->handle);
+}
+
+void render_texture_fullscreen(texture* tex) {
+
+
+}
+
 void debug_proc(GLenum glsource, GLenum gltype, GLuint id, GLenum severity, GLsizei length, const GLchar* glmessage, const void* up) {
 
 	string message = string_from_c_str((char*)glmessage);
@@ -213,16 +275,16 @@ void debug_proc(GLenum glsource, GLenum gltype, GLuint id, GLenum severity, GLsi
 
 	switch(severity) {
 	case GL_DEBUG_SEVERITY_HIGH:
-		LOG_ERR_F("HIGH OpenGL: %s source: %s type: %s", message.c_str, source.c_str, type.c_str);
+		LOG_ERR_F("HIGH OpenGL: %s SOURCE: %s TYPE: %s", message.c_str, source.c_str, type.c_str);
 		break;
 	case GL_DEBUG_SEVERITY_MEDIUM:
-		LOG_WARN_F("MED OpenGL: %s source: %s type: %s", message.c_str, source.c_str, type.c_str);
+		LOG_WARN_F("MED OpenGL: %s SOURCE: %s TYPE: %s", message.c_str, source.c_str, type.c_str);
 		break;
 	case GL_DEBUG_SEVERITY_LOW:
-		LOG_WARN_F("LOW OpenGL: %s source: %s type: %s", message.c_str, source.c_str, type.c_str);
+		LOG_WARN_F("LOW OpenGL: %s SOURCE: %s TYPE: %s", message.c_str, source.c_str, type.c_str);
 		break;
 	case GL_DEBUG_SEVERITY_NOTIFICATION:
-		LOG_INFO_F("NOTF OpenGL: %s source: %s type: %s", message.c_str, source.c_str, type.c_str);
+		LOG_INFO_F("NOTF OpenGL: %s SOURCE: %s TYPE: %s", message.c_str, source.c_str, type.c_str);
 		break;
 	}
 }
@@ -233,8 +295,8 @@ void ogl_load_global_funcs() {
 	glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 
 	glDebugMessageCallback 	= (glDebugMessageCallback_t) global_state->api->platform_get_glproc(string_literal("glDebugMessageCallback"));
-	glDebugMessageInsert 	= (glDebugMessageInsert_t) global_state->api->platform_get_glproc(string_literal("glDebugMessageInsert"));
-	glDebugMessageControl 	= (glDebugMessageControl_t) global_state->api->platform_get_glproc(string_literal("glDebugMessageControl"));
+	glDebugMessageInsert 	= (glDebugMessageInsert_t) 	 global_state->api->platform_get_glproc(string_literal("glDebugMessageInsert"));
+	glDebugMessageControl 	= (glDebugMessageControl_t)  global_state->api->platform_get_glproc(string_literal("glDebugMessageControl"));
 
 	glAttachShader  = (glAttachShader_t)  global_state->api->platform_get_glproc(string_literal("glAttachShader"));
 	glCompileShader = (glCompileShader_t) global_state->api->platform_get_glproc(string_literal("glCompileShader"));
@@ -245,6 +307,8 @@ void ogl_load_global_funcs() {
 	glLinkProgram   = (glLinkProgram_t)   global_state->api->platform_get_glproc(string_literal("glLinkProgram"));
 	glShaderSource  = (glShaderSource_t)  global_state->api->platform_get_glproc(string_literal("glShaderSource"));
 	glUseProgram    = (glUseProgram_t)    global_state->api->platform_get_glproc(string_literal("glUseProgram"));
+
+	glGenerateMipmap = (glGenerateMipmap_t) global_state->api->platform_get_glproc(string_literal("glGenerateMipmap"));
 
 	glDebugMessageCallback(debug_proc, NULL);
 	glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);

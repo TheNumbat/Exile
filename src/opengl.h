@@ -26,6 +26,10 @@
 #define GL_DEBUG_SEVERITY_LOW             0x9148
 #define GL_DEBUG_SEVERITY_NOTIFICATION    0x826B
 
+#define GL_MIRRORED_REPEAT                0x8370
+#define GL_CLAMP_TO_EDGE                  0x812F
+#define GL_CLAMP_TO_BORDER                0x812D
+
 typedef char GLchar;
 typedef void (*glDebugProc_t)(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *message, const void *userParam);
 typedef void (*glDebugMessageCallback_t)(glDebugProc_t callback, const void *userParam);
@@ -42,9 +46,12 @@ typedef void (*glLinkProgram_t)(GLuint program);
 typedef void (*glShaderSource_t)(GLuint shader, GLsizei count, const GLchar* const* str, const GLint* length);
 typedef void (*glUseProgram_t)(GLuint program);
 
+typedef void (*glGenerateMipmap_t)(GLenum target);
+
 glDebugMessageCallback_t 	glDebugMessageCallback;
 glDebugMessageInsert_t		glDebugMessageInsert;
 glDebugMessageControl_t		glDebugMessageControl;
+
 glAttachShader_t  			glAttachShader;
 glCompileShader_t 			glCompileShader;
 glCreateProgram_t 			glCreateProgram;
@@ -54,6 +61,8 @@ glDeleteShader_t  			glDeleteShader;
 glLinkProgram_t   			glLinkProgram;
 glShaderSource_t  			glShaderSource;
 glUseProgram_t    			glUseProgram;
+
+glGenerateMipmap_t			glGenerateMipmap;
 
 struct shader_source {
 	string path;
@@ -67,6 +76,18 @@ struct shader_program {
 	shader_source vertex;
 	shader_source fragment;
 	// tessellation control, evaluation, geometry
+};
+
+enum texture_wrap {
+	wrap_repeat,
+	wrap_mirror,
+	wrap_clamp,
+	wrap_clamp_border,
+};
+
+struct texture {
+	GLuint handle = 0;
+	texture_wrap wrap = wrap_repeat;
 };
 
 struct opengl {
@@ -90,5 +111,10 @@ shader_program make_program(string vert, string frag, allocator* a);
 void compile_program(shader_program* prog);
 void refresh_program(shader_program* prog);
 void destroy_program(shader_program* prog);
+
+texture make_texture(texture_wrap wrap);
+void render_texture_fullscreen(texture* tex);
+void texture_load_bitmap(texture* tex, asset_store* as, string name);
+void destroy_texture(texture* tex);
 
 void debug_proc(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userPointer);

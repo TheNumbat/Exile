@@ -1,0 +1,2 @@
+bitmap:cat:cat.bmp:
+bitmap:cat2:cat2.bmp:
