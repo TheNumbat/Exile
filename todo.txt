@@ -7,7 +7,7 @@ are get() references really a good idea?
 
 immediate to do:
 
-	better asset stuff
+	asset manager (general allocator?)
 	asset fonts
 	call asset.exe to re/build (do path stuff, platform_exec_cmd)
 	better allocator names

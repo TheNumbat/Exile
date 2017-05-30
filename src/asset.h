@@ -53,14 +53,14 @@ struct asset_file_header {
 };
 
 #ifndef BUILDER
-struct asset_manager {
+struct asset_store {
 	map<string, asset> 	assets;
-	vector<void*> 		stores;
-	arena_allocator 	arena;	// TODO(Max): general purpose allocator to free assets (stores?)
+	void* 				store = NULL;
+	allocator* 			alloc;
 };
 
-asset_manager make_asset_manager(allocator* a);
-void destroy_asset_manager(asset_manager* am);
+asset_store make_asset_store(allocator* a); // allocations are done in load
+void destroy_asset_store(asset_store* am);
 
-void load_asset_store(asset_manager* am, string path);
+void load_asset_store(asset_store* am, string path);
 #endif

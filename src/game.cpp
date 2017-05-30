@@ -45,8 +45,8 @@ extern "C" game_state* start_up(platform_api* api) {
 
 	LOG_DEBUG("Setting up asset system");
 	LOG_PUSH_CONTEXT_L("assets");
-	state->assets = make_asset_manager(&state->default_platform_allocator);
-	load_asset_store(&state->assets, string_literal("cats.asset"));
+	state->test_store = make_asset_store(&state->default_platform_allocator);
+	load_asset_store(&state->test_store, string_literal("cats.asset"));
 	LOG_POP_CONTEXT();
 
 	LOG_DEBUG("Creating window");
@@ -91,7 +91,7 @@ extern "C" void shut_down(platform_api* api, game_state* state) {
 	LOG_PUSH_CONTEXT_L("shutdown");
 
 	LOG_DEBUG("Ending asset system");
-	destroy_asset_manager(&state->assets);
+	destroy_asset_store(&state->test_store);
 
 	LOG_DEBUG("Stopping thread pool");
 	threadpool_stop_all(&state->thread_pool);

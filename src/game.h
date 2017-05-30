@@ -12,8 +12,9 @@ struct game_state {
 	
 	logger log;
 	threadpool thread_pool;
-	asset_manager assets;
 	event_manager events;
+
+	asset_store test_store;
 
 	i32 window_w = 0, window_h = 0;
 	platform_window window 	= {};

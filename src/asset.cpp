@@ -1,32 +1,28 @@
 
-asset_manager make_asset_manager(allocator* a) {
+asset_store make_asset_store(allocator* a) {
 
-	asset_manager ret;
+	asset_store ret;
 
-	ret.assets = make_map<string, asset>(1024, a, &hash_string);
-	ret.stores = make_vector<void*>(8, a);
-	ret.arena = MAKE_ARENA("assets", GIGABYTES(1), a, false);
-	
+	ret.alloc = a;
+
 	return ret;
 }
 
-void destroy_asset_manager(asset_manager* am) {
+void destroy_asset_store(asset_store* am) {
 
-	destroy_map(&am->assets);
+	if(am->store) {
 
-	PUSH_ALLOC(&am->arena) {
+		destroy_map(&am->assets);
 
-		for(u32 i = 0; i < am->stores.size; i++) {
-			free(*vector_get(&am->stores, i));
-		}
+		PUSH_ALLOC(am->alloc) {
+			free(am->store);
+		} POP_ALLOC();
 
-	} POP_ALLOC();
-
-	destroy_vector(&am->stores);
-	DESTROY_ARENA(&am->arena);
+		am->store = NULL;
+	}
 }
 
-void load_asset_store(asset_manager* am, string path) {
+void load_asset_store(asset_store* am, string path) {
 
 	platform_file store;
 	platform_error err = global_state->api->platform_create_file(&store, path, open_file_existing);
@@ -36,16 +32,20 @@ void load_asset_store(asset_manager* am, string path) {
 		return;
 	}
 
-	PUSH_ALLOC(&am->arena) {
+	u32 store_size = global_state->api->platform_file_size(&store);
 
-		u32 store_size = global_state->api->platform_file_size(&store);
-		u8* store_mem = (u8*)malloc(store_size);
-		vector_push(&am->stores, (void*)store_mem);
+	PUSH_ALLOC(am->alloc) {
+
+		am->store = malloc(store_size);
+		u8* store_mem = (u8*)am->store;
+
 		global_state->api->platform_read_file(&store, (void*)store_mem, store_size);
 		global_state->api->platform_close_file(&store);
 
 		asset_file_header* header = (asset_file_header*)store_mem;
 		file_asset* current_asset = (file_asset*)(store_mem + sizeof(asset_file_header));
+
+		am->assets = make_map<string,asset>(header->num_assets, am->alloc, &hash_string);
 
 		for(u32 i = 0; i < header->num_assets; i++) {
 
