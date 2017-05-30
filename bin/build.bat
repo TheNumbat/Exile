@@ -13,6 +13,11 @@ set Platform_DebugCompilerFlags=-Od -MTd -nologo -Gr -EHa -Oi -W4 -Z7 -FC -Femai
 set Platform_ReleaseCompilerFlags=-O2 -MT -nologo -Gr -EHa -W4 -FC -Femain.exe -wd4100
 set Platform_LinkerFlags=/NODEFAULTLIB:MSVCRT /SUBSYSTEM:console kernel32.lib user32.lib gdi32.lib opengl32.lib 
 
+set Asset_CompilerFlags=-Od -MTd -nologo -Gr -EHa -Oi -W4 -Z7 -FC -Feasset.exe -wd4100
+set Asset_LinkerFlags=/NODEFAULTLIB:MSVCRT /SUBSYSTEM:console kernel32.lib user32.lib gdi32.lib opengl32.lib 
+
+cl %Asset_CompilerFlags% w:\src\asset_builder.cpp /link %Asset_LinkerFlags%
+
 if "%1"=="release" (
 	cl %Game_ReleaseCompilerFlags% w:\src\game.cpp /link %Game_LinkerFlags%
 ) else if "%2"=="release" (

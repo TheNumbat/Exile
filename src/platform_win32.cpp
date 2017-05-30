@@ -40,10 +40,26 @@ platform_api platform_build_api() {
 	ret.platform_create_file			= &platform_create_file;
 	ret.platform_close_file				= &platform_close_file;
 	ret.platform_write_file				= &platform_write_file;
+	ret.platform_read_file				= &platform_read_file;
 	ret.platform_get_stdout_as_file		= &platform_get_stdout_as_file;
 	ret.platform_get_timef				= &platform_get_timef;
 	ret.platform_make_timef				= &platform_make_timef;
 	ret.platform_get_window_size		= &platform_get_window_size;
+	ret.platform_write_stdout			= &platform_write_stdout;
+	ret.platform_file_size				= &platform_file_size;
+
+	return ret;
+}
+
+platform_error platform_write_stdout(string str) {
+
+	platform_error ret;
+
+	if(WriteConsole(GetStdHandle(STD_OUTPUT_HANDLE), (void*)str.c_str, str.len, 0, 0) == 0) {
+		ret.good = false;
+		ret.error = GetLastError();
+		return ret;	
+	}
 
 	return ret;
 }
@@ -104,7 +120,24 @@ platform_error platform_get_stdout_as_file(platform_file* file) {
 	return ret;
 }
 
-platform_error platform_write_file(platform_file* file, void* mem, i32 bytes) {
+u32 platform_file_size(platform_file* file) {
+	return GetFileSize(file->handle, NULL);
+}
+
+platform_error platform_read_file(platform_file* file, void* mem, u32 bytes) {
+
+	platform_error ret;
+
+	if(ReadFile(file->handle, mem, bytes, NULL, NULL) == FALSE) {
+		ret.good = false;
+		ret.error = GetLastError();
+		return ret;
+	}
+
+	return ret;
+}
+
+platform_error platform_write_file(platform_file* file, void* mem, u32 bytes) {
 
 	platform_error ret;
 
@@ -143,7 +176,7 @@ platform_error platform_create_file(platform_file* file, string path, platform_f
 
 	file->handle = CreateFileA(path.c_str, GENERIC_READ | GENERIC_WRITE, 0, NULL, creation, FILE_ATTRIBUTE_NORMAL, NULL);
 
-	if(file->handle == NULL) {
+	if(file->handle == INVALID_HANDLE_VALUE) {
 		ret.good = false;
 		ret.error = GetLastError();
 		return ret;		

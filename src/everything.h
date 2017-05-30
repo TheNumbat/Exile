@@ -3,26 +3,12 @@
 
 // be wary of using code reloading with this, it's shared between platform and game
 
-#include <stdint.h>
-
 #ifdef _DEBUG
 #define BOUNDS_CHECK
 #endif
 
-typedef uint8_t 	u8;
-typedef int8_t 		i8;
-typedef uint16_t 	u16;
-typedef int16_t 	i16;
-typedef uint32_t 	u32;
-typedef int32_t 	i32;
-typedef uint64_t 	u64;
-typedef int64_t 	i64;
-
-typedef float  f32;
-typedef double f64;
-
+#include "basic_types.h"
 #include "str/strings.h"
-
 #include "platform_api.h"
 
 struct code_context {
@@ -48,6 +34,7 @@ inline code_context make_context(string file, string function, i32 line);
 #include "log.h"
 #include "game.h"
 #include "events.h"
+#include "asset.h"
 
 static game_state* global_state = NULL;
 
@@ -56,6 +43,7 @@ static game_state* global_state = NULL;
 #include "alloc.cpp"
 #include "log.cpp"
 #include "events.cpp"
+#include "asset.cpp"
 
 #include "ds/vector.cpp"
 #include "ds/stack.cpp"

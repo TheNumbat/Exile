@@ -266,10 +266,13 @@ struct platform_api {
 	platform_thread_join_state (*platform_join_thread)(platform_thread* thread, i32 ms)											= NULL;
 	platform_error 	(*platform_create_file)(platform_file* file, string path, platform_file_open_op mode)						= NULL;
 	platform_error 	(*platform_close_file)(platform_file* file)																	= NULL;
-	platform_error 	(*platform_write_file)(platform_file* file, void* mem, i32 bytes)											= NULL;
+	platform_error 	(*platform_write_file)(platform_file* file, void* mem, u32 bytes)											= NULL;
+	platform_error 	(*platform_read_file)(platform_file* file, void* mem, u32 bytes)											= NULL;
 	platform_error 	(*platform_get_stdout_as_file)(platform_file* file)															= NULL;
+	platform_error 	(*platform_write_stdout)(string str)																		= NULL;
 	string 			(*platform_make_timef)(string fmt)																			= NULL;
 	void 			(*platform_get_timef)(string fmt, string* out)																= NULL;
+	u32			   	(*platform_file_size)(platform_file* file)																	= NULL;
 };
 
 #ifdef _WIN32
