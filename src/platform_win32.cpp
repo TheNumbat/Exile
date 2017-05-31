@@ -1,8 +1,8 @@
 
-typedef HGLRC WINAPI wgl_create_context_attribs_arb(HDC hDC, HGLRC hShareContext,
+typedef HGLRC (WINAPI *wglCreateContextAttribsARB_t)(HDC hDC, HGLRC hShareContext,
 													const int* attribList);
 
-static wgl_create_context_attribs_arb* wglCreateContextAttribsARB;
+static wglCreateContextAttribsARB_t wglCreateContextAttribsARB;
 static bool global_platform_running = true;
 
 static void (*global_enqueue)(void* queue_param, platform_event evt) = NULL;
@@ -1087,7 +1087,7 @@ platform_error platform_create_window(platform_window* window, string title, u32
     	0
 	};
 
-	wglCreateContextAttribsARB = (wgl_create_context_attribs_arb*)wglGetProcAddress("wglCreateContextAttribsARB");
+	wglCreateContextAttribsARB = (wglCreateContextAttribsARB_t)wglGetProcAddress("wglCreateContextAttribsARB");
 
 	if(wglCreateContextAttribsARB == NULL) {
 		ret.good = false;

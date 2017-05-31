@@ -7,6 +7,16 @@ are get() references really a good idea?
 
 immediate to do:
 
+	OpenGl
+		texture representation/store
+		mesh representation
+		think about chunk rendering
+			texture atlases
+			deferred mesh re/building
+		models & animation
+
+		2D rendering - how will this work with UI system
+
 	asset
 		asset manager (general allocator?)
 		asset fonts
@@ -15,15 +25,14 @@ immediate to do:
 
 	better allocator names
 
-	metaprogramming - type introspection?
+	metaprogramming - struct introspection?
 		replace vsnprintf
 
 	Make concurrent vector/array/stack/hash map 
-		usage: allocator stacks, logging contexts, job/logging queue
+		use for allocator stacks, logging contexts, job/logging queue
 		basically wherever we use a mutex right now.
 	
 	UI
 	Profiling/debugging/visualization
-	OpenGL and voxel rendering
 
 possibly imitate: dear imgui

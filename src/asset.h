@@ -5,6 +5,10 @@ enum asset_type : u8 {
 	asset_none,
 	asset_bitmap,
 	asset_font, 	// TODO(max)
+	// asset_mesh?
+	// asset_audio?
+	// asset_shader?
+	// asset_cfg?
 };
 
 struct _asset_bitmap {
