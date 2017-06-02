@@ -443,33 +443,34 @@ template<typename T> inline m4_t<T> transpose(m4_t<T> m) {
 template m4 transpose(m4);
 
 inline m4 ortho(f32 left, f32 right, f32 bot, f32 top, f32 _near, f32 _far) {
-    m4 ret = M4D(1.0f);
+    m4 ret;
     ret.f[0][0] = 2.0f / (right - left);
     ret.f[1][1] = 2.0f / (top - bot);
     ret.f[2][2] = 2.0f / (_near - _far);
-    ret.f[3][0] = (left + right) / (left - right);
-    ret.f[3][1] = (bot + top) / (bot - top);
-    ret.f[3][2] = (_far + _near) / (_near - _far);
+    ret.f[3][3] = 1.0f;
+    ret.f[0][3] = (-left - right) / (right - left);
+    ret.f[1][3] = (-bot - top)  / (top - bot);
+    ret.f[2][3] = - _near / (_far - _near);
     return ret;
 }
 
 inline m4 proj(f32 fov, f32 ar, f32 _near, f32 _far) {
     m4 ret = M4D(1.0f);
-    f32 tan_over_2 = tanf(fov * (PI32 / 360.0f));
-    ret.f[0][0] = 1.0f / tan_over_2;
-    ret.f[1][1] = ar / tan_over_2;
-    ret.f[2][3] = -1.0f;
-    ret.f[2][2] = (_near + _far) / (_near - _far);
-    ret.f[3][2] = (2.0f * _near * _far) / (_near - _far);
+    f32 tan_over_2 = tanf(RADIANS(fov) / 2.0f);
+    ret.f[1][1] = 1.0f / tan_over_2;
+    ret.f[0][0] = ret.f[1][1] / ar;
+    ret.f[2][2] = _far / (_far - _near);
+    ret.f[3][2] = -_far * _near / (_far - _near);
+    ret.f[2][3] = 1.0f;
     ret.f[3][3] = 0.0f;
     return ret;
 }
 
 inline m4 translate(v3 trans) {
 	m4 ret = M4D(1.0f);
-    ret.f[3][0] = trans.x;
-    ret.f[3][1] = trans.y;
-    ret.f[3][2] = trans.z;
+    ret.f[0][3] = trans.x;
+    ret.f[1][3] = trans.y;
+    ret.f[2][3] = trans.z;
     return ret;
 }
 
@@ -480,13 +481,13 @@ inline m4 rotate(f32 angle, v3 axis) {
     f32 cosa = cosf(RADIANS(angle));
     f32 cosv = 1.0f - cosa;
     ret.f[0][0] = (axis.x * axis.x * cosv) + cosa;
-    ret.f[0][1] = (axis.x * axis.y * cosv) + (axis.z * sina);
-    ret.f[0][2] = (axis.x * axis.z * cosv) - (axis.y * sina);
-    ret.f[1][0] = (axis.y * axis.x * cosv) - (axis.z * sina);
+    ret.f[1][0] = (axis.x * axis.y * cosv) + (axis.z * sina);
+    ret.f[2][0] = (axis.x * axis.z * cosv) - (axis.y * sina);
+    ret.f[0][1] = (axis.y * axis.x * cosv) - (axis.z * sina);
     ret.f[1][1] = (axis.y * axis.y * cosv) + cosa;
-    ret.f[1][2] = (axis.y * axis.z * cosv) + (axis.x * sina);
-    ret.f[2][0] = (axis.z * axis.x * cosv) + (axis.y * sina);
-    ret.f[2][1] = (axis.z * axis.y * cosv) - (axis.x * sina);
+    ret.f[2][1] = (axis.y * axis.z * cosv) + (axis.x * sina);
+    ret.f[0][2] = (axis.z * axis.x * cosv) + (axis.y * sina);
+    ret.f[1][2] = (axis.z * axis.y * cosv) - (axis.x * sina);
     ret.f[2][2] = (axis.z * axis.z * cosv) + cosa;
     return ret;
 }

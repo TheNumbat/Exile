@@ -112,11 +112,13 @@ extern "C" bool main_loop(game_state* state) {
 	cmd.texture = state->texture;
 	cmd.context = state->context;
 	render_add_command(&rcl, cmd);
-	// rcl.proj = ortho(0, (f32)state->window_w, (f32)state->window_h, 0, 0.1f, 100.0f);
+
+	rcl.proj = proj(90.0f, (f32)state->window_w/(f32)state->window_h, 0.0f, 100.0f);
+	static f32 dist = 0.0f;
+	m4 trans = translate(V3(0.0f, 0.0f, 1.0f + sinf(dist += 0.01f)));
+	rcl.proj = mult(rcl.proj, trans);
 
 	ogl_render_command_list(&state->ogl, &rcl);
-
-	// ogl_dbg_render_texture_fullscreen(&state->ogl, state->texture);
 
 	destroy_mesh_2d(&mesh);
 	destroy_command_list(&rcl);
