@@ -14,8 +14,8 @@
 typedef void* (*startup_type)(platform_api*);
 typedef bool  (*main_loop_type)(void*);
 typedef void  (*shut_down_type)(platform_api*, void*);
-typedef shut_down_type on_reload_type;
-typedef shut_down_type on_unload_type;
+typedef main_loop_type on_reload_type;
+typedef main_loop_type on_unload_type;
 
 startup_type	start_up  = NULL;
 main_loop_type	main_loop = NULL;
@@ -124,7 +124,7 @@ bool try_reload() {
 		
 		attrib = to_test;
 
-		(*on_unload)(&api, game_state);
+		(*on_unload)(game_state);
 
 		platform_free_library(&game_dll);
 
@@ -132,7 +132,7 @@ bool try_reload() {
 
 		if(!load_funcs()) return false;
 
-		(*on_reload)(&api, game_state);
+		(*on_reload)(game_state);
 	}
 
 	return true;

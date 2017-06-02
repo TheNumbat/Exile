@@ -112,7 +112,7 @@ extern "C" bool main_loop(game_state* state) {
 	cmd.texture = state->texture;
 	cmd.context = state->context;
 	render_add_command(&rcl, cmd);
-	rcl.proj = ortho(0, (f32)state->window_w, 0, (f32)state->window_h, 0, 1);
+	// rcl.proj = ortho(0, (f32)state->window_w, (f32)state->window_h, 0, 0.1f, 100.0f);
 
 	ogl_render_command_list(&state->ogl, &rcl);
 
@@ -165,7 +165,7 @@ extern "C" void shut_down(platform_api* api, game_state* state) {
 	api->platform_heap_free(state);
 }
 
-extern "C" void on_reload(platform_api* api, game_state* state) {
+extern "C" void on_reload(game_state* state) {
 
 	global_state = state;
 	ogl_load_global_funcs();
@@ -176,7 +176,7 @@ extern "C" void on_reload(platform_api* api, game_state* state) {
 	LOG_INFO("End reloading game code");
 }
 
-extern "C" void on_unload(platform_api* api, game_state* state) {
+extern "C" void on_unload(game_state* state) {
 	
 	LOG_INFO("Begin reloading game code");
 

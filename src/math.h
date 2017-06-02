@@ -1,4 +1,3 @@
-
 #pragma once
 
 // TODO(max): remove cmath, use more SIMD intrinsics
@@ -83,6 +82,10 @@ typedef v2_t<f32> v2;
 typedef v2_t<i32> iv2;
 typedef v2_t<u32> uv2;
 typedef v2_t<u8>  bv2;
+template v2_t<f32>;
+template v2_t<i32>;
+template v2_t<u32>;
+template v2_t<u8>;
 
 template<typename T>
 union v3_t {
@@ -107,6 +110,10 @@ typedef v3_t<f32> v3;
 typedef v3_t<i32> iv3;
 typedef v3_t<u32> uv3;
 typedef v3_t<u8>  bv3;
+template v3_t<f32>;
+template v3_t<i32>;
+template v3_t<u32>;
+template v3_t<u8>;
 
 template<typename T>
 union v4_t {
@@ -139,6 +146,10 @@ typedef bv4 	  color;
 typedef v4 		  colorf;
 typedef v4 		  r2;
 typedef iv4 	  ir2;
+template v4_t<f32>;
+template v4_t<i32>;
+template v4_t<u32>;
+template v4_t<u8>;
 
 template<typename T>
 union m4_t {
@@ -153,6 +164,8 @@ union m4_t {
 };
 typedef m4_t<f32> m4;
 typedef m4_t<u32> um4;
+template m4_t<f32>;
+template m4_t<u32>;
 
 template<typename T> inline v2_t<T> V2(T x, T y) {
 	v2_t<T> ret;
@@ -160,6 +173,8 @@ template<typename T> inline v2_t<T> V2(T x, T y) {
 	ret.y = y;
 	return ret;
 }
+template v2 V2(f32 x, f32 y);
+
 template<typename T> inline v3_t<T> V3(T x, T y, T z) {
 	v3_t<T> ret;
 	ret.x = x;
@@ -167,6 +182,8 @@ template<typename T> inline v3_t<T> V3(T x, T y, T z) {
 	ret.z = z;
 	return ret;
 }
+template v3 V3(f32 x, f32 y, f32 z);
+
 template<typename T> inline v4_t<T> V4(T x, T y, T z, T w) {
 	v4_t<T> ret;
 	ret.x = x;
@@ -175,111 +192,143 @@ template<typename T> inline v4_t<T> V4(T x, T y, T z, T w) {
 	ret.w = w;
 	return ret;
 }
+template v4 V4(f32 x, f32 y, f32 z, f32 w);
 
-template<typename T> inline T lensq(v2_t<T> V) {
+template<typename T> inline T lengthsq(v2_t<T> V) {
 	return V.x * V.x + V.y * V.y;
 }
-template<typename T> inline T lensq(v3_t<T> V) {
+template f32 lengthsq(v2);
+template<typename T> inline T lengthsq(v3_t<T> V) {
 	return V.x * V.x + V.y * V.y + V.z * V.z;
 }
-template<typename T> inline T lensq(v4_t<T> V) {
+template f32 lengthsq(v3);
+template<typename T> inline T lengthsq(v4_t<T> V) {
 	return V.x * V.x + V.y * V.y + V.z * V.z + V.w * V.w;
 }
+template f32 lengthsq(v4);
 
 template<typename T> inline T length(v2_t<T> V) {
-	return sqrtf(lensq(V));
+	return sqrtf(lengthsq(V));
 }
+template f32 length(v2);
 template<typename T> inline T length(v3_t<T> V) {
-	return sqrtf(lensq(V));
+	return sqrtf(lengthsq(V));
 }
+template f32 length(v3);
 template<typename T> inline T length(v4_t<T> V) {
-	return sqrtf(lensq(V));
+	return sqrtf(lengthsq(V));
 }
+template f32 length(v4);
 
 template<typename T> inline v2_t<T> normalize(v2_t<T> V) {
 	T len = length(V);
 	return V2(V.x * ((T)1.0 / len), V.y * ((T)1.0 / len));
 }
+template v2 normalize(v2);
 template<typename T> inline v3_t<T> normalize(v3_t<T> V) {
 	T len = length(V);
 	return V3(V.x * ((T)1.0 / len), V.y * ((T)1.0 / len), V.z * ((T)1.0 / len));
 }
+template v3 normalize(v3);
 template<typename T> inline v4_t<T> normalize(v4_t<T> V) {
 	T len = length(V);
 	return V4(V.x * ((T)1.0 / len), V.y * ((T)1.0 / len), V.z * ((T)1.0 / len), V.w * ((T)1.0 / len));
 }
+template v4 normalize(v4);
 
 template<typename T> inline T dot(v2_t<T> l, v2_t<T> r) {
 	return l.x * r.x + l.y * r.y;
 }
+template f32 dot(v2, v2);
 template<typename T> inline T dot(v3_t<T> l, v3_t<T> r) {
 	return l.x * r.x + l.y * r.y + l.z * r.z;
 }
+template f32 dot(v3, v3);
 template<typename T> inline T dot(v4_t<T> l, v4_t<T> r) {
 	return l.x * r.x + l.y * r.y + l.z * r.z + l.w * r.w;
 }
+template f32 dot(v4, v4);
 
 template<typename T> inline v3_t<T> cross(v3_t<T> l, v3_t<T> r) {
 	return V3(l.y * r.z - l.z * r.y, l.z * r.x - l.x * r.z, l.x * r.y - l.y * r.x);
 }
+template v3 cross(v3, v3);
 
 template<typename T> inline v2_t<T> add(v2_t<T> l, v2_t<T> r) {
 	return V2(l.x + r.x, l.y + r.y);
 }
+template v2 add(v2, v2);
 template<typename T> inline v3_t<T> add(v3_t<T> l, v3_t<T> r) {
 	return V3(l.x + r.x, l.y + r.y, l.z + r.z);
 }
+template v3 add(v3, v3);
 template<typename T> inline v4_t<T> add(v4_t<T> l, v4_t<T> r) {
 	return V4(l.x + r.x, l.y + r.y, l.z + r.z, l.w + r.w);	
 }
+template v4 add(v4, v4);
 
 template<typename T> inline v2_t<T> sub(v2_t<T> l, v2_t<T> r) {
 	return V2(l.x - r.x, l.y - r.y);
 }
+template v2 sub(v2, v2);
 template<typename T> inline v3_t<T> sub(v3_t<T> l, v3_t<T> r) {
 	return V3(l.x - r.x, l.y - r.y, l.z - r.z);
 }
+template v3 sub(v3, v3);
 template<typename T> inline v4_t<T> sub(v4_t<T> l, v4_t<T> r) {
 	return V4(l.x - r.x, l.y - r.y, l.z - r.z, l.w - r.w);	
 }
+template v4 sub(v4, v4);
 
 template<typename T> inline v2_t<T> mult(v2_t<T> l, v2_t<T> r) {
 	return V2(l.x * r.x, l.y * r.y);
 }
+template v2 mult(v2, v2);
 template<typename T> inline v2_t<T> mult(v2_t<T> l, T r) {
 	return V2(l.x * r, l.y * r);
 }
+template v2 mult(v2, f32);
 template<typename T> inline v3_t<T> mult(v3_t<T> l, v3_t<T> r) {
 	return V3(l.x * r.x, l.y * r.y, l.z * r.z);
 }
+template v3 mult(v3, v3);
 template<typename T> inline v3_t<T> mult(v3_t<T> l, T r) {
 	return V3(l.x * r, l.y * r, l.z * r);
 }
+template v3 mult(v3, f32);
 template<typename T> inline v4_t<T> mult(v4_t<T> l, v4_t<T> r) {
 	return V4(l.x * r.x, l.y * r.y, l.z * r.z, l.w * r.w);
 }
+template v4 mult(v4, v4);
 template<typename T> inline v4_t<T> mult(v4_t<T> l, T r) {
 	return V4(l.x * r, l.y * r, l.z * r, l.w * r);
 }
+template v4 mult(v4, f32);
 
 template<typename T> inline v2_t<T> div(v2_t<T> l, v2_t<T> r) {
 	return V2(l.x / r.x, l.y / r.y);
 }
+template v2 div(v2, v2);
 template<typename T> inline v2_t<T> div(v2_t<T> l, T r) {
 	return V2(l.x / r, l.y / r);
 }
+template v2 div(v2, f32);
 template<typename T> inline v3_t<T> div(v3_t<T> l, v3_t<T> r) {
 	return V3(l.x / r.x, l.y / r.y, l.z / r.z);
 }
+template v3 div(v3, v3);
 template<typename T> inline v3_t<T> div(v3_t<T> l, T r) {
 	return V3(l.x / r, l.y / r, l.z / r);
 }
+template v3 div(v3, f32);
 template<typename T> inline v4_t<T> div(v4_t<T> l, v4_t<T> r) {
 	return V4(l.x / r.x, l.y / r.y, l.z / r.z, l.w / r.w);
 }
+template v4 div(v4, v4);
 template<typename T> inline v4_t<T> div(v4_t<T> l, T r) {
 	return V4(l.x / r, l.y / r, l.z / r, l.w / r);
 }
+template v4 div(v4, f32);
 
 // TODO(max): more SIMD
 // Several of these matrix algorithms adapted from https://github.com/StrangeZak/Handmade-Math
@@ -291,6 +340,7 @@ template<typename T> inline m4_t<T> M4D(T diag) {
 	ret._44 = diag;
 	return ret;
 }
+template m4 M4D(f32);
 
 template<typename T> inline m4_t<T> add(m4_t<T> l, m4_t<T> r) {
 	m4_t<T> ret;
@@ -300,6 +350,7 @@ template<typename T> inline m4_t<T> add(m4_t<T> l, m4_t<T> r) {
 	ret._41 = l._41 + r._41; ret._42 = l._42 + r._42; ret._43 = l._43 + r._43; ret._44 = l._44 + r._44;
 	return ret;
 }
+template m4 add(m4, m4);
 
 template<typename T> inline m4_t<T> sub(m4_t<T> l, m4_t<T> r) {
 	m4_t<T> ret;
@@ -309,6 +360,7 @@ template<typename T> inline m4_t<T> sub(m4_t<T> l, m4_t<T> r) {
 	ret._41 = l._41 - r._41; ret._42 = l._42 - r._42; ret._43 = l._43 - r._43; ret._44 = l._44 - r._44;
 	return ret;
 }
+template m4 sub(m4, m4);
 
 template<typename T> m4_t<T> mult(m4_t<T> l, m4_t<T> r) {
 	m4_t<T> ret;
@@ -349,33 +401,36 @@ template<> inline m4 mult(m4 l, m4 r) {
 
 template<typename T> inline m4_t<T> mult(m4_t<T> m, T s) {
 	m4_t<T> ret;
-	ret._11 = l._11 * s; ret._12 = l._12 * s; ret._13 = l._13 * s; ret._14 = l._14 * s;
-	ret._21 = l._21 * s; ret._22 = l._22 * s; ret._23 = l._23 * s; ret._24 = l._24 * s;
-	ret._31 = l._31 * s; ret._32 = l._32 * s; ret._33 = l._33 * s; ret._34 = l._34 * s;
-	ret._41 = l._41 * s; ret._42 = l._42 * s; ret._43 = l._43 * s; ret._44 = l._44 * s;
+	ret._11 = m._11 * s; ret._12 = m._12 * s; ret._13 = m._13 * s; ret._14 = m._14 * s;
+	ret._21 = m._21 * s; ret._22 = m._22 * s; ret._23 = m._23 * s; ret._24 = m._24 * s;
+	ret._31 = m._31 * s; ret._32 = m._32 * s; ret._33 = m._33 * s; ret._34 = m._34 * s;
+	ret._41 = m._41 * s; ret._42 = m._42 * s; ret._43 = m._43 * s; ret._44 = m._44 * s;
 	return ret;
 }
+template m4 mult(m4, f32);
 
 template<typename T> inline v4_t<T> mult(m4_t<T> m, v4_t<T> v) {
     v4_t<T> ret;
     for(i32 row = 0; row < 4; row++) {
         T sum = 0;
-        for(col = 0; col < 4; col++) {
-            sum += m.v[col][row] * v.f[Columns];
+        for(i32 col = 0; col < 4; col++) {
+            sum += m.f[col][row] * v.f[col];
         }
         ret.f[row] = sum;
     }
     return ret;
 }
+template v4 mult(m4, v4);
 
 template<typename T> inline m4_t<T> div(m4_t<T> m, T s) {
 	m4_t<T> ret;
-	ret._11 = l._11 / s; ret._12 = l._12 / s; ret._13 = l._13 / s; ret._14 = l._14 / s;
-	ret._21 = l._21 / s; ret._22 = l._22 / s; ret._23 = l._23 / s; ret._24 = l._24 / s;
-	ret._31 = l._31 / s; ret._32 = l._32 / s; ret._33 = l._33 / s; ret._34 = l._34 / s;
-	ret._41 = l._41 / s; ret._42 = l._42 / s; ret._43 = l._43 / s; ret._44 = l._44 / s;
+	ret._11 = m._11 / s; ret._12 = m._12 / s; ret._13 = m._13 / s; ret._14 = m._14 / s;
+	ret._21 = m._21 / s; ret._22 = m._22 / s; ret._23 = m._23 / s; ret._24 = m._24 / s;
+	ret._31 = m._31 / s; ret._32 = m._32 / s; ret._33 = m._33 / s; ret._34 = m._34 / s;
+	ret._41 = m._41 / s; ret._42 = m._42 / s; ret._43 = m._43 / s; ret._44 = m._44 / s;
 	return ret;
 }
+template m4 div(m4, f32);
 
 template<typename T> inline m4_t<T> transpose(m4_t<T> m) {
 	m4_t<T> ret;
@@ -385,6 +440,7 @@ template<typename T> inline m4_t<T> transpose(m4_t<T> m) {
 	ret._41 = m._14; ret._42 = m._24; ret._43 = m._34; ret._44 = m._44;
 	return ret;
 }
+template m4 transpose(m4);
 
 inline m4 ortho(f32 left, f32 right, f32 bot, f32 top, f32 _near, f32 _far) {
     m4 ret = M4D(1.0f);
