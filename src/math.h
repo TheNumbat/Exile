@@ -4,6 +4,7 @@
 // TODO(max): remove cmath, use more SIMD intrinsics
 	// matrix/vector ops (+ batch)
 	// mod, div, sign
+// TODO(max): quaternions
 #include <cmath>
 #include <xmmintrin.h>
 
@@ -281,6 +282,7 @@ template<typename T> inline v4_t<T> div(v4_t<T> l, T r) {
 }
 
 // TODO(max): more SIMD
+// Several of these matrix algorithms adapted from https://github.com/StrangeZak/Handmade-Math
 template<typename T> inline m4_t<T> M4D(T diag) {
 	m4_t<T> ret;
 	ret._11 = diag;

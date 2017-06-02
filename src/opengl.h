@@ -33,6 +33,7 @@
 #define GL_ARRAY_BUFFER                   0x8892
 #define GL_ELEMENT_ARRAY_BUFFER           0x8893
 #define GL_STATIC_DRAW                    0x88E4
+#define GL_STREAM_DRAW                    0x88E0
 
 typedef char GLchar;
 typedef ptrdiff_t GLsizeiptr;
@@ -51,6 +52,8 @@ typedef void (*glDeleteShader_t)(GLuint shader);
 typedef void (*glLinkProgram_t)(GLuint program);
 typedef void (*glShaderSource_t)(GLuint shader, GLsizei count, const GLchar* const* str, const GLint* length);
 typedef void (*glUseProgram_t)(GLuint program);
+typedef GLint (*glGetUniformLocation_t)(GLuint program, const GLchar *name);
+typedef void (*glUniformMatrix4fv_t)(GLint location, GLsizei count, GLboolean transpose, const GLfloat *value);
 
 typedef void (*glGenerateMipmap_t)(GLenum target);
 
@@ -79,6 +82,8 @@ glDeleteShader_t  			glDeleteShader;
 glLinkProgram_t   			glLinkProgram;
 glShaderSource_t  			glShaderSource;
 glUseProgram_t    			glUseProgram;
+glGetUniformLocation_t 		glGetUniformLocation;
+glUniformMatrix4fv_t   		glUniformMatrix4fv;
 
 glGenerateMipmap_t			glGenerateMipmap;
 
@@ -94,6 +99,10 @@ glBufferData_t				glBufferData;
 glVertexAttribPointer_t		glVertexAttribPointer;
 glEnableVertexAttribArray_t glEnableVertexAttribArray;
 
+typedef u32 shader_program_id;
+typedef u32 texture_id;
+typedef u32 context_id; // VAO
+
 struct shader_source {
 	string path;
 	platform_file_attributes last_attrib;
@@ -101,13 +110,12 @@ struct shader_source {
 	allocator* alloc = NULL;
 };
 
-typedef u32 shader_program_id;
-
 struct shader_program {
 	shader_program_id id = 0;
 	GLuint handle = 0;
 	shader_source vertex;
 	shader_source fragment;
+	void (*set_uniforms)(shader_program*, render_command_list*) = NULL;
 	// tessellation control, evaluation, geometry
 };
 
@@ -119,15 +127,29 @@ enum texture_wrap {
 };
 
 struct texture {
+	texture_id id 		= 0;
 	GLuint handle 		= 0;
 	texture_wrap wrap 	= wrap_repeat;
 	bool pixelated 		= false;;
 };
 
+struct ogl_draw_context {
+	context_id id  = 0;
+	GLuint vao     = 0;
+	GLuint vbos[8] = {};
+};
+
 struct opengl {
 	map<shader_program_id, shader_program> programs;
-	shader_program_id dbg_shader = 0;
-	shader_program_id next_id = 1;
+	map<texture_id, texture> 			   textures;
+	map<context_id, ogl_draw_context> 	   contexts;
+	
+	shader_program_id 	dbg_shader = 0;
+
+	shader_program_id 	next_shader_id = 1;
+	texture_id 			next_texture_id = 1;
+	context_id 			next_context_id = 1;
+	
 	allocator* alloc = NULL;
 	string version, renderer, vendor;
 };
@@ -136,23 +158,38 @@ void ogl_load_global_funcs();
 
 opengl make_opengl(allocator* a);
 void destroy_opengl(opengl* ogl);
-shader_program_id ogl_add_program(opengl* ogl, string v_path, string f_path);
-void ogl_select_program(opengl* ogl, shader_program_id id);
 
-void ogl_dbg_render_texture_fullscreen(opengl* ogl, texture* tex);
+shader_program_id ogl_add_program(opengl* ogl, string v_path, string f_path, void (*set_uniforms)(shader_program*, render_command_list*));
+shader_program* ogl_select_program(opengl* ogl, shader_program_id id);
+void ogl_set_uniforms(shader_program* prog, render_command_list* rcl);
+
+texture_id ogl_add_texture(opengl* ogl, asset_store* as, string name, texture_wrap wrap = wrap_repeat, bool pixelated = false);
+texture* ogl_select_texture(opengl* ogl, texture_id id);
+
+context_id ogl_add_draw_context(opengl* ogl, void (*set_atribs)(ogl_draw_context* dc));
+ogl_draw_context* ogl_select_draw_context(opengl* ogl, context_id id);
+
+void ogl_dbg_render_texture_fullscreen(opengl* ogl, texture_id id);
+void ogl_render_command_list(opengl* ogl, render_command_list* rcl);
 
 shader_source make_source(string path, allocator* a);
 void load_source(shader_source* source);
 void destroy_source(shader_source* source);
 bool refresh_source(shader_source* source);
 
-shader_program make_program(string vert, string frag, allocator* a);
+shader_program make_program(string vert, string frag, void (*set_uniforms)(shader_program*, render_command_list*), allocator* a);
 void compile_program(shader_program* prog);
 void refresh_program(shader_program* prog);
 void destroy_program(shader_program* prog);
 
-texture make_texture(texture_wrap wrap = wrap_repeat, bool pixelated = false);
+texture make_texture(texture_wrap wrap, bool pixelated);
 void texture_load_bitmap(texture* tex, asset_store* as, string name);
 void destroy_texture(texture* tex);
 
 void debug_proc(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userPointer);
+
+void ogl_mesh_2d_attribs(ogl_draw_context* dc);
+void ogl_send_mesh_2d(opengl* ogl, mesh_2d* m, ogl_draw_context* context);
+
+void ogl_uniforms_gui(shader_program* prog, render_command_list* rcl);
+void ogl_uniforms_dbg(shader_program* prog, render_command_list* rcl) {};

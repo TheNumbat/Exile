@@ -15,8 +15,12 @@ struct game_state {
 	event_manager events;
 	opengl ogl;
 
-	asset_store test_store;
-
 	i32 window_w = 0, window_h = 0;
 	platform_window window 	= {};
+
+	// testing
+	asset_store test_store;
+	shader_program_id 	shader;
+	texture_id 			texture;
+	context_id			context;
 };

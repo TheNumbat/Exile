@@ -54,13 +54,14 @@ bool refresh_source(shader_source* source) {
 	return false;
 }
 
-shader_program make_program(string vert, string frag, allocator* a) {
+shader_program make_program(string vert, string frag, void (*set_uniforms)(shader_program*, render_command_list*), allocator* a) {
 
 	shader_program ret;
 
 	ret.vertex = make_source(vert, a);
 	ret.fragment = make_source(frag, a);
 	ret.handle = glCreateProgram();
+	ret.set_uniforms = set_uniforms;
 
 	compile_program(&ret);
 
@@ -113,12 +114,14 @@ opengl make_opengl(allocator* a) {
 
 	ret.alloc = a;
 	ret.programs = make_map<shader_program_id, shader_program>(8, a);
+	ret.textures = make_map<texture_id, texture>(32, a);
+	ret.contexts = make_map<context_id, ogl_draw_context>(32, a);
 
 	ret.version 	= string_from_c_str((char*)glGetString(GL_VERSION));
 	ret.renderer 	= string_from_c_str((char*)glGetString(GL_RENDERER));
 	ret.vendor  	= string_from_c_str((char*)glGetString(GL_VENDOR));
 
-	ret.dbg_shader = ogl_add_program(&ret, string_literal("shaders/dbg.v"), string_literal("shaders/dbg.f"));
+	ret.dbg_shader = ogl_add_program(&ret, string_literal("shaders/dbg.v"), string_literal("shaders/dbg.f"), &ogl_uniforms_dbg);
 
 	LOG_INFO_F("GL version : %s", ret.version.c_str);
 	LOG_INFO_F("GL renderer: %s", ret.renderer.c_str);
@@ -134,31 +137,75 @@ void destroy_opengl(opengl* ogl) {
 			destroy_program(&vector_get(&ogl->programs.contents, i)->value);
 		}
 	}
+	for(u32 i = 0; i < ogl->textures.contents.capacity; i++) {
+		if(vector_get(&ogl->textures.contents, i)->occupied) {
+			destroy_texture(&vector_get(&ogl->textures.contents, i)->value);
+		}
+	}
+	for(u32 i = 0; i < ogl->contexts.contents.capacity; i++) {
+		if(vector_get(&ogl->contexts.contents, i)->occupied) {
+			glDeleteVertexArrays(1, &(vector_get(&ogl->contexts.contents, i))->value.vao);
+			glDeleteBuffers(8, vector_get(&ogl->contexts.contents, i)->value.vbos);
+		}
+	}
 
 	destroy_map(&ogl->programs);
+	destroy_map(&ogl->textures);
+	destroy_map(&ogl->contexts);
 }
 
-shader_program_id ogl_add_program(opengl* ogl, string v_path, string f_path) {
+shader_program_id ogl_add_program(opengl* ogl, string v_path, string f_path, void (*set_uniforms)(shader_program*, render_command_list*)) {
 
-	shader_program p = make_program(v_path, f_path, ogl->alloc);
+	shader_program p = make_program(v_path, f_path, set_uniforms, ogl->alloc);
+	p.id = ogl->next_shader_id;
 
-	map_insert(&ogl->programs, ogl->next_id, p);
+	map_insert(&ogl->programs, ogl->next_shader_id, p);
 
-	ogl->next_id++;
+	ogl->next_shader_id++;
 
-	return ogl->next_id - 1;
+	return ogl->next_shader_id - 1;
 }
 
-void ogl_select_program(opengl* ogl, shader_program_id id) {
+shader_program* ogl_select_program(opengl* ogl, shader_program_id id) {
 
 	shader_program* p = map_try_get(&ogl->programs, id);
 
 	if(!p) {
 		LOG_ERR_F("Failed to retrieve program %u", id);
-		return;
+		return NULL;
 	}
 	
 	glUseProgram(p->handle);
+
+	return p;
+}
+
+texture_id ogl_add_texture(opengl* ogl, asset_store* as, string name, texture_wrap wrap, bool pixelated) {
+
+	texture t = make_texture(wrap, pixelated);
+	t.id = ogl->next_texture_id;
+
+	texture_load_bitmap(&t, as, name);
+
+	map_insert(&ogl->textures, ogl->next_texture_id, t);
+
+	ogl->next_texture_id++;
+
+	return ogl->next_texture_id - 1;
+}
+
+texture* ogl_select_texture(opengl* ogl, texture_id id) {
+
+	texture* t = map_try_get(&ogl->textures, id);
+
+	if(!t) {
+		LOG_ERR_F("Failed to retrieve texture %u", id);
+		return NULL;
+	}
+	
+	glBindTexture(GL_TEXTURE_2D, t->handle);
+
+	return t;
 }
 
 texture make_texture(texture_wrap wrap, bool pixelated) {
@@ -225,8 +272,97 @@ void destroy_texture(texture* tex) {
 	glDeleteTextures(1, &tex->handle);
 }
 
+context_id ogl_add_draw_context(opengl* ogl, void (*set_atribs)(ogl_draw_context* dc)) {
+
+	ogl_draw_context d;
+	glGenVertexArrays(1, &d.vao);
+	glBindVertexArray(d.vao);
+	glGenBuffers(8, d.vbos);
+	d.id = ogl->next_context_id;
+
+	set_atribs(&d);
+
+	map_insert(&ogl->contexts, ogl->next_context_id, d);
+
+	ogl->next_context_id++;
+
+	return ogl->next_context_id - 1;
+}
+
+ogl_draw_context* ogl_select_draw_context(opengl* ogl, context_id id) {
+
+	ogl_draw_context* d = map_try_get(&ogl->contexts, id);
+
+	if(!d) {
+		LOG_ERR_F("Failed to retrieve context %u", id);
+		return NULL;
+	}
+	
+	glBindVertexArray(d->vao);
+
+	return d;
+}
+
+void ogl_mesh_2d_attribs(ogl_draw_context* dc) {
+
+	glBindBuffer(GL_ARRAY_BUFFER, dc->vbos[0]);
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(f32), (void*)0);
+	glBindBuffer(GL_ARRAY_BUFFER, dc->vbos[1]);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(f32), (void*)0);
+	glBindBuffer(GL_ARRAY_BUFFER, dc->vbos[2]);
+	glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(f32), (void*)0);
+
+	glEnableVertexAttribArray(0);
+	glEnableVertexAttribArray(1);
+	glEnableVertexAttribArray(2);
+}
+
+void ogl_send_mesh_2d(opengl* ogl, mesh_2d* m, ogl_draw_context* dc) {
+
+	glBindBuffer(GL_ARRAY_BUFFER, dc->vbos[0]);
+	glBufferData(GL_ARRAY_BUFFER, m->verticies.size * sizeof(v2), m->verticies.size ? m->verticies.memory : NULL, GL_STREAM_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, dc->vbos[1]);
+	glBufferData(GL_ARRAY_BUFFER, m->texCoords.size * sizeof(v2), m->texCoords.size ? m->texCoords.memory : NULL, GL_STREAM_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, dc->vbos[2]);
+	glBufferData(GL_ARRAY_BUFFER, m->colors.size * sizeof(v4), m->colors.size ? m->colors.memory : NULL, GL_STREAM_DRAW);
+}
+
+void ogl_uniforms_gui(shader_program* prog, render_command_list* rcl) {
+
+	GLint loc = glGetUniformLocation(prog->handle, "transform");
+	glUniformMatrix4fv(loc, 1, GL_FALSE, rcl->proj.v);
+}
+
+void ogl_set_uniforms(shader_program* prog, render_command_list* rcl) {
+
+	prog->set_uniforms(prog, rcl);
+}
+
+void ogl_render_command_list(opengl* ogl, render_command_list* rcl) {
+
+	for(u32 i = 0; i < rcl->commands.size; i++) {
+
+		render_command* cmd = vector_get(&rcl->commands, i);
+
+		ogl_draw_context* context = ogl_select_draw_context(ogl, cmd->context);
+		ogl_select_texture(ogl, cmd->texture);
+		shader_program* prog = ogl_select_program(ogl, cmd->shader);
+
+		ogl_set_uniforms(prog, rcl);
+
+		glViewport(0, 0, global_state->window_w, global_state->window_h);
+
+		if(cmd->cmd == render_mesh_2d) {
+
+			ogl_send_mesh_2d(ogl, cmd->m2d, context);
+
+			glDrawArrays(GL_TRIANGLES, 0, cmd->m2d->verticies.size);
+		}
+	}
+}
+
 // temporary and inefficient texture render
-void ogl_dgb_render_texture_fullscreen(opengl* ogl, texture* tex) {
+void ogl_dbg_render_texture_fullscreen(opengl* ogl, texture_id id) {
 
 	GLfloat data[] = {
 		-1.0f, -1.0f,	0.0f, 0.0f,
@@ -253,8 +389,8 @@ void ogl_dgb_render_texture_fullscreen(opengl* ogl, texture* tex) {
 	glEnableVertexAttribArray(1);
 
 	ogl_select_program(ogl, ogl->dbg_shader);
+	ogl_select_texture(ogl, id);
 
-	glBindTexture(GL_TEXTURE_2D, tex->handle);
 	glViewport(0, 0, global_state->window_w, global_state->window_h);
 
 	glDrawArrays(GL_TRIANGLES, 0, 6);
@@ -347,15 +483,17 @@ void ogl_load_global_funcs() {
 	glDebugMessageInsert 	= (glDebugMessageInsert_t) 	 global_state->api->platform_get_glproc(string_literal("glDebugMessageInsert"));
 	glDebugMessageControl 	= (glDebugMessageControl_t)  global_state->api->platform_get_glproc(string_literal("glDebugMessageControl"));
 
-	glAttachShader  = (glAttachShader_t)  global_state->api->platform_get_glproc(string_literal("glAttachShader"));
-	glCompileShader = (glCompileShader_t) global_state->api->platform_get_glproc(string_literal("glCompileShader"));
-	glCreateProgram = (glCreateProgram_t) global_state->api->platform_get_glproc(string_literal("glCreateProgram"));
-	glCreateShader  = (glCreateShader_t)  global_state->api->platform_get_glproc(string_literal("glCreateShader"));
-	glDeleteProgram = (glDeleteProgram_t) global_state->api->platform_get_glproc(string_literal("glDeleteProgram"));
-	glDeleteShader  = (glDeleteShader_t)  global_state->api->platform_get_glproc(string_literal("glDeleteShader"));
-	glLinkProgram   = (glLinkProgram_t)   global_state->api->platform_get_glproc(string_literal("glLinkProgram"));
-	glShaderSource  = (glShaderSource_t)  global_state->api->platform_get_glproc(string_literal("glShaderSource"));
-	glUseProgram    = (glUseProgram_t)    global_state->api->platform_get_glproc(string_literal("glUseProgram"));
+	glAttachShader       = (glAttachShader_t)  global_state->api->platform_get_glproc(string_literal("glAttachShader"));
+	glCompileShader      = (glCompileShader_t) global_state->api->platform_get_glproc(string_literal("glCompileShader"));
+	glCreateProgram      = (glCreateProgram_t) global_state->api->platform_get_glproc(string_literal("glCreateProgram"));
+	glCreateShader       = (glCreateShader_t)  global_state->api->platform_get_glproc(string_literal("glCreateShader"));
+	glDeleteProgram      = (glDeleteProgram_t) global_state->api->platform_get_glproc(string_literal("glDeleteProgram"));
+	glDeleteShader       = (glDeleteShader_t)  global_state->api->platform_get_glproc(string_literal("glDeleteShader"));
+	glLinkProgram        = (glLinkProgram_t)   global_state->api->platform_get_glproc(string_literal("glLinkProgram"));
+	glShaderSource       = (glShaderSource_t)  global_state->api->platform_get_glproc(string_literal("glShaderSource"));
+	glUseProgram         = (glUseProgram_t)    global_state->api->platform_get_glproc(string_literal("glUseProgram"));
+	glGetUniformLocation = (glGetUniformLocation_t) global_state->api->platform_get_glproc(string_literal("glGetUniformLocation"));
+	glUniformMatrix4fv   = (glUniformMatrix4fv_t)   global_state->api->platform_get_glproc(string_literal("glUniformMatrix4fv"));
 
 	glGenerateMipmap = (glGenerateMipmap_t) global_state->api->platform_get_glproc(string_literal("glGenerateMipmap"));
 
