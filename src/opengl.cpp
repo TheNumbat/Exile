@@ -112,17 +112,17 @@ opengl make_opengl(allocator* a) {
 	opengl ret;
 
 	ret.alloc = a;
-	ret.programs = make_map<string, shader_program>(8, a, &hash_string);
+	ret.programs = make_map<shader_program_id, shader_program>(8, a);
 
 	ret.version 	= string_from_c_str((char*)glGetString(GL_VERSION));
 	ret.renderer 	= string_from_c_str((char*)glGetString(GL_RENDERER));
 	ret.vendor  	= string_from_c_str((char*)glGetString(GL_VENDOR));
 
+	ret.dbg_shader = ogl_add_program(&ret, string_literal("shaders/dbg.v"), string_literal("shaders/dbg.f"));
+
 	LOG_INFO_F("GL version : %s", ret.version.c_str);
 	LOG_INFO_F("GL renderer: %s", ret.renderer.c_str);
 	LOG_INFO_F("GL vendor  : %s", ret.vendor.c_str);
-
-	ogl_add_program(&ret, string_literal("tex_2D"), string_literal("shaders/tex_2D.v"), string_literal("shaders/tex_2D.f"));
 
 	return ret;
 }
@@ -138,30 +138,35 @@ void destroy_opengl(opengl* ogl) {
 	destroy_map(&ogl->programs);
 }
 
-void ogl_add_program(opengl* ogl, string name, string v_path, string f_path) {
+shader_program_id ogl_add_program(opengl* ogl, string v_path, string f_path) {
 
 	shader_program p = make_program(v_path, f_path, ogl->alloc);
 
-	map_insert(&ogl->programs, name, p);
+	map_insert(&ogl->programs, ogl->next_id, p);
+
+	ogl->next_id++;
+
+	return ogl->next_id - 1;
 }
 
-void ogl_select_program(opengl* ogl, string name) {
+void ogl_select_program(opengl* ogl, shader_program_id id) {
 
-	shader_program* p = map_try_get(&ogl->programs, name);
+	shader_program* p = map_try_get(&ogl->programs, id);
 
 	if(!p) {
-		LOG_ERR_F("Failed to retrieve program %s", name.c_str);
+		LOG_ERR_F("Failed to retrieve program %u", id);
 		return;
 	}
 	
 	glUseProgram(p->handle);
 }
 
-texture make_texture(texture_wrap wrap) {
+texture make_texture(texture_wrap wrap, bool pixelated) {
 
 	texture ret;
 
 	ret.wrap = wrap;
+	ret.pixelated = pixelated;
 	glGenTextures(1, &ret.handle);
 
 	glBindTexture(GL_TEXTURE_2D, ret.handle);
@@ -187,10 +192,13 @@ texture make_texture(texture_wrap wrap) {
 		break;
 	}
 
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-	// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	if(pixelated) {
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	} else {
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	}
 
 	glBindTexture(GL_TEXTURE_2D, 0);
 
@@ -218,7 +226,7 @@ void destroy_texture(texture* tex) {
 }
 
 // temporary and inefficient texture render
-void ogl_render_texture_fullscreen(opengl* ogl, texture* tex) {
+void ogl_dgb_render_texture_fullscreen(opengl* ogl, texture* tex) {
 
 	GLfloat data[] = {
 		-1.0f, -1.0f,	0.0f, 0.0f,
@@ -244,7 +252,7 @@ void ogl_render_texture_fullscreen(opengl* ogl, texture* tex) {
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);
 
-	ogl_select_program(ogl, string_literal("tex_2D"));
+	ogl_select_program(ogl, ogl->dbg_shader);
 
 	glBindTexture(GL_TEXTURE_2D, tex->handle);
 	glViewport(0, 0, global_state->window_w, global_state->window_h);
@@ -325,7 +333,7 @@ void debug_proc(GLenum glsource, GLenum gltype, GLuint id, GLenum severity, GLsi
 		LOG_WARN_F("LOW OpenGL: %s SOURCE: %s TYPE: %s", message.c_str, source.c_str, type.c_str);
 		break;
 	case GL_DEBUG_SEVERITY_NOTIFICATION:
-		LOG_INFO_F("NOTF OpenGL: %s SOURCE: %s TYPE: %s", message.c_str, source.c_str, type.c_str);
+		LOG_DEBUG_F("NOTF OpenGL: %s SOURCE: %s TYPE: %s", message.c_str, source.c_str, type.c_str);
 		break;
 	}
 }
@@ -360,7 +368,7 @@ void ogl_load_global_funcs() {
 	glGenBuffers    = (glGenBuffers_t)    global_state->api->platform_get_glproc(string_literal("glGenBuffers"));
 	glBufferData	= (glBufferData_t)    global_state->api->platform_get_glproc(string_literal("glBufferData"));
 
-	glVertexAttribPointer 	  = (glVertexAttribPointer_t) global_state->api->platform_get_glproc(string_literal("glVertexAttribPointer"));
+	glVertexAttribPointer 	  = (glVertexAttribPointer_t) 	  global_state->api->platform_get_glproc(string_literal("glVertexAttribPointer"));
 	glEnableVertexAttribArray = (glEnableVertexAttribArray_t) global_state->api->platform_get_glproc(string_literal("glEnableVertexAttribArray"));
 	
 	glDebugMessageCallback(debug_proc, NULL);

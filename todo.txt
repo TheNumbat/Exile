@@ -8,17 +8,20 @@ are get() references really a good idea?
 immediate to do:
 
 	OpenGl
-		texture representation/store
-		mesh representation
-		think about chunk rendering
-			texture atlases
+		draw commands/lists
+		2D
+			2D meshing?
+			texture atlas - fonts (texture array?)
+		3D
+			texture atlas/array representation/store
+			mesh representation
+			chunk meshing, texturing
 			deferred mesh re/building
-		models & animation
-
-		2D rendering - how will this work with UI system
+			models & animation
 
 	asset
 		asset manager (general allocator?)
+		asset texture atlases
 		asset fonts
 		call asset.exe to re/build (do path stuff, platform_exec_cmd)
 		auto-reload asset stores

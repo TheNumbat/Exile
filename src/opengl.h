@@ -101,7 +101,10 @@ struct shader_source {
 	allocator* alloc = NULL;
 };
 
+typedef u32 shader_program_id;
+
 struct shader_program {
+	shader_program_id id = 0;
 	GLuint handle = 0;
 	shader_source vertex;
 	shader_source fragment;
@@ -116,12 +119,15 @@ enum texture_wrap {
 };
 
 struct texture {
-	GLuint handle = 0;
-	texture_wrap wrap = wrap_repeat;
+	GLuint handle 		= 0;
+	texture_wrap wrap 	= wrap_repeat;
+	bool pixelated 		= false;;
 };
 
 struct opengl {
-	map<string, shader_program> programs;
+	map<shader_program_id, shader_program> programs;
+	shader_program_id dbg_shader = 0;
+	shader_program_id next_id = 1;
 	allocator* alloc = NULL;
 	string version, renderer, vendor;
 };
@@ -130,9 +136,10 @@ void ogl_load_global_funcs();
 
 opengl make_opengl(allocator* a);
 void destroy_opengl(opengl* ogl);
-void ogl_add_program(opengl* ogl, string name, string v_path, string f_path);
-void ogl_select_program(opengl* ogl, string name);
-void ogl_render_texture_fullscreen(opengl* ogl, texture* tex);
+shader_program_id ogl_add_program(opengl* ogl, string v_path, string f_path);
+void ogl_select_program(opengl* ogl, shader_program_id id);
+
+void ogl_dbg_render_texture_fullscreen(opengl* ogl, texture* tex);
 
 shader_source make_source(string path, allocator* a);
 void load_source(shader_source* source);
@@ -144,7 +151,7 @@ void compile_program(shader_program* prog);
 void refresh_program(shader_program* prog);
 void destroy_program(shader_program* prog);
 
-texture make_texture(texture_wrap wrap);
+texture make_texture(texture_wrap wrap = wrap_repeat, bool pixelated = false);
 void texture_load_bitmap(texture* tex, asset_store* as, string name);
 void destroy_texture(texture* tex);
 

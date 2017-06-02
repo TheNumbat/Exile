@@ -74,10 +74,6 @@ extern "C" game_state* start_up(platform_api* api) {
 
 extern "C" bool main_loop(game_state* state) {
 
-	texture test = make_texture(wrap_clamp_border);
-	texture_load_bitmap(&test, &state->test_store, string_literal("cat"));
-	ogl_render_texture_fullscreen(&state->ogl, &test);
-	destroy_texture(&test);
 	state->api->platform_swap_buffers(&state->window);
 	
 	return run_events(&state->events);

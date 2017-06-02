@@ -179,13 +179,6 @@ int main(int argc, char** argv) {
 
 	platform_close_file(&assets_out);
 
-	err = platform_create_file(&assets_out, string_from_c_str(argv[2]), open_file_existing);
-	u32 out_size = platform_file_size(&assets_out);
-	void* out_mem = platform_heap_alloc(out_size);
-	platform_read_file(&assets_out, out_mem, out_size);
-	platform_close_file(&assets_out);
-	platform_heap_free(out_mem);
-
 	cout << "Done!" << endl;
 
 	return 0;
