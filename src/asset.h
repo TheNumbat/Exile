@@ -27,19 +27,22 @@ struct file_asset_font {
 };
 
 struct file_asset_bitmap {
-	i32 width = 0;
-	i32 height = 0;
+	i32 width;
+	i32 height;
 };
 
 struct file_asset {
-	asset_type type = asset_none;
-	char name[128] = {};
+	asset_type type;
+	char name[128];
 	union {
 		file_asset_bitmap bitmap;
 		file_asset_font   font;
 	};
-	u64 next = 0; // byte offset from start of file_asset
-	file_asset() : bitmap(), font() {};
+	u64 next; // byte offset from start of file_asset
+};
+
+struct asset_file_header {
+	u32 num_assets;
 };
 #pragma pack(pop)
 
@@ -51,10 +54,6 @@ struct asset {
 		_asset_font 	font;
 	};
 	asset() : bitmap(), font() {};
-};
-
-struct asset_file_header {
-	u32 num_assets = 0;
 };
 
 #ifndef BUILDER

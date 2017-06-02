@@ -71,7 +71,7 @@ void load_asset_store(asset_store* am, string path) {
 
 				a.bitmap.width = current_asset->bitmap.width;
 				a.bitmap.height = current_asset->bitmap.height;
-				a.bitmap.mem = (u8*)(current_asset + sizeof(file_asset));
+				a.bitmap.mem = (u8*)(current_asset) + sizeof(file_asset);
 
 				map_insert(&am->assets, a.name, a);
 

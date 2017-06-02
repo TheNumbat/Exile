@@ -147,8 +147,21 @@ int main(int argc, char** argv) {
 			asset.bitmap.height = bmp_header->height;
 
 			// calculate total asset size for next asset member
-			u32 pixel_size = (bmp_header->width * bmp_header->height * bmp_header->bitsperpipxel / 8);
+			u32 pixel_stride =  bmp_header->width * bmp_header->bitsperpipxel / 8;
+			u32 pixel_size = (bmp_header->height * pixel_stride);
 			asset.next = sizeof(file_asset) + pixel_size;
+
+			// BGRA -> RGBA
+			for(u8* current = pixels; current != pixels + pixel_size; current += 4) {
+				u8 b = *(current);
+				u8 g = *(current + 1);
+				u8 r = *(current + 2);
+				u8 a = *(current + 3);
+				*current 	   = r;
+				*(current + 1) = g;
+				*(current + 2) = b;
+				*(current + 3) = a;
+			}
 
 			// write asset
 			platform_write_file(&assets_out, (void*)&asset, sizeof(file_asset));
@@ -165,6 +178,14 @@ int main(int argc, char** argv) {
 		free_string(def_strings[i], &platform_heap_free);
 
 	platform_close_file(&assets_out);
+
+	err = platform_create_file(&assets_out, string_from_c_str(argv[2]), open_file_existing);
+	u32 out_size = platform_file_size(&assets_out);
+	void* out_mem = platform_heap_alloc(out_size);
+	platform_read_file(&assets_out, out_mem, out_size);
+	platform_close_file(&assets_out);
+	platform_heap_free(out_mem);
+
 	cout << "Done!" << endl;
 
 	return 0;

@@ -122,6 +122,8 @@ opengl make_opengl(allocator* a) {
 	LOG_INFO_F("GL renderer: %s", ret.renderer.c_str);
 	LOG_INFO_F("GL vendor  : %s", ret.vendor.c_str);
 
+	ogl_add_program(&ret, string_literal("tex_2D"), string_literal("shaders/tex_2D.v"), string_literal("shaders/tex_2D.f"));
+
 	return ret;
 }
 
@@ -188,6 +190,8 @@ texture make_texture(texture_wrap wrap) {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
+	// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
 	glBindTexture(GL_TEXTURE_2D, 0);
 
 	return ret;
@@ -201,7 +205,8 @@ void texture_load_bitmap(texture* tex, asset_store* as, string name) {
 
 	glBindTexture(GL_TEXTURE_2D, tex->handle);
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, a.bitmap.width, a.bitmap.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, a.bitmap.mem);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, a.bitmap.width, a.bitmap.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, a.bitmap.mem);
+	
 	glGenerateMipmap(GL_TEXTURE_2D);
 
 	glBindTexture(GL_TEXTURE_2D, 0);
@@ -212,9 +217,45 @@ void destroy_texture(texture* tex) {
 	glDeleteTextures(1, &tex->handle);
 }
 
-void render_texture_fullscreen(texture* tex) {
+// temporary and inefficient texture render
+void ogl_render_texture_fullscreen(opengl* ogl, texture* tex) {
 
+	GLfloat data[] = {
+		-1.0f, -1.0f,	0.0f, 0.0f,
+		-1.0f,  1.0f, 	0.0f, 1.0f,
+		 1.0f, -1.0f,	1.0f, 0.0f,
 
+		-1.0f,  1.0f, 	0.0f, 1.0f,
+		 1.0f, -1.0f,	1.0f, 0.0f,
+		 1.0f,  1.0f,	1.0f, 1.0f
+	};
+
+	GLuint VAO, VBO;
+	glGenVertexArrays(1, &VAO);
+	glGenBuffers(1, &VBO);
+	glBindVertexArray(VAO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+
+	glBufferData(GL_ARRAY_BUFFER, sizeof(data), data, GL_STATIC_DRAW);
+
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), (void*)0);	
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), (void*)(2 * sizeof(GLfloat)));
+
+	glEnableVertexAttribArray(0);
+	glEnableVertexAttribArray(1);
+
+	ogl_select_program(ogl, string_literal("tex_2D"));
+
+	glBindTexture(GL_TEXTURE_2D, tex->handle);
+	glViewport(0, 0, global_state->window_w, global_state->window_h);
+
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	
+	glBindTexture(GL_TEXTURE_2D, 0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+	glDeleteBuffers(1, &VBO);
+	glDeleteVertexArrays(1, &VAO);
 }
 
 void debug_proc(GLenum glsource, GLenum gltype, GLuint id, GLenum severity, GLsizei length, const GLchar* glmessage, const void* up) {
@@ -310,6 +351,18 @@ void ogl_load_global_funcs() {
 
 	glGenerateMipmap = (glGenerateMipmap_t) global_state->api->platform_get_glproc(string_literal("glGenerateMipmap"));
 
+	glBindVertexArray    = (glBindVertexArray_t)    global_state->api->platform_get_glproc(string_literal("glBindVertexArray"));
+	glDeleteVertexArrays = (glDeleteVertexArrays_t) global_state->api->platform_get_glproc(string_literal("glDeleteVertexArrays"));
+	glGenVertexArrays    = (glGenVertexArrays_t)    global_state->api->platform_get_glproc(string_literal("glGenVertexArrays"));
+
+	glBindBuffer    = (glBindBuffer_t)    global_state->api->platform_get_glproc(string_literal("glBindBuffer"));
+	glDeleteBuffers = (glDeleteBuffers_t) global_state->api->platform_get_glproc(string_literal("glDeleteBuffers"));
+	glGenBuffers    = (glGenBuffers_t)    global_state->api->platform_get_glproc(string_literal("glGenBuffers"));
+	glBufferData	= (glBufferData_t)    global_state->api->platform_get_glproc(string_literal("glBufferData"));
+
+	glVertexAttribPointer 	  = (glVertexAttribPointer_t) global_state->api->platform_get_glproc(string_literal("glVertexAttribPointer"));
+	glEnableVertexAttribArray = (glEnableVertexAttribArray_t) global_state->api->platform_get_glproc(string_literal("glEnableVertexAttribArray"));
+	
 	glDebugMessageCallback(debug_proc, NULL);
 	glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
 }

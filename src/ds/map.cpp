@@ -166,6 +166,10 @@ V* map_get(map<K,V>* m, K key) {
 template<typename K, typename V>
 V* map_try_get(map<K,V>* m, K key) {	// can return NULL
 
+	if (m->size == 0) {
+		return NULL;
+	}
+
 	u32 hash_bucket;
 
 	if(m->use_u32hash) {

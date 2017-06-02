@@ -22,7 +22,7 @@ extern "C" game_state* start_up(platform_api* api) {
 	api->platform_get_stdout_as_file(&stdout_file);
 	api->platform_create_file(&log_all_file, string_literal("log_all.txt"), open_file_create);
 	logger_add_file(&state->log, log_all_file, log_alloc);
-	logger_add_file(&state->log, stdout_file, log_debug);
+	logger_add_file(&state->log, stdout_file, log_info);
 
 	LOG_INIT_THREAD(string_literal("main"));
 
@@ -64,7 +64,6 @@ extern "C" game_state* start_up(platform_api* api) {
 	LOG_PUSH_CONTEXT_L("ogl");
 	ogl_load_global_funcs();
 	state->ogl = make_opengl(&state->default_platform_allocator);
-	ogl_add_program(&state->ogl, string_literal("basic_2D"), string_literal("shaders/basic_2D.v"), string_literal("shaders/basic_2D.f"));
 	LOG_POP_CONTEXT();
 
 	LOG_INFO("Done with startup!");
@@ -75,9 +74,9 @@ extern "C" game_state* start_up(platform_api* api) {
 
 extern "C" bool main_loop(game_state* state) {
 
-	texture test = make_texture(wrap_repeat);
+	texture test = make_texture(wrap_clamp_border);
 	texture_load_bitmap(&test, &state->test_store, string_literal("cat"));
-	render_texture_fullscreen(&test);
+	ogl_render_texture_fullscreen(&state->ogl, &test);
 	destroy_texture(&test);
 	state->api->platform_swap_buffers(&state->window);
 	

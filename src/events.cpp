@@ -73,6 +73,11 @@ bool run_events(event_manager* em) {
 			global_state->window_w = evt.window.x;
 			global_state->window_h = evt.window.y;
 		}
+		else if(evt.type == event_window && evt.window.op == window_maximized) {
+			LOG_DEBUG_F("window maximized w: %i h: %i", evt.window.x, evt.window.y);
+			global_state->window_w = evt.window.x;
+			global_state->window_h = evt.window.y;
+		}
 
 		else if(evt.type == event_window && evt.window.op == window_moved) {
 			LOG_DEBUG_F("window moved x: %i y: %i", evt.window.x, evt.window.y);
