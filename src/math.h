@@ -65,7 +65,7 @@ inline f32 _sinf(f32 value) {
 inline f32 _cosf(f32 value) {
 	return cosf(value);
 }
-#define cosf(v) _sinf(v)
+#define cosf(v) _cosf(v)
 
 template<typename T>
 union v2_t {
@@ -154,12 +154,12 @@ template v4_t<u8>;
 template<typename T>
 union m4_t {
 	T v[16] = {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1}; 
-	T f[4][4]; // row column
+	T f[4][4]; // column row
 	struct {
-		T _11, _12, _13, _14;
-		T _21, _22, _23, _24;
-		T _31, _32, _33, _34;
-		T _41, _42, _43, _44;
+		T _11, _21, _31, _41;
+		T _12, _22, _32, _42;
+		T _13, _23, _33, _43;
+		T _14, _24, _34, _44;
 	};
 };
 typedef m4_t<f32> m4;
@@ -475,21 +475,26 @@ inline m4 translate(v3 trans) {
 }
 
 inline m4 rotate(f32 angle, v3 axis) {
-    m4 ret = M4D(1.0f);
-    axis = normalize(axis);
-    f32 sina = sinf(RADIANS(angle));
-    f32 cosa = cosf(RADIANS(angle));
-    f32 cosv = 1.0f - cosa;
-    ret.f[0][0] = (axis.x * axis.x * cosv) + cosa;
-    ret.f[1][0] = (axis.x * axis.y * cosv) + (axis.z * sina);
-    ret.f[2][0] = (axis.x * axis.z * cosv) - (axis.y * sina);
-    ret.f[0][1] = (axis.y * axis.x * cosv) - (axis.z * sina);
-    ret.f[1][1] = (axis.y * axis.y * cosv) + cosa;
-    ret.f[2][1] = (axis.y * axis.z * cosv) + (axis.x * sina);
-    ret.f[0][2] = (axis.z * axis.x * cosv) + (axis.y * sina);
-    ret.f[1][2] = (axis.z * axis.y * cosv) - (axis.x * sina);
-    ret.f[2][2] = (axis.z * axis.z * cosv) + cosa;
-    return ret;
+
+	m4 ret;
+
+	f32 c = cosf(RADIANS(angle));
+	f32 s = sinf(RADIANS(angle));
+
+	axis = normalize(axis);
+	v3 temp = mult(axis, (1 - c));
+
+	ret.f[0][0] = c + temp.f[0] * axis.f[0];
+	ret.f[0][1] = temp.f[0] * axis.f[1] + s * axis.f[2];
+	ret.f[0][2] = temp.f[0] * axis.f[2] - s * axis.f[1];
+	ret.f[1][0] = temp.f[1] * axis.f[0] - s * axis.f[2];
+	ret.f[1][1] = c + temp.f[1] * axis.f[1];
+	ret.f[1][2] = temp.f[1] * axis.f[2] + s * axis.f[0];
+	ret.f[2][0] = temp.f[2] * axis.f[0] + s * axis.f[1];
+	ret.f[2][1] = temp.f[2] * axis.f[1] - s * axis.f[0];
+	ret.f[2][2] = c + temp.f[2] * axis.f[2];
+
+	return ret;
 }
 
 inline m4 scale(v3 scale) {
@@ -500,23 +505,29 @@ inline m4 scale(v3 scale) {
     return ret;
 }
 
-inline m4 lookAt(v3 pos, v3 look_at, v3 up) {
-    m4 ret;
-    v3 F = normalize(sub(look_at, pos));
+inline m4 lookAt(v3 eye, v3 center, v3 up) {
+    m4 ret = M4D(0.0f);
+
+    v3 F = normalize(sub(center, eye));
     v3 S = normalize(cross(F, up));
     v3 U = cross(S, F);
-    ret.f[0][0] = S.x;
-    ret.f[1][0] = U.x;
-    ret.f[2][0] = -F.x;
-    ret.f[0][1] = S.y;
-    ret.f[1][1] = U.y;
-    ret.f[2][1] = -F.y;
-    ret.f[0][2] = S.z;
-    ret.f[1][2] = U.z;
+
+    ret.f[0][0] =  S.x;
+    ret.f[0][1] =  U.x;
+    ret.f[0][2] = -F.x;
+
+    ret.f[1][0] =  S.y;
+    ret.f[1][1] =  U.y;
+    ret.f[1][2] = -F.y;
+
+    ret.f[2][0] =  S.z;
+    ret.f[2][1] =  U.z;
     ret.f[2][2] = -F.z;
-    ret.f[0][3] = -dot(S, pos);
-    ret.f[1][3] = -dot(U, pos);
-    ret.f[2][3] =  dot(F, pos);
+
+    ret.f[3][0] = -dot(S, eye);
+    ret.f[3][1] = -dot(U, eye);
+    ret.f[3][2] =  dot(F, eye);
     ret.f[3][3] = 1.0f;
+
     return ret;
 }

@@ -162,9 +162,12 @@ extern "C" bool main_loop(game_state* state) {
 	cmd.shader = state->shader;
 	cmd.texture = state->texture;
 	cmd.context = state->context;
-	
+	static f32 test = 0.0f;
+	cmd.model = scale(V3(2.0f, 1.0f, 1.0f));
+
 	render_add_command(&rcl, cmd);
-	rcl.view = translate(V3(1.0f, -1.0f, -3.0f));
+	// rcl.view = translate(V3(0.0f, 0.0f, -3.0f));
+	rcl.view = lookAt(V3(10.0f*sinf(test += 0.05f), 0.0f, 10.0f*cosf(test)), V3(0.0f, 0.0f, 0.0f), V3(0.0f, 1.0f, 0.0f));
 	rcl.proj = proj(45.0f, (f32)global_state->window_w/(f32)global_state->window_h, 0.1f, 100.0f);
 	
 	ogl_render_command_list(&state->ogl, &rcl);
