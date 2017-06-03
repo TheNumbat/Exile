@@ -115,7 +115,7 @@ struct shader_program {
 	GLuint handle = 0;
 	shader_source vertex;
 	shader_source fragment;
-	void (*set_uniforms)(shader_program*, render_command_list*) = NULL;
+	void (*set_uniforms)(shader_program*, render_command*, render_command_list*) = NULL;
 	// tessellation control, evaluation, geometry
 };
 
@@ -159,9 +159,9 @@ void ogl_load_global_funcs();
 opengl make_opengl(allocator* a);
 void destroy_opengl(opengl* ogl);
 
-shader_program_id ogl_add_program(opengl* ogl, string v_path, string f_path, void (*set_uniforms)(shader_program*, render_command_list*));
+shader_program_id ogl_add_program(opengl* ogl, string v_path, string f_path, void (*set_uniforms)(shader_program*, render_command*, render_command_list*));
 shader_program* ogl_select_program(opengl* ogl, shader_program_id id);
-void ogl_set_uniforms(shader_program* prog, render_command_list* rcl);
+void ogl_set_uniforms(shader_program* prog, render_command* rc, render_command_list* rcl);
 
 texture_id ogl_add_texture(opengl* ogl, asset_store* as, string name, texture_wrap wrap = wrap_repeat, bool pixelated = false);
 texture* ogl_select_texture(opengl* ogl, texture_id id);
@@ -177,7 +177,7 @@ void load_source(shader_source* source);
 void destroy_source(shader_source* source);
 bool refresh_source(shader_source* source);
 
-shader_program make_program(string vert, string frag, void (*set_uniforms)(shader_program*, render_command_list*), allocator* a);
+shader_program make_program(string vert, string frag, void (*set_uniforms)(shader_program*, render_command*, render_command_list*), allocator* a);
 void compile_program(shader_program* prog);
 void refresh_program(shader_program* prog);
 void destroy_program(shader_program* prog);
@@ -191,5 +191,9 @@ void debug_proc(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei 
 void ogl_mesh_2d_attribs(ogl_draw_context* dc);
 void ogl_send_mesh_2d(opengl* ogl, mesh_2d* m, ogl_draw_context* context);
 
-void ogl_uniforms_gui(shader_program* prog, render_command_list* rcl);
-void ogl_uniforms_dbg(shader_program* prog, render_command_list* rcl) {};
+void ogl_mesh_3d_attribs(ogl_draw_context* dc);
+void ogl_send_mesh_3d(opengl* ogl, mesh_3d* m, ogl_draw_context* context);
+
+void ogl_uniforms_gui(shader_program* prog, render_command* rc, render_command_list* rcl);
+void ogl_uniforms_dbg(shader_program* prog, render_command* rc, render_command_list* rcl) {};
+void ogl_uniforms_3dtex(shader_program* prog, render_command* rc, render_command_list* rcl);

@@ -21,8 +21,7 @@ struct mesh_2d {
 struct mesh_3d {
 	vector<v3>  verticies;	// x y z
 	vector<v2>  texCoords; 	// u v (layer)
-	vector<uv3>	indicies;	// x y z
-	m4 			model;
+	// TODO(max): indices
 	allocator* alloc = NULL;
 };
 
@@ -31,6 +30,7 @@ struct render_command {
 	shader_program_id 	shader 	= 0;
 	texture_id 			texture = 0;
 	context_id 			context = 0;
+	m4 model;
 	union {
 		void* data = NULL;
 		mesh_3d*	m3d;
@@ -45,8 +45,8 @@ struct render_camera {
 struct render_command_list {
 	vector<render_command> commands;
 	render_camera cam;
-	m4 proj;
 	allocator* alloc = NULL;
+	m4 view, proj;
 };
 
 mesh_2d make_mesh_2d(allocator* alloc, u32 verts = 32);

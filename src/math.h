@@ -153,7 +153,7 @@ template v4_t<u8>;
 
 template<typename T>
 union m4_t {
-	T v[16] = {}; 
+	T v[16] = {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1}; 
 	T f[4][4]; // row column
 	struct {
 		T _11, _12, _13, _14;
@@ -364,40 +364,18 @@ template m4 sub(m4, m4);
 
 template<typename T> m4_t<T> mult(m4_t<T> l, m4_t<T> r) {
 	m4_t<T> ret;
-    for(i32 col = 0; col < 4; col++) {
-        for(i32 row = 0; row < 4; row++) {
+    for(i32 row = 0; row < 4; row++) {
+	    for(i32 col = 0; col < 4; col++) {
             T sum = 0;
-            for(i32 vec = 0; vec < 4; vec++) {
-                sum += l.v[vec][row] * r.v[col][vec];
+            for(i32 place = 0; place < 4; place++) {
+                sum += l.f[row][place] * r.f[place][col];
             }
-            ret.v[col][row] = sum;
+            ret.f[row][col] = sum;
         }
     }
     return ret;
 }
-
-template<> inline m4 mult(m4 l, m4 r) {
-    m4 ret;
-    __m128 row1 = _mm_load_ps(&r.v[0]);
-    __m128 row2 = _mm_load_ps(&r.v[4]);
-    __m128 row3 = _mm_load_ps(&r.v[8]);
-    __m128 row4 = _mm_load_ps(&r.v[12]);
-    for(int i=0; i<4; i++) {
-        __m128 brod1 = _mm_set1_ps(l.v[4*i + 0]);
-        __m128 brod2 = _mm_set1_ps(l.v[4*i + 1]);
-        __m128 brod3 = _mm_set1_ps(l.v[4*i + 2]);
-        __m128 brod4 = _mm_set1_ps(l.v[4*i + 3]);
-        __m128 row = _mm_add_ps(
-                    _mm_add_ps(
-                        _mm_mul_ps(brod1, row1),
-                        _mm_mul_ps(brod2, row2)),
-                    _mm_add_ps(
-                        _mm_mul_ps(brod3, row3),
-                        _mm_mul_ps(brod4, row4)));
-        _mm_store_ps(&ret.v[4*i], row);
-    }
-    return ret;
-}
+template m4 mult(m4, m4);
 
 template<typename T> inline m4_t<T> mult(m4_t<T> m, T s) {
 	m4_t<T> ret;
@@ -414,7 +392,7 @@ template<typename T> inline v4_t<T> mult(m4_t<T> m, v4_t<T> v) {
     for(i32 row = 0; row < 4; row++) {
         T sum = 0;
         for(i32 col = 0; col < 4; col++) {
-            sum += m.f[col][row] * v.f[col];
+            sum += m.f[row][col] * v.f[col];
         }
         ret.f[row] = sum;
     }
@@ -459,18 +437,18 @@ inline m4 proj(f32 fov, f32 ar, f32 _near, f32 _far) {
     f32 tan_over_2 = tanf(RADIANS(fov) / 2.0f);
     ret.f[1][1] = 1.0f / tan_over_2;
     ret.f[0][0] = ret.f[1][1] / ar;
-    ret.f[2][2] = _far / (_far - _near);
-    ret.f[3][2] = -_far * _near / (_far - _near);
-    ret.f[2][3] = 1.0f;
+    ret.f[2][2] = -_far / (_far - _near);
+    ret.f[2][3] = -1.0f;
+    ret.f[3][2] = 2.0f * (-_far * _near) / (_far - _near);
     ret.f[3][3] = 0.0f;
     return ret;
 }
 
 inline m4 translate(v3 trans) {
 	m4 ret = M4D(1.0f);
-    ret.f[0][3] = trans.x;
-    ret.f[1][3] = trans.y;
-    ret.f[2][3] = trans.z;
+    ret.f[3][0] = trans.x;
+    ret.f[3][1] = trans.y;
+    ret.f[3][2] = trans.z;
     return ret;
 }
 
@@ -500,23 +478,23 @@ inline m4 scale(v3 scale) {
     return ret;
 }
 
-inline m4 lookAt(v3 eye, v3 pos, v3 up) {
+inline m4 lookAt(v3 pos, v3 look_at, v3 up) {
     m4 ret;
-    v3 F = normalize(sub(pos, eye));
+    v3 F = normalize(sub(look_at, pos));
     v3 S = normalize(cross(F, up));
     v3 U = cross(S, F);
     ret.f[0][0] = S.x;
-    ret.f[0][1] = U.x;
-    ret.f[0][2] = -F.x;
-    ret.f[1][0] = S.y;
+    ret.f[1][0] = U.x;
+    ret.f[2][0] = -F.x;
+    ret.f[0][1] = S.y;
     ret.f[1][1] = U.y;
-    ret.f[1][2] = -F.y;
-    ret.f[2][0] = S.z;
-    ret.f[2][1] = U.z;
+    ret.f[2][1] = -F.y;
+    ret.f[0][2] = S.z;
+    ret.f[1][2] = U.z;
     ret.f[2][2] = -F.z;
-    ret.f[3][0] = -dot(S, eye);
-    ret.f[3][1] = -dot(U, eye);
-    ret.f[3][2] =  dot(F, eye);
+    ret.f[0][3] = -dot(S, pos);
+    ret.f[1][3] = -dot(U, pos);
+    ret.f[2][3] =  dot(F, pos);
     ret.f[3][3] = 1.0f;
     return ret;
 }

@@ -14,5 +14,5 @@ void main() {
 
 	uv_f = uv_v;
 	color_f = color_v;
-	gl_Position = transform * vec4(pos.x, pos.y, 1.0, 1.0);
+	gl_Position = transform * vec4(pos.x, pos.y, 0.0, 1.0);
 }

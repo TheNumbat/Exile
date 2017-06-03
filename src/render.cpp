@@ -28,16 +28,15 @@ mesh_3d make_mesh_3d(allocator* alloc, u32 verts, u32 inds) {
 
 	ret.verticies = make_vector<v3>(verts, alloc);
 	ret.texCoords = make_vector<v2>(verts, alloc);
-	ret.indicies  =	make_vector<uv3>(inds, alloc);
 
 	return ret;
 }
 
-void destroy_mesh(mesh_3d* m) {
+void destroy_mesh_3d(mesh_3d* m) {
 
 	destroy_vector(&m->verticies);
 	destroy_vector(&m->texCoords);
-	destroy_vector(&m->indicies);
+
 	m->alloc = NULL;	
 }
 

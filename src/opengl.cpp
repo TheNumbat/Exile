@@ -54,7 +54,7 @@ bool refresh_source(shader_source* source) {
 	return false;
 }
 
-shader_program make_program(string vert, string frag, void (*set_uniforms)(shader_program*, render_command_list*), allocator* a) {
+shader_program make_program(string vert, string frag, void (*set_uniforms)(shader_program*, render_command*, render_command_list*), allocator* a) {
 
 	shader_program ret;
 
@@ -154,7 +154,7 @@ void destroy_opengl(opengl* ogl) {
 	destroy_map(&ogl->contexts);
 }
 
-shader_program_id ogl_add_program(opengl* ogl, string v_path, string f_path, void (*set_uniforms)(shader_program*, render_command_list*)) {
+shader_program_id ogl_add_program(opengl* ogl, string v_path, string f_path, void (*set_uniforms)(shader_program*, render_command*, render_command_list*)) {
 
 	shader_program p = make_program(v_path, f_path, set_uniforms, ogl->alloc);
 	p.id = ogl->next_shader_id;
@@ -303,6 +303,35 @@ ogl_draw_context* ogl_select_draw_context(opengl* ogl, context_id id) {
 	return d;
 }
 
+void ogl_mesh_3d_attribs(ogl_draw_context* dc) {
+
+	glBindBuffer(GL_ARRAY_BUFFER, dc->vbos[0]);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(f32), (void*)0);
+	glBindBuffer(GL_ARRAY_BUFFER, dc->vbos[1]);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(f32), (void*)0);
+
+	glEnableVertexAttribArray(0);
+	glEnableVertexAttribArray(1);
+}
+
+void ogl_send_mesh_3d(opengl* ogl, mesh_3d* m, ogl_draw_context* dc) {
+
+	glBindBuffer(GL_ARRAY_BUFFER, dc->vbos[0]);
+	glBufferData(GL_ARRAY_BUFFER, m->verticies.size * sizeof(v3), m->verticies.size ? m->verticies.memory : NULL, GL_STREAM_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, dc->vbos[1]);
+	glBufferData(GL_ARRAY_BUFFER, m->texCoords.size * sizeof(v2), m->texCoords.size ? m->texCoords.memory : NULL, GL_STREAM_DRAW);
+}
+
+void ogl_uniforms_3dtex(shader_program* prog, render_command* rc, render_command_list* rcl) {
+
+	GLint loc = glGetUniformLocation(prog->handle, "transform");
+
+	m4 transform = mult(rc->model, rcl->view);
+	transform = mult(transform, rcl->proj);
+
+	glUniformMatrix4fv(loc, 1, GL_FALSE, transform.v);
+}
+
 void ogl_mesh_2d_attribs(ogl_draw_context* dc) {
 
 	glBindBuffer(GL_ARRAY_BUFFER, dc->vbos[0]);
@@ -327,18 +356,24 @@ void ogl_send_mesh_2d(opengl* ogl, mesh_2d* m, ogl_draw_context* dc) {
 	glBufferData(GL_ARRAY_BUFFER, m->colors.size * sizeof(v4), m->colors.size ? m->colors.memory : NULL, GL_STREAM_DRAW);
 }
 
-void ogl_uniforms_gui(shader_program* prog, render_command_list* rcl) {
+void ogl_uniforms_gui(shader_program* prog, render_command* rc, render_command_list* rcl) {
 
 	GLint loc = glGetUniformLocation(prog->handle, "transform");
-	glUniformMatrix4fv(loc, 1, GL_FALSE, rcl->proj.v);
+
+	m4 transform = mult(rc->model, rcl->view);
+	transform = mult(transform, rcl->proj);
+
+	glUniformMatrix4fv(loc, 1, GL_FALSE, transform.v);
 }
 
-void ogl_set_uniforms(shader_program* prog, render_command_list* rcl) {
+void ogl_set_uniforms(shader_program* prog, render_command* rc, render_command_list* rcl) {
 
-	prog->set_uniforms(prog, rcl);
+	prog->set_uniforms(prog, rc, rcl);
 }
 
 void ogl_render_command_list(opengl* ogl, render_command_list* rcl) {
+
+	glEnable(GL_DEPTH_TEST);
 
 	for(u32 i = 0; i < rcl->commands.size; i++) {
 
@@ -348,7 +383,7 @@ void ogl_render_command_list(opengl* ogl, render_command_list* rcl) {
 		ogl_select_texture(ogl, cmd->texture);
 		shader_program* prog = ogl_select_program(ogl, cmd->shader);
 
-		ogl_set_uniforms(prog, rcl);
+		ogl_set_uniforms(prog, cmd, rcl);
 
 		glViewport(0, 0, global_state->window_w, global_state->window_h);
 
@@ -357,6 +392,12 @@ void ogl_render_command_list(opengl* ogl, render_command_list* rcl) {
 			ogl_send_mesh_2d(ogl, cmd->m2d, context);
 
 			glDrawArrays(GL_TRIANGLES, 0, cmd->m2d->verticies.size);
+
+		} else if (cmd->cmd == render_mesh_3d) {
+
+			ogl_send_mesh_3d(ogl, cmd->m3d, context);			
+
+			glDrawArrays(GL_TRIANGLES, 0, cmd->m3d->verticies.size);
 		}
 	}
 }
