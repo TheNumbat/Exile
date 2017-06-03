@@ -375,7 +375,29 @@ template<typename T> m4_t<T> mult(m4_t<T> l, m4_t<T> r) {
     }
     return ret;
 }
-template m4 mult(m4, m4);
+
+template<> inline m4 mult(m4 l, m4 r) {
+    m4 ret;
+    __m128 row1 = _mm_load_ps(&r.v[0]);
+    __m128 row2 = _mm_load_ps(&r.v[4]);
+    __m128 row3 = _mm_load_ps(&r.v[8]);
+    __m128 row4 = _mm_load_ps(&r.v[12]);
+    for(int i=0; i<4; i++) {
+        __m128 brod1 = _mm_set1_ps(l.v[4*i + 0]);
+        __m128 brod2 = _mm_set1_ps(l.v[4*i + 1]);
+        __m128 brod3 = _mm_set1_ps(l.v[4*i + 2]);
+        __m128 brod4 = _mm_set1_ps(l.v[4*i + 3]);
+        __m128 row = _mm_add_ps(
+                    _mm_add_ps(
+                        _mm_mul_ps(brod1, row1),
+                        _mm_mul_ps(brod2, row2)),
+                    _mm_add_ps(
+                        _mm_mul_ps(brod3, row3),
+                        _mm_mul_ps(brod4, row4)));
+        _mm_store_ps(&ret.v[4*i], row);
+    }
+    return ret;
+}
 
 template<typename T> inline m4_t<T> mult(m4_t<T> m, T s) {
 	m4_t<T> ret;
