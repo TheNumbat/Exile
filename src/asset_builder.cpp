@@ -1,6 +1,17 @@
 
+#pragma warning(push)
+#pragma warning(disable : 4244)
+#pragma warning(disable : 4456)
+#pragma warning(disable : 4505)
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
+
+#define STB_RECT_PACK_IMPLEMENTATION
+#include <stb_rect_pack.h>
+
 #define STB_TRUETYPE_IMPLEMENTATION
 #include <stb_truetype.h>
+#pragma warning(pop)
 
 #include "basic_types.h"
 
@@ -20,21 +31,6 @@ using std::cout;
 using std::endl;
 
 u32 num_strings = 0;
-
-#pragma pack(push, 1)
-struct bitmap_header {
-	u16 type; // "BM"
-	u32 size;
-	u16 zero;
-	u16 zero_;
-	u32 memoffset;
-	u32 second_header_size;
-	i32 width;
-	i32 height;
-	u16 planes;
-	u16 bitsperpipxel;
-};
-#pragma pack(pop)
 
 bool whitespace(char c) {
 	return c == '\n' || c == '\r' || c == ' ' || c == '\t';
@@ -143,34 +139,24 @@ int main(int argc, char** argv) {
 			platform_read_file(&bmp_in, bmp_mem, bmp_size);
 			platform_close_file(&bmp_in);
 
-			bitmap_header* bmp_header = (bitmap_header*)bmp_mem;
-			u8* pixels = (u8*)bmp_mem + bmp_header->memoffset;
-
 			file_asset_bitmap bitmap;
-			bitmap.width = bmp_header->width;
-			bitmap.height = bmp_header->height;
+			u8* pixels = stbi_load_from_memory((u8*)bmp_mem, bmp_size, &bitmap.width, &bitmap.height, NULL, 4);
 
 			// calculate total asset size for next asset member
-			u32 pixel_stride =  bmp_header->width * bmp_header->bitsperpipxel / 8;
-			u32 pixel_size = (bmp_header->height * pixel_stride);
+			u32 pixel_stride =  bitmap.width * 4;
+			u32 pixel_size = bitmap.height * pixel_stride;
 			asset.next = sizeof(file_asset_header) + sizeof(file_asset_bitmap) + pixel_size;
-
-			// BGRA -> RGBA
-			for(u8* current = pixels; current != pixels + pixel_size; current += 4) {
-				u8 b = *(current);
-				u8 g = *(current + 1);
-				u8 r = *(current + 2);
-				u8 a = *(current + 3);
-				*current 	   = r;
-				*(current + 1) = g;
-				*(current + 2) = b;
-				*(current + 3) = a;
-			}
 
 			// write asset
 			platform_write_file(&assets_out, (void*)&asset, sizeof(file_asset_header));
 			platform_write_file(&assets_out, (void*)&bitmap, sizeof(file_asset_bitmap));
-			platform_write_file(&assets_out, (void*)pixels, pixel_size);
+			
+			// flip bitmap
+			u8* pixel_last = pixels + pixel_size - pixel_stride;
+			for(; pixel_last != pixels; pixel_last -= pixel_stride) {
+				platform_write_file(&assets_out, (void*)pixel_last, pixel_stride);
+			}
+			platform_write_file(&assets_out, (void*)pixel_last, pixel_stride);
 
 			platform_heap_free(bmp_mem);
 		} else {

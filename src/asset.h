@@ -29,7 +29,7 @@ struct _asset_bitmap {
 };
 
 struct _asset_font {
-
+	
 };
 
 #pragma pack(push, 1)

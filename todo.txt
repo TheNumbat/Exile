@@ -1,11 +1,24 @@
 
 For overall : see #high_level_systems
 
-are get() references really a good idea? 
-	decided: they're not. Return pointers, but still crash if get() fails.
-	Don't store these pointers unless you know the structure will never grow!
-
 immediate to do:
+
+	fonts
+		asset fonts
+		loading/rendering fonts w/ stb_tt
+		packing glyphs (stb_rp? or own skyline algorithm)
+		generating glyph table
+		generating glyph data - kerning, baseline
+		font rendering shader? - one shader for GUI
+
+	asset
+		asset manager (general allocator?)
+		real file format for store def file
+		asset texture atlases
+		call asset.exe to re/build (do path stuff, platform_exec_cmd)
+		auto-reload asset stores
+
+	better allocator names
 
 	OpenGl
 		improve shader spec API
@@ -13,19 +26,9 @@ immediate to do:
 			texture atlas - fonts (texture array?)
 		3D
 			texture atlas/array representation/store
-			mesh representation
 			chunk meshing, texturing
 			deferred mesh re/building
 			models & animation
-
-	asset
-		asset manager (general allocator?)
-		asset texture atlases
-		asset fonts
-		call asset.exe to re/build (do path stuff, platform_exec_cmd)
-		auto-reload asset stores
-
-	better allocator names
 
 	metaprogramming - struct introspection?
 		replace vsnprintf
@@ -37,4 +40,3 @@ immediate to do:
 	UI
 	Profiling/debugging/visualization
 
-possibly imitate: dear imgui
