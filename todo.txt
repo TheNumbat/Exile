@@ -8,6 +8,7 @@ immediate to do:
 			variable-length specs
 			named specs
 			json-ish?
+		clean up builder code
 		asset texture atlases
 		call asset.exe to re/build (do path stuff, platform_exec_cmd)
 		auto-reload asset stores
