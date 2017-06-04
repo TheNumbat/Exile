@@ -22,19 +22,15 @@ enum asset_type : u8 {
 	// asset_cfg?
 };
 
-struct _asset_bitmap {
-	i32 width = 0;
-	i32 height = 0;
-	u8* mem = NULL; // RGBA8888
-};
-
-struct _asset_font {
-	
-};
-
 #pragma pack(push, 1)
-struct file_asset_font {
+struct file_glyph_data {
+	u16 x1, y1, x2, y2; // texture coordinates
+	f32 xoff1, yoff1, advance, xoff2, yoff2;
+};
 
+struct file_asset_font {
+	u32 num_glyphs;
+	i32 baseline;
 };
 
 struct file_asset_bitmap {
@@ -53,6 +49,19 @@ struct asset_file_header {
 };
 #pragma pack(pop)
 
+#ifndef BUILDER
+struct _asset_bitmap {
+	i32 width = 0;
+	i32 height = 0;
+	u8* mem = NULL; // RGBA8888
+};
+
+struct _asset_font {
+	i32 baseline 	= 0;
+	array<file_glyph_data> glyphs;
+	u8* mem 		= NULL;
+};
+
 struct asset {
 	string name;
 	asset_type type = asset_none;
@@ -63,7 +72,6 @@ struct asset {
 	asset() : bitmap(), font() {};
 };
 
-#ifndef BUILDER
 struct asset_store {
 	map<string, asset> 	assets;
 	void* 				store = NULL;

@@ -180,6 +180,20 @@ shader_program* ogl_select_program(opengl* ogl, shader_program_id id) {
 	return p;
 }
 
+texture_id ogl_add_texture_from_font(opengl* ogl, asset_store* as, string name, texture_wrap wrap, bool pixelated) {
+
+	texture t = make_texture(wrap, pixelated);
+	t.id = ogl->next_texture_id;
+
+	texture_load_bitmap_from_font(&t, as, name);
+
+	map_insert(&ogl->textures, ogl->next_texture_id, t);
+
+	ogl->next_texture_id++;
+
+	return ogl->next_texture_id - 1;
+}
+
 texture_id ogl_add_texture(opengl* ogl, asset_store* as, string name, texture_wrap wrap, bool pixelated) {
 
 	texture t = make_texture(wrap, pixelated);
@@ -250,6 +264,21 @@ texture make_texture(texture_wrap wrap, bool pixelated) {
 	glBindTexture(GL_TEXTURE_2D, 0);
 
 	return ret;
+}
+
+void texture_load_bitmap_from_font(texture* tex, asset_store* as, string name) {
+
+	asset a = get_asset(as, name);
+
+	LOG_DEBUG_ASSERT(a.type == asset_font);
+
+	glBindTexture(GL_TEXTURE_2D, tex->handle);
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, 1024, 1024, 0, GL_RGBA, GL_UNSIGNED_BYTE, a.font.mem);
+	
+	glGenerateMipmap(GL_TEXTURE_2D);
+
+	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 void texture_load_bitmap(texture* tex, asset_store* as, string name) {

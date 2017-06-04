@@ -79,7 +79,23 @@ void load_asset_store(asset_store* am, string path) {
 
 				current_asset = (file_asset_header*)((u8*)current_asset + current_asset->next);
 
+			} else if(current_asset->type == asset_font) {
+
+				a.type = asset_font;
+
+				file_asset_font* font = (file_asset_font*)((u8*)current_asset + sizeof(file_asset_header));
+
+				a.font.baseline = font->baseline;
+				a.font.glyphs = make_array_memory<file_glyph_data>(font->num_glyphs, (u8*)font + sizeof(file_asset_font));
+
+				a.font.mem = (u8*)font + sizeof(file_asset_font) + (font->num_glyphs * sizeof(file_glyph_data));
+
+				map_insert(&am->assets, a.name, a);
+
+				current_asset = (file_asset_header*)((u8*)current_asset + current_asset->next);				
+
 			} else {
+
 				LOG_ERR("Only bitmaps for now!");
 				break;
 			}

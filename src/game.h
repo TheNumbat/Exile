@@ -20,7 +20,5 @@ struct game_state {
 
 	// testing
 	asset_store test_store;
-	shader_program_id 	shader;
 	texture_id 			texture;
-	context_id			context;
 };

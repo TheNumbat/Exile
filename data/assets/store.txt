@@ -1,1 +1,3 @@
+bitmap:cat1:cat.jpg:
+font:font:400:33:127:font.ttf:
 bitmap:cat:cat.jpg:

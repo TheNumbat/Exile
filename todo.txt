@@ -14,6 +14,9 @@ immediate to do:
 	asset
 		asset manager (general allocator?)
 		real file format for store def file
+			variable-length specs
+			named specs
+			json-ish?
 		asset texture atlases
 		call asset.exe to re/build (do path stuff, platform_exec_cmd)
 		auto-reload asset stores

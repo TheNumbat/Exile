@@ -165,6 +165,7 @@ void ogl_set_uniforms(shader_program* prog, render_command* rc, render_command_l
 
 texture_id ogl_add_texture(opengl* ogl, asset_store* as, string name, texture_wrap wrap = wrap_repeat, bool pixelated = false);
 texture* ogl_select_texture(opengl* ogl, texture_id id);
+texture_id ogl_add_texture_from_font(opengl* ogl, asset_store* as, string name, texture_wrap wrap = wrap_repeat, bool pixelated = false);
 
 context_id ogl_add_draw_context(opengl* ogl, void (*set_atribs)(ogl_draw_context* dc));
 ogl_draw_context* ogl_select_draw_context(opengl* ogl, context_id id);
@@ -184,6 +185,7 @@ void destroy_program(shader_program* prog);
 
 texture make_texture(texture_wrap wrap, bool pixelated);
 void texture_load_bitmap(texture* tex, asset_store* as, string name);
+void texture_load_bitmap_from_font(texture* tex, asset_store* as, string name);
 void destroy_texture(texture* tex);
 
 void debug_proc(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userPointer);

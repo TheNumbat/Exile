@@ -69,9 +69,7 @@ extern "C" game_state* start_up(platform_api* api) {
 	LOG_INFO("Done with startup!");
 	LOG_POP_CONTEXT();
 	
-	state->shader = ogl_add_program(&state->ogl, string_literal("shaders/3d.v"), string_literal("shaders/3d.f"), &ogl_uniforms_3dtex);
-	state->texture = ogl_add_texture(&state->ogl, &state->test_store, string_literal("cat"));
-	state->context = ogl_add_draw_context(&state->ogl, &ogl_mesh_3d_attribs);
+	state->texture = ogl_add_texture_from_font(&state->ogl, &state->test_store, string_literal("font"), wrap_clamp_border);
 
 	return state;
 }
@@ -80,100 +78,8 @@ extern "C" bool main_loop(game_state* state) {
 
 	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	render_command_list rcl = make_command_list(&state->default_platform_allocator);
-	mesh_3d mesh = make_mesh_3d(&state->default_platform_allocator);
-	{
-		vector_push(&mesh.verticies, V3(-0.5f, -0.5f, -0.5f));
-		vector_push(&mesh.verticies, V3(0.5f, -0.5f, -0.5f));
-		vector_push(&mesh.verticies, V3(0.5f,  0.5f, -0.5f));
-		vector_push(&mesh.verticies, V3(0.5f,  0.5f, -0.5f));
-		vector_push(&mesh.verticies, V3(-0.5f,  0.5f, -0.5f));
-		vector_push(&mesh.verticies, V3(-0.5f, -0.5f, -0.5f));
-		vector_push(&mesh.verticies, V3(-0.5f, -0.5f,  0.5f));
-		vector_push(&mesh.verticies, V3(0.5f, -0.5f,  0.5f));
-		vector_push(&mesh.verticies, V3(0.5f,  0.5f,  0.5f));
-		vector_push(&mesh.verticies, V3(0.5f,  0.5f,  0.5f));
-		vector_push(&mesh.verticies, V3(-0.5f,  0.5f,  0.5f));
-		vector_push(&mesh.verticies, V3(-0.5f, -0.5f,  0.5f));
-		vector_push(&mesh.verticies, V3(-0.5f,  0.5f,  0.5f));
-		vector_push(&mesh.verticies, V3(-0.5f,  0.5f, -0.5f));
-		vector_push(&mesh.verticies, V3(-0.5f, -0.5f, -0.5f));
-		vector_push(&mesh.verticies, V3(-0.5f, -0.5f, -0.5f));
-		vector_push(&mesh.verticies, V3(-0.5f, -0.5f,  0.5f));
-		vector_push(&mesh.verticies, V3(-0.5f,  0.5f,  0.5f));
-		vector_push(&mesh.verticies, V3(0.5f,  0.5f,  0.5f));
-		vector_push(&mesh.verticies, V3(0.5f,  0.5f, -0.5f));
-		vector_push(&mesh.verticies, V3(0.5f, -0.5f, -0.5f));
-		vector_push(&mesh.verticies, V3(0.5f, -0.5f, -0.5f));
-		vector_push(&mesh.verticies, V3(0.5f, -0.5f,  0.5f));
-		vector_push(&mesh.verticies, V3(0.5f,  0.5f,  0.5f));
-		vector_push(&mesh.verticies, V3(-0.5f, -0.5f, -0.5f));
-		vector_push(&mesh.verticies, V3(0.5f, -0.5f, -0.5f));
-		vector_push(&mesh.verticies, V3(0.5f, -0.5f,  0.5f));
-		vector_push(&mesh.verticies, V3(0.5f, -0.5f,  0.5f));
-		vector_push(&mesh.verticies, V3(-0.5f, -0.5f,  0.5f));
-		vector_push(&mesh.verticies, V3(-0.5f, -0.5f, -0.5f));
-		vector_push(&mesh.verticies, V3(-0.5f,  0.5f, -0.5f));
-		vector_push(&mesh.verticies, V3(0.5f,  0.5f, -0.5f));
-		vector_push(&mesh.verticies, V3(0.5f,  0.5f,  0.5f));
-		vector_push(&mesh.verticies, V3(0.5f,  0.5f,  0.5f));
-		vector_push(&mesh.verticies, V3(-0.5f,  0.5f,  0.5f));
-		vector_push(&mesh.verticies, V3(-0.5f,  0.5f, -0.5f));
-	}
-	{
-		vector_push(&mesh.texCoords, V2(0.0f, 0.0f));
-		vector_push(&mesh.texCoords, V2(1.0f, 0.0f));
-		vector_push(&mesh.texCoords, V2(1.0f, 1.0f));
-		vector_push(&mesh.texCoords, V2(1.0f, 1.0f));
-		vector_push(&mesh.texCoords, V2(0.0f, 1.0f));
-		vector_push(&mesh.texCoords, V2(0.0f, 0.0f));
-		vector_push(&mesh.texCoords, V2(0.0f, 0.0f));
-		vector_push(&mesh.texCoords, V2(1.0f, 0.0f));
-		vector_push(&mesh.texCoords, V2(1.0f, 1.0f));
-		vector_push(&mesh.texCoords, V2(1.0f, 1.0f));
-		vector_push(&mesh.texCoords, V2(0.0f, 1.0f));
-		vector_push(&mesh.texCoords, V2(0.0f, 0.0f));
-		vector_push(&mesh.texCoords, V2(1.0f, 0.0f));
-		vector_push(&mesh.texCoords, V2(1.0f, 1.0f));
-		vector_push(&mesh.texCoords, V2(0.0f, 1.0f));
-		vector_push(&mesh.texCoords, V2(0.0f, 1.0f));
-		vector_push(&mesh.texCoords, V2(0.0f, 0.0f));
-		vector_push(&mesh.texCoords, V2(1.0f, 0.0f));
-		vector_push(&mesh.texCoords, V2(1.0f, 0.0f));
-		vector_push(&mesh.texCoords, V2(1.0f, 1.0f));
-		vector_push(&mesh.texCoords, V2(0.0f, 1.0f));
-		vector_push(&mesh.texCoords, V2(0.0f, 1.0f));
-		vector_push(&mesh.texCoords, V2(0.0f, 0.0f));
-		vector_push(&mesh.texCoords, V2(1.0f, 0.0f));
-		vector_push(&mesh.texCoords, V2(0.0f, 1.0f));
-		vector_push(&mesh.texCoords, V2(1.0f, 1.0f));
-		vector_push(&mesh.texCoords, V2(1.0f, 0.0f));
-		vector_push(&mesh.texCoords, V2(1.0f, 0.0f));
-		vector_push(&mesh.texCoords, V2(0.0f, 0.0f));
-		vector_push(&mesh.texCoords, V2(0.0f, 1.0f));
-		vector_push(&mesh.texCoords, V2(0.0f, 1.0f));
-		vector_push(&mesh.texCoords, V2(1.0f, 1.0f));
-		vector_push(&mesh.texCoords, V2(1.0f, 0.0f));
-		vector_push(&mesh.texCoords, V2(1.0f, 0.0f));
-		vector_push(&mesh.texCoords, V2(0.0f, 0.0f));
-		vector_push(&mesh.texCoords, V2(0.0f, 1.0f));
-	}
-	render_command cmd = make_render_command(render_mesh_3d, &mesh);
-	cmd.shader = state->shader;
-	cmd.texture = state->texture;
-	cmd.context = state->context;
-	static f32 test = 0.0f;
-	cmd.model = scale(V3(2.0f, 1.0f, 1.0f));
 
-	render_add_command(&rcl, cmd);
-	// rcl.view = translate(V3(0.0f, 0.0f, -3.0f));
-	rcl.view = lookAt(V3(10.0f*sinf(test += 0.05f), 0.0f, 10.0f*cosf(test)), V3(0.0f, 0.0f, 0.0f), V3(0.0f, 1.0f, 0.0f));
-	rcl.proj = proj(45.0f, (f32)global_state->window_w/(f32)global_state->window_h, 0.1f, 100.0f);
-	
-	ogl_render_command_list(&state->ogl, &rcl);
-
-	destroy_mesh_3d(&mesh);
-	destroy_command_list(&rcl);
+	ogl_dbg_render_texture_fullscreen(&state->ogl, state->texture);
 
 	state->api->platform_swap_buffers(&state->window);
 	
