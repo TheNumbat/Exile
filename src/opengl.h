@@ -67,6 +67,8 @@ typedef void (*glUniformMatrix4fv_t)(GLint location, GLsizei count, GLboolean tr
 
 typedef void (*glGenerateMipmap_t)(GLenum target);
 typedef void (*glActiveTexture_t)(GLenum texture);
+typedef void (*glCreateTextures_t)(GLenum target, GLsizei n, GLuint *textures);
+typedef void (*glBindTextureUnit_t)(GLuint unit, GLuint texture);
 
 typedef void (*glBindVertexArray_t)(GLuint array);
 typedef void (*glDeleteVertexArrays_t)(GLsizei n, const GLuint *arrays);
@@ -98,6 +100,8 @@ glUniformMatrix4fv_t   		glUniformMatrix4fv;
 
 glGenerateMipmap_t			glGenerateMipmap;
 glActiveTexture_t			glActiveTexture;
+glCreateTextures_t			glCreateTextures;
+glBindTextureUnit_t			glBindTextureUnit;
 
 glBindVertexArray_t    		glBindVertexArray; 		
 glDeleteVertexArrays_t 		glDeleteVertexArrays;

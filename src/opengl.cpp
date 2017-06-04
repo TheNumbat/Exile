@@ -217,7 +217,7 @@ texture* ogl_select_texture(opengl* ogl, texture_id id) {
 		return NULL;
 	}
 	
-	glBindTexture(GL_TEXTURE_2D, t->handle);
+	glBindTextureUnit(0, t->handle);
 
 	return t;
 }
@@ -228,9 +228,9 @@ texture make_texture(texture_wrap wrap, bool pixelated) {
 
 	ret.wrap = wrap;
 	ret.pixelated = pixelated;
-	glGenTextures(1, &ret.handle);
+	glCreateTextures(GL_TEXTURE_2D, 1, &ret.handle);
 
-	glBindTexture(GL_TEXTURE_2D, ret.handle);
+	glBindTextureUnit(0, ret.handle);
 	
 	switch(wrap) {
 	case wrap_repeat:
@@ -261,7 +261,7 @@ texture make_texture(texture_wrap wrap, bool pixelated) {
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	}
 
-	glBindTexture(GL_TEXTURE_2D, 0);
+	glBindTextureUnit(0, 0);
 
 	return ret;
 }
@@ -272,13 +272,13 @@ void texture_load_bitmap_from_font(texture* tex, asset_store* as, string name) {
 
 	LOG_DEBUG_ASSERT(a.type == asset_font);
 
-	glBindTexture(GL_TEXTURE_2D, tex->handle);
+	glBindTextureUnit(0, tex->handle);
 
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 1024, 1024, 0, GL_RGBA, GL_UNSIGNED_BYTE, a.font.mem);
 	
 	glGenerateMipmap(GL_TEXTURE_2D);
 
-	glBindTexture(GL_TEXTURE_2D, 0);
+	glBindTextureUnit(0, 0);
 }
 
 void texture_load_bitmap(texture* tex, asset_store* as, string name) {
@@ -287,13 +287,13 @@ void texture_load_bitmap(texture* tex, asset_store* as, string name) {
 
 	LOG_DEBUG_ASSERT(a.type == asset_bitmap);
 
-	glBindTexture(GL_TEXTURE_2D, tex->handle);
+	glBindTextureUnit(0, tex->handle);
 
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, a.bitmap.width, a.bitmap.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, a.bitmap.mem);
 	
 	glGenerateMipmap(GL_TEXTURE_2D);
 
-	glBindTexture(GL_TEXTURE_2D, 0);
+	glBindTextureUnit(0, 0);
 }
 
 void destroy_texture(texture* tex) {
@@ -403,7 +403,6 @@ void ogl_set_uniforms(shader_program* prog, render_command* rc, render_command_l
 void ogl_render_command_list(opengl* ogl, render_command_list* rcl) {
 
 	glEnable(GL_DEPTH_TEST);
-	glActiveTexture(GL_TEXTURE0);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -465,13 +464,11 @@ void ogl_dbg_render_texture_fullscreen(opengl* ogl, texture_id id) {
 	ogl_select_texture(ogl, id);
 
 	glViewport(0, 0, global_state->window_w, global_state->window_h);
-	glActiveTexture(GL_TEXTURE0);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	
-	glBindTexture(GL_TEXTURE_2D, 0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
 	glDeleteBuffers(1, &VBO);
@@ -571,8 +568,10 @@ void ogl_load_global_funcs() {
 	glGetUniformLocation = (glGetUniformLocation_t) global_state->api->platform_get_glproc(string_literal("glGetUniformLocation"));
 	glUniformMatrix4fv   = (glUniformMatrix4fv_t)   global_state->api->platform_get_glproc(string_literal("glUniformMatrix4fv"));
 
-	glGenerateMipmap = (glGenerateMipmap_t) global_state->api->platform_get_glproc(string_literal("glGenerateMipmap"));
-	glActiveTexture  = (glActiveTexture_t)  global_state->api->platform_get_glproc(string_literal("glActiveTexture"));
+	glGenerateMipmap  = (glGenerateMipmap_t)  global_state->api->platform_get_glproc(string_literal("glGenerateMipmap"));
+	glActiveTexture   = (glActiveTexture_t)   global_state->api->platform_get_glproc(string_literal("glActiveTexture"));
+	glCreateTextures  = (glCreateTextures_t)  global_state->api->platform_get_glproc(string_literal("glCreateTextures"));
+	glBindTextureUnit = (glBindTextureUnit_t) global_state->api->platform_get_glproc(string_literal("glBindTextureUnit"));
 
 	glBindVertexArray    = (glBindVertexArray_t)    global_state->api->platform_get_glproc(string_literal("glBindVertexArray"));
 	glDeleteVertexArrays = (glDeleteVertexArrays_t) global_state->api->platform_get_glproc(string_literal("glDeleteVertexArrays"));
