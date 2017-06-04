@@ -3,8 +3,13 @@
 #pragma warning(disable : 4244)
 #pragma warning(disable : 4456)
 #pragma warning(disable : 4505)
+#pragma warning(disable : 4996)
+
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
+
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include <stb_image_write.h>
 
 #define STB_RECT_PACK_IMPLEMENTATION
 #include <stb_rect_pack.h>
@@ -149,9 +154,16 @@ int main(int argc, char** argv) {
 			platform_write_file(&assets_out, (void*)&asset, sizeof(file_asset_header));
 			platform_write_file(&assets_out, (void*)&bitmap, sizeof(file_asset_bitmap));
 			
-			// flip bitmap
+			// flip bitmap + pre-multiply alpha
 			u8* pixel_last = pixels + pixel_size - pixel_stride;
 			for(; pixel_last != pixels; pixel_last -= pixel_stride) {
+				u8* pixel_out_place = pixel_last;
+				for(u32 pix = 0; pix < pixel_stride; pix += 4) {
+					*pixel_out_place++ = (u8)roundf(pixel_last[pix + 0] * (pixel_last[pix + 3] / 255.0f));
+					*pixel_out_place++ = (u8)roundf(pixel_last[pix + 1] * (pixel_last[pix + 3] / 255.0f));
+					*pixel_out_place++ = (u8)roundf(pixel_last[pix + 2] * (pixel_last[pix + 3] / 255.0f));
+					*pixel_out_place++ = pixel_last[pix + 3];
+				}
 				platform_write_file(&assets_out, (void*)pixel_last, pixel_stride);
 			}
 			platform_write_file(&assets_out, (void*)pixel_last, pixel_stride);
@@ -186,35 +198,38 @@ int main(int argc, char** argv) {
 
 			stbtt_fontinfo font_info;
 			stbtt_pack_context pack_context;
-			i32 ascent, baseline;
+			i32 ascent, descent, baseline, linegap;
 			f32 scale;
 
 			// get font data
 			stbtt_InitFont(&font_info, (u8*)font_mem, 0);
 			scale = stbtt_ScaleForPixelHeight(&font_info, (f32)point_size);
-			stbtt_GetFontVMetrics(&font_info, &ascent, 0, 0);
+			stbtt_GetFontVMetrics(&font_info, &ascent, &descent, &linegap);
 			baseline = (i32) (ascent * scale);
 
-			// TODO(max): is 1024x1024 always good?
+			// TODO(max): is 1024x1024 always good enough?
 			u32 pixel_stride =  1024 * 1;
 			u32 pixel_size = 1024 * pixel_stride;
 			u8* bake_mem = (u8*)platform_heap_alloc(pixel_size);
 
 			// pack chars to font
-			stbtt_PackBegin(&pack_context, bake_mem, 1024, 1024, pixel_stride, 2, NULL);
-			// stbtt_PackSetOversampling(&pack_context, 2, 2);
+			stbtt_PackBegin(&pack_context, bake_mem, 1024, 1024, 0, 1, NULL);
+			stbtt_PackSetOversampling(&pack_context, 1, 1);
 			stbtt_PackFontRange(&pack_context, (u8*)font_mem, 0, (f32)point_size, cp_begin, cp_num, packedchars);
 			stbtt_PackEnd(&pack_context);
-			// stbtt_BakeFontBitmap((u8*)font_mem, 0, (f32)point_size, bake_mem, 1024, 1024, cp_begin, cp_num, packedchars);
 
 			// write asset
-			asset.next = sizeof(file_asset_header) + sizeof(file_asset_font) + cp_num * sizeof(stbtt_packedchar) + pixel_size;
+			asset.next = sizeof(file_asset_header) + sizeof(file_asset_font) + cp_num * sizeof(stbtt_packedchar) + pixel_size * 4;
 			platform_write_file(&assets_out, (void*)&asset, sizeof(file_asset_header));
 
 			// write font asset
 			file_asset_font font;
 			font.num_glyphs = cp_num;
 			font.baseline = baseline;
+			font.ascent = ascent;
+			font.descent = descent;
+			font.linegap = linegap;
+			font.linedist = ascent - descent + linegap;
 			platform_write_file(&assets_out, (void*)&font, sizeof(file_asset_font));
 
 			// write glyph data
@@ -222,13 +237,19 @@ int main(int argc, char** argv) {
 			assert(sizeof(stbtt_packedchar) == sizeof(file_glyph_data));
 			platform_write_file(&assets_out, (void*)packedchars, cp_num * sizeof(stbtt_packedchar));
 
-			// write texture
-			// platform_write_file(&assets_out, (void*)bake_mem, pixel_size);
-			u8* pixel_last = bake_mem + pixel_size - pixel_stride;
-			for(; pixel_last != bake_mem; pixel_last -= pixel_stride) {
-				platform_write_file(&assets_out, (void*)pixel_last, pixel_stride);
+			// flip and expand texture to 32 bit, pre-multiply alpha
+			u8* texture_out = (u8*)platform_heap_alloc(1024 * 1024 * 4);
+			u8* texture_out_place = texture_out;
+			u8* bake_last = bake_mem + pixel_size - pixel_stride;
+			for(; bake_last != bake_mem; bake_last -= pixel_stride) {
+				for(i32 pix = 0; pix < 1024; pix++) {
+					*texture_out_place++ = bake_last[pix];
+					*texture_out_place++ = bake_last[pix];
+					*texture_out_place++ = bake_last[pix];
+					*texture_out_place++ = bake_last[pix];
+				}
 			}
-			platform_write_file(&assets_out, (void*)pixel_last, pixel_stride);
+			platform_write_file(&assets_out, (void*)texture_out, 1024 * 1024 * 4);
 
 			platform_heap_free(bake_mem);
 			platform_heap_free(packedchars);

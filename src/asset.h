@@ -30,7 +30,7 @@ struct file_glyph_data {
 
 struct file_asset_font {
 	u32 num_glyphs;
-	i32 baseline;
+	i32 baseline, ascent, descent, linegap, linedist;
 };
 
 struct file_asset_bitmap {

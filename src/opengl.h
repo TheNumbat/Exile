@@ -30,6 +30,16 @@
 #define GL_CLAMP_TO_EDGE                  0x812F
 #define GL_CLAMP_TO_BORDER                0x812D
 
+#define GL_TEXTURE0                       0x84C0
+#define GL_TEXTURE1                       0x84C1
+#define GL_TEXTURE2                       0x84C2
+#define GL_TEXTURE3                       0x84C3
+#define GL_TEXTURE4                       0x84C4
+#define GL_TEXTURE5                       0x84C5
+#define GL_TEXTURE6                       0x84C6
+#define GL_TEXTURE7                       0x84C7
+#define GL_TEXTURE8                       0x84C8
+
 #define GL_ARRAY_BUFFER                   0x8892
 #define GL_ELEMENT_ARRAY_BUFFER           0x8893
 #define GL_STATIC_DRAW                    0x88E4
@@ -56,6 +66,7 @@ typedef GLint (*glGetUniformLocation_t)(GLuint program, const GLchar *name);
 typedef void (*glUniformMatrix4fv_t)(GLint location, GLsizei count, GLboolean transpose, const GLfloat *value);
 
 typedef void (*glGenerateMipmap_t)(GLenum target);
+typedef void (*glActiveTexture_t)(GLenum texture);
 
 typedef void (*glBindVertexArray_t)(GLuint array);
 typedef void (*glDeleteVertexArrays_t)(GLsizei n, const GLuint *arrays);
@@ -86,6 +97,7 @@ glGetUniformLocation_t 		glGetUniformLocation;
 glUniformMatrix4fv_t   		glUniformMatrix4fv;
 
 glGenerateMipmap_t			glGenerateMipmap;
+glActiveTexture_t			glActiveTexture;
 
 glBindVertexArray_t    		glBindVertexArray; 		
 glDeleteVertexArrays_t 		glDeleteVertexArrays;

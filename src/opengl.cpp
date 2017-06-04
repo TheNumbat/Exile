@@ -274,7 +274,7 @@ void texture_load_bitmap_from_font(texture* tex, asset_store* as, string name) {
 
 	glBindTexture(GL_TEXTURE_2D, tex->handle);
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, 1024, 1024, 0, GL_RGBA, GL_UNSIGNED_BYTE, a.font.mem);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 1024, 1024, 0, GL_RGBA, GL_UNSIGNED_BYTE, a.font.mem);
 	
 	glGenerateMipmap(GL_TEXTURE_2D);
 
@@ -403,6 +403,9 @@ void ogl_set_uniforms(shader_program* prog, render_command* rc, render_command_l
 void ogl_render_command_list(opengl* ogl, render_command_list* rcl) {
 
 	glEnable(GL_DEPTH_TEST);
+	glActiveTexture(GL_TEXTURE0);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
 	for(u32 i = 0; i < rcl->commands.size; i++) {
 
@@ -462,6 +465,9 @@ void ogl_dbg_render_texture_fullscreen(opengl* ogl, texture_id id) {
 	ogl_select_texture(ogl, id);
 
 	glViewport(0, 0, global_state->window_w, global_state->window_h);
+	glActiveTexture(GL_TEXTURE0);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	
@@ -566,6 +572,7 @@ void ogl_load_global_funcs() {
 	glUniformMatrix4fv   = (glUniformMatrix4fv_t)   global_state->api->platform_get_glproc(string_literal("glUniformMatrix4fv"));
 
 	glGenerateMipmap = (glGenerateMipmap_t) global_state->api->platform_get_glproc(string_literal("glGenerateMipmap"));
+	glActiveTexture  = (glActiveTexture_t)  global_state->api->platform_get_glproc(string_literal("glActiveTexture"));
 
 	glBindVertexArray    = (glBindVertexArray_t)    global_state->api->platform_get_glproc(string_literal("glBindVertexArray"));
 	glDeleteVertexArrays = (glDeleteVertexArrays_t) global_state->api->platform_get_glproc(string_literal("glDeleteVertexArrays"));
