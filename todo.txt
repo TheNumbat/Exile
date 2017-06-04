@@ -4,21 +4,15 @@ For overall : see #high_level_systems
 immediate to do:
 
 	asset
-		real file format for store def file
-			variable-length specs
-			named specs
-			json-ish?
-		clean up builder code
 		asset texture atlases
 		call asset.exe to re/build (do path stuff, platform_exec_cmd)
 		auto-reload asset stores
 		asset manager (general allocator?)
 
 	fonts
-		rendering them
+		actually rendering text with the font atlas
 
-
-	better allocator names
+	better allocator names - don't just copy
 
 	OpenGl
 		improve shader spec API

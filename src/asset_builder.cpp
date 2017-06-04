@@ -277,7 +277,7 @@ int main(int argc, char** argv) {
 			vector<i32> 		      cp_nums;
 			for(i32 ri = 0; ri < def_asset.font.ranges.size(); ri++) {
 			
-				i32 cp_num = def_asset.font.ranges[i].end - def_asset.font.ranges[i].start;
+				i32 cp_num = def_asset.font.ranges[ri].end - def_asset.font.ranges[ri].start;
 
 				packedchars.push_back((stbtt_packedchar*)malloc(cp_num * sizeof(stbtt_packedchar)));
 				total_packedchars_size += cp_num * sizeof(stbtt_packedchar);

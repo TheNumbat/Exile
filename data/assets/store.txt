@@ -4,9 +4,8 @@ image {
 }
 font {
 	name : font,
-	size : 40,
+	size : 80,
 	file : font.ttf,
-	range : 65, 90,
-	range : 97, 122,
+	range : 32, 128,
 }
 
