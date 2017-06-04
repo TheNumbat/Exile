@@ -1,2 +1,12 @@
-bitmap:cat:cat.jpg:
-font:font:40:32:127:font.ttf:
+image {
+	name : cat,
+	file : cat.jpg,
+}
+font {
+	name : font,
+	size : 40,
+	file : font.ttf,
+	range : 65, 90,
+	range : 97, 122,
+}
+

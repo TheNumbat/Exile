@@ -1,10 +1,17 @@
 
+// don't care about using libraries in this; it's just to build the asset stores
+// we don't even use the stuff for the game
+#include <string>
+#include <iostream>
+#include <fstream>
+#include <vector>
+using namespace std;
+
 #pragma warning(push)
 #pragma warning(disable : 4244)
 #pragma warning(disable : 4456)
 #pragma warning(disable : 4505)
 #pragma warning(disable : 4996)
-
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
@@ -19,64 +26,150 @@
 #pragma warning(pop)
 
 #include "basic_types.h"
-
-#include "str/platform_strings.h"
-#include "str/platform_strings.cpp"
-
-#include "platform_api.h"
-#include "platform.h"
-#include "platform_win32.cpp"
-
 #define BUILDER
 #include "asset.h"
 
-#include <iostream>
-#include <cstring>
-using std::cout;
-using std::endl;
+struct def_asset_image {
+	string name;
+	string file;
+};
 
-u32 num_strings = 0;
-u32 num_lines = 0;
+struct def_asset_font {
+	struct range {
+		u32 start, end;
+	};
+	string name;
+	string file;
+	i32 size;
+	vector<range> ranges;
+};
 
-bool newline(char c) {
-	return c == '\n' || c == '\r';
+struct def_asset {
+	asset_type type;
+	union {
+		def_asset_image image;
+		def_asset_font font;
+	};
+	def_asset(const def_asset& source) {memcpy(this, &source, sizeof(def_asset));};
+	def_asset() : type(), image(), font() {};
+	~def_asset() {};
+};
+
+struct def_file_structure {
+	vector<def_asset> assets;
+};
+
+bool control_char(char c) {
+	return c == '\r' || c == '\n' || c == '\t' || c == ' ' || c == ':' || c == ',';
 }
 
-void extract_strings(char* mem, u32 size, string strings[]) {
+void eat_control(ifstream& in) {
 
-	u32 strstart = 0;
-	u32 cursor = 0;
+	while(control_char((char)in.peek())) {
+		in.get();
+	}
+}
 
-	while(cursor < size) {
+def_file_structure build_def_file(ifstream& in) {
 
-		if(mem[cursor] == '\r') {
-			num_lines++;
-			cursor += 2;
+	def_file_structure ret;
+
+	while(in.good()) {
+
+		eat_control(in);
+		string type;
+		getline(in, type, '{');
+		type.erase(type.find_last_not_of(" \n\r\t") + 1);
+
+		if (!in.good()) break;
+
+		def_asset asset;
+
+		if(type == "image") {
+
+			asset.type = asset_bitmap;
+			eat_control(in);
+
+			while(in.peek() != '}') {
+				string field;
+				in >> field;
+				if(field == "name") {
+
+					string name;
+					eat_control(in);
+					getline(in, name, ',');
+					eat_control(in);
+					name.erase(name.find_last_not_of(" \n\r\t") + 1);
+					asset.image.name = name;
+
+				} else if(field == "file") {
+
+					string file;
+					eat_control(in);
+					getline(in, file, ',');
+					eat_control(in);
+					file.erase(file.find_last_not_of(" \n\r\t") + 1);
+					asset.image.file = file;
+				}
+			}
+			in.get();
+
+		} else if(type == "font") {
+
+			asset.type = asset_font;
+			eat_control(in);
+
+			while(in.peek() != '}') {
+
+				string field;
+				in >> field;
+				if(field == "name") {
+
+					string name;
+					eat_control(in);
+					getline(in, name, ',');
+					eat_control(in);
+					name.erase(name.find_last_not_of(" \n\r\t") + 1);
+					asset.font.name = name;
+
+				} else if(field == "file") {
+
+					string file;
+					eat_control(in);
+					getline(in, file, ',');
+					eat_control(in);
+					file.erase(file.find_last_not_of(" \n\r\t") + 1);
+					asset.font.file = file;
+
+				} else if(field == "size") {
+
+					i32 size;
+					eat_control(in);
+					in >> size;
+					eat_control(in);
+					asset.font.size = size;
+
+				} else if(field == "range") {
+
+					def_asset_font::range range;
+					i32 start, end;
+					eat_control(in);
+					in >> start;
+					eat_control(in);
+					in >> end;
+					eat_control(in);
+					range.start = start;
+					range.end = end;
+					asset.font.ranges.push_back(range);
+				}
+			}
+			in.get();
 		}
-		if(cursor >= size) {
-			return;	
-		}
 
-		strstart = cursor;
+		ret.assets.push_back(asset);
+	}
 
-		for(; mem[cursor] != ':' && cursor < size; cursor++);
-
-		u32 length = cursor - strstart + 1;
-
-		strings[num_strings] = make_string(length, &platform_heap_alloc);
-		memcpy(strings[num_strings].c_str, mem + strstart, length - 1);
-		strings[num_strings].c_str[length] = 0;
-		strings[num_strings].len = length;
-
-		num_strings++;
-
-		if(num_strings >= 3072) {
-			cout << "Too many records!" << endl;
-			exit(1);
-		}
-
-		cursor++;
-	}	
+	return ret;
 }
 
 int main(int argc, char** argv) {
@@ -86,77 +179,55 @@ int main(int argc, char** argv) {
 		return 1;
 	}
 
-	platform_file def_file, assets_out;
-	platform_error err = platform_create_file(&def_file, string_from_c_str(argv[1]), open_file_existing);
+	ifstream def_file(argv[1]);
 
-	if(!err.good) {
+	if(!def_file.good()) {
 		cout << "Failed to open file " << argv[1] << endl;
 		return 1;
 	}
 
-	err = platform_create_file(&assets_out, string_from_c_str(argv[2]), open_file_create);
-
-	if(!err.good) {
+	ofstream assets_out(argv[2], ios::binary);
+	
+	if(!assets_out.good()) {
 		cout << "Failed to create file " << argv[2] << endl;
 		return 1;
 	}
 
-	u32 def_size = platform_file_size(&def_file);
-
-	char* def_mem = (char*)platform_heap_alloc(def_size);
-	platform_read_file(&def_file, def_mem, def_size);
-	platform_close_file(&def_file);
-
-	string def_strings[3072];
-	extract_strings(def_mem, def_size, def_strings);
-	platform_heap_free(def_mem);
+	def_file_structure def = build_def_file(def_file);
+	def_file.close();
 
 	asset_file_header header;
-	header.num_assets = num_lines;
-	platform_write_file(&assets_out, (void*)&header, sizeof(asset_file_header));
+	header.num_assets = (u32)def.assets.size();
+	assets_out.write((char*)&header, sizeof(header));
 
-	for(u32 i = 0; i < num_strings;) {
-		file_asset_header asset;
+	for(i32 i = 0; i < def.assets.size(); i++) {
+		
+		def_asset& 			def_asset = def.assets[i];
+		file_asset_header 	asset_header;
 
-		if(def_strings[i + 1].len > 128) {
-			cout << "Name too long! Max 128" << endl;
-			return 1;
-		}
+		if(def_asset.type == asset_bitmap) {
 
-		memcpy(asset.name, def_strings[i + 1].c_str, def_strings[i + 1].len);
+			asset_header.type = asset_bitmap;
+			memcpy(asset_header.name, def_asset.image.name.c_str(), def_asset.image.name.size() + 1);
 
-		if(strcmp(def_strings[i].c_str, "bitmap") == 0) {
-
-			asset.type = asset_bitmap;
+			file_asset_bitmap asset_bitmap;
 
 			// load bitmap
-			platform_file bmp_in;
-			err = platform_create_file(&bmp_in, def_strings[i + 2], open_file_existing);
-			if (!err.good) {
-				cout << "Failed to open file " << def_strings[i + 2].c_str << endl;
-				return 1;
-			}
+			i32 width, height;
+			u8* bitmap = stbi_load(def_asset.image.file.c_str(), &width, &height, NULL, 4);
 
-			u32 bmp_size = platform_file_size(&bmp_in);
-			void* bmp_mem = platform_heap_alloc(bmp_size);
-			platform_read_file(&bmp_in, bmp_mem, bmp_size);
-			platform_close_file(&bmp_in);
+			u32 pixel_stride = width * 4;
+			u32 pixel_size = pixel_stride * height;
 
-			file_asset_bitmap bitmap;
-			u8* pixels = stbi_load_from_memory((u8*)bmp_mem, bmp_size, &bitmap.width, &bitmap.height, NULL, 4);
+			asset_bitmap.width = width;
+			asset_bitmap.height = height;
+			asset_header.next = sizeof(file_asset_header) + sizeof(file_asset_bitmap) + pixel_size;
 
-			// calculate total asset size for next asset member
-			u32 pixel_stride =  bitmap.width * 4;
-			u32 pixel_size = bitmap.height * pixel_stride;
-			asset.next = sizeof(file_asset_header) + sizeof(file_asset_bitmap) + pixel_size;
+			assets_out.write((char*)&asset_header, sizeof(file_asset_header));
+			assets_out.write((char*)&asset_bitmap, sizeof(file_asset_bitmap));
 
-			// write asset
-			platform_write_file(&assets_out, (void*)&asset, sizeof(file_asset_header));
-			platform_write_file(&assets_out, (void*)&bitmap, sizeof(file_asset_bitmap));
-			
-			// flip bitmap + pre-multiply alpha
-			u8* pixel_last = pixels + pixel_size - pixel_stride;
-			for(; pixel_last != pixels; pixel_last -= pixel_stride) {
+			u8* pixel_last = bitmap + pixel_size - pixel_stride;
+			for(; pixel_last != bitmap; pixel_last -= pixel_stride) {
 				u8* pixel_out_place = pixel_last;
 				for(u32 pix = 0; pix < pixel_stride; pix += 4) {
 					*pixel_out_place++ = (u8)roundf(pixel_last[pix + 0] * (pixel_last[pix + 3] / 255.0f));
@@ -164,84 +235,76 @@ int main(int argc, char** argv) {
 					*pixel_out_place++ = (u8)roundf(pixel_last[pix + 2] * (pixel_last[pix + 3] / 255.0f));
 					*pixel_out_place++ = pixel_last[pix + 3];
 				}
-				platform_write_file(&assets_out, (void*)pixel_last, pixel_stride);
+				assets_out.write((char*)pixel_last, pixel_stride);
 			}
-			platform_write_file(&assets_out, (void*)pixel_last, pixel_stride);
+			assets_out.write((char*)pixel_last, pixel_stride);
 
-			platform_heap_free(bmp_mem);
+			stbi_image_free(bitmap);
 
-			i += 3;
-		
-		} else if(strcmp(def_strings[i].c_str, "font") == 0) {
+		} else if(def_asset.type == asset_font) {
 
-			asset.type = asset_font;
+			asset_header.type = asset_font;
+			memcpy(asset_header.name, def_asset.font.name.c_str(), def_asset.font.name.size() + 1);			
 
-			// load font
-			platform_file font_in;
-			err = platform_create_file(&font_in, def_strings[i + 5], open_file_existing);
-			if (!err.good) {
-				cout << "Failed to open file " << def_strings[i + 5].c_str << endl;
-				return 1;
-			}
+			file_asset_font asset_font;
 
-			u32 font_size = platform_file_size(&font_in);
-			void* font_mem = platform_heap_alloc(font_size);
-			platform_read_file(&font_in, font_mem, font_size);
-			platform_close_file(&font_in);
+			ifstream font_in(def_asset.font.file, ios::binary | ios::ate);
+			streamsize size = font_in.tellg();
+			font_in.seekg(0, ios::beg);
 
-			// parse load data
-			u32 point_size = atoi(def_strings[i + 2].c_str);
-			u32 cp_begin = atoi(def_strings[i + 3].c_str);
-			u32 cp_end = atoi(def_strings[i + 4].c_str);
-			u32 cp_num = cp_end - cp_begin + 1;
-			stbtt_packedchar* packedchars = (stbtt_packedchar*)platform_heap_alloc(cp_num * sizeof(stbtt_packedchar));
+			vector<char> data(size);
+			font_in.read(data.data(), size);
 
 			stbtt_fontinfo font_info;
 			stbtt_pack_context pack_context;
 			i32 ascent, descent, baseline, linegap;
 			f32 scale;
 
-			// get font data
-			stbtt_InitFont(&font_info, (u8*)font_mem, 0);
-			scale = stbtt_ScaleForPixelHeight(&font_info, (f32)point_size);
+			stbtt_InitFont(&font_info, (u8*)data.data(), 0);
+			scale = stbtt_ScaleForPixelHeight(&font_info, (f32)def_asset.font.size);
 			stbtt_GetFontVMetrics(&font_info, &ascent, &descent, &linegap);
 			baseline = (i32) (ascent * scale);
 
-			// TODO(max): is 1024x1024 always good enough?
 			u32 pixel_stride =  1024 * 1;
 			u32 pixel_size = 1024 * pixel_stride;
-			u8* bake_mem = (u8*)platform_heap_alloc(pixel_size);
+			u8* baked_bitmap = (u8*)malloc(pixel_size);
 
-			// pack chars to font
-			stbtt_PackBegin(&pack_context, bake_mem, 1024, 1024, 0, 1, NULL);
+			stbtt_PackBegin(&pack_context, baked_bitmap, 1024, 1024, 0, 1, NULL);
 			stbtt_PackSetOversampling(&pack_context, 1, 1);
-			stbtt_PackFontRange(&pack_context, (u8*)font_mem, 0, (f32)point_size, cp_begin, cp_num, packedchars);
+
+			u32 total_packedchars_size = 0, total_packedchars = 0;
+			vector<stbtt_packedchar*> packedchars;	
+			vector<i32> 		      cp_nums;
+			for(i32 ri = 0; ri < def_asset.font.ranges.size(); ri++) {
+			
+				i32 cp_num = def_asset.font.ranges[i].end - def_asset.font.ranges[i].start;
+
+				packedchars.push_back((stbtt_packedchar*)malloc(cp_num * sizeof(stbtt_packedchar)));
+				total_packedchars_size += cp_num * sizeof(stbtt_packedchar);
+				total_packedchars += cp_num;
+				cp_nums.push_back(cp_num);
+
+				stbtt_PackFontRange(&pack_context, (u8*)data.data(), 0, (f32)def_asset.font.size, def_asset.font.ranges[ri].start, cp_num, packedchars[ri]);
+			}
 			stbtt_PackEnd(&pack_context);
 
-			// write asset
-			asset.next = sizeof(file_asset_header) + sizeof(file_asset_font) + cp_num * sizeof(stbtt_packedchar) + pixel_size * 4;
-			platform_write_file(&assets_out, (void*)&asset, sizeof(file_asset_header));
+			asset_font.num_glyphs 	= total_packedchars;
+			asset_font.baseline 	= baseline;
+			asset_font.ascent 		= ascent;
+			asset_font.descent 		= descent;
+			asset_font.linegap 		= linegap;
+			asset_font.linedist 	= ascent - descent + linegap;
+			asset_header.next 		= sizeof(file_asset_header) + sizeof(file_asset_font) +  + pixel_size * 4;
 
-			// write font asset
-			file_asset_font font;
-			font.num_glyphs = cp_num;
-			font.baseline = baseline;
-			font.ascent = ascent;
-			font.descent = descent;
-			font.linegap = linegap;
-			font.linedist = ascent - descent + linegap;
-			platform_write_file(&assets_out, (void*)&font, sizeof(file_asset_font));
+			assets_out.write((char*)&asset_header, sizeof(file_asset_header));
+			assets_out.write((char*)&asset_font, sizeof(file_asset_font));
+			for(i32 pc_i = 0; pc_i < packedchars.size(); pc_i++)
+				assets_out.write((char*)packedchars[pc_i], cp_nums[pc_i] * sizeof(stbtt_packedchar));
 
-			// write glyph data
-			// this assumes file_glyph_data is the same as stbtt_packedchar
-			assert(sizeof(stbtt_packedchar) == sizeof(file_glyph_data));
-			platform_write_file(&assets_out, (void*)packedchars, cp_num * sizeof(stbtt_packedchar));
-
-			// flip and expand texture to 32 bit, pre-multiply alpha
-			u8* texture_out = (u8*)platform_heap_alloc(1024 * 1024 * 4);
+			u8* texture_out = (u8*)malloc(1024 * 1024 * 4);
 			u8* texture_out_place = texture_out;
-			u8* bake_last = bake_mem + pixel_size - pixel_stride;
-			for(; bake_last != bake_mem; bake_last -= pixel_stride) {
+			u8* bake_last = baked_bitmap + pixel_size - pixel_stride;
+			for(; bake_last != baked_bitmap; bake_last -= pixel_stride) {
 				for(i32 pix = 0; pix < 1024; pix++) {
 					*texture_out_place++ = bake_last[pix];
 					*texture_out_place++ = bake_last[pix];
@@ -249,25 +312,16 @@ int main(int argc, char** argv) {
 					*texture_out_place++ = bake_last[pix];
 				}
 			}
-			platform_write_file(&assets_out, (void*)texture_out, 1024 * 1024 * 4);
+			assets_out.write((char*)texture_out, 1024 * 1024 * 4);
 
-			platform_heap_free(bake_mem);
-			platform_heap_free(packedchars);
-			platform_heap_free(font_mem);
-
-			i += 6;
-
-		} else {
-
-			cout << "Only images/fonts for now!" << endl;
-			return 1;
+			free(texture_out);
+			free(baked_bitmap);
+			for(stbtt_packedchar* pc : packedchars)
+				free(pc);
 		}
 	}
 
-	for(u32 i = 0; i < num_strings; i++)
-		free_string(def_strings[i], &platform_heap_free);
-
-	platform_close_file(&assets_out);
+	assets_out.close();
 
 	cout << "Done!" << endl;
 
