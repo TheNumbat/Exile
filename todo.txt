@@ -8,9 +8,8 @@ are get() references really a good idea?
 immediate to do:
 
 	OpenGl
-		draw commands/lists
+		improve shader spec API
 		2D
-			2D meshing?
 			texture atlas - fonts (texture array?)
 		3D
 			texture atlas/array representation/store

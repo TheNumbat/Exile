@@ -1,4 +1,7 @@
 
+#define STB_TRUETYPE_IMPLEMENTATION
+#include <stb_truetype.h>
+
 #include "basic_types.h"
 
 #include "str/platform_strings.h"
@@ -114,7 +117,7 @@ int main(int argc, char** argv) {
 	platform_write_file(&assets_out, (void*)&header, sizeof(asset_file_header));
 
 	for(u32 i = 0; i < num_strings; i += 3) {
-		file_asset asset;
+		file_asset_header asset;
 
 		if(def_strings[i + 1].len > 128) {
 			cout << "Name too long! Max 128" << endl;
@@ -143,13 +146,14 @@ int main(int argc, char** argv) {
 			bitmap_header* bmp_header = (bitmap_header*)bmp_mem;
 			u8* pixels = (u8*)bmp_mem + bmp_header->memoffset;
 
-			asset.bitmap.width = bmp_header->width;
-			asset.bitmap.height = bmp_header->height;
+			file_asset_bitmap bitmap;
+			bitmap.width = bmp_header->width;
+			bitmap.height = bmp_header->height;
 
 			// calculate total asset size for next asset member
 			u32 pixel_stride =  bmp_header->width * bmp_header->bitsperpipxel / 8;
 			u32 pixel_size = (bmp_header->height * pixel_stride);
-			asset.next = sizeof(file_asset) + pixel_size;
+			asset.next = sizeof(file_asset_header) + sizeof(file_asset_bitmap) + pixel_size;
 
 			// BGRA -> RGBA
 			for(u8* current = pixels; current != pixels + pixel_size; current += 4) {
@@ -164,7 +168,8 @@ int main(int argc, char** argv) {
 			}
 
 			// write asset
-			platform_write_file(&assets_out, (void*)&asset, sizeof(file_asset));
+			platform_write_file(&assets_out, (void*)&asset, sizeof(file_asset_header));
+			platform_write_file(&assets_out, (void*)&bitmap, sizeof(file_asset_bitmap));
 			platform_write_file(&assets_out, (void*)pixels, pixel_size);
 
 			platform_heap_free(bmp_mem);

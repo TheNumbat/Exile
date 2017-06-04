@@ -56,7 +56,7 @@ void load_asset_store(asset_store* am, string path) {
 		global_state->api->platform_close_file(&store);
 
 		asset_file_header* header = (asset_file_header*)store_mem;
-		file_asset* current_asset = (file_asset*)(store_mem + sizeof(asset_file_header));
+		file_asset_header* current_asset = (file_asset_header*)(store_mem + sizeof(asset_file_header));
 
 		am->assets = make_map<string,asset>(header->num_assets, am->alloc, &hash_string);
 
@@ -69,13 +69,15 @@ void load_asset_store(asset_store* am, string path) {
 
 				a.type = asset_bitmap;
 
-				a.bitmap.width = current_asset->bitmap.width;
-				a.bitmap.height = current_asset->bitmap.height;
-				a.bitmap.mem = (u8*)(current_asset) + sizeof(file_asset);
+				file_asset_bitmap* bitmap = (file_asset_bitmap*)((u8*)current_asset + sizeof(file_asset_header));
+
+				a.bitmap.width = bitmap->width;
+				a.bitmap.height = bitmap->height;
+				a.bitmap.mem = (u8*)(current_asset) + sizeof(file_asset_header) + sizeof(file_asset_bitmap);
 
 				map_insert(&am->assets, a.name, a);
 
-				current_asset = (file_asset*)((u8*)current_asset + current_asset->next);
+				current_asset = (file_asset_header*)((u8*)current_asset + current_asset->next);
 
 			} else {
 				LOG_ERR("Only bitmaps for now!");

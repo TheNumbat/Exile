@@ -1,10 +1,21 @@
 
 #pragma once
 
+// Asset file structure
+
+// asset_file_header
+// file_asset_header
+// file_asset_bitmap/file_asset_font/etc
+// memory for ^
+// file_asset_header
+// file_asset_bitmap/file_asset_font/etc
+// memory for ^
+// etc
+
 enum asset_type : u8 {
 	asset_none,
 	asset_bitmap,
-	asset_font, 	// TODO(max)
+	asset_font,
 	// asset_mesh?
 	// asset_audio?
 	// asset_shader?
@@ -18,7 +29,7 @@ struct _asset_bitmap {
 };
 
 struct _asset_font {
-	// lots of font stuff
+
 };
 
 #pragma pack(push, 1)
@@ -31,13 +42,9 @@ struct file_asset_bitmap {
 	i32 height;
 };
 
-struct file_asset {
+struct file_asset_header {
 	asset_type type;
 	char name[128];
-	union {
-		file_asset_bitmap bitmap;
-		file_asset_font   font;
-	};
 	u64 next; // byte offset from start of file_asset
 };
 
