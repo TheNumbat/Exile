@@ -6,6 +6,7 @@ font {
 	name : font,
 	size : 80,
 	file : font.ttf,
-	range : 32, 128,
+	range : 161, 255,
+	range : 32, 126,
 }
 

@@ -94,5 +94,5 @@ void destroy_asset_store(asset_store* as);
 void load_asset_store(asset_store* as, string path);
 asset get_asset(asset_store* as, string name);
 
-
+file_glyph_data get_glyph_data(_asset_font* font, u32 codepoint);
 #endif

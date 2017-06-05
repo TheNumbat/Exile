@@ -35,6 +35,11 @@ asset get_asset(asset_store* as, string name) {
 	return *a;
 }
 
+file_glyph_data get_glyph_data(_asset_font* font, u32 codepoint) {
+
+	
+}
+
 void load_asset_store(asset_store* am, string path) {
 
 	platform_file store;
