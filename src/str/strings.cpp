@@ -14,7 +14,7 @@ bool operator==(string& first, string& second) {
 	return true;
 }
 
-// http://www.cse.yorku.ca/~oz/hash.html
+// from http://www.cse.yorku.ca/~oz/hash.html
 u32 hash_string(string str) {
 
     u32 hash = 5381;
@@ -23,6 +23,67 @@ u32 hash_string(string str) {
         hash = ((hash << 5) + hash) ^ str.c_str[i]; /* hash * 33 + c */
 
     return hash;
+}
+
+// adapted from http://www.json.org/JSON_checker/utf8_decode.c
+u32 get_next_codepoint(string text_utf8, u32* index) {
+
+	char first, second, third, fourth;
+	u32 codepoint;
+
+	if(*index >= text_utf8.len) return 0;
+
+	first = text_utf8.c_str[*index++];
+
+	// one byte
+	if((first & 0x80) == 0) {
+		
+		codepoint = first;
+
+		return codepoint;
+	}
+
+	// two bytes
+	if((first & 0xE0) == 0xC0) {
+		
+		second = text_utf8.c_str[*index++] & 0x3F;
+
+		codepoint = ((first & 0x1F) << 6) | second;
+
+		LOG_DEBUG_ASSERT(codepoint >= 128);
+
+		return codepoint;
+	}
+
+	// three bytes
+	if((first & 0xF0) == 0xE0) {
+		
+		second = text_utf8.c_str[*index++] & 0x3F;
+		third  = text_utf8.c_str[*index++] & 0x3F;
+
+		codepoint = ((first & 0x0F) << 12) | (second << 6) | third;
+
+		LOG_DEBUG_ASSERT(codepoint >= 2048 && (codepoint < 55296 || codepoint > 57343))
+
+		return codepoint;
+	}
+
+	// four bytes
+	if((first & 0xF8) == 0xF0) {
+
+		second = text_utf8.c_str[*index++] & 0x3F;
+		third  = text_utf8.c_str[*index++] & 0x3F;
+		fourth = text_utf8.c_str[*index++] & 0x3F;
+		
+		codepoint = ((first & 0x07) << 18) | (second << 12) | (third << 6) | fourth;
+
+		LOG_DEBUG_ASSERT(codepoint >= 65536 && codepoint <= 1114111);
+
+		return codepoint;
+	}
+
+	LOG_DEBUG_ASSERT(false);
+	return 0;
 }
 
 string make_copy_string(string src, allocator* a) {

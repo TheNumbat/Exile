@@ -69,7 +69,9 @@ extern "C" game_state* start_up(platform_api* api) {
 	LOG_INFO("Done with startup!");
 	LOG_POP_CONTEXT();
 	
-	state->texture = ogl_add_texture_from_font(&state->ogl, &state->test_store, string_literal("font"), wrap_clamp_border);
+	state->texture = ogl_add_texture(&state->ogl, &state->test_store, string_literal("cat"), wrap_clamp_border);
+	state->context = ogl_add_draw_context(&state->ogl, &ogl_mesh_2d_attribs);
+	state->shader = ogl_add_program(&state->ogl, string_literal("shaders/gui.v"), string_literal("shaders/gui.f"), &ogl_uniforms_gui);
 
 	return state;
 }
@@ -79,8 +81,44 @@ extern "C" bool main_loop(game_state* state) {
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	ogl_dbg_render_texture_fullscreen(&state->ogl, state->texture);
+	render_command_list rcl = make_command_list(&state->default_platform_allocator);
+	mesh_2d mesh = make_mesh_2d(&state->default_platform_allocator);
+	{
+		vector_push(&mesh.verticies, V2f(0, 0));
+		vector_push(&mesh.verticies, V2f(0, state->window_h));
+		vector_push(&mesh.verticies, V2f(state->window_w, 0));
+		vector_push(&mesh.verticies, V2f(0, state->window_h));
+		vector_push(&mesh.verticies, V2f(state->window_w, 0));
+		vector_push(&mesh.verticies, V2f(state->window_w, state->window_h));
+	}
+	{
+		vector_push(&mesh.texCoords, V2(0.0f, 0.0f));
+		vector_push(&mesh.texCoords, V2(0.0f, 1.0f));
+		vector_push(&mesh.texCoords, V2(1.0f, 0.0f));
+		vector_push(&mesh.texCoords, V2(0.0f, 1.0f));
+		vector_push(&mesh.texCoords, V2(1.0f, 0.0f));
+		vector_push(&mesh.texCoords, V2(1.0f, 1.0f));
+	}
+	{
+		vector_push(&mesh.colors, V4(1.0f, 1.0f, 1.0f, 1.0f));
+		vector_push(&mesh.colors, V4(1.0f, 1.0f, 1.0f, 1.0f));
+		vector_push(&mesh.colors, V4(1.0f, 1.0f, 1.0f, 1.0f));
+		vector_push(&mesh.colors, V4(1.0f, 1.0f, 1.0f, 1.0f));
+		vector_push(&mesh.colors, V4(1.0f, 1.0f, 1.0f, 1.0f));
+		vector_push(&mesh.colors, V4(1.0f, 1.0f, 1.0f, 1.0f));	
+	}
+	render_command cmd = make_render_command(render_mesh_2d, &mesh);
+	cmd.shader = state->shader;
+	cmd.texture = state->texture;
+	cmd.context = state->context;
 
+	render_add_command(&rcl, cmd);
+	rcl.proj = ortho(0, (f32)state->window_w, 0, (f32)state->window_h, -1, 1);
+
+	ogl_render_command_list(&state->ogl, &rcl);
+
+	destroy_mesh_2d(&mesh);
+	destroy_command_list(&rcl);
 	state->api->platform_swap_buffers(&state->window);
 	
 	return run_events(&state->events);

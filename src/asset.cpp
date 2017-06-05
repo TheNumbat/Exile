@@ -22,38 +22,39 @@ void destroy_asset_store(asset_store* am) {
 	}
 }
 
-asset get_asset(asset_store* as, string name) {
+asset* get_asset(asset_store* as, string name) {
 
 	asset* a = map_try_get(&as->assets, name);
 
 	if(!a) {
 		LOG_ERR_F("Failed to get asset %s", name.c_str);
-		asset ret;
-		return ret;
+		return NULL;
 	}
 
-	return *a;
+	return a;
 }
 
 glyph_data get_glyph_data(asset_store* as, string font, u32 codepoint) {
 
-	asset a = get_asset(as, font);
+	asset* a = get_asset(as, font);
 
-	LOG_ASSERT(a.type == asset_font);
+	LOG_ASSERT(a->type == asset_font);
 
-	return get_glyph_data(&a.font, codepoint);
+	return get_glyph_data(a, codepoint);
 }
 
-glyph_data get_glyph_data(_asset_font* font, u32 codepoint) {
+glyph_data get_glyph_data(asset* font, u32 codepoint) {
 
-	u32 low = 0, high = font->glyphs.capacity;
+	LOG_DEBUG_ASSERT(font->type == asset_font);
+
+	u32 low = 0, high = font->font.glyphs.capacity;
 
 	// binary search
 	for(;;) {
 
 		u32 search = low + ((high - low) / 2);
 
-		glyph_data* data = array_get(&font->glyphs, search);
+		glyph_data* data = array_get(&font->font.glyphs, search);
 
 		if(data->codepoint == codepoint) {
 			return *data;

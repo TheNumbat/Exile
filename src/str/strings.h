@@ -11,6 +11,9 @@ struct allocator;
 u32 hash_string(string str);
 bool operator==(string& first, string& second);
 
+// utf-8 stuff
+u32 get_next_codepoint(string text_utf8, u32* index);
+
 string make_string_from_c_str(char* c_str);
 void free_string(string s);
 string make_string(u32 cap);

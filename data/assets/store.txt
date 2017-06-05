@@ -9,4 +9,7 @@ font {
 	range : 161, 255,
 	range : 32, 126,
 }
-
+image {
+	name : white,
+	file : white.png,
+}

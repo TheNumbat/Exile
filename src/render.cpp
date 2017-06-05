@@ -20,6 +20,15 @@ void destroy_mesh_2d(mesh_2d* m) {
 	m->alloc = NULL;
 }
 
+void mesh_push_text(mesh_2d* m, asset* font, string text_utf8) {
+
+	u32 index = 0;
+	while(u32 codepoint = get_next_codepoint(text_utf8, &index)) {
+
+		glyph_data data = get_glyph_data(font, codepoint);
+	}
+}
+
 mesh_3d make_mesh_3d(allocator* alloc, u32 verts, u32 inds) {
 
 	mesh_3d ret;

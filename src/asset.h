@@ -94,8 +94,8 @@ asset_store make_asset_store(allocator* a); // allocations are done in load
 void destroy_asset_store(asset_store* as);
 
 void load_asset_store(asset_store* as, string path);
-asset get_asset(asset_store* as, string name);
+asset* get_asset(asset_store* as, string name);
 
 glyph_data get_glyph_data(asset_store* as, string font, u32 codepoint);
-glyph_data get_glyph_data(_asset_font* font, u32 codepoint);
+glyph_data get_glyph_data(asset* font, u32 codepoint);
 #endif

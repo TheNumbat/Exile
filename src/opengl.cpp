@@ -268,13 +268,13 @@ texture make_texture(texture_wrap wrap, bool pixelated) {
 
 void texture_load_bitmap_from_font(texture* tex, asset_store* as, string name) {
 
-	asset a = get_asset(as, name);
+	asset* a = get_asset(as, name);
 
-	LOG_DEBUG_ASSERT(a.type == asset_font);
+	LOG_DEBUG_ASSERT(a->type == asset_font);
 
 	glBindTextureUnit(0, tex->handle);
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 1024, 1024, 0, GL_RGBA, GL_UNSIGNED_BYTE, a.font.mem);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 1024, 1024, 0, GL_RGBA, GL_UNSIGNED_BYTE, a->font.mem);
 	
 	glGenerateMipmap(GL_TEXTURE_2D);
 
@@ -283,13 +283,13 @@ void texture_load_bitmap_from_font(texture* tex, asset_store* as, string name) {
 
 void texture_load_bitmap(texture* tex, asset_store* as, string name) {
 
-	asset a = get_asset(as, name);
+	asset* a = get_asset(as, name);
 
-	LOG_DEBUG_ASSERT(a.type == asset_bitmap);
+	LOG_DEBUG_ASSERT(a->type == asset_bitmap);
 
 	glBindTextureUnit(0, tex->handle);
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, a.bitmap.width, a.bitmap.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, a.bitmap.mem);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, a->bitmap.width, a->bitmap.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, a->bitmap.mem);
 	
 	glGenerateMipmap(GL_TEXTURE_2D);
 
@@ -378,7 +378,7 @@ void ogl_mesh_2d_attribs(ogl_draw_context* dc) {
 void ogl_send_mesh_2d(opengl* ogl, mesh_2d* m, ogl_draw_context* dc) {
 
 	glBindBuffer(GL_ARRAY_BUFFER, dc->vbos[0]);
-	glBufferData(GL_ARRAY_BUFFER, m->verticies.size * sizeof(v2), m->verticies.size ? m->verticies.memory : NULL, GL_STREAM_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, m->verticies.size * sizeof(iv2), m->verticies.size ? m->verticies.memory : NULL, GL_STREAM_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, dc->vbos[1]);
 	glBufferData(GL_ARRAY_BUFFER, m->texCoords.size * sizeof(v2), m->texCoords.size ? m->texCoords.memory : NULL, GL_STREAM_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, dc->vbos[2]);

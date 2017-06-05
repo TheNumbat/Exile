@@ -174,6 +174,9 @@ template<typename T> inline v2_t<T> V2(T x, T y) {
 	return ret;
 }
 template v2 V2(f32 x, f32 y);
+inline v2 V2f(i32 x, i32 y) {
+	return V2((f32)x, (f32)y);
+}
 
 template<typename T> inline v3_t<T> V3(T x, T y, T z) {
 	v3_t<T> ret;
@@ -448,9 +451,9 @@ inline m4 ortho(f32 left, f32 right, f32 bot, f32 top, f32 _near, f32 _far) {
     ret.f[1][1] = 2.0f / (top - bot);
     ret.f[2][2] = 2.0f / (_near - _far);
     ret.f[3][3] = 1.0f;
-    ret.f[0][3] = (-left - right) / (right - left);
-    ret.f[1][3] = (-bot - top)  / (top - bot);
-    ret.f[2][3] = - _near / (_far - _near);
+    ret.f[3][0] = (-left - right) / (right - left);
+    ret.f[3][1] = (-bot - top)  / (top - bot);
+    ret.f[3][2] = - _near / (_far - _near);
     return ret;
 }
 
