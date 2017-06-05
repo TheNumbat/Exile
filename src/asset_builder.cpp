@@ -5,6 +5,7 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <algorithm>
 using namespace std;
 
 #pragma warning(push)
@@ -272,17 +273,14 @@ int main(int argc, char** argv) {
 			stbtt_PackBegin(&pack_context, baked_bitmap, 1024, 1024, 0, 1, NULL);
 			stbtt_PackSetOversampling(&pack_context, 1, 1);
 
-			u32 total_packedchars_size = 0, total_packedchars = 0;
+			u32 total_packedchars = 0;
 			vector<stbtt_packedchar*> packedchars;	
-			vector<i32> 		      cp_nums;
 			for(i32 ri = 0; ri < def_asset.font.ranges.size(); ri++) {
 			
-				i32 cp_num = def_asset.font.ranges[ri].end - def_asset.font.ranges[ri].start;
+				i32 cp_num = def_asset.font.ranges[ri].end - def_asset.font.ranges[ri].start + 1;
 
 				packedchars.push_back((stbtt_packedchar*)malloc(cp_num * sizeof(stbtt_packedchar)));
-				total_packedchars_size += cp_num * sizeof(stbtt_packedchar);
 				total_packedchars += cp_num;
-				cp_nums.push_back(cp_num);
 
 				stbtt_PackFontRange(&pack_context, (u8*)data.data(), 0, (f32)def_asset.font.size, def_asset.font.ranges[ri].start, cp_num, packedchars[ri]);
 			}
@@ -294,18 +292,42 @@ int main(int argc, char** argv) {
 			asset_font.descent 		= descent;
 			asset_font.linegap 		= linegap;
 			asset_font.linedist 	= ascent - descent + linegap;
-			asset_header.next 		= sizeof(file_asset_header) + sizeof(file_asset_font) +  + pixel_size * 4;
+
+			vector<file_glyph_data> glyph_data;
+			for(i32 ri = 0; ri < def_asset.font.ranges.size(); ri++) {
+
+				def_asset_font::range& r = def_asset.font.ranges[ri];
+				for(u32 point = r.start; point <= r.end; point++) {
+
+					file_glyph_data glyph;
+					glyph.codepoint = point;
+					glyph.x1 = packedchars[ri][point - r.start].x0;
+					glyph.y1 = packedchars[ri][point - r.start].y0;
+					glyph.x2 = packedchars[ri][point - r.start].x1;
+					glyph.y2 = packedchars[ri][point - r.start].y1;
+					glyph.x1 = packedchars[ri][point - r.start].x1;
+					glyph.xoff1 = packedchars[ri][point - r.start].xoff;
+					glyph.yoff1 = packedchars[ri][point - r.start].yoff;
+					glyph.xoff2 = packedchars[ri][point - r.start].xoff2;
+					glyph.yoff2 = packedchars[ri][point - r.start].yoff2;
+					glyph.advance = packedchars[ri][point - r.start].xadvance;
+
+					glyph_data.push_back(glyph);
+				}
+			}
+			sort(glyph_data.begin(), glyph_data.end(), [](file_glyph_data& one, file_glyph_data& two) -> bool {return one.codepoint < two.codepoint;});
+
+			asset_header.next = sizeof(file_asset_header) + sizeof(file_asset_font) + sizeof(file_glyph_data) * glyph_data.size() + pixel_size * 4;
 
 			assets_out.write((char*)&asset_header, sizeof(file_asset_header));
 			assets_out.write((char*)&asset_font, sizeof(file_asset_font));
-			for(i32 pc_i = 0; pc_i < packedchars.size(); pc_i++)
-				assets_out.write((char*)packedchars[pc_i], cp_nums[pc_i] * sizeof(stbtt_packedchar));
+			assets_out.write((char*)glyph_data.data(), sizeof(file_glyph_data) * glyph_data.size());
 
 			u8* texture_out = (u8*)malloc(1024 * 1024 * 4);
 			u8* texture_out_place = texture_out;
 			u8* bake_last = baked_bitmap + pixel_size - pixel_stride;
 			for(; bake_last != baked_bitmap; bake_last -= pixel_stride) {
-				for(i32 pix = 0; pix < 1024; pix++) {
+				for(u32 pix = 0; pix < pixel_stride; pix++) {
 					*texture_out_place++ = bake_last[pix];
 					*texture_out_place++ = bake_last[pix];
 					*texture_out_place++ = bake_last[pix];

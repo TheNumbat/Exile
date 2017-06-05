@@ -12,6 +12,15 @@
 // memory for ^
 // etc
 
+// bitmap structure
+// file_asset_bitmap
+// bitmap memory
+
+// font structure
+// file_asset_font
+// file_glyph_data[num_glyphs]
+// bitmap memory
+
 enum asset_type : u8 {
 	asset_none,
 	asset_bitmap,
@@ -24,6 +33,7 @@ enum asset_type : u8 {
 
 #pragma pack(push, 1)
 struct file_glyph_data {
+	u32 codepoint;		// sorted
 	u16 x1, y1, x2, y2; // texture coordinates
 	f32 xoff1, yoff1, advance, xoff2, yoff2;
 };
@@ -58,7 +68,7 @@ struct _asset_bitmap {
 
 struct _asset_font {
 	i32 baseline 	= 0;
-	array<file_glyph_data> glyphs;
+	array<file_glyph_data> 	glyphs;
 	u8* mem 		= NULL;
 };
 
@@ -83,4 +93,6 @@ void destroy_asset_store(asset_store* as);
 
 void load_asset_store(asset_store* as, string path);
 asset get_asset(asset_store* as, string name);
+
+
 #endif
