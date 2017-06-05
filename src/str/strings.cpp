@@ -33,7 +33,7 @@ u32 get_next_codepoint(string text_utf8, u32* index) {
 
 	if(*index >= text_utf8.len) return 0;
 
-	first = text_utf8.c_str[*index++];
+	first = text_utf8.c_str[(*index)++];
 
 	// one byte
 	if((first & 0x80) == 0) {
@@ -46,7 +46,7 @@ u32 get_next_codepoint(string text_utf8, u32* index) {
 	// two bytes
 	if((first & 0xE0) == 0xC0) {
 		
-		second = text_utf8.c_str[*index++] & 0x3F;
+		second = text_utf8.c_str[(*index)++] & 0x3F;
 
 		codepoint = ((first & 0x1F) << 6) | second;
 
@@ -58,8 +58,8 @@ u32 get_next_codepoint(string text_utf8, u32* index) {
 	// three bytes
 	if((first & 0xF0) == 0xE0) {
 		
-		second = text_utf8.c_str[*index++] & 0x3F;
-		third  = text_utf8.c_str[*index++] & 0x3F;
+		second = text_utf8.c_str[(*index)++] & 0x3F;
+		third  = text_utf8.c_str[(*index)++] & 0x3F;
 
 		codepoint = ((first & 0x0F) << 12) | (second << 6) | third;
 
@@ -71,9 +71,9 @@ u32 get_next_codepoint(string text_utf8, u32* index) {
 	// four bytes
 	if((first & 0xF8) == 0xF0) {
 
-		second = text_utf8.c_str[*index++] & 0x3F;
-		third  = text_utf8.c_str[*index++] & 0x3F;
-		fourth = text_utf8.c_str[*index++] & 0x3F;
+		second = text_utf8.c_str[(*index)++] & 0x3F;
+		third  = text_utf8.c_str[(*index)++] & 0x3F;
+		fourth = text_utf8.c_str[(*index)++] & 0x3F;
 		
 		codepoint = ((first & 0x07) << 18) | (second << 12) | (third << 6) | fourth;
 

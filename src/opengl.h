@@ -207,10 +207,10 @@ void destroy_texture(texture* tex);
 void debug_proc(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userPointer);
 
 void ogl_mesh_2d_attribs(ogl_draw_context* dc);
-void ogl_send_mesh_2d(opengl* ogl, mesh_2d* m, ogl_draw_context* context);
+void ogl_send_mesh_2d(opengl* ogl, mesh_2d* m, context_id id);
 
 void ogl_mesh_3d_attribs(ogl_draw_context* dc);
-void ogl_send_mesh_3d(opengl* ogl, mesh_3d* m, ogl_draw_context* context);
+void ogl_send_mesh_3d(opengl* ogl, mesh_3d* m, context_id id);
 
 void ogl_uniforms_gui(shader_program* prog, render_command* rc, render_command_list* rcl);
 void ogl_uniforms_dbg(shader_program* prog, render_command* rc, render_command_list* rcl) {};

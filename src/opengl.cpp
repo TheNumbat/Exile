@@ -343,7 +343,9 @@ void ogl_mesh_3d_attribs(ogl_draw_context* dc) {
 	glEnableVertexAttribArray(1);
 }
 
-void ogl_send_mesh_3d(opengl* ogl, mesh_3d* m, ogl_draw_context* dc) {
+void ogl_send_mesh_3d(opengl* ogl, mesh_3d* m, context_id id) {
+
+	ogl_draw_context* dc = ogl_select_draw_context(ogl, id);
 
 	glBindBuffer(GL_ARRAY_BUFFER, dc->vbos[0]);
 	glBufferData(GL_ARRAY_BUFFER, m->verticies.size * sizeof(v3), m->verticies.size ? m->verticies.memory : NULL, GL_STREAM_DRAW);
@@ -375,10 +377,12 @@ void ogl_mesh_2d_attribs(ogl_draw_context* dc) {
 	glEnableVertexAttribArray(2);
 }
 
-void ogl_send_mesh_2d(opengl* ogl, mesh_2d* m, ogl_draw_context* dc) {
+void ogl_send_mesh_2d(opengl* ogl, mesh_2d* m, context_id id) {
+
+	ogl_draw_context* dc = ogl_select_draw_context(ogl, id);
 
 	glBindBuffer(GL_ARRAY_BUFFER, dc->vbos[0]);
-	glBufferData(GL_ARRAY_BUFFER, m->verticies.size * sizeof(iv2), m->verticies.size ? m->verticies.memory : NULL, GL_STREAM_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, m->verticies.size * sizeof(v2), m->verticies.size ? m->verticies.memory : NULL, GL_STREAM_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, dc->vbos[1]);
 	glBufferData(GL_ARRAY_BUFFER, m->texCoords.size * sizeof(v2), m->texCoords.size ? m->texCoords.memory : NULL, GL_STREAM_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, dc->vbos[2]);
@@ -402,7 +406,8 @@ void ogl_set_uniforms(shader_program* prog, render_command* rc, render_command_l
 
 void ogl_render_command_list(opengl* ogl, render_command_list* rcl) {
 
-	glEnable(GL_DEPTH_TEST);
+	// glEnable(GL_DEPTH_TEST);
+	glClear(GL_DEPTH_BUFFER_BIT); // do we want to do this?
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -410,7 +415,7 @@ void ogl_render_command_list(opengl* ogl, render_command_list* rcl) {
 
 		render_command* cmd = vector_get(&rcl->commands, i);
 
-		ogl_draw_context* context = ogl_select_draw_context(ogl, cmd->context);
+		ogl_select_draw_context(ogl, cmd->context);
 		ogl_select_texture(ogl, cmd->texture);
 		shader_program* prog = ogl_select_program(ogl, cmd->shader);
 
@@ -420,13 +425,9 @@ void ogl_render_command_list(opengl* ogl, render_command_list* rcl) {
 
 		if(cmd->cmd == render_mesh_2d) {
 
-			ogl_send_mesh_2d(ogl, cmd->m2d, context);
-
 			glDrawArrays(GL_TRIANGLES, 0, cmd->m2d->verticies.size);
 
 		} else if (cmd->cmd == render_mesh_3d) {
-
-			ogl_send_mesh_3d(ogl, cmd->m3d, context);			
 
 			glDrawArrays(GL_TRIANGLES, 0, cmd->m3d->verticies.size);
 		}

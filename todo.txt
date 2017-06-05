@@ -11,6 +11,7 @@ immediate to do:
 
 	fonts
 		actually rendering text with the font atlas
+		color/format specifications in string
 
 	better allocator names - don't just copy
 

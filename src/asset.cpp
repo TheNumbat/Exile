@@ -123,7 +123,13 @@ void load_asset_store(asset_store* am, string path) {
 
 				file_asset_font* font = (file_asset_font*)((u8*)current_asset + sizeof(file_asset_header));
 
-				a.font.baseline = font->baseline;
+				a.font.ascent   = font->ascent;
+				a.font.descent  = font->descent;
+				a.font.linegap  = font->linegap;
+				a.font.linedist = font->linedist;
+				a.font.width    = font->width;
+				a.font.height   = font->height;
+
 				a.font.glyphs = make_array_memory<file_glyph_data>(font->num_glyphs, (u8*)font + sizeof(file_asset_font));
 
 				a.font.mem = (u8*)font + sizeof(file_asset_font) + (font->num_glyphs * sizeof(file_glyph_data));

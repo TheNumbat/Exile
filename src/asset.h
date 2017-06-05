@@ -40,7 +40,8 @@ struct file_glyph_data {
 
 struct file_asset_font {
 	u32 num_glyphs;
-	i32 baseline, ascent, descent, linegap, linedist;
+	f32 ascent, descent, linegap, linedist;
+	i32 width, height;
 };
 
 struct file_asset_bitmap {
@@ -69,7 +70,8 @@ struct _asset_bitmap {
 };
 
 struct _asset_font {
-	i32 baseline 	= 0;
+	f32 ascent, descent, linegap, linedist;
+	i32 width, height;
 	array<file_glyph_data> 	glyphs;
 	u8* mem 		= NULL;
 };

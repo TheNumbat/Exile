@@ -20,13 +20,48 @@ void destroy_mesh_2d(mesh_2d* m) {
 	m->alloc = NULL;
 }
 
-void mesh_push_text(mesh_2d* m, asset* font, string text_utf8) {
+f32 mesh_push_text(mesh_2d* m, asset* font, string text_utf8, v2 pos, colorf color) {
+
+	f32 x = pos.x;
+	f32 y = global_state->window_h - pos.y;
 
 	u32 index = 0;
 	while(u32 codepoint = get_next_codepoint(text_utf8, &index)) {
 
-		glyph_data data = get_glyph_data(font, codepoint);
+		glyph_data glyph = get_glyph_data(font, codepoint);
+
+		f32 w = (f32)font->font.width;
+		f32 h = (f32)font->font.height;
+		v2 tlc = V2(glyph.x1/w, 1.0f - glyph.y1/h);
+		v2 brc = V2(glyph.x2/w, 1.0f - glyph.y2/h);
+		v2 trc = V2(glyph.x2/w, 1.0f - glyph.y1/h);
+		v2 blc = V2(glyph.x1/w, 1.0f - glyph.y2/h);
+				 
+		vector_push(&m->verticies, V2(x + glyph.xoff1, y - glyph.yoff2)); 	// BLC
+ 		vector_push(&m->verticies, V2(x + glyph.xoff1, y - glyph.yoff1));	// TLC
+ 		vector_push(&m->verticies, V2(x + glyph.xoff2, y - glyph.yoff2));	// BRC
+ 		vector_push(&m->verticies, V2(x + glyph.xoff1, y - glyph.yoff1));	// TLC
+ 		vector_push(&m->verticies, V2(x + glyph.xoff2, y - glyph.yoff2));	// BRC
+ 		vector_push(&m->verticies, V2(x + glyph.xoff2, y - glyph.yoff1));	// TLC
+
+		vector_push(&m->texCoords, blc);
+		vector_push(&m->texCoords, tlc);
+		vector_push(&m->texCoords, brc);
+		vector_push(&m->texCoords, tlc);
+		vector_push(&m->texCoords, brc);
+		vector_push(&m->texCoords, trc);
+
+		vector_push(&m->colors, color);
+		vector_push(&m->colors, color);
+		vector_push(&m->colors, color);
+		vector_push(&m->colors, color);
+		vector_push(&m->colors, color);
+		vector_push(&m->colors, color);
+
+		x += glyph.advance;
 	}
+
+	return font->font.linedist;
 }
 
 mesh_3d make_mesh_3d(allocator* alloc, u32 verts, u32 inds) {

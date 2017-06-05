@@ -177,6 +177,9 @@ template v2 V2(f32 x, f32 y);
 inline v2 V2f(i32 x, i32 y) {
 	return V2((f32)x, (f32)y);
 }
+inline uv2 V2u(i32 x, i32 y) {
+	return V2((u32)x, (u32)y);
+}
 
 template<typename T> inline v3_t<T> V3(T x, T y, T z) {
 	v3_t<T> ret;
