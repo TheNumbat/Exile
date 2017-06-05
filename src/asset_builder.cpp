@@ -30,9 +30,6 @@ using namespace std;
 #define BUILDER
 #include "asset.h"
 
-const i32 FONT_W = 1024;
-const i32 FONT_H = 1024;
-
 struct def_asset_image {
 	string name;
 	string file;
@@ -44,7 +41,8 @@ struct def_asset_font {
 	};
 	string name;
 	string file;
-	i32 size;
+	i32 point;
+	i32 width, height;
 	vector<range> ranges;
 };
 
@@ -145,13 +143,29 @@ def_file_structure build_def_file(ifstream& in) {
 					file.erase(file.find_last_not_of(" \n\r\t") + 1);
 					asset.font.file = file;
 
-				} else if(field == "size") {
+				} else if(field == "point") {
 
-					i32 size;
+					i32 point;
 					eat_control(in);
-					in >> size;
+					in >> point;
 					eat_control(in);
-					asset.font.size = size;
+					asset.font.point = point;
+
+				} else if(field == "width") {
+
+					i32 width;
+					eat_control(in);
+					in >> width;
+					eat_control(in);
+					asset.font.width = width;
+
+				} else if(field == "height") {
+
+					i32 height;
+					eat_control(in);
+					in >> height;
+					eat_control(in);
+					asset.font.height = height;
 
 				} else if(field == "range") {
 
@@ -265,14 +279,14 @@ int main(int argc, char** argv) {
 			f32 scale;
 
 			stbtt_InitFont(&font_info, (u8*)data.data(), 0);
-			scale = stbtt_ScaleForPixelHeight(&font_info, (f32)def_asset.font.size);
+			scale = stbtt_ScaleForPixelHeight(&font_info, (f32)def_asset.font.point);
 			stbtt_GetFontVMetrics(&font_info, &ascent, &descent, &linegap);
 
-			u32 pixel_stride =  FONT_W;
-			u32 pixel_size = pixel_stride * FONT_H;
+			u32 pixel_stride =  def_asset.font.width;
+			u32 pixel_size = pixel_stride * def_asset.font.height;
 			u8* baked_bitmap = (u8*)malloc(pixel_size);
 
-			stbtt_PackBegin(&pack_context, baked_bitmap, FONT_W, FONT_H, 0, 1, NULL);
+			stbtt_PackBegin(&pack_context, baked_bitmap, def_asset.font.width, def_asset.font.height, 0, 1, NULL);
 			stbtt_PackSetOversampling(&pack_context, 1, 1);
 
 			u32 total_packedchars = 0;
@@ -284,17 +298,19 @@ int main(int argc, char** argv) {
 				packedchars.push_back((stbtt_packedchar*)malloc(cp_num * sizeof(stbtt_packedchar)));
 				total_packedchars += cp_num;
 
-				stbtt_PackFontRange(&pack_context, (u8*)data.data(), 0, (f32)def_asset.font.size, def_asset.font.ranges[ri].start, cp_num, packedchars[ri]);
+				stbtt_PackFontRange(&pack_context, (u8*)data.data(), 0, (f32)def_asset.font.point, def_asset.font.ranges[ri].start, cp_num, packedchars[ri]);
 			}
 			stbtt_PackEnd(&pack_context);
+
+			// stbi_write_png((def_asset.font.name + ".png").c_str(), def_asset.font.width, def_asset.font.height, 1, baked_bitmap, 0);
 
 			asset_font.num_glyphs 	= total_packedchars;
 			asset_font.ascent 		= ascent * scale;
 			asset_font.descent 		= descent * scale;
 			asset_font.linegap 		= linegap * scale;
 			asset_font.linedist 	= asset_font.ascent - asset_font.descent + asset_font.linegap;
-			asset_font.width		= FONT_W;
-			asset_font.height		= FONT_H;
+			asset_font.width		= def_asset.font.width;
+			asset_font.height		= def_asset.font.height;
 
 			vector<file_glyph_data> glyph_data;
 			for(i32 ri = 0; ri < def_asset.font.ranges.size(); ri++) {
@@ -325,7 +341,7 @@ int main(int argc, char** argv) {
 			assets_out.write((char*)&asset_font, sizeof(file_asset_font));
 			assets_out.write((char*)glyph_data.data(), sizeof(file_glyph_data) * glyph_data.size());
 
-			u8* texture_out = (u8*)malloc(FONT_W * FONT_H * 4);
+			u8* texture_out = (u8*)malloc(def_asset.font.width * def_asset.font.height * 4);
 			u8* texture_out_place = texture_out;
 			u8* bake_last = baked_bitmap + pixel_size - pixel_stride;
 			for(; bake_last != baked_bitmap; bake_last -= pixel_stride) {
@@ -336,7 +352,7 @@ int main(int argc, char** argv) {
 					*texture_out_place++ = bake_last[pix];
 				}
 			}
-			assets_out.write((char*)texture_out, FONT_W * FONT_H * 4);
+			assets_out.write((char*)texture_out, def_asset.font.width * def_asset.font.height * 4);
 
 			free(texture_out);
 			free(baked_bitmap);

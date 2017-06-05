@@ -274,7 +274,7 @@ void texture_load_bitmap_from_font(texture* tex, asset_store* as, string name) {
 
 	glBindTextureUnit(0, tex->handle);
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 1024, 1024, 0, GL_RGBA, GL_UNSIGNED_BYTE, a->font.mem);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, a->font.width, a->font.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, a->font.mem);
 	
 	glGenerateMipmap(GL_TEXTURE_2D);
 
@@ -406,7 +406,7 @@ void ogl_set_uniforms(shader_program* prog, render_command* rc, render_command_l
 
 void ogl_render_command_list(opengl* ogl, render_command_list* rcl) {
 
-	// glEnable(GL_DEPTH_TEST);
+	glEnable(GL_DEPTH_TEST);
 	glClear(GL_DEPTH_BUFFER_BIT); // do we want to do this?
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
