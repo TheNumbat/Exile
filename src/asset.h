@@ -33,7 +33,7 @@ enum asset_type : u8 {
 
 #pragma pack(push, 1)
 struct file_glyph_data {
-	u32 codepoint;		// sorted
+	u32 codepoint;		// sorted by this
 	u16 x1, y1, x2, y2; // texture coordinates
 	f32 xoff1, yoff1, advance, xoff2, yoff2;
 };
@@ -60,6 +60,8 @@ struct asset_file_header {
 #pragma pack(pop)
 
 #ifndef BUILDER
+typedef file_glyph_data glyph_data;
+
 struct _asset_bitmap {
 	i32 width = 0;
 	i32 height = 0;
@@ -94,5 +96,6 @@ void destroy_asset_store(asset_store* as);
 void load_asset_store(asset_store* as, string path);
 asset get_asset(asset_store* as, string name);
 
-file_glyph_data get_glyph_data(_asset_font* font, u32 codepoint);
+glyph_data get_glyph_data(asset_store* as, string font, u32 codepoint);
+glyph_data get_glyph_data(_asset_font* font, u32 codepoint);
 #endif

@@ -35,9 +35,41 @@ asset get_asset(asset_store* as, string name) {
 	return *a;
 }
 
-file_glyph_data get_glyph_data(_asset_font* font, u32 codepoint) {
+glyph_data get_glyph_data(asset_store* as, string font, u32 codepoint) {
 
-	
+	asset a = get_asset(as, font);
+
+	LOG_ASSERT(a.type == asset_font);
+
+	return get_glyph_data(&a.font, codepoint);
+}
+
+glyph_data get_glyph_data(_asset_font* font, u32 codepoint) {
+
+	u32 low = 0, high = font->glyphs.capacity;
+
+	// binary search
+	for(;;) {
+
+		u32 search = low + ((high - low) / 2);
+
+		glyph_data* data = array_get(&font->glyphs, search);
+
+		if(data->codepoint == codepoint) {
+			return *data;
+		}
+
+		if(data->codepoint < codepoint) {
+			low = search + 1;
+		} else {
+			high = search;
+		}
+
+		if(low == high) {
+			glyph_data ret = {0, 0, 0, 0, 0, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
+			return ret;
+		}
+	}
 }
 
 void load_asset_store(asset_store* am, string path) {
