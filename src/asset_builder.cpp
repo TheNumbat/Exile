@@ -44,6 +44,7 @@ struct def_asset_font {
 	i32 point;
 	i32 width, height;
 	vector<range> ranges;
+	bool write_out = false;
 };
 
 struct def_asset {
@@ -133,6 +134,17 @@ def_file_structure build_def_file(ifstream& in) {
 					eat_control(in);
 					name.erase(name.find_last_not_of(" \n\r\t") + 1);
 					asset.font.name = name;
+
+				} else if(field == "write_out") {
+
+					string write_out;
+					eat_control(in);
+					getline(in, write_out, ',');
+					eat_control(in);
+					write_out.erase(write_out.find_last_not_of(" \n\r\t") + 1);
+					if(write_out == "true") {
+						asset.font.write_out = true;
+					}
 
 				} else if(field == "file") {
 
@@ -302,7 +314,9 @@ int main(int argc, char** argv) {
 			}
 			stbtt_PackEnd(&pack_context);
 
-			// stbi_write_png((def_asset.font.name + ".png").c_str(), def_asset.font.width, def_asset.font.height, 1, baked_bitmap, 0);
+			if(def_asset.font.write_out) {
+				stbi_write_png((def_asset.font.name + ".png").c_str(), def_asset.font.width, def_asset.font.height, 1, baked_bitmap, 0);
+			}
 
 			asset_font.num_glyphs 	= total_packedchars;
 			asset_font.ascent 		= ascent * scale;
