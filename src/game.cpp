@@ -86,7 +86,7 @@ extern "C" bool main_loop(game_state* state) {
 
 	asset* font = get_asset(&state->test_store, string_literal("font"));
 
-	mesh_push_text(&mesh, font, string_literal("wew lad"), V2f(20, 40), V4(1.0f, 1.0f, 1.0f, 1.0f));
+	mesh_push_text_line(&mesh, font, string_literal("‎abcdefghijklmnopqrstuvwxyz"), V2f(20, 40), 10.0f);
 
 	render_command cmd = make_render_command(render_mesh_2d, &mesh);
 	cmd.shader = state->shader;

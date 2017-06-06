@@ -10,8 +10,8 @@ immediate to do:
 		asset manager (general allocator?)
 
 	fonts
-		actually rendering text with the font atlas
 		color/format specifications in string
+		extra kerning pairs
 
 	better allocator names - don't just copy
 

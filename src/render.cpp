@@ -20,18 +20,19 @@ void destroy_mesh_2d(mesh_2d* m) {
 	m->alloc = NULL;
 }
 
-f32 mesh_push_text(mesh_2d* m, asset* font, string text_utf8, v2 pos, colorf color) {
+f32 mesh_push_text_line(mesh_2d* m, asset* font, string text_utf8, v2 pos, f32 point, colorf color) {
 
 	f32 x = pos.x;
 	f32 y = global_state->window_h - pos.y;
+	f32 scale = point / font->font.point;
 
 	u32 index = 0;
 	while(u32 codepoint = get_next_codepoint(text_utf8, &index)) {
 
 		glyph_data glyph = get_glyph_data(font, codepoint);
 
-		f32 w = (f32)font->font.width;
-		f32 h = (f32)font->font.height;
+		f32 w = (f32)font->font.width * scale;
+		f32 h = (f32)font->font.height * scale;
 		v2 tlc = V2(glyph.x1/w, 1.0f - glyph.y1/h);
 		v2 brc = V2(glyph.x2/w, 1.0f - glyph.y2/h);
 		v2 trc = V2(glyph.x2/w, 1.0f - glyph.y1/h);

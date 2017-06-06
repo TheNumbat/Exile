@@ -129,6 +129,7 @@ void load_asset_store(asset_store* am, string path) {
 				a.font.linedist = font->linedist;
 				a.font.width    = font->width;
 				a.font.height   = font->height;
+				a.font.point 	= font->point;
 
 				a.font.glyphs = make_array_memory<file_glyph_data>(font->num_glyphs, (u8*)font + sizeof(file_asset_font));
 

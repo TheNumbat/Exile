@@ -52,7 +52,7 @@ struct render_command_list {
 mesh_2d make_mesh_2d(allocator* alloc, u32 verts = 32);
 void destroy_mesh_2d(mesh_2d* m);
 
-f32 mesh_push_text_line(mesh_2d* m, asset* font, string text_utf8, v2 pos, colorf color); 
+f32 mesh_push_text_line(mesh_2d* m, asset* font, string text_utf8, v2 pos, f32 point, colorf color = V4(1.0f, 1.0f, 1.0f, 1.0f)); 
 
 mesh_3d make_mesh_3d(allocator* alloc, u32 verts = 32, u32 inds = 32);
 void destroy_mesh_3d(mesh_3d* m);

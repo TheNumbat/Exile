@@ -325,6 +325,7 @@ int main(int argc, char** argv) {
 			asset_font.linedist 	= asset_font.ascent - asset_font.descent + asset_font.linegap;
 			asset_font.width		= def_asset.font.width;
 			asset_font.height		= def_asset.font.height;
+			asset_font.point 		= (f32)def_asset.font.point;
 
 			vector<file_glyph_data> glyph_data;
 			for(i32 ri = 0; ri < def_asset.font.ranges.size(); ri++) {

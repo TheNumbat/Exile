@@ -10,4 +10,3 @@ font {
 	file : font.ttf,
 	range : 32, 126,
 }
-
