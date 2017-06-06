@@ -44,6 +44,7 @@
 #define GL_ELEMENT_ARRAY_BUFFER           0x8893
 #define GL_STATIC_DRAW                    0x88E4
 #define GL_STREAM_DRAW                    0x88E0
+#define GL_DYNAMIC_DRAW                   0x88E8
 
 typedef char GLchar;
 typedef ptrdiff_t GLsizeiptr;

@@ -40,7 +40,7 @@ void gui_begin_window(gui_manager* gui, r2 rect) {
 
 void gui_end_window(gui_manager* gui) {
 
-	mesh_push_rect(&gui->mesh, gui->current.rect, V4(1.0f, 1.0f, 1.0f, gui->current.opacity));
+	mesh_push_rect(&gui->mesh, gui->current.rect, V4b(34, 43, 47, (i32)roundf(gui->current.opacity * 255)));
 
 	for(u32 i = 0; i < gui->current.widgets.size; i++) {
 
@@ -49,7 +49,7 @@ void gui_end_window(gui_manager* gui) {
 		switch(w->type) {
 		case widget_text: {
 
-			mesh_push_text_line(&gui->mesh, gui->font, w->text.text, add(gui->current.rect.xy, w->pos), w->text.point, w->text.color);
+			mesh_push_text_line(&gui->mesh, gui->font, w->text.text, add(gui->current.rect.xy, w->pos), w->text.point, w->text.c);
 
 		} break;
 		}
@@ -58,13 +58,13 @@ void gui_end_window(gui_manager* gui) {
 	destroy_vector(&gui->current.widgets);
 }
 
-void gui_text_line(gui_manager* gui, string str, f32 point, colorf color) {
+void gui_text_line(gui_manager* gui, string str, f32 point, color c) {
 
 	gui_widget t;
 	t.type = widget_text;
 	t.text.text = str;
 	t.text.point = point;
-	t.text.color = color;
+	t.text.c = c;
 
 	vector_push(&gui->current.widgets, t);
 }

@@ -399,6 +399,7 @@ void ogl_mesh_2d_attribs(ogl_draw_context* dc) {
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(f32), (void*)0);
 	glBindBuffer(GL_ARRAY_BUFFER, dc->vbos[2]);
 	glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(f32), (void*)0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, dc->vbos[3]);
 
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);
@@ -410,11 +411,13 @@ void ogl_send_mesh_2d(opengl* ogl, mesh_2d* m, context_id id) {
 	ogl_draw_context* dc = ogl_select_draw_context(ogl, id);
 
 	glBindBuffer(GL_ARRAY_BUFFER, dc->vbos[0]);
-	glBufferData(GL_ARRAY_BUFFER, m->verticies.size * sizeof(v2), m->verticies.size ? m->verticies.memory : NULL, GL_STREAM_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, m->verticies.size * sizeof(v2), m->verticies.size ? m->verticies.memory : NULL, GL_DYNAMIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, dc->vbos[1]);
-	glBufferData(GL_ARRAY_BUFFER, m->texCoords.size * sizeof(v3), m->texCoords.size ? m->texCoords.memory : NULL, GL_STREAM_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, m->texCoords.size * sizeof(v3), m->texCoords.size ? m->texCoords.memory : NULL, GL_DYNAMIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, dc->vbos[2]);
-	glBufferData(GL_ARRAY_BUFFER, m->colors.size * sizeof(v4), m->colors.size ? m->colors.memory : NULL, GL_STREAM_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, m->colors.size * sizeof(v4), m->colors.size ? m->colors.memory : NULL, GL_DYNAMIC_DRAW);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, dc->vbos[3]);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, m->elements.size * sizeof(uv3), m->elements.size ? m->elements.memory : NULL, GL_DYNAMIC_DRAW);
 }
 
 void ogl_uniforms_gui(shader_program* prog, render_command* rc, render_command_list* rcl) {
@@ -453,7 +456,7 @@ void ogl_render_command_list(opengl* ogl, render_command_list* rcl) {
 
 			glDisable(GL_DEPTH_TEST);
 
-			glDrawArrays(GL_TRIANGLES, 0, cmd->m2d->verticies.size);
+			glDrawElements(GL_TRIANGLES, cmd->m2d->elements.size * 3, GL_UNSIGNED_INT, 0);
 
 		} else if (cmd->cmd == render_mesh_3d) {
 

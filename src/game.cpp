@@ -82,7 +82,7 @@ extern "C" game_state* start_up(platform_api* api) {
 
 extern "C" bool main_loop(game_state* state) {
 
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	PUSH_ALLOC(&state->transient_arena) {
@@ -90,7 +90,7 @@ extern "C" bool main_loop(game_state* state) {
 		gui_begin_frame(&state->gui);
 
 		gui_begin_window(&state->gui, R2f(20, 40, 300, 400));
-		gui_text_line(&state->gui, string_literal("abcdefghijklmnopqrstuvwxyz"), 0., V4(1.0f, 0.0f, 1.0f, 1.0f));
+		gui_text_line(&state->gui, string_literal("abcdefghijklmnopqrstuvwxyz"));
 		gui_end_window(&state->gui);
 
 		gui_render(&state->gui, &state->ogl);

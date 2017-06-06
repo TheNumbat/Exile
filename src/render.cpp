@@ -11,7 +11,8 @@ mesh_2d make_mesh_2d(allocator* alloc, u32 verts) {
 
 	ret.verticies = make_vector<v2>(verts, alloc);
 	ret.texCoords = make_vector<v3>(verts, alloc);
-	ret.colors =	make_vector<v4>(verts, alloc);
+	ret.colors 	  =	make_vector<v4>(verts, alloc);
+	ret.elements  = make_vector<uv3>(verts * 3, alloc); 
 
 	return ret;
 }
@@ -21,14 +22,15 @@ void destroy_mesh_2d(mesh_2d* m) {
 	destroy_vector(&m->verticies);
 	destroy_vector(&m->texCoords);
 	destroy_vector(&m->colors);
+	destroy_vector(&m->elements);
 	m->alloc = NULL;
 }
 
-void mesh_push_rect(mesh_2d* m, r2 r, colorf color) {
+void mesh_push_rect(mesh_2d* m, r2 r, color c) {
+
+	u32 idx = m->verticies.size;
 
 	vector_push(&m->verticies, V2(r.x, r.y + r.h)); // BLC
-	vector_push(&m->verticies, r.xy);				// TLC
-	vector_push(&m->verticies, add(r.xy, r.wh));	// BRC
 	vector_push(&m->verticies, r.xy);				// TLC
 	vector_push(&m->verticies, add(r.xy, r.wh));	// BRC
 	vector_push(&m->verticies, V2(r.x + r.w, r.y));	// TRC
@@ -37,19 +39,20 @@ void mesh_push_rect(mesh_2d* m, r2 r, colorf color) {
 	vector_push(&m->texCoords, V3(0.0f, 0.0f, 0.0f));
 	vector_push(&m->texCoords, V3(0.0f, 0.0f, 0.0f));
 	vector_push(&m->texCoords, V3(0.0f, 0.0f, 0.0f));
-	vector_push(&m->texCoords, V3(0.0f, 0.0f, 0.0f));
-	vector_push(&m->texCoords, V3(0.0f, 0.0f, 0.0f));
 
-	vector_push(&m->colors, color);
-	vector_push(&m->colors, color);
-	vector_push(&m->colors, color);
-	vector_push(&m->colors, color);
-	vector_push(&m->colors, color);
-	vector_push(&m->colors, color);
+	colorf cf = color_to_f(c);
+	vector_push(&m->colors, cf);
+	vector_push(&m->colors, cf);
+	vector_push(&m->colors, cf);
+	vector_push(&m->colors, cf);
+
+	vector_push(&m->elements, V3u(idx, idx + 1, idx + 2));
+	vector_push(&m->elements, V3u(idx + 1, idx + 2, idx + 3));
 }
 
-f32 mesh_push_text_line(mesh_2d* m, asset* font, string text_utf8, v2 pos, f32 point, colorf color) {
+f32 mesh_push_text_line(mesh_2d* m, asset* font, string text_utf8, v2 pos, f32 point, color c) {
 
+	colorf cf = color_to_f(c);
 	f32 x = pos.x;
 	f32 y = pos.y;
 	f32 scale = point / font->font.point;
@@ -61,6 +64,7 @@ f32 mesh_push_text_line(mesh_2d* m, asset* font, string text_utf8, v2 pos, f32 p
 	u32 index = 0;
 	while(u32 codepoint = get_next_codepoint(text_utf8, &index)) {
 
+		u32 idx = m->verticies.size;
 		glyph_data glyph = get_glyph_data(font, codepoint);
 
 		f32 w = (f32)font->font.width;
@@ -73,23 +77,20 @@ f32 mesh_push_text_line(mesh_2d* m, asset* font, string text_utf8, v2 pos, f32 p
 		vector_push(&m->verticies, V2(x + scale*glyph.xoff1, y + scale*glyph.yoff2)); 	// BLC
  		vector_push(&m->verticies, V2(x + scale*glyph.xoff1, y + scale*glyph.yoff1));	// TLC
  		vector_push(&m->verticies, V2(x + scale*glyph.xoff2, y + scale*glyph.yoff2));	// BRC
- 		vector_push(&m->verticies, V2(x + scale*glyph.xoff1, y + scale*glyph.yoff1));	// TLC
- 		vector_push(&m->verticies, V2(x + scale*glyph.xoff2, y + scale*glyph.yoff2));	// BRC
  		vector_push(&m->verticies, V2(x + scale*glyph.xoff2, y + scale*glyph.yoff1));	// TRC
 
 		vector_push(&m->texCoords, blc);
 		vector_push(&m->texCoords, tlc);
 		vector_push(&m->texCoords, brc);
-		vector_push(&m->texCoords, tlc);
-		vector_push(&m->texCoords, brc);
 		vector_push(&m->texCoords, trc);
 
-		vector_push(&m->colors, color);
-		vector_push(&m->colors, color);
-		vector_push(&m->colors, color);
-		vector_push(&m->colors, color);
-		vector_push(&m->colors, color);
-		vector_push(&m->colors, color);
+		vector_push(&m->colors, cf);
+		vector_push(&m->colors, cf);
+		vector_push(&m->colors, cf);
+		vector_push(&m->colors, cf);
+
+		vector_push(&m->elements, V3u(idx, idx + 1, idx + 2));
+		vector_push(&m->elements, V3u(idx + 1, idx + 2, idx + 3));
 
 		x += scale * glyph.advance;
 	}

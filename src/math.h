@@ -111,20 +111,20 @@ template r2_t<u8>;
 template<typename T>
 union v3_t {
 	struct {
-		f32 x, y, z;
+		T x, y, z;
 	};
 	struct {
-		f32 r, g, b;
+		T r, g, b;
 	};
 	struct {
 		v2_t<T> xy;
-		f32 z;
+		T z;
 	};
 	struct {
-		f32 x;
+		T x;
 		v2_t<T> yz;
 	};
-	f32 f[3] = {};
+	T f[3] = {};
 	v3_t() {};
 };
 typedef v3_t<f32> v3;
@@ -193,10 +193,10 @@ template<typename T> inline v2_t<T> V2(T x, T y) {
 	return ret;
 }
 template v2 V2(f32 x, f32 y);
-inline v2 V2f(i32 x, i32 y) {
+template<typename T> inline v2 V2f(T x, T y) {
 	return V2((f32)x, (f32)y);
 }
-inline uv2 V2u(i32 x, i32 y) {
+template<typename T> inline uv2 V2u(T x, T y) {
 	return V2((u32)x, (u32)y);
 }
 
@@ -208,6 +208,12 @@ template<typename T> inline v3_t<T> V3(T x, T y, T z) {
 	return ret;
 }
 template v3 V3(f32 x, f32 y, f32 z);
+template<typename T> inline v3 V3f(T x, T y, T z) {
+	return V3((f32)x, (f32)y, (f32)z);
+}
+template<typename T> inline uv3 V3u(T x, T y, T z) {
+	return V3((u32)x, (u32)y, (u32)z);
+}
 
 template<typename T> inline v4_t<T> V4(T x, T y, T z, T w) {
 	v4_t<T> ret;
@@ -218,6 +224,12 @@ template<typename T> inline v4_t<T> V4(T x, T y, T z, T w) {
 	return ret;
 }
 template v4 V4(f32 x, f32 y, f32 z, f32 w);
+template<typename T> inline bv4 V4b(T x, T y, T z, T w) {
+	return V4((u8)x, (u8)y, (u8)z, (u8)w);
+}
+inline v4 color_to_f(color c) {
+	return V4(c.x / 255.0f, c.y / 255.0f, c.z / 255.0f, c.w / 255.0f);
+}
 
 template<typename T> inline T lengthsq(v2_t<T> V) {
 	return V.x * V.x + V.y * V.y;
