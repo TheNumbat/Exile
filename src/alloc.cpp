@@ -97,7 +97,7 @@ inline void arena_reset(arena_allocator* a, code_context context) {
 
 	a->used = 0;
 
-#ifdef _DEBUG
+#ifdef ZERO_ARENA
 	memset(a->memory, a->size, 0);
 #endif
 }
@@ -196,7 +196,7 @@ void memset(void* mem, u64 size, u8 val) {
 
 	u8* cmem = (u8*)mem;
 
-	for(u64 i = 0; i < size; i++) {
-		cmem[i] = val;
+	while(size--) {
+		*cmem++ = val;
 	}
 }

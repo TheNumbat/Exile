@@ -48,8 +48,8 @@ extern "C" game_state* start_up(platform_api* api) {
 
 	LOG_DEBUG("Setting up asset system");
 	LOG_PUSH_CONTEXT_L("assets");
-	state->test_store = make_asset_store(&state->default_platform_allocator);
-	load_asset_store(&state->test_store, string_literal("assets/assets.asset"));
+	state->default_store = make_asset_store(&state->default_platform_allocator);
+	load_asset_store(&state->default_store, string_literal("assets/assets.asset"));
 	LOG_POP_CONTEXT();
 
 	LOG_DEBUG("Creating window");
@@ -72,10 +72,6 @@ extern "C" game_state* start_up(platform_api* api) {
 	LOG_INFO("Done with startup!");
 	LOG_POP_CONTEXT();
 	
-	state->texture = ogl_add_texture_from_font(&state->ogl, &state->test_store, string_literal("font15"), wrap_clamp_border, true);
-	state->context = ogl_add_draw_context(&state->ogl, &ogl_mesh_2d_attribs);
-	state->shader = ogl_add_program(&state->ogl, string_literal("shaders/gui.v"), string_literal("shaders/gui.f"), &ogl_uniforms_gui);
-
 	return state;
 }
 
@@ -86,33 +82,16 @@ extern "C" bool main_loop(game_state* state) {
 
 	PUSH_ALLOC(&state->transient_arena) {
 
-		render_command_list rcl = make_command_list();
-		mesh_2d mesh = make_mesh_2d();
-
-		asset* font = get_asset(&state->test_store, string_literal("font15"));
-
-		mesh_push_text_line(&mesh, font, string_literal("‎abcdefghijklmnopqrstuvwxyz"), V2f(20, 40), 15.0f);
-
-		render_command cmd = make_render_command(render_mesh_2d, &mesh);
-		cmd.shader = state->shader;
-		cmd.texture = state->texture;
-		cmd.context = state->context;
-
-		render_add_command(&rcl, cmd);
-		rcl.proj = ortho(0, (f32)state->window_w, 0, (f32)state->window_h, -1, 1);
-
-		ogl_send_mesh_2d(&state->ogl, &mesh, state->context);
-		ogl_render_command_list(&state->ogl, &rcl);
-
-		destroy_mesh_2d(&mesh);
-		destroy_command_list(&rcl);
+		
 
 	} POP_ALLOC();
-	RESET_ARENA(&state->transient_arena);
+	// RESET_ARENA(&state->transient_arena);
 
 	state->api->platform_swap_buffers(&state->window);
 	
-	return run_events(&state->events);
+	bool running = run_events(&state->events);
+
+	return running;
 }
 
 extern "C" void shut_down(platform_api* api, game_state* state) {
@@ -124,7 +103,7 @@ extern "C" void shut_down(platform_api* api, game_state* state) {
 	destroy_opengl(&state->ogl);
 
 	LOG_DEBUG("Destroying asset system");
-	destroy_asset_store(&state->test_store);
+	destroy_asset_store(&state->default_store);
 
 	LOG_DEBUG("Destroying thread pool");
 	threadpool_stop_all(&state->thread_pool);

@@ -7,7 +7,7 @@ logger make_logger(allocator* a) {
 	ret.message_queue = make_queue<log_message>(8, a);
 	global_state->api->platform_create_mutex(&ret.queue_mutex, false);
 	global_state->api->platform_create_mutex(&ret.thread_data_mutex, false);
-	global_state->api->platform_create_semaphore(&ret.logging_semaphore, 0, UINT32_MAX);
+	global_state->api->platform_create_semaphore(&ret.logging_semaphore, 0, INT32_MAX);
 	ret.thread_data = make_map<platform_thread_id,log_thread_data>(8, a);
 	ret.alloc = a;
 	ret.scratch = MAKE_ARENA("log scratch", 2048, a, true);
@@ -152,6 +152,7 @@ void logger_msgf(logger* log, string fmt, log_level level, code_context context,
 #ifdef BREAK_ERROR
 		if(level == log_error) {
 			__debugbreak();
+			global_state->api->platform_wait_semaphore(data->logging_semaphore, -1);
 		}
 #endif
 		if(level == log_fatal) {

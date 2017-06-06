@@ -1,9 +1,10 @@
 
 typedef HGLRC (WINAPI *wglCreateContextAttribsARB_t)(HDC hDC, HGLRC hShareContext,
 													const int* attribList);
+typedef BOOL  (WINAPI *wglSwapIntervalEXT_t)(int interval);
 
 static wglCreateContextAttribsARB_t wglCreateContextAttribsARB;
-static bool global_platform_running = true;
+static wglSwapIntervalEXT_t 		wglSwapIntervalEXT;
 
 static void (*global_enqueue)(void* queue_param, platform_event evt) = NULL;
 static void* global_enqueue_param = NULL;
@@ -1108,6 +1109,17 @@ platform_error platform_create_window(platform_window* window, string title, u32
 		ret.error = GetLastError();
 		return ret;	
 	}
+
+	wglSwapIntervalEXT = (wglSwapIntervalEXT_t)wglGetProcAddress("wglSwapIntervalEXT");
+
+	if(wglSwapIntervalEXT == NULL) {
+		ret.good = false;
+		ret.error = GetLastError();
+		return ret;		
+	}
+
+	// TODO(max): vsync settings
+	wglSwapIntervalEXT(1);
 
 	return ret;
 }

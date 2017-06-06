@@ -4,6 +4,7 @@
 #ifdef _DEBUG
 #define BOUNDS_CHECK
 // #define BREAK_ERROR
+// #define ZERO_ARENA
 #endif
 
 #include "basic_types.h"

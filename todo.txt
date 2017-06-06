@@ -15,6 +15,9 @@ immediate to do:
 
 	better allocator names - don't just copy
 
+	platform 
+		wgl extension testing/loading
+
 	OpenGl
 		improve shader spec API
 		2D
