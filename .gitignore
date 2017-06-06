@@ -4,4 +4,4 @@ bin/.vs
 bin/*.opendb
 bin/project.sublime-workspace
 data/log_all.txt
-data/asset/*.asset
+data/assets/*.asset
