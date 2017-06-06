@@ -88,6 +88,27 @@ template v2_t<u32>;
 template v2_t<u8>;
 
 template<typename T>
+union r2_t {
+	struct {
+		T x, y, w, h;	
+	};
+	struct {
+		v2_t<T> xy;
+		v2_t<T> wh;
+	};
+	T v[4] = {};
+	r2_t() {};
+};
+typedef r2_t<f32> r2;
+typedef r2_t<i32> ir2;
+typedef r2_t<u32> ur2;
+typedef	r2_t<u8>  br2;
+template r2_t<f32>;
+template r2_t<i32>;
+template r2_t<u32>;
+template r2_t<u8>;
+
+template<typename T>
 union v3_t {
 	struct {
 		f32 x, y, z;
@@ -144,8 +165,6 @@ typedef v4_t<u32> uv4;
 typedef v4_t<u8>  bv4;
 typedef bv4 	  color;
 typedef v4 		  colorf;
-typedef v4 		  r2;
-typedef iv4 	  ir2;
 template v4_t<f32>;
 template v4_t<i32>;
 template v4_t<u32>;
@@ -336,6 +355,29 @@ template<typename T> inline v4_t<T> div(v4_t<T> l, T r) {
 }
 template v4 div(v4, f32);
 
+template<typename T> inline r2_t<T> R2(T x, T y, T w, T h) {
+	r2_t<T> ret;
+	ret.x = x;
+	ret.y = y;
+	ret.w = w;
+	ret.h = h;
+	return ret;
+}
+template r2 R2(f32, f32, f32, f32);
+r2 R2f(i32 x, i32 y, i32 w, i32 h) {
+	return R2((f32)x, (f32)y, (f32)w, (f32)h);
+}
+
+template<typename T> inline r2_t<T> add(r2_t<T> l, r2_t<T> r) {
+	return R2(l.x + r.x, l.y + r.y, l.w + r.w, l.h + r.h);	
+}
+template r2 add(r2, r2);
+template<typename T> inline r2_t<T> sub(r2_t<T> l, r2_t<T> r) {
+	return R2(l.x - r.x, l.y - r.y, l.w - r.w, l.h - r.h);	
+}
+template r2 sub(r2, r2);
+
+
 // TODO(max): more SIMD
 // Several of these matrix algorithms adapted from https://github.com/StrangeZak/Handmade-Math
 template<typename T> inline m4_t<T> M4D(T diag) {
@@ -370,13 +412,13 @@ template m4 sub(m4, m4);
 
 template<typename T> m4_t<T> mult(m4_t<T> l, m4_t<T> r) {
 	m4_t<T> ret;
-    for(i32 row = 0; row < 4; row++) {
-	    for(i32 col = 0; col < 4; col++) {
+    for(i32 col = 0; col < 4; col++) {
+	    for(i32 row = 0; row < 4; row++) {
             T sum = 0;
             for(i32 place = 0; place < 4; place++) {
-                sum += l.f[row][place] * r.f[place][col];
+                sum += l.f[col][place] * r.f[place][row];
             }
-            ret.f[row][col] = sum;
+            ret.f[col][row] = sum;
         }
     }
     return ret;

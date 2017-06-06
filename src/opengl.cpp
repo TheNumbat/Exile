@@ -180,6 +180,20 @@ shader_program* ogl_select_program(opengl* ogl, shader_program_id id) {
 	return p;
 }
 
+texture_id ogl_add_texture_from_font(opengl* ogl, asset* font, texture_wrap wrap, bool pixelated) {
+
+	texture t = make_texture(wrap, pixelated);
+	t.id = ogl->next_texture_id;
+
+	texture_load_bitmap_from_font(&t, font);
+
+	map_insert(&ogl->textures, ogl->next_texture_id, t);
+
+	ogl->next_texture_id++;
+
+	return ogl->next_texture_id - 1;
+}
+
 texture_id ogl_add_texture_from_font(opengl* ogl, asset_store* as, string name, texture_wrap wrap, bool pixelated) {
 
 	texture t = make_texture(wrap, pixelated);
@@ -265,6 +279,20 @@ texture make_texture(texture_wrap wrap, bool pixelated) {
 
 	return ret;
 }
+
+void texture_load_bitmap_from_font(texture* tex, asset* font) {
+
+	LOG_DEBUG_ASSERT(font->type == asset_font);
+
+	glBindTextureUnit(0, tex->handle);
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, font->font.width, font->font.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, font->font.mem);
+	
+	glGenerateMipmap(GL_TEXTURE_2D);
+
+	glBindTextureUnit(0, 0);
+}
+
 
 void texture_load_bitmap_from_font(texture* tex, asset_store* as, string name) {
 
@@ -368,7 +396,7 @@ void ogl_mesh_2d_attribs(ogl_draw_context* dc) {
 	glBindBuffer(GL_ARRAY_BUFFER, dc->vbos[0]);
 	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(f32), (void*)0);
 	glBindBuffer(GL_ARRAY_BUFFER, dc->vbos[1]);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(f32), (void*)0);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(f32), (void*)0);
 	glBindBuffer(GL_ARRAY_BUFFER, dc->vbos[2]);
 	glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(f32), (void*)0);
 
@@ -384,7 +412,7 @@ void ogl_send_mesh_2d(opengl* ogl, mesh_2d* m, context_id id) {
 	glBindBuffer(GL_ARRAY_BUFFER, dc->vbos[0]);
 	glBufferData(GL_ARRAY_BUFFER, m->verticies.size * sizeof(v2), m->verticies.size ? m->verticies.memory : NULL, GL_STREAM_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, dc->vbos[1]);
-	glBufferData(GL_ARRAY_BUFFER, m->texCoords.size * sizeof(v2), m->texCoords.size ? m->texCoords.memory : NULL, GL_STREAM_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, m->texCoords.size * sizeof(v3), m->texCoords.size ? m->texCoords.memory : NULL, GL_STREAM_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, dc->vbos[2]);
 	glBufferData(GL_ARRAY_BUFFER, m->colors.size * sizeof(v4), m->colors.size ? m->colors.memory : NULL, GL_STREAM_DRAW);
 }
@@ -406,8 +434,6 @@ void ogl_set_uniforms(shader_program* prog, render_command* rc, render_command_l
 
 void ogl_render_command_list(opengl* ogl, render_command_list* rcl) {
 
-	glEnable(GL_DEPTH_TEST);
-	glClear(GL_DEPTH_BUFFER_BIT); // do we want to do this?
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -425,9 +451,13 @@ void ogl_render_command_list(opengl* ogl, render_command_list* rcl) {
 
 		if(cmd->cmd == render_mesh_2d) {
 
+			glDisable(GL_DEPTH_TEST);
+
 			glDrawArrays(GL_TRIANGLES, 0, cmd->m2d->verticies.size);
 
 		} else if (cmd->cmd == render_mesh_3d) {
+
+			glEnable(GL_DEPTH_TEST);
 
 			glDrawArrays(GL_TRIANGLES, 0, cmd->m3d->verticies.size);
 		}

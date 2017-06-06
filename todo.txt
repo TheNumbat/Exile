@@ -15,7 +15,7 @@ immediate to do:
 
 	better allocator names - don't just copy
 
-	platform 
+	platform
 		wgl extension testing/loading
 
 	OpenGl
@@ -27,6 +27,7 @@ immediate to do:
 			chunk meshing, texturing
 			deferred mesh re/building
 			models & animation
+		rename ogl stuff to "renderer" to facilitate different backends
 
 	metaprogramming - struct introspection?
 		replace vsnprintf

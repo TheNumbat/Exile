@@ -61,7 +61,7 @@ struct asset_file_header {
 #pragma pack(pop)
 
 #ifndef BUILDER
-typedef file_glyph_data glyph_data;
+typedef file_glyph_data glyph_data; // is this OK to be packed?
 
 struct _asset_bitmap {
 	i32 width = 0;

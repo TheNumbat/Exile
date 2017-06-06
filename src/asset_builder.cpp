@@ -298,7 +298,8 @@ int main(int argc, char** argv) {
 			u32 pixel_size = pixel_stride * def_asset.font.height;
 			u8* baked_bitmap = (u8*)malloc(pixel_size);
 
-			stbtt_PackBegin(&pack_context, baked_bitmap, def_asset.font.width, def_asset.font.height, 0, 1, NULL);
+			// TODO(max): why do we need 2-pixel padding here?
+			stbtt_PackBegin(&pack_context, baked_bitmap, def_asset.font.width, def_asset.font.height, 0, 2, NULL);
 			stbtt_PackSetOversampling(&pack_context, 1, 1);
 
 			u32 total_packedchars = 0;

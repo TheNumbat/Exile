@@ -13,7 +13,7 @@ enum render_command_type {
 
 struct mesh_2d {
 	vector<v2>		verticies;	// x y 
-	vector<v2>		texCoords;	// u v
+	vector<v3>		texCoords;	// u v
 	vector<colorf>	colors;		// r g b a (clamp f)
 	allocator* alloc = NULL;
 };
@@ -52,7 +52,8 @@ struct render_command_list {
 mesh_2d make_mesh_2d(allocator* alloc = NULL, u32 verts = 32);
 void destroy_mesh_2d(mesh_2d* m);
 
-f32 mesh_push_text_line(mesh_2d* m, asset* font, string text_utf8, v2 pos, f32 point, colorf color = V4(1.0f, 1.0f, 1.0f, 1.0f)); 
+f32 mesh_push_text_line(mesh_2d* m, asset* font, string text_utf8, v2 pos, f32 point = 0.0f, colorf color = V4(0.0f, 0.0f, 0.0f, 1.0f)); 
+void mesh_push_rect(mesh_2d* m, r2 rect, colorf color);
 
 mesh_3d make_mesh_3d(allocator* alloc = NULL, u32 verts = 32, u32 inds = 32);
 void destroy_mesh_3d(mesh_3d* m);

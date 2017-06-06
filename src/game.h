@@ -15,6 +15,7 @@ struct game_state {
 	threadpool thread_pool;
 	event_manager events;
 	opengl ogl;
+	gui_manager gui;
 
 	i32 window_w = 0, window_h = 0;
 	platform_window window 	= {};

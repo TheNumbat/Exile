@@ -69,6 +69,11 @@ extern "C" game_state* start_up(platform_api* api) {
 	state->ogl = make_opengl(&state->default_platform_allocator);
 	LOG_POP_CONTEXT();
 
+	LOG_DEBUG("Setting up GUI");
+	LOG_PUSH_CONTEXT_L("gui");
+	state->gui = make_gui(&state->transient_arena, &state->ogl, get_asset(&state->default_store, string_literal("font24")));
+	LOG_POP_CONTEXT();
+
 	LOG_INFO("Done with startup!");
 	LOG_POP_CONTEXT();
 	
@@ -77,15 +82,22 @@ extern "C" game_state* start_up(platform_api* api) {
 
 extern "C" bool main_loop(game_state* state) {
 
-	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	PUSH_ALLOC(&state->transient_arena) {
 
-		
+		gui_begin_frame(&state->gui);
+
+		gui_begin_window(&state->gui, R2f(20, 40, 300, 400));
+		gui_text_line(&state->gui, string_literal("abcdefghijklmnopqrstuvwxyz"), 0., V4(1.0f, 0.0f, 1.0f, 1.0f));
+		gui_end_window(&state->gui);
+
+		gui_render(&state->gui, &state->ogl);
+		gui_end_frame(&state->gui);
 
 	} POP_ALLOC();
-	// RESET_ARENA(&state->transient_arena);
+	RESET_ARENA(&state->transient_arena);
 
 	state->api->platform_swap_buffers(&state->window);
 	
@@ -98,6 +110,9 @@ extern "C" void shut_down(platform_api* api, game_state* state) {
 
 	LOG_INFO("Beginning shutdown...");
 	LOG_PUSH_CONTEXT_L("shutdown");
+
+	LOG_DEBUG("Destroying GUI");
+	destroy_gui(&state->gui);
 
 	LOG_DEBUG("Destroying OpenGL")
 	destroy_opengl(&state->ogl);
