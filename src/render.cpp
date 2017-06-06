@@ -31,19 +31,19 @@ f32 mesh_push_text_line(mesh_2d* m, asset* font, string text_utf8, v2 pos, f32 p
 
 		glyph_data glyph = get_glyph_data(font, codepoint);
 
-		f32 w = (f32)font->font.width * scale;
-		f32 h = (f32)font->font.height * scale;
+		f32 w = (f32)font->font.width;
+		f32 h = (f32)font->font.height;
 		v2 tlc = V2(glyph.x1/w, 1.0f - glyph.y1/h);
 		v2 brc = V2(glyph.x2/w, 1.0f - glyph.y2/h);
 		v2 trc = V2(glyph.x2/w, 1.0f - glyph.y1/h);
 		v2 blc = V2(glyph.x1/w, 1.0f - glyph.y2/h);
 				 
-		vector_push(&m->verticies, V2(x + glyph.xoff1, y - glyph.yoff2)); 	// BLC
- 		vector_push(&m->verticies, V2(x + glyph.xoff1, y - glyph.yoff1));	// TLC
- 		vector_push(&m->verticies, V2(x + glyph.xoff2, y - glyph.yoff2));	// BRC
- 		vector_push(&m->verticies, V2(x + glyph.xoff1, y - glyph.yoff1));	// TLC
- 		vector_push(&m->verticies, V2(x + glyph.xoff2, y - glyph.yoff2));	// BRC
- 		vector_push(&m->verticies, V2(x + glyph.xoff2, y - glyph.yoff1));	// TLC
+		vector_push(&m->verticies, V2(x + scale*glyph.xoff1, y - scale*glyph.yoff2)); 	// BLC
+ 		vector_push(&m->verticies, V2(x + scale*glyph.xoff1, y - scale*glyph.yoff1));	// TLC
+ 		vector_push(&m->verticies, V2(x + scale*glyph.xoff2, y - scale*glyph.yoff2));	// BRC
+ 		vector_push(&m->verticies, V2(x + scale*glyph.xoff1, y - scale*glyph.yoff1));	// TLC
+ 		vector_push(&m->verticies, V2(x + scale*glyph.xoff2, y - scale*glyph.yoff2));	// BRC
+ 		vector_push(&m->verticies, V2(x + scale*glyph.xoff2, y - scale*glyph.yoff1));	// TLC
 
 		vector_push(&m->texCoords, blc);
 		vector_push(&m->texCoords, tlc);
@@ -59,7 +59,7 @@ f32 mesh_push_text_line(mesh_2d* m, asset* font, string text_utf8, v2 pos, f32 p
 		vector_push(&m->colors, color);
 		vector_push(&m->colors, color);
 
-		x += glyph.advance;
+		x += scale * glyph.advance;
 	}
 
 	return font->font.linedist;

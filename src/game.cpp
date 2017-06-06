@@ -69,7 +69,7 @@ extern "C" game_state* start_up(platform_api* api) {
 	LOG_INFO("Done with startup!");
 	LOG_POP_CONTEXT();
 	
-	state->texture = ogl_add_texture_from_font(&state->ogl, &state->test_store, string_literal("font"), wrap_clamp_border, true);
+	state->texture = ogl_add_texture_from_font(&state->ogl, &state->test_store, string_literal("font15"), wrap_clamp_border, true);
 	state->context = ogl_add_draw_context(&state->ogl, &ogl_mesh_2d_attribs);
 	state->shader = ogl_add_program(&state->ogl, string_literal("shaders/gui.v"), string_literal("shaders/gui.f"), &ogl_uniforms_gui);
 
@@ -84,9 +84,9 @@ extern "C" bool main_loop(game_state* state) {
 	render_command_list rcl = make_command_list(&state->default_platform_allocator);
 	mesh_2d mesh = make_mesh_2d(&state->default_platform_allocator);
 
-	asset* font = get_asset(&state->test_store, string_literal("font"));
+	asset* font = get_asset(&state->test_store, string_literal("font15"));
 
-	mesh_push_text_line(&mesh, font, string_literal("‎abcdefghijklmnopqrstuvwxyz"), V2f(20, 40), 10.0f);
+	mesh_push_text_line(&mesh, font, string_literal("‎abcdefghijklmnopqrstuvwxyz"), V2f(20, 40), 15.0f);
 
 	render_command cmd = make_render_command(render_mesh_2d, &mesh);
 	cmd.shader = state->shader;

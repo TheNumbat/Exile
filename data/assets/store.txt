@@ -3,8 +3,24 @@ image {
 	file : cat.jpg,
 }
 font {
-	name : font,
+	name : font15,
+	point : 15,
+	width : 196,
+	height : 196,
+	file : font.ttf,
+	range : 32, 126,
+}
+font {
+	name : font40,
 	point : 40,
+	width : 196,
+	height : 196,
+	file : font.ttf,
+	range : 32, 126,
+}
+font {
+	name : font80,
+	point : 80,
 	width : 196,
 	height : 196,
 	file : font.ttf,
