@@ -31,6 +31,9 @@ extern "C" game_state* start_up(platform_api* api) {
 	LOG_DEBUG("Beginning startup...");
 	LOG_PUSH_CONTEXT_L("startup");
 
+	LOG_DEBUG("Allocating transient store...")
+	state->transient_arena = MAKE_ARENA("transient", MEGABYTES(16), &state->default_platform_allocator, false);
+
 	LOG_DEBUG("Starting thread pool");
 	LOG_PUSH_CONTEXT_L("threadpool");
 	state->thread_pool = make_threadpool(&state->default_platform_allocator);
@@ -81,26 +84,32 @@ extern "C" bool main_loop(game_state* state) {
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	render_command_list rcl = make_command_list(&state->default_platform_allocator);
-	mesh_2d mesh = make_mesh_2d(&state->default_platform_allocator);
+	PUSH_ALLOC(&state->transient_arena) {
 
-	asset* font = get_asset(&state->test_store, string_literal("font15"));
+		render_command_list rcl = make_command_list();
+		mesh_2d mesh = make_mesh_2d();
 
-	mesh_push_text_line(&mesh, font, string_literal("‎abcdefghijklmnopqrstuvwxyz"), V2f(20, 40), 15.0f);
+		asset* font = get_asset(&state->test_store, string_literal("font15"));
 
-	render_command cmd = make_render_command(render_mesh_2d, &mesh);
-	cmd.shader = state->shader;
-	cmd.texture = state->texture;
-	cmd.context = state->context;
+		mesh_push_text_line(&mesh, font, string_literal("‎abcdefghijklmnopqrstuvwxyz"), V2f(20, 40), 15.0f);
 
-	render_add_command(&rcl, cmd);
-	rcl.proj = ortho(0, (f32)state->window_w, 0, (f32)state->window_h, -1, 1);
+		render_command cmd = make_render_command(render_mesh_2d, &mesh);
+		cmd.shader = state->shader;
+		cmd.texture = state->texture;
+		cmd.context = state->context;
 
-	ogl_send_mesh_2d(&state->ogl, &mesh, state->context);
-	ogl_render_command_list(&state->ogl, &rcl);
+		render_add_command(&rcl, cmd);
+		rcl.proj = ortho(0, (f32)state->window_w, 0, (f32)state->window_h, -1, 1);
 
-	destroy_mesh_2d(&mesh);
-	destroy_command_list(&rcl);
+		ogl_send_mesh_2d(&state->ogl, &mesh, state->context);
+		ogl_render_command_list(&state->ogl, &rcl);
+
+		destroy_mesh_2d(&mesh);
+		destroy_command_list(&rcl);
+
+	} POP_ALLOC();
+	RESET_ARENA(&state->transient_arena);
+
 	state->api->platform_swap_buffers(&state->window);
 	
 	return run_events(&state->events);
@@ -129,6 +138,9 @@ extern "C" void shut_down(platform_api* api, game_state* state) {
 
 	LOG_DEBUG("Destroying events");
 	destroy_event_manager(&state->events);
+
+	LOG_DEBUG("Destroying transient store");
+	DESTROY_ARENA(&state->transient_arena);
 
 	LOG_DEBUG("Done with shutdown!");
 

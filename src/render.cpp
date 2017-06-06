@@ -1,6 +1,10 @@
 
 mesh_2d make_mesh_2d(allocator* alloc, u32 verts) {
 
+	if(alloc == NULL) {
+		alloc = CURRENT_ALLOC();
+	}
+
 	mesh_2d ret;
 
 	ret.alloc = alloc;
@@ -37,7 +41,7 @@ f32 mesh_push_text_line(mesh_2d* m, asset* font, string text_utf8, v2 pos, f32 p
 		v2 brc = V2(glyph.x2/w, 1.0f - glyph.y2/h);
 		v2 trc = V2(glyph.x2/w, 1.0f - glyph.y1/h);
 		v2 blc = V2(glyph.x1/w, 1.0f - glyph.y2/h);
-				 
+
 		vector_push(&m->verticies, V2(x + scale*glyph.xoff1, y - scale*glyph.yoff2)); 	// BLC
  		vector_push(&m->verticies, V2(x + scale*glyph.xoff1, y - scale*glyph.yoff1));	// TLC
  		vector_push(&m->verticies, V2(x + scale*glyph.xoff2, y - scale*glyph.yoff2));	// BRC
@@ -66,6 +70,10 @@ f32 mesh_push_text_line(mesh_2d* m, asset* font, string text_utf8, v2 pos, f32 p
 }
 
 mesh_3d make_mesh_3d(allocator* alloc, u32 verts, u32 inds) {
+
+	if(alloc == NULL) {
+		alloc = CURRENT_ALLOC();
+	}
 
 	mesh_3d ret;
 
@@ -96,6 +104,10 @@ render_command make_render_command(render_command_type type, void* data) {
 }
 
 render_command_list make_command_list(allocator* alloc, u32 cmds) {
+
+	if(alloc == NULL) {
+		alloc = CURRENT_ALLOC();
+	}
 
 	render_command_list ret;
 
