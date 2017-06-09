@@ -56,18 +56,9 @@ bool run_events(event_manager* em) {
 		if(evt.type == event_window && evt.window.op == window_close) {
 			return false;
 		}
-
-		else if(evt.type == event_key && evt.key.code == key_w) {
-			if(evt.key.flags & key_flag_ctrl && evt.key.flags & key_flag_alt) {
-				if(evt.key.flags & key_flag_press)
-					LOG_DEBUG("Ctrl Alt Press");
-				if(evt.key.flags & key_flag_release)
-					LOG_DEBUG("Ctrl Alt Release");
-				if(evt.key.flags & key_flag_repeat)
-					LOG_DEBUG("Ctrl Alt Repeat");
-			}
+		else if(evt.type == event_key && evt.key.code == key_escape) {
+			return false;
 		}
-
 		else if(evt.type == event_window && evt.window.op == window_resized) {
 			LOG_DEBUG_F("window resized w: %i h: %i", evt.window.x, evt.window.y);
 			global_state->window_w = evt.window.x;
@@ -78,25 +69,8 @@ bool run_events(event_manager* em) {
 			global_state->window_w = evt.window.x;
 			global_state->window_h = evt.window.y;
 		}
-
 		else if(evt.type == event_window && evt.window.op == window_moved) {
 			LOG_DEBUG_F("window moved x: %i y: %i", evt.window.x, evt.window.y);
-		}
-
-		else if(evt.type == event_mouse && evt.mouse.flags & mouse_flag_move) {
-			// LOG_DEBUG_F("mouse at x: %i y: %i", evt.mouse.x, evt.mouse.y);
-		}
-
-		else if(evt.type == event_mouse && evt.mouse.flags & mouse_flag_mclick && evt.mouse.flags & mouse_flag_double) {
-			LOG_DEBUG_F("Double mclick");
-		}
-
-
-		else if(evt.type == event_mouse && evt.mouse.flags & mouse_flag_press && evt.mouse.flags & mouse_flag_mclick) {
-			LOG_DEBUG_F("press mclick");
-		}
-		else if(evt.type == event_mouse && evt.mouse.flags & mouse_flag_release && evt.mouse.flags & mouse_flag_mclick) {
-			LOG_DEBUG_F("release mclick");
 		}
 	}
 
