@@ -40,7 +40,7 @@ void gui_begin_window(gui_manager* gui, r2 rect) {
 
 void gui_end_window(gui_manager* gui) {
 
-	mesh_push_rect(&gui->mesh, gui->current.rect, V4b(34, 43, 47, (i32)roundf(gui->current.opacity * 255)));
+	mesh_push_cutrect(&gui->mesh, gui->current.rect, 10.0f, V4b(34, 43, 47, (i32)roundf(gui->current.opacity * 255)));
 
 	for(u32 i = 0; i < gui->current.widgets.size; i++) {
 

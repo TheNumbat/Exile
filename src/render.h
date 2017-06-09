@@ -55,6 +55,7 @@ void destroy_mesh_2d(mesh_2d* m);
 
 f32 mesh_push_text_line(mesh_2d* m, asset* font, string text_utf8, v2 pos, f32 point = 0.0f, color c = V4b(255, 255, 255, 255)); 
 void mesh_push_rect(mesh_2d* m, r2 rect, color c = V4b(255, 255, 255, 255));
+void mesh_push_cutrect(mesh_2d* m, r2 r, f32 round, color c = V4b(255, 255, 255, 255));
 
 mesh_3d make_mesh_3d(allocator* alloc = NULL, u32 verts = 32, u32 inds = 32);
 void destroy_mesh_3d(mesh_3d* m);
