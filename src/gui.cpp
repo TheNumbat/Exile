@@ -36,6 +36,7 @@ void gui_begin_window(gui_manager* gui, r2 rect) {
 
 	gui->current.rect = rect;
 	gui->current.widgets = make_vector<gui_widget>(16, gui->alloc);
+	gui->current.margin = V2(10.0f, 0.0f);
 }
 
 void gui_end_window(gui_manager* gui) {
@@ -65,6 +66,7 @@ void gui_text_line(gui_manager* gui, string str, f32 point, color c) {
 	t.text.text = str;
 	t.text.point = point;
 	t.text.c = c;
+	t.pos = V2(gui->current.margin.x, gui->current.widgets.size > 0 ? vector_back(&gui->current.widgets).pos.y + 20.0f : gui->current.margin.y);
 
 	vector_push(&gui->current.widgets, t);
 }

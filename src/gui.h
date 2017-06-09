@@ -31,6 +31,7 @@ struct gui_window {
 	r2 rect;
 	u16 flags 	= 0;
 	f32 opacity = 1.0f;
+	v2 margin;
 	vector<gui_widget> widgets;
 };
 
