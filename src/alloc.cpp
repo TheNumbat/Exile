@@ -182,7 +182,8 @@ inline arena_allocator make_arena_allocator(string name, u64 size, allocator* ba
 	return ret;
 }
 
-void memcpy(void* source, void* dest, u64 size) {
+#define memcpy(s, d, i) _memcpy(s, d, i)
+void _memcpy(void* source, void* dest, u64 size) {
 
 	u8* csource = (u8*)source;
 	u8* cdest   = (u8*)dest;

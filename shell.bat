@@ -8,6 +8,8 @@ IF EXIST "D:\VBS\VC\Auxiliary\Build" (
 	call "D:\VBS\VC\Auxiliary\Build\vcvarsall.bat" x64 
 ) ELSE IF EXIST "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\" (
 	call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x64 
+) ELSE IF EXIST "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\Tools" (
+	call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\Tools\VsDevCmd.bat"
 )
 
 set path=%cd%bin;%path%

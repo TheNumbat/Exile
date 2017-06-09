@@ -8,6 +8,8 @@
 #include <algorithm>
 using namespace std;
 
+#pragma warning(disable : 4007)
+
 #pragma warning(push)
 #pragma warning(disable : 4244)
 #pragma warning(disable : 4456)
@@ -230,7 +232,7 @@ int main(int argc, char** argv) {
 	header.num_assets = (u32)def.assets.size();
 	assets_out.write((char*)&header, sizeof(header));
 
-	for(i32 i = 0; i < def.assets.size(); i++) {
+	for(u32 i = 0; i < def.assets.size(); i++) {
 		
 		def_asset& 			def_asset = def.assets[i];
 		file_asset_header 	asset_header;
@@ -282,7 +284,7 @@ int main(int argc, char** argv) {
 			streamsize size = font_in.tellg();
 			font_in.seekg(0, ios::beg);
 
-			vector<char> data(size);
+			vector<char> data((u32)size);
 			font_in.read(data.data(), size);
 
 			stbtt_fontinfo font_info;
@@ -304,7 +306,7 @@ int main(int argc, char** argv) {
 
 			u32 total_packedchars = 0;
 			vector<stbtt_packedchar*> packedchars;	
-			for(i32 ri = 0; ri < def_asset.font.ranges.size(); ri++) {
+			for(u32 ri = 0; ri < def_asset.font.ranges.size(); ri++) {
 			
 				i32 cp_num = def_asset.font.ranges[ri].end - def_asset.font.ranges[ri].start + 1;
 
@@ -329,7 +331,7 @@ int main(int argc, char** argv) {
 			asset_font.point 		= (f32)def_asset.font.point;
 
 			vector<file_glyph_data> glyph_data;
-			for(i32 ri = 0; ri < def_asset.font.ranges.size(); ri++) {
+			for(u32 ri = 0; ri < def_asset.font.ranges.size(); ri++) {
 
 				def_asset_font::range& r = def_asset.font.ranges[ri];
 				for(u32 point = r.start; point <= r.end; point++) {

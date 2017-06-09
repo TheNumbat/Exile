@@ -1,6 +1,8 @@
 
 // platform layer setup + game code loading/reloading
 
+#pragma warning(disable : 4007)
+
 #include "basic_types.h"
 
 #include "str/platform_strings.h"
