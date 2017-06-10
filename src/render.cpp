@@ -60,10 +60,8 @@ void mesh_push_cutrect(mesh_2d* m, r2 r, f32 round, color c) {
 
 	vector_push(&m->elements, V3u(idx, idx + 1, idx + 2));
 	vector_push(&m->elements, V3u(idx, idx + 2, idx + 7));
-	vector_push(&m->elements, V3u(idx, idx + 1, idx + 2));
 	vector_push(&m->elements, V3u(idx + 7, idx + 2, idx + 3));
 	vector_push(&m->elements, V3u(idx + 7, idx + 6, idx + 3));
-	vector_push(&m->elements, V3u(idx + 7, idx + 2, idx + 3));
 	vector_push(&m->elements, V3u(idx + 3, idx + 4, idx + 5));
 	vector_push(&m->elements, V3u(idx + 3, idx + 5, idx + 6));
 }

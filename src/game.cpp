@@ -89,7 +89,7 @@ extern "C" bool main_loop(game_state* state) {
 
 		gui_begin_frame(&state->gui);
 
-		gui_begin_window(&state->gui, R2f(20, 40, 300, 400));
+		gui_begin_window(&state->gui, string_literal("Title"), R2f(20, 40, 300, 400), 0.75f);
 		gui_text_line(&state->gui, string_literal("abcdefghijklmnopqrstuvwxyz"));
 		gui_text_line(&state->gui, string_literal("abcdefghijklmnopqrstuvwxyz"));
 		gui_end_window(&state->gui);

@@ -22,16 +22,16 @@ struct gui_widget {
 };
 
 enum gui_window_flags {
-	gui_window_title_bar 	= 1<<0,
-	gui_window_border 		= 1<<1,
-	gui_window_background	= 1<<2,
+	gui_window_scroll = 1<<0,
+	gui_window_resize = 1<<1,
 };
 
 struct gui_window {
-	r2 rect;
-	u16 flags 	= 0;
+	string title;
 	f32 opacity = 1.0f;
+	r2 rect;
 	v2 margin;
+	u16 flags 	= 0;
 	vector<gui_widget> widgets;
 };
 
@@ -56,7 +56,7 @@ void destroy_gui(gui_manager* gui);
 void gui_begin_frame(gui_manager* gui);
 void gui_end_frame(gui_manager* gui);
 
-void gui_begin_window(gui_manager* gui, r2 rect);
+void gui_begin_window(gui_manager* gui, string title, r2 rect, f32 opacity = 1.0f);
 void gui_end_window(gui_manager* gui);
 
 void gui_text_line(gui_manager* gui, string str, f32 point = 0.0f, color color = V4b(255, 255, 255, 255));

@@ -32,8 +32,10 @@ void gui_end_frame(gui_manager* gui) {
 	destroy_mesh_2d(&gui->mesh);
 }
 
-void gui_begin_window(gui_manager* gui, r2 rect) {
+void gui_begin_window(gui_manager* gui, string title, r2 rect, f32 opacity) {
 
+	gui->current.opacity = opacity;
+	gui->current.title = title;
 	gui->current.rect = rect;
 	gui->current.widgets = make_vector<gui_widget>(16, gui->alloc);
 	gui->current.margin = V2(10.0f, 0.0f);
