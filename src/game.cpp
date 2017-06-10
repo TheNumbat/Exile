@@ -71,7 +71,7 @@ extern "C" game_state* start_up(platform_api* api) {
 
 	LOG_DEBUG("Setting up GUI");
 	LOG_PUSH_CONTEXT_L("gui");
-	state->gui = make_gui(&state->transient_arena, &state->ogl, get_asset(&state->default_store, string_literal("font24")));
+	state->gui = make_gui(&state->transient_arena, &state->ogl, get_asset(&state->default_store, string_literal("font18")));
 	LOG_POP_CONTEXT();
 
 	LOG_INFO("Done with startup!");

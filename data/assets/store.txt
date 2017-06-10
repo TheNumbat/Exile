@@ -19,8 +19,8 @@ font {
 	range : 32, 126,
 }
 font {
-	name : font80,
-	point : 80,
+	name : font18,
+	point : 18,
 	width : 196,
 	height : 196,
 	file : font.ttf,

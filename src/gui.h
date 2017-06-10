@@ -22,8 +22,11 @@ struct gui_widget {
 };
 
 enum gui_window_flags {
-	gui_window_scroll = 1<<0,
-	gui_window_resize = 1<<1,
+	gui_window_scroll 	= 1<<0,
+	gui_window_resize 	= 1<<1,
+	gui_window_move   	= 1<<2,
+	gui_window_collapse	= 1<<3,
+	gui_window_close 	= 1<<4,
 };
 
 struct gui_window {

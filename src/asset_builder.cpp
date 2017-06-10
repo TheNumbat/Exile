@@ -313,7 +313,7 @@ int main(int argc, char** argv) {
 				packedchars.push_back((stbtt_packedchar*)malloc(cp_num * sizeof(stbtt_packedchar)));
 				total_packedchars += cp_num;
 
-				stbtt_PackFontRange(&pack_context, (u8*)data.data(), 0, (f32)def_asset.font.point, def_asset.font.ranges[ri].start, cp_num, packedchars[ri]);
+				stbtt_PackFontRange(&pack_context, (u8*)data.data(), 0, STBTT_POINT_SIZE((f32)def_asset.font.point), def_asset.font.ranges[ri].start, cp_num, packedchars[ri]);
 			}
 			stbtt_PackEnd(&pack_context);
 
