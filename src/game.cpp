@@ -91,7 +91,7 @@ extern "C" bool main_loop(game_state* state) {
 
 		gui_begin_window(&state->gui, string_literal("Title"), R2f(20, 40, 300, 400));
 		gui_text_line(&state->gui, string_literal("abcdefghijklmnopqrstuvwxyz"));
-		gui_text_line(&state->gui, string_literal("abcdefghijklmnopqrstuvwxyz"));
+		gui_text_line_f(&state->gui, string_literal("uwu %s"), 0.0f, V4b(255, 255, 255, 255), "thinking");
 		gui_end_window(&state->gui);
 
 		gui_render(&state->gui, &state->ogl);

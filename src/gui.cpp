@@ -64,6 +64,20 @@ void gui_end_window(gui_manager* gui) {
 	destroy_vector(&gui->current.widgets);
 }
 
+void gui_text_line_f(gui_manager* gui, string fmt, f32 point, color c, ...) {
+
+	string final;
+
+	va_list args;
+	va_start(args, c);
+	PUSH_ALLOC(gui->alloc) {
+		final = make_vstringf(fmt, args);
+	} POP_ALLOC();
+	va_end(args);
+
+	gui_text_line(gui, final, point, c);
+}
+
 void gui_text_line(gui_manager* gui, string str, f32 point, color c) {
 
 	if (point == 0.0f) {

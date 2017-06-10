@@ -61,6 +61,7 @@ void gui_end_frame(gui_manager* gui);
 void gui_begin_window(gui_manager* gui, string title, r2 rect, f32 opacity = 1.0f);
 void gui_end_window(gui_manager* gui);
 
-void gui_text_line(gui_manager* gui, string str, f32 point = 0.0f, color color = V4b(255, 255, 255, 255));
+void gui_text_line(gui_manager* gui, string str, f32 point = 0.0f, color c = V4b(255, 255, 255, 255));
+void gui_text_line_f(gui_manager* gui, string fmt, f32 point, color c, ...);
 
 void gui_render(gui_manager* gui, opengl* ogl);
