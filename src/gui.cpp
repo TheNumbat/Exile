@@ -5,6 +5,7 @@ gui_manager make_gui(allocator* alloc, opengl* ogl, asset* font) {
 
 	ret.alloc = alloc;
 	ret.font = font;
+	ret.font_point = font->font.point;
 
 	ret.ogl.context = ogl_add_draw_context(ogl, &ogl_mesh_2d_attribs);
 	ret.ogl.texture = ogl_add_texture_from_font(ogl, font);
@@ -38,12 +39,14 @@ void gui_begin_window(gui_manager* gui, string title, r2 rect, f32 opacity) {
 	gui->current.title = title;
 	gui->current.rect = rect;
 	gui->current.widgets = make_vector<gui_widget>(16, gui->alloc);
-	gui->current.margin = V2(10.0f, 0.0f);
+	gui->current.margin = V2(10.0f, gui->font_point);
+	gui->current.last_y = 0;
 }
 
 void gui_end_window(gui_manager* gui) {
 
-	mesh_push_cutrect(&gui->mesh, gui->current.rect, 10.0f, V4b(34, 43, 47, (i32)roundf(gui->current.opacity * 255)));
+	mesh_push_windowshape(&gui->mesh, gui->current.rect, gui->font_point, V4b(34, 43, 47, (i32)roundf(gui->current.opacity * 255)), V4b(74, 79, 137, 255));
+	mesh_push_text_line(&gui->mesh, gui->font, gui->current.title, add(gui->current.rect.xy, V2(15.0f, gui->font_point - 5.0f)), gui->font_point, V4b(255, 255, 255, 255));
 
 	for(u32 i = 0; i < gui->current.widgets.size; i++) {
 
@@ -63,12 +66,18 @@ void gui_end_window(gui_manager* gui) {
 
 void gui_text_line(gui_manager* gui, string str, f32 point, color c) {
 
+	if (point == 0.0f) {
+		point = gui->font_point;
+	}
+
 	gui_widget t;
 	t.type = widget_text;
 	t.text.text = str;
 	t.text.point = point;
 	t.text.c = c;
-	t.pos = V2(gui->current.margin.x, gui->current.widgets.size > 0 ? vector_back(&gui->current.widgets).pos.y + 20.0f : gui->current.margin.y);
+	gui->current.last_y += point;
+	t.pos = V2(gui->current.margin.x, gui->current.last_y + gui->current.margin.y);
+
 
 	vector_push(&gui->current.widgets, t);
 }

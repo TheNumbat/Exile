@@ -32,6 +32,7 @@ struct gui_window {
 	r2 rect;
 	v2 margin;
 	u16 flags 	= 0;
+	f32 last_y = 0;
 	vector<gui_widget> widgets;
 };
 
@@ -44,6 +45,7 @@ struct gui_opengl {
 struct gui_manager {
 	gui_window current;
 	
+	f32 font_point = 0.0f;
 	mesh_2d mesh;
 	gui_opengl ogl;
 	allocator* alloc 	= NULL;
