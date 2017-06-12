@@ -214,6 +214,9 @@ template<typename T> inline v3 V3f(T x, T y, T z) {
 template<typename T> inline uv3 V3u(T x, T y, T z) {
 	return V3((u32)x, (u32)y, (u32)z);
 }
+template<typename T> inline bv3 V3b(T x, T y, T z) {
+	return V3((u8)x, (u8)y, (u8)z);
+}
 
 template<typename T> inline v4_t<T> V4(T x, T y, T z, T w) {
 	v4_t<T> ret;
@@ -226,6 +229,9 @@ template<typename T> inline v4_t<T> V4(T x, T y, T z, T w) {
 template v4 V4(f32 x, f32 y, f32 z, f32 w);
 template<typename T> inline bv4 V4b(T x, T y, T z, T w) {
 	return V4((u8)x, (u8)y, (u8)z, (u8)w);
+}
+template<typename T> inline bv4 V4b(bv3 vec3, T w) {
+	return V4b(vec3.x, vec3.y, vec3.z, (u8)w);
 }
 inline v4 color_to_f(color c) {
 	return V4(c.x / 255.0f, c.y / 255.0f, c.z / 255.0f, c.w / 255.0f);

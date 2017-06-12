@@ -38,14 +38,14 @@ void gui_begin_window(gui_manager* gui, string title, r2 rect, f32 opacity) {
 	gui->current.opacity = opacity;
 	gui->current.title = title;
 	gui->current.rect = rect;
-	gui->current.widgets = make_vector<gui_widget>(16, gui->alloc);
+	gui->current.widgets = make_vector<gui_widget>(16, gui->all oc);
 	gui->current.margin = V2(10.0f, gui->font_point + 5.0f);
 	gui->current.last_y = 0;
 }
 
 void gui_end_window(gui_manager* gui) {
 
-	mesh_push_windowshape(&gui->mesh, gui->current.rect, gui->font_point + 5.0f, V4b(34, 43, 47, (i32)roundf(gui->current.opacity * 255)), V4b(74, 79, 137, 255));
+	mesh_push_windowshape(&gui->mesh, gui->current.rect, gui->font_point + 5.0f, V4b(win_back, (i32)roundf(gui->current.opacity * 255)), V4b(win_top, 255));
 	mesh_push_text_line(&gui->mesh, gui->font, gui->current.title, add(gui->current.rect.xy, V2(15.0f, gui->font_point)), gui->font_point, V4b(255, 255, 255, 255));
 
 	for(u32 i = 0; i < gui->current.widgets.size; i++) {
@@ -54,7 +54,7 @@ void gui_end_window(gui_manager* gui) {
 
 		switch(w->type) {
 		case widget_text: {
-
+			
 			mesh_push_text_line(&gui->mesh, gui->font, w->text.text, add(gui->current.rect.xy, w->pos), w->text.point, w->text.c);
 
 		} break;

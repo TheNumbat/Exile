@@ -68,3 +68,6 @@ void gui_text_line(gui_manager* gui, string str, f32 point = 0.0f, color c = V4b
 void gui_text_line_f(gui_manager* gui, string fmt, f32 point, color c, ...);
 
 void gui_render(gui_manager* gui, opengl* ogl);
+
+static const bv3 win_back = V3b(34, 43, 47);
+static const bv3 win_top  = V3b(74, 79, 137);
