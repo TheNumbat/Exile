@@ -19,7 +19,7 @@ gui_manager make_gui(allocator* alloc, opengl* ogl, asset* font) {
 	ret.ogl.shader 	= ogl_add_program(ogl, string_literal("shaders/gui.v"), string_literal("shaders/gui.f"), &ogl_uniforms_gui);
 	ret.windows = make_vector<_gui_window>(16, alloc);
 
-	ret.style.win_margin = V2(10.0f, ret.font_point + 5.0f);;
+	ret.style.win_margin = V2(10.0f, 2*ret.font_point + 5.0f);;
 
 	return ret;
 }
@@ -56,14 +56,16 @@ void gui_end_frame_render(opengl* ogl, gui_manager* gui) {
 		
 			push_windowbody(gui, it);
 		
+			f32 y = 0;
 			for(u32 i = 0; i < it->widgets.size; i++) {
 
 				gui_widget* w = vector_get(&it->widgets, i);
 
 				switch(w->type) {
 				case widget_text: {
-					
-					mesh_push_text_line(&gui->mesh, gui->font, w->text.text, add(it->rect.xy, w->pos), w->text.point, w->text.c);
+
+					v2 pos = V2(it->margin.x + it->rect.x, it->margin.y + it->rect.y + y);					
+					y += mesh_push_text_line(&gui->mesh, gui->font, w->text.text, pos, w->text.point, w->text.c);
 
 				} break;
 				}
@@ -172,7 +174,6 @@ bool gui_window(u32 id, gui_manager* gui, string title, r2 rect, f32 opacity) {
 	}
 
 	rect = current->rect;
-	current->last_y = 0;
 	f32 pt = gui->font_point;
 	r2 togglerect = R2(rect.x + rect.w - 22.5f, rect.y + (pt / 2.0f) - 7.5f, 15.0f, 15.0f);
 	if(inside(togglerect, (f32)gui->input.mouse.x, (f32)gui->input.mouse.y) && (gui->input.mouse.flags & mouse_flag_press || gui->input.mouse.flags & mouse_flag_double)) {
@@ -248,8 +249,6 @@ void gui_text_line(u32 id, gui_manager* gui, string str, f32 point, color c) {
 		w = vector_back(&current->widgets);
 	}
 
-	current->last_y += point;
-	w->pos = V2(current->margin.x, current->last_y + current->margin.y);
 	w->text.text = str;
 	w->text.point = point;
 	w->text.c = c;

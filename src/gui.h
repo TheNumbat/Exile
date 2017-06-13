@@ -15,7 +15,6 @@ struct _widget_text {
 struct gui_widget {
 	_widget_type type = widget_none;
 	u32 id = 0;
-	v2 pos;
 	union {
 		_widget_text text;
 	};
@@ -43,7 +42,6 @@ struct _gui_window {
 	f32 opacity = 1.0f;
 	u16 flags  = 0;
 
-	f32 last_y = 0;
 	vector<gui_widget> widgets;
 };
 
