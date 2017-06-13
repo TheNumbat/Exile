@@ -411,13 +411,13 @@ void ogl_send_mesh_2d(opengl* ogl, mesh_2d* m, context_id id) {
 	ogl_draw_context* dc = ogl_select_draw_context(ogl, id);
 
 	glBindBuffer(GL_ARRAY_BUFFER, dc->vbos[0]);
-	glBufferData(GL_ARRAY_BUFFER, m->verticies.size * sizeof(v2), m->verticies.size ? m->verticies.memory : NULL, GL_DYNAMIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, m->verticies.size * sizeof(v2), m->verticies.size ? m->verticies.memory : NULL, GL_STREAM_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, dc->vbos[1]);
-	glBufferData(GL_ARRAY_BUFFER, m->texCoords.size * sizeof(v3), m->texCoords.size ? m->texCoords.memory : NULL, GL_DYNAMIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, m->texCoords.size * sizeof(v3), m->texCoords.size ? m->texCoords.memory : NULL, GL_STREAM_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, dc->vbos[2]);
-	glBufferData(GL_ARRAY_BUFFER, m->colors.size * sizeof(v4), m->colors.size ? m->colors.memory : NULL, GL_DYNAMIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, m->colors.size * sizeof(v4), m->colors.size ? m->colors.memory : NULL, GL_STREAM_DRAW);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, dc->vbos[3]);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, m->elements.size * sizeof(uv3), m->elements.size ? m->elements.memory : NULL, GL_DYNAMIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, m->elements.size * sizeof(uv3), m->elements.size ? m->elements.memory : NULL, GL_STREAM_DRAW);
 }
 
 void ogl_uniforms_gui(shader_program* prog, render_command* rc, render_command_list* rcl) {

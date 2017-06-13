@@ -9,6 +9,11 @@ u32 vector_capacity(vector<T>* v) {
 	return v->capacity;
 }
 
+template<typename T> 
+void vector_clear(vector<T>* v) {
+	v->size = 0;
+}
+
 template<typename T>
 vector<T> make_vector_copy(vector<T> source, allocator* a) {
 

@@ -20,6 +20,7 @@ gui_manager make_gui(allocator* alloc, opengl* ogl, asset* font) {
 	ret.windows = make_vector<_gui_window>(16, alloc);
 
 	ret.style.win_margin = V2(10.0f, 2*ret.font_point + 5.0f);;
+	ret.mesh = make_mesh_2d(alloc, 32);
 
 	return ret;
 }
@@ -31,7 +32,7 @@ void destroy_gui(gui_manager* gui) {
 	)
 
 	destroy_vector(&gui->windows);
-	destroy_mesh_2d(&gui->mesh);
+	destroy_mesh(&gui->mesh);
 
 	gui->ogl.context = 0;
 	gui->ogl.texture = 0;
@@ -40,7 +41,6 @@ void destroy_gui(gui_manager* gui) {
 
 void gui_begin_frame(gui_manager* gui, gui_input input) {
 
-	gui->mesh = make_mesh_2d();
 	gui->hot = 0;
 	gui->input = input;
 }
@@ -86,7 +86,7 @@ void gui_end_frame_render(opengl* ogl, gui_manager* gui) {
 	ogl_render_command_list(ogl, &rcl);
 	destroy_command_list(&rcl);
 
-	destroy_mesh_2d(&gui->mesh);
+	clear_mesh(&gui->mesh);
 }
 
 void push_windowhead(gui_manager* gui, _gui_window* win) {
@@ -209,7 +209,7 @@ bool gui_window(u32 id, gui_manager* gui, string title, r2 rect, f32 opacity) {
 	}
 
 	if(gui->active == id) {
-		if(current->resizing) {
+		if(current->resizing) {	
 			if(gui->input.mouse.x - rect.x > gui->style.win_minw) {
 				current->rect.w = gui->input.mouse.x - rect.x;
 			}
@@ -237,12 +237,12 @@ void gui_text_line_f(u32 id, gui_manager* gui, string fmt, f32 point, color c, .
 
 	va_list args;
 	va_start(args, c);
-	PUSH_ALLOC(gui->alloc) {
-		final = make_vstringf(fmt, args);
-	} POP_ALLOC();
+	final = make_vstringf(fmt, args);
 	va_end(args);
 
 	gui_text_line(id, gui, final, point, c);
+
+	free_string(final);
 }
 
 void gui_text_line(u32 id, gui_manager* gui, string str, f32 point, color c) {

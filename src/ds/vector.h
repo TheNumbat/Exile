@@ -23,6 +23,7 @@ template<typename T> void vector_push(vector<T>* v, T value);
 template<typename T> void vector_pop(vector<T>* v);
 template<typename T> void vector_pop_front(vector<T>* v);
 template<typename T> void vector_erase(vector<T>* v, u32 index, u32 num = 1);
+template<typename T> void vector_clear(vector<T>* v); // doesn't free/resize
 
 template<typename T> T* vector_get(vector<T>* v, u32 idx);
 template<typename T> T* vector_front(vector<T>* v);

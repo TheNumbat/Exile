@@ -17,7 +17,7 @@ mesh_2d make_mesh_2d(allocator* alloc, u32 verts) {
 	return ret;
 }
 
-void destroy_mesh_2d(mesh_2d* m) {
+void destroy_mesh(mesh_2d* m) {
 
 	destroy_vector(&m->verticies);
 	destroy_vector(&m->texCoords);
@@ -115,7 +115,7 @@ f32 mesh_push_text_line(mesh_2d* m, asset* font, string text_utf8, v2 pos, f32 p
 	return scale * font->font.linedist;
 }
 
-mesh_3d make_mesh_3d(allocator* alloc, u32 verts, u32 inds) {
+mesh_3d make_mesh_3d(allocator* alloc, u32 verts) {
 
 	if(alloc == NULL) {
 		alloc = CURRENT_ALLOC();
@@ -131,7 +131,7 @@ mesh_3d make_mesh_3d(allocator* alloc, u32 verts, u32 inds) {
 	return ret;
 }
 
-void destroy_mesh_3d(mesh_3d* m) {
+void destroy_mesh(mesh_3d* m) {
 
 	destroy_vector(&m->verticies);
 	destroy_vector(&m->texCoords);
@@ -173,4 +173,16 @@ void destroy_command_list(render_command_list* rcl) {
 void render_add_command(render_command_list* rcl, render_command rc) {
 
 	vector_push(&rcl->commands, rc);
+}
+
+void clear_mesh(mesh_2d* m) {
+	vector_clear(&m->verticies);
+	vector_clear(&m->colors);
+	vector_clear(&m->texCoords);
+	vector_clear(&m->elements);
+}
+
+void clear_mesh(mesh_3d* m) {
+	vector_clear(&m->verticies);
+	vector_clear(&m->texCoords);
 }
