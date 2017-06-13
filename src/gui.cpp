@@ -49,23 +49,24 @@ void gui_end_frame_render(opengl* ogl, gui_manager* gui) {
 
 	FORVEC(gui->windows,
 		push_windowhead(gui, it);
-		if(it->active) {
-			push_windowbody(gui, it);
-		}
-
 		v2 vtitle = add(it->rect.xy, V2(15.0f, gui->font_point));
 		mesh_push_text_line(&gui->mesh, gui->font, it->title, vtitle, gui->font_point, V4b(255, 255, 255, 255));
 
-		for(u32 i = 0; i < it->widgets.size; i++) {
+		if(it->active) {
+		
+			push_windowbody(gui, it);
+		
+			for(u32 i = 0; i < it->widgets.size; i++) {
 
-			gui_widget* w = vector_get(&it->widgets, i);
+				gui_widget* w = vector_get(&it->widgets, i);
 
-			switch(w->type) {
-			case widget_text: {
-				
-				mesh_push_text_line(&gui->mesh, gui->font, w->text.text, add(it->rect.xy, w->pos), w->text.point, w->text.c);
+				switch(w->type) {
+				case widget_text: {
+					
+					mesh_push_text_line(&gui->mesh, gui->font, w->text.text, add(it->rect.xy, w->pos), w->text.point, w->text.c);
 
-			} break;
+				} break;
+				}
 			}
 		}
 	)
@@ -173,7 +174,7 @@ bool gui_window(u32 id, gui_manager* gui, string title, r2 rect, f32 opacity) {
 	current->last_y = 0;
 
 	f32 pt = gui->font_point;
-	r2 togglerect = R2(rect.x + rect.w - 25.0f, rect.y + (pt / 2.0f) - 10.0f, 15.0f, 15.0f);
+	r2 togglerect = R2(rect.x + rect.w - 22.5f, rect.y + (pt / 2.0f) - 7.5f, 15.0f, 15.0f);
 	if(inside(togglerect, (f32)gui->input.mouse.x, (f32)gui->input.mouse.y) && (gui->input.mouse.flags & mouse_flag_press || gui->input.mouse.flags & mouse_flag_double)) {
 		current->active = !current->active;
 	}
