@@ -33,19 +33,59 @@ void gui_end_frame(gui_manager* gui) {
 	destroy_mesh_2d(&gui->mesh);
 }
 
+void push_windowshape(gui_manager* gui) {
+
+	u32 idx = gui->mesh.verticies.size;
+	r2 r = gui->current.rect;
+	f32 pt = gui->font_point + 5.0f;
+
+	vector_push(&gui->mesh.verticies, V2(r.x, r.y + pt));
+	vector_push(&gui->mesh.verticies, V2(r.x, r.y + r.h));
+	vector_push(&gui->mesh.verticies, V2(r.x + r.w - 10.0f, r.y + r.h));
+	vector_push(&gui->mesh.verticies, V2(r.x + r.w, r.y + r.h - 10.0f));
+	vector_push(&gui->mesh.verticies, V2(r.x + r.w, r.y + pt));
+
+	vector_push(&gui->mesh.verticies, V2(r.x + r.w - 10.0f, r.y));
+	vector_push(&gui->mesh.verticies, V2(r.x + 10.0f, r.y));
+	vector_push(&gui->mesh.verticies, V2(r.x, r.y + pt));
+	vector_push(&gui->mesh.verticies, V2(r.x + r.w, r.y + pt));
+
+	vector_push(&gui->mesh.verticies, V2(r.x + r.w - 15, r.y + (pt / 2) - 5));
+	vector_push(&gui->mesh.verticies, V2(r.x + r.w - 20, r.y + (pt / 2) + 5));
+	vector_push(&gui->mesh.verticies, V2(r.x + r.w - 10, r.y + (pt / 2) + 5));
+
+	FOR(12) vector_push(&gui->mesh.texCoords, V3f(0,0,0));
+
+	colorf cf = color_to_f(V4b(gui->style.win_back, (u8)roundf(gui->current.opacity * 255.0f)));
+	colorf topf = color_to_f(V4b(gui->style.win_top, 255));
+	colorf win_closef = color_to_f(V4b(gui->style.win_close, 255));
+	FOR(5) vector_push(&gui->mesh.colors, cf);
+	FOR(4) vector_push(&gui->mesh.colors, topf);
+	FOR(3) vector_push(&gui->mesh.colors, win_closef);
+
+	vector_push(&gui->mesh.elements, V3u(idx, idx + 1, idx + 2));
+	vector_push(&gui->mesh.elements, V3u(idx, idx + 2, idx + 3));
+	vector_push(&gui->mesh.elements, V3u(idx, idx + 3, idx + 4));
+
+	vector_push(&gui->mesh.elements, V3u(idx + 7, idx + 5, idx + 6));
+	vector_push(&gui->mesh.elements, V3u(idx + 8, idx + 5, idx + 7));
+
+	vector_push(&gui->mesh.elements, V3u(idx + 9, idx + 10, idx + 11));
+}
+
 void gui_begin_window(gui_manager* gui, string title, r2 rect, f32 opacity) {
 
 	gui->current.opacity = opacity;
 	gui->current.title = title;
 	gui->current.rect = rect;
-	gui->current.widgets = make_vector<gui_widget>(16, gui->all oc);
+	gui->current.widgets = make_vector<gui_widget>(16, gui->alloc);
 	gui->current.margin = V2(10.0f, gui->font_point + 5.0f);
 	gui->current.last_y = 0;
 }
 
 void gui_end_window(gui_manager* gui) {
 
-	mesh_push_windowshape(&gui->mesh, gui->current.rect, gui->font_point + 5.0f, V4b(win_back, (i32)roundf(gui->current.opacity * 255)), V4b(win_top, 255));
+	push_windowshape(gui);
 	mesh_push_text_line(&gui->mesh, gui->font, gui->current.title, add(gui->current.rect.xy, V2(15.0f, gui->font_point)), gui->font_point, V4b(255, 255, 255, 255));
 
 	for(u32 i = 0; i < gui->current.widgets.size; i++) {

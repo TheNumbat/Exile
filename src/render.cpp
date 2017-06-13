@@ -26,51 +26,6 @@ void destroy_mesh_2d(mesh_2d* m) {
 	m->alloc = NULL;
 }
 
-void mesh_push_windowshape(mesh_2d* m, r2 r, f32 pt, color back, color top) {
-
-	u32 idx = m->verticies.size;
-
-	vector_push(&m->verticies, V2(r.x, r.y + pt));
-	vector_push(&m->verticies, V2(r.x, r.y + r.h));
-	vector_push(&m->verticies, V2(r.x + r.w - 10.0f, r.y + r.h));
-	vector_push(&m->verticies, V2(r.x + r.w, r.y + r.h - 10.0f));
-	vector_push(&m->verticies, V2(r.x + r.w, r.y + pt));
-
-	vector_push(&m->verticies, V2(r.x + r.w - 10.0f, r.y));
-	vector_push(&m->verticies, V2(r.x + 10.0f, r.y));
-	vector_push(&m->verticies, V2(r.x, r.y + pt));
-	vector_push(&m->verticies, V2(r.x + r.w, r.y + pt));
-
-	vector_push(&m->texCoords, V3(0.0f, 0.0f, 0.0f));
-	vector_push(&m->texCoords, V3(0.0f, 0.0f, 0.0f));
-	vector_push(&m->texCoords, V3(0.0f, 0.0f, 0.0f));
-	vector_push(&m->texCoords, V3(0.0f, 0.0f, 0.0f));
-	vector_push(&m->texCoords, V3(0.0f, 0.0f, 0.0f));
-	vector_push(&m->texCoords, V3(0.0f, 0.0f, 0.0f));
-	vector_push(&m->texCoords, V3(0.0f, 0.0f, 0.0f));
-	vector_push(&m->texCoords, V3(0.0f, 0.0f, 0.0f));
-	vector_push(&m->texCoords, V3(0.0f, 0.0f, 0.0f));
-
-	colorf cf = color_to_f(back);
-	colorf topf = color_to_f(top);
-	vector_push(&m->colors, cf);
-	vector_push(&m->colors, cf);
-	vector_push(&m->colors, cf);
-	vector_push(&m->colors, cf);
-	vector_push(&m->colors, cf);
-	vector_push(&m->colors, topf);
-	vector_push(&m->colors, topf);
-	vector_push(&m->colors, topf);
-	vector_push(&m->colors, topf);
-
-	vector_push(&m->elements, V3u(idx, idx + 1, idx + 2));
-	vector_push(&m->elements, V3u(idx, idx + 2, idx + 3));
-	vector_push(&m->elements, V3u(idx, idx + 3, idx + 4));
-
-	vector_push(&m->elements, V3u(idx + 7, idx + 5, idx + 6));
-	vector_push(&m->elements, V3u(idx + 8, idx + 5, idx + 7));
-}
-
 void mesh_push_cutrect(mesh_2d* m, r2 r, f32 round, color c) {
 
 	u32 idx = m->verticies.size;

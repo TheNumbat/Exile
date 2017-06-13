@@ -11,6 +11,8 @@
 #include "str/strings.h"
 #include "platform_api.h"
 
+#define FOR(num) for(i32 __i = 0; __i < num; __i++)
+
 struct code_context {
 	string file;
 	string function;
