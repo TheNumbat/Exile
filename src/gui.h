@@ -32,13 +32,17 @@ enum gui_window_flags : u16 {
 };
 
 struct _gui_window {
-	bool active = true;
 	u32 id 		= 0;
+
 	string title;
-	f32 opacity = 1.0f;
+	bool active = true;
+	v2 clickoffset = V2f(0, 0);
+	
 	r2 rect;
 	v2 margin;
+	f32 opacity = 1.0f;
 	u16 flags  = 0;
+
 	f32 last_y = 0;
 	vector<gui_widget> widgets;
 };
@@ -61,7 +65,7 @@ struct gui_input {
 };
 
 struct gui_manager {
-	vector<_gui_window> windows;
+	vector<_gui_window> windows;	// TODO(max): sort?
 	u32 current = 0;
 	
 	u32 active 		= 0;
@@ -89,9 +93,9 @@ bool gui_window(u32 ID, gui_manager* gui, string title, r2 rect, f32 opacity);
 void gui_text_line(u32 ID, gui_manager* gui, string str, f32 point, color c);
 void gui_text_line_f(u32 ID, gui_manager* gui, string fmt, f32 point, color c, ...);
 
-#define gui_window(g,t,r,o) gui_window(__COUNTER__, g, t, r, o)
-#define gui_text_line(g,s,p,c) gui_text_line(__COUNTER__, g, s, p, c)
-#define gui_text_line_f(g,s,p,c,...) gui_text_line_f(__COUNTER__, g, s, p, c, __VA_ARGS__)
+#define gui_window(g,t,r,o) gui_window(__COUNTER__ + 1, g, t, r, o)
+#define gui_text_line(g,s,p,c) gui_text_line(__COUNTER__ + 1, g, s, p, c)
+#define gui_text_line_f(g,s,p,c,...) gui_text_line_f(__COUNTER__ + 1, g, s, p, c, __VA_ARGS__)
 
 void push_windowhead(gui_manager* gui, _gui_window* win);
 void push_windowbody(gui_manager* gui, _gui_window* win);

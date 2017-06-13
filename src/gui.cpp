@@ -165,18 +165,44 @@ bool gui_window(u32 id, gui_manager* gui, string title, r2 rect, f32 opacity) {
 		current->id = id;
 		current->widgets = make_vector<gui_widget>(16, gui->alloc);
 		current->margin = gui->style.win_margin; 
+
+		current->rect = rect;
+		current->opacity = opacity;
+		current->title = title;
 	}
 
-	// TODO(max): update these dynamically
-	current->rect = rect;
-	current->opacity = opacity;
-	current->title = title;
+	rect = current->rect;
 	current->last_y = 0;
-
 	f32 pt = gui->font_point;
 	r2 togglerect = R2(rect.x + rect.w - 22.5f, rect.y + (pt / 2.0f) - 7.5f, 15.0f, 15.0f);
 	if(inside(togglerect, (f32)gui->input.mouse.x, (f32)gui->input.mouse.y) && (gui->input.mouse.flags & mouse_flag_press || gui->input.mouse.flags & mouse_flag_double)) {
+
 		current->active = !current->active;
+
+	} else {
+
+		r2 moverect = R2(rect.x, rect.y, rect.w, pt);
+		if(inside(moverect, (f32)gui->input.mouse.x, (f32)gui->input.mouse.y)) {
+
+			if(gui->input.mouse.flags & mouse_flag_press) {
+
+				gui->active = id;
+				current->clickoffset = V2(gui->input.mouse.x - rect.x, gui->input.mouse.y - rect.y);
+			} 
+			if(gui->input.mouse.flags & mouse_flag_release) {
+
+				gui->active = 0;
+			} 
+			if(gui->input.mouse.flags & mouse_flag_double) {
+
+				current->active = !current->active;
+			} 
+		}
+	}
+
+	if(gui->active == id) {
+		current->rect.x = gui->input.mouse.x - current->clickoffset.x;
+		current->rect.y = gui->input.mouse.y - current->clickoffset.y;
 	}
 
 	return current->active;
