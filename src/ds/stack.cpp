@@ -55,7 +55,7 @@ T stack_pop(stack<T>* s) {
 
 	if(s->contents.size > 0) {
 		
-		T top = stack_top(s);
+		T top = *stack_top(s);
 
 		vector_pop(&s->contents);
 
@@ -68,7 +68,7 @@ T stack_pop(stack<T>* s) {
 }
 
 template<typename T>
-T stack_top(stack<T>* s) {
+T* stack_top(stack<T>* s) {
 
 	if(s->contents.size > 0) {
 
@@ -76,8 +76,7 @@ T stack_top(stack<T>* s) {
 	}
 
 	LOG_FATAL("Trying to get top of empty stack!");
-	T ret = {};
-	return ret;
+	return NULL;
 }
 
 template<typename T>

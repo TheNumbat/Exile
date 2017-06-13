@@ -39,24 +39,10 @@ void mesh_push_cutrect(mesh_2d* m, r2 r, f32 round, color c) {
 	vector_push(&m->verticies, V2(r.x + r.w - round, r.y));
 	vector_push(&m->verticies, V2(r.x + round, r.y));
 
-	vector_push(&m->texCoords, V3(0.0f, 0.0f, 0.0f));
-	vector_push(&m->texCoords, V3(0.0f, 0.0f, 0.0f));
-	vector_push(&m->texCoords, V3(0.0f, 0.0f, 0.0f));
-	vector_push(&m->texCoords, V3(0.0f, 0.0f, 0.0f));
-	vector_push(&m->texCoords, V3(0.0f, 0.0f, 0.0f));
-	vector_push(&m->texCoords, V3(0.0f, 0.0f, 0.0f));
-	vector_push(&m->texCoords, V3(0.0f, 0.0f, 0.0f));
-	vector_push(&m->texCoords, V3(0.0f, 0.0f, 0.0f));
+	FOR(8) vector_push(&m->texCoords, V3(0.0f, 0.0f, 0.0f));
 
 	colorf cf = color_to_f(c);
-	vector_push(&m->colors, cf);
-	vector_push(&m->colors, cf);
-	vector_push(&m->colors, cf);
-	vector_push(&m->colors, cf);
-	vector_push(&m->colors, cf);
-	vector_push(&m->colors, cf);
-	vector_push(&m->colors, cf);
-	vector_push(&m->colors, cf);
+	FOR(8) vector_push(&m->colors, cf);
 
 	vector_push(&m->elements, V3u(idx, idx + 1, idx + 2));
 	vector_push(&m->elements, V3u(idx, idx + 2, idx + 7));
@@ -75,16 +61,10 @@ void mesh_push_rect(mesh_2d* m, r2 r, color c) {
 	vector_push(&m->verticies, add(r.xy, r.wh));	// BRC
 	vector_push(&m->verticies, V2(r.x + r.w, r.y));	// TRC
 
-	vector_push(&m->texCoords, V3(0.0f, 0.0f, 0.0f));
-	vector_push(&m->texCoords, V3(0.0f, 0.0f, 0.0f));
-	vector_push(&m->texCoords, V3(0.0f, 0.0f, 0.0f));
-	vector_push(&m->texCoords, V3(0.0f, 0.0f, 0.0f));
+	FOR(4) vector_push(&m->texCoords, V3(0.0f, 0.0f, 0.0f));
 
 	colorf cf = color_to_f(c);
-	vector_push(&m->colors, cf);
-	vector_push(&m->colors, cf);
-	vector_push(&m->colors, cf);
-	vector_push(&m->colors, cf);
+	FOR(4) vector_push(&m->colors, cf);
 
 	vector_push(&m->elements, V3u(idx, idx + 1, idx + 2));
 	vector_push(&m->elements, V3u(idx + 1, idx + 2, idx + 3));
@@ -124,10 +104,7 @@ f32 mesh_push_text_line(mesh_2d* m, asset* font, string text_utf8, v2 pos, f32 p
 		vector_push(&m->texCoords, brc);
 		vector_push(&m->texCoords, trc);
 
-		vector_push(&m->colors, cf);
-		vector_push(&m->colors, cf);
-		vector_push(&m->colors, cf);
-		vector_push(&m->colors, cf);
+		FOR(4) vector_push(&m->colors, cf);
 
 		vector_push(&m->elements, V3u(idx, idx + 1, idx + 2));
 		vector_push(&m->elements, V3u(idx + 1, idx + 2, idx + 3));

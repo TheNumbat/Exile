@@ -36,7 +36,7 @@ T queue_pop(queue<T>* q) {
 
 	if(q->contents.size > 0) {
 		
-		T top = queue_front(q);
+		T top = *queue_front(q);
 
 		vector_pop_front(&q->contents);
 
@@ -49,7 +49,7 @@ T queue_pop(queue<T>* q) {
 }
 
 template<typename T>
-T queue_front(queue<T>* q) {
+T* queue_front(queue<T>* q) {
 
 	if(q->contents.size > 0) {
 
@@ -57,8 +57,7 @@ T queue_front(queue<T>* q) {
 	}
 
 	LOG_FATAL("Trying to get front of empty queue!");
-	T ret = {};
-	return ret;
+	return NULL;
 }
 
 template<typename T>

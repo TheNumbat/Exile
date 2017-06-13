@@ -142,27 +142,25 @@ void vector_pop(vector<T>* v) {
 }
 
 template<typename T>
-T vector_front(vector<T>* v) { 
+T* vector_front(vector<T>* v) { 
 
 	if(v->size > 0) {
-		return v->memory[0];
+		return v->memory;
 	}
 
 	LOG_FATAL("Trying to get empty vector front!");
-	T ret = {};
-	return ret;
+	return NULL;
 }
 
 template<typename T>
-T vector_back(vector<T>* v) { 
+T* vector_back(vector<T>* v) { 
 
 	if(v->size) {
-		return v->memory[v->size - 1];
+		return v->memory + (v->size - 1);
 	}
 
 	LOG_FATAL("Trying to get empty vector back!");
-	T ret = {};
-	return ret;
+	return NULL;
 }
 
 template<typename T>

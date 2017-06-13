@@ -9,7 +9,8 @@ struct string {
 struct allocator;
 
 u32 hash_string(string str);
-bool operator==(string& first, string& second);
+bool operator==(string first, string second);
+bool strcmp(string first, string second);
 
 // utf-8 stuff
 u32 get_next_codepoint(string text_utf8, u32* index);

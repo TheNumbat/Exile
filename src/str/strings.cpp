@@ -1,5 +1,5 @@
 
-bool operator==(string& first, string& second) {
+bool operator==(string first, string second) {
 
 	if(first.len != second.len) {
 		return false;
@@ -12,6 +12,10 @@ bool operator==(string& first, string& second) {
 	}
 	
 	return true;
+}
+
+bool strcmp(string first, string second) {
+	return first == second;
 }
 
 // from http://www.cse.yorku.ca/~oz/hash.html

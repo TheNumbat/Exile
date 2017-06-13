@@ -30,7 +30,7 @@ enum gui_window_flags {
 	gui_window_close 	= 1<<4,
 };
 
-struct gui_window {
+struct _gui_window {
 	u32 id 		= 0;
 	string title;
 	f32 opacity = 1.0f;
@@ -51,12 +51,13 @@ struct gui_style {
 	bv3 win_back  = V3b(34, 43, 47);
 	bv3 win_top   = V3b(74, 79, 137);
 	bv3 win_close = V3b(102, 105, 185);
+	v2  win_margin = V2(0.0f, 0.0f);
 };
 
 struct gui_manager {
-	gui_window current;
+	vector<_gui_window> windows;
+	u32 current = 0;
 	
-	u32 last_id 	= 1;
 	u32 active 		= 0;
 	u32 hot 		= 0;
 	
@@ -75,15 +76,14 @@ gui_manager make_gui(allocator* alloc, opengl* ogl, asset* font);
 void destroy_gui(gui_manager* gui);
 
 void gui_begin_frame(gui_manager* gui);
-void gui_end_frame(gui_manager* gui);
+void gui_end_frame_render(opengl* ogl, gui_manager* gui);
 
-void gui_begin_window(gui_manager* gui, string title, r2 rect, f32 opacity = 1.0f);
-void gui_end_window(gui_manager* gui);
-void push_windowshape(gui_manager* gui);
+void gui_window(u32 ID, gui_manager* gui, string title, r2 rect, f32 opacity);
+void gui_text_line(u32 ID, gui_manager* gui, string str, f32 point, color c);
+void gui_text_line_f(u32 ID, gui_manager* gui, string fmt, f32 point, color c, ...);
 
-void gui_text_line(gui_manager* gui, string str, f32 point = 0.0f, color c = V4b(255, 255, 255, 255));
-void gui_text_line_f(gui_manager* gui, string fmt, f32 point, color c, ...);
+#define gui_window(g,t,r,o) gui_window(__COUNTER__, g, t, r, o)
+#define gui_text_line(g,s,p,c) gui_text_line(__COUNTER__, g, s, p, c)
+#define gui_text_line_f(g,s,p,c,...) gui_text_line_f(__COUNTER__, g, s, p, c, __VA_ARGS__)
 
-void gui_render(gui_manager* gui, opengl* ogl);
-
-
+void push_windowshape(gui_manager* gui, _gui_window* win);

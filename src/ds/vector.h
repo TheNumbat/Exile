@@ -25,8 +25,8 @@ template<typename T> void vector_pop_front(vector<T>* v);
 template<typename T> void vector_erase(vector<T>* v, u32 index, u32 num = 1);
 
 template<typename T> T* vector_get(vector<T>* v, u32 idx);
-template<typename T> T vector_front(vector<T>* v);
-template<typename T> T vector_back(vector<T>* v);
+template<typename T> T* vector_front(vector<T>* v);
+template<typename T> T* vector_back(vector<T>* v);
 
 template<typename T> u32 vector_len(vector<T>* v);
 template<typename T> u32 vector_capacity(vector<T>* v);
