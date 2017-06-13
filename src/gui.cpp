@@ -38,15 +38,20 @@ void destroy_gui(gui_manager* gui) {
 	gui->ogl.shader  = 0;
 }
 
-void gui_begin_frame(gui_manager* gui) {
+void gui_begin_frame(gui_manager* gui, gui_input input) {
 
 	gui->mesh = make_mesh_2d();
+	gui->hot = 0;
+	gui->input = input;
 }
 
 void gui_end_frame_render(opengl* ogl, gui_manager* gui) {
 
 	FORVEC(gui->windows,
-		push_windowshape(gui, it);
+		push_windowhead(gui, it);
+		if(it->active) {
+			push_windowbody(gui, it);
+		}
 
 		v2 vtitle = add(it->rect.xy, V2(15.0f, gui->font_point));
 		mesh_push_text_line(&gui->mesh, gui->font, it->title, vtitle, gui->font_point, V4b(255, 255, 255, 255));
@@ -81,7 +86,41 @@ void gui_end_frame_render(opengl* ogl, gui_manager* gui) {
 	destroy_mesh_2d(&gui->mesh);
 }
 
-void push_windowshape(gui_manager* gui, _gui_window* win) {
+void push_windowhead(gui_manager* gui, _gui_window* win) {
+	
+	u32 idx = gui->mesh.verticies.size;
+	r2 r = win->rect;
+	f32 pt = gui->font_point + 5.0f;
+
+	vector_push(&gui->mesh.verticies, V2(r.x + r.w - 10.0f, r.y));
+	vector_push(&gui->mesh.verticies, V2(r.x + 10.0f, r.y));
+	vector_push(&gui->mesh.verticies, V2(r.x, r.y + pt));
+	vector_push(&gui->mesh.verticies, V2(r.x + r.w, r.y + pt));
+
+	if(win->active) {
+		vector_push(&gui->mesh.verticies, V2(r.x + r.w - 15, r.y + (pt / 2) - 5));
+		vector_push(&gui->mesh.verticies, V2(r.x + r.w - 20, r.y + (pt / 2) + 5));
+		vector_push(&gui->mesh.verticies, V2(r.x + r.w - 10, r.y + (pt / 2) + 5));
+	} else {
+		vector_push(&gui->mesh.verticies, V2(r.x + r.w - 15, r.y + (pt / 2) + 5));
+		vector_push(&gui->mesh.verticies, V2(r.x + r.w - 20, r.y + (pt / 2) - 5));
+		vector_push(&gui->mesh.verticies, V2(r.x + r.w - 10, r.y + (pt / 2) - 5));
+	}
+
+	FOR(7) vector_push(&gui->mesh.texCoords, V3f(0,0,0));
+
+	colorf topf = color_to_f(V4b(gui->style.win_top, 255));
+	colorf win_closef = color_to_f(V4b(gui->style.win_close, 255));
+	FOR(4) vector_push(&gui->mesh.colors, topf);
+	FOR(3) vector_push(&gui->mesh.colors, win_closef);
+
+	vector_push(&gui->mesh.elements, V3u(idx + 2, idx, idx + 1));
+	vector_push(&gui->mesh.elements, V3u(idx + 3, idx, idx + 2));
+
+	vector_push(&gui->mesh.elements, V3u(idx + 4, idx + 5, idx + 6));
+}
+
+void push_windowbody(gui_manager* gui, _gui_window* win) {
 
 	u32 idx = gui->mesh.verticies.size;
 	r2 r = win->rect;
@@ -93,35 +132,18 @@ void push_windowshape(gui_manager* gui, _gui_window* win) {
 	vector_push(&gui->mesh.verticies, V2(r.x + r.w, r.y + r.h - 10.0f));
 	vector_push(&gui->mesh.verticies, V2(r.x + r.w, r.y + pt));
 
-	vector_push(&gui->mesh.verticies, V2(r.x + r.w - 10.0f, r.y));
-	vector_push(&gui->mesh.verticies, V2(r.x + 10.0f, r.y));
-	vector_push(&gui->mesh.verticies, V2(r.x, r.y + pt));
-	vector_push(&gui->mesh.verticies, V2(r.x + r.w, r.y + pt));
-
-	vector_push(&gui->mesh.verticies, V2(r.x + r.w - 15, r.y + (pt / 2) - 5));
-	vector_push(&gui->mesh.verticies, V2(r.x + r.w - 20, r.y + (pt / 2) + 5));
-	vector_push(&gui->mesh.verticies, V2(r.x + r.w - 10, r.y + (pt / 2) + 5));
-
-	FOR(12) vector_push(&gui->mesh.texCoords, V3f(0,0,0));
+	FOR(5) vector_push(&gui->mesh.texCoords, V3f(0,0,0));
 
 	colorf cf = color_to_f(V4b(gui->style.win_back, win->opacity * 255.0f));
-	colorf topf = color_to_f(V4b(gui->style.win_top, 255));
-	colorf win_closef = color_to_f(V4b(gui->style.win_close, 255));
+
 	FOR(5) vector_push(&gui->mesh.colors, cf);
-	FOR(4) vector_push(&gui->mesh.colors, topf);
-	FOR(3) vector_push(&gui->mesh.colors, win_closef);
 
 	vector_push(&gui->mesh.elements, V3u(idx, idx + 1, idx + 2));
 	vector_push(&gui->mesh.elements, V3u(idx, idx + 2, idx + 3));
 	vector_push(&gui->mesh.elements, V3u(idx, idx + 3, idx + 4));
-
-	vector_push(&gui->mesh.elements, V3u(idx + 7, idx + 5, idx + 6));
-	vector_push(&gui->mesh.elements, V3u(idx + 8, idx + 5, idx + 7));
-
-	vector_push(&gui->mesh.elements, V3u(idx + 9, idx + 10, idx + 11));
 }
 
-void gui_window(u32 id, gui_manager* gui, string title, r2 rect, f32 opacity) {
+bool gui_window(u32 id, gui_manager* gui, string title, r2 rect, f32 opacity) {
 
 	bool found = false;
 	FORVEC(gui->windows,
@@ -149,6 +171,14 @@ void gui_window(u32 id, gui_manager* gui, string title, r2 rect, f32 opacity) {
 	current->opacity = opacity;
 	current->title = title;
 	current->last_y = 0;
+
+	f32 pt = gui->font_point;
+	r2 togglerect = R2(rect.x + rect.w - 25.0f, rect.y + (pt / 2.0f) - 10.0f, 15.0f, 15.0f);
+	if(inside(togglerect, (f32)gui->input.mouse.x, (f32)gui->input.mouse.y) && (gui->input.mouse.flags & mouse_flag_press || gui->input.mouse.flags & mouse_flag_double)) {
+		current->active = !current->active;
+	}
+
+	return current->active;
 }
 
 void gui_text_line_f(u32 id, gui_manager* gui, string fmt, f32 point, color c, ...) {

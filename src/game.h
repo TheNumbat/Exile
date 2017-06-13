@@ -11,6 +11,8 @@ struct game_state {
 	platform_allocator 	suppressed_platform_allocator;
 	arena_allocator 	transient_arena;
 
+	bool running = false;
+
 	logger log;
 	threadpool thread_pool;
 	event_manager events;

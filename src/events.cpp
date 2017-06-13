@@ -44,20 +44,24 @@ void filter_dupe_window_events(queue<platform_event>* queue) {
 	}
 }
 
-bool run_events(event_manager* em) {
+gui_input run_events(game_state* state) {
 
 	global_state->api->platform_queue_messages(&global_state->window);
-	filter_dupe_window_events(&em->event_queue);
+	filter_dupe_window_events(&state->events.event_queue);
 
-	while(!queue_empty(&em->event_queue)) {
+	gui_input ret = state->gui.input;
+	ret.mouse.flags = 0;
+	ret.mouse.w = 0;
 
-		platform_event evt = queue_pop(&em->event_queue);
+	while(!queue_empty(&state->events.event_queue)) {
+
+		platform_event evt = queue_pop(&state->events.event_queue);
 
 		if(evt.type == event_window && evt.window.op == window_close) {
-			return false;
+			state->running = false;
 		}
 		else if(evt.type == event_key && evt.key.code == key_escape) {
-			return false;
+			state->running = false;
 		}
 		else if(evt.type == event_window && evt.window.op == window_resized) {
 			LOG_DEBUG_F("window resized w: %i h: %i", evt.window.x, evt.window.y);
@@ -72,9 +76,19 @@ bool run_events(event_manager* em) {
 		else if(evt.type == event_window && evt.window.op == window_moved) {
 			LOG_DEBUG_F("window moved x: %i y: %i", evt.window.x, evt.window.y);
 		}
+
+		if(evt.type == event_mouse && evt.mouse.flags & mouse_flag_move) {
+			ret.mouse.x = evt.mouse.x;
+			ret.mouse.y = evt.mouse.y;
+		} else if(evt.type == event_mouse && evt.mouse.flags & mouse_flag_wheel) {
+			ret.mouse.w = evt.mouse.w;
+		} 
+		if(evt.type == event_mouse) {
+			ret.mouse.flags |= evt.mouse.flags;
+		}
 	}
 
-	return true;
+	return ret;
 }
 
 void event_enqueue(void* data, platform_event evt) {

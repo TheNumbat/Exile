@@ -395,6 +395,14 @@ template<typename T> inline r2_t<T> sub(r2_t<T> l, r2_t<T> r) {
 }
 template r2 sub(r2, r2);
 
+template<typename T> inline bool inside(r2_t<T> r, T x, T y) {
+	return (x >= r.x) &&
+		   (x <= r.x + r.w) &&
+		   (y >= r.y) &&
+		   (y <= r.y + r.h);
+}
+template bool inside(r2, f32, f32);
+
 
 // TODO(max): more SIMD
 // Several of these matrix algorithms adapted from https://github.com/StrangeZak/Handmade-Math

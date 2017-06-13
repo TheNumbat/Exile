@@ -76,7 +76,8 @@ extern "C" game_state* start_up(platform_api* api) {
 
 	LOG_INFO("Done with startup!");
 	LOG_POP_CONTEXT();
-	
+
+	state->running = true;
 	return state;
 }
 
@@ -87,7 +88,8 @@ extern "C" bool main_loop(game_state* state) {
 
 	PUSH_ALLOC(&state->transient_arena) {
 
-		gui_begin_frame(&state->gui);
+		gui_input input = run_events(state); // will update gui_input
+		gui_begin_frame(&state->gui, input);
 
 		gui_window(&state->gui, string_literal("Title"), R2f(20, 40, 300, 400), 1.0f);
 		gui_text_line(&state->gui, string_literal("abcdefghijklmnopqrstuvwxyz"), 0.0f, V4b(255, 255, 255, 255));
@@ -100,9 +102,7 @@ extern "C" bool main_loop(game_state* state) {
 
 	state->api->platform_swap_buffers(&state->window);
 	
-	bool running = run_events(&state->events);
-
-	return running;
+	return state->running;
 }
 
 extern "C" void shut_down(platform_api* api, game_state* state) {

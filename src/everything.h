@@ -35,11 +35,11 @@ inline code_context make_context(string file, string function, i32 line);
 #include "ds/threadpool.h"
 
 #include "log.h"
-#include "events.h"
 #include "asset.h"
 #include "render.h"
 #include "opengl.h"
 #include "gui.h"
+#include "events.h"
 
 #include "game.h"
 static game_state* global_state = NULL;
