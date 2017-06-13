@@ -21,13 +21,13 @@ struct gui_widget {
 	gui_widget() : text() {};
 };
 
-enum gui_window_flags : u16 {
+// TODO(max): this
+enum gui_window_style_flags : u16 {
 	gui_window_scroll 	= 1<<0,
 	gui_window_resize 	= 1<<1,
 	gui_window_move   	= 1<<2,
 	gui_window_collapse	= 1<<3,
 	gui_window_close 	= 1<<4,
-	gui_window_closed 	= 1<<5,
 };
 
 struct _gui_window {
@@ -35,6 +35,7 @@ struct _gui_window {
 
 	string title;
 	bool active = true;
+	bool resizing = false;
 	v2 clickoffset = V2f(0, 0);
 	
 	r2 rect;
@@ -56,6 +57,8 @@ struct gui_style {
 	bv3 win_top    = V3b(74, 79, 137);
 	bv3 win_close  = V3b(102, 105, 185);
 	v2  win_margin = V2(0.0f, 0.0f);		// depends on font, set on make_gui
+	f32 win_minw   = 50.0f;
+	f32 win_minh   = 50.0f;
 };
 
 struct gui_input {

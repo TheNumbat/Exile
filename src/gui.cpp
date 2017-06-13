@@ -190,20 +190,42 @@ bool gui_window(u32 id, gui_manager* gui, string title, r2 rect, f32 opacity) {
 				gui->active = id;
 				current->clickoffset = V2(gui->input.mouse.x - rect.x, gui->input.mouse.y - rect.y);
 			} 
-			if(gui->input.mouse.flags & mouse_flag_release) {
-
-				gui->active = 0;
-			} 
 			if(gui->input.mouse.flags & mouse_flag_double) {
 
 				current->active = !current->active;
 			} 
 		}
+
+		r2 resizerect = R2(rect.x + rect.w - 10.0f, rect.y + rect.h - 10.0f, 10.0f, 10.0f);
+		if(inside(resizerect, (f32)gui->input.mouse.x, (f32)gui->input.mouse.y)) {
+
+			if(gui->input.mouse.flags & mouse_flag_press) {
+
+				gui->active = id;
+				current->clickoffset = V2(gui->input.mouse.x - rect.x, gui->input.mouse.y - rect.y);
+				current->resizing = true;
+			} 
+		}
 	}
 
 	if(gui->active == id) {
-		current->rect.x = gui->input.mouse.x - current->clickoffset.x;
-		current->rect.y = gui->input.mouse.y - current->clickoffset.y;
+		if(current->resizing) {
+			if(gui->input.mouse.x - rect.x > gui->style.win_minw) {
+				current->rect.w = gui->input.mouse.x - rect.x;
+			}
+			if(gui->input.mouse.y - rect.y > gui->style.win_minh) {
+				current->rect.h = gui->input.mouse.y - rect.y;
+			}
+		} else {
+			current->rect.x = gui->input.mouse.x - current->clickoffset.x;
+			current->rect.y = gui->input.mouse.y - current->clickoffset.y;
+		}
+
+		if(gui->input.mouse.flags & mouse_flag_release) {
+
+			gui->active = 0;
+			current->resizing = false;
+		} 
 	}
 
 	return current->active;
