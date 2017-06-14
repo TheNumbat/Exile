@@ -1,13 +1,4 @@
 
-#pragma push_macro("gui_window")
-#pragma push_macro("gui_text_line")
-#pragma push_macro("gui_text_line_f")
-#pragma push_macro("gui_carrot")
-#undef gui_window
-#undef gui_text_line
-#undef gui_text_line_f
-#undef gui_carrot
-
 gui_manager make_gui(allocator* alloc, opengl* ogl, asset* font) {
 
 	gui_manager ret;
@@ -28,10 +19,6 @@ gui_manager make_gui(allocator* alloc, opengl* ogl, asset* font) {
 
 void destroy_gui(gui_manager* gui) {
 
-	FORVEC(gui->windows,
-		destroy_vector(&it->widgets);
-	)
-
 	destroy_vector(&gui->windows);
 	destroy_mesh(&gui->mesh);
 
@@ -43,7 +30,6 @@ void destroy_gui(gui_manager* gui) {
 void gui_begin_frame(gui_manager* gui, gui_input_state input) {
 
 	gui->currentwin = 0;
-	gui->hot = 0;
 	gui->input = input;
 }
 
@@ -79,10 +65,6 @@ v2 gui_render_widget_carrot(gui_manager* gui, _gui_window* win, gui_widget* carr
 }
 
 void gui_end_frame_render(opengl* ogl, gui_manager* gui) {
-
-	if(!gui->input.mouse) {
-		gui->active = 0;
-	}
 
 	render_command_list rcl = make_command_list();
 	render_command cmd = make_render_command(render_mesh_2d, &gui->mesh);
@@ -143,11 +125,11 @@ void push_windowbody(gui_manager* gui, _gui_window* win, f32 opacity) {
 	vector_push(&gui->mesh.elements, V3u(idx, idx + 3, idx + 4));
 }
 
-bool gui_window(guiid id, gui_manager* gui, string title, r2 rect, f32 opacity) {
+bool gui_window(gui_manager* gui, string title, r2 rect, f32 opacity) {
 
 	bool found = false;
 	FORVEC(gui->windows,
-		if(it->id == id) {
+		if(it->title == title) {
 			gui->currentwin = __i;
 			found = true;
 		}
@@ -161,72 +143,48 @@ bool gui_window(guiid id, gui_manager* gui, string title, r2 rect, f32 opacity) 
 		vector_push(&gui->windows, win);
 		current = vector_back(&gui->windows);
 
-		current->id = id;
-		current->widgets = make_vector<gui_widget>(16, gui->alloc);
-
 		current->rect = rect;
+		current->title = title;
 	}
 
 	push_windowhead(gui, current);
 
 	current->offset = V2(rect.w - 20.0f, (gui->font_point + gui->style.title_padding) / 2.0f - 5.0f);
-	gui_carrot(__COUNTER__ + 1, gui, V4b(gui->style.win_close,255), &current->shown);;
+	gui_carrot(gui, V4b(gui->style.win_close,255), &current->shown);;
 
 	current->offset = V2(15.0f, gui->font_point);
-	gui_text_line(__COUNTER__ + 1, gui, title, gui->font_point, V4b(255, 255, 255, 255));
+	gui_text_line(gui, title, gui->font_point, V4b(255, 255, 255, 255));
 	current->offset = V2(5.0f, current->offset.y + 5.0f);
 
-	if(current->shown) {	
+	if(current->shown) {
 		push_windowbody(gui, current, opacity);
 	}
 
 	return current->shown;
 }
 
-bool gui_carrot(guiid id, gui_manager* gui, color c, bool* toggle) {
+bool gui_carrot(gui_manager* gui, color c, bool* toggle) {
 
 	_gui_window* current = vector_get(&gui->windows,gui->currentwin);
-	gui_widget* w = NULL;
 
-	bool found = false;
-	FORVEC(current->widgets,
-		if(it->id == id) {
-			w = it;
-			found = true;
-		}
-	)
-	if(!found) {
-		gui_widget car;
-		car.type = widget_carrot;
-		car.id = id;
-	
-		vector_push(&current->widgets, car);
-
-		w = vector_back(&current->widgets);
-	}
-
-	w->carrot.c = c;
+	gui_widget car;
+	car.type = widget_carrot;
+	car.carrot.c = c;
 	
 	r2 rect = R2(add(current->rect.xy, current->offset), V2(10.0f, 10.0f));
 	if(inside(rect, (f32)gui->input.mousex, (f32)gui->input.mousey)) {
-		gui->hot = id;
-		if(gui->active == 0 && gui->input.mouse) {
-			gui->active = id;
+		if(gui->input.mouse) {
 			*toggle = !*toggle;
 		}
 	}
 
-	if(gui->active == id) {
-		
-	}
-
-	w->carrot.active = *toggle;
-	current->offset = add(current->offset, gui_render_widget_carrot(gui, current, w));
+	car.carrot.active = *toggle;
+	current->offset = add(current->offset, gui_render_widget_carrot(gui, current, &car));
 
 	return *toggle;
 }
 
-void gui_text_line_f(guiid id, gui_manager* gui, string fmt, f32 point, color c, ...) {
+void gui_text_line_f(gui_manager* gui, string fmt, f32 point, color c, ...) {
 
 	string final;
 
@@ -235,45 +193,24 @@ void gui_text_line_f(guiid id, gui_manager* gui, string fmt, f32 point, color c,
 	final = make_vstringf(fmt, args);
 	va_end(args);
 
-	gui_text_line(id, gui, final, point, c);
+	gui_text_line(gui, final, point, c);
 
 	free_string(final);
 }
 
-void gui_text_line(guiid id, gui_manager* gui, string str, f32 point, color c) {
+void gui_text_line(gui_manager* gui, string str, f32 point, color c) {
 
 	if (point == 0.0f) {
 		point = gui->font_point;
 	}
 
 	_gui_window* current = vector_get(&gui->windows,gui->currentwin);
-	gui_widget* w = NULL;
 
-	bool found = false;
-	FORVEC(current->widgets,
-		if(it->id == id) {
-			w = it;
-			found = true;
-		}
-	)
-	if(!found) {
-		gui_widget t;
-		t.type = widget_text;
-		t.id = id;
-	
-		vector_push(&current->widgets, t);
+	gui_widget t;
+	t.type = widget_text;
+	t.text.text = str;
+	t.text.point = point;
+	t.text.c = c;
 
-		w = vector_back(&current->widgets);
-	}
-
-	w->text.text = str;
-	w->text.point = point;
-	w->text.c = c;
-
-	current->offset = add(current->offset, gui_render_widget_text(gui, current, w));
+	current->offset = add(current->offset, gui_render_widget_text(gui, current, &t));
 }
-
-#pragma pop_macro("gui_window")
-#pragma pop_macro("gui_text_line")
-#pragma pop_macro("gui_text_line_f")
-#pragma pop_macro("gui_carrot")

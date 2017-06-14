@@ -22,7 +22,6 @@ struct _widget_carrot {
 
 struct gui_widget {
 	_widget_type type = widget_none;
-	guiid id = 0;
 	union {
 		_widget_text text;
 		_widget_carrot carrot;
@@ -40,14 +39,11 @@ enum gui_window_style_flags : u16 {
 };
 
 struct _gui_window {
-	guiid id 		= 0;
-
 	bool shown = true;
 
+	string title;
 	r2 rect;
 	v2 offset, clickoffset;
-
-	vector<gui_widget> widgets;
 };
 
 struct gui_opengl {
@@ -75,8 +71,6 @@ struct gui_manager {
 	vector<_gui_window> windows;	// TODO(max): sort?
 	u32 currentwin = 0;
 	
-	guiid hot = 0;
-	guiid active = 0;
 	mesh_2d mesh;
 	
 	gui_opengl ogl;
@@ -95,19 +89,14 @@ void destroy_gui(gui_manager* gui);
 void gui_begin_frame(gui_manager* gui, gui_input_state input);
 void gui_end_frame_render(opengl* ogl, gui_manager* gui);
 
-bool gui_window(guiid id, gui_manager* gui, string title, r2 rect, f32 opacity);
-void gui_text_line(guiid id, gui_manager* gui, string str, f32 point, color c);
-void gui_text_line_f(guiid id, gui_manager* gui, string fmt, f32 point, color c, ...);
-bool gui_carrot(guiid id, gui_manager* gui, color c, bool* toggle);
+bool gui_window(gui_manager* gui, string title, r2 rect, f32 opacity);
+void gui_text_line(gui_manager* gui, string str, f32 point, color c);
+void gui_text_line_f(gui_manager* gui, string fmt, f32 point, color c, ...);
+bool gui_carrot(gui_manager* gui, color c, bool* toggle);
 
 void gui_render_window(gui_manager* gui, _gui_window* win);
 v2 gui_render_widget_text(gui_manager* gui, _gui_window* win, gui_widget* text);
 v2 gui_render_widget_carrot(gui_manager* gui, _gui_window* win, gui_widget* carrot);
-
-#define gui_window(g,t,r,o) gui_window(__COUNTER__ + 1, g, t, r, o)
-#define gui_text_line(g,s,p,c) gui_text_line(__COUNTER__ + 1, g, s, p, c)
-#define gui_text_line_f(g,s,p,c,...) gui_text_line_f(__COUNTER__ + 1, g, s, p, c, __VA_ARGS__)
-#define gui_carrot(g,c,t) gui_carrot(__COUNTER__ + 1, g, c, t);
 
 void push_windowhead(gui_manager* gui, _gui_window* win);
 void push_windowbody(gui_manager* gui, _gui_window* win, f32 opacity);
