@@ -49,7 +49,10 @@ struct gui_input_state {
 	u16 mousey = 0;
 	u16 scroll = 0;
 
-	bool mouse = false;
+	bool lclick = false;
+	bool rclick = false;
+	bool mclick = false;
+	bool ldbl = false;
 };
 
 struct gui_manager {
@@ -82,8 +85,7 @@ void gui_end_frame_render(opengl* ogl, gui_manager* gui);
 bool gui_window(gui_manager* gui, string title, r2 rect, f32 opacity);
 void gui_text_line(gui_manager* gui, string str, f32 point, color c);
 void gui_text_line_f(gui_manager* gui, string fmt, f32 point, color c, ...);
-bool _gui_carrot(guiid id, gui_manager* gui, color c, bool* toggle);
-#define gui_carrot(g,c,t) _gui_carrot(getid(g),g,c,t)
+bool gui_carrot(gui_manager* gui, color c, bool* toggle);
 
 void gui_render_window(gui_manager* gui, _gui_window* win);
 v2 gui_render_widget_text(gui_manager* gui, _gui_window* win, widget_text* text);

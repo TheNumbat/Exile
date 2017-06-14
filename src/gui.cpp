@@ -73,7 +73,7 @@ v2 gui_render_widget_carrot(gui_manager* gui, _gui_window* win, widget_carrot* c
 
 void gui_end_frame_render(opengl* ogl, gui_manager* gui) {
 
-	if(!gui->input.mouse) {
+	if(!gui->input.lclick && !gui->input.rclick && !gui->input.mclick && !gui->input.ldbl) {
 		gui->active = 1;
 	} else if(gui->active == 1) {
 		gui->active = 0;
@@ -176,8 +176,9 @@ bool gui_window(gui_manager* gui, string title, r2 rect, f32 opacity) {
 	return current->shown;
 }
 
-bool _gui_carrot(guiid id, gui_manager* gui, color c, bool* toggle) {
+bool gui_carrot(gui_manager* gui, color c, bool* toggle) {
 
+	guiid id = getid(gui);
 	_gui_window* current = vector_get(&gui->windows,gui->currentwin);
 
 	widget_carrot car;
@@ -186,7 +187,7 @@ bool _gui_carrot(guiid id, gui_manager* gui, color c, bool* toggle) {
 	r2 rect = R2(add(current->rect.xy, current->offset), V2(10.0f, 10.0f));
 	if(inside(rect, (f32)gui->input.mousex, (f32)gui->input.mousey)) {
 		gui->hot = id;
-		if(gui->active == 1 && gui->input.mouse) {
+		if(gui->active == 1 && (gui->input.lclick || gui->input.ldbl)) {
 			*toggle = !*toggle;
 			gui->active = id;
 		}

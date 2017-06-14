@@ -55,9 +55,28 @@ gui_input_state run_events(game_state* state) {
 			}
 			
 			if(evt.mouse.flags & mouse_flag_lclick) {
-				ret.mouse = true;
+				ret.lclick = true;
 				if(evt.mouse.flags & mouse_flag_release) {
-					ret.mouse = false;
+					ret.lclick = false;
+					ret.ldbl = false;
+				}
+				if(evt.mouse.flags & mouse_flag_double) {
+					ret.lclick = false;
+					ret.ldbl = true;
+				}
+			}
+
+			if(evt.mouse.flags & mouse_flag_rclick) {
+				ret.rclick = true;
+				if(evt.mouse.flags & mouse_flag_release) {
+					ret.rclick = false;
+				}
+			}
+
+			if(evt.mouse.flags & mouse_flag_mclick) {
+				ret.mclick = true;
+				if(evt.mouse.flags & mouse_flag_release) {
+					ret.mclick = false;
 				}
 			}
 		}
