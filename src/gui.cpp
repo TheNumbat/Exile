@@ -2,9 +2,11 @@
 #pragma push_macro("gui_window")
 #pragma push_macro("gui_text_line")
 #pragma push_macro("gui_text_line_f")
+#pragma push_macro("gui_carrot")
 #undef gui_window
 #undef gui_text_line
 #undef gui_text_line_f
+#undef gui_carrot
 
 gui_manager make_gui(allocator* alloc, opengl* ogl, asset* font) {
 
@@ -19,7 +21,6 @@ gui_manager make_gui(allocator* alloc, opengl* ogl, asset* font) {
 	ret.ogl.shader 	= ogl_add_program(ogl, string_literal("shaders/gui.v"), string_literal("shaders/gui.f"), &ogl_uniforms_gui);
 	ret.windows = make_vector<_gui_window>(16, alloc);
 
-	ret.style.win_margin = V2(10.0f, 2*ret.font_point + 5.0f);;
 	ret.mesh = make_mesh_2d(alloc, 32);
 
 	return ret;
@@ -41,43 +42,42 @@ void destroy_gui(gui_manager* gui) {
 
 void gui_begin_frame(gui_manager* gui, gui_input input) {
 
-	gui->hot = 0;
+	gui->currentwin = 0;
 	gui->input = input;
+}
 
-	FORVEC(gui->windows,
-		it->exists = false;
-	)
+v2 gui_render_widget_text(gui_manager* gui, _gui_window* win, gui_widget* text) {
+
+	v2 pos = V2(win->margin.x + win->rect.x + win->offset.x, win->margin.y + win->rect.y + win->offset.y);					
+	return V2(0.0f, mesh_push_text_line(&gui->mesh, gui->font, text->text.text, pos, text->text.point, text->text.c));
+}
+
+v2 gui_render_widget_carrot(gui_manager* gui, _gui_window* win, gui_widget* carrot) {
+
+	u32 idx = gui->mesh.verticies.size;
+	v2 pos = add(win->rect.xy, win->offset);
+
+	if(carrot->carrot.active) {
+		vector_push(&gui->mesh.verticies, V2(pos.x, 	pos.y - 5));
+		vector_push(&gui->mesh.verticies, V2(pos.x - 5, pos.y + 5));
+		vector_push(&gui->mesh.verticies, V2(pos.x + 5, pos.y + 5));
+	} else {
+		vector_push(&gui->mesh.verticies, V2(pos.x, pos.y + 5));
+		vector_push(&gui->mesh.verticies, V2(pos.x - 5, pos.y - 5));
+		vector_push(&gui->mesh.verticies, V2(pos.x + 5, pos.y - 5));
+	}
+
+	colorf cf = color_to_f(carrot->carrot.c);
+	FOR(3) vector_push(&gui->mesh.colors, cf);
+
+	FOR(3) vector_push(&gui->mesh.texCoords, V3(0.0f, 0.0f, 0.0f));
+
+	vector_push(&gui->mesh.elements, V3(idx, idx + 1, idx + 2));
+
+	return V2(0.0f, 10.0f);
 }
 
 void gui_end_frame_render(opengl* ogl, gui_manager* gui) {
-
-	FORVEC(gui->windows,
-		if(it->exists) {
-			push_windowhead(gui, it);
-			v2 vtitle = add(it->rect.xy, V2(15.0f, gui->font_point));
-			mesh_push_text_line(&gui->mesh, gui->font, it->title, vtitle, gui->font_point, V4b(255, 255, 255, 255));
-
-			if(it->active) {
-			
-				push_windowbody(gui, it);
-			
-				f32 y = 0;
-				for(u32 i = 0; i < it->widgets.size; i++) {
-
-					gui_widget* w = vector_get(&it->widgets, i);
-
-					switch(w->type) {
-					case widget_text: {
-
-						v2 pos = V2(it->margin.x + it->rect.x, it->margin.y + it->rect.y + y);					
-						y += mesh_push_text_line(&gui->mesh, gui->font, w->text.text, pos, w->text.point, w->text.c);
-
-					} break;
-					}
-				}
-			}
-		}
-	)
 
 	render_command_list rcl = make_command_list();
 	render_command cmd = make_render_command(render_mesh_2d, &gui->mesh);
@@ -106,30 +106,16 @@ void push_windowhead(gui_manager* gui, _gui_window* win) {
 	vector_push(&gui->mesh.verticies, V2(r.x, r.y + pt));
 	vector_push(&gui->mesh.verticies, V2(r.x + r.w, r.y + pt));
 
-	if(win->active) {
-		vector_push(&gui->mesh.verticies, V2(r.x + r.w - 15, r.y + (pt / 2) - 5));
-		vector_push(&gui->mesh.verticies, V2(r.x + r.w - 20, r.y + (pt / 2) + 5));
-		vector_push(&gui->mesh.verticies, V2(r.x + r.w - 10, r.y + (pt / 2) + 5));
-	} else {
-		vector_push(&gui->mesh.verticies, V2(r.x + r.w - 15, r.y + (pt / 2) + 5));
-		vector_push(&gui->mesh.verticies, V2(r.x + r.w - 20, r.y + (pt / 2) - 5));
-		vector_push(&gui->mesh.verticies, V2(r.x + r.w - 10, r.y + (pt / 2) - 5));
-	}
-
-	FOR(7) vector_push(&gui->mesh.texCoords, V3f(0,0,0));
+	FOR(4) vector_push(&gui->mesh.texCoords, V3f(0,0,0));
 
 	colorf topf = color_to_f(V4b(gui->style.win_top, 255));
-	colorf win_closef = color_to_f(V4b(gui->style.win_close, 255));
 	FOR(4) vector_push(&gui->mesh.colors, topf);
-	FOR(3) vector_push(&gui->mesh.colors, win_closef);
 
 	vector_push(&gui->mesh.elements, V3u(idx + 2, idx, idx + 1));
 	vector_push(&gui->mesh.elements, V3u(idx + 3, idx, idx + 2));
-
-	vector_push(&gui->mesh.elements, V3u(idx + 4, idx + 5, idx + 6));
 }
 
-void push_windowbody(gui_manager* gui, _gui_window* win) {
+void push_windowbody(gui_manager* gui, _gui_window* win, f32 opacity) {
 
 	u32 idx = gui->mesh.verticies.size;
 	r2 r = win->rect;
@@ -143,7 +129,7 @@ void push_windowbody(gui_manager* gui, _gui_window* win) {
 
 	FOR(5) vector_push(&gui->mesh.texCoords, V3f(0,0,0));
 
-	colorf cf = color_to_f(V4b(gui->style.win_back, win->opacity * 255.0f));
+	colorf cf = color_to_f(V4b(gui->style.win_back, opacity * 255.0f));
 
 	FOR(5) vector_push(&gui->mesh.colors, cf);
 
@@ -152,93 +138,83 @@ void push_windowbody(gui_manager* gui, _gui_window* win) {
 	vector_push(&gui->mesh.elements, V3u(idx, idx + 3, idx + 4));
 }
 
-bool gui_window(u32 id, gui_manager* gui, string title, r2 rect, f32 opacity) {
+bool gui_window(guiid id, gui_manager* gui, string title, r2 rect, f32 opacity) {
 
 	bool found = false;
 	FORVEC(gui->windows,
 		if(it->id == id) {
-			gui->current = __i;
+			gui->currentwin = __i;
 			found = true;
 		}
 	)
 
-	_gui_window* current = vector_get(&gui->windows, gui->current);
+	_gui_window* current = vector_get(&gui->windows, gui->currentwin);
 	
 	if(!found) {
 		_gui_window win;
-		gui->current = gui->windows.size;
+		gui->currentwin = gui->windows.size;
 		vector_push(&gui->windows, win);
 		current = vector_back(&gui->windows);
 
 		current->id = id;
 		current->widgets = make_vector<gui_widget>(16, gui->alloc);
-		current->margin = gui->style.win_margin; 
 
 		current->rect = rect;
-		current->opacity = opacity;
-		current->title = title;
 	}
 
-	current->exists = true;
-	rect = current->rect;
-	f32 pt = gui->font_point;
-	r2 togglerect = R2(rect.x + rect.w - 22.5f, rect.y + (pt / 2.0f) - 7.5f, 15.0f, 15.0f);
-	if(inside(togglerect, (f32)gui->input.mouse.x, (f32)gui->input.mouse.y) && (gui->input.mouse.flags & mouse_flag_press || gui->input.mouse.flags & mouse_flag_double)) {
+	push_windowhead(gui, current);
 
-		current->active = !current->active;
+	current->offset = V2(rect.w - 15, (gui->font_point + 5.0f) / 2.0f);
+	gui_carrot(__COUNTER__ + 1, gui, V4b(gui->style.win_close,255), &current->active);;
 
-	} else {
+	current->offset = V2(15.0f, gui->font_point);
+	gui_text_line(__COUNTER__ + 1, gui, title, gui->font_point, V4b(255, 255, 255, 255));
+	current->offset = V2(5.0f, add(current->offset, V2(0.0f, 5.0f)).y);
 
-		r2 moverect = R2(rect.x, rect.y, rect.w, pt);
-		if(inside(moverect, (f32)gui->input.mouse.x, (f32)gui->input.mouse.y)) {
-
-			if(gui->input.mouse.flags & mouse_flag_press) {
-
-				gui->active = id;
-				current->clickoffset = V2(gui->input.mouse.x - rect.x, gui->input.mouse.y - rect.y);
-			} 
-			if(gui->input.mouse.flags & mouse_flag_double) {
-
-				current->active = !current->active;
-			} 
-		}
-
-		r2 resizerect = R2(rect.x + rect.w - 10.0f, rect.y + rect.h - 10.0f, 10.0f, 10.0f);
-		if(inside(resizerect, (f32)gui->input.mouse.x, (f32)gui->input.mouse.y)) {
-
-			if(gui->input.mouse.flags & mouse_flag_press) {
-
-				gui->active = id;
-				current->clickoffset = V2(gui->input.mouse.x - rect.x, gui->input.mouse.y - rect.y);
-				current->resizing = true;
-			} 
-		}
-	}
-
-	if(gui->active == id) {
-		if(current->resizing) {	
-			if(gui->input.mouse.x - rect.x > gui->style.win_minw) {
-				current->rect.w = gui->input.mouse.x - rect.x;
-			}
-			if(gui->input.mouse.y - rect.y > gui->style.win_minh) {
-				current->rect.h = gui->input.mouse.y - rect.y;
-			}
-		} else {
-			current->rect.x = gui->input.mouse.x - current->clickoffset.x;
-			current->rect.y = gui->input.mouse.y - current->clickoffset.y;
-		}
-
-		if(gui->input.mouse.flags & mouse_flag_release) {
-
-			gui->active = 0;
-			current->resizing = false;
-		} 
+	if(current->active) {	
+		push_windowbody(gui, current, opacity);
 	}
 
 	return current->active;
 }
 
-void gui_text_line_f(u32 id, gui_manager* gui, string fmt, f32 point, color c, ...) {
+bool gui_carrot(guiid id, gui_manager* gui, color c, bool* toggle) {
+
+	_gui_window* current = vector_get(&gui->windows,gui->currentwin);
+	gui_widget* w = NULL;
+
+	bool found = false;
+	FORVEC(current->widgets,
+		if(it->id == id) {
+			w = it;
+			found = true;
+		}
+	)
+	if(!found) {
+		gui_widget car;
+		car.type = widget_carrot;
+		car.id = id;
+	
+		vector_push(&current->widgets, car);
+
+		w = vector_back(&current->widgets);
+	}
+
+	w->carrot.c = c;
+
+	r2 rect = R2(add(current->rect.xy, current->offset), V2(10.0f, 10.0f));
+	if(inside(rect, (f32)gui->input.mouse.x, (f32)gui->input.mouse.y) && (gui->input.mouse.flags & mouse_flag_press || gui->input.mouse.flags & mouse_flag_double)) {
+
+		*toggle = !*toggle;
+	} 
+
+	w->carrot.active = *toggle;
+	current->offset = add(current->offset, gui_render_widget_carrot(gui, current, w));
+
+	return *toggle;
+}
+
+void gui_text_line_f(guiid id, gui_manager* gui, string fmt, f32 point, color c, ...) {
 
 	string final;
 
@@ -252,13 +228,13 @@ void gui_text_line_f(u32 id, gui_manager* gui, string fmt, f32 point, color c, .
 	free_string(final);
 }
 
-void gui_text_line(u32 id, gui_manager* gui, string str, f32 point, color c) {
+void gui_text_line(guiid id, gui_manager* gui, string str, f32 point, color c) {
 
 	if (point == 0.0f) {
 		point = gui->font_point;
 	}
 
-	_gui_window* current = vector_get(&gui->windows,gui->current);
+	_gui_window* current = vector_get(&gui->windows,gui->currentwin);
 	gui_widget* w = NULL;
 
 	bool found = false;
@@ -281,8 +257,11 @@ void gui_text_line(u32 id, gui_manager* gui, string str, f32 point, color c) {
 	w->text.text = str;
 	w->text.point = point;
 	w->text.c = c;
+
+	current->offset = add(current->offset, gui_render_widget_text(gui, current, w));
 }
 
 #pragma pop_macro("gui_window")
 #pragma pop_macro("gui_text_line")
 #pragma pop_macro("gui_text_line_f")
+#pragma pop_macro("gui_carrot")

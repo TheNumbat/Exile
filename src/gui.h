@@ -1,9 +1,12 @@
 
 #pragma once
 
+typedef u32 guiid;
+
 enum _widget_type {
 	widget_none,
 	widget_text,
+	widget_carrot,
 };
 
 struct _widget_text {
@@ -12,13 +15,19 @@ struct _widget_text {
 	string text;
 };
 
+struct _widget_carrot {
+	color c;
+	bool active;
+};
+
 struct gui_widget {
 	_widget_type type = widget_none;
-	u32 id = 0;
+	guiid id = 0;
 	union {
 		_widget_text text;
+		_widget_carrot carrot;
 	};
-	gui_widget() : text() {};
+	gui_widget() : text(), carrot() {};
 };
 
 // TODO(max): this
@@ -31,18 +40,13 @@ enum gui_window_style_flags : u16 {
 };
 
 struct _gui_window {
-	u32 id 		= 0;
+	guiid id 		= 0;
 
-	string title;
 	bool active = true;
 	bool resizing = false;
-	bool exists = false;
-	v2 clickoffset = V2f(0, 0);
-	
+
 	r2 rect;
-	v2 margin;
-	f32 opacity = 1.0f;
-	u16 flags  = 0;
+	v2 margin, offset, clickoffset;
 
 	vector<gui_widget> widgets;
 };
@@ -57,22 +61,18 @@ struct gui_style {
 	bv3 win_back   = V3b(34, 43, 47);
 	bv3 win_top    = V3b(74, 79, 137);
 	bv3 win_close  = V3b(102, 105, 185);
-	v2  win_margin = V2(0.0f, 0.0f);		// depends on font, set on make_gui
-	f32 win_minw   = 50.0f;
-	f32 win_minh   = 50.0f;
 };
 
 struct gui_input {
 	_platform_event_mouse mouse;
 };
 
+
 struct gui_manager {
 	vector<_gui_window> windows;	// TODO(max): sort?
-	u32 current = 0;
+	u32 currentwin = 0;
 	
-	u32 active 		= 0;
-	u32 hot 		= 0;
-	
+	guiid active = 0;
 	mesh_2d mesh;
 	
 	gui_opengl ogl;
@@ -91,13 +91,19 @@ void destroy_gui(gui_manager* gui);
 void gui_begin_frame(gui_manager* gui, gui_input input);
 void gui_end_frame_render(opengl* ogl, gui_manager* gui);
 
-bool gui_window(u32 ID, gui_manager* gui, string title, r2 rect, f32 opacity);
-void gui_text_line(u32 ID, gui_manager* gui, string str, f32 point, color c);
-void gui_text_line_f(u32 ID, gui_manager* gui, string fmt, f32 point, color c, ...);
+bool gui_window(guiid id, gui_manager* gui, string title, r2 rect, f32 opacity);
+void gui_text_line(guiid id, gui_manager* gui, string str, f32 point, color c);
+void gui_text_line_f(guiid id, gui_manager* gui, string fmt, f32 point, color c, ...);
+bool gui_carrot(guiid id, gui_manager* gui, color c, bool* toggle);
+
+void gui_render_window(gui_manager* gui, _gui_window* win);
+v2 gui_render_widget_text(gui_manager* gui, _gui_window* win, gui_widget* text);
+v2 gui_render_widget_carrot(gui_manager* gui, _gui_window* win, gui_widget* carrot);
 
 #define gui_window(g,t,r,o) gui_window(__COUNTER__ + 1, g, t, r, o)
 #define gui_text_line(g,s,p,c) gui_text_line(__COUNTER__ + 1, g, s, p, c)
 #define gui_text_line_f(g,s,p,c,...) gui_text_line_f(__COUNTER__ + 1, g, s, p, c, __VA_ARGS__)
+#define gui_carrot(g,c,t) gui_carrot(__COUNTER__ + 1, g, c, t);
 
 void push_windowhead(gui_manager* gui, _gui_window* win);
-void push_windowbody(gui_manager* gui, _gui_window* win);
+void push_windowbody(gui_manager* gui, _gui_window* win, f32 opacity);

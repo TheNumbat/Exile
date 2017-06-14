@@ -385,6 +385,10 @@ template r2 R2(f32, f32, f32, f32);
 r2 R2f(i32 x, i32 y, i32 w, i32 h) {
 	return R2((f32)x, (f32)y, (f32)w, (f32)h);
 }
+template<typename T> inline r2_t<T> R2(v2_t<T> xy, v2_t<T> wh) {
+	return R2(xy.x, xy.y, wh.x, wh.y);
+}
+template r2 R2(v2, v2); 
 
 template<typename T> inline r2_t<T> add(r2_t<T> l, r2_t<T> r) {
 	return R2(l.x + r.x, l.y + r.y, l.w + r.w, l.h + r.h);	
