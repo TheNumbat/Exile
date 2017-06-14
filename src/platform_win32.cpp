@@ -55,6 +55,7 @@ platform_api platform_build_api() {
 	ret.platform_write_stdout			= &platform_write_stdout;
 	ret.platform_file_size				= &platform_file_size;
 	ret.platform_get_glproc				= &platform_get_glproc;
+	ret.platform_keydown				= &platform_keydown;
 
 	return ret;
 }
@@ -604,6 +605,109 @@ void platform_queue_messages(platform_window* window) {
 	}
 }
 
+u16 translate_key_code(platform_keycode keycode) {
+	switch(keycode) {
+	case key_0: return '0';
+	case key_1: return '1';
+	case key_2: return '2';
+	case key_3: return '3';
+	case key_4: return '4';
+	case key_5: return '5';
+	case key_6: return '6';
+	case key_7: return '7';
+	case key_8: return '8';
+	case key_9: return '9';
+	case key_a: return 'A';
+	case key_b: return 'B';
+	case key_c: return 'C';
+	case key_d: return 'D';
+	case key_e: return 'E';
+	case key_f: return 'F';
+	case key_g: return 'G';
+	case key_h: return 'H';
+	case key_i: return 'I';
+	case key_j: return 'J';
+	case key_k: return 'K';
+	case key_l: return 'L';
+	case key_m: return 'M';
+	case key_n: return 'N';
+	case key_o: return 'O';
+	case key_p: return 'P';
+	case key_q: return 'Q';
+	case key_r: return 'R';
+	case key_s: return 'S';
+	case key_t: return 'T';
+	case key_u: return 'U';
+	case key_v: return 'V';
+	case key_w: return 'W';
+	case key_x: return 'X';
+	case key_y: return 'Y';
+	case key_z: return 'Z';
+	case key_tab: return VK_TAB;
+	case key_grave: return VK_OEM_3;
+	case key_dash: return VK_OEM_MINUS;
+	case key_comma: return VK_OEM_COMMA;
+	case key_slash: return VK_OEM_2;
+	case key_space: return VK_SPACE;
+	case key_equals: return VK_OEM_PLUS;
+	case key_enter: return VK_RETURN;
+	case key_period: return VK_OEM_PERIOD;
+	case key_rbracket: return VK_OEM_6;
+	case key_lbracket: return VK_OEM_4;
+	case key_semicolon: return VK_OEM_1;
+	case key_backslash: return VK_OEM_5;
+	case key_np_0: return VK_NUMPAD0;
+	case key_np_1: return VK_NUMPAD1;
+	case key_np_2: return VK_NUMPAD2;
+	case key_np_3: return VK_NUMPAD3;
+	case key_np_4: return VK_NUMPAD4;
+	case key_np_5: return VK_NUMPAD5;
+	case key_np_6: return VK_NUMPAD6;
+	case key_np_7: return VK_NUMPAD7;
+	case key_np_8: return VK_NUMPAD8;
+	case key_np_9: return VK_NUMPAD9;
+	case key_np_add: return VK_ADD;
+	case key_np_period: return VK_DECIMAL;
+	case key_np_divide: return VK_DIVIDE;
+	case key_np_multiply: return VK_MULTIPLY;
+	case key_np_subtract: return VK_SUBTRACT;
+	case key_backspace: return VK_BACK;
+	case key_capslock: return VK_CAPITAL;
+	case key_delete: return VK_DELETE;
+	case key_down: return VK_DOWN;
+	case key_up: return VK_UP;
+	case key_left: return VK_LEFT;
+	case key_right: return VK_RIGHT;
+	case key_end: return VK_END;
+	case key_escape: return VK_ESCAPE;
+	case key_f1: return VK_F1;
+	case key_f2: return VK_F2;
+	case key_f3: return VK_F3;
+	case key_f4: return VK_F4;
+	case key_f5: return VK_F5;
+	case key_f6: return VK_F6;
+	case key_f7: return VK_F7;
+	case key_f8: return VK_F8;
+	case key_f9: return VK_F9;
+	case key_f10: return VK_F10;
+	case key_f11: return VK_F11;
+	case key_f12: return VK_F12;
+	case key_home: return VK_HOME;
+	case key_insert: return VK_INSERT;
+	case key_lalt: return VK_LMENU;
+	case key_ralt: return VK_RMENU;
+	case key_lctrl: return VK_LCONTROL;
+	case key_rctrl: return VK_RCONTROL;
+	case key_lshift: return VK_LSHIFT;
+	case key_rshift: return VK_RSHIFT;
+	case key_numlock: return VK_NUMLOCK;
+	case key_pgup: return VK_PRIOR;
+	case key_pgdown: return VK_NEXT;
+	case key_scrolllock: return VK_SCROLL;
+	default:  return key_none;
+	}
+}
+
 platform_keycode translate_key_code(WPARAM wParam) {
 	switch(wParam) {
 	case '0': return key_0;
@@ -705,6 +809,13 @@ platform_keycode translate_key_code(WPARAM wParam) {
 	case VK_SCROLL: return key_scrolllock;
 	default:  return key_none;
 	}
+}
+
+bool platform_keydown(platform_keycode key) {
+
+	u16 vk_code = translate_key_code(key);
+
+	return GetKeyState(vk_code) & 0x8000;
 }
 
 LRESULT CALLBACK window_proc(HWND handle, UINT msg, WPARAM wParam, LPARAM lParam) {

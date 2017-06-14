@@ -234,6 +234,7 @@ enum _platform_thread_join_state {
 struct platform_api {
 	void 			(*platform_set_queue_callback)(void (*enqueue)(void* queue_param, platform_event evt), void* queue_param)	= NULL;
 	void 			(*platform_queue_messages)(platform_window* window)															= NULL;
+	bool 		    (*platform_keydown)(platform_keycode key)																	= NULL;
 	platform_error 	(*platform_create_window)(platform_window* window, string title, u32 width, u32 height)						= NULL;
 	platform_error 	(*platform_destroy_window)(platform_window* window)															= NULL;
 	platform_error 	(*platform_get_window_size)(platform_window* window, i32* w, i32* h)										= NULL;

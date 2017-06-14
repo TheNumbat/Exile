@@ -3,7 +3,7 @@
 
 // TODO(max): fix the ID system
 // currently they are dealt out sequentially starting from 2 every frame
-// this will cause when the draw order changes while a widget is active
+// this will cause problems when the draw order changes while a widget is hot/active
 typedef u32 guiid;
 
 struct widget_text {

@@ -10,6 +10,7 @@ platform_error platform_swap_buffers(platform_window* window);
 void		   platform_set_queue_callback(void (*enqueue)(void* queue_param, platform_event evt), void* queue_param);
 void 		   platform_queue_messages(platform_window* window);
 platform_error platform_wait_message();
+bool 		   platform_keydown(platform_keycode key);
 
 platform_error platform_load_library(platform_dll* dll, string file_path);
 platform_error platform_free_library(platform_dll* dll);
