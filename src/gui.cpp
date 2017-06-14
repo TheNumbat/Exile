@@ -17,6 +17,10 @@ gui_manager make_gui(allocator* alloc, opengl* ogl, asset* font) {
 	return ret;
 }
 
+guiid getid(gui_manager* gui) {
+	return gui->last_id++;
+}
+
 void destroy_gui(gui_manager* gui) {
 
 	destroy_vector(&gui->windows);
@@ -30,21 +34,24 @@ void destroy_gui(gui_manager* gui) {
 void gui_begin_frame(gui_manager* gui, gui_input_state input) {
 
 	gui->currentwin = 0;
+	gui->last_id = 1;
+	gui->hot = 1;
+
 	gui->input = input;
 }
 
-v2 gui_render_widget_text(gui_manager* gui, _gui_window* win, gui_widget* text) {
+v2 gui_render_widget_text(gui_manager* gui, _gui_window* win, widget_text* text) {
 
 	v2 pos = add(win->rect.xy, win->offset);
-	return V2(0.0f, mesh_push_text_line(&gui->mesh, gui->font, text->text.text, pos, text->text.point, text->text.c));
+	return V2(0.0f, mesh_push_text_line(&gui->mesh, gui->font, text->text, pos, text->point, text->c));
 }
 
-v2 gui_render_widget_carrot(gui_manager* gui, _gui_window* win, gui_widget* carrot) {
+v2 gui_render_widget_carrot(gui_manager* gui, _gui_window* win, widget_carrot* carrot) {
 
 	u32 idx = gui->mesh.verticies.size;
 	v2 pos = add(win->rect.xy, win->offset);
 
-	if(carrot->carrot.active) {
+	if(carrot->active) {
 		vector_push(&gui->mesh.verticies, V2(pos.x, 	pos.y));
 		vector_push(&gui->mesh.verticies, V2(pos.x + 10, pos.y));
 		vector_push(&gui->mesh.verticies, V2(pos.x + 5, pos.y + 10));
@@ -54,7 +61,7 @@ v2 gui_render_widget_carrot(gui_manager* gui, _gui_window* win, gui_widget* carr
 		vector_push(&gui->mesh.verticies, V2(pos.x + 10, pos.y + 10));
 	}
 
-	colorf cf = color_to_f(carrot->carrot.c);
+	colorf cf = color_to_f(carrot->c);
 	FOR(3) vector_push(&gui->mesh.colors, cf);
 
 	FOR(3) vector_push(&gui->mesh.texCoords, V3(0.0f, 0.0f, 0.0f));
@@ -65,6 +72,12 @@ v2 gui_render_widget_carrot(gui_manager* gui, _gui_window* win, gui_widget* carr
 }
 
 void gui_end_frame_render(opengl* ogl, gui_manager* gui) {
+
+	if(!gui->input.mouse) {
+		gui->active = 1;
+	} else if(gui->active == 1) {
+		gui->active = 0;
+	}
 
 	render_command_list rcl = make_command_list();
 	render_command cmd = make_render_command(render_mesh_2d, &gui->mesh);
@@ -163,22 +176,23 @@ bool gui_window(gui_manager* gui, string title, r2 rect, f32 opacity) {
 	return current->shown;
 }
 
-bool gui_carrot(gui_manager* gui, color c, bool* toggle) {
+bool _gui_carrot(guiid id, gui_manager* gui, color c, bool* toggle) {
 
 	_gui_window* current = vector_get(&gui->windows,gui->currentwin);
 
-	gui_widget car;
-	car.type = widget_carrot;
-	car.carrot.c = c;
+	widget_carrot car;
+	car.c = c;
 	
 	r2 rect = R2(add(current->rect.xy, current->offset), V2(10.0f, 10.0f));
 	if(inside(rect, (f32)gui->input.mousex, (f32)gui->input.mousey)) {
-		if(gui->input.mouse) {
+		gui->hot = id;
+		if(gui->active == 1 && gui->input.mouse) {
 			*toggle = !*toggle;
+			gui->active = id;
 		}
 	}
 
-	car.carrot.active = *toggle;
+	car.active = *toggle;
 	current->offset = add(current->offset, gui_render_widget_carrot(gui, current, &car));
 
 	return *toggle;
@@ -206,11 +220,10 @@ void gui_text_line(gui_manager* gui, string str, f32 point, color c) {
 
 	_gui_window* current = vector_get(&gui->windows,gui->currentwin);
 
-	gui_widget t;
-	t.type = widget_text;
-	t.text.text = str;
-	t.text.point = point;
-	t.text.c = c;
+	widget_text t;
+	t.text = str;
+	t.point = point;
+	t.c = c;
 
 	current->offset = add(current->offset, gui_render_widget_text(gui, current, &t));
 }
