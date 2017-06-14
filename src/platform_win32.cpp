@@ -815,7 +815,7 @@ bool platform_keydown(platform_keycode key) {
 
 	u16 vk_code = translate_key_code(key);
 
-	return GetKeyState(vk_code) & 0x8000;
+	return (GetKeyState(vk_code) & 0x8000) != 0;
 }
 
 LRESULT CALLBACK window_proc(HWND handle, UINT msg, WPARAM wParam, LPARAM lParam) {
