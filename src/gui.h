@@ -36,6 +36,7 @@ struct _gui_window {
 	string title;
 	bool active = true;
 	bool resizing = false;
+	bool exists = false;
 	v2 clickoffset = V2f(0, 0);
 	
 	r2 rect;

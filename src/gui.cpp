@@ -43,31 +43,37 @@ void gui_begin_frame(gui_manager* gui, gui_input input) {
 
 	gui->hot = 0;
 	gui->input = input;
+
+	FORVEC(gui->windows,
+		it->exists = false;
+	)
 }
 
 void gui_end_frame_render(opengl* ogl, gui_manager* gui) {
 
 	FORVEC(gui->windows,
-		push_windowhead(gui, it);
-		v2 vtitle = add(it->rect.xy, V2(15.0f, gui->font_point));
-		mesh_push_text_line(&gui->mesh, gui->font, it->title, vtitle, gui->font_point, V4b(255, 255, 255, 255));
+		if(it->exists) {
+			push_windowhead(gui, it);
+			v2 vtitle = add(it->rect.xy, V2(15.0f, gui->font_point));
+			mesh_push_text_line(&gui->mesh, gui->font, it->title, vtitle, gui->font_point, V4b(255, 255, 255, 255));
 
-		if(it->active) {
-		
-			push_windowbody(gui, it);
-		
-			f32 y = 0;
-			for(u32 i = 0; i < it->widgets.size; i++) {
+			if(it->active) {
+			
+				push_windowbody(gui, it);
+			
+				f32 y = 0;
+				for(u32 i = 0; i < it->widgets.size; i++) {
 
-				gui_widget* w = vector_get(&it->widgets, i);
+					gui_widget* w = vector_get(&it->widgets, i);
 
-				switch(w->type) {
-				case widget_text: {
+					switch(w->type) {
+					case widget_text: {
 
-					v2 pos = V2(it->margin.x + it->rect.x, it->margin.y + it->rect.y + y);					
-					y += mesh_push_text_line(&gui->mesh, gui->font, w->text.text, pos, w->text.point, w->text.c);
+						v2 pos = V2(it->margin.x + it->rect.x, it->margin.y + it->rect.y + y);					
+						y += mesh_push_text_line(&gui->mesh, gui->font, w->text.text, pos, w->text.point, w->text.c);
 
-				} break;
+					} break;
+					}
 				}
 			}
 		}
@@ -173,6 +179,7 @@ bool gui_window(u32 id, gui_manager* gui, string title, r2 rect, f32 opacity) {
 		current->title = title;
 	}
 
+	current->exists = true;
 	rect = current->rect;
 	f32 pt = gui->font_point;
 	r2 togglerect = R2(rect.x + rect.w - 22.5f, rect.y + (pt / 2.0f) - 7.5f, 15.0f, 15.0f);

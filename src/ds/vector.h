@@ -28,6 +28,7 @@ template<typename T> void vector_clear(vector<T>* v); // doesn't free/resize
 template<typename T> T* vector_get(vector<T>* v, u32 idx);
 template<typename T> T* vector_front(vector<T>* v);
 template<typename T> T* vector_back(vector<T>* v);
+template<typename T> T* vector_find(vector<T>* v, T val); // linear search
 
 template<typename T> u32 vector_len(vector<T>* v);
 template<typename T> u32 vector_capacity(vector<T>* v);

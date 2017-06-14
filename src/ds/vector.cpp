@@ -15,6 +15,19 @@ void vector_clear(vector<T>* v) {
 }
 
 template<typename T>
+T* vector_find(vector<T>* v, T val) {
+
+	T* ret = NULL;
+	FORVEC(*v, 
+		if(*it == val) {
+			ret = it;
+		}
+	)
+
+	return ret;
+}
+
+template<typename T>
 vector<T> make_vector_copy(vector<T> source, allocator* a) {
 
 	vector<T> ret = make_vector<T>(source.capacity, a);
