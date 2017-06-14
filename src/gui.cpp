@@ -34,7 +34,7 @@ void destroy_gui(gui_manager* gui) {
 void gui_begin_frame(gui_manager* gui, gui_input_state input) {
 
 	gui->currentwin = 0;
-	gui->last_id = 1;
+	gui->last_id = 2;
 	gui->hot = 1;
 
 	gui->input = input;
@@ -140,6 +140,8 @@ void push_windowbody(gui_manager* gui, _gui_window* win, f32 opacity) {
 
 bool gui_window(gui_manager* gui, string title, r2 rect, f32 opacity) {
 
+	guiid id = getid(gui);
+
 	bool found = false;
 	FORVEC(gui->windows,
 		if(it->title == title) {
@@ -159,6 +161,7 @@ bool gui_window(gui_manager* gui, string title, r2 rect, f32 opacity) {
 		current->rect = rect;
 		current->title = title;
 	}
+	rect = current->rect;
 
 	push_windowhead(gui, current);
 
@@ -171,6 +174,24 @@ bool gui_window(gui_manager* gui, string title, r2 rect, f32 opacity) {
 
 	if(current->shown) {
 		push_windowbody(gui, current, opacity);
+	}
+
+	r2 moverect = R2(rect.x, rect.y, rect.w, gui->font_point + gui->style.title_padding);
+	if(inside(moverect, (f32)gui->input.mousex, (f32)gui->input.mousey)) {
+		gui->hot = id;
+		if(gui->active == 1 && gui->input.lclick) {
+			gui->active = id;
+			current->clickoffset = V2(gui->input.mousex - rect.x, gui->input.mousey - rect.y);
+		} 
+		if(gui->active == 1 && gui->input.ldbl) {
+			gui->active = id;
+			current->shown = !current->shown;
+		} 
+	}
+
+	if(gui->active == id) {
+		current->rect.x = gui->input.mousex - current->clickoffset.x;
+		current->rect.y = gui->input.mousey - current->clickoffset.y;
 	}
 
 	return current->shown;

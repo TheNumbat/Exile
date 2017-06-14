@@ -1,6 +1,9 @@
 
 #pragma once
 
+// TODO(max): fix the ID system
+// currently they are dealt out sequentially starting from 2 every frame
+// this will cause when the draw order changes while a widget is active
 typedef u32 guiid;
 
 struct widget_text {
@@ -59,7 +62,7 @@ struct gui_manager {
 	vector<_gui_window> windows;	// TODO(max): sort?
 	u32 currentwin = 0;
 	
-	guiid last_id = 1;
+	guiid last_id = 2;
 	// 0 = invalid, 1 = none
 	guiid hot = 1, active = 1;
 
