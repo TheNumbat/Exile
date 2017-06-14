@@ -43,7 +43,7 @@ void gui_begin_frame(gui_manager* gui, gui_input_state input) {
 v2 gui_render_widget_text(gui_manager* gui, _gui_window* win, widget_text* text) {
 
 	v2 pos = add(win->rect.xy, win->offset);
-	return V2(0.0f, mesh_push_text_line(&gui->mesh, gui->font, text->text, pos, text->point, text->c));
+	return V2(0.0f, gui->style.line_padding + mesh_push_text_line(&gui->mesh, gui->font, text->text, pos, text->point, text->c));
 }
 
 v2 gui_render_widget_carrot(gui_manager* gui, _gui_window* win, widget_carrot* carrot) {
@@ -68,7 +68,7 @@ v2 gui_render_widget_carrot(gui_manager* gui, _gui_window* win, widget_carrot* c
 
 	vector_push(&gui->mesh.elements, V3(idx, idx + 1, idx + 2));
 
-	return V2(0.0f, 10.0f);
+	return V2(0.0f, gui->style.line_padding + 10.0f);
 }
 
 void gui_end_frame_render(opengl* ogl, gui_manager* gui) {
@@ -165,10 +165,10 @@ bool gui_window(gui_manager* gui, string title, r2 rect, f32 opacity) {
 
 	push_windowhead(gui, current);
 
-	current->offset = V2(rect.w - 20.0f, (gui->font_point + gui->style.title_padding) / 2.0f - 5.0f);
+	current->offset = V2(rect.w - 20.0f, (gui->font_point + gui->style.title_padding) / 2.0f - 10.0f);
 	gui_carrot(gui, V4b(gui->style.win_close,255), &current->shown);;
 
-	current->offset = V2(15.0f, gui->font_point);
+	current->offset = V2(15.0f, 0.0f);
 	gui_text_line(gui, title, gui->font_point, V4b(255, 255, 255, 255));
 	current->offset = V2(5.0f, current->offset.y + 5.0f);
 
@@ -204,12 +204,16 @@ bool gui_carrot(gui_manager* gui, color c, bool* toggle) {
 
 	widget_carrot car;
 	car.c = c;
-	
+
+	current->offset = add(current->offset, V2(0.0f, 5.0f));
+
 	r2 rect = R2(add(current->rect.xy, current->offset), V2(10.0f, 10.0f));
 	if(inside(rect, (f32)gui->input.mousex, (f32)gui->input.mousey)) {
 		gui->hot = id;
 		if(gui->active == 1 && (gui->input.lclick || gui->input.ldbl)) {
-			*toggle = !*toggle;
+			if(toggle) {
+				*toggle = !*toggle;
+			}
 			gui->active = id;
 		}
 	}

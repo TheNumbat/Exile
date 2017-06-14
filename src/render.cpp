@@ -79,7 +79,7 @@ f32 mesh_push_text_line(mesh_2d* m, asset* font, string text_utf8, v2 pos, f32 p
 	if(point == 0.0f) {
 		scale = 1.0f;
 	}
-	// y += scale * font->font.linedist;
+	y += scale * font->font.linedist;
 
 	u32 index = 0;
 	while(u32 codepoint = get_next_codepoint(text_utf8, &index)) {

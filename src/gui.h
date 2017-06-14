@@ -45,6 +45,7 @@ struct gui_style {
 	bv3 win_top    = V3b(74, 79, 137);
 	bv3 win_close  = V3b(102, 105, 185);
 	f32 title_padding = 5.0f;
+	f32 line_padding  = 0.0f;
 };
 
 struct gui_input_state {
@@ -86,8 +87,8 @@ void gui_begin_frame(gui_manager* gui, gui_input_state input);
 void gui_end_frame_render(opengl* ogl, gui_manager* gui);
 
 bool gui_window(gui_manager* gui, string title, r2 rect, f32 opacity);
-void gui_text_line(gui_manager* gui, string str, f32 point, color c);
-void gui_text_line_f(gui_manager* gui, string fmt, f32 point, color c, ...);
+void gui_text_line(gui_manager* gui, string str, f32 point = 0.0f, color c = V4b(255, 255, 255, 255));
+void gui_text_line_f(gui_manager* gui, string fmt, f32 point = 0.0f, color c = V4b(255, 255, 255, 255), ...);
 bool gui_carrot(gui_manager* gui, color c, bool* toggle);
 
 void gui_render_window(gui_manager* gui, _gui_window* win);
