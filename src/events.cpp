@@ -18,40 +18,10 @@ void destroy_event_manager(event_manager* em) {
 	destroy_queue(&em->event_queue);
 }
 
-void filter_dupe_window_events(queue<platform_event>* queue) {
-
-	if(queue_empty(queue)) return;
-
-	bool found_move = false, found_resize = false;
-	
-	for(i32 i = (i32)queue->contents.size - 1; i >= 0; i--) {
-		platform_event* evt = vector_get(&queue->contents, i);
-		if(evt->type == event_window)  {
-			if(evt->window.op == window_moved) {
-				if(found_move) {
-					vector_erase(&queue->contents, i);
-				} else {
-					found_move = true;
-				}
-			} else if(evt->window.op == window_resized) {
-				if(found_resize) {
-					vector_erase(&queue->contents, i);
-				} else {
-					found_resize = true;
-				}
-			}
-		}
-	}
-}
-
-gui_input run_events(game_state* state) {
+gui_input_state run_events(game_state* state) {
 
 	global_state->api->platform_queue_messages(&global_state->window);
-	filter_dupe_window_events(&state->events.event_queue);
-
-	gui_input ret = state->gui.input;
-	ret.mouse.flags = 0;
-	ret.mouse.w = 0;
+	gui_input_state ret = state->gui.input;
 
 	while(!queue_empty(&state->events.event_queue)) {
 
@@ -74,10 +44,22 @@ gui_input run_events(game_state* state) {
 		}
 
 		if(evt.type == event_mouse) {
-			ret.mouse.w = evt.mouse.w;
-			ret.mouse.x = evt.mouse.x;
-			ret.mouse.y = evt.mouse.y;
-			ret.mouse.flags |= evt.mouse.flags;
+		
+			if(evt.mouse.flags & mouse_flag_move) {
+				ret.mousex = evt.mouse.x;
+				ret.mousey = evt.mouse.y;
+			}
+
+			if(evt.mouse.flags & mouse_flag_wheel) {
+				ret.scroll = evt.mouse.w;
+			}
+			
+			if(evt.mouse.flags & mouse_flag_lclick) {
+				ret.mouse = true;
+				if(evt.mouse.flags & mouse_flag_release) {
+					ret.mouse = false;
+				}
+			}
 		}
 	}
 

@@ -42,11 +42,10 @@ enum gui_window_style_flags : u16 {
 struct _gui_window {
 	guiid id 		= 0;
 
-	bool active = true;
-	bool resizing = false;
+	bool shown = true;
 
 	r2 rect;
-	v2 margin, offset, clickoffset;
+	v2 offset, clickoffset;
 
 	vector<gui_widget> widgets;
 };
@@ -61,23 +60,28 @@ struct gui_style {
 	bv3 win_back   = V3b(34, 43, 47);
 	bv3 win_top    = V3b(74, 79, 137);
 	bv3 win_close  = V3b(102, 105, 185);
+	f32 title_padding = 5.0f;
 };
 
-struct gui_input {
-	_platform_event_mouse mouse;
-};
+struct gui_input_state {
+	u16 mousex = 0;
+	u16 mousey = 0;
+	u16 scroll = 0;
 
+	bool mouse = false;
+};
 
 struct gui_manager {
 	vector<_gui_window> windows;	// TODO(max): sort?
 	u32 currentwin = 0;
 	
+	guiid hot = 0;
 	guiid active = 0;
 	mesh_2d mesh;
 	
 	gui_opengl ogl;
 	gui_style  style;
-	gui_input  input;
+	gui_input_state  input;
 
 	f32 font_point 	= 0.0f;
 	asset* font 	= NULL;
@@ -88,7 +92,7 @@ struct gui_manager {
 gui_manager make_gui(allocator* alloc, opengl* ogl, asset* font);
 void destroy_gui(gui_manager* gui);
 
-void gui_begin_frame(gui_manager* gui, gui_input input);
+void gui_begin_frame(gui_manager* gui, gui_input_state input);
 void gui_end_frame_render(opengl* ogl, gui_manager* gui);
 
 bool gui_window(guiid id, gui_manager* gui, string title, r2 rect, f32 opacity);

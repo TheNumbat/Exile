@@ -88,16 +88,12 @@ extern "C" bool main_loop(game_state* state) {
 
 	PUSH_ALLOC(&state->transient_arena) {
 
-		gui_input input = run_events(state); 
+		gui_input_state input = run_events(state); 
 		gui_begin_frame(&state->gui, input);
 
-		if(gui_window(&state->gui, string_literal("Title"), R2f(20, 40, 300, 400), 0.5f)) {
-
-			gui_text_line(&state->gui, string_literal("abcdefghijklmnopqrstuvwxyz"), 0.0f, V4b(255, 255, 255, 255));
-			gui_text_line_f(&state->gui, string_literal("uwu %s"), 0.0f, V4b(255, 255, 255, 255), "thinking");
-
-			gui_window(&state->gui, string_literal("Title2"), R2f(500, 40, 300, 400), 0.5f);
-		}
+		gui_window(&state->gui, string_literal("Title"), R2f(20, 40, 300, 400), 0.5f);
+		gui_text_line(&state->gui, string_literal("abcdefghijklmnopqrstuvwxyz"), 0.0f, V4b(255, 255, 255, 255));
+		gui_text_line_f(&state->gui, string_literal("uwu %s"), 0.0f, V4b(255, 255, 255, 255), "thinking");
 
 		gui_end_frame_render(&state->ogl, &state->gui);
 
