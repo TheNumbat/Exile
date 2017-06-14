@@ -1,9 +1,6 @@
 
 #pragma once
 
-// TODO(max): fix the ID system
-// currently they are dealt out sequentially starting from 2 every frame
-// this will cause problems when the draw order changes while a widget is hot/active
 typedef u32 guiid;
 
 struct widget_text {
@@ -31,7 +28,11 @@ struct _gui_window {
 
 	string title;
 	r2 rect;
-	v2 offset, clickoffset;
+	v2 clickoffset;
+	stack<v2> offsets;
+	v2 base;
+	v2 last;
+	guiid carrot = 0;
 };
 
 struct gui_opengl {
@@ -68,7 +69,7 @@ struct gui_manager {
 	guiid hot = 1, active = 1;
 
 	mesh_2d mesh;
-	
+
 	gui_opengl ogl;
 	gui_style  style;
 	gui_input_state  input;
@@ -86,10 +87,16 @@ guiid getid(gui_manager* gui);
 void gui_begin_frame(gui_manager* gui, gui_input_state input);
 void gui_end_frame_render(opengl* ogl, gui_manager* gui);
 
-bool gui_window(gui_manager* gui, string title, r2 rect, f32 opacity);
+bool gui_window(guiid* id, gui_manager* gui, string title, r2 rect, f32 opacity);
 void gui_text_line(gui_manager* gui, string str, f32 point = 0.0f, color c = V4b(255, 255, 255, 255));
-void gui_text_line_f(gui_manager* gui, string fmt, f32 point = 0.0f, color c = V4b(255, 255, 255, 255), ...);
-bool gui_carrot(gui_manager* gui, color c, bool* toggle);
+void gui_text_line_fex(gui_manager* gui, string fmt, f32 point, color c, ...);
+void gui_text_line_fexv(gui_manager* gui, string fmt, f32 point, color c, va_list args);
+void gui_text_line_f(gui_manager* gui, string fmt, ...);
+bool gui_carrot(guiid* id, gui_manager* gui, color c, bool* toggle);
+bool gui_carrot_text(guiid* id, gui_manager* gui, color c, bool* toggle, string text);
+
+void gui_push_offset(gui_manager* gui, v2 offset);
+void gui_pop_offset(gui_manager* gui);
 
 void gui_render_window(gui_manager* gui, _gui_window* win);
 v2 gui_render_widget_text(gui_manager* gui, _gui_window* win, widget_text* text);

@@ -24,4 +24,5 @@ struct game_state {
 
 	// testing
 	asset_store default_store;
+	dbg_gui dgui;
 };

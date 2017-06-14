@@ -91,22 +91,7 @@ extern "C" bool main_loop(game_state* state) {
 		gui_input_state input = run_events(state); 
 		gui_begin_frame(&state->gui, input);
 
-		if(state->api->platform_keydown(key_e)) {
-			gui_window(&state->gui, string_literal("Title3"), R2f(700, 40, 300, 400), 0.5f);
-		}
-
-		if(gui_window(&state->gui, string_literal("Title"), R2f(20, 40, 300, 400), 0.5f)) {
-
-			gui_text_line(&state->gui, string_literal("abcdefghijklmnopqrstuvwxyz"));
-			gui_text_line_f(&state->gui, string_literal("uwu %s"), 0.0f, V4b(255, 255, 255, 255), "thinking");
-
-			static bool test = false; // statics are bad
-			if(gui_carrot(&state->gui, V4b(255, 255, 255, 255), &test)) {
-				gui_text_line(&state->gui, string_literal("wew"));
-			}
-
-			gui_window(&state->gui, string_literal("Title2"), R2f(400, 40, 300, 400), 0.5f);
-		}
+		render_debug_gui(state);
 
 		gui_end_frame_render(&state->ogl, &state->gui);
 
