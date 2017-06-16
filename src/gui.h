@@ -32,13 +32,12 @@ struct _gui_window {
 	stack<v2> offsets;
 	v2 base;
 	v2 last;
-	guiid carrot = 0;
 };
 
 struct gui_opengl {
-	context_id 			context;
+	context_id		context;
 	shader_program_id 	shader;
-	texture_id 			texture;
+	texture_id 		texture;
 };
 
 struct gui_style {
@@ -82,18 +81,19 @@ struct gui_manager {
 
 gui_manager make_gui(allocator* alloc, opengl* ogl, asset* font);
 void destroy_gui(gui_manager* gui);
-guiid getid(gui_manager* gui);
+guiid next_guiid(gui_manager* gui);
+guiid get_guiid(_gui_window* win, string text);
 
 void gui_begin_frame(gui_manager* gui, gui_input_state input);
 void gui_end_frame_render(opengl* ogl, gui_manager* gui);
 
-bool gui_window(guiid* id, gui_manager* gui, string title, r2 rect, f32 opacity);
+// TODO(max): handle collisions with ID strings?
+bool gui_window(gui_manager* gui, string title, r2 rect, f32 opacity);
 void gui_text_line(gui_manager* gui, string str, f32 point = 0.0f, color c = V4b(255, 255, 255, 255));
 void gui_text_line_fex(gui_manager* gui, string fmt, f32 point, color c, ...);
 void gui_text_line_fexv(gui_manager* gui, string fmt, f32 point, color c, va_list args);
 void gui_text_line_f(gui_manager* gui, string fmt, ...);
-bool gui_carrot(guiid* id, gui_manager* gui, color c, bool* toggle);
-bool gui_carrot_text(guiid* id, gui_manager* gui, color c, bool* toggle, string text);
+bool gui_carrot(gui_manager* gui, string text, bool* toggle, color c = V4b(255, 255, 255, 255));
 
 void gui_push_offset(gui_manager* gui, v2 offset);
 void gui_pop_offset(gui_manager* gui);

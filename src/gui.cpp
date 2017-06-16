@@ -148,12 +148,17 @@ void push_windowbody(gui_manager* gui, _gui_window* win, f32 opacity) {
 	vector_push(&gui->mesh.elements, V3u(idx, idx + 3, idx + 4));
 }
 
-bool gui_window(guiid* _id, gui_manager* gui, string title, r2 rect, f32 opacity) {
+guiid get_guiid(_gui_window* win, string text) {
 
-	if(*_id == 0) {
-		*_id = getid(gui);
-	}
-	guiid id = *_id;
+	string str = make_cat_string(win->title, text);
+	guiid ret = hash_string(str);
+	free_string(str);
+	return ret;
+}
+
+bool gui_window(gui_manager* gui, string title, r2 rect, f32 opacity) {
+
+	guiid id = hash_string(title);
 
 	bool found = false;
 	FORVEC(gui->windows,
@@ -182,7 +187,7 @@ bool gui_window(guiid* _id, gui_manager* gui, string title, r2 rect, f32 opacity
 	push_windowhead(gui, current);
 
 	gui_push_offset(gui, V2(rect.w - 25.0f, (gui->font_point + gui->style.title_padding) / 2.0f - 10.0f));
-	gui_carrot(&current->carrot, gui, V4b(gui->style.win_close,255), &current->shown);;
+	gui_carrot(gui, string_literal("closecarrot"), &current->shown, V4b(gui->style.win_close,255));;
 	gui_pop_offset(gui);
 	current->base = sub(current->base, current->last);
 
@@ -231,28 +236,11 @@ void gui_pop_offset(gui_manager* gui) {
 	stack_pop(&current->offsets);
 }
 
-bool gui_carrot_text(guiid* id, gui_manager* gui, color c, bool* toggle, string text) {
+bool gui_carrot(gui_manager* gui, string text, bool* toggle, color c) {
 
-	_gui_window* current = vector_get(&gui->windows,gui->currentwin);
+	_gui_window* current = vector_get(&gui->windows, gui->currentwin);
 
-	bool result = gui_carrot(id, gui, c, toggle);
-	current->base = sub(current->base, current->last);
-
-	gui_push_offset(gui, V2(15.0f, 0.0f));
-	gui_text_line(gui, text, 0.0f, c);
-	gui_pop_offset(gui);
-
-	return result;
-}
-
-bool gui_carrot(guiid* _id, gui_manager* gui, color c, bool* toggle) {
-
-	if(*_id == 0) {
-		*_id = getid(gui);
-	}
-	guiid id = *_id;
-
-	_gui_window* current = vector_get(&gui->windows,gui->currentwin);
+	guiid id = get_guiid(current, text);
 
 	widget_carrot car;
 	car.c = c;
@@ -275,9 +263,13 @@ bool gui_carrot(guiid* _id, gui_manager* gui, color c, bool* toggle) {
 	}
 
 	car.active = *toggle;
+
 	current->last = gui_render_widget_carrot(gui, current, &car);
 	current->base = add(current->base, current->last);
-	gui_pop_offset(gui);
+
+	// gui_push_offset(gui, V2(15.0f, 0.0f));
+	// gui_text_line(gui, text, 0.0f, c);
+	// gui_pop_offset(gui);
 
 	return *toggle;
 }
