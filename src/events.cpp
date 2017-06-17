@@ -46,8 +46,8 @@ gui_input_state run_events(game_state* state) {
 		if(evt.type == event_mouse) {
 		
 			if(evt.mouse.flags & mouse_flag_move) {
-				ret.mousex = evt.mouse.x;
-				ret.mousey = evt.mouse.y;
+				ret.mousepos.x = evt.mouse.x;
+				ret.mousepos.y = evt.mouse.y;
 			}
 
 			if(evt.mouse.flags & mouse_flag_wheel) {

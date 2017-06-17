@@ -103,6 +103,7 @@ typedef r2_t<f32> r2;
 typedef r2_t<i32> ir2;
 typedef r2_t<u32> ur2;
 typedef	r2_t<u8>  br2;
+typedef r2_t<u16> sr2;
 template r2_t<f32>;
 template r2_t<i32>;
 template r2_t<u32>;
@@ -131,6 +132,8 @@ typedef v3_t<f32> v3;
 typedef v3_t<i32> iv3;
 typedef v3_t<u32> uv3;
 typedef v3_t<u8>  bv3;
+typedef bv3 	  color3;
+typedef v3 		  color3f;
 template v3_t<f32>;
 template v3_t<i32>;
 template v3_t<u32>;
@@ -406,6 +409,10 @@ template<typename T> inline bool inside(r2_t<T> r, T x, T y) {
 		   (y <= r.y + r.h);
 }
 template bool inside(r2, f32, f32);
+template<typename T> inline bool inside(r2_t<T> r, v2_t<T> v) {
+	return inside(r, v.x, v.y);
+}
+template bool inside(r2, v2);
 
 
 // TODO(max): more SIMD

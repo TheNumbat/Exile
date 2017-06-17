@@ -32,6 +32,7 @@ struct render_command {
 	texture_id 			texture = 0;
 	context_id 			context = 0;
 	m4 model;
+	u32 elements = 0;
 	union {
 		void* data = NULL;
 		mesh_3d*	m3d;
@@ -50,8 +51,8 @@ struct render_command_list {
 	m4 view, proj;
 };
 
-mesh_2d make_mesh_2d(allocator* alloc = NULL, u32 verts = 32);
-mesh_3d make_mesh_3d(allocator* alloc = NULL, u32 verts = 32);
+mesh_2d make_mesh_2d(u32 verts = 32, allocator* alloc = NULL);
+mesh_3d make_mesh_3d(u32 verts = 32, allocator* alloc = NULL);
 
 void destroy_mesh(mesh_2d* m);
 void destroy_mesh(mesh_3d* m);

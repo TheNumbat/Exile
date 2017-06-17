@@ -1,5 +1,5 @@
 
-mesh_2d make_mesh_2d(allocator* alloc, u32 verts) {
+mesh_2d make_mesh_2d(u32 verts, allocator* alloc) {
 
 	if(alloc == NULL) {
 		alloc = CURRENT_ALLOC();
@@ -115,7 +115,7 @@ f32 mesh_push_text_line(mesh_2d* m, asset* font, string text_utf8, v2 pos, f32 p
 	return scale * font->font.linedist;
 }
 
-mesh_3d make_mesh_3d(allocator* alloc, u32 verts) {
+mesh_3d make_mesh_3d(u32 verts, allocator* alloc) {
 
 	if(alloc == NULL) {
 		alloc = CURRENT_ALLOC();
@@ -145,6 +145,11 @@ render_command make_render_command(render_command_type type, void* data) {
 
 	ret.cmd = type;
 	ret.data = data;
+
+	if(type == render_mesh_2d) {
+		mesh_2d* m = (mesh_2d*)data;
+		ret.elements = m->elements.size * 3;
+	}
 
 	return ret;
 }

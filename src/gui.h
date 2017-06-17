@@ -2,55 +2,23 @@
 #pragma once
 
 typedef u32 guiid;
+typedef u16 gui_window_flags;
 
-struct widget_text {
-	f32 point = 0.0f;
-	color c;
-	string text;
-};
-
-struct widget_carrot {
-	color c;
-	bool active;
-};
-
-// TODO(max): this
-enum gui_window_style_flags : u16 {
-	gui_window_scroll 	= 1<<0,
-	gui_window_resize 	= 1<<1,
-	gui_window_move   	= 1<<2,
-	gui_window_collapse	= 1<<3,
-	gui_window_close 	= 1<<4,
-};
-
-struct _gui_window {
-	bool shown = true;
-
-	string title;
-	r2 rect;
-	v2 clickoffset;
-	stack<v2> offsets;
-	v2 base;
-	v2 last;
+enum _gui_window_flags : gui_window_flags {
+	win_noresize 	= 1<<0,
+	win_nomove		= 1<<1,
+	win_nohide		= 1<<2,
+	win_noinput 	= win_noresize | win_nomove | win_nohide,
 };
 
 struct gui_opengl {
-	context_id		context;
+	context_id			context;
 	shader_program_id 	shader;
-	texture_id 		texture;
-};
-
-struct gui_style {
-	bv3 win_back   = V3b(34, 43, 47);
-	bv3 win_top    = V3b(74, 79, 137);
-	bv3 win_close  = V3b(102, 105, 185);
-	f32 title_padding = 5.0f;
-	f32 line_padding  = 0.0f;
+	texture_id 			texture;
 };
 
 struct gui_input_state {
-	u16 mousex = 0;
-	u16 mousey = 0;
+	v2 mousepos;
 	u16 scroll = 0;
 
 	bool lclick = false;
@@ -59,48 +27,88 @@ struct gui_input_state {
 	bool ldbl = false;
 };
 
-struct gui_manager {
-	vector<_gui_window> windows;	// TODO(max): sort?
-	u32 currentwin = 0;
-	
-	guiid last_id = 2;
-	// 0 = invalid, 1 = none
-	guiid hot = 1, active = 1;
+union gui_state_data {
+	struct {
+		u16 u16_1, u16_2, u16_3, u16_4;
+	};
+	struct {
+		i16 i16_1, i16_2, i16_3, i16_4;
+	};
+	struct {
+		u32 u32_1, u32_2;
+	};
+	struct {
+		i32 i32_1, i32_2;
+	};
+	struct {
+		f32 f32_1, f32_2;
+	};
+	u64 u64_1;
+	i64 i64_1;
+	f64 f64_1;
+	bool b;
+	void* data = NULL;
+};
 
+struct gui_window_state {
+	r2 rect;
+	u16 flags 	= 0;
+	f32 opacity = 1.0f;
+	bool active = true;
+	stack<guiid> id_stack;
 	mesh_2d mesh;
+	v2 move_click_offset;
+	bool resizing = false;
+};
 
-	gui_opengl ogl;
-	gui_style  style;
-	gui_input_state  input;
+struct gui_style {
+	f32 gscale 			= 1.0f;	// global scale TODO(max)
+	f32 wscale			= 1.0f;	// widget scale TODO(max)
+	f32 font 			= 0.0f;	
+	f32 title_padding 	= 5.0f;
+	f32 line_padding 	= 3.0f;
 
-	f32 font_point 	= 0.0f;
-	asset* font 	= NULL;
+	f32 default_win_a 	= 0.75f;
+	v2 default_win_size = V2f(250, 400);
+	v2 min_win_size		= V2f(75, 50);
 
+	color3 win_back		= V3b(34, 43, 47);
+	color3 win_top		= V3b(74, 79, 137);
+	color3 win_close	= V3b(102, 105, 185);
+	color3 win_title 	= V3b(255, 255, 255);
+};
+
+struct gui_manager {
+
+	guiid active 		= 1; // 0 = invalid, 1 = none
+
+	gui_style 		style;
+	gui_input_state input;
+	gui_opengl 		ogl;
+
+	gui_window_state* current = NULL;
+	map<guiid, gui_window_state> 	window_state_data;
+	map<guiid, gui_state_data> 		state_data;
+
+	asset* font = NULL;
 	allocator* alloc = NULL;
 };
 
-gui_manager make_gui(allocator* alloc, opengl* ogl, asset* font);
+static gui_manager* ggui;
+
+guiid id_hash(string name, guiid seed);
+u32   guiid_map_hash(guiid id);
+
+gui_manager make_gui(asset* font, opengl* ogl, allocator* alloc);
 void destroy_gui(gui_manager* gui);
-guiid next_guiid(gui_manager* gui);
-guiid get_guiid(_gui_window* win, string text);
 
 void gui_begin_frame(gui_manager* gui, gui_input_state input);
-void gui_end_frame_render(opengl* ogl, gui_manager* gui);
+void gui_end_frame(opengl* ogl);
 
-// TODO(max): handle collisions with ID strings?
-bool gui_window(gui_manager* gui, string title, r2 rect, f32 opacity);
-void gui_text_line(gui_manager* gui, string str, f32 point = 0.0f, color c = V4b(255, 255, 255, 255));
-void gui_text_line_fex(gui_manager* gui, string fmt, f32 point, color c, ...);
-void gui_text_line_fexv(gui_manager* gui, string fmt, f32 point, color c, va_list args);
-void gui_text_line_f(gui_manager* gui, string fmt, ...);
-bool gui_carrot(gui_manager* gui, string text, bool* toggle, color c = V4b(255, 255, 255, 255));
+bool gui_begin(string name, r2 first_size = R2f(40,40,0,0), f32 first_alpha = 0, gui_window_flags flags = 0);
+bool gui_carrot_toggle(string name, bool initial = false, color c = V4b(255, 255, 255, 255),  v2 pos = V2f(0,0), bool* toggleme = NULL);
 
-void gui_push_offset(gui_manager* gui, v2 offset);
-void gui_pop_offset(gui_manager* gui);
-
-void gui_render_window(gui_manager* gui, _gui_window* win);
-v2 gui_render_widget_text(gui_manager* gui, _gui_window* win, widget_text* text);
-v2 gui_render_widget_carrot(gui_manager* gui, _gui_window* win, widget_carrot* carrot);
-
-void push_windowhead(gui_manager* gui, _gui_window* win);
-void push_windowbody(gui_manager* gui, _gui_window* win, f32 opacity);
+void push_windowhead(gui_window_state* win);
+void push_windowbody(gui_window_state* win);
+void push_text(gui_window_state* win, v2 pos, string text, f32 point, color c);
+void push_carrot(gui_window_state* win, v2 pos, bool active, color c);

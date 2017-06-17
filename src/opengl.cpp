@@ -454,11 +454,15 @@ void ogl_render_command_list(opengl* ogl, render_command_list* rcl) {
 
 		if(cmd->cmd == render_mesh_2d) {
 
+			ogl_send_mesh_2d(ogl, cmd->m2d, cmd->context);
+
 			glDisable(GL_DEPTH_TEST);
 
-			glDrawElements(GL_TRIANGLES, cmd->m2d->elements.size * 3, GL_UNSIGNED_INT, 0);
+			glDrawElements(GL_TRIANGLES, cmd->elements * 3, GL_UNSIGNED_INT, 0);
 
 		} else if (cmd->cmd == render_mesh_3d) {
+
+			ogl_send_mesh_3d(ogl, cmd->m3d, cmd->context);
 
 			glEnable(GL_DEPTH_TEST);
 

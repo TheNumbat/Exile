@@ -18,6 +18,19 @@ bool strcmp(string first, string second) {
 	return first == second;
 }
 
+u32 hash_strings(string one, string two) {
+
+    u32 hash = 5381;
+
+    for(u32 i = 0; i < one.len; i++)
+        hash = ((hash << 5) + hash) ^ one.c_str[i]; /* hash * 33 + c */
+
+    for(u32 i = 0; i < two.len; i++)
+        hash = ((hash << 5) + hash) ^ two.c_str[i]; /* hash * 33 + c */
+
+    return hash;
+}
+
 // from http://www.cse.yorku.ca/~oz/hash.html
 u32 hash_string(string str) {
 

@@ -71,7 +71,7 @@ extern "C" game_state* start_up(platform_api* api) {
 
 	LOG_DEBUG("Setting up GUI");
 	LOG_PUSH_CONTEXT_L("gui");
-	state->gui = make_gui(&state->default_platform_allocator, &state->ogl, get_asset(&state->default_store, string_literal("font14")));
+	state->gui = make_gui(get_asset(&state->default_store, string_literal("font14")), &state->ogl, &state->default_platform_allocator);
 	LOG_POP_CONTEXT();
 
 	LOG_INFO("Done with startup!");
@@ -93,7 +93,7 @@ extern "C" bool main_loop(game_state* state) {
 
 		render_debug_gui(state);
 
-		gui_end_frame_render(&state->ogl, &state->gui);
+		gui_end_frame(&state->ogl);
 
 	} POP_ALLOC();
 	RESET_ARENA(&state->transient_arena);

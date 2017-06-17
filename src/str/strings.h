@@ -8,6 +8,7 @@ struct string {
 };
 struct allocator;
 
+u32 hash_strings(string one, string two);
 u32 hash_string(string str);
 bool operator==(string first, string second);
 bool strcmp(string first, string second);
