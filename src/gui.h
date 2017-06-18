@@ -57,13 +57,17 @@ union gui_state_data {
 struct gui_window_state {
 	r2 rect;
 	v2 title_size;
-	u16 flags 	= 0;
+	v2 move_click_offset;
+
 	f32 opacity = 1.0f;
+	u16 flags 	= 0;
+	
 	bool active = true;
+	bool resizing = false;
+
+	stack<v2> offset_stack;
 	stack<u32> id_hash_stack;
 	mesh_2d mesh;
-	v2 move_click_offset;
-	bool resizing = false;
 };
 
 struct gui_style {
@@ -77,7 +81,7 @@ struct gui_style {
 	v2 default_win_size = V2f(250, 400);
 	v2 min_win_size		= V2f(75, 50);
 
-	v2 default_carrot_size = V2(10.0f, 10.0f);
+	v2 default_carrot_size = V2f(10, 10);
 
 	color3 win_back		= V3b(34, 43, 47);
 	color3 win_top		= V3b(74, 79, 137);

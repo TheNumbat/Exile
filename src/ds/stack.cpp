@@ -25,7 +25,8 @@ stack<T> make_stack(u32 capacity, allocator* a) {
 	return ret;
 }
 
-template<typename T> stack<T> make_stack_copy(stack<T> src) {
+template<typename T> 
+stack<T> make_stack_copy(stack<T> src) {
 	
 	stack<T> ret;
 
@@ -42,6 +43,12 @@ stack<T> make_stack(u32 capacity) {
 	ret.contents = make_vector<T>(capacity);
 
 	return ret;
+}
+
+template<typename T>
+void clear_stack(stack<T>* s) {
+
+	vector_clear(&s->contents);
 }
 
 template<typename T>

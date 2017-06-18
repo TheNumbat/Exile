@@ -32,6 +32,7 @@ void destroy_gui(gui_manager* gui) {
 
 	FORMAP(gui->window_state_data,
 		destroy_stack(&it->value.id_hash_stack);
+		destroy_stack(&it->value.offset_stack);
 		destroy_mesh(&it->value.mesh);
 	)
 
@@ -68,6 +69,8 @@ void gui_end_frame(opengl* ogl) {
 	destroy_command_list(&rcl);
 
 	FORMAP(ggui->window_state_data,
+		clear_stack(&it->value.offset_stack);
+		clear_stack(&it->value.id_hash_stack);
 		clear_mesh(&it->value.mesh);
 	)
 }
@@ -95,13 +98,15 @@ bool gui_begin(string name, r2 first_size, f32 first_alpha, gui_window_flags fla
 
 		ns.mesh = make_mesh_2d(32, ggui->alloc);
 		ns.id_hash_stack = make_stack<u32>(16, ggui->alloc);
+		ns.offset_stack = make_stack<v2>(16, ggui->alloc);
 		ns.title_size = size_text(ggui->font, name, ggui->style.font);
-
-		stack_push(&ns.id_hash_stack, guiid_hash(id));
 		ns.flags = flags;
 
 		window = map_insert(&ggui->window_state_data, id, ns);
 	}
+
+	stack_push(&window->id_hash_stack, guiid_hash(id));
+	stack_push(&window->offset_stack, V2(5.0f, ggui->style.gscale * ggui->style.font + ggui->style.title_padding + 5.0f));
 
 	ggui->current = window;
 	push_windowhead(window);

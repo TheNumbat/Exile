@@ -1,7 +1,7 @@
 
 #pragma once
 
-// don't take addresses of elements in a map, they will be invalidated if the map grows
+// don't store addresses of elements in a map, they will be invalidated if the map grows
 // (unless you know the map will never grow)
 
 const f32 MAP_MAX_LOAD_FACTOR = 0.9f;

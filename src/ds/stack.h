@@ -9,6 +9,7 @@ template<typename T> stack<T> make_stack(u32 capacity = 0);
 template<typename T> stack<T> make_stack_copy(stack<T> src);
 template<typename T> stack<T> make_stack_copy(stack<T> src, allocator* a);
 template<typename T> void destroy_stack(stack<T>* s);
+template<typename T> void clear_stack(stack<T>* s);
 
 template<typename T> void stack_push(stack<T>* s, T value);
 template<typename T> T stack_pop(stack<T>* s);
