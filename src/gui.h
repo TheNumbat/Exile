@@ -56,6 +56,7 @@ union gui_state_data {
 
 struct gui_window_state {
 	r2 rect;
+	v2 title_size;
 	u16 flags 	= 0;
 	f32 opacity = 1.0f;
 	bool active = true;

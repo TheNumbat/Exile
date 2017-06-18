@@ -34,6 +34,28 @@ asset* get_asset(asset_store* as, string name) {
 	return a;
 }
 
+
+v2 size_text(asset* font, string text_utf8, f32 point) {
+
+	v2 ret;
+
+	f32 scale = point / font->font.point;
+	if(point == 0.0f) {
+		scale = 1.0f;
+	}
+
+	u32 index = 0;
+	while(u32 codepoint = get_next_codepoint(text_utf8, &index)) {
+
+		glyph_data glyph = get_glyph_data(font, codepoint);
+		ret.x += scale * glyph.advance;
+	}
+
+	ret.y = scale * font->font.linedist;
+	return ret;
+}
+
+
 glyph_data get_glyph_data(asset_store* as, string font, u32 codepoint) {
 
 	asset* a = get_asset(as, font);

@@ -95,6 +95,8 @@ bool gui_begin(string name, r2 first_size, f32 first_alpha, gui_window_flags fla
 
 		ns.mesh = make_mesh_2d(32, ggui->alloc);
 		ns.id_hash_stack = make_stack<u32>(16, ggui->alloc);
+		ns.title_size = size_text(ggui->font, name, ggui->style.font);
+
 		stack_push(&ns.id_hash_stack, guiid_hash(id));
 		ns.flags = flags;
 
@@ -158,6 +160,9 @@ bool gui_begin(string name, r2 first_size, f32 first_alpha, gui_window_flags fla
 			v2 wh = sub(ggui->input.mousepos, window->rect.xy);
 			if(wh.x < ggui->style.min_win_size.x) {
 				wh.x = ggui->style.min_win_size.x;
+			}
+			if(wh.x < window->title_size.x + 40.0f) {
+				wh.x = window->title_size.x + 40.0f;
 			}
 			if(wh.y < ggui->style.min_win_size.y) {
 				wh.y = ggui->style.min_win_size.y;
