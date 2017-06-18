@@ -67,15 +67,17 @@ struct gui_window_state {
 };
 
 struct gui_style {
-	f32 gscale 			= 1.0f;	// global scale TODO(max)
-	f32 wscale			= 1.0f;	// widget scale TODO(max)
+	f32 gscale 			= 1.0f;	// global scale 
 	f32 font 			= 0.0f;	
 	f32 title_padding 	= 5.0f;
 	f32 line_padding 	= 3.0f;
+	v2 carrot_padding	= V2(10.0f, 5.0f);
 
 	f32 default_win_a 	= 0.75f;
 	v2 default_win_size = V2f(250, 400);
 	v2 min_win_size		= V2f(75, 50);
+
+	v2 default_carrot_size = V2(10.0f, 10.0f);
 
 	color3 win_back		= V3b(34, 43, 47);
 	color3 win_top		= V3b(74, 79, 137);

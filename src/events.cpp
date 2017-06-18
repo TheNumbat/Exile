@@ -27,6 +27,7 @@ gui_input_state run_events(game_state* state) {
 
 		platform_event evt = queue_pop(&state->events.event_queue);
 
+		// Exiting
 		if(evt.type == event_window && evt.window.op == window_close) {
 			state->running = false;
 		}
@@ -34,6 +35,7 @@ gui_input_state run_events(game_state* state) {
 			state->running = false;
 		}
 
+		// Window Resize
 		if(evt.type == event_window && evt.window.op == window_resized) {
 			global_state->window_w = evt.window.x;
 			global_state->window_h = evt.window.y;
@@ -43,6 +45,15 @@ gui_input_state run_events(game_state* state) {
 			global_state->window_h = evt.window.y;
 		}
 
+		// Debug stuff
+		if(evt.type == event_key && evt.key.code == key_plus) {
+			global_state->gui.style.gscale += 0.5f;
+		}
+		if(evt.type == event_key && evt.key.code == key_minus) {
+			global_state->gui.style.gscale -= 0.5f;
+		}
+
+		// GUI: mouse
 		if(evt.type == event_mouse) {
 		
 			if(evt.mouse.flags & mouse_flag_move) {

@@ -402,6 +402,11 @@ template<typename T> inline r2_t<T> sub(r2_t<T> l, r2_t<T> r) {
 }
 template r2 sub(r2, r2);
 
+template<typename T> inline r2_t<T> mult(r2_t<T> r, T f) {
+	return R2(r.x, r.y, r.w * f, r.h * f);
+}
+template r2 mult(r2, f32);
+
 template<typename T> inline bool inside(r2_t<T> r, T x, T y) {
 	return (x >= r.x) &&
 		   (x <= r.x + r.w) &&
