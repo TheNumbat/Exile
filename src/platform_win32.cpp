@@ -1230,7 +1230,7 @@ platform_error platform_create_window(platform_window* window, string title, u32
 	}
 
 	// TODO(max): vsync settings
-	wglSwapIntervalEXT(0);
+	wglSwapIntervalEXT(1);
 
 	return ret;
 }

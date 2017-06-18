@@ -4,12 +4,13 @@ For overall : see #high_level_systems
 immediate to do:
 
 	UI
-		think about how we want to cache windows/widgets - it's basically retained mode right now
 		window layering/sorting/input occlusion
 		widget+title clipping based on window size (just use clip rect?)
-		window rendering based on flags
-		text wrapping based on window size, etc.
+		text wrapping
+		window scroll
 		lots of different widgets (see dear imgui)
+		font scale
+		font point range - automatic switch based on scale
 		start profiler
 
 	asset
