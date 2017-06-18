@@ -1,8 +1,12 @@
 
 #pragma once
 
-typedef u32 guiid;
 typedef u16 gui_window_flags;
+
+struct guiid {
+	u32 base;
+	string name;
+};
 
 enum _gui_window_flags : gui_window_flags {
 	win_noresize 	= 1<<0,
@@ -55,7 +59,7 @@ struct gui_window_state {
 	u16 flags 	= 0;
 	f32 opacity = 1.0f;
 	bool active = true;
-	stack<guiid> id_stack;
+	stack<u32> id_hash_stack;
 	mesh_2d mesh;
 	v2 move_click_offset;
 	bool resizing = false;
@@ -80,7 +84,9 @@ struct gui_style {
 
 struct gui_manager {
 
-	guiid active 		= 1; // 0 = invalid, 1 = none
+	// TODO(max): this will break on hash collision. The IDs are otherwise abstracted
+	// through the guiid maps, but not here. 
+	i64 hash_active; // -2 = invalid, -1 = none
 
 	gui_style 		style;
 	gui_input_state input;
@@ -96,9 +102,6 @@ struct gui_manager {
 
 static gui_manager* ggui;
 
-guiid id_hash(string name, guiid seed);
-u32   guiid_map_hash(guiid id);
-
 gui_manager make_gui(asset* font, opengl* ogl, allocator* alloc);
 void destroy_gui(gui_manager* gui);
 
@@ -112,3 +115,5 @@ void push_windowhead(gui_window_state* win);
 void push_windowbody(gui_window_state* win);
 void push_text(gui_window_state* win, v2 pos, string text, f32 point, color c);
 void push_carrot(gui_window_state* win, v2 pos, bool active, color c);
+
+bool operator==(guiid l, guiid r);

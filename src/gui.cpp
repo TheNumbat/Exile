@@ -1,12 +1,12 @@
 
-u32 guiid_map_hash(guiid id) {
-	return id;
+u32 guiid_hash(guiid id) {
+
+	u32 hash = hash_string(id.name);
+	return hash ^ id.base;
 }
 
-guiid id_hash(string name, guiid seed) {
-
-	u32 hash = hash_string(name);
-	return hash ^ seed;
+bool operator==(guiid l, guiid r) {
+	return l.base == r.base && l.name == r.name;
 }
 
 gui_manager make_gui(asset* font, opengl* ogl, allocator* alloc) {
@@ -19,8 +19,8 @@ gui_manager make_gui(asset* font, opengl* ogl, allocator* alloc) {
 	ret.ogl.texture = ogl_add_texture_from_font(ogl, font);
 	ret.ogl.shader 	= ogl_add_program(ogl, string_literal("shaders/gui.v"), string_literal("shaders/gui.f"), &ogl_uniforms_gui);
 
-	ret.window_state_data = make_map<guiid, gui_window_state>(32, alloc, &guiid_map_hash);
-	ret.state_data = make_map<guiid, gui_state_data>(128, alloc, &guiid_map_hash);
+	ret.window_state_data = make_map<guiid, gui_window_state>(32, alloc, &guiid_hash);
+	ret.state_data = make_map<guiid, gui_state_data>(128, alloc, &guiid_hash);
 	
 	ret.font = font;
 	ret.style.font = font->font.point;
@@ -31,7 +31,7 @@ gui_manager make_gui(asset* font, opengl* ogl, allocator* alloc) {
 void destroy_gui(gui_manager* gui) {
 
 	FORMAP(gui->window_state_data,
-		destroy_stack(&it->value.id_stack);
+		destroy_stack(&it->value.id_hash_stack);
 		destroy_mesh(&it->value.mesh);
 	)
 
@@ -48,9 +48,9 @@ void gui_begin_frame(gui_manager* gui, gui_input_state input) {
 void gui_end_frame(opengl* ogl) {
 
 	if(!ggui->input.lclick && !ggui->input.rclick && !ggui->input.mclick && !ggui->input.ldbl) {
-		ggui->active = 1;
-	} else if(ggui->active == 1) {
-		ggui->active = 0;
+		ggui->hash_active = -1;
+	} else if(ggui->hash_active == -1) {
+		ggui->hash_active = -2;
 	}
 
 	render_command_list rcl = make_command_list();
@@ -74,7 +74,7 @@ void gui_end_frame(opengl* ogl) {
 
 bool gui_begin(string name, r2 first_size, f32 first_alpha, gui_window_flags flags) {
 
-	guiid id = hash_string(name);
+	guiid id {0, name};
 
 	gui_window_state* window = map_try_get(&ggui->window_state_data, id);
 
@@ -94,8 +94,8 @@ bool gui_begin(string name, r2 first_size, f32 first_alpha, gui_window_flags fla
 		}
 
 		ns.mesh = make_mesh_2d(32, ggui->alloc);
-		ns.id_stack = make_stack<guiid>(16, ggui->alloc);
-		stack_push(&ns.id_stack, id);
+		ns.id_hash_stack = make_stack<u32>(16, ggui->alloc);
+		stack_push(&ns.id_hash_stack, guiid_hash(id));
 		ns.flags = flags;
 
 		window = map_insert(&ggui->window_state_data, id, ns);
@@ -115,10 +115,10 @@ bool gui_begin(string name, r2 first_size, f32 first_alpha, gui_window_flags fla
 
 		if(inside(top_rect, ggui->input.mousepos)) {
 
-			if(ggui->active == 1 && ggui->input.ldbl) {
+			if(ggui->hash_active == -1 && ggui->input.ldbl) {
 				
 				window->active = !window->active;
-				ggui->active = id;
+				ggui->hash_active = guiid_hash(id);
 				window->resizing = false;
 			}
 		}
@@ -127,9 +127,9 @@ bool gui_begin(string name, r2 first_size, f32 first_alpha, gui_window_flags fla
 
 		if(inside(top_rect, ggui->input.mousepos)) {
 
-			if(ggui->active == 1 && ggui->input.lclick) {
+			if(ggui->hash_active == -1 && ggui->input.lclick) {
 
-				ggui->active = id;
+				ggui->hash_active = guiid_hash(id);
 				window->move_click_offset = sub(ggui->input.mousepos, window->rect.xy);
 				window->resizing = false;
 			}
@@ -140,9 +140,9 @@ bool gui_begin(string name, r2 first_size, f32 first_alpha, gui_window_flags fla
 		r2 resize_rect = R2(sub(add(window->rect.xy, window->rect.wh), V2f(15, 15)), V2f(15, 15));
 		if(inside(resize_rect, ggui->input.mousepos)) {
 
-			if(ggui->active == 1 && ggui->input.lclick) {
+			if(ggui->hash_active == -1 && ggui->input.lclick) {
 
-				ggui->active = id;
+				ggui->hash_active = guiid_hash(id);
 				window->resizing = true;
 			}
 		}
@@ -152,7 +152,7 @@ bool gui_begin(string name, r2 first_size, f32 first_alpha, gui_window_flags fla
 		push_windowbody(window);
 	}
 
-	if(ggui->active == id) {
+	if(ggui->hash_active == guiid_hash(id)) {
 		if(window->resizing) {
 
 			v2 wh = sub(ggui->input.mousepos, window->rect.xy);
@@ -175,7 +175,7 @@ bool gui_begin(string name, r2 first_size, f32 first_alpha, gui_window_flags fla
 
 bool gui_carrot_toggle(string name, bool initial, color c, v2 pos, bool* toggleme) {
 
-	guiid id = id_hash(name, *stack_top(&ggui->current->id_stack));
+	guiid id {*stack_top(&ggui->current->id_hash_stack), name};
 
 	gui_state_data* data = map_try_get(&ggui->state_data, id);
 
@@ -194,10 +194,10 @@ bool gui_carrot_toggle(string name, bool initial, color c, v2 pos, bool* togglem
 
 	if(inside(R2(pos, V2f(10, 10)), ggui->input.mousepos)) {
 
-		if(ggui->active == 1 && (ggui->input.lclick || ggui->input.ldbl)) {
+		if(ggui->hash_active == -1 && (ggui->input.lclick || ggui->input.ldbl)) {
 
 			data->b = !data->b;
-			ggui->active = id;
+			ggui->hash_active = guiid_hash(id);
 
 			if(toggleme) {
 				*toggleme = !*toggleme;
