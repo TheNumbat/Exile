@@ -89,11 +89,17 @@ struct gui_style {
 	color3 win_title 	= V3b(255, 255, 255);
 };
 
+enum gui_active_state {
+	gui_active,
+	gui_none,
+	gui_invalid,
+	gui_captured,
+};
+
 struct gui_manager {
 
-	// TODO(max): this will break on hash collision. The IDs are otherwise abstracted
-	// through the guiid maps, but not here. 
-	i64 hash_active; // -2 = invalid, -1 = none
+	guiid active_id;
+	gui_active_state active = gui_none;
 
 	gui_style 		style;
 	gui_input_state input;

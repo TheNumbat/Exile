@@ -49,9 +49,12 @@ void gui_begin_frame(gui_manager* gui, gui_input_state input) {
 void gui_end_frame(opengl* ogl) {
 
 	if(!ggui->input.lclick && !ggui->input.rclick && !ggui->input.mclick && !ggui->input.ldbl) {
-		ggui->hash_active = -1;
-	} else if(ggui->hash_active == -1) {
-		ggui->hash_active = -2;
+		if(ggui->active != gui_captured) {
+			ggui->active_id = {};
+			ggui->active = gui_none;
+		}
+	} else if(ggui->active == gui_none) {
+		ggui->active = gui_invalid;
 	}
 
 	render_command_list rcl = make_command_list();
@@ -125,10 +128,11 @@ bool gui_begin(string name, r2 first_size, f32 first_alpha, gui_window_flags fla
 
 		if(inside(top_rect, ggui->input.mousepos)) {
 
-			if(ggui->hash_active == -1 && ggui->input.ldbl) {
+			if(ggui->active == gui_none && ggui->input.ldbl) {
 				
 				window->active = !window->active;
-				ggui->hash_active = guiid_hash(id);
+				ggui->active_id = id;
+				ggui->active = gui_active;
 				window->resizing = false;
 			}
 		}
@@ -137,9 +141,10 @@ bool gui_begin(string name, r2 first_size, f32 first_alpha, gui_window_flags fla
 
 		if(inside(top_rect, ggui->input.mousepos)) {
 
-			if(ggui->hash_active == -1 && ggui->input.lclick) {
+			if(ggui->active == gui_none && ggui->input.lclick) {
 
-				ggui->hash_active = guiid_hash(id);
+				ggui->active_id = id;
+				ggui->active = gui_active;
 				window->move_click_offset = sub(ggui->input.mousepos, real_rect.xy);
 				window->resizing = false;
 			}
@@ -150,9 +155,10 @@ bool gui_begin(string name, r2 first_size, f32 first_alpha, gui_window_flags fla
 		r2 resize_rect = R2(sub(add(real_rect.xy, real_rect.wh), V2f(15, 15)), V2f(15, 15));
 		if(inside(resize_rect, ggui->input.mousepos)) {
 
-			if(ggui->hash_active == -1 && ggui->input.lclick) {
+			if(ggui->active == gui_none && ggui->input.lclick) {
 
-				ggui->hash_active = guiid_hash(id);
+				ggui->active_id = id;
+				ggui->active = gui_active;
 				window->resizing = true;
 			}
 		}
@@ -162,7 +168,7 @@ bool gui_begin(string name, r2 first_size, f32 first_alpha, gui_window_flags fla
 		push_windowbody(window);
 	}
 
-	if(ggui->hash_active == guiid_hash(id)) {
+	if(ggui->active_id == id) {
 		if(window->resizing) {
 
 			v2 wh = sub(ggui->input.mousepos, real_rect.xy);
@@ -209,10 +215,11 @@ bool gui_carrot_toggle(string name, bool initial, color c, v2 pos, bool* togglem
 	size = mult(size, ggui->style.gscale);
 	if(inside(R2(pos, size), ggui->input.mousepos)) {
 
-		if(ggui->hash_active == -1 && (ggui->input.lclick || ggui->input.ldbl)) {
+		if(ggui->active == gui_none && (ggui->input.lclick || ggui->input.ldbl)) {
 
 			data->b = !data->b;
-			ggui->hash_active = guiid_hash(id);
+			ggui->active_id = id;
+			ggui->active = gui_active;
 
 			if(toggleme) {
 				*toggleme = !*toggleme;

@@ -5,24 +5,24 @@ image {
 font {
 	name : font24,
 	point : 24,
-	width : 196,
-	height : 196,
+	width : 128,
+	height : 128,
 	file : font.ttf,
 	range : 32, 126,
 }
 font {
 	name : font40,
 	point : 40,
-	width : 196,
-	height : 196,
+	width : 256,
+	height : 256,
 	file : font.ttf,
 	range : 32, 126,
 }
 font {
 	name : font14,
 	point : 14,
-	width : 196,
-	height : 196,
+	width : 128,
+	height : 128,
 	file : font.ttf,
 	range : 32, 126,
 }
