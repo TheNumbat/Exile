@@ -16,9 +16,9 @@ enum _gui_window_flags : gui_window_flags {
 };
 
 struct gui_opengl {
-	context_id			context;
-	shader_program_id 	shader;
-	texture_id 			texture;
+	context_id			context 	 = 0;
+	shader_program_id 	shader 		 = 0;
+	texture_id			current_font = 0;
 };
 
 struct gui_input_state {
@@ -73,7 +73,7 @@ struct gui_window_state {
 
 struct gui_style {
 	f32 gscale 			= 1.0f;	// global scale 
-	f32 font 			= 0.0f;	
+	f32 font 			= 0.0f;	// default font size - may use different actual font based on gscale * font
 	f32 title_padding 	= 5.0f;
 	f32 line_padding 	= 3.0f;
 	v2 carrot_padding	= V2(10.0f, 5.0f);
@@ -97,6 +97,11 @@ enum gui_active_state {
 	gui_captured,
 };
 
+struct gui_font {
+	asset* font;
+	texture_id texture;
+};
+
 struct gui_manager {
 
 	guiid active_id;
@@ -112,18 +117,24 @@ struct gui_manager {
 										// get to >4 billion changes, right?
 	map<guiid, gui_window_state> 	window_state_data;
 	map<guiid, gui_state_data> 		state_data;
+	gui_font* current_font = NULL; // same here (see current)
+	vector<gui_font> fonts;
 
-	asset* font = NULL;
 	allocator* alloc = NULL;
 };
 
 static gui_manager* ggui;
 
-gui_manager make_gui(asset* font, opengl* ogl, allocator* alloc);
+// the functions you call every frame use ggui instead of passing a gui_manager pointer
+// (except) begin_frame, as this sets up the global pointer
+
+gui_manager make_gui(opengl* ogl, allocator* alloc);
 void destroy_gui(gui_manager* gui);
+void gui_add_font(opengl* ogl, gui_manager* gui, asset* font); // the first font you add is the default size
 
 void gui_begin_frame(gui_manager* gui, gui_input_state input);
 void gui_end_frame(opengl* ogl);
+void gui_select_best_font_scale();
 
 bool gui_occluded();
 bool gui_begin(string name, r2 first_size = R2f(40,40,0,0), f32 first_alpha = 0, gui_window_flags flags = 0);

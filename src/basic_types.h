@@ -1,5 +1,6 @@
 
 #include <stdint.h>
+#include <float.h>
 
 typedef uint8_t 	u8;
 typedef int8_t 		i8;

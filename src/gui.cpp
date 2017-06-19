@@ -9,21 +9,18 @@ bool operator==(guiid l, guiid r) {
 	return l.base == r.base && l.name == r.name;
 }
 
-gui_manager make_gui(asset* font, opengl* ogl, allocator* alloc) {
+gui_manager make_gui(opengl* ogl, allocator* alloc) {
 
 	gui_manager ret;
 
 	ret.alloc = alloc;
 
 	ret.ogl.context = ogl_add_draw_context(ogl, &ogl_mesh_2d_attribs);
-	ret.ogl.texture = ogl_add_texture_from_font(ogl, font);
 	ret.ogl.shader 	= ogl_add_program(ogl, string_literal("shaders/gui.v"), string_literal("shaders/gui.f"), &ogl_uniforms_gui);
 
 	ret.window_state_data = make_map<guiid, gui_window_state>(32, alloc, &guiid_hash);
 	ret.state_data = make_map<guiid, gui_state_data>(128, alloc, &guiid_hash);
-	
-	ret.font = font;
-	ret.style.font = font->font.point;
+	ret.fonts = make_vector<gui_font>(4, alloc);
 
 	return ret;
 }
@@ -38,12 +35,45 @@ void destroy_gui(gui_manager* gui) {
 
 	destroy_map(&gui->window_state_data);
 	destroy_map(&gui->state_data);
+	destroy_vector(&gui->fonts);
+}
+
+void gui_add_font(opengl* ogl, gui_manager* gui, asset* font) {
+
+	if(vector_empty(&gui->fonts)) {
+		gui->style.font = font->font.point;
+	}
+
+	gui_font f;
+	f.texture = ogl_add_texture_from_font(ogl, font);
+	f.font = font;
+	vector_push(&gui->fonts, f);
+}
+
+void gui_select_best_font_scale() {
+
+	gui_font* f = NULL;
+
+	f32 defl = ggui->style.font * ggui->style.gscale;
+	f32 min_off = FLT_MAX;
+	FORVEC(ggui->fonts,
+		f32 off = absf(defl - it->font->font.point);
+		if(off < min_off) {
+			min_off = off;
+			f = it;
+		}
+	)
+
+	ggui->current_font = f;
+	ggui->ogl.current_font = f->texture;
 }
 
 void gui_begin_frame(gui_manager* gui, gui_input_state input) {
 
 	ggui = gui;
 	gui->input = input;
+
+	gui_select_best_font_scale();
 }
 
 void gui_end_frame(opengl* ogl) {
@@ -62,7 +92,7 @@ void gui_end_frame(opengl* ogl) {
 
 		render_command cmd = make_render_command(render_mesh_2d, &it->value.mesh, it->value.z);
 		cmd.shader  = ggui->ogl.shader;
-		cmd.texture = ggui->ogl.texture;
+		cmd.texture = ggui->ogl.current_font;
 		cmd.context = ggui->ogl.context;
 		render_add_command(&rcl, cmd);
 	)
@@ -118,7 +148,7 @@ bool gui_begin(string name, r2 first_size, f32 first_alpha, gui_window_flags fla
 		ns.mesh = make_mesh_2d(32, ggui->alloc);
 		ns.id_hash_stack = make_stack<u32>(16, ggui->alloc);
 		ns.offset_stack = make_stack<v2>(16, ggui->alloc);
-		ns.title_size = size_text(ggui->font, name, ggui->style.font);
+		ns.title_size = size_text(ggui->current_font->font, name, ggui->style.font);
 		ns.flags = flags;
 		ns.z = ggui->last_z++;
 
@@ -279,7 +309,7 @@ void push_carrot(gui_window_state* win, v2 pos, bool active, color c) {
 
 void push_text(gui_window_state* win, v2 pos, string text, f32 point, color c) {
 
-	mesh_push_text_line(&win->mesh, ggui->font, text, pos, point * ggui->style.gscale, c);
+	mesh_push_text_line(&win->mesh, ggui->current_font->font, text, pos, point * ggui->style.gscale, c);
 }
 
 void push_windowhead(gui_window_state* win) {

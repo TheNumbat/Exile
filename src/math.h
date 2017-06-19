@@ -34,13 +34,13 @@ inline i32 _abs(i32 value) {
 }
 #define abs(v) _abs(v)
 
-inline f32 _fabs(f32 value) {
+inline f32 absf_(f32 value) {
 	return value > 0.0f ? value : -value;	
 }
-inline f64 _fabs(f64 value) {
+inline f64 absf_(f64 value) {
 	return value > 0.0f ? value : -value;	
 }
-#define fabs(v) _fabs(v)
+#define absf(v) absf_(v)
 
 inline f32 _roundf(f32 value) {
 	return roundf(value);

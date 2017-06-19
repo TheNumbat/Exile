@@ -4,7 +4,6 @@ For overall : see #high_level_systems
 immediate to do:
 
 	UI
-		window layering/sorting/input occlusion
 		widget+title clipping based on window size (just use clip rect?)
 		text wrapping
 		window scroll

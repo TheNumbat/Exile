@@ -5,8 +5,8 @@ image {
 font {
 	name : font24,
 	point : 24,
-	width : 128,
-	height : 128,
+	width : 256,
+	height : 256,
 	file : font.ttf,
 	range : 32, 126,
 }
