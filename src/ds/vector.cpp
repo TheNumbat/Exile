@@ -28,6 +28,41 @@ T* vector_find(vector<T>* v, T val) {
 }
 
 template<typename T>
+u32 vector_partition(vector<T>* v, u32 low, u32 high) {
+
+	T pivot = v->memory[high];
+	u32 i = low;
+
+	for(u32 j = low; j < high; j++) {
+		if(pivot < v->memory[j]) {
+
+			i++;
+			if(i != j) {
+				T temp = v->memory[i];
+				v->memory[i] = v->memory[j];
+				v->memory[j] = temp;
+			}
+		}
+	}
+	return i;
+}
+
+template<typename T> 
+void vector_qsort(vector<T>* v, u32 low, u32 high, bool first) {
+		
+	if(first) {
+		high = v->size - 1;
+	}
+
+	if(low < high) {
+
+		u32 part = vector_partition(v, low, high);
+		vector_qsort(v, low, part, false);
+		vector_qsort(v, part + 1, high, false);
+	}
+}
+
+template<typename T>
 vector<T> make_vector_copy(vector<T> source, allocator* a) {
 
 	vector<T> ret = make_vector<T>(source.capacity, a);

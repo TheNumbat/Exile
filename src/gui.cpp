@@ -60,7 +60,7 @@ void gui_end_frame(opengl* ogl) {
 	render_command_list rcl = make_command_list();
 	FORMAP(ggui->window_state_data,
 
-		render_command cmd = make_render_command(render_mesh_2d, &it->value.mesh);
+		render_command cmd = make_render_command(render_mesh_2d, &it->value.mesh, it->value.z);
 		cmd.shader  = ggui->ogl.shader;
 		cmd.texture = ggui->ogl.texture;
 		cmd.context = ggui->ogl.context;
@@ -68,6 +68,8 @@ void gui_end_frame(opengl* ogl) {
 	)
 
 	rcl.proj = ortho(0, (f32)global_state->window_w, (f32)global_state->window_h, 0, -1, 1);
+	sort_render_commands(&rcl);
+
 	ogl_render_command_list(ogl, &rcl);
 	destroy_command_list(&rcl);
 
@@ -78,9 +80,23 @@ void gui_end_frame(opengl* ogl) {
 	)
 }
 
+bool gui_occluded() {
+	FORMAP(ggui->window_state_data,
+		if(&it->value != ggui->current && it->value.z > ggui->current->z) {
+			if(it->value.active && inside(it->value.rect, ggui->input.mousepos)) {
+				return true;
+			} else if(inside(R2(it->value.rect.xy, V2(it->value.rect.w, ggui->style.gscale * ggui->style.font + ggui->style.title_padding)), ggui->input.mousepos)) {
+				return true;
+			}
+		}
+	)
+	return false;
+}
+
 bool gui_begin(string name, r2 first_size, f32 first_alpha, gui_window_flags flags) {
 
-	guiid id {0, name};
+	guiid id;
+	id.name = name;
 
 	gui_window_state* window = map_try_get(&ggui->window_state_data, id);
 
@@ -104,6 +120,7 @@ bool gui_begin(string name, r2 first_size, f32 first_alpha, gui_window_flags fla
 		ns.offset_stack = make_stack<v2>(16, ggui->alloc);
 		ns.title_size = size_text(ggui->font, name, ggui->style.font);
 		ns.flags = flags;
+		ns.z = ggui->last_z++;
 
 		window = map_insert(&ggui->window_state_data, id, ns);
 	}
@@ -121,16 +138,18 @@ bool gui_begin(string name, r2 first_size, f32 first_alpha, gui_window_flags fla
 
 	f32 carrot_x_diff = ggui->style.default_carrot_size.x * ggui->style.gscale + ggui->style.carrot_padding.x;
 	r2 top_rect = R2(real_rect.xy, V2(real_rect.w - carrot_x_diff, ggui->style.gscale * ggui->style.font + ggui->style.title_padding));	
+	bool occluded = gui_occluded();
 	if(!(window->flags & win_nohide)) {
 
 		v2 carrot_pos = add(real_rect.xy, V2(real_rect.w - carrot_x_diff, ((ggui->style.font + ggui->style.title_padding) * ggui->style.gscale / 2.0f) - (ggui->style.gscale * ggui->style.default_carrot_size.y / 2.0f)));
 		gui_carrot_toggle(string_literal("#CLOSE"), window->active, V4b(ggui->style.win_close, 255), carrot_pos, &window->active);
 
-		if(inside(top_rect, ggui->input.mousepos)) {
+		if(!occluded && inside(top_rect, ggui->input.mousepos)) {
 
 			if(ggui->active == gui_none && ggui->input.ldbl) {
 				
 				window->active = !window->active;
+				window->z = ggui->last_z++;
 				ggui->active_id = id;
 				ggui->active = gui_active;
 				window->resizing = false;
@@ -139,10 +158,11 @@ bool gui_begin(string name, r2 first_size, f32 first_alpha, gui_window_flags fla
 	}
 	if(!(window->flags & win_nomove)) {
 
-		if(inside(top_rect, ggui->input.mousepos)) {
+		if(!occluded && inside(top_rect, ggui->input.mousepos)) {
 
 			if(ggui->active == gui_none && ggui->input.lclick) {
 
+				window->z = ggui->last_z++;
 				ggui->active_id = id;
 				ggui->active = gui_active;
 				window->move_click_offset = sub(ggui->input.mousepos, real_rect.xy);
@@ -153,10 +173,11 @@ bool gui_begin(string name, r2 first_size, f32 first_alpha, gui_window_flags fla
 	if(!(window->flags & win_noresize)) {
 
 		r2 resize_rect = R2(sub(add(real_rect.xy, real_rect.wh), V2f(15, 15)), V2f(15, 15));
-		if(inside(resize_rect, ggui->input.mousepos)) {
+		if(!occluded && inside(resize_rect, ggui->input.mousepos)) {
 
 			if(ggui->active == gui_none && ggui->input.lclick) {
 
+				window->z = ggui->last_z++;
 				ggui->active_id = id;
 				ggui->active = gui_active;
 				window->resizing = true;
@@ -194,7 +215,9 @@ bool gui_begin(string name, r2 first_size, f32 first_alpha, gui_window_flags fla
 
 bool gui_carrot_toggle(string name, bool initial, color c, v2 pos, bool* toggleme) {
 
-	guiid id {*stack_top(&ggui->current->id_hash_stack), name};
+	guiid id;
+	id.base = *stack_top(&ggui->current->id_hash_stack);
+	id.name = name;
 
 	gui_state_data* data = map_try_get(&ggui->state_data, id);
 
@@ -213,7 +236,7 @@ bool gui_carrot_toggle(string name, bool initial, color c, v2 pos, bool* togglem
 
 	v2 size = ggui->style.default_carrot_size;
 	size = mult(size, ggui->style.gscale);
-	if(inside(R2(pos, size), ggui->input.mousepos)) {
+	if(!gui_occluded() && inside(R2(pos, size), ggui->input.mousepos)) {
 
 		if(ggui->active == gui_none && (ggui->input.lclick || ggui->input.ldbl)) {
 

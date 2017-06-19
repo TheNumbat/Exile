@@ -30,6 +30,9 @@ template<typename T> T* vector_front(vector<T>* v);
 template<typename T> T* vector_back(vector<T>* v);
 template<typename T> T* vector_find(vector<T>* v, T val); // linear search
 
+template<typename T> void vector_qsort(vector<T>* v, u32 low = 0, u32 high = 0, bool first = true); // quick sort
+template<typename T> u32 vector_partition(vector<T>* v, u32 low, u32 high);
+
 template<typename T> u32 vector_len(vector<T>* v);
 template<typename T> u32 vector_capacity(vector<T>* v);
 template<typename T> bool vector_empty(vector<T>* v);

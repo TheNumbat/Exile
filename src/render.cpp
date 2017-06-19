@@ -139,12 +139,13 @@ void destroy_mesh(mesh_3d* m) {
 	m->alloc = NULL;	
 }
 
-render_command make_render_command(render_command_type type, void* data) {
+render_command make_render_command(render_command_type type, void* data, u32 key) {
 
 	render_command ret;
 
 	ret.cmd = type;
 	ret.data = data;
+	ret.sort_key = key;
 
 	if(type == render_mesh_2d) {
 		mesh_2d* m = (mesh_2d*)data;
@@ -152,6 +153,10 @@ render_command make_render_command(render_command_type type, void* data) {
 	}
 
 	return ret;
+}
+
+bool operator<(render_command first, render_command second) {
+	return first.sort_key < second.sort_key;
 }
 
 render_command_list make_command_list(allocator* alloc, u32 cmds) {
@@ -178,6 +183,11 @@ void destroy_command_list(render_command_list* rcl) {
 void render_add_command(render_command_list* rcl, render_command rc) {
 
 	vector_push(&rcl->commands, rc);
+}
+
+void sort_render_commands(render_command_list* rcl) {
+
+	vector_qsort(&rcl->commands);
 }
 
 void clear_mesh(mesh_2d* m) {

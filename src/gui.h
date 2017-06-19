@@ -4,7 +4,7 @@
 typedef u16 gui_window_flags;
 
 struct guiid {
-	u32 base;
+	u32 base = 0;
 	string name;
 };
 
@@ -61,6 +61,7 @@ struct gui_window_state {
 
 	f32 opacity = 1.0f;
 	u16 flags 	= 0;
+	u32 z 		= 0; 
 	
 	bool active = true;
 	bool resizing = false;
@@ -106,7 +107,9 @@ struct gui_manager {
 	gui_opengl 		ogl;
 
 	gui_window_state* current = NULL;
+	u32 last_z = 0;
 	map<guiid, gui_window_state> 	window_state_data;
+	
 	map<guiid, gui_state_data> 		state_data;
 
 	asset* font = NULL;
@@ -121,6 +124,7 @@ void destroy_gui(gui_manager* gui);
 void gui_begin_frame(gui_manager* gui, gui_input_state input);
 void gui_end_frame(opengl* ogl);
 
+bool gui_occluded();
 bool gui_begin(string name, r2 first_size = R2f(40,40,0,0), f32 first_alpha = 0, gui_window_flags flags = 0);
 bool gui_carrot_toggle(string name, bool initial = false, color c = V4b(255, 255, 255, 255),  v2 pos = V2f(0,0), bool* toggleme = NULL);
 

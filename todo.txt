@@ -9,7 +9,6 @@ immediate to do:
 		text wrapping
 		window scroll
 		lots of different widgets (see dear imgui)
-		font scale
 		font point range - automatic switch based on scale
 		start profiler
 

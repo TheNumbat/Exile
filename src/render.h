@@ -33,6 +33,7 @@ struct render_command {
 	context_id 			context = 0;
 	m4 model;
 	u32 elements = 0;
+	u32 sort_key = 0;
 	union {
 		void* data = NULL;
 		mesh_3d*	m3d;
@@ -63,8 +64,10 @@ f32 mesh_push_text_line(mesh_2d* m, asset* font, string text_utf8, v2 pos, f32 p
 void mesh_push_rect(mesh_2d* m, r2 rect, color c);
 void mesh_push_cutrect(mesh_2d* m, r2 r, f32 round, color c);
 
-render_command make_render_command(render_command_type type, void* data);
+render_command make_render_command(render_command_type type, void* data, u32 key = 0);
+bool operator<(render_command first, render_command second);
 
 render_command_list make_command_list(allocator* alloc = NULL, u32 cmds = 8);
 void destroy_command_list(render_command_list* rcl);
 void render_add_command(render_command_list* rcl, render_command rc);
+void sort_render_commands(render_command_list* rcl);
