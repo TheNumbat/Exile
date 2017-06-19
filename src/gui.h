@@ -126,7 +126,7 @@ struct gui_manager {
 static gui_manager* ggui;
 
 // the functions you call every frame use ggui instead of passing a gui_manager pointer
-// (except) begin_frame, as this sets up the global pointer
+// (except begin_frame, as this sets up the global pointer)
 
 gui_manager make_gui(opengl* ogl, allocator* alloc);
 void destroy_gui(gui_manager* gui);
