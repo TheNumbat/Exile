@@ -102,7 +102,11 @@ extern "C" bool main_loop(game_state* state) {
 	RESET_ARENA(&state->transient_arena);
 
 	state->api->platform_swap_buffers(&state->window);
-	
+
+#ifdef _DEBUG
+	ogl_try_reload_programs(&state->ogl);
+#endif
+
 	return state->running;
 }
 

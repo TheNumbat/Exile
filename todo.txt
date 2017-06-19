@@ -31,7 +31,6 @@ immediate to do:
 		linux platform layer
 
 	OpenGl
-		auto-reload shader code
 		start AZDO style (bindless?)
 		improve shader spec API
 		3D

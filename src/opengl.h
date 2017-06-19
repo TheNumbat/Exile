@@ -178,6 +178,7 @@ void destroy_opengl(opengl* ogl);
 
 shader_program_id ogl_add_program(opengl* ogl, string v_path, string f_path, void (*set_uniforms)(shader_program*, render_command*, render_command_list*));
 shader_program* ogl_select_program(opengl* ogl, shader_program_id id);
+void ogl_try_reload_programs(opengl* ogl);
 void ogl_set_uniforms(shader_program* prog, render_command* rc, render_command_list* rcl);
 
 texture_id ogl_add_texture(opengl* ogl, asset_store* as, string name, texture_wrap wrap = wrap_repeat, bool pixelated = false);
@@ -198,7 +199,7 @@ bool refresh_source(shader_source* source);
 
 shader_program make_program(string vert, string frag, void (*set_uniforms)(shader_program*, render_command*, render_command_list*), allocator* a);
 void compile_program(shader_program* prog);
-void refresh_program(shader_program* prog);
+bool refresh_program(shader_program* prog);
 void destroy_program(shader_program* prog);
 
 texture make_texture(texture_wrap wrap, bool pixelated);

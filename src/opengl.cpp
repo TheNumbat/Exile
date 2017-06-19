@@ -88,7 +88,7 @@ void compile_program(shader_program* prog) {
 	glDeleteShader(fragment);
 }
 
-void refresh_program(shader_program* prog) {
+bool refresh_program(shader_program* prog) {
 
 	if(refresh_source(&prog->vertex) || refresh_source(&prog->fragment)) {
 
@@ -96,7 +96,11 @@ void refresh_program(shader_program* prog) {
 		prog->handle = glCreateProgram();
 
 		compile_program(prog);
+
+		return true;
 	}
+
+	return false;
 }
 
 void destroy_program(shader_program* prog) {
@@ -105,6 +109,14 @@ void destroy_program(shader_program* prog) {
 	destroy_source(&prog->fragment);
 
 	glDeleteProgram(prog->handle);
+}
+
+void ogl_try_reload_programs(opengl* ogl) {
+	FORMAP(ogl->programs,
+		if(refresh_program(&it->value)) {
+			LOG_INFO_F("Reloaded program %u with files %s, %s", it->key, it->value.vertex.path.c_str, it->value.fragment.path.c_str);
+		}
+	)
 }
 
 opengl make_opengl(allocator* a) {

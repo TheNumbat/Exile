@@ -17,13 +17,9 @@
             "variants":
             [
                 {
-                    "name": "Run",
-                    "shell_cmd": "run",
-                    "encoding": "UTF-16LE"
-                },
-                {
                     "name": "Debug",
-                    "shell_cmd": "dev"
+                    "shell_cmd": "dev",
+                    "encoding": "UTF-8"
                 },
                 {
                     "name": "Platform",
