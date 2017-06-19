@@ -13,6 +13,8 @@ enum _gui_window_flags : gui_window_flags {
 	win_nomove		= 1<<1,
 	win_nohide		= 1<<2,
 	win_noinput 	= win_noresize | win_nomove | win_nohide,
+	win_nohead		= 1<<3 | win_nohide | win_nomove,
+	win_noback		= 1<<4 | win_noresize,
 };
 
 struct gui_opengl {

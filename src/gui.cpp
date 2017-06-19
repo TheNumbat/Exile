@@ -159,17 +159,23 @@ bool gui_begin(string name, r2 first_size, f32 first_alpha, gui_window_flags fla
 	stack_push(&window->offset_stack, V2(5.0f, ggui->style.gscale * ggui->style.font + ggui->style.title_padding + 5.0f));
 
 	ggui->current = window;
-	push_windowhead(window);
+	if((window->flags & win_nohead) != win_nohead) {
+		push_windowhead(window);
 
-	v2 title_pos = add(window->rect.xy, V2(15.0f, 0.0f));
-	push_text(window, title_pos, name, ggui->style.font, V4b(ggui->style.win_title, 255));
+		v2 title_pos = add(window->rect.xy, V2(15.0f, 0.0f));
+		push_text(window, title_pos, name, ggui->style.font, V4b(ggui->style.win_title, 255));
+	}
+
+	if((window->flags & win_noback) != win_noback && window->active) {
+		push_windowbody(window);
+	}
 
 	r2 real_rect = mult(window->rect, ggui->style.gscale);
 
 	f32 carrot_x_diff = ggui->style.default_carrot_size.x * ggui->style.gscale + ggui->style.carrot_padding.x;
 	r2 top_rect = R2(real_rect.xy, V2(real_rect.w - carrot_x_diff, ggui->style.gscale * ggui->style.font + ggui->style.title_padding));	
 	bool occluded = gui_occluded();
-	if(!(window->flags & win_nohide)) {
+	if((window->flags & win_nohide) != win_nohide) {
 
 		v2 carrot_pos = add(real_rect.xy, V2(real_rect.w - carrot_x_diff, ((ggui->style.font + ggui->style.title_padding) * ggui->style.gscale / 2.0f) - (ggui->style.gscale * ggui->style.default_carrot_size.y / 2.0f)));
 		gui_carrot_toggle(string_literal("#CLOSE"), window->active, V4b(ggui->style.win_close, 255), carrot_pos, &window->active);
@@ -186,7 +192,7 @@ bool gui_begin(string name, r2 first_size, f32 first_alpha, gui_window_flags fla
 			}
 		}
 	}
-	if(!(window->flags & win_nomove)) {
+	if((window->flags & win_nomove) != win_nomove) {
 
 		if(!occluded && inside(top_rect, ggui->input.mousepos)) {
 
@@ -200,7 +206,7 @@ bool gui_begin(string name, r2 first_size, f32 first_alpha, gui_window_flags fla
 			}
 		}
 	}
-	if(!(window->flags & win_noresize)) {
+	if((window->flags & win_noresize) != win_noresize) {
 
 		r2 resize_rect = R2(sub(add(real_rect.xy, real_rect.wh), V2f(15, 15)), V2f(15, 15));
 		if(!occluded && inside(resize_rect, ggui->input.mousepos)) {
@@ -212,10 +218,6 @@ bool gui_begin(string name, r2 first_size, f32 first_alpha, gui_window_flags fla
 				window->resizing = true;
 			}
 		}
-	}
-
-	if(window->active) {
-		push_windowbody(window);
 	}
 
 	if(ggui->active_id == id) {
@@ -340,19 +342,38 @@ void push_windowbody(gui_window_state* win) {
 	f32 pt = ggui->style.font + ggui->style.title_padding;
 	pt *= ggui->style.gscale;
 
-	vector_push(&win->mesh.verticies, V2(r.x, r.y + pt));
-	vector_push(&win->mesh.verticies, V2(r.x, r.y + r.h));
-	vector_push(&win->mesh.verticies, V2(r.x + r.w - 10.0f, r.y + r.h));
-	vector_push(&win->mesh.verticies, V2(r.x + r.w, r.y + r.h - 10.0f));
-	vector_push(&win->mesh.verticies, V2(r.x + r.w, r.y + pt));
+	if((win->flags & win_noresize) == win_noresize) {
 
-	FOR(5) vector_push(&win->mesh.texCoords, V3f(0,0,0));
+		vector_push(&win->mesh.verticies, V2(r.x, r.y + pt));
+		vector_push(&win->mesh.verticies, V2(r.x, r.y + r.h));
+		vector_push(&win->mesh.verticies, V2(r.x + r.w, r.y + r.h));
+		vector_push(&win->mesh.verticies, V2(r.x + r.w, r.y + pt));
 
-	colorf cf = color_to_f(V4b(ggui->style.win_back, win->opacity * 255.0f));
+		FOR(4) vector_push(&win->mesh.texCoords, V3f(0,0,0));
 
-	FOR(5) vector_push(&win->mesh.colors, cf);
+		colorf cf = color_to_f(V4b(ggui->style.win_back, win->opacity * 255.0f));
 
-	vector_push(&win->mesh.elements, V3u(idx, idx + 1, idx + 2));
-	vector_push(&win->mesh.elements, V3u(idx, idx + 2, idx + 3));
-	vector_push(&win->mesh.elements, V3u(idx, idx + 3, idx + 4));
+		FOR(4) vector_push(&win->mesh.colors, cf);
+
+		vector_push(&win->mesh.elements, V3u(idx, idx + 1, idx + 2));
+		vector_push(&win->mesh.elements, V3u(idx, idx + 2, idx + 3));
+
+	} else {
+
+		vector_push(&win->mesh.verticies, V2(r.x, r.y + pt));
+		vector_push(&win->mesh.verticies, V2(r.x, r.y + r.h));
+		vector_push(&win->mesh.verticies, V2(r.x + r.w - 10.0f, r.y + r.h));
+		vector_push(&win->mesh.verticies, V2(r.x + r.w, r.y + r.h - 10.0f));
+		vector_push(&win->mesh.verticies, V2(r.x + r.w, r.y + pt));
+
+		FOR(5) vector_push(&win->mesh.texCoords, V3f(0,0,0));
+
+		colorf cf = color_to_f(V4b(ggui->style.win_back, win->opacity * 255.0f));
+
+		FOR(5) vector_push(&win->mesh.colors, cf);
+
+		vector_push(&win->mesh.elements, V3u(idx, idx + 1, idx + 2));
+		vector_push(&win->mesh.elements, V3u(idx, idx + 2, idx + 3));
+		vector_push(&win->mesh.elements, V3u(idx, idx + 3, idx + 4));
+	}
 }
