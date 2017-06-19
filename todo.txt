@@ -4,11 +4,13 @@ For overall : see #high_level_systems
 immediate to do:
 
 	UI
-		widget+title clipping based on window size (just use clip rect?)
+		widget clipping
 		text wrapping
 		window scroll
-		lots of different widgets (see dear imgui)
+		lots of widgets types
+		logger UI window
 		start profiler
+			lots to do here...
 
 	asset
 		asset texture atlases
@@ -20,28 +22,37 @@ immediate to do:
 		color/format specifications in string
 		extra kerning pairs
 
-	better allocator names - don't just copy
+	allocators
+		better names, force specific names for DS allocators
 
 	platform
 		wgl extension testing/loading
+		file change watcher/callback system
+		linux platform layer
 
 	OpenGl
+		auto-reload shader code
+		start AZDO style (bindless?)
 		improve shader spec API
-		2D
-			texture atlas - fonts (texture array?)
 		3D
-			texture atlas/array representation/store
-			chunk meshing, texturing
-			deferred mesh re/building
+			texture arrays?
 			models & animation
 		rename ogl stuff to "renderer" to facilitate different backends
 
+	chunks
+		chunk meshing, texturing
+		deferred mesh re/building
+		LOD
+		storage representation (compression?)
+		paging
+		world storage (3D chunks?)
+
 	metaprogramming - struct introspection?
 		replace vsnprintf
+		easy UI show with introspection
+		profiler call injection
 
 	Make concurrent vector/array/stack/hash map 
 		use for allocator stacks, logging contexts, job/logging queue
 		basically wherever we use a mutex right now.
 	
-	Profiling/debugging/visualization
-
