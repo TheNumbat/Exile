@@ -96,9 +96,11 @@ bool load_lib() {
 	// we just spinlock here waiting for the file to unlock
 	// TODO(max): cap infinite loop
 	platform_error err;
+	u32 itr = 0;
 	do {
+		itr++;
 		err = platform_copy_file(dll_path, temp_dll_path, true);
-	} while(!err.good);
+	} while(!err.good && itr < 1000);
 
 	err = platform_load_library(&game_dll, temp_dll_path);
 	if(!err.good) {

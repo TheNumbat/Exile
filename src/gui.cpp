@@ -177,7 +177,6 @@ bool gui_begin(string name, r2 first_size, f32 first_alpha, gui_window_flags fla
 
 			if(ggui->active == gui_none && ggui->input.lclick) {
 
-				window->z = ggui->last_z++;
 				ggui->active_id = id;
 				ggui->active = gui_active;
 				window->resizing = true;

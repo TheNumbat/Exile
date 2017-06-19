@@ -106,10 +106,11 @@ struct gui_manager {
 	gui_input_state input;
 	gui_opengl 		ogl;
 
-	gui_window_state* current = NULL;
-	u32 last_z = 0;
+	gui_window_state* current = NULL;	// we take a pointer into a map but it's OK because we know nothing will be added while this is in use
+	u32 last_z = 0;						// this only counts up on window layer changes so we don't have
+										// to iterate through the map to check z levels. You'll never 
+										// get to >4 billion changes, right?
 	map<guiid, gui_window_state> 	window_state_data;
-	
 	map<guiid, gui_state_data> 		state_data;
 
 	asset* font = NULL;

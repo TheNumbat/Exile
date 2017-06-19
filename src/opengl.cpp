@@ -25,7 +25,6 @@ void load_source(shader_source* source) {
 	source->source = make_string(len, source->alloc);
 	global_state->api->platform_read_file(&source_file, (void*)source->source.c_str, len - 1);
 
-	// TODO(max): do preprocessing somewhere around here
 	source->source.c_str[len] = 0;
 
 	global_state->api->platform_close_file(&source_file);
