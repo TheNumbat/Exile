@@ -100,7 +100,7 @@ bool load_lib() {
 	do {
 		itr++;
 		err = platform_copy_file(dll_path, temp_dll_path, true);
-	} while(!err.good && itr < 1000);
+	} while(err.error == PLATFORM_SHARING_ERROR && itr < 10000);
 
 	err = platform_load_library(&game_dll, temp_dll_path);
 	if(!err.good) {

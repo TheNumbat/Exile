@@ -6,6 +6,8 @@
 
 // API Structures (mark opaque/transparent)
 
+u32 PLATFORM_SHARING_ERROR = 32;
+
 struct platform_window {
 	// Transparent
 	string title;
@@ -16,13 +18,6 @@ struct platform_window {
 	HDC device_context					= {};
 	PIXELFORMATDESCRIPTOR pixel_format 	= {};
 	HGLRC gl_temp, gl_context		   	= {};
-};
-
-struct platform_error {
-	// Transparent
-	bool good	 = true;
-	// Transparent - printf %i able
-	DWORD error  = 0;		
 };
 
 struct platform_dll {

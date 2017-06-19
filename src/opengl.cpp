@@ -14,7 +14,12 @@ shader_source make_source(string path, allocator* a) {
 void load_source(shader_source* source) {
 
 	platform_file source_file;
-	platform_error err = global_state->api->platform_create_file(&source_file, source->path, open_file_existing);
+	platform_error err;
+	u32 itr = 0;
+	do {
+		itr++;
+		err = global_state->api->platform_create_file(&source_file, source->path, open_file_existing);
+	} while (err.error == PLATFORM_SHARING_ERROR && itr < 10000);
 	if(!err.good) {
 		LOG_ERR_F("Failed to load shader source %s", source->path.c_str);
 		global_state->api->platform_close_file(&source_file);
@@ -40,7 +45,13 @@ void destroy_source(shader_source* source) {
 bool refresh_source(shader_source* source) {
 
 	platform_file_attributes new_attrib;
-	global_state->api->platform_get_file_attributes(&new_attrib, source->path);	
+	
+	platform_error err;
+	u32 itr = 0;
+	do {
+		itr++;
+		err = global_state->api->platform_get_file_attributes(&new_attrib, source->path);	
+	} while(err.error == PLATFORM_SHARING_ERROR && itr < 10000);
 
 	if(global_state->api->platform_test_file_written(&source->last_attrib, &new_attrib)) {
 

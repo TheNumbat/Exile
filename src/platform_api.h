@@ -3,7 +3,6 @@
 // this file is for both the platform layer and the game - this defines the interface for the game
 
 struct platform_window;
-struct platform_error;
 struct platform_dll;
 struct platform_file_attributes;
 struct platform_thread_id;
@@ -14,6 +13,13 @@ struct platform_semaphore_state;
 struct platform_mutex_state;
 struct platform_thread_join_state;
 struct platform_file;
+
+struct platform_error {
+	bool good = true;
+	u32 error = 0;
+};
+
+extern u32 PLATFORM_SHARING_ERROR;
 
 bool operator==(platform_thread_id& first, platform_thread_id& second);
 
