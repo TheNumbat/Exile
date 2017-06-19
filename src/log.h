@@ -1,8 +1,6 @@
 
 #pragma once
 
-// TODO(max): test flushing every frame instead of every message
-
 // currently, each message enqueue allocates one 512-byte arena allocation to hold
 // a copy of the message, the thread context stack, and the thread name. 
 // the arena is freed after the message is output.

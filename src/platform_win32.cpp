@@ -56,8 +56,13 @@ platform_api platform_build_api() {
 	ret.platform_file_size				= &platform_file_size;
 	ret.platform_get_glproc				= &platform_get_glproc;
 	ret.platform_keydown				= &platform_keydown;
+	ret.platform_is_debugging			= &platform_is_debugging;
 
 	return ret;
+}
+
+bool platform_is_debugging() {
+	return IsDebuggerPresent() == TRUE;
 }
 
 platform_error platform_write_stdout(string str) {

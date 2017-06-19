@@ -149,15 +149,18 @@ void logger_msgf(logger* log, string fmt, log_level level, code_context context,
 		global_state->api->platform_release_mutex(&log->queue_mutex);
 		global_state->api->platform_signal_semaphore(&log->logging_semaphore, 1);
 
-#ifdef BREAK_ERROR
 		if(level == log_error) {
-			__debugbreak();
-			global_state->api->platform_wait_semaphore(data->logging_semaphore, -1);
-		}
+			if(global_state->api->platform_is_debugging()) {
+				__debugbreak();	
+			}
+#ifdef BLOCK_ON_ERROR
+			global_state->api->platform_join_thread(&log->logging_thread, -1);
 #endif
+		}
 		if(level == log_fatal) {
-			// we will never return
-			__debugbreak();
+			if(global_state->api->platform_is_debugging()) {
+				__debugbreak();	
+			}
 			global_state->api->platform_join_thread(&log->logging_thread, -1);
 		}
 
@@ -186,14 +189,18 @@ void logger_msg(logger* log, string msg, log_level level, code_context context) 
 		global_state->api->platform_release_mutex(&log->queue_mutex);
 		global_state->api->platform_signal_semaphore(&log->logging_semaphore, 1);
 
-#ifdef BREAK_ERROR
 		if(level == log_error) {
-			__debugbreak();
-		}
+			if(global_state->api->platform_is_debugging()) {
+				__debugbreak();	
+			}
+#ifdef BLOCK_ON_ERROR
+			global_state->api->platform_join_thread(&log->logging_thread, -1);
 #endif
+		}
 		if(level == log_fatal) {
-			// we will never return
-			__debugbreak();
+			if(global_state->api->platform_is_debugging()) {
+				__debugbreak();	
+			}
 			global_state->api->platform_join_thread(&log->logging_thread, -1);
 		}
 

@@ -1,6 +1,8 @@
 
 #pragma once
 
+bool platform_is_debugging();
+
 platform_error platform_create_window(platform_window* window, string title, u32 width, u32 height);
 platform_error platform_destroy_window(platform_window* window);
 platform_error platform_get_window_size(platform_window* window, i32* w, i32* h);

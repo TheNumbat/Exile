@@ -234,6 +234,7 @@ enum _platform_thread_join_state {
 };
 
 struct platform_api {
+	bool 			(*platform_is_debugging)()																					= NULL;
 	void 			(*platform_set_queue_callback)(void (*enqueue)(void* queue_param, platform_event evt), void* queue_param)	= NULL;
 	void 			(*platform_queue_messages)(platform_window* window)															= NULL;
 	bool 		    (*platform_keydown)(platform_keycode key)																	= NULL;
