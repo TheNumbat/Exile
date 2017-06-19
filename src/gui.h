@@ -100,8 +100,11 @@ enum gui_active_state {
 };
 
 struct gui_font {
-	asset* font;
-	texture_id texture;
+	asset_store* store = NULL;
+	string asset_name;
+
+	asset* font = NULL;
+	texture_id texture = 0;
 };
 
 struct gui_manager {
@@ -119,6 +122,7 @@ struct gui_manager {
 										// get to >4 billion changes, right?
 	map<guiid, gui_window_state> 	window_state_data;
 	map<guiid, gui_state_data> 		state_data;
+
 	gui_font* current_font = NULL; // same here (see current)
 	vector<gui_font> fonts;
 
@@ -132,7 +136,10 @@ static gui_manager* ggui;
 
 gui_manager make_gui(opengl* ogl, allocator* alloc);
 void destroy_gui(gui_manager* gui);
-void gui_add_font(opengl* ogl, gui_manager* gui, asset* font); // the first font you add is the default size
+
+// call these before or after a frame
+void gui_add_font(opengl* ogl, gui_manager* gui, string asset_name, asset_store* store); // the first font you add is the default size
+void gui_reload_fonts(opengl* ogl, gui_manager* gui);
 
 void gui_begin_frame(gui_manager* gui, gui_input_state input);
 void gui_end_frame(opengl* ogl);

@@ -44,6 +44,17 @@ void destroy_map(map<K,V>* m) {
 }
 
 template<typename K, typename V>
+void map_clear(map<K,V>* m) {
+	
+	FORVEC(m->contents,
+		it->occupied = false;
+	)
+	vector_clear(&m->contents);
+	m->size = 0;
+	m->max_probe = 0;
+}
+
+template<typename K, typename V>
 void map_grow_rehash(map<K,V>* m) {	
 
 	vector<map_element<K,V>> temp = make_vector_copy(m->contents);

@@ -37,6 +37,7 @@ template<typename K, typename V> void destroy_map(map<K,V>* m);
 template<typename K, typename V> V* map_insert(map<K,V>* m, K key, V value, bool grow_if_needed = true);
 template<typename K, typename V> V* map_insert_if_unique(map<K,V>* m, K key, V value, bool grow_if_needed = true);
 template<typename K, typename V> void map_erase(map<K,V>* m, K key);
+template<typename K, typename V> void map_clear(map<K,V>* m);
 
 template<typename K, typename V> V* map_get(map<K,V>* m, K key);
 template<typename K, typename V> V* map_try_get(map<K,V>* m, K key);

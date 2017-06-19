@@ -88,7 +88,12 @@ struct asset {
 
 struct asset_store {
 	map<string, asset> 	assets;
+
 	void* 				store = NULL;
+	
+	string path;
+	platform_file_attributes last;
+
 	allocator* 			alloc;
 };
 
@@ -96,6 +101,7 @@ asset_store make_asset_store(allocator* a); // allocations are done in load
 void destroy_asset_store(asset_store* as);
 
 void load_asset_store(asset_store* as, string path);
+bool try_reload_asset_store(asset_store* as);
 asset* get_asset(asset_store* as, string name);
 
 glyph_data get_glyph_data(asset_store* as, string font, u32 codepoint);

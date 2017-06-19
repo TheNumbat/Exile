@@ -34,7 +34,6 @@ asset* get_asset(asset_store* as, string name) {
 	return a;
 }
 
-
 v2 size_text(asset* font, string text_utf8, f32 point) {
 
 	v2 ret;
@@ -54,7 +53,6 @@ v2 size_text(asset* font, string text_utf8, f32 point) {
 	ret.y = scale * font->font.linedist;
 	return ret;
 }
-
 
 glyph_data get_glyph_data(asset_store* as, string font, u32 codepoint) {
 
@@ -95,22 +93,59 @@ glyph_data get_glyph_data(asset* font, u32 codepoint) {
 	}
 }
 
-void load_asset_store(asset_store* am, string path) {
+bool try_reload_asset_store(asset_store* as) {
+
+	platform_file_attributes new_attrib;
+	
+	global_state->api->platform_get_file_attributes(&new_attrib, as->path);	
+	
+	if(global_state->api->platform_test_file_written(&as->last, &new_attrib)) {
+
+		PUSH_ALLOC(as->alloc) {
+
+			free(as->store);
+			as->store = NULL;
+
+		} POP_ALLOC();
+
+		map_clear(&as->assets);
+
+		load_asset_store(as, as->path);
+
+		LOG_INFO_F("Reloaded asset store from %s", as->path.c_str);
+
+		return true;
+	}
+
+	return false;
+}
+
+void load_asset_store(asset_store* as, string path) {
 
 	platform_file store;
-	platform_error err = global_state->api->platform_create_file(&store, path, open_file_existing);
+
+	u32 itr = 0;
+	platform_error err;
+	do {
+		itr++;
+		err = global_state->api->platform_create_file(&store, path, open_file_existing);
+	} while(err.error == PLATFORM_SHARING_ERROR && itr < 100000);
+
 	if(!err.good) {
 		LOG_ERR_F("Failed to open asset store %s, error %u", path.c_str, err.error);
 		global_state->api->platform_close_file(&store);
 		return;
 	}
 
+	as->path = path;
+	global_state->api->platform_get_file_attributes(&as->last, path);
+
 	u32 store_size = global_state->api->platform_file_size(&store);
 
-	PUSH_ALLOC(am->alloc) {
+	PUSH_ALLOC(as->alloc) {
 
-		am->store = malloc(store_size);
-		u8* store_mem = (u8*)am->store;
+		as->store = malloc(store_size);
+		u8* store_mem = (u8*)as->store;
 
 		global_state->api->platform_read_file(&store, (void*)store_mem, store_size);
 		global_state->api->platform_close_file(&store);
@@ -118,7 +153,7 @@ void load_asset_store(asset_store* am, string path) {
 		asset_file_header* header = (asset_file_header*)store_mem;
 		file_asset_header* current_asset = (file_asset_header*)(store_mem + sizeof(asset_file_header));
 
-		am->assets = make_map<string,asset>(header->num_assets, am->alloc, &hash_string);
+		as->assets = make_map<string,asset>(header->num_assets, as->alloc, &hash_string);
 
 		for(u32 i = 0; i < header->num_assets; i++) {
 
@@ -135,7 +170,7 @@ void load_asset_store(asset_store* am, string path) {
 				a.bitmap.height = bitmap->height;
 				a.bitmap.mem = (u8*)(current_asset) + sizeof(file_asset_header) + sizeof(file_asset_bitmap);
 
-				map_insert(&am->assets, a.name, a);
+				map_insert(&as->assets, a.name, a);
 
 				current_asset = (file_asset_header*)((u8*)current_asset + current_asset->next);
 
@@ -157,13 +192,13 @@ void load_asset_store(asset_store* am, string path) {
 
 				a.font.mem = (u8*)font + sizeof(file_asset_font) + (font->num_glyphs * sizeof(file_glyph_data));
 
-				map_insert(&am->assets, a.name, a);
+				map_insert(&as->assets, a.name, a);
 
 				current_asset = (file_asset_header*)((u8*)current_asset + current_asset->next);				
 
 			} else {
 
-				LOG_ERR("Only bitmaps for now!");
+				LOG_ERR("Only bitmaps and fonts for now!");
 				break;
 			}
 		}

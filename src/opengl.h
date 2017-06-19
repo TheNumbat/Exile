@@ -185,6 +185,7 @@ texture_id ogl_add_texture(opengl* ogl, asset_store* as, string name, texture_wr
 texture* ogl_select_texture(opengl* ogl, texture_id id);
 texture_id ogl_add_texture_from_font(opengl* ogl, asset_store* as, string name, texture_wrap wrap = wrap_repeat, bool pixelated = false);
 texture_id ogl_add_texture_from_font(opengl* ogl, asset* font, texture_wrap wrap = wrap_repeat, bool pixelated = false);
+void ogl_destroy_texture(opengl* ogl, texture_id id);
 
 context_id ogl_add_draw_context(opengl* ogl, void (*set_atribs)(ogl_draw_context* dc));
 ogl_draw_context* ogl_select_draw_context(opengl* ogl, context_id id);

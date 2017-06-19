@@ -72,9 +72,9 @@ extern "C" game_state* start_up(platform_api* api) {
 	LOG_DEBUG("Setting up GUI");
 	LOG_PUSH_CONTEXT_L("gui");
 	state->gui = make_gui(&state->ogl, &state->default_platform_allocator);
-	gui_add_font(&state->ogl, &state->gui, get_asset(&state->default_store, string_literal("font14")));
-	gui_add_font(&state->ogl, &state->gui, get_asset(&state->default_store, string_literal("font24")));
-	gui_add_font(&state->ogl, &state->gui, get_asset(&state->default_store, string_literal("font40")));
+	gui_add_font(&state->ogl, &state->gui, string_literal("font14"), &state->default_store);
+	gui_add_font(&state->ogl, &state->gui, string_literal("font24"), &state->default_store);
+	gui_add_font(&state->ogl, &state->gui, string_literal("font40"), &state->default_store);
 	LOG_POP_CONTEXT();
 
 	LOG_INFO("Done with startup!");
@@ -86,6 +86,7 @@ extern "C" game_state* start_up(platform_api* api) {
 
 extern "C" bool main_loop(game_state* state) {
 
+	glUseProgram(0); // why tho?? https://twitter.com/fohx/status/619887799462985729?lang=en
 	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -105,6 +106,9 @@ extern "C" bool main_loop(game_state* state) {
 
 #ifdef _DEBUG
 	ogl_try_reload_programs(&state->ogl);
+	if(try_reload_asset_store(&state->default_store)) {
+		gui_reload_fonts(&state->ogl, &state->gui);
+	}
 #endif
 
 	return state->running;

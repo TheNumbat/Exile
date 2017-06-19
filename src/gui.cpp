@@ -38,15 +38,34 @@ void destroy_gui(gui_manager* gui) {
 	destroy_vector(&gui->fonts);
 }
 
-void gui_add_font(opengl* ogl, gui_manager* gui, asset* font) {
+void gui_reload_fonts(opengl* ogl, gui_manager* gui) {
+
+	FORVEC(gui->fonts,
+
+		ogl_destroy_texture(ogl, it->texture);
+
+		asset* font = get_asset(it->store, it->asset_name);
+
+		it->font = font;
+		it->texture = ogl_add_texture_from_font(ogl, font);
+	)
+}
+
+void gui_add_font(opengl* ogl, gui_manager* gui, string asset_name, asset_store* store) {
+
+	asset* font = get_asset(store, asset_name);
 
 	if(vector_empty(&gui->fonts)) {
 		gui->style.font = font->font.point;
 	}
 
 	gui_font f;
-	f.texture = ogl_add_texture_from_font(ogl, font);
+	
+	f.asset_name = asset_name;
+	f.store = store;
 	f.font = font;
+	f.texture = ogl_add_texture_from_font(ogl, font);
+
 	vector_push(&gui->fonts, f);
 }
 

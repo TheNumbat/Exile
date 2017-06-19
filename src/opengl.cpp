@@ -14,12 +14,14 @@ shader_source make_source(string path, allocator* a) {
 void load_source(shader_source* source) {
 
 	platform_file source_file;
+
 	platform_error err;
 	u32 itr = 0;
 	do {
 		itr++;
 		err = global_state->api->platform_create_file(&source_file, source->path, open_file_existing);
-	} while (err.error == PLATFORM_SHARING_ERROR && itr < 10000);
+	} while (err.error == PLATFORM_SHARING_ERROR && itr < 100000);
+
 	if(!err.good) {
 		LOG_ERR_F("Failed to load shader source %s", source->path.c_str);
 		global_state->api->platform_close_file(&source_file);
@@ -46,13 +48,8 @@ bool refresh_source(shader_source* source) {
 
 	platform_file_attributes new_attrib;
 	
-	platform_error err;
-	u32 itr = 0;
-	do {
-		itr++;
-		err = global_state->api->platform_get_file_attributes(&new_attrib, source->path);	
-	} while(err.error == PLATFORM_SHARING_ERROR && itr < 10000);
-
+	global_state->api->platform_get_file_attributes(&new_attrib, source->path);	
+	
 	if(global_state->api->platform_test_file_written(&source->last_attrib, &new_attrib)) {
 
 		destroy_source(source);
@@ -244,6 +241,20 @@ texture_id ogl_add_texture(opengl* ogl, asset_store* as, string name, texture_wr
 	return ogl->next_texture_id - 1;
 }
 
+void ogl_destroy_texture(opengl* ogl, texture_id id) {
+
+	texture* t = map_try_get(&ogl->textures, id);
+
+	if(!t) {
+		LOG_ERR_F("Failed to find texture %u", id);
+		return;
+	}
+
+	glDeleteTextures(1, &t->handle);
+
+	map_erase(&ogl->textures, id);
+}
+
 texture* ogl_select_texture(opengl* ogl, texture_id id) {
 
 	texture* t = map_try_get(&ogl->textures, id);
@@ -284,7 +295,7 @@ texture make_texture(texture_wrap wrap, bool pixelated) {
 	case wrap_clamp_border:
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-		float borderColor[] = { 0.0f, 0.0f, 0.0f, 1.0f };
+		f32 borderColor[] = { 0.0f, 0.0f, 0.0f, 1.0f };
 		glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);  
 		break;
 	}
@@ -476,6 +487,7 @@ void ogl_render_command_list(opengl* ogl, render_command_list* rcl) {
 
 		if(cmd->cmd == render_mesh_2d) {
 
+			// TODO(max): we don't want to send every frame, do we?
 			ogl_send_mesh_2d(ogl, cmd->m2d, cmd->context);
 
 			glDisable(GL_DEPTH_TEST);
