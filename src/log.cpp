@@ -1,7 +1,7 @@
 
-logger make_logger(allocator* a) {
+log_manager make_logger(allocator* a) {
 
-	logger ret;
+	log_manager ret;
 
 	ret.out = make_vector<log_out>(4, a);
 	ret.message_queue = make_queue<log_message>(8, a);
@@ -15,7 +15,7 @@ logger make_logger(allocator* a) {
 	return ret;
 }
 
-void logger_start(logger* log) {
+void logger_start(log_manager* log) {
 
 	log->thread_param.out 				= &log->out;
 	log->thread_param.message_queue 	= &log->message_queue;
@@ -28,7 +28,7 @@ void logger_start(logger* log) {
 	global_state->api->platform_create_thread(&log->logging_thread, &logging_thread, &log->thread_param, false);
 }
 
-void logger_stop(logger* log) {
+void logger_stop(log_manager* log) {
 
 	log->thread_param.running = false;
 
@@ -44,7 +44,7 @@ void logger_stop(logger* log) {
 	log->thread_param.scratch			= NULL;
 }
 
-void logger_end_thread(logger* log) {
+void logger_end_thread(log_manager* log) {
 
 	global_state->api->platform_aquire_mutex(&log->thread_data_mutex, -1);
 	
@@ -55,7 +55,7 @@ void logger_end_thread(logger* log) {
 	global_state->api->platform_release_mutex(&log->thread_data_mutex);
 }
 
-void logger_init_thread(logger* log, string name, code_context context) {
+void logger_init_thread(log_manager* log, string name, code_context context) {
 
 	log_thread_data this_data;
 
@@ -68,7 +68,7 @@ void logger_init_thread(logger* log, string name, code_context context) {
 	global_state->api->platform_release_mutex(&log->thread_data_mutex);
 }
 
-void destroy_logger(logger* log) {
+void destroy_logger(log_manager* log) {
 
 	if(log->thread_param.running) {
 		logger_stop(log);
@@ -84,7 +84,7 @@ void destroy_logger(logger* log) {
 	log->alloc = NULL;
 }
 
-void logger_push_context(logger* log, string context) {
+void logger_push_context(log_manager* log, string context) {
 
 	global_state->api->platform_aquire_mutex(&log->thread_data_mutex, -1);
 	log_thread_data* data = map_get(&log->thread_data, global_state->api->platform_this_thread_id());
@@ -92,7 +92,7 @@ void logger_push_context(logger* log, string context) {
 	global_state->api->platform_release_mutex(&log->thread_data_mutex);
 }
 
-void logger_pop_context(logger* log) {
+void logger_pop_context(log_manager* log) {
 
 	global_state->api->platform_aquire_mutex(&log->thread_data_mutex, -1);
 	log_thread_data* data = map_get(&log->thread_data, global_state->api->platform_this_thread_id());
@@ -100,7 +100,7 @@ void logger_pop_context(logger* log) {
 	global_state->api->platform_release_mutex(&log->thread_data_mutex);
 }
 
-void logger_add_file(logger* log, platform_file file, log_level level) {
+void logger_add_file(log_manager* log, platform_file file, log_level level) {
 
 	log_out lfile;
 	lfile.file = file;
@@ -110,13 +110,13 @@ void logger_add_file(logger* log, platform_file file, log_level level) {
 	logger_print_header(log, lfile);
 }
 
-void logger_add_output(logger* log, log_out out) {
+void logger_add_output(log_manager* log, log_out out) {
 
 	vector_push(&log->out, out);
 	logger_print_header(log, out);
 }
 
-void logger_print_header(logger* log, log_out out) {
+void logger_print_header(log_manager* log, log_out out) {
 
 	PUSH_ALLOC(log->alloc) {
 		
@@ -131,7 +131,7 @@ void logger_print_header(logger* log, log_out out) {
 	} POP_ALLOC();
 }
 
-void logger_msgf(logger* log, string fmt, log_level level, code_context context, ...) {
+void logger_msgf(log_manager* log, string fmt, log_level level, code_context context, ...) {
 
 	log_message lmsg;
 
@@ -175,7 +175,7 @@ void logger_msgf(logger* log, string fmt, log_level level, code_context context,
 	} POP_ALLOC();
 }
 
-void logger_msg(logger* log, string msg, log_level level, code_context context) {
+void logger_msg(log_manager* log, string msg, log_level level, code_context context) {
 
 	log_message lmsg;
 

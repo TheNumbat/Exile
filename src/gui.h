@@ -134,15 +134,15 @@ static gui_manager* ggui;
 // the functions you call every frame use ggui instead of passing a gui_manager pointer
 // (except begin_frame, as this sets up the global pointer)
 
-gui_manager make_gui(opengl* ogl, allocator* alloc);
+gui_manager make_gui(ogl_manager* ogl, allocator* alloc);
 void destroy_gui(gui_manager* gui);
 
 // call these before or after a frame
-void gui_add_font(opengl* ogl, gui_manager* gui, string asset_name, asset_store* store); // the first font you add is the default size
-void gui_reload_fonts(opengl* ogl, gui_manager* gui);
+void gui_add_font(ogl_manager* ogl, gui_manager* gui, string asset_name, asset_store* store); // the first font you add is the default size
+void gui_reload_fonts(ogl_manager* ogl, gui_manager* gui);
 
 void gui_begin_frame(gui_manager* gui, gui_input_state input);
-void gui_end_frame(opengl* ogl);
+void gui_end_frame(ogl_manager* ogl);
 void gui_select_best_font_scale();
 
 bool gui_occluded();

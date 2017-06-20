@@ -48,7 +48,7 @@ struct log_thread_param {
 	arena_allocator* scratch				= NULL;
 };
 
-struct logger {
+struct log_manager {
 	vector<log_out> 	out;
 	queue<log_message> 	message_queue;
 	platform_mutex		queue_mutex, thread_data_mutex;
@@ -61,28 +61,28 @@ struct logger {
 };
 
 
-logger make_logger(allocator* a); // allocator must have suppress_messages set
-void destroy_logger(logger* log); // calls logger_stop if needed, call log_end_thread() everywhere first
+log_manager make_logger(allocator* a); // allocator must have suppress_messages set
+void destroy_logger(log_manager* log); // calls logger_stop if needed, call log_end_thread() everywhere first
 
 #define LOG_INIT_THREAD(n) logger_init_thread(&global_state->log, n, CONTEXT)
-void logger_init_thread(logger* log, string name, code_context context);  // initializes logging for this thread. call before start in main
+void logger_init_thread(log_manager* log, string name, code_context context);  // initializes logging for this thread. call before start in main
 #define LOG_END_THREAD() logger_end_thread(&global_state->log)
-void logger_end_thread(logger* log);
-void logger_start(logger* log); // begin logging thread - call from one thread
-void logger_stop(logger* log);  // end logging thread - call from one thread
+void logger_end_thread(log_manager* log);
+void logger_start(log_manager* log); // begin logging thread - call from one thread
+void logger_stop(log_manager* log);  // end logging thread - call from one thread
 
 #define LOG_PUSH_CONTEXT(str) logger_push_context(&global_state->log, str);
 #define LOG_PUSH_CONTEXT_L(str) logger_push_context(&global_state->log, string_literal(str));
-void logger_push_context(logger* log, string context);
+void logger_push_context(log_manager* log, string context);
 #define LOG_POP_CONTEXT() logger_pop_context(&global_state->log);
-void logger_pop_context(logger* log);
+void logger_pop_context(log_manager* log);
 
-void logger_add_file(logger* log, platform_file file, log_level level); // call from one thread before starting
-void logger_print_header(logger* log, log_out out);
-void logger_add_output(logger* log, log_out out);
+void logger_add_file(log_manager* log, platform_file file, log_level level); // call from one thread before starting
+void logger_print_header(log_manager* log, log_out out);
+void logger_add_output(log_manager* log, log_out out);
 
-void logger_msgf(logger* log, string fmt, log_level level, code_context context, ...);
-void logger_msg(logger* log, string msg, log_level level, code_context context);
+void logger_msgf(log_manager* log, string fmt, log_level level, code_context context, ...);
+void logger_msg(log_manager* log, string msg, log_level level, code_context context);
 string log_fmt_msg(log_message* msg);
 
 #define LOG_INFO(msg) 	logger_msg(&global_state->log, string_literal(msg), log_info,  CONTEXT);

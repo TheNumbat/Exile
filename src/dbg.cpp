@@ -1,5 +1,10 @@
 
 
+void dbg_add_log(log_message* msg) {
+
+	
+}
+
 void render_debug_gui(game_state* state) {
 
 	gui_begin(string_literal("Debug"));

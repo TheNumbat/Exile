@@ -7,20 +7,21 @@ struct game_state {
 	platform_mutex alloc_contexts_mutex;
 	map<platform_thread_id, stack<allocator*>> alloc_contexts;
 	
+	arena_allocator 	transient_arena;
 	platform_allocator 	default_platform_allocator;
 	platform_allocator 	suppressed_platform_allocator;
-	arena_allocator 	transient_arena;
 
 	bool running = false;
 
-	logger log;
-	threadpool thread_pool;
-	event_manager events;
-	opengl ogl;
+	log_manager log;
+	ogl_manager ogl;
 	gui_manager gui;
+	dbg_manager dbg;
+	evt_manager evt;
+	threadpool thread_pool;
 
-	i32 window_w = 0, window_h = 0;
 	platform_window window 	= {};
+	i32 window_w = 0, window_h = 0;
 
 	// testing
 	asset_store default_store;

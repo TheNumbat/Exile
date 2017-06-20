@@ -43,8 +43,8 @@ extern "C" game_state* start_up(platform_api* api) {
 
 	LOG_DEBUG("Setting up events");
 	LOG_PUSH_CONTEXT_L("events");
-	state->events = make_event_manager(&state->default_platform_allocator);
-	start_event_manger(&state->events);
+	state->evt = make_evt_manager(&state->default_platform_allocator);
+	start_evt_manger(&state->evt);
 	LOG_POP_CONTEXT();
 
 	LOG_DEBUG("Setting up asset system");
@@ -140,7 +140,7 @@ extern "C" void shut_down(platform_api* api, game_state* state) {
 	}
 
 	LOG_DEBUG("Destroying events");
-	destroy_event_manager(&state->events);
+	destroy_evt_manager(&state->evt);
 
 	LOG_DEBUG("Destroying transient store");
 	DESTROY_ARENA(&state->transient_arena);

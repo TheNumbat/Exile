@@ -119,7 +119,7 @@ void destroy_program(shader_program* prog) {
 	glDeleteProgram(prog->handle);
 }
 
-void ogl_try_reload_programs(opengl* ogl) {
+void ogl_try_reload_programs(ogl_manager* ogl) {
 	FORMAP(ogl->programs,
 		if(refresh_program(&it->value)) {
 			LOG_INFO_F("Reloaded program %u with files %s, %s", it->key, it->value.vertex.path.c_str, it->value.fragment.path.c_str);
@@ -127,9 +127,9 @@ void ogl_try_reload_programs(opengl* ogl) {
 	)
 }
 
-opengl make_opengl(allocator* a) {
+ogl_manager make_opengl(allocator* a) {
 
-	opengl ret;
+	ogl_manager ret;
 
 	ret.alloc = a;
 	ret.programs = make_map<shader_program_id, shader_program>(8, a);
@@ -149,7 +149,7 @@ opengl make_opengl(allocator* a) {
 	return ret;
 }
 
-void destroy_opengl(opengl* ogl) {
+void destroy_opengl(ogl_manager* ogl) {
 
 	for(u32 i = 0; i < ogl->programs.contents.capacity; i++) {
 		if(vector_get(&ogl->programs.contents, i)->occupied) {
@@ -173,7 +173,7 @@ void destroy_opengl(opengl* ogl) {
 	destroy_map(&ogl->contexts);
 }
 
-shader_program_id ogl_add_program(opengl* ogl, string v_path, string f_path, void (*set_uniforms)(shader_program*, render_command*, render_command_list*)) {
+shader_program_id ogl_add_program(ogl_manager* ogl, string v_path, string f_path, void (*set_uniforms)(shader_program*, render_command*, render_command_list*)) {
 
 	shader_program p = make_program(v_path, f_path, set_uniforms, ogl->alloc);
 	p.id = ogl->next_shader_id;
@@ -185,7 +185,7 @@ shader_program_id ogl_add_program(opengl* ogl, string v_path, string f_path, voi
 	return ogl->next_shader_id - 1;
 }
 
-shader_program* ogl_select_program(opengl* ogl, shader_program_id id) {
+shader_program* ogl_select_program(ogl_manager* ogl, shader_program_id id) {
 
 	shader_program* p = map_try_get(&ogl->programs, id);
 
@@ -199,7 +199,7 @@ shader_program* ogl_select_program(opengl* ogl, shader_program_id id) {
 	return p;
 }
 
-texture_id ogl_add_texture_from_font(opengl* ogl, asset* font, texture_wrap wrap, bool pixelated) {
+texture_id ogl_add_texture_from_font(ogl_manager* ogl, asset* font, texture_wrap wrap, bool pixelated) {
 
 	texture t = make_texture(wrap, pixelated);
 	t.id = ogl->next_texture_id;
@@ -213,7 +213,7 @@ texture_id ogl_add_texture_from_font(opengl* ogl, asset* font, texture_wrap wrap
 	return ogl->next_texture_id - 1;
 }
 
-texture_id ogl_add_texture_from_font(opengl* ogl, asset_store* as, string name, texture_wrap wrap, bool pixelated) {
+texture_id ogl_add_texture_from_font(ogl_manager* ogl, asset_store* as, string name, texture_wrap wrap, bool pixelated) {
 
 	texture t = make_texture(wrap, pixelated);
 	t.id = ogl->next_texture_id;
@@ -227,7 +227,7 @@ texture_id ogl_add_texture_from_font(opengl* ogl, asset_store* as, string name, 
 	return ogl->next_texture_id - 1;
 }
 
-texture_id ogl_add_texture(opengl* ogl, asset_store* as, string name, texture_wrap wrap, bool pixelated) {
+texture_id ogl_add_texture(ogl_manager* ogl, asset_store* as, string name, texture_wrap wrap, bool pixelated) {
 
 	texture t = make_texture(wrap, pixelated);
 	t.id = ogl->next_texture_id;
@@ -241,7 +241,7 @@ texture_id ogl_add_texture(opengl* ogl, asset_store* as, string name, texture_wr
 	return ogl->next_texture_id - 1;
 }
 
-void ogl_destroy_texture(opengl* ogl, texture_id id) {
+void ogl_destroy_texture(ogl_manager* ogl, texture_id id) {
 
 	texture* t = map_try_get(&ogl->textures, id);
 
@@ -255,7 +255,7 @@ void ogl_destroy_texture(opengl* ogl, texture_id id) {
 	map_erase(&ogl->textures, id);
 }
 
-texture* ogl_select_texture(opengl* ogl, texture_id id) {
+texture* ogl_select_texture(ogl_manager* ogl, texture_id id) {
 
 	texture* t = map_try_get(&ogl->textures, id);
 
@@ -362,7 +362,7 @@ void destroy_texture(texture* tex) {
 	glDeleteTextures(1, &tex->handle);
 }
 
-context_id ogl_add_draw_context(opengl* ogl, void (*set_atribs)(ogl_draw_context* dc)) {
+context_id ogl_add_draw_context(ogl_manager* ogl, void (*set_atribs)(ogl_draw_context* dc)) {
 
 	ogl_draw_context d;
 	glGenVertexArrays(1, &d.vao);
@@ -379,7 +379,7 @@ context_id ogl_add_draw_context(opengl* ogl, void (*set_atribs)(ogl_draw_context
 	return ogl->next_context_id - 1;
 }
 
-ogl_draw_context* ogl_select_draw_context(opengl* ogl, context_id id) {
+ogl_draw_context* ogl_select_draw_context(ogl_manager* ogl, context_id id) {
 
 	ogl_draw_context* d = map_try_get(&ogl->contexts, id);
 
@@ -404,7 +404,7 @@ void ogl_mesh_3d_attribs(ogl_draw_context* dc) {
 	glEnableVertexAttribArray(1);
 }
 
-void ogl_send_mesh_3d(opengl* ogl, mesh_3d* m, context_id id) {
+void ogl_send_mesh_3d(ogl_manager* ogl, mesh_3d* m, context_id id) {
 
 	ogl_draw_context* dc = ogl_select_draw_context(ogl, id);
 
@@ -439,7 +439,7 @@ void ogl_mesh_2d_attribs(ogl_draw_context* dc) {
 	glEnableVertexAttribArray(2);
 }
 
-void ogl_send_mesh_2d(opengl* ogl, mesh_2d* m, context_id id) {
+void ogl_send_mesh_2d(ogl_manager* ogl, mesh_2d* m, context_id id) {
 
 	ogl_draw_context* dc = ogl_select_draw_context(ogl, id);
 
@@ -468,7 +468,7 @@ void ogl_set_uniforms(shader_program* prog, render_command* rc, render_command_l
 	prog->set_uniforms(prog, rc, rcl);
 }
 
-void ogl_render_command_list(opengl* ogl, render_command_list* rcl) {
+void ogl_render_command_list(ogl_manager* ogl, render_command_list* rcl) {
 
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
@@ -506,7 +506,7 @@ void ogl_render_command_list(opengl* ogl, render_command_list* rcl) {
 }
 
 // temporary and inefficient texture render
-void ogl_dbg_render_texture_fullscreen(opengl* ogl, texture_id id) {
+void ogl_dbg_render_texture_fullscreen(ogl_manager* ogl, texture_id id) {
 
 	GLfloat data[] = {
 		-1.0f, -1.0f,	0.0f, 0.0f,

@@ -1,19 +1,19 @@
 
-event_manager make_event_manager(allocator* a) {
+evt_manager make_evt_manager(allocator* a) {
 	
-	event_manager ret;
+	evt_manager ret;
 
 	ret.event_queue = make_queue<platform_event>(256, a);
 
 	return ret;
 }
 
-void start_event_manger(event_manager* em) {
+void start_evt_manger(evt_manager* em) {
 
 	global_state->api->platform_set_queue_callback(&event_enqueue, &em->event_queue);
 }
 
-void destroy_event_manager(event_manager* em) {
+void destroy_evt_manager(evt_manager* em) {
 
 	destroy_queue(&em->event_queue);
 }
@@ -23,9 +23,9 @@ gui_input_state run_events(game_state* state) {
 	global_state->api->platform_queue_messages(&global_state->window);
 	gui_input_state ret = state->gui.input;
 
-	while(!queue_empty(&state->events.event_queue)) {
+	while(!queue_empty(&state->evt.event_queue)) {
 
-		platform_event evt = queue_pop(&state->events.event_queue);
+		platform_event evt = queue_pop(&state->evt.event_queue);
 
 		// Exiting
 		if(evt.type == event_window && evt.window.op == window_close) {

@@ -9,7 +9,7 @@ bool operator==(guiid l, guiid r) {
 	return l.base == r.base && l.name == r.name;
 }
 
-gui_manager make_gui(opengl* ogl, allocator* alloc) {
+gui_manager make_gui(ogl_manager* ogl, allocator* alloc) {
 
 	gui_manager ret;
 
@@ -38,7 +38,7 @@ void destroy_gui(gui_manager* gui) {
 	destroy_vector(&gui->fonts);
 }
 
-void gui_reload_fonts(opengl* ogl, gui_manager* gui) {
+void gui_reload_fonts(ogl_manager* ogl, gui_manager* gui) {
 
 	FORVEC(gui->fonts,
 
@@ -51,7 +51,7 @@ void gui_reload_fonts(opengl* ogl, gui_manager* gui) {
 	)
 }
 
-void gui_add_font(opengl* ogl, gui_manager* gui, string asset_name, asset_store* store) {
+void gui_add_font(ogl_manager* ogl, gui_manager* gui, string asset_name, asset_store* store) {
 
 	asset* font = get_asset(store, asset_name);
 
@@ -95,7 +95,7 @@ void gui_begin_frame(gui_manager* gui, gui_input_state input) {
 	gui_select_best_font_scale();
 }
 
-void gui_end_frame(opengl* ogl) {
+void gui_end_frame(ogl_manager* ogl) {
 
 	if(!ggui->input.lclick && !ggui->input.rclick && !ggui->input.mclick && !ggui->input.ldbl) {
 		if(ggui->active != gui_captured) {
@@ -132,10 +132,14 @@ void gui_end_frame(opengl* ogl) {
 bool gui_occluded() {
 	FORMAP(ggui->window_state_data,
 		if(&it->value != ggui->current && it->value.z > ggui->current->z) {
-			if(it->value.active && inside(it->value.rect, ggui->input.mousepos)) {
+			if(it->value.active && inside(mult(it->value.rect, ggui->style.gscale), ggui->input.mousepos)) {
 				return true;
-			} else if(inside(R2(it->value.rect.xy, V2(it->value.rect.w, ggui->style.gscale * ggui->style.font + ggui->style.title_padding)), ggui->input.mousepos)) {
-				return true;
+			} else {
+				r2 title_rect = R2(it->value.rect.xy, V2(it->value.rect.w, ggui->style.gscale * ggui->style.font + ggui->style.title_padding));
+				title_rect = mult(title_rect, ggui->style.gscale);
+				if(inside(title_rect, ggui->input.mousepos)) {
+					return true;
+				}
 			}
 		}
 	)

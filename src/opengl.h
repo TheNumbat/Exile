@@ -156,7 +156,7 @@ struct ogl_draw_context {
 	GLuint vbos[8] = {};
 };
 
-struct opengl {
+struct ogl_manager {
 	map<shader_program_id, shader_program> programs;
 	map<texture_id, texture> 			   textures;
 	map<context_id, ogl_draw_context> 	   contexts;
@@ -173,25 +173,25 @@ struct opengl {
 
 void ogl_load_global_funcs();
 
-opengl make_opengl(allocator* a);
-void destroy_opengl(opengl* ogl);
+ogl_manager make_opengl(allocator* a);
+void destroy_opengl(ogl_manager* ogl);
 
-shader_program_id ogl_add_program(opengl* ogl, string v_path, string f_path, void (*set_uniforms)(shader_program*, render_command*, render_command_list*));
-shader_program* ogl_select_program(opengl* ogl, shader_program_id id);
-void ogl_try_reload_programs(opengl* ogl);
+shader_program_id ogl_add_program(ogl_manager* ogl, string v_path, string f_path, void (*set_uniforms)(shader_program*, render_command*, render_command_list*));
+shader_program* ogl_select_program(ogl_manager* ogl, shader_program_id id);
+void ogl_try_reload_programs(ogl_manager* ogl);
 void ogl_set_uniforms(shader_program* prog, render_command* rc, render_command_list* rcl);
 
-texture_id ogl_add_texture(opengl* ogl, asset_store* as, string name, texture_wrap wrap = wrap_repeat, bool pixelated = false);
-texture* ogl_select_texture(opengl* ogl, texture_id id);
-texture_id ogl_add_texture_from_font(opengl* ogl, asset_store* as, string name, texture_wrap wrap = wrap_repeat, bool pixelated = false);
-texture_id ogl_add_texture_from_font(opengl* ogl, asset* font, texture_wrap wrap = wrap_repeat, bool pixelated = false);
-void ogl_destroy_texture(opengl* ogl, texture_id id);
+texture_id ogl_add_texture(ogl_manager* ogl, asset_store* as, string name, texture_wrap wrap = wrap_repeat, bool pixelated = false);
+texture* ogl_select_texture(ogl_manager* ogl, texture_id id);
+texture_id ogl_add_texture_from_font(ogl_manager* ogl, asset_store* as, string name, texture_wrap wrap = wrap_repeat, bool pixelated = false);
+texture_id ogl_add_texture_from_font(ogl_manager* ogl, asset* font, texture_wrap wrap = wrap_repeat, bool pixelated = false);
+void ogl_destroy_texture(ogl_manager* ogl, texture_id id);
 
-context_id ogl_add_draw_context(opengl* ogl, void (*set_atribs)(ogl_draw_context* dc));
-ogl_draw_context* ogl_select_draw_context(opengl* ogl, context_id id);
+context_id ogl_add_draw_context(ogl_manager* ogl, void (*set_atribs)(ogl_draw_context* dc));
+ogl_draw_context* ogl_select_draw_context(ogl_manager* ogl, context_id id);
 
-void ogl_dbg_render_texture_fullscreen(opengl* ogl, texture_id id);
-void ogl_render_command_list(opengl* ogl, render_command_list* rcl);
+void ogl_dbg_render_texture_fullscreen(ogl_manager* ogl, texture_id id);
+void ogl_render_command_list(ogl_manager* ogl, render_command_list* rcl);
 
 shader_source make_source(string path, allocator* a);
 void load_source(shader_source* source);
@@ -212,10 +212,10 @@ void destroy_texture(texture* tex);
 void debug_proc(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userPointer);
 
 void ogl_mesh_2d_attribs(ogl_draw_context* dc);
-void ogl_send_mesh_2d(opengl* ogl, mesh_2d* m, context_id id);
+void ogl_send_mesh_2d(ogl_manager* ogl, mesh_2d* m, context_id id);
 
 void ogl_mesh_3d_attribs(ogl_draw_context* dc);
-void ogl_send_mesh_3d(opengl* ogl, mesh_3d* m, context_id id);
+void ogl_send_mesh_3d(ogl_manager* ogl, mesh_3d* m, context_id id);
 
 void ogl_uniforms_gui(shader_program* prog, render_command* rc, render_command_list* rcl);
 void ogl_uniforms_dbg(shader_program* prog, render_command* rc, render_command_list* rcl) {};
