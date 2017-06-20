@@ -3,7 +3,7 @@ logger make_logger(allocator* a) {
 
 	logger ret;
 
-	ret.out = make_vector<log_file>(4, a);
+	ret.out = make_vector<log_out>(4, a);
 	ret.message_queue = make_queue<log_message>(8, a);
 	global_state->api->platform_create_mutex(&ret.queue_mutex, false);
 	global_state->api->platform_create_mutex(&ret.thread_data_mutex, false);
@@ -102,7 +102,7 @@ void logger_pop_context(logger* log) {
 
 void logger_add_file(logger* log, platform_file file, log_level level) {
 
-	log_file lfile;
+	log_out lfile;
 	lfile.file = file;
 	lfile.level = level;
 	vector_push(&log->out, lfile);
@@ -110,13 +110,21 @@ void logger_add_file(logger* log, platform_file file, log_level level) {
 	logger_print_header(log, lfile);
 }
 
-void logger_print_header(logger* log, log_file file) {
+void logger_add_output(logger* log, log_out out) {
+
+	vector_push(&log->out, out);
+	logger_print_header(log, out);
+}
+
+void logger_print_header(logger* log, log_out out) {
 
 	PUSH_ALLOC(log->alloc) {
 		
 		string header = make_stringf(string_literal("%-8s [%-24s] [%-20s] [%-5s] %-2s\r\n"), "time", "thread/context", "file:line", "level", "message");
 
-		global_state->api->platform_write_file(&file.file, (void*)header.c_str, header.len - 1);
+		if(!out.custom) { 
+			global_state->api->platform_write_file(&out.file, (void*)header.c_str, header.len - 1);
+		}
 
 		free_string(header);
 
@@ -207,6 +215,51 @@ void logger_msg(logger* log, string msg, log_level level, code_context context) 
 	} POP_ALLOC();
 }
 
+string log_fmt_msg(log_message* msg) {
+
+	string time = make_string(9);
+	global_state->api->platform_get_timef(string_literal("hh:mm:ss"), &time);
+		
+	string thread_contexts = make_cat_string(msg->data.name, string_literal("/"));
+	for(u32 j = 0; j < msg->data.context_name.contents.size; j++) {
+		string temp = make_cat_strings(3, thread_contexts, *vector_get(&msg->data.context_name.contents, j), string_literal("/"));
+		free_string(thread_contexts);
+		thread_contexts = temp;
+	}
+
+	string file_line = make_stringf(string_literal("%s:%u"), msg->publisher.file.c_str, msg->publisher.line);
+	string level;
+	switch(msg->level) {
+	case log_debug:
+		level = string_literal("DEBUG");
+		break;
+	case log_info:
+		level = string_literal("INFO");
+		break;
+	case log_warn:
+		level = string_literal("WARN");
+		break;
+	case log_error:
+		level = string_literal("ERROR");
+		break;
+	case log_fatal:
+		level = string_literal("FATAL");
+		break;
+	case log_alloc:
+		level = string_literal("ALLOC");
+		break;
+	}
+
+	string output = make_stringf(string_literal("%-8s [%-24s] [%-20s] [%-5s] %*s\r\n"), time.c_str, thread_contexts.c_str, file_line.c_str, level.c_str, 3 * msg->data.context_name.contents.size + msg->msg.len - 1, msg->msg.c_str);
+
+	free_string(time);
+	free_string(thread_contexts);
+	free_string(file_line);
+	free_string(level);
+
+	return output;	
+}
+
 i32 logging_thread(void* data_) {
 
 	log_thread_param* data = (log_thread_param*)data_;	
@@ -231,63 +284,30 @@ i32 logging_thread(void* data_) {
 
 			if(msg.msg.c_str != NULL) {
 				
+				string output;
 				PUSH_ALLOC(data->scratch) {
-
-					string time = make_string(9);
-					global_state->api->platform_get_timef(string_literal("hh:mm:ss"), &time);
 					
-					string thread_contexts = make_cat_string(msg.data.name, string_literal("/"));
-					for(u32 j = 0; j < msg.data.context_name.contents.size; j++) {
-						string temp = make_cat_strings(3, thread_contexts, *vector_get(&msg.data.context_name.contents, j), string_literal("/"));
-						free_string(thread_contexts);
-						thread_contexts = temp;
-					}
-
-					string file_line = make_stringf(string_literal("%s:%u"), msg.publisher.file.c_str, msg.publisher.line);
-					string level;
-					switch(msg.level) {
-					case log_debug:
-						level = string_literal("DEBUG");
-						break;
-					case log_info:
-						level = string_literal("INFO");
-						break;
-					case log_warn:
-						level = string_literal("WARN");
-						break;
-					case log_error:
-						level = string_literal("ERROR");
-						break;
-					case log_fatal:
-						level = string_literal("FATAL");
-						break;
-					case log_alloc:
-						level = string_literal("ALLOC");
-						break;
-					}
-
-					string final_output = make_stringf(string_literal("%-8s [%-24s] [%-20s] [%-5s] %*s\r\n"), time.c_str, thread_contexts.c_str, file_line.c_str, level.c_str, 3 * msg.data.context_name.contents.size + msg.msg.len - 1, msg.msg.c_str);
-
-					for(u32 i = 0; i < data->out->size; i++) {
-
-						if(vector_get(data->out, i)->level <= msg.level) {
-
-							global_state->api->platform_write_file(&vector_get(data->out, i)->file, (void*)final_output.c_str, final_output.len - 1);
+					output = log_fmt_msg(&msg);
+				
+					FORVEC(*data->out,
+						if(it->level <= msg.level) {
+							if(it->custom) {
+								it->write(&msg);
+							} else {
+								global_state->api->platform_write_file(&it->file, (void*)output.c_str, output.len - 1);
+							}
 						}
-					}
+					)
 
-					/*unnecessary, as they are allocated on the scratch arena
-					free_string(time);
-					free_string(file_line);
-					free_string(thread_contexts);
-					free_string(final_output);*/
+					free_string(output);
 
-					if(msg.level == log_fatal) {
-						// die
-						exit(1);
-					}
 				} POP_ALLOC();
 				RESET_ARENA(data->scratch);
+
+				if(msg.level == log_fatal) {
+					// die
+					exit(1);
+				}
 
 				DESTROY_ARENA(&msg.arena);
 			}

@@ -14,11 +14,6 @@ enum log_level : i8 {
 	log_fatal,		// basically assert(false), hangs the thread and will exit the program after output
 };
 
-struct log_file {
-	platform_file file;
-	log_level 	  level;
-};
-
 struct log_thread_data {
 	stack<string> context_name;
 	string name;
@@ -33,9 +28,19 @@ struct log_message {
 	arena_allocator arena; // joint allocation of msg, data.context_name, data.name
 };
 
+struct log_out {
+	log_level 	  level;
+	bool custom = false;
+	union {
+		platform_file file;
+		void (*write)(log_message* msg) = NULL;
+	};
+	log_out() : file(), write() {}
+};
+
 struct log_thread_param {
 	bool running 							= false;
-	vector<log_file>* 	out					= NULL;
+	vector<log_out>* 	out					= NULL;
 	queue<log_message>*	message_queue		= NULL;
 	platform_mutex*		queue_mutex			= NULL;
 	platform_semaphore*	logging_semaphore 	= NULL;
@@ -44,7 +49,7 @@ struct log_thread_param {
 };
 
 struct logger {
-	vector<log_file> 	out;
+	vector<log_out> 	out;
 	queue<log_message> 	message_queue;
 	platform_mutex		queue_mutex, thread_data_mutex;
 	platform_semaphore	logging_semaphore;
@@ -73,10 +78,12 @@ void logger_push_context(logger* log, string context);
 void logger_pop_context(logger* log);
 
 void logger_add_file(logger* log, platform_file file, log_level level); // call from one thread before starting
-void logger_print_header(logger* log, log_file file);
+void logger_print_header(logger* log, log_out out);
+void logger_add_output(logger* log, log_out out);
 
 void logger_msgf(logger* log, string fmt, log_level level, code_context context, ...);
 void logger_msg(logger* log, string msg, log_level level, code_context context);
+string log_fmt_msg(log_message* msg);
 
 #define LOG_INFO(msg) 	logger_msg(&global_state->log, string_literal(msg), log_info,  CONTEXT);
 #define LOG_WARN(msg) 	logger_msg(&global_state->log, string_literal(msg), log_warn,  CONTEXT);

@@ -12,8 +12,8 @@
 #include "platform_api.h"
 
 #define FOR(num) for(i32 __i = 0; __i < num; __i++)
-#define FORVEC(v,code) {u32 __i = 0; for(auto it = v.memory; it != v.memory + v.size; __i++, it++) {code}}
-#define FORMAP(m,code) {u32 __i = 0; for(auto it = m.contents.memory; it != m.contents.memory + m.contents.capacity; __i++, it++) if(it->occupied) {code}}
+#define FORVEC(v,code) {u32 __i = 0; for(auto it = (v).memory; it != (v).memory + (v).size; __i++, it++) {code}}
+#define FORMAP(m,code) {u32 __i = 0; for(auto it = (m).contents.memory; it != (m).contents.memory + (m).contents.capacity; __i++, it++) if(it->occupied) {code}}
 #define INC__COUNTER__ {u32 i = __COUNTER__; i = 0;}
 
 struct code_context {
