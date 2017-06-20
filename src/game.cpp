@@ -25,6 +25,13 @@ extern "C" game_state* start_up(platform_api* api) {
 	logger_add_file(&state->log, log_all_file, log_alloc);
 	logger_add_file(&state->log, stdout_file, log_info);
 
+	state->dbg = make_dbg_manager(&state->suppressed_platform_allocator);
+	log_out dbg_log;
+	dbg_log.level = log_debug;
+	dbg_log.custom = true;
+	dbg_log.write = &dbg_add_log;
+	logger_add_output(&state->log, dbg_log);
+
 	LOG_INIT_THREAD(string_literal("main"));
 
 	logger_start(&state->log);
@@ -151,6 +158,8 @@ extern "C" void shut_down(platform_api* api, game_state* state) {
 	LOG_END_THREAD();
 	logger_stop(&state->log);
 	destroy_logger(&state->log);
+
+	destroy_dbg_manager(&state->dbg);
 
 	destroy_stack(map_get(&state->alloc_contexts, state->api->platform_this_thread_id()));
 	map_erase(&state->alloc_contexts, state->api->platform_this_thread_id());

@@ -7,6 +7,7 @@
 
 enum log_level : i8 {
 	log_alloc = -1,	// super gratuitous allocation info
+	log_ogl,		// gratuitous opengl info
 	log_debug,		// gratuitous info
 	log_info,		// relevant info
 	log_warn,		// shouldn't happen, debug later
@@ -90,6 +91,7 @@ string log_fmt_msg(log_message* msg);
 #define LOG_ERR(msg) 	logger_msg(&global_state->log, string_literal(msg), log_error, CONTEXT);
 #define LOG_FATAL(msg) 	logger_msg(&global_state->log, string_literal(msg), log_fatal, CONTEXT);
 
+#define LOG_OGL_F(fmt, ...)		logger_msgf(&global_state->log, string_literal(fmt), log_ogl,  CONTEXT, __VA_ARGS__);
 #define LOG_INFO_F(fmt, ...) 	logger_msgf(&global_state->log, string_literal(fmt), log_info,  CONTEXT, __VA_ARGS__);
 #define LOG_WARN_F(fmt, ...) 	logger_msgf(&global_state->log, string_literal(fmt), log_warn,  CONTEXT, __VA_ARGS__);
 #define LOG_ERR_F(fmt, ...) 	logger_msgf(&global_state->log, string_literal(fmt), log_error, CONTEXT, __VA_ARGS__);

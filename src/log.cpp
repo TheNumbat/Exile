@@ -245,6 +245,9 @@ string log_fmt_msg(log_message* msg) {
 	case log_fatal:
 		level = string_literal("FATAL");
 		break;
+	case log_ogl:
+		level = string_literal("OGL");
+		break;
 	case log_alloc:
 		level = string_literal("ALLOC");
 		break;
