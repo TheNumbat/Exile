@@ -46,11 +46,11 @@ gui_input_state run_events(game_state* state) {
 		}
 
 		// Debug stuff
-		if(evt.type == event_key && evt.key.code == key_plus) {
-			global_state->gui.style.gscale += 0.5f;
+		if(evt.type == event_key && evt.key.flags & key_flag_release && evt.key.code == key_plus) {
+			global_state->gui.style.gscale *= 1.5f;
 		}
-		if(evt.type == event_key && evt.key.code == key_minus) {
-			global_state->gui.style.gscale -= 0.5f;
+		if(evt.type == event_key && evt.key.flags & key_flag_release && evt.key.code == key_minus) {
+			global_state->gui.style.gscale /= 1.5f;
 		}
 
 		// GUI: mouse

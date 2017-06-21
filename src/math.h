@@ -240,6 +240,32 @@ inline v4 color_to_f(color c) {
 	return V4(c.x / 255.0f, c.y / 255.0f, c.z / 255.0f, c.w / 255.0f);
 }
 
+const color WHITE = V4b(255, 255, 255, 255);
+const color BLACK = V4b(0, 0, 0, 255);
+const color RED   = V4b(255, 0, 0, 255);
+const color GREEN = V4b(0, 255, 0, 255);
+const color BLUE  = V4b(0, 0, 255, 255);
+
+template<typename T> inline T clamp(T V, T min, T max) {
+	if(V < min) return min;
+	if(V > max) return max;
+	return V;
+}
+template f32 clamp(f32, f32, f32);
+template i32 clamp(i32, i32, i32);
+template<typename T> inline v2_t<T> clamp(v2_t<T> V, T min, T max) {
+	return V2(clamp(V.x, min, max), clamp(V.y, min, max));
+}
+template v2 clamp(v2, f32, f32);
+template<typename T> inline v3_t<T> clamp(v3_t<T> V, T min, T max) {
+	return V3(clamp(V.x, min, max), clamp(V.y, min, max), clamp(V.z, min, max));
+}
+template v3 clamp(v3, f32, f32);
+template<typename T> inline v4_t<T> clamp(v4_t<T> V, T min, T max) {
+	return V4(clamp(V.x, min, max), clamp(V.y, min, max), clamp(V.z, min, max), clamp(V.w, min, max));
+}
+template v4 clamp(v4, f32, f32);
+
 template<typename T> inline T lengthsq(v2_t<T> V) {
 	return V.x * V.x + V.y * V.y;
 }

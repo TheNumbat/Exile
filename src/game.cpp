@@ -80,9 +80,10 @@ extern "C" game_state* start_up(platform_api* api) {
 	LOG_DEBUG("Setting up GUI");
 	LOG_PUSH_CONTEXT_L("gui");
 	state->gui = make_gui(&state->ogl, &state->default_platform_allocator);
-	gui_add_font(&state->ogl, &state->gui, string_literal("font14"), &state->default_store);
-	gui_add_font(&state->ogl, &state->gui, string_literal("font24"), &state->default_store);
-	gui_add_font(&state->ogl, &state->gui, string_literal("font40"), &state->default_store);
+	gui_add_font(&state->ogl, &state->gui, string_literal("gui14"), &state->default_store);
+	gui_add_font(&state->ogl, &state->gui, string_literal("gui24"), &state->default_store);
+	gui_add_font(&state->ogl, &state->gui, string_literal("gui40"), &state->default_store);
+	gui_add_font(&state->ogl, &state->gui, string_literal("guimono"), &state->default_store, true);
 	LOG_POP_CONTEXT();
 
 	LOG_INFO("Done with startup!");

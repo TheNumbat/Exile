@@ -1,8 +1,0 @@
-font {
-	name : chinese,
-	point : 40,
-	width : 4096,
-	height : 4096,
-	file : chinese.ttf,
-	range : 19968, 40959,
-}

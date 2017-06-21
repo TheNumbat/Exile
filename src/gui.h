@@ -12,15 +12,18 @@ enum _gui_window_flags : gui_window_flags {
 	win_noresize 	= 1<<0,
 	win_nomove		= 1<<1,
 	win_nohide		= 1<<2,
-	win_noinput 	= win_noresize | win_nomove | win_nohide,
-	win_nohead		= 1<<3 | win_nohide | win_nomove,
-	win_noback		= 1<<4 | win_noresize,
+	win_noscroll	= 1<<3,
+	win_noinput 	= win_noresize | win_nomove | win_nohide | win_noscroll,
+	win_nowininput	= win_noresize | win_nomove | win_nohide,
+	win_nohead		= 1<<4 | win_nohide | win_nomove,
+	win_noback		= 1<<5 | win_noresize,
+	win_ignorescale = 1<<6,
 };
 
 struct gui_opengl {
-	context_id			context 	 = 0;
-	shader_program_id 	shader 		 = 0;
-	texture_id			current_font = 0;
+	context_id			context = 0;
+	shader_program_id 	shader 	= 0;
+	texture_id			font 	= 0;
 };
 
 struct gui_input_state {
@@ -33,6 +36,7 @@ struct gui_input_state {
 	bool ldbl = false;
 };
 
+// whatever we want to store in 64 bits
 union gui_state_data {
 	struct {
 		u16 u16_1, u16_2, u16_3, u16_4;
@@ -56,9 +60,23 @@ union gui_state_data {
 	void* data = NULL;
 };
 
+enum gui_offset_mode {
+	gui_offset_xy,
+	gui_offset_x,
+	gui_offset_y,
+};
+
+struct gui_font {
+	asset_store* store = NULL;
+	string asset_name;
+
+	bool mono = false;
+	asset* font = NULL;
+	texture_id texture = 0;
+};
+
 struct gui_window_state {
 	r2 rect;
-	v2 title_size;
 	v2 move_click_offset;
 
 	f32 opacity = 1.0f;
@@ -68,8 +86,12 @@ struct gui_window_state {
 	bool active = true;
 	bool resizing = false;
 
+	gui_offset_mode offset_mode = gui_offset_y;
 	vector<v2> offset_stack;
 	stack<u32> id_hash_stack;
+
+	bool mono = false;
+	gui_font* font = NULL;
 	mesh_2d mesh;
 };
 
@@ -78,6 +100,9 @@ struct gui_style {
 	f32 font 			= 0.0f;	// default font size - may use different actual font based on gscale * font
 	f32 title_padding 	= 5.0f;
 	f32 line_padding 	= 3.0f;
+	f32 log_win_height 	= 200.0f;
+	f32 resize_tab		= 0.075f;
+	v4 win_margin 		= V4(15.0f, 15.0f, 10.0f, 15.0f); // l r t b
 	v2 carrot_padding	= V2(10.0f, 5.0f);
 
 	f32 default_win_a 	= 0.75f;
@@ -100,14 +125,6 @@ enum gui_active_state {
 	gui_captured,
 };
 
-struct gui_font {
-	asset_store* store = NULL;
-	string asset_name;
-
-	asset* font = NULL;
-	texture_id texture = 0;
-};
-
 struct gui_manager {
 
 	guiid active_id;
@@ -124,7 +141,6 @@ struct gui_manager {
 	map<guiid, gui_window_state> 	window_state_data;
 	map<guiid, gui_state_data> 		state_data;
 
-	gui_font* current_font = NULL; // same here (see current)
 	vector<gui_font> fonts;
 
 	allocator* alloc = NULL;
@@ -139,19 +155,24 @@ gui_manager make_gui(ogl_manager* ogl, allocator* alloc);
 void destroy_gui(gui_manager* gui);
 
 // call these before or after a frame
-void gui_add_font(ogl_manager* ogl, gui_manager* gui, string asset_name, asset_store* store); // the first font you add is the default size
+void gui_add_font(ogl_manager* ogl, gui_manager* gui, string asset_name, asset_store* store, bool mono = false); // the first font you add is the default size
 void gui_reload_fonts(ogl_manager* ogl, gui_manager* gui);
 
 void gui_begin_frame(gui_manager* gui, gui_input_state input);
 void gui_end_frame(ogl_manager* ogl);
-void gui_select_best_font_scale();
+gui_font* gui_select_best_font_scale();
+
+void gui_push_offset(v2 offset);
+void gui_pop_offset();
+void gui_set_offset_mode(gui_offset_mode mode = gui_offset_y);
 
 bool gui_occluded();
-bool gui_begin(string name, r2 first_size = R2f(40,40,0,0), f32 first_alpha = 0, gui_window_flags flags = 0);
+bool gui_begin(string name, r2 first_size = R2f(40,40,0,0), f32 first_alpha = 0, gui_window_flags flags = 0, bool mono = false);
 bool gui_carrot_toggle(string name, bool initial = false, color c = V4b(255, 255, 255, 255),  v2 pos = V2f(0,0), bool* toggleme = NULL);
 
-void gui_log_dsp(string name, vector<log_message>* cache);
+void gui_log_wnd(string name, vector<log_message>* cache);
 
+// these take into account only gscale & win_ignorescale - window + offset transforms occur in gui_ functions
 void push_windowhead(gui_window_state* win);
 void push_windowbody(gui_window_state* win);
 void push_text(gui_window_state* win, v2 pos, string text, f32 point, color c);

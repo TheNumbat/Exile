@@ -34,7 +34,7 @@ struct log_out {
 	bool custom = false;
 	union {
 		platform_file file;
-		void (*write)(log_message* msg) = NULL;
+		void (*write)(log_message* msg, string fmt) = NULL;
 	};
 	log_out() : file(), write() {}
 };

@@ -1,28 +1,32 @@
-image {
-	name : cat,
-	file : cat.jpg,
-}
 font {
-	name : font24,
+	name : gui24,
 	point : 24,
 	width : 256,
 	height : 256,
-	file : font.ttf,
+	file : gui.ttf,
 	range : 32, 126,
 }
 font {
-	name : font40,
+	name : gui40,
 	point : 40,
 	width : 256,
 	height : 256,
-	file : font.ttf,
+	file : gui.ttf,
 	range : 32, 126,
 }
 font {
-	name : font14,
+	name : gui14,
 	point : 14,
 	width : 128,
 	height : 128,
-	file : font.ttf,
+	file : gui.ttf,
+	range : 32, 126,
+}
+font {
+	name : guimono,
+	point : 14,
+	width : 128,
+	height : 128,
+	file : mono.ttf,
 	range : 32, 126,
 }

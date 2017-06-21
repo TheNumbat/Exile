@@ -1,9 +1,14 @@
 
 #pragma once
 
+struct cached_message {
+	log_message msg;
+	string fmt;
+};
+
 struct dbg_manager {
 
-	vector<log_message> log_cache;
+	vector<cached_message> log_cache;
 	log_level lvl = log_info;
 
 	allocator* alloc = NULL;

@@ -51,7 +51,7 @@ void gui_reload_fonts(ogl_manager* ogl, gui_manager* gui) {
 	)
 }
 
-void gui_add_font(ogl_manager* ogl, gui_manager* gui, string asset_name, asset_store* store) {
+void gui_add_font(ogl_manager* ogl, gui_manager* gui, string asset_name, asset_store* store, bool mono) {
 
 	asset* font = get_asset(store, asset_name);
 
@@ -64,12 +64,13 @@ void gui_add_font(ogl_manager* ogl, gui_manager* gui, string asset_name, asset_s
 	f.asset_name = asset_name;
 	f.store = store;
 	f.font = font;
+	f.mono = mono;
 	f.texture = ogl_add_texture_from_font(ogl, font);
 
 	vector_push(&gui->fonts, f);
 }
 
-void gui_select_best_font_scale() {
+gui_font* gui_select_best_font_scale(gui_window_state* win) {
 
 	gui_font* f = NULL;
 
@@ -77,14 +78,13 @@ void gui_select_best_font_scale() {
 	f32 min_off = FLT_MAX;
 	FORVEC(ggui->fonts,
 		f32 off = absf(defl - it->font->font.point);
-		if(off < min_off) {
+		if(off < min_off && it->mono == win->mono) {
 			min_off = off;
 			f = it;
 		}
 	)
 
-	ggui->current_font = f;
-	ggui->ogl.current_font = f->texture;
+	return f;
 }
 
 void gui_begin_frame(gui_manager* gui, gui_input_state input) {
@@ -92,7 +92,9 @@ void gui_begin_frame(gui_manager* gui, gui_input_state input) {
 	ggui = gui;
 	gui->input = input;
 
-	gui_select_best_font_scale();
+	FORMAP(gui->window_state_data,
+		it->value.font = gui_select_best_font_scale(&it->value);
+	)
 }
 
 void gui_end_frame(ogl_manager* ogl) {
@@ -111,7 +113,7 @@ void gui_end_frame(ogl_manager* ogl) {
 
 		render_command cmd = make_render_command(render_mesh_2d, &it->value.mesh, it->value.z);
 		cmd.shader  = ggui->ogl.shader;
-		cmd.texture = ggui->ogl.current_font;
+		cmd.texture = it->value.font->texture;
 		cmd.context = ggui->ogl.context;
 		render_add_command(&rcl, cmd);
 	)
@@ -127,6 +129,28 @@ void gui_end_frame(ogl_manager* ogl) {
 		clear_stack(&it->value.id_hash_stack);
 		clear_mesh(&it->value.mesh);
 	)
+}
+
+void gui_push_offset(v2 offset) {
+	switch(ggui->current->offset_mode) {
+	case gui_offset_xy:
+		vector_push(&ggui->current->offset_stack, V2(ggui->style.win_margin.x + offset.x, offset.y));
+		break;
+	case gui_offset_x:
+		vector_push(&ggui->current->offset_stack, V2(ggui->style.win_margin.x + offset.x, 0.0f));
+		break;
+	case gui_offset_y:
+		vector_push(&ggui->current->offset_stack, V2(ggui->style.win_margin.x, offset.y));
+		break;
+	}
+}
+
+void gui_pop_offset() {
+	vector_pop(&ggui->current->offset_stack);
+}
+
+void gui_set_offset_mode(gui_offset_mode mode) {
+	ggui->current->offset_mode = mode;
 }
 
 bool gui_occluded() {
@@ -146,7 +170,7 @@ bool gui_occluded() {
 	return false;
 }
 
-bool gui_begin(string name, r2 first_size, f32 first_alpha, gui_window_flags flags) {
+bool gui_begin(string name, r2 first_size, f32 first_alpha, gui_window_flags flags, bool mono) {
 
 	guiid id;
 	id.name = name;
@@ -171,9 +195,10 @@ bool gui_begin(string name, r2 first_size, f32 first_alpha, gui_window_flags fla
 		ns.mesh = make_mesh_2d(32, ggui->alloc);
 		ns.id_hash_stack = make_stack<u32>(16, ggui->alloc);
 		ns.offset_stack = make_vector<v2>(16, ggui->alloc);
-		ns.title_size = size_text(ggui->current_font->font, name, ggui->style.font);
 		ns.flags = flags;
-		ns.z = ggui->last_z++;
+		ns.mono = mono;
+		ns.font = gui_select_best_font_scale(&ns);
+		ns.z = ggui->last_z;
 
 		window = map_insert(&ggui->window_state_data, id, ns);
 	}
@@ -181,6 +206,37 @@ bool gui_begin(string name, r2 first_size, f32 first_alpha, gui_window_flags fla
 	stack_push(&window->id_hash_stack, guiid_hash(id));
 
 	ggui->current = window;
+
+	f32 gscale = 1.0f;
+	if((window->flags & win_ignorescale) != win_ignorescale) {
+		gscale = ggui->style.gscale;
+	}
+
+	r2 real_rect = mult(window->rect, gscale);
+
+	if(ggui->active_id == id) {
+		if(window->resizing) {
+
+			v2 wh = sub(ggui->input.mousepos, real_rect.xy);
+			if(wh.x < ggui->style.min_win_size.x) {
+				wh.x = ggui->style.min_win_size.x;
+			}
+			if(wh.x < ggui->style.min_win_size.x) {
+				wh.x = ggui->style.min_win_size.x;
+			}
+			if(wh.y < ggui->style.min_win_size.y) {
+				wh.y = ggui->style.min_win_size.y;
+			}
+			window->rect = R2(real_rect.xy, div(wh, gscale));
+
+		} else {
+
+			window->rect = R2(sub(ggui->input.mousepos, window->move_click_offset), window->rect.wh);
+		}
+	}
+
+	real_rect = mult(window->rect, gscale);
+
 	if((window->flags & win_nohead) != win_nohead) {
 		push_windowhead(window);
 
@@ -192,14 +248,12 @@ bool gui_begin(string name, r2 first_size, f32 first_alpha, gui_window_flags fla
 		push_windowbody(window);
 	}
 
-	r2 real_rect = mult(window->rect, ggui->style.gscale);
-
-	f32 carrot_x_diff = ggui->style.default_carrot_size.x * ggui->style.gscale + ggui->style.carrot_padding.x;
-	r2 top_rect = R2(real_rect.xy, V2(real_rect.w - carrot_x_diff, ggui->style.gscale * ggui->style.font + ggui->style.title_padding));	
+	f32 carrot_x_diff = ggui->style.default_carrot_size.x * gscale + ggui->style.carrot_padding.x;
+	r2 top_rect = R2(real_rect.xy, V2(real_rect.w - carrot_x_diff, gscale * ggui->style.font + ggui->style.title_padding));	
 	bool occluded = gui_occluded();
 	if((window->flags & win_nohide) != win_nohide) {
 
-		v2 carrot_pos = add(real_rect.xy, V2(real_rect.w - carrot_x_diff, ((ggui->style.font + ggui->style.title_padding) * ggui->style.gscale / 2.0f) - (ggui->style.gscale * ggui->style.default_carrot_size.y / 2.0f)));
+		v2 carrot_pos = V2(real_rect.w - carrot_x_diff, ((ggui->style.font + ggui->style.title_padding) * gscale / 2.0f) - (gscale * ggui->style.default_carrot_size.y / 2.0f));
 		gui_carrot_toggle(string_literal("#CLOSE"), window->active, V4b(ggui->style.win_close, 255), carrot_pos, &window->active);
 
 		if(!occluded && inside(top_rect, ggui->input.mousepos)) {
@@ -228,9 +282,12 @@ bool gui_begin(string name, r2 first_size, f32 first_alpha, gui_window_flags fla
 			}
 		}
 	}
+
 	if((window->flags & win_noresize) != win_noresize) {
 
-		r2 resize_rect = R2(sub(add(real_rect.xy, real_rect.wh), V2f(15, 15)), V2f(15, 15));
+		v2 resize_tab = clamp(mult(real_rect.wh, ggui->style.resize_tab), 5.0f, 25.0f);
+
+		r2 resize_rect = R2(sub(add(real_rect.xy, real_rect.wh), resize_tab), resize_tab);
 		if(!occluded && inside(resize_rect, ggui->input.mousepos)) {
 
 			if(ggui->active == gui_none && ggui->input.lclick) {
@@ -242,51 +299,26 @@ bool gui_begin(string name, r2 first_size, f32 first_alpha, gui_window_flags fla
 		}
 	}
 
-	vector_push(&window->offset_stack, V2(5.0f, ggui->style.gscale * ggui->style.font + ggui->style.title_padding + 5.0f));
+	gui_push_offset(V2(0.0f, gscale * ggui->style.font + ggui->style.title_padding + ggui->style.win_margin.z));
 
-	if(ggui->active_id == id) {
-		if(window->resizing) {
-
-			v2 wh = sub(ggui->input.mousepos, real_rect.xy);
-			if(wh.x < ggui->style.min_win_size.x) {
-				wh.x = ggui->style.min_win_size.x;
-			}
-			if(wh.x < (window->title_size.x + ggui->style.default_carrot_size.x) * ggui->style.gscale + ggui->style.carrot_padding.x + 20.0f) {
-				wh.x = (window->title_size.x + ggui->style.default_carrot_size.x) * ggui->style.gscale + ggui->style.carrot_padding.x + 20.0f;
-			}
-			if(wh.y < ggui->style.min_win_size.y) {
-				wh.y = ggui->style.min_win_size.y;
-			}
-			window->rect = R2(real_rect.xy, div(wh, ggui->style.gscale));
-
-		} else {
-
-			window->rect = R2(sub(ggui->input.mousepos, window->move_click_offset), window->rect.wh);
-		}
-	}
-
-	return false;
+	return window->active;
 }
 
-void gui_log_dsp(string name, vector<log_message>* cache) {
+void gui_log_wnd(string name, vector<cached_message>* cache) {
 
-	guiid id;
-	id.base = *stack_top(&ggui->current->id_hash_stack);
-	id.name = name;
+	gui_begin(name, R2(0.0f, global_state->window_h - ggui->style.log_win_height, (f32)global_state->window_w, ggui->style.log_win_height), 0.5f, win_nowininput | win_nohead | win_ignorescale, true);
 
-	gui_state_data* data = map_try_get(&ggui->state_data, id);
+	gui_window_state* current = ggui->current;
 
-	if(!data) {
+	v2 pos = ggui->current->rect.xy;
+	FORVEC(ggui->current->offset_stack,
+		pos = add(pos, *it);
+	)
 
-		gui_state_data nd;
-
-		nd.u16_1 = log_info;		// level
-		nd.u16_2 = 0;				// place
-
-		data = map_insert(&ggui->state_data, id, nd);
-	}
-
-	// input
+	FORVEC(*cache,
+		push_text(current, pos, it->fmt, ggui->style.font, WHITE);
+		pos.y += ggui->style.font;
+	)
 }
 
 bool gui_carrot_toggle(string name, bool initial, color c, v2 pos, bool* toggleme) {
@@ -310,6 +342,7 @@ bool gui_carrot_toggle(string name, bool initial, color c, v2 pos, bool* togglem
 		data->b = *toggleme;
 	}
 
+	pos = add(ggui->current->rect.xy, pos);
 	FORVEC(ggui->current->offset_stack,
 		pos = add(pos, *it);
 	)
@@ -337,16 +370,21 @@ bool gui_carrot_toggle(string name, bool initial, color c, v2 pos, bool* togglem
 
 void push_carrot(gui_window_state* win, v2 pos, bool active, color c) {
 
+	f32 gscale = 1.0f;
+	if((win->flags & win_ignorescale) != win_ignorescale) {
+		gscale = ggui->style.gscale;
+	}
+
 	u32 idx = win->mesh.verticies.size;
-	f32 size = 10.0f * ggui->style.gscale;
+	f32 size = ggui->style.default_carrot_size.x * gscale;
 
 	if(active) {
-		vector_push(&win->mesh.verticies, V2(pos.x, 	pos.y));
-		vector_push(&win->mesh.verticies, V2(pos.x + size, pos.y));
+		vector_push(&win->mesh.verticies, V2(pos.x 		 		, pos.y));
+		vector_push(&win->mesh.verticies, V2(pos.x + size 		, pos.y));
 		vector_push(&win->mesh.verticies, V2(pos.x + size / 2.0f, pos.y + size));
 	} else {
-		vector_push(&win->mesh.verticies, V2(pos.x, pos.y));
-		vector_push(&win->mesh.verticies, V2(pos.x, 	 pos.y + size));
+		vector_push(&win->mesh.verticies, V2(pos.x 		 , pos.y));
+		vector_push(&win->mesh.verticies, V2(pos.x 		 , pos.y + size));
 		vector_push(&win->mesh.verticies, V2(pos.x + size, pos.y + size / 2.0f));
 	}
 
@@ -360,15 +398,25 @@ void push_carrot(gui_window_state* win, v2 pos, bool active, color c) {
 
 void push_text(gui_window_state* win, v2 pos, string text, f32 point, color c) {
 
-	mesh_push_text_line(&win->mesh, ggui->current_font->font, text, pos, point * ggui->style.gscale, c);
+	f32 gscale = 1.0f;
+	if((win->flags & win_ignorescale) != win_ignorescale) {
+		gscale = ggui->style.gscale;
+	}
+
+	mesh_push_text_line(&win->mesh, win->font->font, text, pos, point * gscale, c);
 }
 
 void push_windowhead(gui_window_state* win) {
 	
+	f32 gscale = 1.0f;
+	if((win->flags & win_ignorescale) != win_ignorescale) {
+		gscale = ggui->style.gscale;
+	}
+
 	u32 idx = win->mesh.verticies.size;
-	r2 r = mult(win->rect, ggui->style.gscale);
+	r2 r = mult(win->rect, gscale);
 	f32 pt = ggui->style.font + ggui->style.title_padding;
-	pt *= ggui->style.gscale;
+	pt *= gscale;
 
 	vector_push(&win->mesh.verticies, V2(r.x + r.w - 10.0f, r.y));
 	vector_push(&win->mesh.verticies, V2(r.x + 10.0f, r.y));
@@ -386,10 +434,15 @@ void push_windowhead(gui_window_state* win) {
 
 void push_windowbody(gui_window_state* win) {
 
+	f32 gscale = 1.0f;
+	if((win->flags & win_ignorescale) != win_ignorescale) {
+		gscale = ggui->style.gscale;
+	}
+
 	u32 idx = win->mesh.verticies.size;
-	r2 r = mult(win->rect, ggui->style.gscale);
+	r2 r = mult(win->rect, gscale);
 	f32 pt = ggui->style.font + ggui->style.title_padding;
-	pt *= ggui->style.gscale;
+	pt *= gscale;
 
 	if((win->flags & win_noresize) == win_noresize) {
 
@@ -409,10 +462,12 @@ void push_windowbody(gui_window_state* win) {
 
 	} else {
 
+		v2 resize_tab = clamp(mult(r.wh, ggui->style.resize_tab), 5.0f, 25.0f);
+
 		vector_push(&win->mesh.verticies, V2(r.x, r.y + pt));
 		vector_push(&win->mesh.verticies, V2(r.x, r.y + r.h));
-		vector_push(&win->mesh.verticies, V2(r.x + r.w - 10.0f, r.y + r.h));
-		vector_push(&win->mesh.verticies, V2(r.x + r.w, r.y + r.h - 10.0f));
+		vector_push(&win->mesh.verticies, V2(r.x + r.w - resize_tab.x, r.y + r.h));
+		vector_push(&win->mesh.verticies, V2(r.x + r.w, r.y + r.h - resize_tab.y));
 		vector_push(&win->mesh.verticies, V2(r.x + r.w, r.y + pt));
 
 		FOR(5) vector_push(&win->mesh.texCoords, V3f(0,0,0));

@@ -295,7 +295,7 @@ i32 logging_thread(void* data_) {
 					FORVEC(*data->out,
 						if(it->level <= msg.level) {
 							if(it->custom) {
-								it->write(&msg);
+								it->write(&msg, output);
 							} else {
 								global_state->api->platform_write_file(&it->file, (void*)output.c_str, output.len - 1);
 							}
