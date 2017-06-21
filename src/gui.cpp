@@ -29,7 +29,7 @@ void destroy_gui(gui_manager* gui) {
 
 	FORMAP(gui->window_state_data,
 		destroy_stack(&it->value.id_hash_stack);
-		destroy_stack(&it->value.offset_stack);
+		destroy_vector(&it->value.offset_stack);
 		destroy_mesh(&it->value.mesh);
 	)
 
@@ -123,7 +123,7 @@ void gui_end_frame(ogl_manager* ogl) {
 	destroy_command_list(&rcl);
 
 	FORMAP(ggui->window_state_data,
-		clear_stack(&it->value.offset_stack);
+		clear_vector(&it->value.offset_stack);
 		clear_stack(&it->value.id_hash_stack);
 		clear_mesh(&it->value.mesh);
 	)
@@ -170,7 +170,7 @@ bool gui_begin(string name, r2 first_size, f32 first_alpha, gui_window_flags fla
 
 		ns.mesh = make_mesh_2d(32, ggui->alloc);
 		ns.id_hash_stack = make_stack<u32>(16, ggui->alloc);
-		ns.offset_stack = make_stack<v2>(16, ggui->alloc);
+		ns.offset_stack = make_vector<v2>(16, ggui->alloc);
 		ns.title_size = size_text(ggui->current_font->font, name, ggui->style.font);
 		ns.flags = flags;
 		ns.z = ggui->last_z++;
@@ -179,7 +179,6 @@ bool gui_begin(string name, r2 first_size, f32 first_alpha, gui_window_flags fla
 	}
 
 	stack_push(&window->id_hash_stack, guiid_hash(id));
-	stack_push(&window->offset_stack, V2(5.0f, ggui->style.gscale * ggui->style.font + ggui->style.title_padding + 5.0f));
 
 	ggui->current = window;
 	if((window->flags & win_nohead) != win_nohead) {
@@ -243,6 +242,8 @@ bool gui_begin(string name, r2 first_size, f32 first_alpha, gui_window_flags fla
 		}
 	}
 
+	vector_push(&window->offset_stack, V2(5.0f, ggui->style.gscale * ggui->style.font + ggui->style.title_padding + 5.0f));
+
 	if(ggui->active_id == id) {
 		if(window->resizing) {
 
@@ -267,6 +268,27 @@ bool gui_begin(string name, r2 first_size, f32 first_alpha, gui_window_flags fla
 	return false;
 }
 
+void gui_log_dsp(string name, vector<log_message>* cache) {
+
+	guiid id;
+	id.base = *stack_top(&ggui->current->id_hash_stack);
+	id.name = name;
+
+	gui_state_data* data = map_try_get(&ggui->state_data, id);
+
+	if(!data) {
+
+		gui_state_data nd;
+
+		nd.u16_1 = log_info;		// level
+		nd.u16_2 = 0;				// place
+
+		data = map_insert(&ggui->state_data, id, nd);
+	}
+
+	// input
+}
+
 bool gui_carrot_toggle(string name, bool initial, color c, v2 pos, bool* toggleme) {
 
 	guiid id;
@@ -287,6 +309,10 @@ bool gui_carrot_toggle(string name, bool initial, color c, v2 pos, bool* togglem
 	if(toggleme) {
 		data->b = *toggleme;
 	}
+
+	FORVEC(ggui->current->offset_stack,
+		pos = add(pos, *it);
+	)
 
 	v2 size = ggui->style.default_carrot_size;
 	size = mult(size, ggui->style.gscale);

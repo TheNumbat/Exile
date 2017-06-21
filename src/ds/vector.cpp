@@ -10,7 +10,7 @@ u32 vector_capacity(vector<T>* v) {
 }
 
 template<typename T> 
-void vector_clear(vector<T>* v) {
+void clear_vector(vector<T>* v) {
 	v->size = 0;
 }
 

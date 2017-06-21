@@ -191,13 +191,13 @@ void sort_render_commands(render_command_list* rcl) {
 }
 
 void clear_mesh(mesh_2d* m) {
-	vector_clear(&m->verticies);
-	vector_clear(&m->colors);
-	vector_clear(&m->texCoords);
-	vector_clear(&m->elements);
+	clear_vector(&m->verticies);
+	clear_vector(&m->colors);
+	clear_vector(&m->texCoords);
+	clear_vector(&m->elements);
 }
 
 void clear_mesh(mesh_3d* m) {
-	vector_clear(&m->verticies);
-	vector_clear(&m->texCoords);
+	clear_vector(&m->verticies);
+	clear_vector(&m->texCoords);
 }

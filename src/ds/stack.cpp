@@ -48,7 +48,7 @@ stack<T> make_stack(u32 capacity) {
 template<typename T>
 void clear_stack(stack<T>* s) {
 
-	vector_clear(&s->contents);
+	clear_vector(&s->contents);
 }
 
 template<typename T>

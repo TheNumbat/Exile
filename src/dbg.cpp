@@ -20,7 +20,7 @@ void dbg_add_log(log_message* msg) {
 
 	// TODO(max): circular buffer
 	if(dbg->log_cache.size == dbg->log_cache.capacity) {
-		vector_pop_front(&dbg->log_cache);		
+		vector_pop_front(&dbg->log_cache);
 	}
 	vector_push(&dbg->log_cache, *msg);
 }
@@ -28,5 +28,5 @@ void dbg_add_log(log_message* msg) {
 void render_debug_gui(game_state* state) {
 
 	gui_begin(string_literal("Debug"));
-	gui_begin(string_literal("TEST"), R2f(300, 40, 0, 0), 0.0f, win_noresize);
+	gui_log_dsp(string_literal("Log"), &state->dbg.log_cache);
 }

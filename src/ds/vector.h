@@ -16,6 +16,7 @@ template<typename T> vector<T> make_vector(u32 capacity = 4);
 template<typename T> vector<T> make_vector_copy(vector<T> source);
 template<typename T> vector<T> make_vector_copy(vector<T> source, allocator* a);
 template<typename T> void destroy_vector(vector<T>* v);
+template<typename T> void clear_vector(vector<T>* v); // doesn't free/resize
 
 template<typename T> void vector_grow(vector<T>* v, bool copy = true);
 template<typename T> void vector_resize(vector<T>* v, u32 capacity, bool copy = true); // a smaller size will truncate
@@ -23,7 +24,6 @@ template<typename T> void vector_push(vector<T>* v, T value);
 template<typename T> void vector_pop(vector<T>* v);
 template<typename T> void vector_pop_front(vector<T>* v);
 template<typename T> void vector_erase(vector<T>* v, u32 index, u32 num = 1);
-template<typename T> void vector_clear(vector<T>* v); // doesn't free/resize
 
 template<typename T> T* vector_get(vector<T>* v, u32 idx);
 template<typename T> T* vector_front(vector<T>* v);

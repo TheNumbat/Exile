@@ -68,7 +68,7 @@ struct gui_window_state {
 	bool active = true;
 	bool resizing = false;
 
-	stack<v2> offset_stack;
+	vector<v2> offset_stack;
 	stack<u32> id_hash_stack;
 	mesh_2d mesh;
 };
@@ -90,6 +90,7 @@ struct gui_style {
 	color3 win_top		= V3b(74, 79, 137);
 	color3 win_close	= V3b(102, 105, 185);
 	color3 win_title 	= V3b(255, 255, 255);
+	color3 wid_back		= V3b(102, 105, 185);
 };
 
 enum gui_active_state {
@@ -148,6 +149,8 @@ void gui_select_best_font_scale();
 bool gui_occluded();
 bool gui_begin(string name, r2 first_size = R2f(40,40,0,0), f32 first_alpha = 0, gui_window_flags flags = 0);
 bool gui_carrot_toggle(string name, bool initial = false, color c = V4b(255, 255, 255, 255),  v2 pos = V2f(0,0), bool* toggleme = NULL);
+
+void gui_log_dsp(string name, vector<log_message>* cache);
 
 void push_windowhead(gui_window_state* win);
 void push_windowbody(gui_window_state* win);

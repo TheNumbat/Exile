@@ -49,7 +49,7 @@ void map_clear(map<K,V>* m) {
 	FORVEC(m->contents,
 		it->occupied = false;
 	)
-	vector_clear(&m->contents);
+	clear_vector(&m->contents);
 	m->size = 0;
 	m->max_probe = 0;
 }
