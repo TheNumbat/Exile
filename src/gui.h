@@ -28,7 +28,7 @@ struct gui_opengl {
 
 struct gui_input_state {
 	v2 mousepos;
-	u16 scroll = 0;
+	i16 scroll = 0;
 
 	bool lclick = false;
 	bool rclick = false;
@@ -116,6 +116,12 @@ struct gui_style {
 	color3 win_close	= V3b(102, 105, 185);
 	color3 win_title 	= V3b(255, 255, 255);
 	color3 wid_back		= V3b(102, 105, 185);
+
+	f32 win_scroll_w 		= 15.0f;
+	f32 win_scroll_margin	= 2.0f;
+	f32 win_scroll_bar_h	= 25.0f;
+	color3 win_scroll_back 	= V3b(102, 105, 185);
+	color3 win_scroll_bar 	= V3b(132, 135, 215);
 };
 
 enum gui_active_state {

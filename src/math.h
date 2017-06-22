@@ -67,6 +67,13 @@ inline f32 _cosf(f32 value) {
 }
 #define cosf(v) _cosf(v)
 
+inline f32 _lerpf(f32 min, f32 max, f32 dist) {
+	return min + (max - min) * dist;
+}
+#define lerpf(i,m,d) _lerpf(i,m,d)
+
+// clamp/f is with the vector clamps
+
 template<typename T>
 union v2_t {
 	struct {

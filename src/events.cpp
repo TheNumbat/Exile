@@ -22,6 +22,7 @@ gui_input_state run_events(game_state* state) {
 
 	global_state->api->platform_queue_messages(&global_state->window);
 	gui_input_state ret = state->gui.input;
+	ret.scroll = 0;
 
 	while(!queue_empty(&state->evt.event_queue)) {
 

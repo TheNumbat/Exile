@@ -249,7 +249,10 @@ bool gui_begin(string name, r2 first_size, f32 first_alpha, gui_window_flags fla
 	}
 
 	f32 carrot_x_diff = ggui->style.default_carrot_size.x * gscale + ggui->style.carrot_padding.x;
+	
 	r2 top_rect = R2(real_rect.xy, V2(real_rect.w - carrot_x_diff, gscale * ggui->style.font + ggui->style.title_padding));	
+	r2 bod_rect = R2(real_rect.x, real_rect.y + ggui->style.font + ggui->style.title_padding, real_rect.w, real_rect.h - ggui->style.font + ggui->style.title_padding);
+
 	bool occluded = gui_occluded();
 	if((window->flags & win_nohide) != win_nohide) {
 
@@ -282,7 +285,6 @@ bool gui_begin(string name, r2 first_size, f32 first_alpha, gui_window_flags fla
 			}
 		}
 	}
-
 	if((window->flags & win_noresize) != win_noresize) {
 
 		v2 resize_tab = clamp(mult(real_rect.wh, ggui->style.resize_tab), 5.0f, 25.0f);
@@ -295,6 +297,14 @@ bool gui_begin(string name, r2 first_size, f32 first_alpha, gui_window_flags fla
 				ggui->active_id = id;
 				ggui->active = gui_active;
 				window->resizing = true;
+			}
+		}
+	}
+	if((window->flags & win_noback) != win_noback && window->active) {
+		
+		if(!occluded && inside(bod_rect, ggui->input.mousepos)) {
+			if(ggui->active == gui_none && ggui->input.lclick) {
+				window->z = ggui->last_z++;
 			}
 		}
 	}
@@ -311,14 +321,59 @@ void gui_log_wnd(string name, vector<cached_message>* cache) {
 	gui_window_state* current = ggui->current;
 
 	v2 pos = ggui->current->rect.xy;
-	FORVEC(ggui->current->offset_stack,
-		pos = add(pos, *it);
-	)
+	pos = add(pos, V2(ggui->style.win_margin.x, current->rect.wh.y - ggui->style.win_margin.w));
 
-	FORVEC(*cache,
+	guiid id;
+	id.base = *stack_top(&current->id_hash_stack);
+	id.name = string_literal("#LOG");
+
+	gui_state_data* data = map_try_get(&ggui->state_data, id);
+
+	if(!data) {
+
+		gui_state_data nd;
+
+		nd.u32_1 = 0; // scroll position
+
+		data = map_insert(&ggui->state_data, id, nd);
+	}
+
+	// we don't need real_rect, as this will always ignore global scale
+	if(!gui_occluded() && inside(current->rect, ggui->input.mousepos)) {
+		if(ggui->input.scroll + (i32)data->u32_1 < 0) {
+			data->u32_1 = 0;
+		} else {
+			data->u32_1 += ggui->input.scroll;
+		}
+		if(data->u32_1 > cache->size) {
+			data->u32_1 = cache->size;
+		}
+	}
+
+	r2 scroll_back = R2(add(current->rect.xy, V2(current->rect.w - ggui->style.win_scroll_w, ggui->style.font + ggui->style.title_padding)), V2(ggui->style.win_scroll_w, current->rect.h));
+
+	mesh_push_rect(&current->mesh, scroll_back, V4b(ggui->style.win_scroll_back, 255));
+
+	f32 scroll_y = lerpf(current->rect.y + current->rect.h, current->rect.y, (f32)data->u32_1 / (f32)cache->size);
+	if(scroll_y < current->rect.y + ggui->style.font + ggui->style.title_padding) {
+		scroll_y = current->rect.y + ggui->style.font + ggui->style.title_padding;
+	}
+	if(scroll_y > current->rect.y + current->rect.h - ggui->style.win_scroll_bar_h) {
+		scroll_y = current->rect.y + current->rect.h - ggui->style.win_scroll_bar_h;
+	}
+	r2 scroll_bar = R2(scroll_back.x + ggui->style.win_scroll_margin, scroll_y, ggui->style.win_scroll_w - ggui->style.win_scroll_margin * 2.0f, ggui->style.win_scroll_bar_h);
+
+	mesh_push_rect(&current->mesh, scroll_bar, V4b(ggui->style.win_scroll_bar, 255));
+
+	for(u32 i = cache->size - data->u32_1 + 1; i > 0; i--) {
+		cached_message* it = vector_get(cache, i - 1);
+
 		push_text(current, pos, it->fmt, ggui->style.font, WHITE);
-		pos.y += ggui->style.font;
-	)
+		pos.y -= ggui->style.font;
+		if(pos.y < current->rect.y + ggui->style.font + ggui->style.win_margin.z) {
+			break;
+		}
+	}
 }
 
 bool gui_carrot_toggle(string name, bool initial, color c, v2 pos, bool* toggleme) {
