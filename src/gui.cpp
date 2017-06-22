@@ -316,12 +316,11 @@ bool gui_begin(string name, r2 first_size, f32 first_alpha, gui_window_flags fla
 
 void gui_log_wnd(string name, vector<cached_message>* cache) {
 
-	gui_begin(name, R2(0.0f, global_state->window_h - ggui->style.log_win_height, (f32)global_state->window_w, ggui->style.log_win_height), 0.5f, win_nowininput | win_nohead | win_ignorescale, true);
+	f32 height = ggui->style.log_win_lines * ggui->style.font + ggui->style.font + ggui->style.title_padding + ggui->style.win_margin.x + ggui->style.win_margin.w;
+	gui_begin(name, R2(0.0f, global_state->window_h - height, (f32)global_state->window_w, height), 0.5f, win_nowininput | win_nohead | win_ignorescale, true);
 
 	gui_window_state* current = ggui->current;
-
-	v2 pos = ggui->current->rect.xy;
-	pos = add(pos, V2(ggui->style.win_margin.x, current->rect.wh.y - ggui->style.win_margin.w));
+	current->rect = R2(0.0f, global_state->window_h - height, (f32)global_state->window_w, height);
 
 	guiid id;
 	id.base = *stack_top(&current->id_hash_stack);
@@ -345,16 +344,16 @@ void gui_log_wnd(string name, vector<cached_message>* cache) {
 		} else {
 			data->u32_1 += ggui->input.scroll;
 		}
-		if(data->u32_1 > cache->size) {
-			data->u32_1 = cache->size;
+		if(cache->size - data->u32_1 < ggui->style.log_win_lines) {
+			data->u32_1 = cache->size - ggui->style.log_win_lines;
 		}
 	}
-
+	
 	r2 scroll_back = R2(add(current->rect.xy, V2(current->rect.w - ggui->style.win_scroll_w, ggui->style.font + ggui->style.title_padding)), V2(ggui->style.win_scroll_w, current->rect.h));
 
 	mesh_push_rect(&current->mesh, scroll_back, V4b(ggui->style.win_scroll_back, 255));
 
-	f32 scroll_y = lerpf(current->rect.y + current->rect.h, current->rect.y, (f32)data->u32_1 / (f32)cache->size);
+	f32 scroll_y = lerpf(current->rect.y + current->rect.h, current->rect.y, (f32)data->u32_1 / (f32)(cache->size - ggui->style.log_win_lines));
 	if(scroll_y < current->rect.y + ggui->style.font + ggui->style.title_padding) {
 		scroll_y = current->rect.y + ggui->style.font + ggui->style.title_padding;
 	}
@@ -365,12 +364,15 @@ void gui_log_wnd(string name, vector<cached_message>* cache) {
 
 	mesh_push_rect(&current->mesh, scroll_bar, V4b(ggui->style.win_scroll_bar, 255));
 
-	for(u32 i = cache->size - data->u32_1 + 1; i > 0; i--) {
+	v2 pos = add(ggui->current->rect.xy, V2(ggui->style.win_margin.x, height - ggui->style.title_padding - ggui->style.win_margin.z - ggui->style.win_margin.w));
+
+	for(i32 i = cache->size - data->u32_1; i > 0; i--) {
 		cached_message* it = vector_get(cache, i - 1);
 
 		push_text(current, pos, it->fmt, ggui->style.font, WHITE);
 		pos.y -= ggui->style.font;
-		if(pos.y < current->rect.y + ggui->style.font + ggui->style.win_margin.z) {
+
+		if(pos.y < current->rect.y + ggui->style.font + ggui->style.title_padding + ggui->style.win_margin.z) {
 			break;
 		}
 	}
