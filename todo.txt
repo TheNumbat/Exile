@@ -7,7 +7,9 @@ immediate to do:
 		stop sending mesh every frame (see OpenGL)
 		widget clipping
 		text wrapping
-		window scroll
+		general window scroll
+			click/drag/hold scroll bar
+			sticky scroll (like twitch chat)
 		lots of widgets types
 		logger UI window
 		start profiler
