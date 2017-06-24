@@ -15,17 +15,11 @@ enum log_level : i8 {
 	log_fatal,		// basically assert(false), hangs the thread and will exit the program after output
 };
 
-struct log_thread_data {
-	stack<string> context_name;
-	string name;
-	code_context start_context;
-};
-
 struct log_message {
 	string msg;
 	log_level level;
-	log_thread_data data; // snapshot
-	code_context publisher;
+	thread_data data; // snapshot
+	code_context* publisher;
 	arena_allocator arena; // joint allocation of msg, data.context_name, data.name
 };
 
@@ -49,8 +43,6 @@ struct log_thread_param {
 	arena_allocator* scratch				= NULL;
 };
 
-thread_local log_thread_data this_thread_data;
-
 struct log_manager {
 	vector<log_out> 	out;
 	queue<log_message> 	message_queue;
@@ -62,14 +54,9 @@ struct log_manager {
 	arena_allocator 	scratch;
 };
 
-
 log_manager make_logger(allocator* a); // allocator must have suppress_messages set
 void destroy_logger(log_manager* log); // calls logger_stop if needed, call log_end_thread() everywhere first
 
-#define LOG_INIT_THREAD(n) logger_init_thread(&global_state->log, n, CONTEXT)
-void logger_init_thread(log_manager* log, string name, code_context context);  // initializes logging for this thread. call before start in main
-#define LOG_END_THREAD() logger_end_thread(&global_state->log)
-void logger_end_thread(log_manager* log);
 void logger_start(log_manager* log); // begin logging thread - call from one thread
 void logger_stop(log_manager* log);  // end logging thread - call from one thread
 
@@ -83,8 +70,8 @@ void logger_add_file(log_manager* log, platform_file file, log_level level); // 
 void logger_print_header(log_manager* log, log_out out);
 void logger_add_output(log_manager* log, log_out out);
 
-void logger_msgf(log_manager* log, string fmt, log_level level, code_context context, ...);
-void logger_msg(log_manager* log, string msg, log_level level, code_context context);
+void logger_msgf(log_manager* log, string fmt, log_level level, code_context* context, ...);
+void logger_msg(log_manager* log, string msg, log_level level, code_context* context);
 string log_fmt_msg(log_message* msg);
 
 #define LOG_INFO(msg) 	logger_msg(&global_state->log, string_literal(msg), log_info,  CONTEXT);
@@ -92,7 +79,7 @@ string log_fmt_msg(log_message* msg);
 #define LOG_ERR(msg) 	logger_msg(&global_state->log, string_literal(msg), log_error, CONTEXT);
 #define LOG_FATAL(msg) 	logger_msg(&global_state->log, string_literal(msg), log_fatal, CONTEXT);
 
-#define LOG_OGL_F(fmt, ...)		logger_msgf(&global_state->log, string_literal(fmt), log_ogl,  CONTEXT, __VA_ARGS__);
+#define LOG_OGL_F(fmt, ...)		logger_msgf(&global_state->log, string_literal(fmt), log_ogl,   CONTEXT, __VA_ARGS__);
 #define LOG_INFO_F(fmt, ...) 	logger_msgf(&global_state->log, string_literal(fmt), log_info,  CONTEXT, __VA_ARGS__);
 #define LOG_WARN_F(fmt, ...) 	logger_msgf(&global_state->log, string_literal(fmt), log_warn,  CONTEXT, __VA_ARGS__);
 #define LOG_ERR_F(fmt, ...) 	logger_msgf(&global_state->log, string_literal(fmt), log_error, CONTEXT, __VA_ARGS__);

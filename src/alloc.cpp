@@ -1,26 +1,18 @@
 
-void alloc_begin_thread(allocator* alloc) {
-	alloc_context = make_stack<allocator*>(8, alloc);
-}
-
-void alloc_end_thread() {
-	destroy_stack(&alloc_context);
-}
-
 inline void _pop_alloc() {
-	stack_pop(&alloc_context);
+	stack_pop(&this_thread_data.alloc_stack);
 }
 
 inline void _push_alloc(allocator* a) {
-	stack_push(&alloc_context,a);
+	stack_push(&this_thread_data.alloc_stack,a);
 }
 
 inline allocator* _current_alloc() {
-	allocator* ret = *stack_top(&alloc_context);
+	allocator* ret = *stack_top(&this_thread_data.alloc_stack);
 	return ret;
 }
 
-inline void* platform_allocate(u64 bytes, void* this_data, code_context context) {
+inline void* platform_allocate(u64 bytes, void* this_data, code_context* context) {
 
 	platform_allocator* this_ = (platform_allocator*)this_data;
 
@@ -28,27 +20,27 @@ inline void* platform_allocate(u64 bytes, void* this_data, code_context context)
 
 #ifdef _DEBUG
 	if(!this_->suppress_messages) {
-		logger_msgf(&global_state->log, string_literal("allocating %u bytes to %p from %s:%u with platform alloc \"%s\""), log_alloc, CONTEXT, bytes, mem, context.file.c_str, context.line, this_->name.c_str);
+		logger_msgf(&global_state->log, string_literal("allocating %u bytes to %p from %s:%u with platform alloc \"%s\""), log_alloc, CONTEXT, bytes, mem, CONTEXT->file.c_str, CONTEXT->line, this_->name.c_str);
 	}
 #endif
 
 	return mem;
 }
 
-inline void platform_free(void* mem, void* this_data, code_context context) {
+inline void platform_free(void* mem, void* this_data, code_context* context) {
 
 	platform_allocator* this_ = (platform_allocator*)this_data;
 
 #ifdef _DEBUG
 	if(!this_->suppress_messages) {
-		logger_msgf(&global_state->log, string_literal("freeing %p from %s:%u with platform alloc \"%s\""), log_alloc, CONTEXT, mem, context.file.c_str, context.line, this_->name.c_str);
+		logger_msgf(&global_state->log, string_literal("freeing %p from %s:%u with platform alloc \"%s\""), log_alloc, CONTEXT, mem, context->file.c_str, context->line, this_->name.c_str);
 	}
 #endif
 
 	this_->platform_free(mem);
 }
 
-inline platform_allocator make_platform_allocator(string name, code_context context) {
+inline platform_allocator make_platform_allocator(string name, code_context* context) {
 
 	platform_allocator ret;
 	
@@ -62,7 +54,7 @@ inline platform_allocator make_platform_allocator(string name, code_context cont
 	return ret;
 }
 
-inline void* arena_allocate(u64 bytes, void* this_data, code_context context) {
+inline void* arena_allocate(u64 bytes, void* this_data, code_context* context) {
 		
 	arena_allocator* this_ = (arena_allocator*)this_data;
 
@@ -75,21 +67,21 @@ inline void* arena_allocate(u64 bytes, void* this_data, code_context context) {
 		this_->used += bytes;
 	} else {
 
-		LOG_ERR_F("Failed to allocate %u bytes in allocator from %s:%u", bytes, this_->context.file.c_str, this_->context.line);
+		LOG_ERR_F("Failed to allocate %u bytes in allocator %s:%u", bytes, this_->context->file.c_str, this_->context->line);
 	}
 
 #ifdef _DEBUG
 	if(!this_->suppress_messages) {
-		logger_msgf(&global_state->log, string_literal("allocating %u bytes (used:%u/%u) to %p from %s:%u with arena alloc \"%s\""), log_alloc, CONTEXT, bytes, this_->used, this_->size, mem, context.file.c_str, context.line, this_->name.c_str);
+		logger_msgf(&global_state->log, string_literal("allocating %u bytes (used:%u/%u) to %p from %s:%u with arena alloc \"%s\""), log_alloc, CONTEXT, bytes, this_->used, this_->size, mem, context->file.c_str, context->line, this_->name.c_str);
 	}
 #endif
 
 	return mem;
 }
 
-inline void arena_free(void*, void*, code_context context) {}
+inline void arena_free(void*, void*, code_context* context) {}
 
-inline void arena_reset(arena_allocator* a, code_context context) {
+inline void arena_reset(arena_allocator* a, code_context* context) {
 
 #ifdef _DEBUG
 	if(!a->suppress_messages) {
@@ -104,7 +96,7 @@ inline void arena_reset(arena_allocator* a, code_context context) {
 #endif
 }
 
-inline void arena_destroy(arena_allocator* a, code_context context) {
+inline void arena_destroy(arena_allocator* a, code_context* context) {
 
 #ifdef _DEBUG
 	if(!a->suppress_messages) {
@@ -120,7 +112,7 @@ inline void arena_destroy(arena_allocator* a, code_context context) {
 	}
 }
 
-inline arena_allocator make_arena_allocator_from_context(string name, u64 size, bool suppress, code_context context) {
+inline arena_allocator make_arena_allocator_from_context(string name, u64 size, bool suppress, code_context* context) {
 
 	arena_allocator ret;
 
@@ -152,7 +144,7 @@ inline arena_allocator make_arena_allocator_from_context(string name, u64 size, 
 	return ret;
 }
 
-inline arena_allocator make_arena_allocator(string name, u64 size, allocator* backing, bool suppress, code_context context) {
+inline arena_allocator make_arena_allocator(string name, u64 size, allocator* backing, bool suppress, code_context* context) {
 
 	arena_allocator ret;
 

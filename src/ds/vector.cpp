@@ -77,6 +77,21 @@ vector<T> make_vector_copy(vector<T> source, allocator* a) {
 	return ret;	
 }
 
+template<typename T>
+vector<T> make_vector_copy_trim(vector<T> source, allocator* a) {
+
+	vector<T> ret = make_vector<T>(source.size, a);
+
+	if(source.memory) {
+
+		memcpy(source.memory, ret.memory, source.size * sizeof(T));
+	}
+
+	ret.size = source.size;
+
+	return ret;	
+}
+
 // operator[] but not a member
 template<typename T>
 inline T* vector_get(vector<T>* v, u32 idx) {

@@ -43,18 +43,6 @@ void logger_stop(log_manager* log) {
 	log->thread_param.scratch			= NULL;
 }
 
-void logger_end_thread(log_manager* log) {
-
-	destroy_stack(&this_thread_data.context_name);
-}
-
-void logger_init_thread(log_manager* log, string name, code_context context) {
-
-	this_thread_data.context_name = make_stack<string>(8, log->alloc);
-	this_thread_data.name = name;
-	this_thread_data.start_context = context;
-}
-
 void destroy_logger(log_manager* log) {
 
 	if(log->thread_param.running) {
@@ -71,13 +59,13 @@ void destroy_logger(log_manager* log) {
 
 void logger_push_context(log_manager* log, string context) {
 
-	stack_push(&this_thread_data.context_name, context);
+	stack_push(&this_thread_data.call_stack, _make_context(string_literal("\\"), context, 0));
 }
 
 void logger_pop_context(log_manager* log) {
 
 
-	stack_pop(&this_thread_data.context_name);
+	stack_pop(&this_thread_data.call_stack);
 }
 
 void logger_add_file(log_manager* log, platform_file file, log_level level) {
@@ -111,7 +99,7 @@ void logger_print_header(log_manager* log, log_out out) {
 	} POP_ALLOC();
 }
 
-void logger_msgf(log_manager* log, string fmt, log_level level, code_context context, ...) {
+void logger_msgf(log_manager* log, string fmt, log_level level, code_context* context, ...) {
 
 	log_message lmsg;
 
@@ -126,7 +114,7 @@ void logger_msgf(log_manager* log, string fmt, log_level level, code_context con
 		lmsg.publisher = context;
 		lmsg.level = level;
 		lmsg.data = this_thread_data;
-		lmsg.data.context_name = make_stack_copy(lmsg.data.context_name, &lmsg.arena);
+		lmsg.data.call_stack = make_stack_copy_trim(lmsg.data.call_stack, &lmsg.arena);
 		lmsg.data.name = make_copy_string(lmsg.data.name);
 		
 		global_state->api->platform_aquire_mutex(&log->queue_mutex, -1);
@@ -152,18 +140,18 @@ void logger_msgf(log_manager* log, string fmt, log_level level, code_context con
 	} POP_ALLOC();
 }
 
-void logger_msg(log_manager* log, string msg, log_level level, code_context context) {
+void logger_msg(log_manager* log, string msg, log_level level, code_context* context) {
 
 	log_message lmsg;
 
-	lmsg.arena = MAKE_ARENA("msg arena", 256, log->alloc, true);
+	lmsg.arena = MAKE_ARENA("msg arena", 512, log->alloc, true);
 	PUSH_ALLOC(&lmsg.arena) {
 
 		lmsg.msg = make_copy_string(msg);
 		lmsg.publisher = context;
 		lmsg.level = level;
 		lmsg.data = this_thread_data;
-		lmsg.data.context_name = make_stack_copy(lmsg.data.context_name, &lmsg.arena);
+		lmsg.data.call_stack = make_stack_copy_trim(lmsg.data.call_stack, &lmsg.arena);
 		lmsg.data.name = make_copy_string(lmsg.data.name);
 
 		global_state->api->platform_aquire_mutex(&log->queue_mutex, -1);
@@ -195,13 +183,16 @@ string log_fmt_msg(log_message* msg) {
 	global_state->api->platform_get_timef(string_literal("hh:mm:ss"), &time);
 		
 	string thread_contexts = make_cat_string(msg->data.name, string_literal("/"));
-	for(u32 j = 0; j < msg->data.context_name.contents.size; j++) {
-		string temp = make_cat_strings(3, thread_contexts, *vector_get(&msg->data.context_name.contents, j), string_literal("/"));
+	for(u32 j = 0; j < msg->data.call_stack.contents.size; j++) {
+		string temp = make_cat_strings(3, thread_contexts, *vector_get(&msg->data.call_stack.contents, j), string_literal("/"));
 		free_string(thread_contexts);
 		thread_contexts = temp;
 	}
 
-	string file_line = make_stringf(string_literal("%s:%u"), msg->publisher.file.c_str, msg->publisher.line);
+	string file_line;
+	if (msg->publisher) {
+		file_line = make_stringf(string_literal("%s:%u"), msg->publisher->file.c_str, msg->publisher->line);
+	}
 	string level;
 	switch(msg->level) {
 	case log_debug:
@@ -227,7 +218,7 @@ string log_fmt_msg(log_message* msg) {
 		break;
 	}
 
-	string output = make_stringf(string_literal("%-8s [%-24s] [%-20s] [%-5s] %*s\r\n"), time.c_str, thread_contexts.c_str, file_line.c_str, level.c_str, 3 * msg->data.context_name.contents.size + msg->msg.len - 1, msg->msg.c_str);
+	string output = make_stringf(string_literal("%-8s [%-24s] [%-20s] [%-5s] %*s\r\n"), time.c_str, thread_contexts.c_str, file_line.c_str, level.c_str, 3 * msg->data.call_stack.contents.size + msg->msg.len - 1, msg->msg.c_str);
 
 	free_string(time);
 	free_string(thread_contexts);
@@ -241,7 +232,7 @@ i32 logging_thread(void* data_) {
 
 	log_thread_param* data = (log_thread_param*)data_;	
 
-	alloc_begin_thread(data->alloc);
+	begin_thread(string_literal("log"), data->alloc);
 
 	while(data->running) {
 
@@ -291,7 +282,7 @@ i32 logging_thread(void* data_) {
 		global_state->api->platform_wait_semaphore(data->logging_semaphore, -1);
 	}
 
-	alloc_end_thread();
+	end_thread();
 
 	return 0;
 }

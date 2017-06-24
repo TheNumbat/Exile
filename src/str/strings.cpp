@@ -152,14 +152,10 @@ string make_stringf_a(allocator* a, string fmt, ...) {
 	
 	string ret;
 
-	PUSH_ALLOC(a) {
-
-		va_list args;
-		va_start(args, fmt);
-		ret = make_vstringf(fmt, args);
-		va_end(args);
-
-	} POP_ALLOC();
+	va_list args;
+	va_start(args, fmt);
+	ret = make_vstringf_a(a, fmt, args);
+	va_end(args);
 
 	return ret;
 }
@@ -176,22 +172,21 @@ string make_stringf(string fmt, ...) {
 	return ret;
 }
 
-string make_vstringf_a(allocator* a, string fmt, va_list args) {
-
-	string ret;
-
-	PUSH_ALLOC(a) {
-
-		ret = make_vstringf(fmt, args);
-
-	} POP_ALLOC();
-
-	return ret;	
-}
-
 #include <cstdio>
 #pragma warning(push)
 #pragma warning(disable : 4996)
+string make_vstringf_a(allocator* a, string fmt, va_list args) {
+
+	i32 len = _vscprintf(fmt.c_str, args) + 1;
+
+	string ret = make_string(len, a);
+	ret.len = len;
+
+	vsnprintf(ret.c_str, ret.len, fmt.c_str, args);
+
+	return ret;
+}
+
 string make_vstringf(string fmt, va_list args) {
 
 	i32 len = _vscprintf(fmt.c_str, args) + 1;

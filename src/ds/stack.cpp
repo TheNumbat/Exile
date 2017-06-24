@@ -16,6 +16,16 @@ stack<T> make_stack_copy(stack<T> src, allocator* a) {
 }
 
 template<typename T>
+stack<T> make_stack_copy_trim(stack<T> src, allocator* a) {
+
+	stack<T> ret;
+
+	ret.contents = make_vector_copy_trim(src.contents, a);
+
+	return ret;
+}
+
+template<typename T>
 stack<T> make_stack(u32 capacity, allocator* a) {
 
 	stack<T> ret;

@@ -15,6 +15,7 @@ template<typename T> vector<T> make_vector(u32 capacity, allocator* a);
 template<typename T> vector<T> make_vector(u32 capacity = 4);
 template<typename T> vector<T> make_vector_copy(vector<T> source);
 template<typename T> vector<T> make_vector_copy(vector<T> source, allocator* a);
+template<typename T> vector<T> make_vector_copy_trim(vector<T> source, allocator* a);
 template<typename T> void destroy_vector(vector<T>* v);
 template<typename T> void clear_vector(vector<T>* v); // doesn't free/resize
 

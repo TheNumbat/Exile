@@ -8,11 +8,11 @@ extern "C" game_state* start_up(platform_api* api) {
 	global_state = state;
 
 	state->api = api;
-	state->default_platform_allocator = MAKE_PLATFORM_ALLOCATOR("default");
+	state->default_platform_allocator = make_platform_allocator(string_literal("default"), NULL);
 	state->suppressed_platform_allocator = state->default_platform_allocator;
 	state->suppressed_platform_allocator.suppress_messages = true;
 
-	alloc_begin_thread(&state->suppressed_platform_allocator);
+	begin_thread(string_literal("main"), &state->suppressed_platform_allocator);
 
 	state->log = make_logger(&state->suppressed_platform_allocator);
 
@@ -28,8 +28,6 @@ extern "C" game_state* start_up(platform_api* api) {
 	dbg_log.custom = true;
 	dbg_log.write = &dbg_add_log;
 	logger_add_output(&state->log, dbg_log);
-
-	LOG_INIT_THREAD(string_literal("main"));
 
 	logger_start(&state->log);
 
@@ -153,13 +151,12 @@ extern "C" void shut_down(platform_api* api, game_state* state) {
 	LOG_DEBUG("Done with shutdown!");
 
 	// not actually quite done but we can't log anything after this
-	LOG_END_THREAD();
 	logger_stop(&state->log);
 	destroy_logger(&state->log);
 
 	destroy_dbg_manager(&state->dbg);
 
-	alloc_end_thread();
+	end_thread();
 
 	api->platform_heap_free(state);
 }
@@ -169,6 +166,7 @@ extern "C" void on_reload(game_state* state) {
 	global_state = state;
 	ogl_load_global_funcs();
 
+	begin_thread(string_literal("main"), &state->suppressed_platform_allocator);
 	logger_start(&state->log);
 	threadpool_start_all(&state->thread_pool);
 
@@ -181,4 +179,6 @@ extern "C" void on_unload(game_state* state) {
 
 	threadpool_stop_all(&state->thread_pool);
 	logger_stop(&state->log);
+
+	end_thread();
 }

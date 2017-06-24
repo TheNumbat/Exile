@@ -347,6 +347,9 @@ void gui_log_wnd(string name, vector<cached_message>* cache) {
 		if(cache->size - data->u32_1 < ggui->style.log_win_lines) {
 			data->u32_1 = cache->size - ggui->style.log_win_lines;
 		}
+		if(cache->size < ggui->style.log_win_lines) {
+			data->u32_1 = 0;
+		}
 	}
 	
 	r2 scroll_back = R2(add(current->rect.xy, V2(current->rect.w - ggui->style.win_scroll_w, ggui->style.font + ggui->style.title_padding)), V2(ggui->style.win_scroll_w, current->rect.h));

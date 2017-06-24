@@ -96,13 +96,8 @@ i32 worker(void* data_) {
 
 	worker_data* data = (worker_data*)data_;
 
-	alloc_begin_thread(&global_state->suppressed_platform_allocator);
-
-	string thread_name;
-	PUSH_ALLOC(&global_state->suppressed_platform_allocator) {
-		thread_name = make_stringf(string_literal("worker %i"), global_state->api->platform_this_thread_id().id);
-		LOG_INIT_THREAD(thread_name);
-	} POP_ALLOC();
+	string thread_name = make_stringf_a(&global_state->suppressed_platform_allocator, string_literal("worker %i"), global_state->api->platform_this_thread_id().id);
+	begin_thread(thread_name, &global_state->suppressed_platform_allocator);
 
 	LOG_DEBUG("Starting worker thread");
 
@@ -125,12 +120,8 @@ i32 worker(void* data_) {
 
 	LOG_DEBUG("Ending worker thread");
 
-	LOG_END_THREAD();
-	PUSH_ALLOC(&global_state->suppressed_platform_allocator) {
-		free_string(thread_name);
-	} POP_ALLOC();
-
-	alloc_end_thread();
+	free_string(thread_name, &global_state->suppressed_platform_allocator);
+	end_thread();
 
 	return 0;
 }
