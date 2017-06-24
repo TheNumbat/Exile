@@ -49,13 +49,14 @@ struct log_thread_param {
 	arena_allocator* scratch				= NULL;
 };
 
+thread_local log_thread_data this_thread_data;
+
 struct log_manager {
 	vector<log_out> 	out;
 	queue<log_message> 	message_queue;
-	platform_mutex		queue_mutex, thread_data_mutex;
+	platform_mutex		queue_mutex;
 	platform_semaphore	logging_semaphore;
 	platform_thread		logging_thread;
-	map<platform_thread_id,log_thread_data> thread_data;
 	log_thread_param 	thread_param;
 	allocator* alloc 	= NULL;
 	arena_allocator 	scratch;

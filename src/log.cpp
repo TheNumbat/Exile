@@ -6,9 +6,8 @@ log_manager make_logger(allocator* a) {
 	ret.out = make_vector<log_out>(4, a);
 	ret.message_queue = make_queue<log_message>(8, a);
 	global_state->api->platform_create_mutex(&ret.queue_mutex, false);
-	global_state->api->platform_create_mutex(&ret.thread_data_mutex, false);
 	global_state->api->platform_create_semaphore(&ret.logging_semaphore, 0, INT32_MAX);
-	ret.thread_data = make_map<platform_thread_id,log_thread_data>(8, a);
+
 	ret.alloc = a;
 	ret.scratch = MAKE_ARENA("log scratch", 2048, a, true);
 
@@ -46,26 +45,14 @@ void logger_stop(log_manager* log) {
 
 void logger_end_thread(log_manager* log) {
 
-	global_state->api->platform_aquire_mutex(&log->thread_data_mutex, -1);
-	
-	log_thread_data* data = map_get(&log->thread_data, global_state->api->platform_this_thread_id());
-	destroy_stack(&data->context_name);
-	map_erase(&log->thread_data, global_state->api->platform_this_thread_id());
-
-	global_state->api->platform_release_mutex(&log->thread_data_mutex);
+	destroy_stack(&this_thread_data.context_name);
 }
 
 void logger_init_thread(log_manager* log, string name, code_context context) {
 
-	log_thread_data this_data;
-
-	this_data.context_name = make_stack<string>(8, log->alloc);
-	this_data.name = name;
-	this_data.start_context = context;
-
-	global_state->api->platform_aquire_mutex(&log->thread_data_mutex, -1);
-	map_insert(&log->thread_data, global_state->api->platform_this_thread_id(), this_data);
-	global_state->api->platform_release_mutex(&log->thread_data_mutex);
+	this_thread_data.context_name = make_stack<string>(8, log->alloc);
+	this_thread_data.name = name;
+	this_thread_data.start_context = context;
 }
 
 void destroy_logger(log_manager* log) {
@@ -77,27 +64,20 @@ void destroy_logger(log_manager* log) {
 	destroy_vector(&log->out);
 	destroy_queue(&log->message_queue);
 	global_state->api->platform_destroy_mutex(&log->queue_mutex);
-	global_state->api->platform_destroy_mutex(&log->thread_data_mutex);
 	global_state->api->platform_destroy_semaphore(&log->logging_semaphore);
-	destroy_map(&log->thread_data);
 	DESTROY_ARENA(&log->scratch);
 	log->alloc = NULL;
 }
 
 void logger_push_context(log_manager* log, string context) {
 
-	global_state->api->platform_aquire_mutex(&log->thread_data_mutex, -1);
-	log_thread_data* data = map_get(&log->thread_data, global_state->api->platform_this_thread_id());
-	stack_push(&data->context_name, context);
-	global_state->api->platform_release_mutex(&log->thread_data_mutex);
+	stack_push(&this_thread_data.context_name, context);
 }
 
 void logger_pop_context(log_manager* log) {
 
-	global_state->api->platform_aquire_mutex(&log->thread_data_mutex, -1);
-	log_thread_data* data = map_get(&log->thread_data, global_state->api->platform_this_thread_id());
-	stack_pop(&data->context_name);
-	global_state->api->platform_release_mutex(&log->thread_data_mutex);
+
+	stack_pop(&this_thread_data.context_name);
 }
 
 void logger_add_file(log_manager* log, platform_file file, log_level level) {
@@ -145,13 +125,10 @@ void logger_msgf(log_manager* log, string fmt, log_level level, code_context con
 
 		lmsg.publisher = context;
 		lmsg.level = level;
-
-		global_state->api->platform_aquire_mutex(&log->thread_data_mutex, -1);
-		lmsg.data = *map_get(&log->thread_data, global_state->api->platform_this_thread_id());
+		lmsg.data = this_thread_data;
 		lmsg.data.context_name = make_stack_copy(lmsg.data.context_name, &lmsg.arena);
 		lmsg.data.name = make_copy_string(lmsg.data.name);
-		global_state->api->platform_release_mutex(&log->thread_data_mutex);
-
+		
 		global_state->api->platform_aquire_mutex(&log->queue_mutex, -1);
 		queue_push(&log->message_queue, lmsg);
 		global_state->api->platform_release_mutex(&log->queue_mutex);
@@ -185,12 +162,9 @@ void logger_msg(log_manager* log, string msg, log_level level, code_context cont
 		lmsg.msg = make_copy_string(msg);
 		lmsg.publisher = context;
 		lmsg.level = level;
-
-		global_state->api->platform_aquire_mutex(&log->thread_data_mutex, -1);
-		lmsg.data = *map_get(&log->thread_data, global_state->api->platform_this_thread_id());
+		lmsg.data = this_thread_data;
 		lmsg.data.context_name = make_stack_copy(lmsg.data.context_name, &lmsg.arena);
 		lmsg.data.name = make_copy_string(lmsg.data.name);
-		global_state->api->platform_release_mutex(&log->thread_data_mutex);
 
 		global_state->api->platform_aquire_mutex(&log->queue_mutex, -1);
 		queue_push(&log->message_queue, lmsg);
