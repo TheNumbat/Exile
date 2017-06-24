@@ -12,10 +12,7 @@ extern "C" game_state* start_up(platform_api* api) {
 	state->suppressed_platform_allocator = state->default_platform_allocator;
 	state->suppressed_platform_allocator.suppress_messages = true;
 
-	api->platform_create_mutex(&state->alloc_contexts_mutex, false);
-	state->alloc_contexts = make_map<platform_thread_id,stack<allocator*>>(api->platform_get_num_cpus() + 2, &state->suppressed_platform_allocator);
-
-	map_insert(&state->alloc_contexts, api->platform_this_thread_id(), make_stack<allocator*>(0, &state->suppressed_platform_allocator));
+	alloc_begin_thread(&state->suppressed_platform_allocator);
 
 	state->log = make_logger(&state->suppressed_platform_allocator);
 
@@ -162,10 +159,7 @@ extern "C" void shut_down(platform_api* api, game_state* state) {
 
 	destroy_dbg_manager(&state->dbg);
 
-	destroy_stack(map_get(&state->alloc_contexts, state->api->platform_this_thread_id()));
-	map_erase(&state->alloc_contexts, state->api->platform_this_thread_id());
-	destroy_map(&state->alloc_contexts);
-	api->platform_destroy_mutex(&state->alloc_contexts_mutex);
+	alloc_end_thread();
 
 	api->platform_heap_free(state);
 }

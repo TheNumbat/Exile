@@ -27,7 +27,6 @@ inline code_context make_context(string file, string function, i32 line);
 
 #define CONTEXT make_context(string_literal(__FILE__), string_literal(__func__), __LINE__)
 
-#include "alloc.h"
 #include "math.h"
 
 #include "ds/vector.h"
@@ -36,6 +35,7 @@ inline code_context make_context(string file, string function, i32 line);
 #include "ds/queue.h"
 #include "ds/map.h"
 #include "ds/threadpool.h"
+#include "alloc.h"
 
 #include "log.h"
 #include "asset.h"

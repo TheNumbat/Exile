@@ -1,20 +1,22 @@
 
+void alloc_begin_thread(allocator* alloc) {
+	alloc_context = make_stack<allocator*>(8, alloc);
+}
+
+void alloc_end_thread() {
+	destroy_stack(&alloc_context);
+}
+
 inline void _pop_alloc() {
-	global_state->api->platform_aquire_mutex(&global_state->alloc_contexts_mutex, -1);
-	stack_pop(map_get(&global_state->alloc_contexts, global_state->api->platform_this_thread_id()));
-	global_state->api->platform_release_mutex(&global_state->alloc_contexts_mutex);
+	stack_pop(&alloc_context);
 }
 
 inline void _push_alloc(allocator* a) {
-	global_state->api->platform_aquire_mutex(&global_state->alloc_contexts_mutex, -1);
-	stack_push(map_get(&global_state->alloc_contexts, global_state->api->platform_this_thread_id()),a);
-	global_state->api->platform_release_mutex(&global_state->alloc_contexts_mutex);
+	stack_push(&alloc_context,a);
 }
 
 inline allocator* _current_alloc() {
-	global_state->api->platform_aquire_mutex(&global_state->alloc_contexts_mutex, -1);
-	allocator* ret = *stack_top(map_get(&global_state->alloc_contexts, global_state->api->platform_this_thread_id()));
-	global_state->api->platform_release_mutex(&global_state->alloc_contexts_mutex);
+	allocator* ret = *stack_top(&alloc_context);
 	return ret;
 }
 

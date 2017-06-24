@@ -241,9 +241,7 @@ i32 logging_thread(void* data_) {
 
 	log_thread_param* data = (log_thread_param*)data_;	
 
-	global_state->api->platform_aquire_mutex(&global_state->alloc_contexts_mutex, -1);
-	map_insert(&global_state->alloc_contexts, global_state->api->platform_this_thread_id(), make_stack<allocator*>(0, data->alloc));
-	global_state->api->platform_release_mutex(&global_state->alloc_contexts_mutex);
+	alloc_begin_thread(data->alloc);
 
 	while(data->running) {
 
@@ -293,10 +291,7 @@ i32 logging_thread(void* data_) {
 		global_state->api->platform_wait_semaphore(data->logging_semaphore, -1);
 	}
 
-	global_state->api->platform_aquire_mutex(&global_state->alloc_contexts_mutex, -1);
-	destroy_stack(map_get(&global_state->alloc_contexts, global_state->api->platform_this_thread_id()));
-	map_erase(&global_state->alloc_contexts, global_state->api->platform_this_thread_id());
-	global_state->api->platform_release_mutex(&global_state->alloc_contexts_mutex);
+	alloc_end_thread();
 
 	return 0;
 }

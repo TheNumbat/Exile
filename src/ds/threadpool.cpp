@@ -96,12 +96,13 @@ i32 worker(void* data_) {
 
 	worker_data* data = (worker_data*)data_;
 
-	global_state->api->platform_aquire_mutex(&global_state->alloc_contexts_mutex, -1);
-	map_insert(&global_state->alloc_contexts, global_state->api->platform_this_thread_id(), make_stack<allocator*>(0, &global_state->suppressed_platform_allocator));
-	global_state->api->platform_release_mutex(&global_state->alloc_contexts_mutex);
+	alloc_begin_thread(&global_state->suppressed_platform_allocator);
 
-	string thread_name = make_stringf_a(&global_state->suppressed_platform_allocator, string_literal("worker %i"), global_state->api->platform_this_thread_id().id);
-	LOG_INIT_THREAD(thread_name);
+	string thread_name;
+	PUSH_ALLOC(&global_state->suppressed_platform_allocator) {
+		thread_name = make_stringf(string_literal("worker %i"), global_state->api->platform_this_thread_id().id);
+		LOG_INIT_THREAD(thread_name);
+	} POP_ALLOC();
 
 	LOG_DEBUG("Starting worker thread");
 
@@ -125,12 +126,11 @@ i32 worker(void* data_) {
 	LOG_DEBUG("Ending worker thread");
 
 	LOG_END_THREAD();
-	free_string(thread_name, &global_state->suppressed_platform_allocator);
+	PUSH_ALLOC(&global_state->suppressed_platform_allocator) {
+		free_string(thread_name);
+	} POP_ALLOC();
 
-	global_state->api->platform_aquire_mutex(&global_state->alloc_contexts_mutex, -1);
-	destroy_stack(map_get(&global_state->alloc_contexts, global_state->api->platform_this_thread_id()));
-	map_erase(&global_state->alloc_contexts, global_state->api->platform_this_thread_id());
-	global_state->api->platform_release_mutex(&global_state->alloc_contexts_mutex);
+	alloc_end_thread();
 
 	return 0;
 }
