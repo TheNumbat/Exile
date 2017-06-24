@@ -8,7 +8,7 @@ extern "C" game_state* start_up(platform_api* api) {
 	global_state = state;
 
 	state->api = api;
-	state->default_platform_allocator = make_platform_allocator(string_literal("default"), NULL);
+	state->default_platform_allocator = MAKE_PLATFORM_ALLOCATOR("default");
 	state->suppressed_platform_allocator = state->default_platform_allocator;
 	state->suppressed_platform_allocator.suppress_messages = true;
 

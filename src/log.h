@@ -19,7 +19,7 @@ struct log_message {
 	string msg;
 	log_level level;
 	thread_data data; // snapshot
-	code_context* publisher;
+	code_context publisher;
 	arena_allocator arena; // joint allocation of msg, data.context_name, data.name
 };
 
@@ -70,8 +70,8 @@ void logger_add_file(log_manager* log, platform_file file, log_level level); // 
 void logger_print_header(log_manager* log, log_out out);
 void logger_add_output(log_manager* log, log_out out);
 
-void logger_msgf(log_manager* log, string fmt, log_level level, code_context* context, ...);
-void logger_msg(log_manager* log, string msg, log_level level, code_context* context);
+void logger_msgf(log_manager* log, string fmt, log_level level, code_context context, ...);
+void logger_msg(log_manager* log, string msg, log_level level, code_context context);
 string log_fmt_msg(log_message* msg);
 
 #define LOG_INFO(msg) 	logger_msg(&global_state->log, string_literal(msg), log_info,  CONTEXT);

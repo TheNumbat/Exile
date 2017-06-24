@@ -1,6 +1,5 @@
 
 inline u32 hash_u32(u32 key) {
-	PENTER
     key = (key ^ 61) ^ (key >> 16);
     key = key + (key << 3);
     key = key ^ (key >> 4);
@@ -12,7 +11,6 @@ inline u32 hash_u32(u32 key) {
 
 template<typename K, typename V>
 map<K,V> make_map(i32 capacity, u32 (*hash)(K)) {
-	PENTER
 	map<K,V> ret = make_map<K,V>(capacity, CURRENT_ALLOC(), hash);
 	
 	return ret;
@@ -20,8 +18,6 @@ map<K,V> make_map(i32 capacity, u32 (*hash)(K)) {
 
 template<typename K, typename V>
 map<K,V> make_map(i32 capacity, allocator* a, u32 (*hash)(K)) {
-	PENTER
-
 	map<K,V> ret;
 
 	capacity = (i32)ceilf(capacity / MAP_MAX_LOAD_FACTOR);
@@ -41,8 +37,7 @@ map<K,V> make_map(i32 capacity, allocator* a, u32 (*hash)(K)) {
 
 template<typename K, typename V>
 void destroy_map(map<K,V>* m) {
-	PENTER
-
+	
 	destroy_vector(&m->contents);
 
 	m->size  = 0;
@@ -52,7 +47,6 @@ void destroy_map(map<K,V>* m) {
 
 template<typename K, typename V>
 void map_clear(map<K,V>* m) {
-	PENTER
 	
 	FORVEC(m->contents,
 		it->occupied = false;
@@ -64,8 +58,7 @@ void map_clear(map<K,V>* m) {
 
 template<typename K, typename V>
 void map_grow_rehash(map<K,V>* m) {	
-	PENTER
-
+	
 	vector<map_element<K,V>> temp = make_vector_copy(m->contents);
 
 	vector_grow(&m->contents, false);
@@ -84,7 +77,6 @@ void map_grow_rehash(map<K,V>* m) {
 
 template<typename K, typename V> 
 void map_trim_rehash(map<K,V>* m) {
-	PENTER
 
 	vector<map_element<K,V>> temp = make_vector_copy(m->contents);
 
@@ -104,8 +96,7 @@ void map_trim_rehash(map<K,V>* m) {
 
 template<typename K, typename V>
 V* map_insert(map<K,V>* m, K key, V value, bool grow_if_needed) {
-	PENTER
-
+	
 	if(m->size >= m->contents.capacity * MAP_MAX_LOAD_FACTOR) {
 
 		if(grow_if_needed) {
@@ -167,7 +158,6 @@ V* map_insert(map<K,V>* m, K key, V value, bool grow_if_needed) {
 
 template<typename K, typename V>
 V* map_insert_if_unique(map<K,V>* m, K key, V value, bool grow_if_needed) {
-	PENTER
 	
 	V* result = map_try_get(m, key);
 	
@@ -182,7 +172,6 @@ V* map_insert_if_unique(map<K,V>* m, K key, V value, bool grow_if_needed) {
 
 template<typename K, typename V>
 V* map_get(map<K,V>* m, K key) {
-	PENTER
 
 	V* result = map_try_get(m, key);
 	LOG_ASSERT(result != NULL);
@@ -192,7 +181,6 @@ V* map_get(map<K,V>* m, K key) {
 
 template<typename K, typename V>
 V* map_try_get(map<K,V>* m, K key) {	// can return NULL
-	PENTER
 
 	if (m->size == 0) {
 		return NULL;
@@ -228,7 +216,6 @@ V* map_try_get(map<K,V>* m, K key) {	// can return NULL
 
 template<typename K, typename V>
 void map_erase(map<K,V>* m, K key) {
-	PENTER
 	
 	u32 hash_bucket;
 

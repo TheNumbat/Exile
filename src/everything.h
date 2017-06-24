@@ -29,7 +29,7 @@ struct code_context {
 
 struct thread_data {
 	stack<allocator*> alloc_stack;
-	stack<code_context> call_stack;
+	stack<string> context_stack;
 	string name;
 	code_context start_context;
 };
@@ -52,18 +52,7 @@ thread_local thread_data this_thread_data;
 #define FORMAP(m,code) {u32 __i = 0; for(auto it = (m).contents.memory; it != (m).contents.memory + (m).contents.capacity; __i++, it++) if(it->occupied) {code}}
 #define INC__COUNTER__ {u32 i = __COUNTER__; i = 0;}
 
-#ifdef _DEBUG
-#define PENTER { \
-					stack_push(&this_thread_data.call_stack, _make_context(string_literal(__FILE__), string_literal(__func__), __LINE__)); \
-			   } 
-#define PEXIT { \
-			   		stack_pop(&this_thread_data.call_stack); \
-			  }
-#define CONTEXT stack_empty(&this_thread_data.call_stack) ? NULL : stack_top(&this_thread_data.call_stack)
-#else
-#define PENTER
-#define PEXIT
-#endif
+#define CONTEXT _make_context(string_literal(__FILE__), string_literal(__func__), __LINE__)
 
 inline code_context _make_context(string file, string function, i32 line);
 

@@ -1,14 +1,12 @@
 
 template<typename T> 
 u32 array_len(array<T>* a) {
-	PENTER
-	
+
 	return a->capacity;
 }
 
 template<typename T>
 void destroy_array(array<T>* a) {
-	PENTER
 
 	if(a->alloc && a->memory) {
 
@@ -17,12 +15,10 @@ void destroy_array(array<T>* a) {
 
 	a->memory = NULL;
 	a->capacity = 0;
-
 }
 
 template<typename T>
 array<T> make_array(u32 capacity, allocator* a) {
-	PENTER
 
 	array<T> ret;
 
@@ -34,13 +30,11 @@ array<T> make_array(u32 capacity, allocator* a) {
 		ret.memory = (T*)ret.alloc->allocate_(capacity * sizeof(T), ret.alloc, CONTEXT);
 	}
 	
-	
 	return ret;
 }
 
 template<typename T>
 array<T> make_array(u32 capacity) {
-	PENTER
 
 	array<T> ret;
 
@@ -52,7 +46,6 @@ array<T> make_array(u32 capacity) {
 
 template<typename T>
 array<T> make_array_memory(u32 capacity, void* memory) {
-	PENTER
 
 	array<T> ret;
 
@@ -66,7 +59,6 @@ array<T> make_array_memory(u32 capacity, void* memory) {
 // operator[] but not a member
 template<typename T>
 inline T* array_get(array<T>* a, u32 idx) {
-	PENTER
 
 #ifdef BOUNDS_CHECK
 	if(a->memory && idx >= 0 && idx < a->capacity) {
@@ -81,7 +73,6 @@ inline T* array_get(array<T>* a, u32 idx) {
 		return NULL;
 	}
 #else
-	
 	return a->memory + idx;
 #endif
 }

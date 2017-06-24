@@ -59,13 +59,13 @@ void destroy_logger(log_manager* log) {
 
 void logger_push_context(log_manager* log, string context) {
 
-	stack_push(&this_thread_data.call_stack, _make_context(string_literal("\\"), context, 0));
+	stack_push(&this_thread_data.context_stack, context);
 }
 
 void logger_pop_context(log_manager* log) {
 
 
-	stack_pop(&this_thread_data.call_stack);
+	stack_pop(&this_thread_data.context_stack);
 }
 
 void logger_add_file(log_manager* log, platform_file file, log_level level) {
@@ -99,7 +99,7 @@ void logger_print_header(log_manager* log, log_out out) {
 	} POP_ALLOC();
 }
 
-void logger_msgf(log_manager* log, string fmt, log_level level, code_context* context, ...) {
+void logger_msgf(log_manager* log, string fmt, log_level level, code_context context, ...) {
 
 	log_message lmsg;
 
@@ -114,7 +114,7 @@ void logger_msgf(log_manager* log, string fmt, log_level level, code_context* co
 		lmsg.publisher = context;
 		lmsg.level = level;
 		lmsg.data = this_thread_data;
-		lmsg.data.call_stack = make_stack_copy_trim(lmsg.data.call_stack, &lmsg.arena);
+		lmsg.data.context_stack = make_stack_copy_trim(lmsg.data.context_stack, &lmsg.arena);
 		lmsg.data.name = make_copy_string(lmsg.data.name);
 		
 		global_state->api->platform_aquire_mutex(&log->queue_mutex, -1);
@@ -140,7 +140,7 @@ void logger_msgf(log_manager* log, string fmt, log_level level, code_context* co
 	} POP_ALLOC();
 }
 
-void logger_msg(log_manager* log, string msg, log_level level, code_context* context) {
+void logger_msg(log_manager* log, string msg, log_level level, code_context context) {
 
 	log_message lmsg;
 
@@ -151,7 +151,7 @@ void logger_msg(log_manager* log, string msg, log_level level, code_context* con
 		lmsg.publisher = context;
 		lmsg.level = level;
 		lmsg.data = this_thread_data;
-		lmsg.data.call_stack = make_stack_copy_trim(lmsg.data.call_stack, &lmsg.arena);
+		lmsg.data.context_stack = make_stack_copy_trim(lmsg.data.context_stack, &lmsg.arena);
 		lmsg.data.name = make_copy_string(lmsg.data.name);
 
 		global_state->api->platform_aquire_mutex(&log->queue_mutex, -1);
@@ -183,16 +183,14 @@ string log_fmt_msg(log_message* msg) {
 	global_state->api->platform_get_timef(string_literal("hh:mm:ss"), &time);
 		
 	string thread_contexts = make_cat_string(msg->data.name, string_literal("/"));
-	for(u32 j = 0; j < msg->data.call_stack.contents.size; j++) {
-		string temp = make_cat_strings(3, thread_contexts, *vector_get(&msg->data.call_stack.contents, j), string_literal("/"));
+	for(u32 j = 0; j < msg->data.context_stack.contents.size; j++) {
+		string temp = make_cat_strings(3, thread_contexts, *vector_get(&msg->data.context_stack.contents, j), string_literal("/"));
 		free_string(thread_contexts);
 		thread_contexts = temp;
 	}
 
-	string file_line;
-	if (msg->publisher) {
-		file_line = make_stringf(string_literal("%s:%u"), msg->publisher->file.c_str, msg->publisher->line);
-	}
+	string file_line = make_stringf(string_literal("%s:%u"), msg->publisher.file.c_str, msg->publisher.line);
+
 	string level;
 	switch(msg->level) {
 	case log_debug:
@@ -218,7 +216,7 @@ string log_fmt_msg(log_message* msg) {
 		break;
 	}
 
-	string output = make_stringf(string_literal("%-8s [%-24s] [%-20s] [%-5s] %*s\r\n"), time.c_str, thread_contexts.c_str, file_line.c_str, level.c_str, 3 * msg->data.call_stack.contents.size + msg->msg.len - 1, msg->msg.c_str);
+	string output = make_stringf(string_literal("%-8s [%-24s] [%-20s] [%-5s] %*s\r\n"), time.c_str, thread_contexts.c_str, file_line.c_str, level.c_str, 3 * msg->data.context_stack.contents.size + msg->msg.len - 1, msg->msg.c_str);
 
 	free_string(time);
 	free_string(thread_contexts);
