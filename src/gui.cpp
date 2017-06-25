@@ -294,6 +294,7 @@ bool gui_begin(string name, r2 first_size, f32 first_alpha, gui_window_flags fla
 
 			if(ggui->active == gui_none && ggui->input.lclick) {
 
+				window->z = ggui->last_z++;
 				ggui->active_id = id;
 				ggui->active = gui_active;
 				window->resizing = true;
@@ -316,7 +317,7 @@ bool gui_begin(string name, r2 first_size, f32 first_alpha, gui_window_flags fla
 
 void gui_log_wnd(string name, vector<cached_message>* cache) {
 
-	f32 height = ggui->style.log_win_lines * ggui->style.font + ggui->style.font + ggui->style.title_padding + ggui->style.win_margin.x + ggui->style.win_margin.w;
+	f32 height = ggui->style.log_win_lines * ggui->style.font + 2 * ggui->style.font + ggui->style.title_padding + ggui->style.win_margin.x + ggui->style.win_margin.w;
 	gui_begin(name, R2(0.0f, global_state->window_h - height, (f32)global_state->window_w, height), 0.5f, win_nowininput | win_nohead | win_ignorescale, true);
 
 	gui_window_state* current = ggui->current;
@@ -367,7 +368,7 @@ void gui_log_wnd(string name, vector<cached_message>* cache) {
 
 	mesh_push_rect(&current->mesh, scroll_bar, V4b(ggui->style.win_scroll_bar, 255));
 
-	v2 pos = add(ggui->current->rect.xy, V2(ggui->style.win_margin.x, height - ggui->style.title_padding - ggui->style.win_margin.z - ggui->style.win_margin.w));
+	v2 pos = add(ggui->current->rect.xy, V2(ggui->style.win_margin.x, height - ggui->style.font - ggui->style.title_padding - ggui->style.win_margin.z - ggui->style.win_margin.w));
 
 	for(i32 i = cache->size - data->u32_1; i > 0; i--) {
 		cached_message* it = vector_get(cache, i - 1);

@@ -31,6 +31,7 @@ set<string>    files;
 vector<_token> all_tokens;
 vector<_token> lib_includes;
 string path;
+ofstream fout;
 
 void load(string file) {
 
@@ -96,11 +97,101 @@ void load(string file) {
 			}
 
 			all_tokens.push_back(t);
+		} else if(token.type == CPP_TOKEN_COMMENT) {
+
+			_token t(token, data.data());
+			t.str = t.str.substr(0, t.str.size() - 1);
+			all_tokens.push_back(t);
+
 		} else {
 
 			all_tokens.push_back(_token(token, data.data()));
 		}
    	}
+
+   	cpp_free_token_array(tokens);
+}
+
+bool was_pp = false, cut_next = false;
+void token_out(_token t, i32 i) {
+
+	bool end_first = false;
+	bool end_last = false;
+
+	string line = t.str;
+
+	if(t.token.type == CPP_TOKEN_COMMENT) {
+		return;
+	}
+	if(cut_next) {
+		line = line.substr(0, line.size() - 1);
+		cut_next = false;
+	}
+	if(t.token.type == CPP_PP_ERROR) {
+		cut_next = true;
+	}
+
+	if(t.token.type == CPP_TOKEN_SEMICOLON) {
+		end_last = true;
+	}
+
+	if((t.token.flags & CPP_TFLAG_PP_BODY) != CPP_TFLAG_PP_BODY && was_pp) {
+		was_pp = false;
+		end_first = true;
+	}
+	if((t.token.flags & CPP_TFLAG_PP_DIRECTIVE) == CPP_TFLAG_PP_DIRECTIVE && !was_pp) {
+		end_first = true;
+		was_pp = true;
+	}
+
+	if((t.token.flags & CPP_TFLAG_PP_BODY) == CPP_TFLAG_PP_BODY) {
+		was_pp = true;
+	}
+
+	if((t.token.flags & CPP_TFLAG_MULTILINE) == CPP_TFLAG_MULTILINE) {
+		end_first = false;
+		end_last = false;
+	}
+
+	if(end_first) fout << endl;
+	fout << line;
+	if(end_last) fout << endl;
+	if(t.token.type != CPP_TOKEN_MINUS && i + 1 < all_tokens.size() && all_tokens[i+1].token.type != CPP_TOKEN_PARENTHESE_OPEN && all_tokens[i+1].token.type != CPP_TOKEN_PARENTHESE_CLOSE) fout << " ";
+}
+
+bool operator_type(_token t) {
+	return t.token.type == CPP_TOKEN_LESS ||
+		   t.token.type == CPP_TOKEN_GRTR ||
+		   t.token.type == CPP_TOKEN_GRTREQ ||
+		   t.token.type == CPP_TOKEN_LESSEQ ||
+		   t.token.type == CPP_TOKEN_EQEQ ||
+		   t.token.type == CPP_TOKEN_NOTEQ;
+}
+
+bool func_type(_token t) {
+	return t.token.type == CPP_TOKEN_IDENTIFIER || 
+		   t.token.type == CPP_TOKEN_KEY_TYPE ||
+		   t.token.type == CPP_TOKEN_LESS || 
+		   t.token.type == CPP_TOKEN_KEY_LINKAGE || 
+		   t.token.type == CPP_TOKEN_KEY_TYPE_DECLARATION || 
+		   t.token.type == CPP_TOKEN_KEY_ACCESS || 
+		   t.token.type == CPP_TOKEN_KEY_OTHER || 
+		   t.token.type == CPP_TOKEN_GRTR ||
+		   t.token.type == CPP_TOKEN_LESS ||
+		   t.token.type == CPP_TOKEN_COMMA ||
+		   t.token.type == CPP_TOKEN_KEY_QUALIFIER ||
+		   t.token.type == CPP_TOKEN_STAR;
+}
+
+bool param_type(_token t) {
+	return t.token.type == CPP_TOKEN_IDENTIFIER || 
+		   t.token.type == CPP_TOKEN_KEY_TYPE ||
+		   t.token.type == CPP_TOKEN_LESS || 
+		   t.token.type == CPP_TOKEN_GRTR ||
+		   t.token.type == CPP_TOKEN_COMMA ||
+		   t.token.type == CPP_TOKEN_KEY_QUALIFIER ||
+		   t.token.type == CPP_TOKEN_STAR;
+
 }
 
 i32 main(i32 argc, char** argv) {
@@ -109,7 +200,7 @@ i32 main(i32 argc, char** argv) {
         return 1;
     }
 
-    ofstream fout("meta_out.cpp");
+    fout.open("meta_out.cpp");
 
     if(!fout.good()) {
     	printf("failed to create file meta_out.cpp\n");
@@ -133,54 +224,59 @@ i32 main(i32 argc, char** argv) {
     	}
     }
 
-    bool was_pp = false, cut_next = false;
     for(i32 i = 0; i < all_tokens.size(); i++) {
     	_token& t = all_tokens[i];
 
-		bool end_first = false;
-		bool end_last = false;
+		// test for function
+		if(func_type(t) && t.token.type != CPP_TOKEN_COMMA) {
+			string func;
+			u32 idents = 0;
+			while(func_type(t) || operator_type(t)) {
+				func += t.str + " ";
+				token_out(t, i);
+				t = all_tokens[++i];
+				++idents;
+			}
+			if(idents > 1 && t.token.type == CPP_TOKEN_PARENTHESE_OPEN) {
+				func += t.str + " ";
+				token_out(t, i);
+				t = all_tokens[++i];
+				while(param_type(t)) {
+					func += t.str + " ";
+					token_out(t, i);
+					t = all_tokens[++i];
+				}
+				if(t.token.type == CPP_TOKEN_PARENTHESE_CLOSE) {
+					func += t.str + " ";
+					token_out(t, i);
+					t = all_tokens[++i];
+					if(t.token.type == CPP_TOKEN_BRACE_OPEN) {
+						func += t.str + " ";
+						token_out(t, i);
+						t = all_tokens[++i];
+						
+						bool modify = true;
+						if(t.token.type == CPP_TOKEN_COMMENT) {
+							func += t.str + " ";
+							token_out(t, i);
 
-    	string line = t.str;
+							if(t.str.find_first_of("@NOPROF") != string::npos) {
+								modify = false;
+							}							
 
-    	if(t.token.type == CPP_TOKEN_COMMENT) {
-    		if(line.back() != '/')
-    			line = line.substr(0, line.size() - 1);
-    		end_last = true;
-    	}
-    	if(cut_next) {
-    		line = line.substr(0, line.size() - 1);
-    		cut_next = false;
-    	}
-    	if(t.token.type == CPP_PP_ERROR) {
-    		cut_next = true;
-    	}
+							t = all_tokens[++i];	
+						}
 
-    	if(t.token.type == CPP_TOKEN_SEMICOLON) {
-    		end_last = true;
-    	}
-
-    	if((t.token.flags & CPP_TFLAG_PP_BODY) != CPP_TFLAG_PP_BODY && was_pp) {
-    		was_pp = false;
-    		end_first = true;
-    	}
-    	if((t.token.flags & CPP_TFLAG_PP_DIRECTIVE) == CPP_TFLAG_PP_DIRECTIVE && !was_pp) {
-    		end_first = true;
-    		was_pp = true;
-    	}
-
-		if((t.token.flags & CPP_TFLAG_PP_BODY) == CPP_TFLAG_PP_BODY) {
-    		was_pp = true;
-    	}
-
-		if((t.token.flags & CPP_TFLAG_MULTILINE) == CPP_TFLAG_MULTILINE) {
-			end_first = false;
-			end_last = false;
+						if(modify) {
+							
+							// here we insert profiling code
+						}
+					}
+				}
+			}
 		}
 
-    	if(end_first) fout << endl;
-    	fout << line;
-    	if(end_last) fout << endl;
-    	else if(t.token.type != CPP_TOKEN_MINUS && i + 1 < all_tokens.size() && all_tokens[i+1].token.type != CPP_TOKEN_PARENTHESE_OPEN && all_tokens[i+1].token.type != CPP_TOKEN_PARENTHESE_CLOSE) fout << " ";
+		token_out(t, i);
     }
 
     fout << endl;

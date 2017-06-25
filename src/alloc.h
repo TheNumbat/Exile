@@ -9,13 +9,13 @@ struct allocator {
 	string name;
 };
 
-#define PUSH_ALLOC(a)			_push_alloc(a); 
-#define POP_ALLOC() 			_pop_alloc() 
-#define CURRENT_ALLOC()			_current_alloc() 
+#define PUSH_ALLOC(a)			_push_alloc(a);
+#define POP_ALLOC() 			_pop_alloc()
+#define CURRENT_ALLOC()			_current_alloc()
 
-#define KILOBYTES(m) (m*1024) 
-#define MEGABYTES(m) (KILOBYTES(m*1024)) 
-#define GIGABYTES(m) (MEGABYTES(m*1024)) 
+#define KILOBYTES(m) (m*1024)
+#define MEGABYTES(m) (KILOBYTES(m*1024))
+#define GIGABYTES(m) (MEGABYTES(m*1024))
 
 inline allocator* _current_alloc();
 inline void _pop_alloc();

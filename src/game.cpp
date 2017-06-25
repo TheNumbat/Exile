@@ -2,7 +2,7 @@
 #include <iostream>
 #include "everything.h"
 
-extern "C" game_state* start_up(platform_api* api) {
+extern "C" game_state* start_up(platform_api* api) { 
 
 	game_state* state = (game_state*)api->platform_heap_alloc(sizeof(game_state));
 	state->api = api;
@@ -182,7 +182,7 @@ extern "C" void on_reload(game_state* state) {
 	global_state = state;
 	ogl_load_global_funcs();
 
-	begin_thread(string_literal("main"), &state->default_platform_allocator);
+	begin_thread(string_literal("main"), &state->suppressed_platform_allocator);
 	logger_start(&state->log);
 	threadpool_start_all(&state->thread_pool);
 

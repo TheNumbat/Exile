@@ -100,7 +100,7 @@ struct gui_style {
 	f32 font 			= 0.0f;	// default font size - may use different actual font based on gscale * font
 	f32 title_padding 	= 5.0f;
 	f32 line_padding 	= 3.0f;
-	u32 log_win_lines 	= 20;
+	u32 log_win_lines 	= 15;
 	f32 resize_tab		= 0.075f;
 	v4 win_margin 		= V4(15.0f, 15.0f, 10.0f, 15.0f); // l r t b
 	v2 carrot_padding	= V2(10.0f, 5.0f);
