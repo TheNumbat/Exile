@@ -7,13 +7,13 @@
 #include <cmath>
 #include <xmmintrin.h>
 
-#define PI32 3.14159265359f
-#define PI64 3.14159265358979323846
-#define TAU32 (2*PI32)
-#define TAU64 (2*PI64)
+#define PI32 3.14159265359f 
+#define PI64 3.14159265358979323846 
+#define TAU32 (2*PI32) 
+#define TAU64 (2*PI64) 
 
-#define RADIANS(v) (v * (PI32 / 180.0f))
-#define DEGREES(v) (v * (180.0f / PI32))
+#define RADIANS(v) (v * (PI32 / 180.0f)) 
+#define DEGREES(v) (v * (180.0f / PI32)) 
 
 inline u32 mod(u32 dividend, u32 devisor) {
 	return dividend % devisor;
@@ -22,17 +22,17 @@ inline u32 mod(u32 dividend, u32 devisor) {
 inline f32 _sqrtf(f32 value) {
 	return _mm_cvtss_f32(_mm_sqrt_ss(_mm_set_ss(value)));
 }
-#define sqrtf(v) _sqrtf(v)
+#define sqrtf(v) _sqrtf(v) 
 
 inline f32 _tanf(f32 value) {
 	return tanf(value);
 }
-#define tanf(v) _tanf(v)
+#define tanf(v) _tanf(v) 
 
 inline i32 _abs(i32 value) {
 	return value > 0 ? value : -value;
 }
-#define abs(v) _abs(v)
+#define abs(v) _abs(v) 
 
 inline f32 absf_(f32 value) {
 	return value > 0.0f ? value : -value;	
@@ -40,37 +40,37 @@ inline f32 absf_(f32 value) {
 inline f64 absf_(f64 value) {
 	return value > 0.0f ? value : -value;	
 }
-#define absf(v) absf_(v)
+#define absf(v) absf_(v) 
 
 inline f32 _roundf(f32 value) {
 	return roundf(value);
 }
-#define roundf(v) _roundf(v)
+#define roundf(v) _roundf(v) 
 
 inline f32 _ceilf(f32 value) {
 	return ceilf(value);
 }
-#define ceilf(v) _ceilf(v)
+#define ceilf(v) _ceilf(v) 
 
 inline f32 _floorf(f32 value) {
 	return (f32)(i32)value;
 }
-#define floorf(v) _floorf(v)
+#define floorf(v) _floorf(v) 
 
 inline f32 _sinf(f32 value) {
 	return sinf(value);
 }
-#define sinf(v) _sinf(v)
+#define sinf(v) _sinf(v) 
 
 inline f32 _cosf(f32 value) {
 	return cosf(value);
 }
-#define cosf(v) _cosf(v)
+#define cosf(v) _cosf(v) 
 
 inline f32 _lerpf(f32 min, f32 max, f32 dist) {
 	return min + (max - min) * dist;
 }
-#define lerpf(i,m,d) _lerpf(i,m,d)
+#define lerpf(i,m,d) _lerpf(i,m,d) 
 
 // clamp/f is with the vector clamps
 

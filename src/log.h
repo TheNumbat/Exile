@@ -60,10 +60,10 @@ void destroy_logger(log_manager* log); // calls logger_stop if needed, call log_
 void logger_start(log_manager* log); // begin logging thread - call from one thread
 void logger_stop(log_manager* log);  // end logging thread - call from one thread
 
-#define LOG_PUSH_CONTEXT(str) logger_push_context(&global_state->log, str);
-#define LOG_PUSH_CONTEXT_L(str) logger_push_context(&global_state->log, string_literal(str));
+#define LOG_PUSH_CONTEXT(str) logger_push_context(&global_state->log, str); 
+#define LOG_PUSH_CONTEXT_L(str) logger_push_context(&global_state->log, string_literal(str)); 
 void logger_push_context(log_manager* log, string context);
-#define LOG_POP_CONTEXT() logger_pop_context(&global_state->log);
+#define LOG_POP_CONTEXT() logger_pop_context(&global_state->log); 
 void logger_pop_context(log_manager* log);
 
 void logger_add_file(log_manager* log, platform_file file, log_level level); // call from one thread before starting
@@ -75,15 +75,15 @@ void logger_msgf(log_manager* log, string fmt, log_level level, code_context con
 void logger_msg(log_manager* log, string msg, log_level level, code_context context);
 string log_fmt_msg(log_message* msg);
 
-#define LOG_INFO(msg) 	logger_msg(&global_state->log, string_literal(msg), log_info,  CONTEXT);
-#define LOG_WARN(msg) 	logger_msg(&global_state->log, string_literal(msg), log_warn,  CONTEXT);
-#define LOG_ERR(msg) 	logger_msg(&global_state->log, string_literal(msg), log_error, CONTEXT);
-#define LOG_FATAL(msg) 	logger_msg(&global_state->log, string_literal(msg), log_fatal, CONTEXT);
+#define LOG_INFO(msg) 	logger_msg(&global_state->log, string_literal(msg), log_info,  CONTEXT); 
+#define LOG_WARN(msg) 	logger_msg(&global_state->log, string_literal(msg), log_warn,  CONTEXT); 
+#define LOG_ERR(msg) 	logger_msg(&global_state->log, string_literal(msg), log_error, CONTEXT); 
+#define LOG_FATAL(msg) 	logger_msg(&global_state->log, string_literal(msg), log_fatal, CONTEXT); 
 
-#define LOG_INFO_F(fmt, ...) 	logger_msgf(&global_state->log, string_literal(fmt), log_info,  CONTEXT, __VA_ARGS__);
-#define LOG_WARN_F(fmt, ...) 	logger_msgf(&global_state->log, string_literal(fmt), log_warn,  CONTEXT, __VA_ARGS__);
-#define LOG_ERR_F(fmt, ...) 	logger_msgf(&global_state->log, string_literal(fmt), log_error, CONTEXT, __VA_ARGS__);
-#define LOG_FATAL_F(fmt, ...) 	logger_msgf(&global_state->log, string_literal(fmt), log_fatal, CONTEXT, __VA_ARGS__);
+#define LOG_INFO_F(fmt, ...) 	logger_msgf(&global_state->log, string_literal(fmt), log_info,  CONTEXT, __VA_ARGS__); 
+#define LOG_WARN_F(fmt, ...) 	logger_msgf(&global_state->log, string_literal(fmt), log_warn,  CONTEXT, __VA_ARGS__); 
+#define LOG_ERR_F(fmt, ...) 	logger_msgf(&global_state->log, string_literal(fmt), log_error, CONTEXT, __VA_ARGS__); 
+#define LOG_FATAL_F(fmt, ...) 	logger_msgf(&global_state->log, string_literal(fmt), log_fatal, CONTEXT, __VA_ARGS__); 
 
 #define LOG_ASSERT(cond) __pragma(warning(push)) \
 						 __pragma(warning(disable:4127)) \
@@ -91,20 +91,20 @@ string log_fmt_msg(log_message* msg);
 						 __pragma(warning(pop))
 
 #ifdef _DEBUG
-	#define LOG_DEBUG(msg) 			logger_msg(&global_state->log, string_literal(msg), log_debug, CONTEXT);
-	#define LOG_DEBUG_F(fmt, ...) 	logger_msgf(&global_state->log, string_literal(fmt), log_debug, CONTEXT, __VA_ARGS__)
-	#define LOG_OGL_F(fmt, ...)		logger_msgf(&global_state->log, string_literal(fmt), log_ogl,   CONTEXT, __VA_ARGS__);
+	#define LOG_DEBUG(msg) 			logger_msg(&global_state->log, string_literal(msg), log_debug, CONTEXT); 
+	#define LOG_DEBUG_F(fmt, ...) 	logger_msgf(&global_state->log, string_literal(fmt), log_debug, CONTEXT, __VA_ARGS__) 
+	#define LOG_OGL_F(fmt, ...)		logger_msgf(&global_state->log, string_literal(fmt), log_ogl,   CONTEXT, __VA_ARGS__); 
 	#define LOG_DEBUG_ASSERT(cond) 	__pragma(warning(push)) \
 							 	   	__pragma(warning(disable:4127)) \
 							 	   	{if(!(cond)) LOG_FATAL_F("Debug assertion %s failed!", #cond);} \
 							 	   	__pragma(warning(pop))
-	#define INVALID_PATH 		   	LOG_FATAL("Invalid path taken!");
+	#define INVALID_PATH 		   	LOG_FATAL("Invalid path taken!"); 
 #else
-	#define LOG_DEBUG(msg)
-	#define LOG_DEBUG_F(fmt, ...)
-	#define LOG_DEBUG_ASSERT(cond)
-	#define LOG_OGL_F(fmt, ...)
-	#define INVALID_PATH
+	#define LOG_DEBUG(msg) 
+	#define LOG_DEBUG_F(fmt, ...) 
+	#define LOG_DEBUG_ASSERT(cond) 
+	#define LOG_OGL_F(fmt, ...) 
+	#define INVALID_PATH 
 #endif
 
 bool operator==(log_out l, log_out r);

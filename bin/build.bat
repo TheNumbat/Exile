@@ -17,13 +17,16 @@ set Asset_CompilerFlags=-Od -MTd -nologo -Gr -EHa -Oi -W4 -Z7 -FC -Feasset.exe -
 set Asset_LinkerFlags=/NODEFAULTLIB:MSVCRT /SUBSYSTEM:console kernel32.lib user32.lib gdi32.lib opengl32.lib 
 
 cl %Asset_CompilerFlags% w:\src\asset_builder.cpp /link %Asset_LinkerFlags%
+cl %Asset_CompilerFlags% -Femeta.exe w:\src\meta.cpp /link %Asset_LinkerFlags%
+
+meta.exe w:\src\game.cpp > meta_out.txt
 
 if "%1"=="release" (
-	cl %Game_ReleaseCompilerFlags% w:\src\game.cpp /link %Game_LinkerFlags%
+	cl %Game_ReleaseCompilerFlags% w:\build\meta_out.cpp /link %Game_LinkerFlags%
 ) else if "%2"=="release" (
-	cl %Game_ReleaseCompilerFlags% w:\src\game.cpp /link %Game_LinkerFlags%
+	cl %Game_ReleaseCompilerFlags% w:\build\meta_out.cpp /link %Game_LinkerFlags%
 ) else (
-	cl %Game_DebugCompilerFlags% w:\src\game.cpp /link %Game_LinkerFlags%
+	cl %Game_DebugCompilerFlags% w:\build\meta_out.cpp /link %Game_LinkerFlags%
 )
 
 if "%1"=="platform" goto platform

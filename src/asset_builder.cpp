@@ -1,6 +1,6 @@
 
 // don't care about using libraries in this; it's just to build the asset stores
-// we don't even use the stuff for the game
+
 #include <string>
 #include <iostream>
 #include <fstream>
