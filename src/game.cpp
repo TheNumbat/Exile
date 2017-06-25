@@ -5,16 +5,19 @@
 extern "C" game_state* start_up(platform_api* api) {
 
 	game_state* state = (game_state*)api->platform_heap_alloc(sizeof(game_state));
+	state->api = api;
 	global_state = state;
 
-	state->api = api;
 	state->default_platform_allocator = MAKE_PLATFORM_ALLOCATOR("default");
-	state->suppressed_platform_allocator = state->default_platform_allocator;
+	state->suppressed_platform_allocator = MAKE_PLATFORM_ALLOCATOR("default/suppress");
 	state->suppressed_platform_allocator.suppress_messages = true;
 
 	begin_thread(string_literal("main"), &state->suppressed_platform_allocator);
 
-	state->log = make_logger(&state->suppressed_platform_allocator);
+	state->api = api;
+	state->log_a = MAKE_PLATFORM_ALLOCATOR("log");
+	state->log_a.suppress_messages = true;
+	state->log = make_logger(&state->log_a);
 
 	platform_file stdout_file, log_all_file;
 	api->platform_get_stdout_as_file(&stdout_file);
@@ -22,36 +25,40 @@ extern "C" game_state* start_up(platform_api* api) {
 	logger_add_file(&state->log, log_all_file, log_alloc);
 	logger_add_file(&state->log, stdout_file, log_info);
 
-	state->dbg = make_dbg_manager(&state->suppressed_platform_allocator);
-	log_out dbg_log;
-	dbg_log.level = log_debug;
-	dbg_log.custom = true;
-	dbg_log.write = &dbg_add_log;
-	logger_add_output(&state->log, dbg_log);
-
-	logger_start(&state->log);
-
 	LOG_DEBUG("Beginning startup...");
 	LOG_PUSH_CONTEXT_L("startup");
 
-	LOG_DEBUG("Allocating transient store...")
+	LOG_DEBUG("Allocating transient store...");
 	state->transient_arena = MAKE_ARENA("transient", MEGABYTES(16), &state->default_platform_allocator, false);
+
+	LOG_DEBUG("Starting debug system");
+	LOG_PUSH_CONTEXT_L("dbg");
+	state->dbg_a = MAKE_PLATFORM_ALLOCATOR("dbg");
+	state->dbg_a.suppress_messages = true;
+	state->dbg = make_dbg_manager(&state->dbg_a);
+	LOG_POP_CONTEXT();
+
+	LOG_DEBUG("Starting logger");
+	logger_start(&state->log);
 
 	LOG_DEBUG("Starting thread pool");
 	LOG_PUSH_CONTEXT_L("threadpool");
-	state->thread_pool = make_threadpool(&state->default_platform_allocator);
+	state->thread_pool_a = MAKE_PLATFORM_ALLOCATOR("threadpool");
+	state->thread_pool = make_threadpool(&state->thread_pool_a);
 	threadpool_start_all(&state->thread_pool);
 	LOG_POP_CONTEXT();
 
 	LOG_DEBUG("Setting up events");
 	LOG_PUSH_CONTEXT_L("events");
-	state->evt = make_evt_manager(&state->default_platform_allocator);
+	state->evt_a = MAKE_PLATFORM_ALLOCATOR("event");
+	state->evt = make_evt_manager(&state->evt_a);
 	start_evt_manger(&state->evt);
 	LOG_POP_CONTEXT();
 
 	LOG_DEBUG("Setting up asset system");
 	LOG_PUSH_CONTEXT_L("assets");
-	state->default_store = make_asset_store(&state->default_platform_allocator);
+	state->default_store_a = MAKE_PLATFORM_ALLOCATOR("asset");
+	state->default_store = make_asset_store(&state->default_store_a);
 	load_asset_store(&state->default_store, string_literal("assets/assets.asset"));
 	LOG_POP_CONTEXT();
 
@@ -69,12 +76,14 @@ extern "C" game_state* start_up(platform_api* api) {
 	LOG_DEBUG("Setting up OpenGL");
 	LOG_PUSH_CONTEXT_L("ogl");
 	ogl_load_global_funcs();
-	state->ogl = make_opengl(&state->default_platform_allocator);
+	state->ogl_a = MAKE_PLATFORM_ALLOCATOR("ogl");
+	state->ogl = make_opengl(&state->ogl_a);
 	LOG_POP_CONTEXT();
 
 	LOG_DEBUG("Setting up GUI");
 	LOG_PUSH_CONTEXT_L("gui");
-	state->gui = make_gui(&state->ogl, &state->default_platform_allocator);
+	state->gui_a = MAKE_PLATFORM_ALLOCATOR("gui");
+	state->gui = make_gui(&state->ogl, &state->gui_a);
 	gui_add_font(&state->ogl, &state->gui, string_literal("gui14"), &state->default_store);
 	gui_add_font(&state->ogl, &state->gui, string_literal("gui24"), &state->default_store);
 	gui_add_font(&state->ogl, &state->gui, string_literal("gui40"), &state->default_store);
@@ -96,12 +105,21 @@ extern "C" bool main_loop(game_state* state) {
 
 	PUSH_ALLOC(&state->transient_arena) {
 
+		LOG_PUSH_CONTEXT_L("events");
 		gui_input_state input = run_events(state); 
+		LOG_POP_CONTEXT();
+
+		LOG_PUSH_CONTEXT_L("gui_begin");
 		gui_begin_frame(&state->gui, input);
+		LOG_POP_CONTEXT();
 
+		LOG_PUSH_CONTEXT_L("gui_dbg");
 		render_debug_gui(state);
+		LOG_POP_CONTEXT();
 
+		LOG_PUSH_CONTEXT_L("gui_end");
 		gui_end_frame(&state->ogl);
+		LOG_POP_CONTEXT();
 
 	} POP_ALLOC();
 	RESET_ARENA(&state->transient_arena);
@@ -150,10 +168,8 @@ extern "C" void shut_down(platform_api* api, game_state* state) {
 
 	LOG_DEBUG("Done with shutdown!");
 
-	// not actually quite done but we can't log anything after this
 	logger_stop(&state->log);
 	destroy_logger(&state->log);
-
 	destroy_dbg_manager(&state->dbg);
 
 	end_thread();
@@ -166,7 +182,7 @@ extern "C" void on_reload(game_state* state) {
 	global_state = state;
 	ogl_load_global_funcs();
 
-	begin_thread(string_literal("main"), &state->suppressed_platform_allocator);
+	begin_thread(string_literal("main"), &state->default_platform_allocator);
 	logger_start(&state->log);
 	threadpool_start_all(&state->thread_pool);
 

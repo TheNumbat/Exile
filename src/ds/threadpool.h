@@ -22,9 +22,8 @@ struct threadpool {
 	queue<job>	   	 	   jobs; 			// TODO(max): priority queue
 	platform_mutex		   queue_mutex; 
 	platform_semaphore	   jobs_semaphore;
-	allocator* 			   alloc = NULL;
+	allocator* 			   alloc;
 };
-
 
 threadpool make_threadpool(i32 num_threads_ = 0);
 threadpool make_threadpool(allocator* a, i32 num_threads_ = 0);

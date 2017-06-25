@@ -21,10 +21,22 @@ T* vector_find(vector<T>* v, T val) {
 	FORVEC(*v, 
 		if(*it == val) {
 			ret = it;
+			break;
 		}
 	)
 
 	return ret;
+}
+
+template<typename T>
+void vector_erase(vector<T>* v, T val) {
+
+	FORVEC(*v, 
+		if(*it == val) {
+			vector_erase(v, __i);
+			it--;
+		}
+	)
 }
 
 template<typename T>
@@ -50,6 +62,8 @@ u32 vector_partition(vector<T>* v, u32 low, u32 high) {
 template<typename T> 
 void vector_qsort(vector<T>* v, u32 low, u32 high, bool first) {
 		
+	if (!v->size) return;
+
 	if(first) {
 		high = v->size - 1;
 	}

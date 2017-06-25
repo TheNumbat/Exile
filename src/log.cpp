@@ -81,7 +81,9 @@ void logger_add_file(log_manager* log, platform_file file, log_level level) {
 void logger_add_output(log_manager* log, log_out out) {
 
 	vector_push(&log->out, out);
-	logger_print_header(log, out);
+	if(!out.custom) {
+		logger_print_header(log, out);
+	}
 }
 
 void logger_print_header(log_manager* log, log_out out) {
@@ -90,9 +92,7 @@ void logger_print_header(log_manager* log, log_out out) {
 		
 		string header = make_stringf(string_literal("%-8s [%-24s] [%-20s] [%-5s] %-2s\r\n"), "time", "thread/context", "file:line", "level", "message");
 
-		if(!out.custom) { 
-			global_state->api->platform_write_file(&out.file, (void*)header.c_str, header.len - 1);
-		}
+		global_state->api->platform_write_file(&out.file, (void*)header.c_str, header.len - 1);
 
 		free_string(header);
 
@@ -226,11 +226,22 @@ string log_fmt_msg(log_message* msg) {
 	return output;	
 }
 
+void logger_rem_output(log_manager* log, log_out out) {
+
+	vector_erase(&log->out, out);
+}
+
+bool operator==(log_out l, log_out r) {
+	if(!(l.level == r.level && l.custom == r.custom)) return false;
+	if(l.custom && l.write == r.write) return true;
+	return l.file == r.file;
+}
+
 i32 logging_thread(void* data_) {
 
 	log_thread_param* data = (log_thread_param*)data_;	
 
-	begin_thread(string_literal("log"), data->alloc);
+	begin_thread(string_literal("log"), &global_state->suppressed_platform_allocator);
 
 	while(data->running) {
 

@@ -69,6 +69,7 @@ void logger_pop_context(log_manager* log);
 void logger_add_file(log_manager* log, platform_file file, log_level level); // call from one thread before starting
 void logger_print_header(log_manager* log, log_out out);
 void logger_add_output(log_manager* log, log_out out);
+void logger_rem_output(log_manager* log, log_out out);
 
 void logger_msgf(log_manager* log, string fmt, log_level level, code_context context, ...);
 void logger_msg(log_manager* log, string msg, log_level level, code_context context);
@@ -79,7 +80,6 @@ string log_fmt_msg(log_message* msg);
 #define LOG_ERR(msg) 	logger_msg(&global_state->log, string_literal(msg), log_error, CONTEXT);
 #define LOG_FATAL(msg) 	logger_msg(&global_state->log, string_literal(msg), log_fatal, CONTEXT);
 
-#define LOG_OGL_F(fmt, ...)		logger_msgf(&global_state->log, string_literal(fmt), log_ogl,   CONTEXT, __VA_ARGS__);
 #define LOG_INFO_F(fmt, ...) 	logger_msgf(&global_state->log, string_literal(fmt), log_info,  CONTEXT, __VA_ARGS__);
 #define LOG_WARN_F(fmt, ...) 	logger_msgf(&global_state->log, string_literal(fmt), log_warn,  CONTEXT, __VA_ARGS__);
 #define LOG_ERR_F(fmt, ...) 	logger_msgf(&global_state->log, string_literal(fmt), log_error, CONTEXT, __VA_ARGS__);
@@ -92,7 +92,8 @@ string log_fmt_msg(log_message* msg);
 
 #ifdef _DEBUG
 	#define LOG_DEBUG(msg) 			logger_msg(&global_state->log, string_literal(msg), log_debug, CONTEXT);
-	#define LOG_DEBUG_F(fmt, ...) 	logger_msgf(&global_state->log, string_literal(fmt), log_debug, CONTEXT, __VA_ARGS__);
+	#define LOG_DEBUG_F(fmt, ...) 	logger_msgf(&global_state->log, string_literal(fmt), log_debug, CONTEXT, __VA_ARGS__)
+	#define LOG_OGL_F(fmt, ...)		logger_msgf(&global_state->log, string_literal(fmt), log_ogl,   CONTEXT, __VA_ARGS__);
 	#define LOG_DEBUG_ASSERT(cond) 	__pragma(warning(push)) \
 							 	   	__pragma(warning(disable:4127)) \
 							 	   	{if(!(cond)) LOG_FATAL_F("Debug assertion %s failed!", #cond);} \
@@ -102,7 +103,10 @@ string log_fmt_msg(log_message* msg);
 	#define LOG_DEBUG(msg)
 	#define LOG_DEBUG_F(fmt, ...)
 	#define LOG_DEBUG_ASSERT(cond)
+	#define LOG_OGL_F(fmt, ...)
 	#define INVALID_PATH
 #endif
+
+bool operator==(log_out l, log_out r);
 
 i32 logging_thread(void* data_);

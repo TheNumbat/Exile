@@ -192,7 +192,7 @@ bool gui_begin(string name, r2 first_size, f32 first_alpha, gui_window_flags fla
 			ns.opacity = first_alpha;
 		}
 
-		ns.mesh = make_mesh_2d(32, ggui->alloc);
+		ns.mesh = make_mesh_2d(1024, ggui->alloc);
 		ns.id_hash_stack = make_stack<u32>(16, ggui->alloc);
 		ns.offset_stack = make_vector<v2>(16, ggui->alloc);
 		ns.flags = flags;

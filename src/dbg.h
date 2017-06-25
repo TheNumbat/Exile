@@ -17,5 +17,5 @@ struct dbg_manager {
 dbg_manager make_dbg_manager(allocator* alloc);
 void destroy_dbg_manager(dbg_manager* dbg);
 
-void dbg_add_log(log_message* msg);
+void dbg_add_log(log_message* msg, string fmt);
 void render_debug_gui(game_state* state);

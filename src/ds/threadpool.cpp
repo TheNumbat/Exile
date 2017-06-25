@@ -14,7 +14,7 @@ threadpool make_threadpool(allocator* a, i32 num_threads_) {
 	ret.threads = make_array<platform_thread>(ret.num_threads, a);
 	ret.data    = make_array<worker_data>(ret.num_threads, a);
 	ret.jobs    = make_queue<job>(ret.num_threads, a);
-
+	
 	global_state->api->platform_create_mutex(&ret.queue_mutex, false);
 	global_state->api->platform_create_semaphore(&ret.jobs_semaphore, 0, ret.num_threads);
 
@@ -77,16 +77,16 @@ void threadpool_start_all(threadpool* tp) {
 
 	if(!tp->running) {
 	
-		for(i32 i = 0; i < tp->num_threads; i++) {
+		FORARR(tp->data,
 
-			array_get(&tp->data, i)->job_queue 	 	= &tp->jobs;
-			array_get(&tp->data, i)->queue_mutex 	= &tp->queue_mutex;
-			array_get(&tp->data, i)->jobs_semaphore = &tp->jobs_semaphore;
-			array_get(&tp->data, i)->running 		= true;
-			array_get(&tp->data, i)->alloc  		= tp->alloc;
+			it->job_queue 	 	= &tp->jobs;
+			it->queue_mutex 	= &tp->queue_mutex;
+			it->jobs_semaphore 	= &tp->jobs_semaphore;
+			it->running 		= true;
+			it->alloc  			= tp->alloc;
 
-			global_state->api->platform_create_thread(array_get(&tp->threads, i), &worker, array_get(&tp->data, i), false);
-		}
+			global_state->api->platform_create_thread(array_get(&tp->threads, __i), &worker, it, false);
+		)
 
 		tp->running = true;
 	}

@@ -473,15 +473,17 @@ platform_error platform_get_bin_path(string* path) {
 
 void* platform_heap_alloc(u64 bytes) {
 
-	// cout << "alloc" << endl;
-
 	HANDLE heap = GetProcessHeap();
-	return HeapAlloc(heap, HEAP_ZERO_MEMORY | HEAP_GENERATE_EXCEPTIONS, (SIZE_T)bytes);
+	void* ret = HeapAlloc(heap, HEAP_ZERO_MEMORY | HEAP_GENERATE_EXCEPTIONS, (SIZE_T)bytes);
+
+	// cout << "alloc " << ret << endl;
+
+	return ret;
 }
 
 void platform_heap_free(void* mem) {
 
-	// cout << "free" << endl;
+	// cout << "free " << mem << endl;
 
 	// *(u8*)mem = 0;
 	HANDLE heap = GetProcessHeap();

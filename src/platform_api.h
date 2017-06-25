@@ -21,7 +21,8 @@ struct platform_error {
 
 extern u32 PLATFORM_SHARING_ERROR;
 
-bool operator==(platform_thread_id& first, platform_thread_id& second);
+bool operator==(platform_thread_id first, platform_thread_id second);
+bool operator==(platform_file first, platform_file second);
 
 // TODO(max): Is this really the best way to handle input? We're basically just translating the OS event system.
 //			  Instead, we could do it the HMH way of representing all input since last poll as one structure.

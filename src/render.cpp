@@ -12,7 +12,7 @@ mesh_2d make_mesh_2d(u32 verts, allocator* alloc) {
 	ret.verticies = make_vector<v2>(verts, alloc);
 	ret.texCoords = make_vector<v3>(verts, alloc);
 	ret.colors 	  =	make_vector<v4>(verts, alloc);
-	ret.elements  = make_vector<uv3>(verts * 3, alloc); 
+	ret.elements  = make_vector<uv3>(verts, alloc); 
 
 	return ret;
 }

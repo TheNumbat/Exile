@@ -40,7 +40,6 @@ array<T> make_array(u32 capacity) {
 
 	ret = make_array<T>(capacity, CURRENT_ALLOC());
 
-	
 	return ret;
 }
 
@@ -51,7 +50,6 @@ array<T> make_array_memory(u32 capacity, void* memory) {
 
 	ret.capacity = capacity;
 	ret.memory = (T*)memory;
-
 	
 	return ret;
 }
