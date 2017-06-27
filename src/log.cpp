@@ -57,15 +57,17 @@ void destroy_logger(log_manager* log) { FUNC
 	log->alloc = NULL;
 }
 
-void logger_push_context(log_manager* log, string context) { FUNC
+void logger_push_context(log_manager* log, string context, code_context fake) { FUNC_NOCS
 
-	stack_push(&this_thread_data.context_stack, context);
+	fake.function = context;
+
+	LOG_DEBUG_ASSERT(this_thread_data.call_stack_depth < 1024);
+	this_thread_data.call_stack[this_thread_data.call_stack_depth++] = fake;
 }
 
-void logger_pop_context(log_manager* log) { FUNC
+void logger_pop_context(log_manager* log) { FUNC_NOCS
 
-
-	stack_pop(&this_thread_data.context_stack);
+	this_thread_data.call_stack_depth--;
 }
 
 void logger_add_file(log_manager* log, platform_file file, log_level level) { FUNC
@@ -90,7 +92,7 @@ void logger_print_header(log_manager* log, log_out out) { FUNC
 
 	PUSH_ALLOC(log->alloc) {
 		
-		string header = make_stringf(string_literal("%-8s [%-24s] [%-20s] [%-5s] %-2s\r\n"), "time", "thread/context", "file:line", "level", "message");
+		string header = make_stringf(string_literal("%-8s [%-36s] [%-20s] [%-5s] %-2s\r\n"), "time", "thread/context", "file:line", "level", "message");
 
 		global_state->api->platform_write_file(&out.file, (void*)header.c_str, header.len - 1);
 
@@ -99,11 +101,11 @@ void logger_print_header(log_manager* log, log_out out) { FUNC
 	} POP_ALLOC();
 }
 
-void logger_msgf(log_manager* log, string fmt, log_level level, code_context context, ...) { FUNC
+void logger_msgf(log_manager* log, string fmt, log_level level, code_context context, ...) { FUNC_NOCS
 
 	log_message lmsg;
 
-	lmsg.arena = MAKE_ARENA("msg arena", 512, log->alloc, true);
+	lmsg.arena = MAKE_ARENA("msg arena", 2048, log->alloc, true);
 	PUSH_ALLOC(&lmsg.arena) {
 
 		va_list args;
@@ -113,9 +115,10 @@ void logger_msgf(log_manager* log, string fmt, log_level level, code_context con
 
 		lmsg.publisher = context;
 		lmsg.level = level;
-		lmsg.data = this_thread_data;
-		lmsg.data.context_stack = make_stack_copy_trim(lmsg.data.context_stack, &lmsg.arena);
-		lmsg.data.name = make_copy_string(lmsg.data.name);
+
+		lmsg.call_stack = make_array<code_context>(this_thread_data.call_stack_depth, &lmsg.arena);
+		lmsg.thread_name = make_copy_string(this_thread_data.name);
+		memcpy(this_thread_data.call_stack, lmsg.call_stack.memory, sizeof(code_context) * this_thread_data.call_stack_depth);
 		
 		global_state->api->platform_aquire_mutex(&log->queue_mutex, -1);
 		queue_push(&log->message_queue, lmsg);
@@ -140,20 +143,21 @@ void logger_msgf(log_manager* log, string fmt, log_level level, code_context con
 	} POP_ALLOC();
 }
 
-void logger_msg(log_manager* log, string msg, log_level level, code_context context) { FUNC
+void logger_msg(log_manager* log, string msg, log_level level, code_context context) { FUNC_NOCS
 
 	log_message lmsg;
 
-	lmsg.arena = MAKE_ARENA("msg arena", 512, log->alloc, true);
+	lmsg.arena = MAKE_ARENA("msg arena", 2048, log->alloc, true);
 	PUSH_ALLOC(&lmsg.arena) {
 
 		lmsg.msg = make_copy_string(msg);
 		lmsg.publisher = context;
 		lmsg.level = level;
-		lmsg.data = this_thread_data;
-		lmsg.data.context_stack = make_stack_copy_trim(lmsg.data.context_stack, &lmsg.arena);
-		lmsg.data.name = make_copy_string(lmsg.data.name);
 
+		lmsg.call_stack = make_array<code_context>(this_thread_data.call_stack_depth, &lmsg.arena);
+		lmsg.thread_name = make_copy_string(this_thread_data.name);
+		memcpy(this_thread_data.call_stack, lmsg.call_stack.memory, sizeof(code_context) * this_thread_data.call_stack_depth);
+		
 		global_state->api->platform_aquire_mutex(&log->queue_mutex, -1);
 		queue_push(&log->message_queue, lmsg);
 		global_state->api->platform_release_mutex(&log->queue_mutex);
@@ -182,9 +186,9 @@ string log_fmt_msg(log_message* msg) { FUNC
 	string time = make_string(9);
 	global_state->api->platform_get_timef(string_literal("hh:mm:ss"), &time);
 		
-	string thread_contexts = make_cat_string(msg->data.name, string_literal("/"));
-	for(u32 j = 0; j < msg->data.context_stack.contents.size; j++) {
-		string temp = make_cat_strings(3, thread_contexts, *vector_get(&msg->data.context_stack.contents, j), string_literal("/"));
+	string thread_contexts = make_cat_string(msg->thread_name, string_literal("/"));
+	for(u32 j = 0; j < msg->call_stack.capacity; j++) {
+		string temp = make_cat_strings(3, thread_contexts, array_get(&msg->call_stack, j)->function, string_literal("/"));
 		free_string(thread_contexts);
 		thread_contexts = temp;
 	}
@@ -216,7 +220,7 @@ string log_fmt_msg(log_message* msg) { FUNC
 		break;
 	}
 
-	string output = make_stringf(string_literal("%-8s [%-24s] [%-20s] [%-5s] %*s\r\n"), time.c_str, thread_contexts.c_str, file_line.c_str, level.c_str, 3 * msg->data.context_stack.contents.size + msg->msg.len - 1, msg->msg.c_str);
+	string output = make_stringf(string_literal("%-8s [%-36s] [%-20s] [%-5s] %*s\r\n"), time.c_str, thread_contexts.c_str, file_line.c_str, level.c_str, 3 * msg->call_stack.capacity + msg->msg.len - 1, msg->msg.c_str);
 
 	free_string(time);
 	free_string(thread_contexts);

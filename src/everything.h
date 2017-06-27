@@ -27,9 +27,12 @@ struct code_context {
 
 struct thread_data {
 	stack<allocator*> alloc_stack;
-	stack<string> context_stack;
+	
 	string name;
 	code_context start_context;
+
+	code_context call_stack[1024];
+	i32 call_stack_depth = 0;
 };
 
 thread_local thread_data this_thread_data;
@@ -42,16 +45,43 @@ thread_local thread_data this_thread_data;
 #define FORARR(a,code) 		FORVECCAP(a,code)
 #define INC__COUNTER__ 		{u32 i = __COUNTER__; i = 0;}
 
-#define CONTEXT _make_context(string_literal(__FILE__), string_literal(__func__), __LINE__)
+string 	np_substring(string str, u32 start, u32 end);
+i32 	np_string_last_slash(string str);
+string 	np_string_literal(const char* literal);
+string 	np_string_from_c_str(char* c_str);
+
+#define CONTEXT _make_context(np_string_literal(__FILE__), np_string_literal(__func__), __LINE__)
+
 #ifdef _DEBUG
-#define FUNC {}
+
+struct func_scope {
+	func_scope(code_context context) {
+		this_thread_data.call_stack[this_thread_data.call_stack_depth++] = context;
+	}
+	~func_scope() {
+		this_thread_data.call_stack_depth--;
+	}
+};
+
+struct func_scope_nocs {
+	func_scope_nocs(code_context context) {
+		
+	}
+	~func_scope_nocs() {
+		
+	}
+};
+
+#define FUNC func_scope __f(CONTEXT);
+#define FUNC_NOCS func_scope_nocs __f(CONTEXT);
 #else
 #define FUNC 
+#define FUNC_NOCS
 #endif
 
 inline code_context _make_context(string file, string function, i32 line);
 
-#define begin_thread(n, a) _begin_thread(n, a, _make_context(string_literal(__FILE__), string_literal(__func__), __LINE__));
+#define begin_thread(n, a) _begin_thread(n, a, CONTEXT);
 void _begin_thread(string name, allocator* alloc, code_context context);
 void end_thread();
 

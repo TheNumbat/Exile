@@ -25,41 +25,32 @@ extern "C" game_state* start_up(platform_api* api) { FUNC
 	logger_add_file(&state->log, stdout_file, log_info);
 
 	LOG_DEBUG("Beginning startup...");
-	LOG_PUSH_CONTEXT_L("startup");
 
 	LOG_DEBUG("Allocating transient store...");
 	state->transient_arena = MAKE_ARENA("transient", MEGABYTES(16), &state->default_platform_allocator, false);
 
 	LOG_DEBUG("Starting debug system");
-	LOG_PUSH_CONTEXT_L("dbg");
 	state->dbg_a = MAKE_PLATFORM_ALLOCATOR("dbg");
 	state->dbg_a.suppress_messages = true;
 	state->dbg = make_dbg_manager(&state->dbg_a);
-	LOG_POP_CONTEXT();
 
 	LOG_DEBUG("Starting logger");
 	logger_start(&state->log);
 
 	LOG_DEBUG("Starting thread pool");
-	LOG_PUSH_CONTEXT_L("threadpool");
 	state->thread_pool_a = MAKE_PLATFORM_ALLOCATOR("threadpool");
 	state->thread_pool = make_threadpool(&state->thread_pool_a);
 	threadpool_start_all(&state->thread_pool);
-	LOG_POP_CONTEXT();
 
 	LOG_DEBUG("Setting up events");
-	LOG_PUSH_CONTEXT_L("events");
 	state->evt_a = MAKE_PLATFORM_ALLOCATOR("event");
 	state->evt = make_evt_manager(&state->evt_a);
 	start_evt_manger(&state->evt);
-	LOG_POP_CONTEXT();
 
 	LOG_DEBUG("Setting up asset system");
-	LOG_PUSH_CONTEXT_L("assets");
 	state->default_store_a = MAKE_PLATFORM_ALLOCATOR("asset");
 	state->default_store = make_asset_store(&state->default_store_a);
 	load_asset_store(&state->default_store, string_literal("assets/assets.asset"));
-	LOG_POP_CONTEXT();
 
 	LOG_DEBUG("Creating window");
 	platform_error err = api->platform_create_window(&state->window, string_literal("CaveGame"), 1280, 720);
@@ -73,24 +64,19 @@ extern "C" game_state* start_up(platform_api* api) { FUNC
 	}
 
 	LOG_DEBUG("Setting up OpenGL");
-	LOG_PUSH_CONTEXT_L("ogl");
 	ogl_load_global_funcs();
 	state->ogl_a = MAKE_PLATFORM_ALLOCATOR("ogl");
 	state->ogl = make_opengl(&state->ogl_a);
-	LOG_POP_CONTEXT();
 
 	LOG_DEBUG("Setting up GUI");
-	LOG_PUSH_CONTEXT_L("gui");
 	state->gui_a = MAKE_PLATFORM_ALLOCATOR("gui");
 	state->gui = make_gui(&state->ogl, &state->gui_a);
 	gui_add_font(&state->ogl, &state->gui, string_literal("gui14"), &state->default_store);
 	gui_add_font(&state->ogl, &state->gui, string_literal("gui24"), &state->default_store);
 	gui_add_font(&state->ogl, &state->gui, string_literal("gui40"), &state->default_store);
 	gui_add_font(&state->ogl, &state->gui, string_literal("guimono"), &state->default_store, true);
-	LOG_POP_CONTEXT();
 
 	LOG_INFO("Done with startup!");
-	LOG_POP_CONTEXT();
 
 	state->running = true;
 	return state;
@@ -104,21 +90,13 @@ extern "C" bool main_loop(game_state* state) { FUNC
 
 	PUSH_ALLOC(&state->transient_arena) {
 
-		LOG_PUSH_CONTEXT_L("events");
 		gui_input_state input = run_events(state); 
-		LOG_POP_CONTEXT();
 
-		LOG_PUSH_CONTEXT_L("gui_begin");
 		gui_begin_frame(&state->gui, input);
-		LOG_POP_CONTEXT();
 
-		LOG_PUSH_CONTEXT_L("gui_dbg");
 		render_debug_gui(state);
-		LOG_POP_CONTEXT();
 
-		LOG_PUSH_CONTEXT_L("gui_end");
 		gui_end_frame(&state->ogl);
-		LOG_POP_CONTEXT();
 
 	} POP_ALLOC();
 	RESET_ARENA(&state->transient_arena);
@@ -138,7 +116,6 @@ extern "C" bool main_loop(game_state* state) { FUNC
 extern "C" void shut_down(platform_api* api, game_state* state) { FUNC
 
 	LOG_INFO("Beginning shutdown...");
-	LOG_PUSH_CONTEXT_L("shutdown");
 
 	LOG_DEBUG("Destroying GUI");
 	destroy_gui(&state->gui);

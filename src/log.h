@@ -18,7 +18,10 @@ enum log_level : i8 {
 struct log_message {
 	string msg;
 	log_level level;
-	thread_data data; // snapshot
+	
+	array<code_context> call_stack; // snapshot
+	string thread_name;
+
 	code_context publisher;
 	arena_allocator arena; // joint allocation of msg, data.context_name, data.name
 };
@@ -60,9 +63,9 @@ void destroy_logger(log_manager* log); // calls logger_stop if needed, call log_
 void logger_start(log_manager* log); // begin logging thread - call from one thread
 void logger_stop(log_manager* log);  // end logging thread - call from one thread
 
-#define LOG_PUSH_CONTEXT(str) logger_push_context(&global_state->log, str); 
-#define LOG_PUSH_CONTEXT_L(str) logger_push_context(&global_state->log, string_literal(str)); 
-void logger_push_context(log_manager* log, string context);
+#define LOG_PUSH_CONTEXT(str) logger_push_context(&global_state->log, str, CONTEXT); 
+#define LOG_PUSH_CONTEXT_L(str) logger_push_context(&global_state->log, string_literal(str), CONTEXT); 
+void logger_push_context(log_manager* log, string context, code_context fake);
 #define LOG_POP_CONTEXT() logger_pop_context(&global_state->log); 
 void logger_pop_context(log_manager* log);
 

@@ -92,7 +92,7 @@ void threadpool_start_all(threadpool* tp) { FUNC
 	}
 }
 
-i32 worker(void* data_) { FUNC
+i32 worker(void* data_) { FUNC_NOCS
 
 	worker_data* data = (worker_data*)data_;
 

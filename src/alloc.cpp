@@ -106,9 +106,7 @@ inline void arena_destroy(arena_allocator* a, code_context context) { FUNC
 
 
 	if(a->memory) {
-		if(!a->suppress_messages) LOG_PUSH_CONTEXT(a->name);
 		a->backing->free_(a->memory, a->backing, context);
-		if (!a->suppress_messages) LOG_POP_CONTEXT();
 	}
 }
 
@@ -127,7 +125,6 @@ inline arena_allocator make_arena_allocator_from_context(string name, u64 size, 
 #ifdef _DEBUG
 	if(!ret.suppress_messages) {
 		logger_msgf(&global_state->log, string_literal("creating arena \"%s\" size %u"), log_alloc, context, name.c_str, size);
-		LOG_PUSH_CONTEXT(name);
 	}
 #endif
 	
@@ -137,7 +134,6 @@ inline arena_allocator make_arena_allocator_from_context(string name, u64 size, 
 
 #ifdef _DEBUG
 	if (!ret.suppress_messages) {
-		LOG_POP_CONTEXT();
 	}
 #endif
 
@@ -159,7 +155,6 @@ inline arena_allocator make_arena_allocator(string name, u64 size, allocator* ba
 #ifdef _DEBUG
 	if(!ret.suppress_messages) {
 		logger_msgf(&global_state->log, string_literal("creating arena \"%s\" size %u"), log_alloc, context, name.c_str, size);
-		LOG_PUSH_CONTEXT(name);
 	}
 #endif
 
@@ -169,7 +164,6 @@ inline arena_allocator make_arena_allocator(string name, u64 size, allocator* ba
 
 #ifdef _DEBUG
 	if (!ret.suppress_messages) {
-		LOG_POP_CONTEXT();
 	}
 #endif
 

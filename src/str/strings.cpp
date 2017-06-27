@@ -128,7 +128,6 @@ string substring(string str, u32 start, u32 end) { FUNC
 	return ret;
 }
 
-
 i32 string_last_slash(string str) { FUNC
 
 	for(u32 i = str.len; i >= 0; i--) {
