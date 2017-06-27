@@ -5,3 +5,5 @@ bin/*.opendb
 bin/project.sublime-workspace
 data/log_all.txt
 data/assets/*.asset
+src/meta_out.h
+out.txt

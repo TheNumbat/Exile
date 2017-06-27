@@ -1,21 +1,21 @@
 
 template<typename T>
-u32 vector_len(vector<T>* v) {
+u32 vector_len(vector<T>* v) { FUNC
 	return v->size;
 }
 
 template<typename T>
-u32 vector_capacity(vector<T>* v) {
+u32 vector_capacity(vector<T>* v) { FUNC
 	return v->capacity;
 }
 
 template<typename T> 
-void clear_vector(vector<T>* v) {
+void clear_vector(vector<T>* v) { FUNC
 	v->size = 0;
 }
 
 template<typename T>
-T* vector_find(vector<T>* v, T val) {
+T* vector_find(vector<T>* v, T val) { FUNC
 
 	T* ret = NULL;
 	FORVEC(*v, 
@@ -29,7 +29,7 @@ T* vector_find(vector<T>* v, T val) {
 }
 
 template<typename T>
-void vector_erase(vector<T>* v, T val) {
+void vector_erase(vector<T>* v, T val) { FUNC
 
 	FORVEC(*v, 
 		if(*it == val) {
@@ -40,7 +40,7 @@ void vector_erase(vector<T>* v, T val) {
 }
 
 template<typename T>
-u32 vector_partition(vector<T>* v, u32 low, u32 high) {
+u32 vector_partition(vector<T>* v, u32 low, u32 high) { FUNC
 
 	T pivot = v->memory[high];
 	u32 i = low;
@@ -60,7 +60,7 @@ u32 vector_partition(vector<T>* v, u32 low, u32 high) {
 }
 
 template<typename T> 
-void vector_qsort(vector<T>* v, u32 low, u32 high, bool first) {
+void vector_qsort(vector<T>* v, u32 low, u32 high, bool first) { FUNC
 		
 	if (!v->size) return;
 
@@ -77,7 +77,7 @@ void vector_qsort(vector<T>* v, u32 low, u32 high, bool first) {
 }
 
 template<typename T>
-vector<T> make_vector_copy(vector<T> source, allocator* a) {
+vector<T> make_vector_copy(vector<T> source, allocator* a) { FUNC
 
 	vector<T> ret = make_vector<T>(source.capacity, a);
 
@@ -92,7 +92,7 @@ vector<T> make_vector_copy(vector<T> source, allocator* a) {
 }
 
 template<typename T>
-vector<T> make_vector_copy_trim(vector<T> source, allocator* a) {
+vector<T> make_vector_copy_trim(vector<T> source, allocator* a) { FUNC
 
 	vector<T> ret = make_vector<T>(source.size, a);
 
@@ -108,7 +108,7 @@ vector<T> make_vector_copy_trim(vector<T> source, allocator* a) {
 
 // operator[] but not a member
 template<typename T>
-inline T* vector_get(vector<T>* v, u32 idx) {
+inline T* vector_get(vector<T>* v, u32 idx) { FUNC
 
 #ifdef BOUNDS_CHECK
 	if(v->memory && idx >= 0 && idx < v->capacity) {
@@ -124,13 +124,13 @@ inline T* vector_get(vector<T>* v, u32 idx) {
 }
 
 template<typename T>
-void vector_grow(vector<T>* v, bool copy) {
+void vector_grow(vector<T>* v, bool copy) { FUNC
 	
 	vector_resize(v, v->capacity > 0 ? 2 * v->capacity : 4, copy);
 }
 
 template<typename T>
-void destroy_vector(vector<T>* v) {
+void destroy_vector(vector<T>* v) { FUNC
 
 	if(v->memory) {
 
@@ -143,7 +143,7 @@ void destroy_vector(vector<T>* v) {
 }
 
 template<typename T>
-vector<T> make_vector(u32 capacity, allocator* a) {
+vector<T> make_vector(u32 capacity, allocator* a) { FUNC
 
 	vector<T> ret;
 
@@ -154,7 +154,7 @@ vector<T> make_vector(u32 capacity, allocator* a) {
 }
 
 template<typename T>
-vector<T> make_vector(u32 capacity) {
+vector<T> make_vector(u32 capacity) { FUNC
 
 	vector<T> ret;
 
@@ -165,7 +165,7 @@ vector<T> make_vector(u32 capacity) {
 }
 
 template<typename T>
-void vector_resize(vector<T>* v, u32 capacity, bool copy) {
+void vector_resize(vector<T>* v, u32 capacity, bool copy) { FUNC
 
 	T* new_memory = NULL;
 
@@ -189,7 +189,7 @@ void vector_resize(vector<T>* v, u32 capacity, bool copy) {
 }
 
 template<typename T>
-vector<T> make_vector_copy(vector<T> source) {
+vector<T> make_vector_copy(vector<T> source) { FUNC
 
 	vector<T> ret = make_vector<T>(source.capacity, source.alloc);
 
@@ -204,7 +204,7 @@ vector<T> make_vector_copy(vector<T> source) {
 }
 
 template<typename T>
-void vector_push(vector<T>* v, T value) { 
+void vector_push(vector<T>* v, T value) { FUNC 
 
 	if(v->size == v->capacity) {
 
@@ -216,7 +216,7 @@ void vector_push(vector<T>* v, T value) {
 }
 
 template<typename T>
-void vector_pop(vector<T>* v) { 
+void vector_pop(vector<T>* v) { FUNC 
 
 	if(v->size > 0) {
 		v->size--;
@@ -224,7 +224,7 @@ void vector_pop(vector<T>* v) {
 }
 
 template<typename T>
-T* vector_front(vector<T>* v) { 
+T* vector_front(vector<T>* v) { FUNC 
 
 	if(v->size > 0) {
 		return v->memory;
@@ -235,7 +235,7 @@ T* vector_front(vector<T>* v) {
 }
 
 template<typename T>
-T* vector_back(vector<T>* v) { 
+T* vector_back(vector<T>* v) { FUNC 
 
 	if(v->size) {
 		return v->memory + (v->size - 1);
@@ -246,7 +246,7 @@ T* vector_back(vector<T>* v) {
 }
 
 template<typename T>
-void vector_erase(vector<T>* v, u32 index, u32 num) {
+void vector_erase(vector<T>* v, u32 index, u32 num) { FUNC
 
 #ifdef BOUNDS_CHECK
 	if(v->size >= num) {
@@ -271,12 +271,12 @@ void vector_erase(vector<T>* v, u32 index, u32 num) {
 }
 
 template<typename T>
-void vector_pop_front(vector<T>* v) {
+void vector_pop_front(vector<T>* v) { FUNC
 
 	vector_erase(v, 0);
 }
 
 template<typename T>
-bool vector_empty(vector<T>* v) {
+bool vector_empty(vector<T>* v) { FUNC
 	return v->size == 0;
 }

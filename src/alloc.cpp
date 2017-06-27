@@ -1,18 +1,18 @@
 
-inline void _pop_alloc() {
+inline void _pop_alloc() { FUNC
 	stack_pop(&this_thread_data.alloc_stack);
 }
 
-inline void _push_alloc(allocator* a) {
+inline void _push_alloc(allocator* a) { FUNC
 	stack_push(&this_thread_data.alloc_stack,a);
 }
 
-inline allocator* _current_alloc() {
+inline allocator* _current_alloc() { FUNC
 	allocator* ret = *stack_top(&this_thread_data.alloc_stack);
 	return ret;
 }
 
-inline void* platform_allocate(u64 bytes, void* this_data, code_context context) {
+inline void* platform_allocate(u64 bytes, void* this_data, code_context context) { FUNC
 
 	platform_allocator* this_ = (platform_allocator*)this_data;
 
@@ -27,7 +27,7 @@ inline void* platform_allocate(u64 bytes, void* this_data, code_context context)
 	return mem;
 }
 
-inline void platform_free(void* mem, void* this_data, code_context context) {
+inline void platform_free(void* mem, void* this_data, code_context context) { FUNC
 
 	platform_allocator* this_ = (platform_allocator*)this_data;
 
@@ -40,7 +40,7 @@ inline void platform_free(void* mem, void* this_data, code_context context) {
 	this_->platform_free(mem);
 }
 
-inline platform_allocator make_platform_allocator(string name, code_context context) {
+inline platform_allocator make_platform_allocator(string name, code_context context) { FUNC
 
 	platform_allocator ret;
 	
@@ -54,7 +54,7 @@ inline platform_allocator make_platform_allocator(string name, code_context cont
 	return ret;
 }
 
-inline void* arena_allocate(u64 bytes, void* this_data, code_context context) {
+inline void* arena_allocate(u64 bytes, void* this_data, code_context context) { FUNC
 		
 	arena_allocator* this_ = (arena_allocator*)this_data;
 
@@ -79,9 +79,9 @@ inline void* arena_allocate(u64 bytes, void* this_data, code_context context) {
 	return mem;
 }
 
-inline void arena_free(void*, void*, code_context context) {}
+inline void arena_free(void*, void*, code_context context) { FUNC}
 
-inline void arena_reset(arena_allocator* a, code_context context) {
+inline void arena_reset(arena_allocator* a, code_context context) { FUNC
 
 #ifdef _DEBUG
 	if(!a->suppress_messages) {
@@ -96,7 +96,7 @@ inline void arena_reset(arena_allocator* a, code_context context) {
 #endif
 }
 
-inline void arena_destroy(arena_allocator* a, code_context context) {
+inline void arena_destroy(arena_allocator* a, code_context context) { FUNC
 
 #ifdef _DEBUG
 	if(!a->suppress_messages) {
@@ -112,7 +112,7 @@ inline void arena_destroy(arena_allocator* a, code_context context) {
 	}
 }
 
-inline arena_allocator make_arena_allocator_from_context(string name, u64 size, bool suppress, code_context context) {
+inline arena_allocator make_arena_allocator_from_context(string name, u64 size, bool suppress, code_context context) { FUNC
 
 	arena_allocator ret;
 
@@ -144,7 +144,7 @@ inline arena_allocator make_arena_allocator_from_context(string name, u64 size, 
 	return ret;
 }
 
-inline arena_allocator make_arena_allocator(string name, u64 size, allocator* backing, bool suppress, code_context context) {
+inline arena_allocator make_arena_allocator(string name, u64 size, allocator* backing, bool suppress, code_context context) { FUNC
 
 	arena_allocator ret;
 
@@ -177,7 +177,7 @@ inline arena_allocator make_arena_allocator(string name, u64 size, allocator* ba
 }
 
 #define memcpy(s, d, i) _memcpy(s, d, i)
-void _memcpy(void* source, void* dest, u64 size) {
+void _memcpy(void* source, void* dest, u64 size) { FUNC
 
 	u8* csource = (u8*)source;
 	u8* cdest   = (u8*)dest;
@@ -187,7 +187,7 @@ void _memcpy(void* source, void* dest, u64 size) {
 	}
 }
 
-void memset(void* mem, u64 size, u8 val) {
+void memset(void* mem, u64 size, u8 val) { FUNC
 
 	u8* cmem = (u8*)mem;
 

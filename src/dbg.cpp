@@ -1,5 +1,5 @@
 
-dbg_manager make_dbg_manager(allocator* alloc) {
+dbg_manager make_dbg_manager(allocator* alloc) { FUNC
 
 	dbg_manager ret;
 
@@ -15,7 +15,7 @@ dbg_manager make_dbg_manager(allocator* alloc) {
 	return ret;
 }
 
-void destroy_dbg_manager(dbg_manager* dbg) {
+void destroy_dbg_manager(dbg_manager* dbg) { FUNC
 
 	FORVEC(dbg->log_cache,
 		free_string(it->fmt, dbg->alloc);
@@ -24,7 +24,7 @@ void destroy_dbg_manager(dbg_manager* dbg) {
 	destroy_vector(&dbg->log_cache);
 }
 
-void dbg_add_log(log_message* msg, string fmt) {
+void dbg_add_log(log_message* msg, string fmt) { FUNC
 
 	dbg_manager* dbg = &global_state->dbg;
 
@@ -42,7 +42,7 @@ void dbg_add_log(log_message* msg, string fmt) {
 	vector_push(&dbg->log_cache, cm);
 }
 
-void render_debug_gui(game_state* state) {
+void render_debug_gui(game_state* state) { FUNC
 
 	gui_begin(string_literal("Debug"));
 	gui_log_wnd(string_literal("Log"), &state->dbg.log_cache);

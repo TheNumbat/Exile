@@ -22,11 +22,11 @@ cl %Asset_CompilerFlags% -Femeta.exe w:\src\meta.cpp /link %Asset_LinkerFlags%
 meta.exe w:\src\game.cpp > meta_out.txt
 
 if "%1"=="release" (
-	cl %Game_ReleaseCompilerFlags% w:\build\meta_out.cpp /link %Game_LinkerFlags%
+	cl %Game_ReleaseCompilerFlags% w:\src\game.cpp /link %Game_LinkerFlags%
 ) else if "%2"=="release" (
-	cl %Game_ReleaseCompilerFlags% w:\build\meta_out.cpp /link %Game_LinkerFlags%
+	cl %Game_ReleaseCompilerFlags% w:\src\game.cpp /link %Game_LinkerFlags%
 ) else (
-	cl %Game_DebugCompilerFlags% /FA w:\build\meta_out.cpp /link %Game_LinkerFlags%
+	cl %Game_DebugCompilerFlags% w:\src\game.cpp /link %Game_LinkerFlags%
 )
 
 if "%1"=="platform" goto platform

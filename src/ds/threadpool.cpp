@@ -1,10 +1,10 @@
 
-threadpool make_threadpool(i32 num_threads_) {
+threadpool make_threadpool(i32 num_threads_) { FUNC
 
 	return make_threadpool(CURRENT_ALLOC(), num_threads_);
 }
 
-threadpool make_threadpool(allocator* a, i32 num_threads_) {
+threadpool make_threadpool(allocator* a, i32 num_threads_) { FUNC
 
 	threadpool ret;
 
@@ -21,7 +21,7 @@ threadpool make_threadpool(allocator* a, i32 num_threads_) {
 	return ret;
 }
 
-void destroy_threadpool(threadpool* tp) {
+void destroy_threadpool(threadpool* tp) { FUNC
 
 	threadpool_stop_all(tp);
 
@@ -33,7 +33,7 @@ void destroy_threadpool(threadpool* tp) {
 	global_state->api->platform_destroy_semaphore(&tp->jobs_semaphore);
 }
 
-void threadpool_queue_job(threadpool* tp, i32 (*proc)(void*), void* data) {
+void threadpool_queue_job(threadpool* tp, i32 (*proc)(void*), void* data) { FUNC
 
 	job j;
 	j.proc = proc;
@@ -42,7 +42,7 @@ void threadpool_queue_job(threadpool* tp, i32 (*proc)(void*), void* data) {
 	threadpool_queue_job(tp, j);
 }
 
-void threadpool_queue_job(threadpool* tp, job j) {
+void threadpool_queue_job(threadpool* tp, job j) { FUNC
 
 	global_state->api->platform_aquire_mutex(&tp->queue_mutex, -1);
 	
@@ -52,7 +52,7 @@ void threadpool_queue_job(threadpool* tp, job j) {
 	global_state->api->platform_signal_semaphore(&tp->jobs_semaphore, 1);
 }
 
-void threadpool_stop_all(threadpool* tp) {
+void threadpool_stop_all(threadpool* tp) { FUNC
 
 	if(tp->running) {
 	
@@ -73,7 +73,7 @@ void threadpool_stop_all(threadpool* tp) {
 	}
 } 
 
-void threadpool_start_all(threadpool* tp) {
+void threadpool_start_all(threadpool* tp) { FUNC
 
 	if(!tp->running) {
 	
@@ -92,7 +92,7 @@ void threadpool_start_all(threadpool* tp) {
 	}
 }
 
-i32 worker(void* data_) {
+i32 worker(void* data_) { FUNC
 
 	worker_data* data = (worker_data*)data_;
 

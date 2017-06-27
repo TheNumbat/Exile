@@ -1,7 +1,7 @@
 
 #include "everything.h"
 
-extern "C" game_state* start_up(platform_api* api) { 
+extern "C" game_state* start_up(platform_api* api) { FUNC 
 
 	game_state* state = (game_state*)api->platform_heap_alloc(sizeof(game_state));
 	state->api = api;
@@ -96,7 +96,7 @@ extern "C" game_state* start_up(platform_api* api) {
 	return state;
 }
 
-extern "C" bool main_loop(game_state* state) {
+extern "C" bool main_loop(game_state* state) { FUNC
 
 	glUseProgram(0); // why tho?? https://twitter.com/fohx/status/619887799462985729?lang=en
 	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
@@ -135,7 +135,7 @@ extern "C" bool main_loop(game_state* state) {
 	return state->running;
 }
 
-extern "C" void shut_down(platform_api* api, game_state* state) {
+extern "C" void shut_down(platform_api* api, game_state* state) { FUNC
 
 	LOG_INFO("Beginning shutdown...");
 	LOG_PUSH_CONTEXT_L("shutdown");
@@ -176,7 +176,7 @@ extern "C" void shut_down(platform_api* api, game_state* state) {
 	api->platform_heap_free(state);
 }
 
-extern "C" void on_reload(game_state* state) {
+extern "C" void on_reload(game_state* state) { FUNC
 
 	global_state = state;
 	ogl_load_global_funcs();
@@ -188,7 +188,7 @@ extern "C" void on_reload(game_state* state) {
 	LOG_INFO("End reloading game code");
 }
 
-extern "C" void on_unload(game_state* state) {
+extern "C" void on_unload(game_state* state) { FUNC
 	
 	LOG_INFO("Begin reloading game code");
 

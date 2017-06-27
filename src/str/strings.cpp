@@ -1,5 +1,5 @@
 
-bool operator==(string first, string second) {
+bool operator==(string first, string second) { FUNC
 
 	if(first.len != second.len) {
 		return false;
@@ -14,11 +14,11 @@ bool operator==(string first, string second) {
 	return true;
 }
 
-bool strcmp(string first, string second) {
+bool strcmp(string first, string second) { FUNC
 	return first == second;
 }
 
-u32 hash_strings(string one, string two) {
+u32 hash_strings(string one, string two) { FUNC
 
     u32 hash = 5381;
 
@@ -32,7 +32,7 @@ u32 hash_strings(string one, string two) {
 }
 
 // from http://www.cse.yorku.ca/~oz/hash.html
-u32 hash_string(string str) {
+u32 hash_string(string str) { FUNC
 
     u32 hash = 5381;
 
@@ -43,7 +43,7 @@ u32 hash_string(string str) {
 }
 
 // adapted from http://www.json.org/JSON_checker/utf8_decode.c
-u32 get_next_codepoint(string text_utf8, u32* index) {
+u32 get_next_codepoint(string text_utf8, u32* index) { FUNC
 
 	char first, second, third, fourth;
 	u32 codepoint;
@@ -103,7 +103,7 @@ u32 get_next_codepoint(string text_utf8, u32* index) {
 	return 0;
 }
 
-string make_copy_string(string src, allocator* a) {
+string make_copy_string(string src, allocator* a) { FUNC
 
 	string ret = make_string(src.cap, a);
 
@@ -116,7 +116,7 @@ string make_copy_string(string src, allocator* a) {
 	return ret;
 }
 
-string substring(string str, u32 start, u32 end) {
+string substring(string str, u32 start, u32 end) { FUNC
 
 	string ret;
 
@@ -129,7 +129,7 @@ string substring(string str, u32 start, u32 end) {
 }
 
 
-i32 string_last_slash(string str) {
+i32 string_last_slash(string str) { FUNC
 
 	for(u32 i = str.len; i >= 0; i--) {
 		if(str.c_str[i] == '\\' || str.c_str[i] == '/') {
@@ -140,7 +140,7 @@ i32 string_last_slash(string str) {
 	return -1;
 }
 
-void free_string(string s, allocator* a) {
+void free_string(string s, allocator* a) { FUNC
 	PUSH_ALLOC(a) {
 
 		free_string(s);
@@ -148,7 +148,7 @@ void free_string(string s, allocator* a) {
 	} POP_ALLOC();
 }
 
-string make_stringf_a(allocator* a, string fmt, ...) {
+string make_stringf_a(allocator* a, string fmt, ...) { FUNC
 	
 	string ret;
 
@@ -160,7 +160,7 @@ string make_stringf_a(allocator* a, string fmt, ...) {
 	return ret;
 }
 
-string make_stringf(string fmt, ...) {
+string make_stringf(string fmt, ...) { FUNC
 
 	va_list args;
 	va_start(args, fmt);
@@ -175,7 +175,7 @@ string make_stringf(string fmt, ...) {
 #include <cstdio>
 #pragma warning(push)
 #pragma warning(disable : 4996)
-string make_vstringf_a(allocator* a, string fmt, va_list args) {
+string make_vstringf_a(allocator* a, string fmt, va_list args) { FUNC
 
 	i32 len = _vscprintf(fmt.c_str, args) + 1;
 
@@ -187,7 +187,7 @@ string make_vstringf_a(allocator* a, string fmt, va_list args) {
 	return ret;
 }
 
-string make_vstringf(string fmt, va_list args) {
+string make_vstringf(string fmt, va_list args) { FUNC
 
 	i32 len = _vscprintf(fmt.c_str, args) + 1;
 
@@ -200,12 +200,12 @@ string make_vstringf(string fmt, va_list args) {
 }
 #pragma warning(pop)
 
-string string_literal(const char* literal) {
+string string_literal(const char* literal) { FUNC
 
 	return string_from_c_str((char*)literal);
 }
 
-string string_from_c_str(char* c_str) {
+string string_from_c_str(char* c_str) { FUNC
 
 	string ret;
 
@@ -220,7 +220,7 @@ string string_from_c_str(char* c_str) {
 	return ret;
 }
 
-string make_string_from_c_str(char* c_str) {
+string make_string_from_c_str(char* c_str) { FUNC
 
 	u32 len;
 	for(len = 0; c_str[len] != '\0'; len++);
@@ -236,7 +236,7 @@ string make_string_from_c_str(char* c_str) {
 	return ret;
 }
 
-void free_string(string s) {
+void free_string(string s) { FUNC
 
 	free(s.c_str);
 
@@ -245,7 +245,7 @@ void free_string(string s) {
 	s.len = 0;
 }
 
-string make_string(u32 cap, allocator* a) {
+string make_string(u32 cap, allocator* a) { FUNC
 
 	string ret;
 
@@ -255,7 +255,7 @@ string make_string(u32 cap, allocator* a) {
 	return ret;
 }
 
-string make_string(u32 cap) {
+string make_string(u32 cap) { FUNC
 
 	string ret;
 
@@ -265,7 +265,7 @@ string make_string(u32 cap) {
 	return ret;
 }
 
-string make_copy_string(string src) {
+string make_copy_string(string src) { FUNC
 
 	string ret = make_string(src.cap);
 
@@ -279,7 +279,7 @@ string make_copy_string(string src) {
 }
 
 // end inclusive
-string make_substring(string str, u32 start, u32 end) {
+string make_substring(string str, u32 start, u32 end) { FUNC
 
 	string ret = make_string(end - start + 1);
 
@@ -292,7 +292,7 @@ string make_substring(string str, u32 start, u32 end) {
 	return ret;
 }
 
-string make_cat_strings(i32 num_strs, ...) {
+string make_cat_strings(i32 num_strs, ...) { FUNC
 
 	va_list args;
 	va_start(args, num_strs);
@@ -333,7 +333,7 @@ string make_cat_strings(i32 num_strs, ...) {
 	return ret;
 }
 
-string make_cat_string(string first, string second) {
+string make_cat_string(string first, string second) { FUNC
 
 	string ret = make_string(first.len + second.len - 1);
 

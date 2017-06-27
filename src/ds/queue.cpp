@@ -1,12 +1,12 @@
 
 template<typename T>
-void destroy_queue(queue<T>* q) {
+void destroy_queue(queue<T>* q) { FUNC
 
 	destroy_vector(&q->contents);
 }
 
 template<typename T>
-queue<T> make_queue(u32 capacity, allocator* a) {
+queue<T> make_queue(u32 capacity, allocator* a) { FUNC
 
 	queue<T> ret;
 
@@ -16,7 +16,7 @@ queue<T> make_queue(u32 capacity, allocator* a) {
 }
 
 template<typename T>
-queue<T> make_queue(u32 capacity) {
+queue<T> make_queue(u32 capacity) { FUNC
 
 	queue<T> ret;
 
@@ -26,13 +26,13 @@ queue<T> make_queue(u32 capacity) {
 }
 
 template<typename T>
-void queue_push(queue<T>* q, T value) {
+void queue_push(queue<T>* q, T value) { FUNC
 
 	vector_push(&q->contents, value);
 }
 
 template<typename T>
-T queue_pop(queue<T>* q) {
+T queue_pop(queue<T>* q) { FUNC
 
 	if(q->contents.size > 0) {
 		
@@ -49,7 +49,7 @@ T queue_pop(queue<T>* q) {
 }
 
 template<typename T>
-T* queue_front(queue<T>* q) {
+T* queue_front(queue<T>* q) { FUNC
 
 	if(q->contents.size > 0) {
 
@@ -61,6 +61,6 @@ T* queue_front(queue<T>* q) {
 }
 
 template<typename T>
-bool queue_empty(queue<T>* q) {
+bool queue_empty(queue<T>* q) { FUNC
 	return vector_empty(&q->contents);
 }

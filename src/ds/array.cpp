@@ -1,12 +1,12 @@
 
 template<typename T> 
-u32 array_len(array<T>* a) {
+u32 array_len(array<T>* a) { FUNC
 
 	return a->capacity;
 }
 
 template<typename T>
-void destroy_array(array<T>* a) {
+void destroy_array(array<T>* a) { FUNC
 
 	if(a->alloc && a->memory) {
 
@@ -18,7 +18,7 @@ void destroy_array(array<T>* a) {
 }
 
 template<typename T>
-array<T> make_array(u32 capacity, allocator* a) {
+array<T> make_array(u32 capacity, allocator* a) { FUNC
 
 	array<T> ret;
 
@@ -34,7 +34,7 @@ array<T> make_array(u32 capacity, allocator* a) {
 }
 
 template<typename T>
-array<T> make_array(u32 capacity) {
+array<T> make_array(u32 capacity) { FUNC
 
 	array<T> ret;
 
@@ -44,7 +44,7 @@ array<T> make_array(u32 capacity) {
 }
 
 template<typename T>
-array<T> make_array_memory(u32 capacity, void* memory) {
+array<T> make_array_memory(u32 capacity, void* memory) { FUNC
 
 	array<T> ret;
 
@@ -56,7 +56,7 @@ array<T> make_array_memory(u32 capacity, void* memory) {
 
 // operator[] but not a member
 template<typename T>
-inline T* array_get(array<T>* a, u32 idx) {
+inline T* array_get(array<T>* a, u32 idx) { FUNC
 
 #ifdef BOUNDS_CHECK
 	if(a->memory && idx >= 0 && idx < a->capacity) {

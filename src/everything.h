@@ -1,32 +1,29 @@
 
 #pragma once
 
-#ifdef _DEBUG
-#define BOUNDS_CHECK
-#define BLOCK_ON_ERROR
-// #define ZERO_ARENA
-#endif
-
 #include "basic_types.h"
 #include "str/strings.h"
 #include "platform_api.h"
-
-struct code_context {
-	string file;
-	string function;
-	i32 line = 0;
-};
+#include "meta_out.h"
 
 #include "math.h"
-
 #include "ds/vector.h"
 #include "ds/stack.h"
 #include "ds/array.h"
 #include "ds/queue.h"
 #include "ds/map.h"
 
-#include "alloc.h"
-#include "ds/threadpool.h"
+#ifdef _DEBUG
+#define BOUNDS_CHECK
+#define BLOCK_ON_ERROR
+// #define ZERO_ARENA
+#endif
+
+struct code_context {
+	string file;
+	string function;
+	i32 line = 0;
+};
 
 struct thread_data {
 	stack<allocator*> alloc_stack;
@@ -37,16 +34,6 @@ struct thread_data {
 
 thread_local thread_data this_thread_data;
 
-#include "log.h"
-#include "asset.h"
-#include "render.h"
-#include "opengl.h"
-#include "gui.h"
-#include "events.h"
-#include "dbg.h"
-
-#include "game.h"
-
 #define FOR(num) 			for(i32 __i = 0; __i < num; __i++)
 #define FORVEC(v,code) 		{u32 __i = 0; for(auto it = (v).memory; it != (v).memory + (v).size; __i++, it++) {code}}
 #define FORVECCAP(v,code) 	{u32 __i = 0; for(auto it = (v).memory; it != (v).memory + (v).capacity; __i++, it++) {code}}
@@ -56,6 +43,12 @@ thread_local thread_data this_thread_data;
 #define INC__COUNTER__ 		{u32 i = __COUNTER__; i = 0;}
 
 #define CONTEXT _make_context(string_literal(__FILE__), string_literal(__func__), __LINE__)
+#ifdef _DEBUG
+#include <iostream>
+#define FUNC {std::cout << __func__ << std::endl;}
+#else
+#define FUNC 
+#endif
 
 inline code_context _make_context(string file, string function, i32 line);
 
@@ -63,10 +56,23 @@ inline code_context _make_context(string file, string function, i32 line);
 void _begin_thread(string name, allocator* alloc, code_context context);
 void end_thread();
 
+#include "alloc.h"
+#include "ds/threadpool.h"
+
+#include "log.h"
+#include "asset.h"
+#include "render.h"
+#include "opengl.h"
+#include "gui.h"
+#include "events.h"
+#include "dbg.h"
+
+#include "game.h"
 static game_state* global_state = NULL;
 
 // IMPLEMENTATIONS
 #include "str/strings.cpp"
+#include "math.cpp"
 
 #include "alloc.cpp"
 #include "log.cpp"
@@ -85,4 +91,4 @@ static game_state* global_state = NULL;
 #include "ds/threadpool.cpp"
 
 #include "everything.cpp"
-// END IMPLEMENTATIONS
+// /IMPLEMENTATIONS

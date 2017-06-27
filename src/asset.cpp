@@ -1,5 +1,5 @@
 
-asset_store make_asset_store(allocator* a) {
+asset_store make_asset_store(allocator* a) { FUNC
 
 	asset_store ret;
 
@@ -8,7 +8,7 @@ asset_store make_asset_store(allocator* a) {
 	return ret;
 }
 
-void destroy_asset_store(asset_store* am) {
+void destroy_asset_store(asset_store* am) { FUNC
 
 	if(am->store) {
 
@@ -22,7 +22,7 @@ void destroy_asset_store(asset_store* am) {
 	}
 }
 
-asset* get_asset(asset_store* as, string name) {
+asset* get_asset(asset_store* as, string name) { FUNC
 
 	asset* a = map_try_get(&as->assets, name);
 
@@ -34,7 +34,7 @@ asset* get_asset(asset_store* as, string name) {
 	return a;
 }
 
-glyph_data get_glyph_data(asset_store* as, string font, u32 codepoint) {
+glyph_data get_glyph_data(asset_store* as, string font, u32 codepoint) { FUNC
 
 	asset* a = get_asset(as, font);
 
@@ -43,7 +43,7 @@ glyph_data get_glyph_data(asset_store* as, string font, u32 codepoint) {
 	return get_glyph_data(a, codepoint);
 }
 
-glyph_data get_glyph_data(asset* font, u32 codepoint) {
+glyph_data get_glyph_data(asset* font, u32 codepoint) { FUNC
 
 	LOG_DEBUG_ASSERT(font->type == asset_font);
 
@@ -73,7 +73,7 @@ glyph_data get_glyph_data(asset* font, u32 codepoint) {
 	}
 }
 
-bool try_reload_asset_store(asset_store* as) {
+bool try_reload_asset_store(asset_store* as) { FUNC
 
 	platform_file_attributes new_attrib;
 	
@@ -100,7 +100,7 @@ bool try_reload_asset_store(asset_store* as) {
 	return false;
 }
 
-void load_asset_store(asset_store* as, string path) {
+void load_asset_store(asset_store* as, string path) { FUNC
 
 	platform_file store;
 
