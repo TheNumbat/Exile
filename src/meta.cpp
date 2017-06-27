@@ -129,22 +129,16 @@ i32 main(i32 argc, char** argv) {
     path = first.substr(0, first.find_last_of("\\/") + 1);
     load(first);
 
-    i32 count = 0;
-    for(auto t : lib_includes) {
-    	count++;
-
-    	fout << t.str;
-    	if(count == 2) {
-    		fout << endl;
-    		count = 0;
-    	} else {
-    		fout << " ";
-    	}
+    for(i32 i = 0; i < lib_includes.size(); i += 2) {
+    	printf("%s %s\n", lib_includes[i].str.c_str(), lib_includes[i+1].str.c_str());
     }
 
     for(i32 i = 0; i < all_tokens.size(); i++) {
     	_token& t = all_tokens[i];
 
+    	if(t.str == "struct") {
+    		
+    	}
     }
 
     fout << endl;

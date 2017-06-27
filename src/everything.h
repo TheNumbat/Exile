@@ -44,8 +44,7 @@ thread_local thread_data this_thread_data;
 
 #define CONTEXT _make_context(string_literal(__FILE__), string_literal(__func__), __LINE__)
 #ifdef _DEBUG
-#include <iostream>
-#define FUNC {std::cout << __func__ << std::endl;}
+#define FUNC {}
 #else
 #define FUNC 
 #endif
