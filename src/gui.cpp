@@ -324,6 +324,7 @@ void gui_log_wnd(string name, vector<log_message>* cache) { FUNC
 
 	f32 height = gui_style.log_win_lines * gui_style.font + 2 * gui_style.font + gui_style.title_padding + gui_style.win_margin.x + gui_style.win_margin.w;
 	gui_begin(name, R2(0.0f, global_state->window_h - height, (f32)global_state->window_w, height), 0.5f, win_nowininput | win_nohead | win_ignorescale, true);
+	gui_pop_offset();
 
 	gui_window_state* current = ggui->current;
 	current->rect = R2(0.0f, global_state->window_h - height, (f32)global_state->window_w, height);
@@ -373,12 +374,13 @@ void gui_log_wnd(string name, vector<log_message>* cache) { FUNC
 
 	mesh_push_rect(&current->mesh, scroll_bar, V4b(gui_style.win_scroll_bar, 255));
 
-	v2 pos = add(ggui->current->rect.xy, V2(gui_style.win_margin.x, height - gui_style.win_margin.w - gui_style.font));
+	v2 pos = V2(gui_style.win_margin.x, height - gui_style.win_margin.w - gui_style.font);
 
 	i32 ignore;
 	gui_box_select(&ignore, 3, pos, string_literal("DEBUG"), string_literal("INFO"), string_literal("WARN/ERR"));
 
-	pos.y -= gui_style.font + 5.0f;
+	pos = add(current->rect.xy, pos);
+	pos.y -= gui_style.font + 7.0f;
 
 	for(i32 i = cache->size - data->u32_1; i > 0; i--) {
 		log_message* it = vector_get(cache, i - 1);
@@ -416,12 +418,17 @@ void gui_box_select(i32* selected, i32 num, v2 pos, ...) { FUNC
 	va_list args;
 	va_start(args, pos);
 
+	pos = add(current->rect.xy, pos);
+	FORVEC(ggui->current->offset_stack,
+		pos = add(pos, *it);
+	)
+
 	for(i32 i = 0; i < num; i++) {
 
 		string option = va_arg(args, string);
 
 		v2 wh = add(size_text(current->font->font, option, gui_style.font * gscale), gui_style.box_sel_padding);
-		v2 txy = add(pos, div(gui_style.box_sel_padding, 2.0f));
+		v2 txy = add(pos, V2(gui_style.box_sel_padding.x / 2.0f, -gui_style.box_sel_padding.y / 2.0f + 4.0f));
 		r2 box = R2(pos, wh);
 
 		mesh_push_rect(&current->mesh, box, V4b(gui_style.wid_back, current->opacity * 255.0f));

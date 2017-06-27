@@ -16,13 +16,15 @@ immediate to do:
 	UI
 		joint allocate cached log messages
 		stop sending mesh every frame (see OpenGL)
-		widget clipping
+		widget clipping/wrapping
 		text wrapping
 		general window scroll
 			click/drag/hold scroll bar
 			sticky scroll (like twitch chat)
 		lots of widgets types
 		logger UI window
+			swap between levels
+			tooltip call stack / file:line
 		start profiler
 			lots to do here...
 

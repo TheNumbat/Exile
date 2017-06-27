@@ -104,7 +104,7 @@ struct _gui_style {
 	f32 resize_tab		= 0.075f;
 	v4 win_margin 		= V4(15.0f, 15.0f, 10.0f, 15.0f); // l r t b
 	v2 carrot_padding	= V2(10.0f, 5.0f);
-	v2 box_sel_padding	= V2(8.0f, 4.0f);
+	v2 box_sel_padding	= V2(6.0f, 6.0f);
 
 	f32 default_win_a 	= 0.75f;
 	v2 default_win_size = V2f(250, 400);
