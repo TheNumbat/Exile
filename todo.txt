@@ -6,14 +6,15 @@ immediate to do:
 	meta
 		struct introspection
 			integration with UI, serialization, printf
-		call stack & profiling 
-		profiler integration
+		profiler
 
 	log
-		remove allocation on message send
+		buffer file IO
+		can we remove allocation on message send?
 		pool allocator/free list?
 
 	UI
+		joint allocate cached log messages
 		stop sending mesh every frame (see OpenGL)
 		widget clipping
 		text wrapping
