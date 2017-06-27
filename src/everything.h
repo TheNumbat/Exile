@@ -25,13 +25,14 @@ struct code_context {
 	i32 line = 0;
 };
 
+#define MAX_CALL_STACK_DEPTH 256
 struct thread_data {
 	stack<allocator*> alloc_stack;
 	
 	string name;
 	code_context start_context;
 
-	code_context call_stack[1024];
+	code_context call_stack[MAX_CALL_STACK_DEPTH];
 	i32 call_stack_depth = 0;
 };
 
@@ -52,10 +53,31 @@ string 	np_string_from_c_str(char* c_str);
 
 #define CONTEXT _make_context(np_string_literal(__FILE__), np_string_literal(__func__), __LINE__)
 
+inline code_context _make_context(string file, string function, i32 line);
+
+#define begin_thread(n, a) _begin_thread(n, a, CONTEXT);
+void _begin_thread(string name, allocator* alloc, code_context context);
+void end_thread();
+
+#include "alloc.h"
+#include "ds/threadpool.h"
+
+#include "log.h"
+#include "asset.h"
+#include "render.h"
+#include "opengl.h"
+#include "gui.h"
+#include "events.h"
+#include "dbg.h"
+
+#include "game.h"
+static game_state* global_state = NULL;
+
 #ifdef _DEBUG
 
 struct func_scope {
 	func_scope(code_context context) {
+		LOG_DEBUG_ASSERT(this_thread_data.call_stack_depth < MAX_CALL_STACK_DEPTH);
 		this_thread_data.call_stack[this_thread_data.call_stack_depth++] = context;
 	}
 	~func_scope() {
@@ -78,26 +100,6 @@ struct func_scope_nocs {
 #define FUNC 
 #define FUNC_NOCS
 #endif
-
-inline code_context _make_context(string file, string function, i32 line);
-
-#define begin_thread(n, a) _begin_thread(n, a, CONTEXT);
-void _begin_thread(string name, allocator* alloc, code_context context);
-void end_thread();
-
-#include "alloc.h"
-#include "ds/threadpool.h"
-
-#include "log.h"
-#include "asset.h"
-#include "render.h"
-#include "opengl.h"
-#include "gui.h"
-#include "events.h"
-#include "dbg.h"
-
-#include "game.h"
-static game_state* global_state = NULL;
 
 // IMPLEMENTATIONS
 #include "str/strings.cpp"

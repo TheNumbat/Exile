@@ -99,7 +99,7 @@ u32 get_next_codepoint(string text_utf8, u32* index) { FUNC
 		return codepoint;
 	}
 
-	LOG_DEBUG_ASSERT(false);
+	LOG_DEBUG_ASSERT(!"Invalid codepoint!");
 	return 0;
 }
 

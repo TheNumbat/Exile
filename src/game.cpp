@@ -25,6 +25,7 @@ extern "C" game_state* start_up(platform_api* api) { FUNC
 	logger_add_file(&state->log, stdout_file, log_info);
 
 	LOG_DEBUG("Beginning startup...");
+	LOG_PUSH_CONTEXT_L("");
 
 	LOG_DEBUG("Allocating transient store...");
 	state->transient_arena = MAKE_ARENA("transient", MEGABYTES(16), &state->default_platform_allocator, false);
@@ -77,6 +78,7 @@ extern "C" game_state* start_up(platform_api* api) { FUNC
 	gui_add_font(&state->ogl, &state->gui, string_literal("guimono"), &state->default_store, true);
 
 	LOG_INFO("Done with startup!");
+	LOG_POP_CONTEXT();
 
 	state->running = true;
 	return state;

@@ -3,7 +3,7 @@ dbg_manager make_dbg_manager(allocator* alloc) { FUNC
 
 	dbg_manager ret;
 
-	ret.log_cache = make_vector<cached_message>(1024, alloc);
+	ret.log_cache = make_vector<log_message>(1024, alloc);
 	ret.alloc = alloc;
 
 	log_out dbg_log;
@@ -18,28 +18,33 @@ dbg_manager make_dbg_manager(allocator* alloc) { FUNC
 void destroy_dbg_manager(dbg_manager* dbg) { FUNC
 
 	FORVEC(dbg->log_cache,
-		free_string(it->fmt, dbg->alloc);
+		destroy_array(&it->call_stack);
+		free_string(it->thread_name, dbg->alloc);
+		free_string(it->msg, dbg->alloc);
 	)
 
 	destroy_vector(&dbg->log_cache);
 }
 
-void dbg_add_log(log_message* msg, string fmt) { FUNC
+void dbg_add_log(log_message* msg) { FUNC
 
 	dbg_manager* dbg = &global_state->dbg;
 
 	// TODO(max): circular buffer
 	if(dbg->log_cache.size == dbg->log_cache.capacity) {
 
-		cached_message* cm = vector_front(&dbg->log_cache);
-		free_string(cm->fmt, dbg->alloc);
+		log_message* m = vector_front(&dbg->log_cache);
+		destroy_array(&m->call_stack);
+		free_string(m->thread_name, dbg->alloc);
+		free_string(m->msg, dbg->alloc);
 		vector_pop_front(&dbg->log_cache);
 	}
 
-	cached_message cm;
-	cm.msg = *msg;
-	cm.fmt = make_copy_string(fmt, dbg->alloc);
-	vector_push(&dbg->log_cache, cm);
+	log_message m = *msg;
+	m.call_stack = make_copy_array(&msg->call_stack, dbg->alloc);
+	m.thread_name = make_copy_string(msg->thread_name, dbg->alloc);
+	m.msg = make_copy_string(msg->msg, dbg->alloc);
+	vector_push(&dbg->log_cache, m);
 }
 
 void render_debug_gui(game_state* state) { FUNC

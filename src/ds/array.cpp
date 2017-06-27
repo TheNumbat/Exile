@@ -6,6 +6,15 @@ u32 array_len(array<T>* a) { FUNC
 }
 
 template<typename T>
+array<T> make_copy_array(array<T>* src, allocator* a) { FUNC
+
+	array<T> ret = make_array<T>(src->capacity, a);
+	memcpy(src->memory, ret.memory, src->capacity * sizeof(T));
+
+	return ret;
+}
+
+template<typename T>
 void destroy_array(array<T>* a) { FUNC
 
 	if(a->alloc && a->memory) {

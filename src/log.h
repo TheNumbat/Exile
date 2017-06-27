@@ -5,8 +5,8 @@
 // a copy of the message, the thread context stack, and the thread name. 
 // the arena is freed after the message is output.
 
-enum log_level : i8 {
-	log_alloc = -1,	// super gratuitous allocation info
+enum log_level : u8 {
+	log_alloc = 0,	// super gratuitous allocation info
 	log_ogl,		// gratuitous opengl info
 	log_debug,		// gratuitous info
 	log_info,		// relevant info
@@ -31,7 +31,7 @@ struct log_out {
 	bool custom = false;
 	union {
 		platform_file file;
-		void (*write)(log_message* msg, string fmt) = NULL;
+		void (*write)(log_message* msg) = NULL;
 	};
 	log_out() : file(), write() {}
 };
@@ -54,7 +54,7 @@ struct log_manager {
 	platform_thread		logging_thread;
 	log_thread_param 	thread_param;
 	allocator* alloc 	= NULL;
-	arena_allocator 	scratch;
+	arena_allocator 	scratch; // reset whenever (on the logging thread) (currently every message)
 };
 
 log_manager make_logger(allocator* a); // allocator must have suppress_messages set
@@ -76,7 +76,14 @@ void logger_rem_output(log_manager* log, log_out out);
 
 void logger_msgf(log_manager* log, string fmt, log_level level, code_context context, ...);
 void logger_msg(log_manager* log, string msg, log_level level, code_context context);
+
+// allocate strings with current allocator
 string log_fmt_msg(log_message* msg);
+string log_fmt_msg_time(log_message* msg);
+string log_fmt_msg_call_stack(log_message* msg);
+string log_fmt_msg_file_line(log_message* msg);
+// will not allocate, returns literal (don't free it)
+string log_fmt_msg_level(log_message* msg);
 
 #define LOG_INFO(msg) 	logger_msg(&global_state->log, string_literal(msg), log_info,  CONTEXT); 
 #define LOG_WARN(msg) 	logger_msg(&global_state->log, string_literal(msg), log_warn,  CONTEXT); 

@@ -61,7 +61,7 @@ void logger_push_context(log_manager* log, string context, code_context fake) { 
 
 	fake.function = context;
 
-	LOG_DEBUG_ASSERT(this_thread_data.call_stack_depth < 1024);
+	LOG_DEBUG_ASSERT(this_thread_data.call_stack_depth < MAX_CALL_STACK_DEPTH);
 	this_thread_data.call_stack[this_thread_data.call_stack_depth++] = fake;
 }
 
@@ -105,7 +105,7 @@ void logger_msgf(log_manager* log, string fmt, log_level level, code_context con
 
 	log_message lmsg;
 
-	lmsg.arena = MAKE_ARENA("msg arena", 2048, log->alloc, true);
+	lmsg.arena = MAKE_ARENA("msg arena", 1024, log->alloc, true);
 	PUSH_ALLOC(&lmsg.arena) {
 
 		va_list args;
@@ -147,7 +147,7 @@ void logger_msg(log_manager* log, string msg, log_level level, code_context cont
 
 	log_message lmsg;
 
-	lmsg.arena = MAKE_ARENA("msg arena", 2048, log->alloc, true);
+	lmsg.arena = MAKE_ARENA("msg arena", 1024, log->alloc, true);
 	PUSH_ALLOC(&lmsg.arena) {
 
 		lmsg.msg = make_copy_string(msg);
@@ -181,19 +181,32 @@ void logger_msg(log_manager* log, string msg, log_level level, code_context cont
 	} POP_ALLOC();
 }
 
-string log_fmt_msg(log_message* msg) { FUNC
+string log_fmt_msg_time(log_message* msg) { FUNC
 
 	string time = make_string(9);
 	global_state->api->platform_get_timef(string_literal("hh:mm:ss"), &time);
-		
-	string thread_contexts = make_cat_string(msg->thread_name, string_literal("/"));
+
+	return time;
+}
+
+string log_fmt_msg_call_stack(log_message* msg) { FUNC_NOCS
+
+	string call_stack = make_cat_string(msg->thread_name, string_literal("/"));
 	for(u32 j = 0; j < msg->call_stack.capacity; j++) {
-		string temp = make_cat_strings(3, thread_contexts, array_get(&msg->call_stack, j)->function, string_literal("/"));
-		free_string(thread_contexts);
-		thread_contexts = temp;
+		string temp = make_cat_strings(3, call_stack, array_get(&msg->call_stack, j)->function, string_literal("/"));
+		free_string(call_stack);
+		call_stack = temp;
 	}
 
-	string file_line = make_stringf(string_literal("%s:%u"), msg->publisher.file.c_str, msg->publisher.line);
+	return call_stack;
+}
+
+string log_fmt_msg_file_line(log_message* msg) { FUNC
+
+	return make_stringf(string_literal("%s:%u"), msg->publisher.file.c_str, msg->publisher.line);
+}
+
+string log_fmt_msg_level(log_message* msg) { FUNC
 
 	string level;
 	switch(msg->level) {
@@ -220,12 +233,21 @@ string log_fmt_msg(log_message* msg) { FUNC
 		break;
 	}
 
-	string output = make_stringf(string_literal("%-8s [%-36s] [%-20s] [%-5s] %*s\r\n"), time.c_str, thread_contexts.c_str, file_line.c_str, level.c_str, 3 * msg->call_stack.capacity + msg->msg.len - 1, msg->msg.c_str);
+	return level;
+}
+
+string log_fmt_msg(log_message* msg) { FUNC
+
+	string time = log_fmt_msg_time(msg);
+	string call_stack = log_fmt_msg_call_stack(msg);
+	string file_line = log_fmt_msg_file_line(msg);
+	string level = log_fmt_msg_level(msg);
+
+	string output = make_stringf(string_literal("%-8s [%-36s] [%-20s] [%-5s] %*s\r\n"), time.c_str, call_stack.c_str, file_line.c_str, level.c_str, 3 * msg->call_stack.capacity + msg->msg.len - 1, msg->msg.c_str);
 
 	free_string(time);
-	free_string(thread_contexts);
+	free_string(call_stack);
 	free_string(file_line);
-	free_string(level);
 
 	return output;	
 }
@@ -241,7 +263,7 @@ bool operator==(log_out l, log_out r) { FUNC
 	return l.file == r.file;
 }
 
-i32 logging_thread(void* data_) { FUNC
+i32 logging_thread(void* data_) { FUNC_NOCS
 
 	log_thread_param* data = (log_thread_param*)data_;	
 
@@ -271,7 +293,7 @@ i32 logging_thread(void* data_) { FUNC
 					FORVEC(*data->out,
 						if(it->level <= msg.level) {
 							if(it->custom) {
-								it->write(&msg, output);
+								it->write(&msg);
 							} else {
 								global_state->api->platform_write_file(&it->file, (void*)output.c_str, output.len - 1);
 							}

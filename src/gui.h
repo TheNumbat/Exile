@@ -149,6 +149,7 @@ struct gui_manager {
 
 	vector<gui_font> fonts;
 
+	arena_allocator scratch; // reset whenever (on whatever thread) (currently on formatting log messages)
 	allocator* alloc = NULL;
 };
 

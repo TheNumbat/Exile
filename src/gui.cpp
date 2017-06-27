@@ -14,6 +14,7 @@ gui_manager make_gui(ogl_manager* ogl, allocator* alloc) { FUNC
 	gui_manager ret;
 
 	ret.alloc = alloc;
+	ret.scratch = MAKE_ARENA("gui_scratch", 1024, alloc, false);
 
 	ret.ogl.context = ogl_add_draw_context(ogl, &ogl_mesh_2d_attribs);
 	ret.ogl.shader 	= ogl_add_program(ogl, string_literal("shaders/gui.v"), string_literal("shaders/gui.f"), &ogl_uniforms_gui);
@@ -36,6 +37,8 @@ void destroy_gui(gui_manager* gui) { FUNC
 	destroy_map(&gui->window_state_data);
 	destroy_map(&gui->state_data);
 	destroy_vector(&gui->fonts);
+
+	DESTROY_ARENA(&gui->scratch);
 }
 
 void gui_reload_fonts(ogl_manager* ogl, gui_manager* gui) { FUNC
@@ -129,6 +132,8 @@ void gui_end_frame(ogl_manager* ogl) { FUNC
 		clear_stack(&it->value.id_hash_stack);
 		clear_mesh(&it->value.mesh);
 	)
+
+	RESET_ARENA(&ggui->scratch);
 }
 
 void gui_push_offset(v2 offset) { FUNC
@@ -315,7 +320,7 @@ bool gui_begin(string name, r2 first_size, f32 first_alpha, gui_window_flags fla
 	return window->active;
 }
 
-void gui_log_wnd(string name, vector<cached_message>* cache) { FUNC
+void gui_log_wnd(string name, vector<log_message>* cache) { FUNC
 
 	f32 height = gui_style.log_win_lines * gui_style.font + 2 * gui_style.font + gui_style.title_padding + gui_style.win_margin.x + gui_style.win_margin.w;
 	gui_begin(name, R2(0.0f, global_state->window_h - height, (f32)global_state->window_w, height), 0.5f, win_nowininput | win_nohead | win_ignorescale, true);
@@ -376,9 +381,21 @@ void gui_log_wnd(string name, vector<cached_message>* cache) { FUNC
 	pos.y -= gui_style.font + 5.0f;
 
 	for(i32 i = cache->size - data->u32_1; i > 0; i--) {
-		cached_message* it = vector_get(cache, i - 1);
+		log_message* it = vector_get(cache, i - 1);
 
-		push_text(current, pos, it->fmt, gui_style.font, WHITE);
+		string fmt;
+		PUSH_ALLOC(&ggui->scratch) {
+			
+			string level	 = log_fmt_msg_level(it);
+
+			fmt = make_stringf(string_literal("[context] [file:line] [%-5s] %*s\r\n"), level.c_str, 3 * it->call_stack.capacity + it->msg.len - 1, it->msg.c_str);
+			push_text(current, pos, fmt, gui_style.font, WHITE);
+
+			free_string(fmt);
+
+		} POP_ALLOC();
+		RESET_ARENA(&ggui->scratch);
+
 		pos.y -= gui_style.font;
 
 		if(pos.y < current->rect.y + gui_style.font + gui_style.title_padding + gui_style.win_margin.z) {
