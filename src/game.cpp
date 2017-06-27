@@ -160,6 +160,8 @@ extern "C" void on_reload(game_state* state) { FUNC
 	global_state = state;
 	ogl_load_global_funcs();
 
+	gui_style = _gui_style();
+
 	begin_thread(string_literal("main"), &state->suppressed_platform_allocator);
 	logger_start(&state->log);
 	threadpool_start_all(&state->thread_pool);

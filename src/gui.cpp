@@ -58,10 +58,6 @@ void gui_add_font(ogl_manager* ogl, gui_manager* gui, string asset_name, asset_s
 
 	asset* font = get_asset(store, asset_name);
 
-	if(vector_empty(&gui->fonts)) {
-		gui_style.font = font->font.point;
-	}
-
 	gui_font f;
 	
 	f.asset_name = asset_name;
@@ -94,6 +90,7 @@ void gui_begin_frame(gui_manager* gui, gui_input_state input) { FUNC
 
 	ggui = gui;
 	gui->input = input;
+	gui_style.font = vector_front(&gui->fonts)->font->font.point;
 
 	FORMAP(gui->window_state_data,
 		it->value.font = gui_select_best_font_scale(&it->value);
@@ -322,7 +319,7 @@ bool gui_begin(string name, r2 first_size, f32 first_alpha, gui_window_flags fla
 
 void gui_log_wnd(string name, vector<log_message>* cache) { FUNC
 
-	f32 height = gui_style.log_win_lines * gui_style.font + 2 * gui_style.font + gui_style.title_padding + gui_style.win_margin.x + gui_style.win_margin.w;
+	f32 height = gui_style.log_win_lines * gui_style.font + 2 * gui_style.font + gui_style.title_padding + gui_style.win_margin.x + gui_style.win_margin.w + 7.0f;
 	gui_begin(name, R2(0.0f, global_state->window_h - height, (f32)global_state->window_w, height), 0.5f, win_nowininput | win_nohead | win_ignorescale, true);
 	gui_pop_offset();
 
@@ -388,7 +385,7 @@ void gui_log_wnd(string name, vector<log_message>* cache) { FUNC
 		string fmt;
 		PUSH_ALLOC(&ggui->scratch) {
 			
-			string level	 = log_fmt_msg_level(it);
+			string level = log_fmt_msg_level(it);
 
 			fmt = make_stringf(string_literal("[context] [file:line] [%-5s] %*s\r\n"), level.c_str, 3 * it->call_stack.capacity + it->msg.len - 1, it->msg.c_str);
 			push_text(current, pos, fmt, gui_style.font, WHITE);
