@@ -26,7 +26,7 @@ if "%1"=="release" (
 ) else if "%2"=="release" (
 	cl %Game_ReleaseCompilerFlags% w:\build\meta_out.cpp /link %Game_LinkerFlags%
 ) else (
-	cl %Game_DebugCompilerFlags% w:\build\meta_out.cpp /link %Game_LinkerFlags%
+	cl %Game_DebugCompilerFlags% /FA w:\build\meta_out.cpp /link %Game_LinkerFlags%
 )
 
 if "%1"=="platform" goto platform

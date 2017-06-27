@@ -70,6 +70,26 @@ void mesh_push_rect(mesh_2d* m, r2 r, color c) {
 	vector_push(&m->elements, V3u(idx + 1, idx + 2, idx + 3));
 }
 
+v2 size_text(asset* font, string text_utf8, f32 point) {
+
+	v2 ret;
+
+	f32 scale = point / font->font.point;
+	if(point == 0.0f) {
+		scale = 1.0f;
+	}
+
+	u32 index = 0;
+	while(u32 codepoint = get_next_codepoint(text_utf8, &index)) {
+
+		glyph_data glyph = get_glyph_data(font, codepoint);
+		ret.x += scale * glyph.advance;
+	}
+
+	ret.y = scale * font->font.linedist;
+	return ret;
+}
+
 f32 mesh_push_text_line(mesh_2d* m, asset* font, string text_utf8, v2 pos, f32 point, color c) {
 
 	colorf cf = color_to_f(c);

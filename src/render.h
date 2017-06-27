@@ -60,6 +60,8 @@ void destroy_mesh(mesh_3d* m);
 void clear_mesh(mesh_2d* m);
 void clear_mesh(mesh_3d* m);
 
+v2 size_text(asset* font, string text_utf8, f32 point);
+
 f32 mesh_push_text_line(mesh_2d* m, asset* font, string text_utf8, v2 pos, f32 point = 0.0f, color c = V4b(255, 255, 255, 255)); 
 void mesh_push_rect(mesh_2d* m, r2 rect, color c);
 void mesh_push_cutrect(mesh_2d* m, r2 r, f32 round, color c);

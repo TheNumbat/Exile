@@ -25,7 +25,6 @@ struct _token {
 	}
 	Cpp_Token token;
 	string str;
-
 };
 set<string>    files;
 vector<_token> all_tokens;

@@ -3,6 +3,16 @@ For overall : see #high_level_systems
 
 immediate to do:
 
+	meta
+		struct introspection
+			integration with UI, serialization, printf
+		call stack & profiling 
+		profiler integration
+
+	log
+		remove allocation on message send
+		pool allocator/free list?
+
 	UI
 		stop sending mesh every frame (see OpenGL)
 		widget clipping
@@ -29,6 +39,7 @@ immediate to do:
 		better names, force specific names for DS allocators
 
 	platform
+		fix cursor
 		wgl extension testing/loading
 		file change watcher/callback system
 		linux platform layer
@@ -49,11 +60,6 @@ immediate to do:
 		storage representation (compression?)
 		paging
 		world storage (3D chunks?)
-
-	metaprogramming - struct introspection?
-		replace vsnprintf
-		easy UI show with introspection
-		profiler call injection
 
 	Make concurrent vector/array/stack/hash map 
 		use for allocator stacks, logging contexts, job/logging queue

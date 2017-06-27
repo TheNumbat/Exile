@@ -106,5 +106,4 @@ asset* get_asset(asset_store* as, string name);
 
 glyph_data get_glyph_data(asset_store* as, string font, u32 codepoint);
 glyph_data get_glyph_data(asset* font, u32 codepoint);
-v2 size_text(asset* font, string text_utf8, f32 point);
 #endif

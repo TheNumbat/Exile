@@ -95,7 +95,7 @@ struct gui_window_state {
 	mesh_2d mesh;
 };
 
-struct gui_style {
+struct _gui_style {
 	f32 gscale 			= 1.0f;	// global scale 
 	f32 font 			= 0.0f;	// default font size - may use different actual font based on gscale * font
 	f32 title_padding 	= 5.0f;
@@ -104,6 +104,7 @@ struct gui_style {
 	f32 resize_tab		= 0.075f;
 	v4 win_margin 		= V4(15.0f, 15.0f, 10.0f, 15.0f); // l r t b
 	v2 carrot_padding	= V2(10.0f, 5.0f);
+	v2 box_sel_padding	= V2(8.0f, 4.0f);
 
 	f32 default_win_a 	= 0.75f;
 	v2 default_win_size = V2f(250, 400);
@@ -113,7 +114,6 @@ struct gui_style {
 
 	color3 win_back		= V3b(34, 43, 47);
 	color3 win_top		= V3b(74, 79, 137);
-	color3 win_close	= V3b(102, 105, 185);
 	color3 win_title 	= V3b(255, 255, 255);
 	color3 wid_back		= V3b(102, 105, 185);
 
@@ -123,6 +123,7 @@ struct gui_style {
 	color3 win_scroll_back 	= V3b(102, 105, 185);
 	color3 win_scroll_bar 	= V3b(132, 135, 215);
 };
+static _gui_style gui_style;
 
 enum gui_active_state {
 	gui_active,
@@ -136,7 +137,6 @@ struct gui_manager {
 	guiid active_id;
 	gui_active_state active = gui_none;
 
-	gui_style 		style;
 	gui_input_state input;
 	gui_opengl 		ogl;
 
@@ -174,7 +174,8 @@ void gui_set_offset_mode(gui_offset_mode mode = gui_offset_y);
 
 bool gui_occluded();
 bool gui_begin(string name, r2 first_size = R2f(40,40,0,0), f32 first_alpha = 0, gui_window_flags flags = 0, bool mono = false);
-bool gui_carrot_toggle(string name, bool initial = false, color c = V4b(255, 255, 255, 255),  v2 pos = V2f(0,0), bool* toggleme = NULL);
+bool gui_carrot_toggle(string name, bool initial = false, v2 pos = V2f(0,0), bool* toggleme = NULL);
+void gui_box_select(i32* selected, i32 num, v2 pos, ...);
 
 void gui_log_wnd(string name, vector<log_message>* cache);
 
@@ -182,6 +183,6 @@ void gui_log_wnd(string name, vector<log_message>* cache);
 void push_windowhead(gui_window_state* win);
 void push_windowbody(gui_window_state* win);
 void push_text(gui_window_state* win, v2 pos, string text, f32 point, color c);
-void push_carrot(gui_window_state* win, v2 pos, bool active, color c);
+void push_carrot(gui_window_state* win, v2 pos, bool active);
 
 bool operator==(guiid l, guiid r);
