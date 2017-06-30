@@ -92,7 +92,7 @@ def_file_structure build_def_file(ifstream& in) {
 
 		if(type == "image") {
 
-			asset.type = asset_bitmap;
+			asset.type = asset_type::bitmap;
 			eat_control(in);
 
 			while(in.peek() != '}') {
@@ -121,7 +121,7 @@ def_file_structure build_def_file(ifstream& in) {
 
 		} else if(type == "font") {
 
-			asset.type = asset_font;
+			asset.type = asset_type::font;
 			eat_control(in);
 
 			while(in.peek() != '}') {
@@ -237,9 +237,9 @@ int main(int argc, char** argv) {
 		def_asset& 			def_asset = def.assets[i];
 		file_asset_header 	asset_header;
 
-		if(def_asset.type == asset_bitmap) {
+		if(def_asset.type == asset_type::bitmap) {
 
-			asset_header.type = asset_bitmap;
+			asset_header.type = asset_type::bitmap;
 			memcpy(asset_header.name, def_asset.image.name.c_str(), def_asset.image.name.size() + 1);
 
 			file_asset_bitmap asset_bitmap;
@@ -273,9 +273,9 @@ int main(int argc, char** argv) {
 
 			stbi_image_free(bitmap);
 
-		} else if(def_asset.type == asset_font) {
+		} else if(def_asset.type == asset_type::font) {
 
-			asset_header.type = asset_font;
+			asset_header.type = asset_type::font;
 			memcpy(asset_header.name, def_asset.font.name.c_str(), def_asset.font.name.size() + 1);			
 
 			file_asset_font asset_font;

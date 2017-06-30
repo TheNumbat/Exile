@@ -9,6 +9,17 @@ inline u32 hash_u32(u32 key) { FUNC
     return key;
 }
 
+inline u32 hash_u64(u64 key) { FUNC
+	key = (~key) + (key << 21); // key = (key << 21) - key - 1;
+	key = key ^ (key >> 24);
+	key = (key + (key << 3)) + (key << 8); // key * 265
+	key = key ^ (key >> 14);
+	key = (key + (key << 2)) + (key << 4); // key * 21
+	key = key ^ (key >> 28);
+	key = key + (key << 31);
+	return (u32)key;			// TODO(max): uh, is this OK? probably not.
+}
+
 template<typename K, typename V>
 map<K,V> make_map(i32 capacity, u32 (*hash)(K)) { FUNC
 	map<K,V> ret = make_map<K,V>(capacity, CURRENT_ALLOC(), hash);

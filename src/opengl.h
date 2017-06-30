@@ -136,17 +136,17 @@ struct shader_program {
 	// tessellation control, evaluation, geometry
 };
 
-enum texture_wrap {
-	wrap_repeat,
-	wrap_mirror,
-	wrap_clamp,
-	wrap_clamp_border,
+enum class texture_wrap {
+	repeat,
+	mirror,
+	clamp,
+	clamp_border,
 };
 
 struct texture {
 	texture_id id 		= 0;
 	GLuint handle 		= 0;
-	texture_wrap wrap 	= wrap_repeat;
+	texture_wrap wrap 	= texture_wrap::repeat;
 	bool pixelated 		= false;;
 };
 
@@ -181,10 +181,10 @@ shader_program* ogl_select_program(ogl_manager* ogl, shader_program_id id);
 void ogl_try_reload_programs(ogl_manager* ogl);
 void ogl_set_uniforms(shader_program* prog, render_command* rc, render_command_list* rcl);
 
-texture_id ogl_add_texture(ogl_manager* ogl, asset_store* as, string name, texture_wrap wrap = wrap_repeat, bool pixelated = false);
+texture_id ogl_add_texture(ogl_manager* ogl, asset_store* as, string name, texture_wrap wrap = texture_wrap::repeat, bool pixelated = false);
 texture* ogl_select_texture(ogl_manager* ogl, texture_id id);
-texture_id ogl_add_texture_from_font(ogl_manager* ogl, asset_store* as, string name, texture_wrap wrap = wrap_repeat, bool pixelated = false);
-texture_id ogl_add_texture_from_font(ogl_manager* ogl, asset* font, texture_wrap wrap = wrap_repeat, bool pixelated = false);
+texture_id ogl_add_texture_from_font(ogl_manager* ogl, asset_store* as, string name, texture_wrap wrap = texture_wrap::repeat, bool pixelated = false);
+texture_id ogl_add_texture_from_font(ogl_manager* ogl, asset* font, texture_wrap wrap = texture_wrap::repeat, bool pixelated = false);
 void ogl_destroy_texture(ogl_manager* ogl, texture_id id);
 
 context_id ogl_add_draw_context(ogl_manager* ogl, void (*set_atribs)(ogl_draw_context* dc));

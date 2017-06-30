@@ -125,7 +125,7 @@ void logger_msgf(log_manager* log, string fmt, log_level level, code_context con
 		global_state->api->platform_release_mutex(&log->queue_mutex);
 		global_state->api->platform_signal_semaphore(&log->logging_semaphore, 1);
 
-		if(level == log_error) {
+		if(level == log_level::error) {
 			if(global_state->api->platform_is_debugging()) {
 				__debugbreak();	
 			}
@@ -133,7 +133,7 @@ void logger_msgf(log_manager* log, string fmt, log_level level, code_context con
 			global_state->api->platform_join_thread(&log->logging_thread, -1);
 #endif
 		}
-		if(level == log_fatal) {
+		if(level == log_level::fatal) {
 			if(global_state->api->platform_is_debugging()) {
 				__debugbreak();	
 			}
@@ -163,7 +163,7 @@ void logger_msg(log_manager* log, string msg, log_level level, code_context cont
 		global_state->api->platform_release_mutex(&log->queue_mutex);
 		global_state->api->platform_signal_semaphore(&log->logging_semaphore, 1);
 
-		if(level == log_error) {
+		if(level == log_level::error) {
 			if(global_state->api->platform_is_debugging()) {
 				__debugbreak();	
 			}
@@ -171,7 +171,7 @@ void logger_msg(log_manager* log, string msg, log_level level, code_context cont
 			global_state->api->platform_join_thread(&log->logging_thread, -1);
 #endif
 		}
-		if(level == log_fatal) {
+		if(level == log_level::fatal) {
 			if(global_state->api->platform_is_debugging()) {
 				__debugbreak();	
 			}
@@ -210,25 +210,25 @@ string log_fmt_msg_level(log_message* msg) { FUNC
 
 	string level;
 	switch(msg->level) {
-	case log_debug:
+	case log_level::debug:
 		level = string_literal("DEBUG");
 		break;
-	case log_info:
+	case log_level::info:
 		level = string_literal("INFO");
 		break;
-	case log_warn:
+	case log_level::warn:
 		level = string_literal("WARN");
 		break;
-	case log_error:
+	case log_level::error:
 		level = string_literal("ERROR");
 		break;
-	case log_fatal:
+	case log_level::fatal:
 		level = string_literal("FATAL");
 		break;
-	case log_ogl:
+	case log_level::ogl:
 		level = string_literal("OGL");
 		break;
-	case log_alloc:
+	case log_level::alloc:
 		level = string_literal("ALLOC");
 		break;
 	}
@@ -305,7 +305,7 @@ i32 logging_thread(void* data_) { FUNC_NOCS
 				} POP_ALLOC();
 				RESET_ARENA(data->scratch);
 
-				if(msg.level == log_fatal) {
+				if(msg.level == log_level::fatal) {
 					// die
 					exit(1);
 				}

@@ -18,11 +18,13 @@ extern "C" game_state* start_up(platform_api* api) { FUNC
 	state->log_a.suppress_messages = true;
 	state->log = make_logger(&state->log_a);
 
+	make_type_table(&state->default_platform_allocator);
+
 	platform_file stdout_file, log_all_file;
 	api->platform_get_stdout_as_file(&stdout_file);
-	api->platform_create_file(&log_all_file, string_literal("log_all.txt"), open_file_create);
-	logger_add_file(&state->log, log_all_file, log_alloc);
-	logger_add_file(&state->log, stdout_file, log_info);
+	api->platform_create_file(&log_all_file, string_literal("log_all.txt"), platform_file_open_op::create);
+	logger_add_file(&state->log, log_all_file, log_level::alloc);
+	logger_add_file(&state->log, stdout_file, log_level::info);
 
 	LOG_DEBUG("Beginning startup...");
 	LOG_PUSH_CONTEXT_L("");
@@ -79,6 +81,10 @@ extern "C" game_state* start_up(platform_api* api) { FUNC
 
 	LOG_INFO("Done with startup!");
 	LOG_POP_CONTEXT();
+
+	// testing
+	_type_info* info = get_type_info<f32>();
+	LOG_INFO_F("size: %u", info->size);
 
 	state->running = true;
 	return state;
@@ -146,10 +152,11 @@ extern "C" void shut_down(platform_api* api, game_state* state) { FUNC
 
 	LOG_DEBUG("Done with shutdown!");
 
+	destroy_type_table();
 	logger_stop(&state->log);
 	destroy_logger(&state->log);
 	destroy_dbg_manager(&state->dbg);
-
+	
 	end_thread();
 
 	api->platform_heap_free(state);
@@ -165,6 +172,7 @@ extern "C" void on_reload(game_state* state) { FUNC
 	begin_thread(string_literal("main"), &state->suppressed_platform_allocator);
 	logger_start(&state->log);
 	threadpool_start_all(&state->thread_pool);
+	make_type_table(&state->default_platform_allocator);
 
 	LOG_INFO("End reloading game code");
 }
@@ -173,6 +181,7 @@ extern "C" void on_unload(game_state* state) { FUNC
 	
 	LOG_INFO("Begin reloading game code");
 
+	destroy_type_table();
 	threadpool_stop_all(&state->thread_pool);
 	logger_stop(&state->log);
 

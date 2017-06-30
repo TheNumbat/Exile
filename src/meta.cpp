@@ -118,10 +118,10 @@ i32 main(i32 argc, char** argv) {
         return 1;
     }
 
-    fout.open("w:/src/meta_out.h");
+    fout.open("w:/src/meta_types.h");
 
     if(!fout.good()) {
-    	printf("failed to create file meta_out.h\n");
+    	printf("failed to create file meta_types.h\n");
     	return 1;
     }
 
@@ -156,80 +156,4 @@ However, we can't exactly do this outside of the compiler, so this will have to 
 	struct introspection (i.e. can't combinatorially generate all pointer type information).
 I think we can do most of it; just start with basic_types.h info, then struct/enum/union
 	introspection and build the table up from there.
-
-enum _type_types : u8 {
-	Type_unkown,
-
-	Type_int,
-	Type_float,
-	Type_bool,
-	Type_ptr,
-	Type_array,
-	Type_func,		// function pointer
-	Type_struct,
-	Type_enum,
-
-	// do we want these?
-	Type_string,
-	Type_vec,
-	Type_map,
-};
-
-struct Type_int_info {
-
-};
-struct Type_float_info {
-
-};
-struct Type_bool_info {
-	
-};
-struct Type_ptr_info {
-
-};
-struct Type_array_info {
-
-};
-struct Type_func_info {
-
-};
-struct Type_struct_info {
-
-};
-struct Type_union_info {
-
-};
-struct Type_enum_info {
-
-};
-struct Type_string_info {
-
-};
-
-struct _type_info {
-	_type_types type_type 	= Type_unkown;
-	union {
-		Type_int_info 		_int;
-		Type_float_info 	_float;
-		Type_bool_info 		_bool;
-		Type_ptr_info 		_ptr;
-		Type_array_info 	_array;
-		Type_func_info 		_func;
-		Type_struct_info	_struct;
-		Type_union_info 	_union;
-		Type_string_info 	_string;
-		Type_enum_info		_enum;
-	};
-};
-
-const map<u32,_type_info> type_table = make_map<;
-const int NUM_TYPES = <num_structs> + 10;
-
-// we can ignore typedefs; they are simply aliases and typeid() will be the same
-_type_info g_type_info[NUM_TYPES] = {
-	{
-		
-	}	
-};
-
 */

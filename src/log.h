@@ -5,14 +5,14 @@
 // a copy of the message, the thread context stack, and the thread name. 
 // the arena is freed after the message is output.
 
-enum log_level : u8 {
-	log_alloc = 0,	// super gratuitous allocation info
-	log_ogl,		// gratuitous opengl info
-	log_debug,		// gratuitous info
-	log_info,		// relevant info
-	log_warn,		// shouldn't happen, debug later
-	log_error,		// shouldn't happen, debug now
-	log_fatal,		// basically assert(false), hangs the thread and will exit the program after output
+enum class log_level : u8 {
+	alloc = 0,	// super gratuitous allocation info
+	ogl,		// gratuitous opengl info
+	debug,		// gratuitous info
+	info,		// relevant info
+	warn,		// shouldn't happen, debug later
+	error,		// shouldn't happen, debug now
+	fatal,		// basically assert(false), hangs the thread and will exit the program after output
 };
 
 struct log_message {
@@ -85,15 +85,15 @@ string log_fmt_msg_file_line(log_message* msg);
 // will not allocate, returns literal (don't free it)
 string log_fmt_msg_level(log_message* msg);
 
-#define LOG_INFO(msg) 	logger_msg(&global_state->log, string_literal(msg), log_info,  CONTEXT); 
-#define LOG_WARN(msg) 	logger_msg(&global_state->log, string_literal(msg), log_warn,  CONTEXT); 
-#define LOG_ERR(msg) 	logger_msg(&global_state->log, string_literal(msg), log_error, CONTEXT); 
-#define LOG_FATAL(msg) 	logger_msg(&global_state->log, string_literal(msg), log_fatal, CONTEXT); 
+#define LOG_INFO(msg) 	logger_msg(&global_state->log, string_literal(msg), log_level::info,  CONTEXT); 
+#define LOG_WARN(msg) 	logger_msg(&global_state->log, string_literal(msg), log_level::warn,  CONTEXT); 
+#define LOG_ERR(msg) 	logger_msg(&global_state->log, string_literal(msg), log_level::error, CONTEXT); 
+#define LOG_FATAL(msg) 	logger_msg(&global_state->log, string_literal(msg), log_level::fatal, CONTEXT); 
 
-#define LOG_INFO_F(fmt, ...) 	logger_msgf(&global_state->log, string_literal(fmt), log_info,  CONTEXT, __VA_ARGS__); 
-#define LOG_WARN_F(fmt, ...) 	logger_msgf(&global_state->log, string_literal(fmt), log_warn,  CONTEXT, __VA_ARGS__); 
-#define LOG_ERR_F(fmt, ...) 	logger_msgf(&global_state->log, string_literal(fmt), log_error, CONTEXT, __VA_ARGS__); 
-#define LOG_FATAL_F(fmt, ...) 	logger_msgf(&global_state->log, string_literal(fmt), log_fatal, CONTEXT, __VA_ARGS__); 
+#define LOG_INFO_F(fmt, ...) 	logger_msgf(&global_state->log, string_literal(fmt), log_level::info,  CONTEXT, __VA_ARGS__); 
+#define LOG_WARN_F(fmt, ...) 	logger_msgf(&global_state->log, string_literal(fmt), log_level::warn,  CONTEXT, __VA_ARGS__); 
+#define LOG_ERR_F(fmt, ...) 	logger_msgf(&global_state->log, string_literal(fmt), log_level::error, CONTEXT, __VA_ARGS__); 
+#define LOG_FATAL_F(fmt, ...) 	logger_msgf(&global_state->log, string_literal(fmt), log_level::fatal, CONTEXT, __VA_ARGS__); 
 
 #define LOG_ASSERT(cond) __pragma(warning(push)) \
 						 __pragma(warning(disable:4127)) \
@@ -101,9 +101,9 @@ string log_fmt_msg_level(log_message* msg);
 						 __pragma(warning(pop))
 
 #ifdef _DEBUG
-	#define LOG_DEBUG(msg) 			logger_msg(&global_state->log, string_literal(msg), log_debug, CONTEXT); 
-	#define LOG_DEBUG_F(fmt, ...) 	logger_msgf(&global_state->log, string_literal(fmt), log_debug, CONTEXT, __VA_ARGS__) 
-	#define LOG_OGL_F(fmt, ...)		logger_msgf(&global_state->log, string_literal(fmt), log_ogl,   CONTEXT, __VA_ARGS__); 
+	#define LOG_DEBUG(msg) 			logger_msg(&global_state->log, string_literal(msg),  log_level::debug, CONTEXT); 
+	#define LOG_DEBUG_F(fmt, ...) 	logger_msgf(&global_state->log, string_literal(fmt), log_level::debug, CONTEXT, __VA_ARGS__) 
+	#define LOG_OGL_F(fmt, ...)		logger_msgf(&global_state->log, string_literal(fmt), log_level::ogl,   CONTEXT, __VA_ARGS__); 
 	#define LOG_DEBUG_ASSERT(cond) 	__pragma(warning(push)) \
 							 	   	__pragma(warning(disable:4127)) \
 							 	   	{if(!(cond)) LOG_FATAL_F("Debug assertion %s failed!", #cond);} \

@@ -8,16 +8,16 @@ struct guiid {
 	string name;
 };
 
-enum _gui_window_flags : gui_window_flags {
-	win_noresize 	= 1<<0,
-	win_nomove		= 1<<1,
-	win_nohide		= 1<<2,
-	win_noscroll	= 1<<3,
-	win_noinput 	= win_noresize | win_nomove | win_nohide | win_noscroll,
-	win_nowininput	= win_noresize | win_nomove | win_nohide,
-	win_nohead		= 1<<4 | win_nohide | win_nomove,
-	win_noback		= 1<<5 | win_noresize,
-	win_ignorescale = 1<<6,
+enum class window_flags : gui_window_flags {
+	noresize 	= 1<<0,
+	nomove		= 1<<1,
+	nohide		= 1<<2,
+	noscroll	= 1<<3,
+	noinput 	= noresize | nomove | nohide | noscroll,
+	nowininput	= noresize | nomove | nohide,
+	nohead		= 1<<4 | nohide | nomove,
+	noback		= 1<<5 | noresize,
+	ignorescale = 1<<6,
 };
 
 struct gui_opengl {
@@ -60,10 +60,10 @@ union gui_state_data {
 	void* data = NULL;
 };
 
-enum gui_offset_mode {
-	gui_offset_xy,
-	gui_offset_x,
-	gui_offset_y,
+enum class gui_offset_mode {
+	xy,
+	x,
+	y,
 };
 
 struct gui_font {
@@ -86,7 +86,7 @@ struct gui_window_state {
 	bool active = true;
 	bool resizing = false;
 
-	gui_offset_mode offset_mode = gui_offset_y;
+	gui_offset_mode offset_mode = gui_offset_mode::y;
 	vector<v2> offset_stack;
 	stack<u32> id_hash_stack;
 
@@ -125,17 +125,17 @@ struct _gui_style {
 };
 static _gui_style gui_style;
 
-enum gui_active_state {
-	gui_active,
-	gui_none,
-	gui_invalid,
-	gui_captured,
+enum class gui_active_state {
+	active,
+	none,
+	invalid,
+	captured,
 };
 
 struct gui_manager {
 
 	guiid active_id;
-	gui_active_state active = gui_none;
+	gui_active_state active = gui_active_state::none;
 
 	gui_input_state input;
 	gui_opengl 		ogl;
@@ -171,7 +171,7 @@ gui_font* gui_select_best_font_scale();
 
 void gui_push_offset(v2 offset);
 void gui_pop_offset();
-void gui_set_offset_mode(gui_offset_mode mode = gui_offset_y);
+void gui_set_offset_mode(gui_offset_mode mode = gui_offset_mode::y);
 
 bool gui_occluded();
 bool gui_begin(string name, r2 first_size = R2f(40,40,0,0), f32 first_alpha = 0, gui_window_flags flags = 0, bool mono = false);

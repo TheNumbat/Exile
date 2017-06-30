@@ -4,7 +4,6 @@
 #include "basic_types.h"
 #include "str/strings.h"
 #include "platform_api.h"
-#include "meta_out.h"
 
 #include "math.h"
 #include "ds/vector.h"
@@ -12,6 +11,9 @@
 #include "ds/array.h"
 #include "ds/queue.h"
 #include "ds/map.h"
+
+#include "type_table.h"
+#include "meta_types.h"
 
 #ifdef _DEBUG
 #define BOUNDS_CHECK

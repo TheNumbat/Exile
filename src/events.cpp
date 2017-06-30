@@ -29,65 +29,65 @@ gui_input_state run_events(game_state* state) { FUNC
 		platform_event evt = queue_pop(&state->evt.event_queue);
 
 		// Exiting
-		if(evt.type == event_window && evt.window.op == window_close) {
+		if(evt.type == platform_event_type::window && evt.window.op == platform_windowop::close) {
 			state->running = false;
 		}
-		if(evt.type == event_key && evt.key.code == key_escape) {
+		if(evt.type == platform_event_type::key && evt.key.code == platform_keycode::escape) {
 			state->running = false;
 		}
 
 		// Window Resize
-		if(evt.type == event_window && evt.window.op == window_resized) {
+		if(evt.type == platform_event_type::window && evt.window.op == platform_windowop::resized) {
 			global_state->window_w = evt.window.x;
 			global_state->window_h = evt.window.y;
 		}
-		else if(evt.type == event_window && evt.window.op == window_maximized) {
+		else if(evt.type == platform_event_type::window && evt.window.op == platform_windowop::maximized) {
 			global_state->window_w = evt.window.x;
 			global_state->window_h = evt.window.y;
 		}
 
 		// Debug stuff
-		if(evt.type == event_key && evt.key.flags & key_flag_release && evt.key.code == key_plus) {
+		if(evt.type == platform_event_type::key && evt.key.flags & (u16)platform_keyflag::release && evt.key.code == platform_keycode::plus) {
 			gui_style.gscale *= 1.5f;
 		}
-		if(evt.type == event_key && evt.key.flags & key_flag_release && evt.key.code == key_minus) {
+		if(evt.type == platform_event_type::key && evt.key.flags & (u16)platform_keyflag::release && evt.key.code == platform_keycode::minus) {
 			gui_style.gscale /= 1.5f;
 		}
 
 		// GUI: mouse
-		if(evt.type == event_mouse) {
+		if(evt.type == platform_event_type::mouse) {
 		
-			if(evt.mouse.flags & mouse_flag_move) {
+			if(evt.mouse.flags & (u16)platform_mouseflag::move) {
 				ret.mousepos.x = evt.mouse.x;
 				ret.mousepos.y = evt.mouse.y;
 			}
 
-			if(evt.mouse.flags & mouse_flag_wheel) {
+			if(evt.mouse.flags & (u16)platform_mouseflag::wheel) {
 				ret.scroll = evt.mouse.w;
 			}
 			
-			if(evt.mouse.flags & mouse_flag_lclick) {
+			if(evt.mouse.flags & (u16)platform_mouseflag::lclick) {
 				ret.lclick = true;
-				if(evt.mouse.flags & mouse_flag_release) {
+				if(evt.mouse.flags & (u16)platform_mouseflag::release) {
 					ret.lclick = false;
 					ret.ldbl = false;
 				}
-				if(evt.mouse.flags & mouse_flag_double) {
+				if(evt.mouse.flags & (u16)platform_mouseflag::dbl) {
 					ret.lclick = false;
 					ret.ldbl = true;
 				}
 			}
 
-			if(evt.mouse.flags & mouse_flag_rclick) {
+			if(evt.mouse.flags & (u16)platform_mouseflag::rclick) {
 				ret.rclick = true;
-				if(evt.mouse.flags & mouse_flag_release) {
+				if(evt.mouse.flags & (u16)platform_mouseflag::release) {
 					ret.rclick = false;
 				}
 			}
 
-			if(evt.mouse.flags & mouse_flag_mclick) {
+			if(evt.mouse.flags & (u16)platform_mouseflag::mclick) {
 				ret.mclick = true;
-				if(evt.mouse.flags & mouse_flag_release) {
+				if(evt.mouse.flags & (u16)platform_mouseflag::release) {
 					ret.mclick = false;
 				}
 			}

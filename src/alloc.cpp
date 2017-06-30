@@ -20,7 +20,7 @@ inline void* platform_allocate(u64 bytes, void* this_data, code_context context)
 
 #ifdef _DEBUG
 	if(!this_->suppress_messages) {
-		logger_msgf(&global_state->log, string_literal("allocating %u bytes to %p with platform alloc \"%s\""), log_alloc, context, bytes, mem, this_->name.c_str);
+		logger_msgf(&global_state->log, string_literal("allocating %u bytes to %p with platform alloc \"%s\""), log_level::alloc, context, bytes, mem, this_->name.c_str);
 	}
 #endif
 
@@ -33,7 +33,7 @@ inline void platform_free(void* mem, void* this_data, code_context context) { FU
 
 #ifdef _DEBUG
 	if(!this_->suppress_messages) {
-		logger_msgf(&global_state->log, string_literal("freeing %p with platform alloc \"%s\""), log_alloc, context, mem, this_->name.c_str);
+		logger_msgf(&global_state->log, string_literal("freeing %p with platform alloc \"%s\""), log_level::alloc, context, mem, this_->name.c_str);
 	}
 #endif
 
@@ -72,7 +72,7 @@ inline void* arena_allocate(u64 bytes, void* this_data, code_context context) { 
 
 #ifdef _DEBUG
 	if(!this_->suppress_messages) {
-		logger_msgf(&global_state->log, string_literal("allocating %u bytes (used:%u/%u) to %p with arena alloc \"%s\""), log_alloc, context, bytes, this_->used, this_->size, mem, this_->name.c_str);
+		logger_msgf(&global_state->log, string_literal("allocating %u bytes (used:%u/%u) to %p with arena alloc \"%s\""), log_level::alloc, context, bytes, this_->used, this_->size, mem, this_->name.c_str);
 	}
 #endif
 
@@ -85,7 +85,7 @@ inline void arena_reset(arena_allocator* a, code_context context) { FUNC
 
 #ifdef _DEBUG
 	if(!a->suppress_messages) {
-		logger_msgf(&global_state->log, string_literal("reseting arena \"%s\""), log_alloc, context, a->name.c_str);
+		logger_msgf(&global_state->log, string_literal("reseting arena \"%s\""), log_level::alloc, context, a->name.c_str);
 	}
 #endif
 
@@ -100,7 +100,7 @@ inline void arena_destroy(arena_allocator* a, code_context context) { FUNC
 
 #ifdef _DEBUG
 	if(!a->suppress_messages) {
-		logger_msgf(&global_state->log, string_literal("destroying arena \"%s\""), log_alloc, context, a->name.c_str);
+		logger_msgf(&global_state->log, string_literal("destroying arena \"%s\""), log_level::alloc, context, a->name.c_str);
 	}
 #endif
 
@@ -124,7 +124,7 @@ inline arena_allocator make_arena_allocator_from_context(string name, u64 size, 
 
 #ifdef _DEBUG
 	if(!ret.suppress_messages) {
-		logger_msgf(&global_state->log, string_literal("creating arena \"%s\" size %u"), log_alloc, context, name.c_str, size);
+		logger_msgf(&global_state->log, string_literal("creating arena \"%s\" size %u"), log_level::alloc, context, name.c_str, size);
 	}
 #endif
 	
@@ -154,7 +154,7 @@ inline arena_allocator make_arena_allocator(string name, u64 size, allocator* ba
 
 #ifdef _DEBUG
 	if(!ret.suppress_messages) {
-		logger_msgf(&global_state->log, string_literal("creating arena \"%s\" size %u"), log_alloc, context, name.c_str, size);
+		logger_msgf(&global_state->log, string_literal("creating arena \"%s\" size %u"), log_level::alloc, context, name.c_str, size);
 	}
 #endif
 

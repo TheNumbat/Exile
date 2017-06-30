@@ -100,18 +100,18 @@ void gui_begin_frame(gui_manager* gui, gui_input_state input) { FUNC
 void gui_end_frame(ogl_manager* ogl) { FUNC
 
 	if(!ggui->input.lclick && !ggui->input.rclick && !ggui->input.mclick && !ggui->input.ldbl) {
-		if(ggui->active != gui_captured) {
+		if(ggui->active != gui_active_state::captured) {
 			ggui->active_id = {};
-			ggui->active = gui_none;
+			ggui->active = gui_active_state::none;
 		}
-	} else if(ggui->active == gui_none) {
-		ggui->active = gui_invalid;
+	} else if(ggui->active == gui_active_state::none) {
+		ggui->active = gui_active_state::invalid;
 	}
 
 	render_command_list rcl = make_command_list();
 	FORMAP(ggui->window_state_data,
 
-		render_command cmd = make_render_command(render_mesh_2d, &it->value.mesh, it->value.z);
+		render_command cmd = make_render_command(render_command_type::mesh_2d, &it->value.mesh, it->value.z);
 		cmd.shader  = ggui->ogl.shader;
 		cmd.texture = it->value.font->texture;
 		cmd.context = ggui->ogl.context;
@@ -135,13 +135,13 @@ void gui_end_frame(ogl_manager* ogl) { FUNC
 
 void gui_push_offset(v2 offset) { FUNC
 	switch(ggui->current->offset_mode) {
-	case gui_offset_xy:
+	case gui_offset_mode::xy:
 		vector_push(&ggui->current->offset_stack, V2(gui_style.win_margin.x + offset.x, offset.y));
 		break;
-	case gui_offset_x:
+	case gui_offset_mode::x:
 		vector_push(&ggui->current->offset_stack, V2(gui_style.win_margin.x + offset.x, 0.0f));
 		break;
-	case gui_offset_y:
+	case gui_offset_mode::y:
 		vector_push(&ggui->current->offset_stack, V2(gui_style.win_margin.x, offset.y));
 		break;
 	}
@@ -210,7 +210,7 @@ bool gui_begin(string name, r2 first_size, f32 first_alpha, gui_window_flags fla
 	ggui->current = window;
 
 	f32 gscale = 1.0f;
-	if((window->flags & win_ignorescale) != win_ignorescale) {
+	if((window->flags & (u16)window_flags::ignorescale) != (u16)window_flags::ignorescale) {
 		gscale = gui_style.gscale;
 	}
 
@@ -239,14 +239,14 @@ bool gui_begin(string name, r2 first_size, f32 first_alpha, gui_window_flags fla
 
 	real_rect = mult(window->rect, gscale);
 
-	if((window->flags & win_nohead) != win_nohead) {
+	if((window->flags & (u16)window_flags::nohead) != (u16)window_flags::nohead) {
 		push_windowhead(window);
 
 		v2 title_pos = add(window->rect.xy, V2(15.0f, 0.0f));
 		push_text(window, title_pos, name, gui_style.font, V4b(gui_style.win_title, 255));
 	}
 
-	if((window->flags & win_noback) != win_noback && window->active) {
+	if((window->flags & (u16)window_flags::noback) != (u16)window_flags::noback && window->active) {
 		push_windowbody(window);
 	}
 
@@ -256,57 +256,57 @@ bool gui_begin(string name, r2 first_size, f32 first_alpha, gui_window_flags fla
 	r2 bod_rect = R2(real_rect.x, real_rect.y + gui_style.font + gui_style.title_padding, real_rect.w, real_rect.h - gui_style.font + gui_style.title_padding);
 
 	bool occluded = gui_occluded();
-	if((window->flags & win_nohide) != win_nohide) {
+	if((window->flags & (u16)window_flags::nohide) != (u16)window_flags::nohide) {
 
 		v2 carrot_pos = V2(real_rect.w - carrot_x_diff, ((gui_style.font + gui_style.title_padding) * gscale / 2.0f) - (gscale * gui_style.default_carrot_size.y / 2.0f));
 		gui_carrot_toggle(string_literal("#CLOSE"), window->active, carrot_pos, &window->active);
 
 		if(!occluded && inside(top_rect, ggui->input.mousepos)) {
 
-			if(ggui->active == gui_none && ggui->input.ldbl) {
+			if(ggui->active == gui_active_state::none && ggui->input.ldbl) {
 				
 				window->active = !window->active;
 				window->z = ggui->last_z++;
 				ggui->active_id = id;
-				ggui->active = gui_active;
+				ggui->active = gui_active_state::active;
 				window->resizing = false;
 			}
 		}
 	}
-	if((window->flags & win_nomove) != win_nomove) {
+	if((window->flags & (u16)window_flags::nomove) != (u16)window_flags::nomove) {
 
 		if(!occluded && inside(top_rect, ggui->input.mousepos)) {
 
-			if(ggui->active == gui_none && ggui->input.lclick) {
+			if(ggui->active == gui_active_state::none && ggui->input.lclick) {
 
 				window->z = ggui->last_z++;
 				ggui->active_id = id;
-				ggui->active = gui_active;
+				ggui->active = gui_active_state::active;
 				window->move_click_offset = sub(ggui->input.mousepos, real_rect.xy);
 				window->resizing = false;
 			}
 		}
 	}
-	if((window->flags & win_noresize) != win_noresize) {
+	if((window->flags & (u16)window_flags::noresize) != (u16)window_flags::noresize) {
 
 		v2 resize_tab = clamp(mult(real_rect.wh, gui_style.resize_tab), 5.0f, 25.0f);
 
 		r2 resize_rect = R2(sub(add(real_rect.xy, real_rect.wh), resize_tab), resize_tab);
 		if(!occluded && inside(resize_rect, ggui->input.mousepos)) {
 
-			if(ggui->active == gui_none && ggui->input.lclick) {
+			if(ggui->active == gui_active_state::none && ggui->input.lclick) {
 
 				window->z = ggui->last_z++;
 				ggui->active_id = id;
-				ggui->active = gui_active;
+				ggui->active = gui_active_state::active;
 				window->resizing = true;
 			}
 		}
 	}
-	if((window->flags & win_noback) != win_noback && window->active) {
+	if((window->flags & (u16)window_flags::noback) != (u16)window_flags::noback && window->active) {
 		
 		if(!occluded && inside(bod_rect, ggui->input.mousepos)) {
-			if(ggui->active == gui_none && ggui->input.lclick) {
+			if(ggui->active == gui_active_state::none && ggui->input.lclick) {
 				window->z = ggui->last_z++;
 			}
 		}
@@ -320,7 +320,7 @@ bool gui_begin(string name, r2 first_size, f32 first_alpha, gui_window_flags fla
 void gui_log_wnd(string name, vector<log_message>* cache) { FUNC
 
 	f32 height = gui_style.log_win_lines * gui_style.font + 2 * gui_style.font + gui_style.title_padding + gui_style.win_margin.x + gui_style.win_margin.w + 7.0f;
-	gui_begin(name, R2(0.0f, global_state->window_h - height, (f32)global_state->window_w, height), 0.5f, win_nowininput | win_nohead | win_ignorescale, true);
+	gui_begin(name, R2(0.0f, global_state->window_h - height, (f32)global_state->window_w, height), 0.5f, (u16)window_flags::nowininput | (u16)window_flags::nohead | (u16)window_flags::ignorescale, true);
 	gui_pop_offset();
 
 	gui_window_state* current = ggui->current;
@@ -408,7 +408,7 @@ void gui_box_select(i32* selected, i32 num, v2 pos, ...) { FUNC
 	gui_window_state* current = ggui->current;
 
 	f32 gscale = 1.0f;
-	if((current->flags & win_ignorescale) != win_ignorescale) {
+	if((current->flags & (u16)window_flags::ignorescale) != (u16)window_flags::ignorescale) {
 		gscale = gui_style.gscale;
 	}
 
@@ -467,11 +467,11 @@ bool gui_carrot_toggle(string name, bool initial, v2 pos, bool* toggleme) { FUNC
 	size = mult(size, gui_style.gscale);
 	if(!gui_occluded() && inside(R2(pos, size), ggui->input.mousepos)) {
 
-		if(ggui->active == gui_none && (ggui->input.lclick || ggui->input.ldbl)) {
+		if(ggui->active == gui_active_state::none && (ggui->input.lclick || ggui->input.ldbl)) {
 
 			data->b = !data->b;
 			ggui->active_id = id;
-			ggui->active = gui_active;
+			ggui->active = gui_active_state::active;
 
 			if(toggleme) {
 				*toggleme = !*toggleme;
@@ -487,7 +487,7 @@ bool gui_carrot_toggle(string name, bool initial, v2 pos, bool* toggleme) { FUNC
 void push_carrot(gui_window_state* win, v2 pos, bool active) { FUNC
 
 	f32 gscale = 1.0f;
-	if((win->flags & win_ignorescale) != win_ignorescale) {
+	if((win->flags & (u16)window_flags::ignorescale) != (u16)window_flags::ignorescale) {
 		gscale = gui_style.gscale;
 	}
 
@@ -515,7 +515,7 @@ void push_carrot(gui_window_state* win, v2 pos, bool active) { FUNC
 void push_text(gui_window_state* win, v2 pos, string text, f32 point, color c) { FUNC
 
 	f32 gscale = 1.0f;
-	if((win->flags & win_ignorescale) != win_ignorescale) {
+	if((win->flags & (u16)window_flags::ignorescale) != (u16)window_flags::ignorescale) {
 		gscale = gui_style.gscale;
 	}
 
@@ -525,7 +525,7 @@ void push_text(gui_window_state* win, v2 pos, string text, f32 point, color c) {
 void push_windowhead(gui_window_state* win) { FUNC
 	
 	f32 gscale = 1.0f;
-	if((win->flags & win_ignorescale) != win_ignorescale) {
+	if((win->flags & (u16)window_flags::ignorescale) != (u16)window_flags::ignorescale) {
 		gscale = gui_style.gscale;
 	}
 
@@ -551,7 +551,7 @@ void push_windowhead(gui_window_state* win) { FUNC
 void push_windowbody(gui_window_state* win) { FUNC
 
 	f32 gscale = 1.0f;
-	if((win->flags & win_ignorescale) != win_ignorescale) {
+	if((win->flags & (u16)window_flags::ignorescale) != (u16)window_flags::ignorescale) {
 		gscale = gui_style.gscale;
 	}
 
@@ -560,7 +560,7 @@ void push_windowbody(gui_window_state* win) { FUNC
 	f32 pt = gui_style.font + gui_style.title_padding;
 	pt *= gscale;
 
-	if((win->flags & win_noresize) == win_noresize) {
+	if((win->flags & (u16)window_flags::noresize) == (u16)window_flags::noresize) {
 
 		vector_push(&win->mesh.verticies, V2(r.x, r.y + pt));
 		vector_push(&win->mesh.verticies, V2(r.x, r.y + r.h));

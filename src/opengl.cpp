@@ -19,7 +19,7 @@ void load_source(shader_source* source) { FUNC
 	u32 itr = 0;
 	do {
 		itr++;
-		err = global_state->api->platform_create_file(&source_file, source->path, open_file_existing);
+		err = global_state->api->platform_create_file(&source_file, source->path, platform_file_open_op::existing);
 	} while (err.error == PLATFORM_SHARING_ERROR && itr < 100000);
 
 	if(!err.good) {
@@ -280,19 +280,19 @@ texture make_texture(texture_wrap wrap, bool pixelated) { FUNC
 	glBindTextureUnit(0, ret.handle);
 	
 	switch(wrap) {
-	case wrap_repeat:
+	case texture_wrap::repeat:
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 		break;
-	case wrap_mirror:
+	case texture_wrap::mirror:
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
 		break;
-	case wrap_clamp:
+	case texture_wrap::clamp:
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 		break;
-	case wrap_clamp_border:
+	case texture_wrap::clamp_border:
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 		f32 borderColor[] = { 0.0f, 0.0f, 0.0f, 1.0f };
@@ -315,7 +315,7 @@ texture make_texture(texture_wrap wrap, bool pixelated) { FUNC
 
 void texture_load_bitmap_from_font(texture* tex, asset* font) { FUNC
 
-	LOG_DEBUG_ASSERT(font->type == asset_font);
+	LOG_DEBUG_ASSERT(font->type == asset_type::font);
 
 	glBindTextureUnit(0, tex->handle);
 
@@ -331,7 +331,7 @@ void texture_load_bitmap_from_font(texture* tex, asset_store* as, string name) {
 
 	asset* a = get_asset(as, name);
 
-	LOG_DEBUG_ASSERT(a->type == asset_font);
+	LOG_DEBUG_ASSERT(a->type == asset_type::font);
 
 	glBindTextureUnit(0, tex->handle);
 
@@ -346,7 +346,7 @@ void texture_load_bitmap(texture* tex, asset_store* as, string name) { FUNC
 
 	asset* a = get_asset(as, name);
 
-	LOG_DEBUG_ASSERT(a->type == asset_bitmap);
+	LOG_DEBUG_ASSERT(a->type == asset_type::bitmap);
 
 	glBindTextureUnit(0, tex->handle);
 
@@ -485,7 +485,7 @@ void ogl_render_command_list(ogl_manager* ogl, render_command_list* rcl) { FUNC
 
 		glViewport(0, 0, global_state->window_w, global_state->window_h);
 
-		if(cmd->cmd == render_mesh_2d) {
+		if(cmd->cmd == render_command_type::mesh_2d) {
 
 			// TODO(max): we don't want to send every frame, do we?
 			ogl_send_mesh_2d(ogl, cmd->m2d, cmd->context);
@@ -494,7 +494,7 @@ void ogl_render_command_list(ogl_manager* ogl, render_command_list* rcl) { FUNC
 
 			glDrawElements(GL_TRIANGLES, cmd->elements * 3, GL_UNSIGNED_INT, 0);
 
-		} else if (cmd->cmd == render_mesh_3d) {
+		} else if (cmd->cmd == render_command_type::mesh_3d) {
 
 			ogl_send_mesh_3d(ogl, cmd->m3d, cmd->context);
 

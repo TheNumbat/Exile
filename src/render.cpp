@@ -167,7 +167,7 @@ render_command make_render_command(render_command_type type, void* data, u32 key
 	ret.data = data;
 	ret.sort_key = key;
 
-	if(type == render_mesh_2d) {
+	if(type == render_command_type::mesh_2d) {
 		mesh_2d* m = (mesh_2d*)data;
 		ret.elements = m->elements.size * 3;
 	}

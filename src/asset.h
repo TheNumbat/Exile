@@ -21,14 +21,14 @@
 // file_glyph_data[num_glyphs]
 // bitmap memory
 
-enum asset_type : u8 {
-	asset_none,
-	asset_bitmap,
-	asset_font,
-	// asset_mesh?
-	// asset_audio?
-	// asset_shader?
-	// asset_cfg?
+enum class asset_type : u8 {
+	none,
+	bitmap,
+	font,
+	// mesh?
+	// audio?
+	// shader?
+	// cfg?
 };
 
 #pragma pack(push, 1)
@@ -78,7 +78,7 @@ struct _asset_font {
 
 struct asset {
 	string name;
-	asset_type type = asset_none;
+	asset_type type = asset_type::none;
 	union {
 		_asset_bitmap 	bitmap;
 		_asset_font 	font;

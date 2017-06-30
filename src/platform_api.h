@@ -28,172 +28,172 @@ bool operator==(platform_file first, platform_file second);
 //			  Instead, we could do it the HMH way of representing all input since last poll as one structure.
 
 // TODO(max): more event types (e.g. controller, text?)
-enum platform_event_type : u8 {
-	event_none,
-	event_window, // includes quit
-	event_key,
-	event_mouse,
+enum class platform_event_type : u8 {
+	none,
+	window, // includes quit
+	key,
+	mouse,
 };
 
-enum platform_keycode : u8 {
-	key_none = 0,
-	key_0,
-	key_1,
-	key_2,
-	key_3,
-	key_4,
-	key_5,
-	key_6,
-	key_7,
-	key_8,
-	key_9,
-	key_a,
-	key_b,
-	key_c,
-	key_d,
-	key_e,
-	key_f,
-	key_g,
-	key_h,
-	key_i,
-	key_j,
-	key_k,
-	key_l,
-	key_m,
-	key_n,
-	key_o,
-	key_p,
-	key_q,
-	key_r,
-	key_s,
-	key_t,
-	key_u,
-	key_v,
-	key_w,
-	key_x,
-	key_y,
-	key_z,
-	key_tab,
-	key_grave,
-	key_comma,
-	key_slash,
-	key_space,
-	key_equals,
-	key_plus = key_equals,
-	key_enter,
-	key_period,
-	key_dash,
-	key_minus = key_dash,
-	key_rbracket,
-	key_lbracket,
-	key_semicolon,
-	key_backslash,
-	key_np_0,
-	key_np_1,
-	key_np_2,
-	key_np_3,
-	key_np_4,
-	key_np_5,
-	key_np_6,
-	key_np_7,
-	key_np_8,
-	key_np_9,
-	key_np_add,
-	key_np_period,
-	key_np_divide,
-	key_np_multiply,
-	key_np_subtract,
-	key_backspace,
-	key_capslock,
-	key_delete,
-	key_down,
-	key_up,
-	key_left,
-	key_right,
-	key_end,
-	key_escape,
-	key_f1,
-	key_f2,
-	key_f3,
-	key_f4,
-	key_f5,
-	key_f6,
-	key_f7,
-	key_f8,
-	key_f9,
-	key_f10,
-	key_f11,
-	key_f12,
-	key_home,
-	key_insert,
-	key_lalt,
-	key_ralt,
-	key_lctrl,
-	key_rctrl,
-	key_lshift,
-	key_rshift,
-	key_numlock,
-	key_pgup,
-	key_pgdown,
-	key_scrolllock,
+enum class platform_keycode : u8 {
+	none = 0,
+	_0,
+	_1,
+	_2,
+	_3,
+	_4,
+	_5,
+	_6,
+	_7,
+	_8,
+	_9,
+	a,
+	b,
+	c,
+	d,
+	e,
+	f,
+	g,
+	h,
+	i,
+	j,
+	k,
+	l,
+	m,
+	n,
+	o,
+	p,
+	q,
+	r,
+	s,
+	t,
+	u,
+	v,
+	w,
+	x,
+	y,
+	z,
+	tab,
+	grave,
+	comma,
+	slash,
+	space,
+	equals,
+	plus = equals,
+	enter,
+	period,
+	dash,
+	minus = dash,
+	rbracket,
+	lbracket,
+	semicolon,
+	backslash,
+	np_0,
+	np_1,
+	np_2,
+	np_3,
+	np_4,
+	np_5,
+	np_6,
+	np_7,
+	np_8,
+	np_9,
+	np_add,
+	np_period,
+	np_divide,
+	np_multiply,
+	np_subtract,
+	backspace,
+	capslock,
+	del,
+	down,
+	up,
+	left,
+	right,
+	end,
+	escape,
+	f1,
+	f2,
+	f3,
+	f4,
+	f5,
+	f6,
+	f7,
+	f8,
+	f9,
+	f10,
+	f11,
+	f12,
+	home,
+	insert,
+	lalt,
+	ralt,
+	lctrl,
+	rctrl,
+	lshift,
+	rshift,
+	numlock,
+	pgup,
+	pgdown,
+	scrolllock,
 };
 
-enum platform_keyflag : u16 {
-	key_flag_press = 1<<0,
-	key_flag_release = 1<<1,
-	key_flag_repeat = 1<<2,
+enum class platform_keyflag : u16 {
+	press       = 1<<0,
+	release     = 1<<1,
+	repeat      = 1<<2,
 
-	key_flag_lshift = 1<<3,
-	key_flag_rshift = 1<<4,
-	key_flag_shift = key_flag_rshift | key_flag_lshift,
-	key_flag_lctrl = 1<<5,
-	key_flag_rctrl = 1<<6,
-	key_flag_ctrl = key_flag_rctrl | key_flag_lctrl,
-	key_flag_lalt = 1<<7,
-	key_flag_ralt = 1<<8,
-	key_flag_alt = key_flag_ralt | key_flag_lalt,
+	lshift      = 1<<3,
+	rshift      = 1<<4,
+	shift       = rshift | lshift,
+	lctrl       = 1<<5,
+	rctrl       = 1<<6,
+	ctrl        = rctrl | lctrl,
+	lalt        = 1<<7,
+	ralt        = 1<<8,
+	alt         = ralt | lalt,
 
-	key_flag_numlock_on = 1<<9,
-	key_flag_capslock_on = 1<<10,
+	numlock_on  = 1<<9,
+	capslock_on = 1<<10,
 };
 
-enum platform_mouseflag : u16 {
-	mouse_flag_press = 1<<0,
-	mouse_flag_release = 1<<1,
-	mouse_flag_wheel = 1<<2,
-	mouse_flag_double = 1<<3,
-	mouse_flag_button = mouse_flag_press | mouse_flag_release | mouse_flag_double,
-	mouse_flag_lclick = 1<<4,
-	mouse_flag_rclick = 1<<5,
-	mouse_flag_mclick = 1<<6,
-	mouse_flag_x1click = 1<<7,
-	mouse_flag_x2click = 1<<8,
-	mouse_flag_click = mouse_flag_rclick | mouse_flag_lclick | mouse_flag_mclick | mouse_flag_x1click | mouse_flag_x2click,
-	mouse_flag_move = 1<<9,
+enum class platform_mouseflag : u16 {
+	press   = 1<<0,
+	release = 1<<1,
+	wheel   = 1<<2,
+	dbl     = 1<<3,
+	button  = press | release | dbl,
+	lclick  = 1<<4,
+	rclick  = 1<<5,
+	mclick  = 1<<6,
+	x1click = 1<<7,
+	x2click = 1<<8,
+	click   = rclick | lclick | mclick | x1click | x2click,
+	move    = 1<<9,
 };
 
 // TODO(max): cursors
-enum platform_windowop : u8 {
-	window_none,
-	window_resized,		// WM_SIZE
-	window_moved,		// WM_MOVE
-	window_shown,		// WM_SHOWWINDOW
-	window_hidden,		// WM_SHOWWINDOW
-	window_minimized,	// WM_SHOWWINDOW, WM_SIZE
-	window_maximized,	// WM_SIZE
-	window_restored,	// WM_SHOWWINDOW
-	window_focused,		// WM_ACTIVATEAPP
-	window_unfocused,	// WM_ACTIVATEAPP
-	window_close,		// WM_CLOSE, WM_DESTROY, WM_QUIT
+enum class platform_windowop : u8 {
+	none,
+	resized,	// WM_SIZE
+	moved,		// WM_MOVE
+	shown,		// WM_SHOWWINDOW
+	hidden,		// WM_SHOWWINDOW
+	minimized,	// WM_SHOWWINDOW, WM_SIZE
+	maximized,	// WM_SIZE
+	restored,	// WM_SHOWWINDOW
+	focused,	// WM_ACTIVATEAPP
+	unfocused,	// WM_ACTIVATEAPP
+	close,		// WM_CLOSE, WM_DESTROY, WM_QUIT
 };
 
 struct _platform_event_window {
-	platform_windowop op = window_none;
+	platform_windowop op = platform_windowop::none;
 	i16 x = 0, y = 0;
 };
 
 struct _platform_event_key {
-	platform_keycode code = key_none;
+	platform_keycode code = platform_keycode::none;
 	u16 flags = 0;
 };
 
@@ -204,7 +204,7 @@ struct _platform_event_mouse {
 };
 
 struct platform_event {
-	platform_event_type type = event_none;
+	platform_event_type type = platform_event_type::none;
 	union { 
 		// no data for platform_event_quit
 		_platform_event_window		window;
@@ -214,30 +214,30 @@ struct platform_event {
 	platform_event() : type(), window(), key(), mouse() {}; // c++ reee
 };
 
-enum platform_file_open_op {
-	open_file_existing,
-	open_file_existing_or_create,
-	open_file_create,
-	open_file_clear_existing,
+enum class platform_file_open_op {
+	existing,
+	existing_or_create,
+	create,
+	clear_existing,
 };
 
-enum _platform_semaphore_state {
-	semaphore_signaled,
-	semaphore_timed_out,
-	semaphore_failed,
+enum class _platform_semaphore_state {
+	signaled,
+	timed_out,
+	failed,
 };
 
-enum _platform_mutex_state {
-	mutex_abandoned,
-	mutex_aquired,
-	mutex_timed_out,
-	mutex_failed,
+enum class _platform_mutex_state {
+	abandoned,
+	aquired,
+	timed_out,
+	failed,
 };
 
-enum _platform_thread_join_state {
-	thread_joined,
-	thread_timed_out,
-	thread_failed,
+enum class _platform_thread_join_state {
+	joined,
+	timed_out,
+	failed,
 };
 
 struct platform_api {

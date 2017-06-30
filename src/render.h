@@ -5,10 +5,10 @@ typedef u32 shader_program_id;
 typedef u32 texture_id;
 typedef u32 context_id;
 
-enum render_command_type {
-	render_none,
-	render_mesh_2d,
-	render_mesh_3d,
+enum class render_command_type {
+	none,
+	mesh_2d,
+	mesh_3d,
 };
 
 struct mesh_2d {
@@ -27,7 +27,7 @@ struct mesh_3d {
 };
 
 struct render_command {
-	render_command_type cmd 	= render_none;
+	render_command_type cmd 	= render_command_type::none;
 	shader_program_id 	shader 	= 0;
 	texture_id 			texture = 0;
 	context_id 			context = 0;

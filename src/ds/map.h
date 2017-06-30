@@ -8,6 +8,7 @@ const f32 MAP_MAX_LOAD_FACTOR = 0.9f;
 
 // from Thomas Wang, http://burtleburtle.net/bob/hash/integer.html
 inline u32 hash_u32(u32 key);
+inline u32 hash_u64(u64 key);
 
 template<typename K, typename V>
 struct map_element {

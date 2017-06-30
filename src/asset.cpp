@@ -38,14 +38,14 @@ glyph_data get_glyph_data(asset_store* as, string font, u32 codepoint) { FUNC
 
 	asset* a = get_asset(as, font);
 
-	LOG_ASSERT(a->type == asset_font);
+	LOG_ASSERT(a->type == asset_type::font);
 
 	return get_glyph_data(a, codepoint);
 }
 
 glyph_data get_glyph_data(asset* font, u32 codepoint) { FUNC
 
-	LOG_DEBUG_ASSERT(font->type == asset_font);
+	LOG_DEBUG_ASSERT(font->type == asset_type::font);
 
 	u32 low = 0, high = font->font.glyphs.capacity;
 
@@ -108,7 +108,7 @@ void load_asset_store(asset_store* as, string path) { FUNC
 	platform_error err;
 	do {
 		itr++;
-		err = global_state->api->platform_create_file(&store, path, open_file_existing);
+		err = global_state->api->platform_create_file(&store, path, platform_file_open_op::existing);
 	} while(err.error == PLATFORM_SHARING_ERROR && itr < 100000);
 
 	if(!err.good) {
@@ -140,9 +140,9 @@ void load_asset_store(asset_store* as, string path) { FUNC
 			asset a;
 			a.name = string_from_c_str(current_asset->name);
 
-			if(current_asset->type == asset_bitmap) {
+			if(current_asset->type == asset_type::bitmap) {
 
-				a.type = asset_bitmap;
+				a.type = asset_type::bitmap;
 
 				file_asset_bitmap* bitmap = (file_asset_bitmap*)((u8*)current_asset + sizeof(file_asset_header));
 
@@ -154,9 +154,9 @@ void load_asset_store(asset_store* as, string path) { FUNC
 
 				current_asset = (file_asset_header*)((u8*)current_asset + current_asset->next);
 
-			} else if(current_asset->type == asset_font) {
+			} else if(current_asset->type == asset_type::font) {
 
-				a.type = asset_font;
+				a.type = asset_type::font;
 
 				file_asset_font* font = (file_asset_font*)((u8*)current_asset + sizeof(file_asset_header));
 
