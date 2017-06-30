@@ -167,10 +167,12 @@ enum _type_types : u8 {
 	Type_array,
 	Type_func,		// function pointer
 	Type_struct,
-	Type_union,
 	Type_enum,
 
-	Type_string, 	// my string
+	// do we want these?
+	Type_string,
+	Type_vec,
+	Type_map,
 };
 
 struct Type_int_info {
@@ -206,7 +208,6 @@ struct Type_string_info {
 
 struct _type_info {
 	_type_types type_type 	= Type_unkown;
-	u32 size 				= 0;
 	union {
 		Type_int_info 		_int;
 		Type_float_info 	_float;
@@ -221,11 +222,11 @@ struct _type_info {
 	};
 };
 
-const int NUM_STRUCTS = <num_structs>;
+const map<u32,_type_info> type_table = make_map<;
+const int NUM_TYPES = <num_structs> + 10;
 
 // we can ignore typedefs; they are simply aliases and typeid() will be the same
-_type_info g_type_info[NUM_STRUCTS] = {
-
+_type_info g_type_info[NUM_TYPES] = {
 	{
 		
 	}	
