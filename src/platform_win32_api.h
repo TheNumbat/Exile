@@ -17,7 +17,8 @@ struct platform_window {
 	HWND handle							= {};
 	HDC device_context					= {};
 	PIXELFORMATDESCRIPTOR pixel_format 	= {};
-	HGLRC gl_temp, gl_context		   	= {};
+	HGLRC gl_temp					   	= {};
+	HGLRC gl_context					= {};
 };
 
 struct platform_dll {

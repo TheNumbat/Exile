@@ -147,7 +147,7 @@ struct texture {
 	texture_id id 		= 0;
 	GLuint handle 		= 0;
 	texture_wrap wrap 	= texture_wrap::repeat;
-	bool pixelated 		= false;;
+	bool pixelated 		= false;
 };
 
 struct ogl_draw_context {
@@ -168,7 +168,9 @@ struct ogl_manager {
 	context_id 			next_context_id = 1;
 	
 	allocator* alloc = NULL;
-	string version, renderer, vendor;
+	string version;
+	string renderer;
+	string vendor;
 };
 
 void ogl_load_global_funcs();

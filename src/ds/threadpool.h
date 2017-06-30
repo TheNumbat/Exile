@@ -11,7 +11,7 @@ struct worker_data {
 	platform_mutex* queue_mutex 	   = NULL;
 	platform_semaphore* jobs_semaphore = NULL;
 	allocator* alloc 				   = NULL;
-	volatile bool running			   = false;
+	bool running			   	       = false;
 };
 
 struct threadpool {

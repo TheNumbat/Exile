@@ -39,19 +39,28 @@ struct gui_input_state {
 // whatever we want to store in 64 bits
 union gui_state_data {
 	struct {
-		u16 u16_1, u16_2, u16_3, u16_4;
+		u16 u16_1;
+		u16 u16_2;
+		u16 u16_3;
+		u16 u16_4;
 	};
 	struct {
-		i16 i16_1, i16_2, i16_3, i16_4;
+		i16 i16_1;
+		i16 i16_2;
+		i16 i16_3;
+		i16 i16_4;
 	};
 	struct {
-		u32 u32_1, u32_2;
+		u32 u32_1;
+		u32 u32_2;
 	};
 	struct {
-		i32 i32_1, i32_2;
+		i32 i32_1;
+		i32 i32_2;
 	};
 	struct {
-		f32 f32_1, f32_2;
+		f32 f32_1;
+		f32 f32_2;
 	};
 	u64 u64_1;
 	i64 i64_1;

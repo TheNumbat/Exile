@@ -27,10 +27,12 @@
 template<typename T>
 union v2_t {
 	struct {
-		T x, y;
+		T x;
+		T y;
 	};
 	struct {
-		T u, v;
+		T u;
+		T v;
 	};
 	T f[2] = {};
 	v2_t() {};
@@ -47,7 +49,10 @@ template v2_t<u8>;
 template<typename T>
 union r2_t {
 	struct {
-		T x, y, w, h;	
+		T x;
+		T y;
+		T w;
+		T h;	
 	};
 	struct {
 		v2_t<T> xy;
@@ -69,10 +74,14 @@ template r2_t<u8>;
 template<typename T>
 union v3_t {
 	struct {
-		T x, y, z;
+		T x;
+		T y;
+		T z;
 	};
 	struct {
-		T r, g, b;
+		T r;
+		T g;
+		T b;
 	};
 	struct {
 		v2_t<T> xy;
@@ -99,13 +108,22 @@ template v3_t<u8>;
 template<typename T>
 union v4_t {
 	struct {
-		T x, y, z, w;
+		T x;
+		T y;
+		T z;
+		T w;
 	};
 	struct {
-		T x1, y1, x2, y2;
+		T x1;
+		T y1;
+		T x2;
+		T y2;
 	};
 	struct {
-		T r, g, b, a;
+		T r;
+		T g;
+		T b;
+		T a;
 	};
 	struct {
 		v2_t<T> xy;
@@ -135,10 +153,22 @@ union m4_t {
 	T v[16] = {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1}; 
 	T f[4][4]; // column row
 	struct {
-		T _11, _21, _31, _41;
-		T _12, _22, _32, _42;
-		T _13, _23, _33, _43;
-		T _14, _24, _34, _44;
+		T _11;
+		T _21;
+		T _31;
+		T _41;
+		T _12;
+		T _22;
+		T _32;
+		T _42;
+		T _13;
+		T _23;
+		T _33;
+		T _43;
+		T _14;
+		T _24;
+		T _34;
+		T _44;
 	};
 };
 typedef m4_t<f32> m4;

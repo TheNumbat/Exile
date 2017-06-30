@@ -189,7 +189,8 @@ enum class platform_windowop : u8 {
 
 struct _platform_event_window {
 	platform_windowop op = platform_windowop::none;
-	i16 x = 0, y = 0;
+	i16 x = 0;
+	i16 y = 0;
 };
 
 struct _platform_event_key {
@@ -198,7 +199,8 @@ struct _platform_event_key {
 };
 
 struct _platform_event_mouse {
-	i16 x = 0, y = 0;
+	i16 x = 0;
+	i16 y = 0;
 	u16 flags = 0;
 	i8 w = 0;
 };

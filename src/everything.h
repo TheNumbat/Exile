@@ -13,7 +13,6 @@
 #include "ds/map.h"
 
 #include "type_table.h"
-#include "meta_types.h"
 
 #ifdef _DEBUG
 #define BOUNDS_CHECK
@@ -102,6 +101,8 @@ struct func_scope_nocs {
 #define FUNC 
 #define FUNC_NOCS
 #endif
+
+#include "meta_types.h"
 
 // IMPLEMENTATIONS
 #include "str/strings.cpp"

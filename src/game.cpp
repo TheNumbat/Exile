@@ -83,8 +83,8 @@ extern "C" game_state* start_up(platform_api* api) { FUNC
 	LOG_POP_CONTEXT();
 
 	// testing
-	_type_info* info = get_type_info<f32>();
-	LOG_INFO_F("size: %u", info->size);
+	_type_info* info = TYPEINFO(_gui_style);
+	LOG_INFO_F("name: %s size: %u", info->name.c_str, info->size);
 
 	state->running = true;
 	return state;

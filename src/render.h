@@ -49,7 +49,8 @@ struct render_command_list {
 	vector<render_command> commands;
 	render_camera cam;
 	allocator* alloc = NULL;
-	m4 view, proj;
+	m4 view;
+	m4 proj;
 };
 
 mesh_2d make_mesh_2d(u32 verts = 32, allocator* alloc = NULL);
