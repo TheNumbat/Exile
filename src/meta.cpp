@@ -133,6 +133,7 @@ i32 main(i32 argc, char** argv) {
     	printf("%s %s\n", lib_includes[i].str.c_str(), lib_includes[i+1].str.c_str());
     }
 
+    fout << endl << "void make_meta_types() {" << endl;
     for(i32 i = 0; i < all_tokens.size(); i++) {
     	_token& t = all_tokens[i];
 
@@ -140,6 +141,7 @@ i32 main(i32 argc, char** argv) {
     		
     	}
     }
+    fout << endl << "}";
 
     fout << endl;
     fout.close();
