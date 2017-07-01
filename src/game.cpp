@@ -14,6 +14,10 @@ template<typename T>
 void print_type(T& val, _type_info* info = NULL) {
 	if(info == NULL) {
 		info = TYPEINFO(T);
+		if(!info) {
+			std::cout << "UNDEF";
+			return;
+		}
 	}
 	switch(info->type_type) {
 	case Type::_void: {
@@ -30,10 +34,10 @@ void print_type(T& val, _type_info* info = NULL) {
 	} break;
 	case Type::_ptr: {
 		std::cout << "*{";
-		if(*(size_t**)&val == NULL) {
-			std::cout << "NULL";
+		if(*(u8**)&val == NULL) {
+			std::cout << info->_ptr.to->name.c_str << "|NULL";
 		} else if(info->_ptr.to == NULL) {
-			std::wcout << "UNDEF";
+			std::cout << "UNDEF";
 		} else {
 			print_type(**(u8**)&val, info->_ptr.to);
 		}
@@ -77,6 +81,7 @@ void meta_printf(string fmt, T value, Targs... Fargs) {
 		if(fmt.c_str[i] == '%') {
 			if(fmt.c_str[i + 1] == '%') {
 				std::cout << '%';
+				i++;
 			} else {
 				print_type(value);
 				meta_printf(string_from_c_str(fmt.c_str + i + 1), Fargs...);
@@ -172,8 +177,7 @@ extern "C" game_state* start_up(platform_api* api) { FUNC
 	// testing
 	a_thing thing;
 	UWU uwu;
-	uwu.thing = &thing; 
-	meta_printf(string_literal("%"), state);
+	meta_printf(string_literal("%%"), &state);
 	std::cout << std::endl;
 
 	state->running = true;
