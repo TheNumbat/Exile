@@ -1,8 +1,13 @@
 
-struct UWU {
-	bool kek = true;
-};
 #include <iostream>
+
+struct a_thing {
+	bool* idk = 0;
+};
+struct UWU {
+	a_thing* thing = 0;
+};
+
 #include "everything.h"
 
 template<typename T>
@@ -11,21 +16,28 @@ void print_type(T& val, _type_info* info = NULL) {
 		info = TYPEINFO(T);
 	}
 	switch(info->type_type) {
-	case Type::_int:
+	case Type::_int: {
 		std::cout << *(i32*)&val;
-	break;
-	case Type::_float:
+	} break;
+	case Type::_float: {
 		std::cout << *(float*)&val;
-	break;
-	case Type::_bool:
+	} break;
+	case Type::_bool: {
 		std::cout << (*(bool*)&val ? "true" : "false");
-	break;
-	case Type::_ptr:
-	break;
-	case Type::_func:
-	break;
-	case Type::_struct:
-		std::cout << info->name.c_str << "{ ";		
+	} break;
+	case Type::_ptr: {
+		std::cout << "*{";
+		if(*(size_t**)&val == NULL) {
+			std::cout << "NULL";
+		} else {
+			print_type(**(u8**)&val, info->_ptr.to);
+		}
+		std::cout << "}";
+	} break;
+	case Type::_func: {
+	} break;
+	case Type::_struct: {
+		std::cout << info->name.c_str << "{";		
 		for(u32 j = 0; j < info->_struct.member_count; j++) {
 			std::cout << info->_struct.member_names[j].c_str << " : ";
 
@@ -34,17 +46,20 @@ void print_type(T& val, _type_info* info = NULL) {
 
 			print_type(*place, member);
 			if(j < info->_struct.member_count - 1) {
-				std::cout << ",";
+				std::cout << ", ";
 			}
-			std::cout << " ";
 		}
 		std::cout << "}";
-	break;
-	case Type::_enum:
-	break;
-	case Type::_string:
-		std::cout << ((string*)&val)->c_str;
-	break;
+	} break;
+	case Type::_enum: {
+	} break;
+	case Type::_string: {
+		std::cout << "\"";
+		if (((string*)&val)->len) {
+			std::cout << ((string*)&val)->c_str;
+		}
+		std::cout << "\"";
+	} break;
 	}
 }
 void cool_printf(string fmt) {
@@ -150,8 +165,10 @@ extern "C" game_state* start_up(platform_api* api) { FUNC
 	LOG_POP_CONTEXT();
 
 	// testing
-	UWU whatsthis;
-	cool_printf(string_literal("owo what's this? % %"), string_literal("LUL"), whatsthis);
+	a_thing thing;
+	UWU uwu;
+	uwu.thing = &thing; 
+	cool_printf(string_literal("owo what's this? % %"), UWU(), state->gui);
 	std::cout << std::endl;
 
 	state->running = true;

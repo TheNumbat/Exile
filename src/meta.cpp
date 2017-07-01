@@ -301,8 +301,9 @@ i32 main(i32 argc, char** argv) {
     			 << "\t{" << endl
     			 << "\t\t// " << ename << endl
     			 << "\t\t_type_info " << ename << "_t;" << endl
-    			 << "\t\t" << ename << "_t.type_type = Type::_struct;" << endl
+    			 << "\t\t" << ename << "_t.type_type = Type::_enum;" << endl
     			 << "\t\t" << ename << "_t.size = sizeof(" << ename << ");" << endl
+                 << "\t\t" << ename << "_t.name = string_literal(\"" << ename << "\");" << endl
     			 << "\t\tu64 hash = (u64)typeid(" << ename << ").hash_code();" << endl
     			 << "\t\tmap_insert(&type_table, hash, " << ename << "_t, false);" << endl
     			 << "\t}" << endl;

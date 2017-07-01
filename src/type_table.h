@@ -69,17 +69,17 @@ static map<u64,_type_info> type_table;
 
 void make_meta_types();
 
-#define TYPEINFO(type) _get_type_info<type>().get_type_info(string_literal(#type));
+#define TYPEINFO(type) _get_type_info<type>().get_type_info();
 template<typename T>
 struct _get_type_info { 
-	_type_info* get_type_info(string n) {
+	_type_info* get_type_info() {
 		return map_try_get(&type_table, typeid(T).hash_code());
 	}
 };
 
 template<typename T>
 struct _get_type_info<T*> {
-	_type_info* get_type_info(string n) {
+	_type_info* get_type_info() {
 
 		_type_info* info = map_try_get(&type_table, typeid(T*).hash_code());
 		if(info) return info;
@@ -87,8 +87,16 @@ struct _get_type_info<T*> {
 		_type_info ptr_t;
 		ptr_t.type_type = Type::_ptr;
 		ptr_t.size 		= sizeof(T*);
-		ptr_t.name 		= n;
-		ptr_t._ptr.to 	= TYPEINFO(T);
+
+		_type_info* to = TYPEINFO(T);
+
+		if (to) {
+			ptr_t.name = to->name;
+		}
+		else {
+			ptr_t.name = string_literal("UNDEF");
+		}
+		ptr_t._ptr.to 	= to;
 		u64 hash = (u64)typeid(T*).hash_code();
 		return map_insert(&type_table, hash, ptr_t, false);
 	}

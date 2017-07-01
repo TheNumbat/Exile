@@ -4,8 +4,12 @@ For overall : see #high_level_systems
 immediate to do:
 
 	meta
-		struct introspection
-			integration with UI, serialization, printf
+		introspection
+			array types
+			enum types
+			function pointer types
+			templated members
+		integration with UI, serialization, printf
 		profiler
 
 	log
