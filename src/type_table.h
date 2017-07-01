@@ -4,6 +4,7 @@
 enum class Type : u8 {
 	unkown,
 
+	_void,
 	_int,
 	_float,
 	_bool,
@@ -19,6 +20,7 @@ enum class Type : u8 {
 
 struct _type_info;
 
+struct Type_void_info {};
 struct Type_int_info {
 	bool is_signed;
 };
@@ -53,6 +55,7 @@ struct _type_info {
 	u32 size 				= 0;
 	string name;
 	union {
+		Type_void_info	 _void;
 		Type_int_info    _int;
 		Type_float_info  _float;
 		Type_bool_info   _bool;
@@ -62,7 +65,7 @@ struct _type_info {
 		Type_enum_info   _enum;
 		Type_string_info _string;
 	};
-	_type_info() : _int(), _float(), _bool(), _ptr(), _func(), _struct(), _enum(), _string() {}
+	_type_info() : _void(), _int(), _float(), _bool(), _ptr(), _func(), _struct(), _enum(), _string() {}
 };
 
 static map<u64,_type_info> type_table;
@@ -105,6 +108,16 @@ struct _get_type_info<T*> {
 void make_type_table(allocator* alloc) {
 
 	type_table = make_map<u64,_type_info>(1024, alloc, &hash_u64);
+
+	{
+		_type_info void_t;
+		void_t.type_type 		= Type::_void;
+		void_t.size				= 0;
+		void_t.name 			= string_literal("void");
+		void_t._int.is_signed 	= true;
+		u64 hash = (u64)typeid(void).hash_code();
+		map_insert(&type_table, hash, void_t, false);
+	}
 
 	{
 		_type_info char_t;

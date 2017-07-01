@@ -16,6 +16,9 @@ void print_type(T& val, _type_info* info = NULL) {
 		info = TYPEINFO(T);
 	}
 	switch(info->type_type) {
+	case Type::_void: {
+		std::cout << "void";
+	} break;
 	case Type::_int: {
 		std::cout << *(i32*)&val;
 	} break;
@@ -29,6 +32,8 @@ void print_type(T& val, _type_info* info = NULL) {
 		std::cout << "*{";
 		if(*(size_t**)&val == NULL) {
 			std::cout << "NULL";
+		} else if(info->_ptr.to == NULL) {
+			std::wcout << "UNDEF";
 		} else {
 			print_type(**(u8**)&val, info->_ptr.to);
 		}
@@ -168,7 +173,7 @@ extern "C" game_state* start_up(platform_api* api) { FUNC
 	a_thing thing;
 	UWU uwu;
 	uwu.thing = &thing; 
-	meta_printf(string_literal("%"), state->gui);
+	meta_printf(string_literal("%"), state);
 	std::cout << std::endl;
 
 	state->running = true;

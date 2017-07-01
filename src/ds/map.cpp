@@ -113,6 +113,7 @@ V* map_insert(map<K,V>* m, K key, V value, bool grow_if_needed) { FUNC
 		if(grow_if_needed) {
 			map_grow_rehash(m); // this is super expensive, avoid at all costs
 		} else {
+			LOG_DEBUG_ASSERT(!"Map needs to grow, but not allowed!");
 			return NULL;
 		}
 	}
