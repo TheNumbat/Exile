@@ -35,6 +35,7 @@ struct Type_func_info {
 struct Type_struct_info {
 	_type_info* member_types[32];
 	string 		member_names[32];
+	u32 		member_offsets[32];
 	u32 		member_count;
 };
 struct Type_enum_info {

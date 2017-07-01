@@ -1,5 +1,66 @@
 
+#include <iostream>
 #include "everything.h"
+
+template<typename T>
+void print_type(T& val, _type_info* info = NULL) {
+	if(info == NULL) {
+		info = TYPEINFO(T);
+	}
+	switch(info->type_type) {
+	case Type::_int:
+		std::cout << *(i32*)&val;
+	break;
+	case Type::_float:
+		std::cout << *(float*)&val;
+	break;
+	case Type::_bool:
+		std::cout << *(bool*)&val ? "true" : "false";
+	break;
+	case Type::_ptr:
+	break;
+	case Type::_func:
+	break;
+	case Type::_struct:
+		std::cout << "{ ";		
+		for(u32 j = 0; j < info->_struct.member_count; j++) {
+			std::cout << info->_struct.member_names[j].c_str << " : ";
+
+			_type_info* member = info->_struct.member_types[j];
+			u8* place = (u8*)&val + info->_struct.member_offsets[j];
+
+			print_type(*place, member);
+			std::cout << " ";
+		}
+		std::cout << "}";
+	break;
+	case Type::_enum:
+	break;
+	case Type::_string:
+		std::cout << ((string*)&val)->c_str;
+	break;
+	}
+}
+void cool_printf(string fmt) {
+	std::cout << fmt.c_str;
+}
+template<typename T, typename... Targs>
+void cool_printf(string fmt, T value, Targs... Fargs) {
+
+	for(u32 i = 0; i < fmt.len - 1; i++) {
+		if(fmt.c_str[i] == '%') {
+			if(fmt.c_str[i + 1] == '%') {
+				std::cout << '%';
+			} else {
+				print_type(value);
+				cool_printf(string_from_c_str(fmt.c_str + i + 1), Fargs...);
+				return;
+			}
+		} else {
+			std::cout << fmt.c_str[i];
+		}
+	}
+}
 
 extern "C" game_state* start_up(platform_api* api) { FUNC 
 
@@ -83,8 +144,8 @@ extern "C" game_state* start_up(platform_api* api) { FUNC
 	LOG_POP_CONTEXT();
 
 	// testing
-	_type_info* info = TYPEINFO(_gui_style);
-	LOG_INFO_F("name: %s size: %u", info->name.c_str, info->size);
+	cool_printf(string_literal("owo what's this? % %"), string_literal("LUL"), gui_style);
+	std::cout << std::endl;
 
 	state->running = true;
 	return state;

@@ -60,6 +60,10 @@ void struct_out(const _struct& s) {
             fout << "\t\t" << s.name << "_t._struct.member_names[" << i << "] = string_literal(\""
                  << s.mem_names[i] << "\");" << endl;
         }
+        for(i32 i = 0; i < s.mem_names.size(); i++) {
+            fout << "\t\t" << s.name << "_t._struct.member_offsets[" << i << "] = offsetof("
+                 << s.name << ", " << s.mem_names[i] << ");" << endl;
+        }
         fout << "\t\t" << s.name << "_t._struct.member_count = " << s.mem_types.size() << ";" << endl
              << "\t\t" << s.name << "_t.name = string_literal(\"" << s.name << "\");" << endl;
         fout << "\t\tu64 hash = (u64)typeid(" << s.name << ").hash_code();" << endl
@@ -93,6 +97,10 @@ void struct_out_template(const string& name, const string& type) {
     for(i32 i = 0; i < s.mem_names.size(); i++) {
         fout << "\t\t" << s.name << "_t._struct.member_names[" << i << "] = string_literal(\""
              << s.mem_names[i] << "\");" << endl;
+    }
+    for(i32 i = 0; i < s.mem_names.size(); i++) {
+        fout << "\t\t" << s.name << "_t._struct.member_offsets[" << i << "] = offsetof("
+             << nametype << ", " << s.mem_names[i] << ");" << endl;
     }
     fout << "\t\t" << s.name << "_t._struct.member_count = " << s.mem_types.size() << ";" << endl
          << "\t\t" << s.name << "_t.name = string_literal(\"" << nametype << "\");" << endl;
