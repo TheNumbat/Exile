@@ -1,4 +1,7 @@
 
+struct UWU {
+	bool kek = true;
+};
 #include <iostream>
 #include "everything.h"
 
@@ -15,14 +18,14 @@ void print_type(T& val, _type_info* info = NULL) {
 		std::cout << *(float*)&val;
 	break;
 	case Type::_bool:
-		std::cout << *(bool*)&val ? "true" : "false";
+		std::cout << (*(bool*)&val ? "true" : "false");
 	break;
 	case Type::_ptr:
 	break;
 	case Type::_func:
 	break;
 	case Type::_struct:
-		std::cout << "{ ";		
+		std::cout << info->name.c_str << "{ ";		
 		for(u32 j = 0; j < info->_struct.member_count; j++) {
 			std::cout << info->_struct.member_names[j].c_str << " : ";
 
@@ -30,6 +33,9 @@ void print_type(T& val, _type_info* info = NULL) {
 			u8* place = (u8*)&val + info->_struct.member_offsets[j];
 
 			print_type(*place, member);
+			if(j < info->_struct.member_count - 1) {
+				std::cout << ",";
+			}
 			std::cout << " ";
 		}
 		std::cout << "}";
@@ -144,7 +150,8 @@ extern "C" game_state* start_up(platform_api* api) { FUNC
 	LOG_POP_CONTEXT();
 
 	// testing
-	cool_printf(string_literal("owo what's this? % %"), string_literal("LUL"), gui_style);
+	UWU whatsthis;
+	cool_printf(string_literal("owo what's this? % %"), string_literal("LUL"), whatsthis);
 	std::cout << std::endl;
 
 	state->running = true;
