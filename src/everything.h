@@ -76,7 +76,7 @@ static game_state* global_state = NULL;
 
 #ifdef _DEBUG
 
-struct func_scope {
+struct func_scope { // @NORTTI
 	func_scope(code_context context) {
 		LOG_DEBUG_ASSERT(this_thread_data.call_stack_depth < MAX_CALL_STACK_DEPTH);
 		this_thread_data.call_stack[this_thread_data.call_stack_depth++] = context;
@@ -86,7 +86,7 @@ struct func_scope {
 	}
 };
 
-struct func_scope_nocs {
+struct func_scope_nocs { // @NORTTI
 	func_scope_nocs(code_context context) {
 		
 	}

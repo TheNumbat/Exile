@@ -62,11 +62,11 @@ void print_type(T& val, _type_info* info = NULL) {
 	} break;
 	}
 }
-void cool_printf(string fmt) {
+void meta_printf(string fmt) {
 	std::cout << fmt.c_str;
 }
 template<typename T, typename... Targs>
-void cool_printf(string fmt, T value, Targs... Fargs) {
+void meta_printf(string fmt, T value, Targs... Fargs) {
 
 	for(u32 i = 0; i < fmt.len - 1; i++) {
 		if(fmt.c_str[i] == '%') {
@@ -74,7 +74,7 @@ void cool_printf(string fmt, T value, Targs... Fargs) {
 				std::cout << '%';
 			} else {
 				print_type(value);
-				cool_printf(string_from_c_str(fmt.c_str + i + 1), Fargs...);
+				meta_printf(string_from_c_str(fmt.c_str + i + 1), Fargs...);
 				return;
 			}
 		} else {
@@ -168,7 +168,7 @@ extern "C" game_state* start_up(platform_api* api) { FUNC
 	a_thing thing;
 	UWU uwu;
 	uwu.thing = &thing; 
-	cool_printf(string_literal("owo what's this? % %"), UWU(), state->gui);
+	meta_printf(string_literal("%"), state->gui);
 	std::cout << std::endl;
 
 	state->running = true;

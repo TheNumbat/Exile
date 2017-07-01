@@ -20,6 +20,10 @@
 
 using namespace std;
 
+/*
+Actual RTTI generated at compile time (but structured at runtime?)
+*/
+
 struct _struct {
     string name;
     vector<string> mem_types;
@@ -73,8 +77,6 @@ void struct_out(const _struct& s) {
 }
 
 void struct_out_template(const string& name, const string& type) {
-
-    cout << name << " " << type << endl;
 
     auto entry = _structs.find(name);
     _struct s = entry->second;
@@ -213,6 +215,7 @@ i32 main(i32 argc, char** argv) {
                 }
             }
     	}
+        bool skip = false;
     	if((t.str == "struct" || t.str == "union") && all_tokens[i + 1].str != "{") {
     		if(all_tokens[i + 2].str == ";") continue;
             
@@ -226,7 +229,14 @@ i32 main(i32 argc, char** argv) {
     		u32 depth = 1;
     		for(i32 j = i + 1;; j++, i++) {
     			string type, name;
-    			while(all_tokens[j].token.type == CPP_TOKEN_COMMENT) j++;
+
+                while(all_tokens[j].token.type == CPP_TOKEN_COMMENT) {
+                    if(all_tokens[j++].str.find("@NORTTI") != string::npos) {
+                        cout << all_tokens[j].str << endl;
+                        skip = true;
+                        break;
+                    }
+                }
 
     			if(depth == 0) {
     				break;
@@ -280,6 +290,7 @@ i32 main(i32 argc, char** argv) {
 
     			if(all_tokens[j].str == "[") { // skip arrays
     				while(all_tokens[++j].str != ";");
+                    while(all_tokens[j+1].token.type == CPP_TOKEN_COMMENT) j++;
     			}
                 if(all_tokens[j].str == "=") {
                     while(all_tokens[++j].str != ";");
@@ -290,8 +301,10 @@ i32 main(i32 argc, char** argv) {
     			s.mem_names.push_back(name);
     		}
 
-            struct_out(s);
-            _structs.insert({s.name, s});
+            if(!skip) {
+                struct_out(s);
+                _structs.insert({s.name, s});
+            }
     	}
 
     	if(t.str == "enum") {
@@ -317,13 +330,4 @@ i32 main(i32 argc, char** argv) {
     return 0;
 }
 
-/*
 
-Actual RTTI generated at compile time
-The code at the bottom is what I'd like to do; it's basically the same as implemented 
-	in JAI and Odin.
-However, we can't exactly do this outside of the compiler, so this will have to be limited to 
-	struct introspection (i.e. can't combinatorially generate all pointer type information).
-I think we can do most of it; just start with basic_types.h info, then struct/enum/union
-	introspection and build the table up from there.
-*/
