@@ -4,12 +4,19 @@ For overall : see #high_level_systems
 immediate to do:
 
 	meta
+		clean up metaprogram code
 		introspection
-			array types
-			enum types
-			function pointer types
+			array
+			enum
+			function
 			templated members
-		integration with UI, serialization, printf
+		printf
+			float
+			enum
+			array
+			function
+			clean up code - not sure if possible, thanks templates
+		integration with UI
 		profiler
 
 	log
