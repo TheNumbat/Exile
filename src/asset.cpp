@@ -27,7 +27,7 @@ asset* get_asset(asset_store* as, string name) { FUNC
 	asset* a = map_try_get(&as->assets, name);
 
 	if(!a) {
-		LOG_ERR_F("Failed to get asset %s", name.c_str);
+		LOG_ERR_F("Failed to get asset %", name);
 		return NULL;
 	}
 
@@ -92,7 +92,7 @@ bool try_reload_asset_store(asset_store* as) { FUNC
 
 		load_asset_store(as, as->path);
 
-		LOG_INFO_F("Reloaded asset store from %s", as->path.c_str);
+		LOG_INFO_F("Reloaded asset store from %", as->path);
 
 		return true;
 	}
@@ -112,7 +112,7 @@ void load_asset_store(asset_store* as, string path) { FUNC
 	} while(err.error == PLATFORM_SHARING_ERROR && itr < 100000);
 
 	if(!err.good) {
-		LOG_ERR_F("Failed to open asset store %s, error %u", path.c_str, err.error);
+		LOG_ERR_F("Failed to open asset store %, error %", path, err.error);
 		global_state->api->platform_close_file(&store);
 		return;
 	}

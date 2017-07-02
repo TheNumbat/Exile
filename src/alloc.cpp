@@ -20,7 +20,7 @@ inline void* platform_allocate(u64 bytes, void* this_data, code_context context)
 
 #ifdef _DEBUG
 	if(!this_->suppress_messages) {
-		logger_msgf(&global_state->log, string_literal("allocating %u bytes to %p with platform alloc \"%s\""), log_level::alloc, context, bytes, mem, this_->name.c_str);
+		logger_msgf(&global_state->log, string_literal("allocating % bytes to % with platform alloc \"%\""), log_level::alloc, context, bytes, mem, this_->name);
 	}
 #endif
 
@@ -33,7 +33,7 @@ inline void platform_free(void* mem, void* this_data, code_context context) { FU
 
 #ifdef _DEBUG
 	if(!this_->suppress_messages) {
-		logger_msgf(&global_state->log, string_literal("freeing %p with platform alloc \"%s\""), log_level::alloc, context, mem, this_->name.c_str);
+		logger_msgf(&global_state->log, string_literal("freeing % with platform alloc \"%\""), log_level::alloc, context, mem, this_->name);
 	}
 #endif
 
@@ -67,12 +67,12 @@ inline void* arena_allocate(u64 bytes, void* this_data, code_context context) { 
 		this_->used += bytes;
 	} else {
 
-		LOG_ERR_F("Failed to allocate %u bytes in allocator %s:%u", bytes, this_->context.file.c_str, this_->context.line);
+		LOG_ERR_F("Failed to allocate % bytes in allocator %:%", bytes, this_->context.file, this_->context.line);
 	}
 
 #ifdef _DEBUG
 	if(!this_->suppress_messages) {
-		logger_msgf(&global_state->log, string_literal("allocating %u bytes (used:%u/%u) to %p with arena alloc \"%s\""), log_level::alloc, context, bytes, this_->used, this_->size, mem, this_->name.c_str);
+		logger_msgf(&global_state->log, string_literal("allocating % bytes (used:%/%) to % with arena alloc \"%\""), log_level::alloc, context, bytes, this_->used, this_->size, mem, this_->name);
 	}
 #endif
 
@@ -85,7 +85,7 @@ inline void arena_reset(arena_allocator* a, code_context context) { FUNC
 
 #ifdef _DEBUG
 	if(!a->suppress_messages) {
-		logger_msgf(&global_state->log, string_literal("reseting arena \"%s\""), log_level::alloc, context, a->name.c_str);
+		logger_msgf(&global_state->log, string_literal("reseting arena \"%\""), log_level::alloc, context, a->name);
 	}
 #endif
 
@@ -100,7 +100,7 @@ inline void arena_destroy(arena_allocator* a, code_context context) { FUNC
 
 #ifdef _DEBUG
 	if(!a->suppress_messages) {
-		logger_msgf(&global_state->log, string_literal("destroying arena \"%s\""), log_level::alloc, context, a->name.c_str);
+		logger_msgf(&global_state->log, string_literal("destroying arena \"%\""), log_level::alloc, context, a->name);
 	}
 #endif
 
@@ -124,7 +124,7 @@ inline arena_allocator make_arena_allocator_from_context(string name, u64 size, 
 
 #ifdef _DEBUG
 	if(!ret.suppress_messages) {
-		logger_msgf(&global_state->log, string_literal("creating arena \"%s\" size %u"), log_level::alloc, context, name.c_str, size);
+		logger_msgf(&global_state->log, string_literal("creating arena \"%\" size %"), log_level::alloc, context, name, size);
 	}
 #endif
 	
@@ -154,7 +154,7 @@ inline arena_allocator make_arena_allocator(string name, u64 size, allocator* ba
 
 #ifdef _DEBUG
 	if(!ret.suppress_messages) {
-		logger_msgf(&global_state->log, string_literal("creating arena \"%s\" size %u"), log_level::alloc, context, name.c_str, size);
+		logger_msgf(&global_state->log, string_literal("creating arena \"%\" size %"), log_level::alloc, context, name, size);
 	}
 #endif
 

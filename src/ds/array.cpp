@@ -74,7 +74,7 @@ inline T* array_get(array<T>* a, u32 idx) { FUNC
 		return a->memory + idx;
 	} else {
 
-		LOG_FATAL_F("array_get out of bounds, %u < 0 || %u > %u", idx, idx, a->capacity);
+		LOG_FATAL_F("array_get out of bounds, % < 0 || % > %", idx, idx, a->capacity);
 
 		
 		return NULL;

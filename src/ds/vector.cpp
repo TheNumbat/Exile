@@ -115,7 +115,7 @@ inline T* vector_get(vector<T>* v, u32 idx) { FUNC
 		return v->memory + idx;
 	} else {
 		
-		LOG_FATAL_F("vector_get out of bounds, %u < 0 || %u >= %u", idx, idx, v->capacity);
+		LOG_FATAL_F("vector_get out of bounds, % < 0 || % >= %", idx, idx, v->capacity);
 		return NULL;
 	}
 #else
@@ -257,10 +257,10 @@ void vector_erase(vector<T>* v, u32 index, u32 num) { FUNC
 
 			v->size -= num;
 		} else {
-			LOG_FATAL_F("vector_erase out of bounds %u < 0 || %u >= %u", index, index, v->capacity);
+			LOG_FATAL_F("vector_erase out of bounds % < 0 || % >= %", index, index, v->capacity);
 		}
 	} else {
-		LOG_FATAL_F("vector_erase trying to erase %u elements, %u left", num, v->size);
+		LOG_FATAL_F("vector_erase trying to erase % elements, % left", num, v->size);
 	}
 #else
 	for(u32 i = index + num; i < v->size; i++) {

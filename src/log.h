@@ -98,7 +98,7 @@ string log_fmt_msg_level(log_message* msg);
 
 #define LOG_ASSERT(cond) __pragma(warning(push)) \
 						 __pragma(warning(disable:4127)) \
-						 {if(!(cond)) LOG_FATAL_F("Assertion %s failed!", #cond);} \
+						 {if(!(cond)) LOG_FATAL_F("Assertion % failed!", string_literal(#cond));} \
 						 __pragma(warning(pop))
 
 #ifdef _DEBUG
@@ -107,7 +107,7 @@ string log_fmt_msg_level(log_message* msg);
 	#define LOG_OGL_F(fmt, ...)		logger_msgf(&global_state->log, string_literal(fmt), log_level::ogl,   CONTEXT, __VA_ARGS__); 
 	#define LOG_DEBUG_ASSERT(cond) 	__pragma(warning(push)) \
 							 	   	__pragma(warning(disable:4127)) \
-							 	   	{if(!(cond)) LOG_FATAL_F("Debug assertion %s failed!", #cond);} \
+							 	   	{if(!(cond)) LOG_FATAL_F("Debug assertion % failed!", string_literal(#cond));} \
 							 	   	__pragma(warning(pop))
 	#define INVALID_PATH 		   	LOG_FATAL("Invalid path taken!"); 
 #else

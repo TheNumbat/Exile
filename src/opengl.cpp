@@ -23,7 +23,7 @@ void load_source(shader_source* source) { FUNC
 	} while (err.error == PLATFORM_SHARING_ERROR && itr < 100000);
 
 	if(!err.good) {
-		LOG_ERR_F("Failed to load shader source %s", source->path.c_str);
+		LOG_ERR_F("Failed to load shader source %", source->path);
 		global_state->api->platform_close_file(&source_file);
 		return;
 	}
@@ -122,7 +122,7 @@ void destroy_program(shader_program* prog) { FUNC
 void ogl_try_reload_programs(ogl_manager* ogl) { FUNC
 	FORMAP(ogl->programs,
 		if(refresh_program(&it->value)) {
-			LOG_INFO_F("Reloaded program %u with files %s, %s", it->key, it->value.vertex.path.c_str, it->value.fragment.path.c_str);
+			LOG_INFO_F("Reloaded program % with files %, %", it->key, it->value.vertex.path, it->value.fragment.path);
 		}
 	)
 }
@@ -190,7 +190,7 @@ shader_program* ogl_select_program(ogl_manager* ogl, shader_program_id id) { FUN
 	shader_program* p = map_try_get(&ogl->programs, id);
 
 	if(!p) {
-		LOG_ERR_F("Failed to retrieve program %u", id);
+		LOG_ERR_F("Failed to retrieve program %", id);
 		return NULL;
 	}
 	
@@ -246,7 +246,7 @@ void ogl_destroy_texture(ogl_manager* ogl, texture_id id) { FUNC
 	texture* t = map_try_get(&ogl->textures, id);
 
 	if(!t) {
-		LOG_ERR_F("Failed to find texture %u", id);
+		LOG_ERR_F("Failed to find texture %", id);
 		return;
 	}
 
@@ -260,7 +260,7 @@ texture* ogl_select_texture(ogl_manager* ogl, texture_id id) { FUNC
 	texture* t = map_try_get(&ogl->textures, id);
 
 	if(!t) {
-		LOG_ERR_F("Failed to retrieve texture %u", id);
+		LOG_ERR_F("Failed to retrieve texture %", id);
 		return NULL;
 	}
 	
@@ -384,7 +384,7 @@ ogl_draw_context* ogl_select_draw_context(ogl_manager* ogl, context_id id) { FUN
 	ogl_draw_context* d = map_try_get(&ogl->contexts, id);
 
 	if(!d) {
-		LOG_ERR_F("Failed to retrieve context %u", id);
+		LOG_ERR_F("Failed to retrieve context %", id);
 		return NULL;
 	}
 	
@@ -605,16 +605,16 @@ void debug_proc(GLenum glsource, GLenum gltype, GLuint id, GLenum severity, GLsi
 
 	switch(severity) {
 	case GL_DEBUG_SEVERITY_HIGH:
-		LOG_ERR_F("HIGH OpenGL: %s SOURCE: %s TYPE: %s", message.c_str, source.c_str, type.c_str);
+		LOG_ERR_F("HIGH OpenGL: % SOURCE: % TYPE: %", message, source, type);
 		break;
 	case GL_DEBUG_SEVERITY_MEDIUM:
-		LOG_WARN_F("MED OpenGL: %s SOURCE: %s TYPE: %s", message.c_str, source.c_str, type.c_str);
+		LOG_WARN_F("MED OpenGL: % SOURCE: % TYPE: %", message, source, type);
 		break;
 	case GL_DEBUG_SEVERITY_LOW:
-		LOG_WARN_F("LOW OpenGL: %s SOURCE: %s TYPE: %s", message.c_str, source.c_str, type.c_str);
+		LOG_WARN_F("LOW OpenGL: % SOURCE: % TYPE: %", message, source, type);
 		break;
 	case GL_DEBUG_SEVERITY_NOTIFICATION:
-		LOG_OGL_F("NOTF OpenGL: %s SOURCE: %s TYPE: %s", message.c_str, source.c_str, type.c_str);
+		LOG_OGL_F("NOTF OpenGL: % SOURCE: % TYPE: %", message, source, type);
 		break;
 	}
 }

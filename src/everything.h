@@ -23,7 +23,7 @@
 struct code_context {
 	string file;
 	string function;
-	i32 line = 0;
+	u32 line = 0;
 };
 
 #define MAX_CALL_STACK_DEPTH 256

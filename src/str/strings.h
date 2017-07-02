@@ -30,6 +30,7 @@ string make_cat_strings(i32 num_strs, ...);
 string string_literal(const char* literal);
 string string_from_c_str(char* c_str);
 u32 string_insert(string s, u32 idx, string ins, bool size = false);
+u32 string_insert(string s, u32 idx, char ins, bool size = false);
 
 // variadic template magic
 template<typename T, typename... Targs> inline T get_pack_first(T& val, Targs... args);
@@ -39,16 +40,19 @@ inline u32 _string_printf_fwd(string out, u32 idx, string fmt, bool size);
 
 // more magic, but only for typed print
 template<typename... Targs> string make_stringf(string fmt, Targs... args);
+template<typename... Targs> u32 size_stringf(string fmt, Targs... args);
+
 template<typename... Targs> void string_printf(string out, string fmt, Targs... args);
 template<typename T, typename... Targs> u32 _string_printf(string out, u32 idx, string fmt, bool size, T value, Targs... args);
 u32 _string_printf(string out, u32 idx, string fmt, bool size = false);
 
+struct _type_info;
 // type-specific prints
-u32 print_int(string s, u32 idx, i32 i, bool size = false);
-u32 print_float(string s, u32 idx, f32 i, bool size = false);
+template<typename T> u32 print_int(string s, u32 idx, u8 base, T val, _type_info* info, bool size = false);
+template<typename T> u32 print_float(string s, u32 idx, T val, _type_info* info, bool size = false);
+u32 print_u64(string s, u32 idx, u8 base, u64 val, bool size = false);
 
 // print any type (calls specific prints + recurs on structure)
-struct _type_info;
 template<typename T> u32 print_type(string s, u32 idx, T& val, _type_info* info = NULL, bool size = false);
 
 string make_string(u32 cap, allocator* a);

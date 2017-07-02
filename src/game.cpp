@@ -1,4 +1,5 @@
 
+#include <iostream>
 #include "everything.h"
 
 extern "C" game_state* start_up(platform_api* api) { FUNC 
@@ -61,7 +62,7 @@ extern "C" game_state* start_up(platform_api* api) { FUNC
 	state->window_h = 720;
 
 	if(!err.good) {
-		LOG_FATAL_F("Failed to create window, error: %i", err.error);
+		LOG_FATAL_F("Failed to create window, error: %", err.error);
 		api->platform_heap_free(state);
 		return NULL;
 	}
@@ -137,7 +138,7 @@ extern "C" void shut_down(platform_api* api, game_state* state) { FUNC
 	LOG_DEBUG("Destroying window");
 	platform_error err = api->platform_destroy_window(&state->window);
 	if(!err.good) {
-		LOG_ERR_F("Failed to destroy window, error: %i", err.error);	
+		LOG_ERR_F("Failed to destroy window, error: %", err.error);	
 	}
 
 	LOG_DEBUG("Destroying events");
