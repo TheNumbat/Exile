@@ -63,7 +63,7 @@ u32 print_int(string s, u32 idx, u8 base, T& val, _type_info* info, bool size) {
 		if(info->_int.is_signed) {
 			i8 p = *(i8*)&val;
 			if(p < 0) {
-				idx = string_insert(s, idx, string_literal("-"));
+				idx = string_insert(s, idx, '-', size);
 				return print_u64(s, idx, base, (u64)-p, size);
 			} else {
 				return print_u64(s, idx, base, (u64)p, size);
@@ -76,7 +76,7 @@ u32 print_int(string s, u32 idx, u8 base, T& val, _type_info* info, bool size) {
 		if(info->_int.is_signed) {
 			i16 p = *(i16*)&val;
 			if(p < 0) {
-				idx = string_insert(s, idx, string_literal("-"));
+				idx = string_insert(s, idx, '-', size);
 				return print_u64(s, idx, base, (u64)-p, size);
 			} else {
 				return print_u64(s, idx, base, (u64)p, size);
@@ -89,7 +89,7 @@ u32 print_int(string s, u32 idx, u8 base, T& val, _type_info* info, bool size) {
 		if(info->_int.is_signed) {
 			i32 p = *(i32*)&val;
 			if(p < 0) {
-				idx = string_insert(s, idx, string_literal("-"));
+				idx = string_insert(s, idx, '-', size);
 				return print_u64(s, idx, base, (u64)-p, size);
 			} else {
 				return print_u64(s, idx, base, (u64)p, size);
@@ -102,7 +102,7 @@ u32 print_int(string s, u32 idx, u8 base, T& val, _type_info* info, bool size) {
 		if(info->_int.is_signed) {
 			i64 p = *(i64*)&val;
 			if(p < 0) {
-				idx = string_insert(s, idx, string_literal("-"));
+				idx = string_insert(s, idx, '-', size);
 				return print_u64(s, idx, base, (u64)-p, size);
 			} else {
 				return print_u64(s, idx, base, (u64)p, size);
@@ -119,7 +119,46 @@ u32 print_int(string s, u32 idx, u8 base, T& val, _type_info* info, bool size) {
 }
 
 template<typename T>
-u32 print_float(string s, u32 idx, T& val, _type_info* info, bool size) { FUNC
+u32 print_float(string s, u32 idx, u8 precision, T& val, _type_info* info, bool size) { FUNC
+	
+	// this does not respect precision, but it's fine for this purpose
+
+	f64 f = 0;
+	if(info->size == 4) {
+		f = (f64)*(f32*)&val;
+	} else {
+		f = *(f64*)&val;
+	}
+	if(f < 0) {
+		idx = string_insert(s, idx, '-', size);
+		f = -f;
+	}
+
+	u64 whole = (u64)f;
+	idx = print_u64(s, idx, 10, whole, size);
+	f64 d = f - (f64)whole;
+
+	idx = string_insert(s, idx, '.', size);
+	u32 start = idx;
+	u32 digits = 0;
+
+	while(precision--) {
+		d *= 10;
+		u8 digit = (u8)d;
+		digits++;
+
+		char c = '0' + digit;
+		idx = string_insert(s, idx, c, size);
+	}
+
+	if(!size) {
+		for(u32 i = start; i < start + digits / 2; i++) {
+			char c = s.c_str[i];
+			s.c_str[i] = s.c_str[start + start + digits - i - 1];
+			s.c_str[start + start + digits - i - 1] = c;
+		}
+	}
+
 	return idx;
 }
 
@@ -140,7 +179,7 @@ u32 print_type(string s, u32 idx, T& val, _type_info* info, bool size) { FUNC
 		idx = print_int(s, idx, 10, val, info, size); 
 	} break;
 	case Type::_float: {
-		idx = print_float(s, idx, val, info, size);		// need bit size flags
+		idx = print_float(s, idx, 6, val, info, size);		// need bit size flags
 	} break;
 	case Type::_bool: {
 		idx = string_insert(s, idx, string_literal(*(bool*)&val ? "true" : "false"), size);
@@ -155,10 +194,10 @@ u32 print_type(string s, u32 idx, T& val, _type_info* info, bool size) { FUNC
 			idx = print_u64(s, idx, 16, (u64)(*(u8**)&val), size);
 		} else {
 			idx = print_type(s, idx, **(u8**)&val, info->_ptr.to, size);
-			idx = string_insert(s, idx, string_literal("|"), size);
+			idx = string_insert(s, idx, '|', size);
 			idx = print_u64(s, idx, 16, (u64)(*(u8**)&val), size);
 		}
-		idx = string_insert(s, idx, string_literal("}"), size);
+		idx = string_insert(s, idx, '}', size);
 	} break;
 	case Type::_func: {
 	} break;
@@ -188,7 +227,7 @@ u32 print_type(string s, u32 idx, T& val, _type_info* info, bool size) { FUNC
 				idx = string_insert(s, idx, string_literal(", "), size);
 			}
 		}
-		idx = string_insert(s, idx, string_literal("}"), size);
+		idx = string_insert(s, idx, '}', size);
 	} break;
 	case Type::_enum: {
 	} break;
