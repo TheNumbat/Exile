@@ -27,6 +27,9 @@ u32 print_u64(string s, u32 idx, u8 base, u64 val, bool size) { FUNC
 
 	u8 digit = 0, digits = 0;
 	u32 start = idx;
+	if(val == 0) {
+		idx = string_insert(s, idx, '0', size);
+	}
 	while(val > 0) {
 		digit = val % base;
 		val /= base;
@@ -53,7 +56,7 @@ u32 print_u64(string s, u32 idx, u8 base, u64 val, bool size) { FUNC
 }
 
 template<typename T>
-u32 print_int(string s, u32 idx, u8 base, T val, _type_info* info, bool size) { FUNC
+u32 print_int(string s, u32 idx, u8 base, T& val, _type_info* info, bool size) { FUNC
 	
 	switch(info->size) {
 	case 1: {
@@ -116,7 +119,7 @@ u32 print_int(string s, u32 idx, u8 base, T val, _type_info* info, bool size) { 
 }
 
 template<typename T>
-u32 print_float(string s, u32 idx, T val, _type_info* info, bool size) { FUNC
+u32 print_float(string s, u32 idx, T& val, _type_info* info, bool size) { FUNC
 	return idx;
 }
 

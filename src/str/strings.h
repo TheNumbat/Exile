@@ -48,8 +48,8 @@ u32 _string_printf(string out, u32 idx, string fmt, bool size = false);
 
 struct _type_info;
 // type-specific prints
-template<typename T> u32 print_int(string s, u32 idx, u8 base, T val, _type_info* info, bool size = false);
-template<typename T> u32 print_float(string s, u32 idx, T val, _type_info* info, bool size = false);
+template<typename T> u32 print_int(string s, u32 idx, u8 base, T& val, _type_info* info, bool size = false);
+template<typename T> u32 print_float(string s, u32 idx, T& val, _type_info* info, bool size = false);
 u32 print_u64(string s, u32 idx, u8 base, u64 val, bool size = false);
 
 // print any type (calls specific prints + recurs on structure)

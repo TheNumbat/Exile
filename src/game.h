@@ -1,11 +1,6 @@
 
 #pragma once
 
-struct test {
-	string LUL = string_literal("LUL");
-	string ULU = string_literal("ULU");
-};
-
 struct game_state {
 	platform_api* api = NULL;
 	
