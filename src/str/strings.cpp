@@ -4,16 +4,16 @@ u32 string_insert(string s, u32 idx, string ins) { FUNC
 	return idx + ins.len - 1;
 }
 
-u32 print_int(string s, u32 idx, i32 i) {
+u32 print_int(string s, u32 idx, i32 i) { FUNC
 	return idx;
 }
 
-u32 print_float(string s, u32 idx, f32 i) {
+u32 print_float(string s, u32 idx, f32 i) { FUNC
 	return idx;
 }
 
 template<typename... Targs>
-u32 size_stringf(string fmt, Targs... args) {
+u32 size_stringf(string fmt, Targs... args) { FUNC
 	return 256;
 }
 
@@ -88,7 +88,7 @@ u32 print_type(string s, u32 idx, T& val, _type_info* info) { FUNC
 	return idx;
 }
 
-u32 string_printf(string out, u32 idx, string fmt) {
+u32 string_printf(string out, u32 idx, string fmt) { FUNC
 	for(u32 i = 0; i < fmt.len - 1; i++) {
 		if(fmt.c_str[i] == '%') {
 			if(fmt.c_str[i + 1] == '%') {
@@ -105,7 +105,7 @@ u32 string_printf(string out, u32 idx, string fmt) {
 	return idx;
 }
 template<typename T, typename... Targs>
-u32 string_printf(string out, u32 idx, string fmt, T value, Targs... args) {
+u32 string_printf(string out, u32 idx, string fmt, T value, Targs... args) { FUNC
 
 	for(u32 i = 0; i < fmt.len - 1; i++) {
 		if(fmt.c_str[i] == '%') {
@@ -124,7 +124,7 @@ u32 string_printf(string out, u32 idx, string fmt, T value, Targs... args) {
 }
 
 template<typename... Targs>
-string make_stringf(string fmt, Targs... args) {
+string make_stringf(string fmt, Targs... args) { FUNC
 
 	u32 len 	= size_stringf(fmt, args...);
 	string ret 	= make_string(len);
@@ -136,7 +136,7 @@ string make_stringf(string fmt, Targs... args) {
 }
 
 template<typename... Targs>
-string make_stringf_a(allocator* a, string fmt, Targs... args) {
+string make_stringf_a(allocator* a, string fmt, Targs... args) { FUNC
 
 	u32 len 	= size_stringf(fmt, args...);
 	string ret 	= make_string(len, a);
