@@ -387,7 +387,7 @@ void gui_log_wnd(string name, vector<log_message>* cache) { FUNC
 			
 			string level = log_fmt_msg_level(it);
 
-			fmt = make_stringf(string_literal("[context] [file:line] [%-5s] %*s\r\n"), level.c_str, 3 * it->call_stack.capacity + it->msg.len - 1, it->msg.c_str);
+			fmt = make_stringf(string_literal("[context] [file:line] [%-5] %+*\r\n"), level, 3 * it->call_stack.capacity + it->msg.len - 1, it->msg);
 			push_text(current, pos, fmt, gui_style.font, WHITE);
 
 			free_string(fmt);

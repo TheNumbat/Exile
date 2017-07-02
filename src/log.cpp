@@ -92,7 +92,7 @@ void logger_print_header(log_manager* log, log_out out) { FUNC
 
 	PUSH_ALLOC(log->alloc) {
 		
-		string header = make_stringf(string_literal("%-8s [%-36s] [%-20s] [%-5s] %-2s\r\n"), string_literal("time"), string_literal("thread/context"), string_literal("file:line"), string_literal("level"), string_literal("message"));
+		string header = make_stringf(string_literal("%-8 [%-36] [%-20] [%-5] %-2\r\n"), string_literal("time"), string_literal("thread/context"), string_literal("file:line"), string_literal("level"), string_literal("message"));
 
 		global_state->api->platform_write_file(&out.file, (void*)header.c_str, header.len - 1);
 
@@ -201,7 +201,7 @@ string log_fmt_msg_call_stack(log_message* msg) { FUNC_NOCS
 
 string log_fmt_msg_file_line(log_message* msg) { FUNC
 
-	return make_stringf(string_literal("%s:%u"), msg->publisher.file, msg->publisher.line);
+	return make_stringf(string_literal("%:%"), msg->publisher.file, msg->publisher.line);
 }
 
 string log_fmt_msg_level(log_message* msg) { FUNC
@@ -241,7 +241,7 @@ string log_fmt_msg(log_message* msg) { FUNC
 	string file_line = log_fmt_msg_file_line(msg);
 	string level = log_fmt_msg_level(msg);
 
-	string output = make_stringf(string_literal("%-8s [%-36s] [%-20s] [%-5s] %*s\r\n"), time, call_stack, file_line, level, 3 * msg->call_stack.capacity + msg->msg.len - 1, msg->msg);
+	string output = make_stringf(string_literal("%-8 [%-36] [%-20] [%-5] %+*\r\n"), time, call_stack, file_line, level, 3 * msg->call_stack.capacity + msg->msg.len - 1, msg->msg);
 
 	free_string(time);
 	free_string(call_stack);

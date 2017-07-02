@@ -142,9 +142,9 @@ ogl_manager make_opengl(allocator* a) { FUNC
 
 	ret.dbg_shader = ogl_add_program(&ret, string_literal("shaders/dbg.v"), string_literal("shaders/dbg.f"), &ogl_uniforms_dbg);
 
-	LOG_INFO_F("GL version : %s", ret.version.c_str);
-	LOG_INFO_F("GL renderer: %s", ret.renderer.c_str);
-	LOG_INFO_F("GL vendor  : %s", ret.vendor.c_str);
+	LOG_INFO_F("GL version : %", ret.version);
+	LOG_INFO_F("GL renderer: %", ret.renderer);
+	LOG_INFO_F("GL vendor  : %", ret.vendor);
 
 	return ret;
 }

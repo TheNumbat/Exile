@@ -1,5 +1,4 @@
 
-#include <iostream>
 #include "everything.h"
 
 extern "C" game_state* start_up(platform_api* api) { FUNC 
@@ -20,12 +19,6 @@ extern "C" game_state* start_up(platform_api* api) { FUNC
 	state->log = make_logger(&state->log_a);
 
 	make_type_table(&state->suppressed_platform_allocator);
-
-	test t;
-	string test = make_stringf(string_literal("owo %"), &t);
-	std::cout << test.c_str << std::endl;
-	free_string(test);
-	// exit(0);
 
 	platform_file stdout_file, log_all_file;
 	api->platform_get_stdout_as_file(&stdout_file);
@@ -155,8 +148,8 @@ extern "C" void shut_down(platform_api* api, game_state* state) { FUNC
 
 	LOG_DEBUG("Done with shutdown!");
 
-	destroy_type_table();
 	logger_stop(&state->log);
+	destroy_type_table();
 	destroy_logger(&state->log);
 	destroy_dbg_manager(&state->dbg);
 	

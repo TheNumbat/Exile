@@ -16,6 +16,8 @@ bool strcmp(string first, string second);
 // utf-8 stuff
 u32 get_next_codepoint(string text_utf8, u32* index);
 
+u32 parse_u32(string s, u32 idx = 0, u32* used = NULL);
+
 string make_string_from_c_str(char* c_str);
 void free_string(string s);
 string make_string(u32 cap);
@@ -27,14 +29,27 @@ string make_cat_string(string first, string second);
 string make_cat_strings(i32 num_strs, ...);
 string string_literal(const char* literal);
 string string_from_c_str(char* c_str);
-u32 string_insert(string s, u32 idx, string ins);
+u32 string_insert(string s, u32 idx, string ins, bool size = false);
 
+// variadic template magic
+template<typename T, typename... Targs> inline T get_pack_first(T& val, Targs... args);
+inline u32 get_pack_first();
+template<typename T, typename... Targs> inline u32 _string_printf_fwd(string out, u32 idx, string fmt, bool size, T val, Targs... args);
+inline u32 _string_printf_fwd(string out, u32 idx, string fmt, bool size);
+
+// more magic, but only for typed print
 template<typename... Targs> string make_stringf(string fmt, Targs... args);
-template<typename T, typename... Targs> u32 string_printf(string out, u32 idx, string fmt, T value, Targs... args);
-u32 string_printf(string out, u32 idx, string fmt);
+template<typename... Targs> void string_printf(string out, string fmt, Targs... args);
+template<typename T, typename... Targs> u32 _string_printf(string out, u32 idx, string fmt, bool size, T value, Targs... args);
+u32 _string_printf(string out, u32 idx, string fmt, bool size = false);
 
+// type-specific prints
+u32 print_int(string s, u32 idx, i32 i, bool size = false);
+u32 print_float(string s, u32 idx, f32 i, bool size = false);
+
+// print any type (calls specific prints + recurs on structure)
 struct _type_info;
-template<typename T> u32 print_type(string s, u32 idx, T& val, _type_info* info = NULL);
+template<typename T> u32 print_type(string s, u32 idx, T& val, _type_info* info = NULL, bool size = false);
 
 string make_string(u32 cap, allocator* a);
 string make_copy_string(string src, allocator* a);

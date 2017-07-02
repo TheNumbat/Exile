@@ -96,7 +96,7 @@ i32 worker(void* data_) { FUNC_NOCS
 
 	worker_data* data = (worker_data*)data_;
 
-	string thread_name = make_stringf_a(&global_state->suppressed_platform_allocator, string_literal("worker %i"), global_state->api->platform_this_thread_id().id);
+	string thread_name = make_stringf_a(&global_state->suppressed_platform_allocator, string_literal("worker %"), global_state->api->platform_this_thread_id().id);
 	begin_thread(thread_name, &global_state->suppressed_platform_allocator);
 
 	LOG_DEBUG("Starting worker thread");

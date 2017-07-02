@@ -1,34 +1,43 @@
 
-u32 string_insert(string s, u32 idx, string ins) { FUNC
-	memcpy(ins.c_str, s.c_str + idx, ins.len - 1);
+u32 parse_u32(string s, u32 idx, u32* used) {
+
+	u32 accum = 0;
+	char* place = s.c_str + idx;
+	while(*place >= '0' && *place <= '9') {
+		accum *= 10;
+		accum += *place - '0';
+		place++;
+		if(used) (*used)++;
+	}
+
+	return accum;
+}
+
+u32 string_insert(string s, u32 idx, string ins, bool size) { FUNC
+	if(!size) memcpy(ins.c_str, s.c_str + idx, ins.len - 1);
 	return idx + ins.len - 1;
 }
 
-u32 print_int(string s, u32 idx, i32 i) { FUNC
+u32 print_int(string s, u32 idx, i32 i, bool size) { FUNC
 	return idx;
 }
 
-u32 print_float(string s, u32 idx, f32 i) { FUNC
+u32 print_float(string s, u32 idx, f32 i, bool size) { FUNC
 	return idx;
-}
-
-template<typename... Targs>
-u32 size_stringf(string fmt, Targs... args) { FUNC
-	return 256;
 }
 
 template<typename T>
-u32 print_type(string s, u32 idx, T& val, _type_info* info) { FUNC
+u32 print_type(string s, u32 idx, T& val, _type_info* info, bool size) { FUNC
 	if(info == NULL) {
 		info = TYPEINFO(T);
 		if(!info) {
-			idx = string_insert(s, idx, string_literal("UNDEF"));
+			idx = string_insert(s, idx, string_literal("UNDEF"), size);
 			return idx;
 		}
 	}
 	switch(info->type_type) {
 	case Type::_void: {
-		idx = string_insert(s, idx, string_literal("void"));
+		idx = string_insert(s, idx, string_literal("void"), size);
 	} break;
 	case Type::_int: {
 		idx = print_int(s, idx, *(i32*)&val); // need bit size/signed flags
@@ -37,100 +46,210 @@ u32 print_type(string s, u32 idx, T& val, _type_info* info) { FUNC
 		idx = print_float(s, idx, *(float*)&val);		// need bit size flags
 	} break;
 	case Type::_bool: {
-		idx = string_insert(s, idx, string_literal(*(bool*)&val ? "true" : "false"));
+		idx = string_insert(s, idx, string_literal(*(bool*)&val ? "true" : "false"), size);
 	} break;
 	case Type::_ptr: {
-		idx = string_insert(s, idx, string_literal("*{"));
+		idx = string_insert(s, idx, string_literal("*{"), size);
 		if(*(u8**)&val == NULL) {
-			idx = string_insert(s, idx, info->_ptr.to->name);
-			idx = string_insert(s, idx, string_literal("|NULL"));
+			idx = string_insert(s, idx, info->_ptr.to->name, size);
+			idx = string_insert(s, idx, string_literal("|NULL"), size);
 		} else if(info->_ptr.to == NULL) {
-			idx = string_insert(s, idx, string_literal("UNDEF"));
+			idx = string_insert(s, idx, string_literal("UNDEF"), size);
 		} else {
-			idx = print_type(s, idx, **(u8**)&val, info->_ptr.to);
+			idx = print_type(s, idx, **(u8**)&val, info->_ptr.to, size);
 		}
-		idx = string_insert(s, idx, string_literal("}"));
+		idx = string_insert(s, idx, string_literal("}"), size);
 	} break;
 	case Type::_func: {
 	} break;
 	case Type::_struct: {
-		idx = string_insert(s, idx, info->name);
-		idx = string_insert(s, idx, string_literal("{"));
+		idx = string_insert(s, idx, info->name, size);
+		idx = string_insert(s, idx, string_literal("{"), size);
 		for(u32 j = 0; j < info->_struct.member_count; j++) {
-			idx = string_insert(s, idx, info->_struct.member_names[j]);
-			idx = string_insert(s, idx, string_literal(" : "));
+			idx = string_insert(s, idx, info->_struct.member_names[j], size);
+			idx = string_insert(s, idx, string_literal(" : "), size);
 
 			_type_info* member = info->_struct.member_types[j];
 			u8* place = (u8*)&val + info->_struct.member_offsets[j];
 
-			if(member->hash == (u64)typeid(string).hash_code()) {
-				idx = string_insert(s, idx, string_literal("\""));
+			if(member->type_type == Type::_string) {
+				idx = string_insert(s, idx, string_literal("\""), size);
 			}
-			idx = print_type(s, idx, *place, member);
-			if(member->hash == (u64)typeid(string).hash_code()) {
-				idx = string_insert(s, idx, string_literal("\""));
+			idx = print_type(s, idx, *place, member, size);
+			if(member->type_type == Type::_string) {
+				idx = string_insert(s, idx, string_literal("\""), size);
 			}
 
 			if(j < info->_struct.member_count - 1) {
-				idx = string_insert(s, idx, string_literal(", "));
+				idx = string_insert(s, idx, string_literal(", "), size);
 			}
 		}
-		idx = string_insert(s, idx, string_literal("}"));
+		idx = string_insert(s, idx, string_literal("}"), size);
 	} break;
 	case Type::_enum: {
 	} break;
 	case Type::_string: {
 		if (((string*)&val)->len) {
-			idx = string_insert(s, idx, *(string*)&val);
+			idx = string_insert(s, idx, *(string*)&val, size);
 		}
 	} break;
 	}
 	return idx;
 }
 
-u32 string_printf(string out, u32 idx, string fmt) { FUNC
+inline u32 get_pack_first() { FUNC
+	return 0;
+}
+template<typename T, typename... Targs> 
+inline T get_pack_first(T& val, Targs... args) { FUNC
+	return val;
+}
+
+template<typename T, typename... Targs>
+inline u32 _string_printf_fwd(string out, u32 idx, string fmt, bool size, T val, Targs... args) { FUNC
+	return _string_printf(out, idx, fmt, size, args...);
+}
+inline u32 _string_printf_fwd(string out, u32 idx, string fmt, bool size) { FUNC
+	return _string_printf(out, idx, fmt, size);
+}
+
+u32 _string_printf(string out, u32 idx, string fmt, bool size) { FUNC
 	for(u32 i = 0; i < fmt.len - 1; i++) {
 		if(fmt.c_str[i] == '%') {
 			if(fmt.c_str[i + 1] == '%') {
-				idx = string_insert(out, idx, string_literal("%"));
+				idx = string_insert(out, idx, string_literal("%"), size);
 				i++;
 			} else {
 				LOG_ERR("Missing parameter for string_printf!");
 				return idx;
 			}
 		} else {
-			out.c_str[idx++] = fmt.c_str[i];
+			if(!size) {
+				out.c_str[idx] = fmt.c_str[i];
+			}
+			idx++;
 		}
 	}
+	if(!size) {
+		out.c_str[idx] = '\0';
+	}
+	idx++;
 	return idx;
 }
 template<typename T, typename... Targs>
-u32 string_printf(string out, u32 idx, string fmt, T value, Targs... args) { FUNC
+u32 _string_printf(string out, u32 idx, string fmt, bool size, T value, Targs... args) { FUNC
 
 	for(u32 i = 0; i < fmt.len - 1; i++) {
 		if(fmt.c_str[i] == '%') {
 			if(fmt.c_str[i + 1] == '%') {
-				idx = string_insert(out, idx, string_literal("%"));
+				idx = string_insert(out, idx, string_literal("%"), size);
 				i++;
 			} else {
-				idx = print_type(out, idx, value);
-				return string_printf(out, idx, string_from_c_str(fmt.c_str + i + 1), args...);;
+				if(fmt.c_str[i + 1] == '-') { // left justify
+					bool len_in_param = false;
+					i++;
+
+					u32 pad = 0;
+					u32 sized = 0;
+
+					if(fmt.c_str[i + 1] == '*') {	// total length passed as a parameter
+						pad = *(u32*)&value;			
+						i++;
+						len_in_param = true;
+
+						auto param = get_pack_first(args...);
+						u32 tmp_idx = print_type(out, idx, param, NULL, size);
+						sized = tmp_idx - idx;
+						idx = tmp_idx;
+					} else {	// total length passed in format string
+						u32 len = 0;
+						i++;
+						pad = parse_u32(fmt, i, &len);
+						i += len;
+						u32 tmp_idx = print_type(out, idx, value, NULL, size);
+						sized = tmp_idx - idx;
+						idx = tmp_idx;
+					}
+
+					while(sized < pad) {
+						idx = string_insert(out, idx, string_literal(" "), size);
+						sized++;
+					}
+					
+					if (len_in_param) {
+						return _string_printf_fwd(out, idx, string_from_c_str(fmt.c_str + i + 1), size, args...);;
+					} else {
+						return _string_printf(out, idx, string_from_c_str(fmt.c_str + i), size, args...);
+					}
+				} if(fmt.c_str[i + 1] == '+') { // right justify
+					bool len_in_param = false;
+					i++;
+
+					u32 pad = 0;
+					u32 sized = 0;
+
+					if(fmt.c_str[i + 1] == '*') {	// total length passed as a parameter
+						pad = *(u32*)&value;			
+						i++;
+						len_in_param = true;
+
+						auto param = get_pack_first(args...);
+						sized = print_type(out, idx, param, NULL, true) - idx;
+					} else {	// total length passed in format string
+						u32 len = 0;
+						i++;
+						pad = parse_u32(fmt, i, &len);
+						i += len;
+						sized = print_type(out, idx, value, NULL, true) - idx;
+					}
+
+					while(sized < pad) {
+						idx = string_insert(out, idx, string_literal(" "), size);
+						sized++;
+					}
+					
+					if (len_in_param) {
+						auto param = get_pack_first(args...);
+						idx = print_type(out, idx, param, NULL, size);
+						return _string_printf_fwd(out, idx, string_from_c_str(fmt.c_str + i + 1), size, args...);;
+					} else {
+						idx = print_type(out, idx, value, NULL, size);
+						return _string_printf(out, idx, string_from_c_str(fmt.c_str + i), size, args...);
+					}
+				} else {
+					idx = print_type(out, idx, value, NULL, size);
+					return _string_printf(out, idx, string_from_c_str(fmt.c_str + i + 1), size, args...);
+				}
+
 			}
 		} else {
-			out.c_str[idx++] = fmt.c_str[i];
+			if(!size) {
+				out.c_str[idx] = fmt.c_str[i];
+			}
+			idx++;
 		}
 	}
+	if(!size) {
+		out.c_str[idx] = '\0';
+	}
+	idx++;
 	return idx;
+}
+
+template<typename... Targs>
+void string_printf(string out, string fmt, Targs... args) { FUNC
+	_string_printf(out, 0, fmt, false, args...);
 }
 
 template<typename... Targs>
 string make_stringf(string fmt, Targs... args) { FUNC
 
-	u32 len 	= size_stringf(fmt, args...);
-	string ret 	= make_string(len);
+	string ret;
+	u32 len = _string_printf(ret, 0, fmt, true, args...);
+	ret 	= make_string(len);
 	ret.len = len;
 
-	string_printf(ret, 0, fmt, args...);
+	_string_printf(ret, 0, fmt, false, args...);
 
 	return ret;
 }
@@ -138,11 +257,12 @@ string make_stringf(string fmt, Targs... args) { FUNC
 template<typename... Targs>
 string make_stringf_a(allocator* a, string fmt, Targs... args) { FUNC
 
-	u32 len 	= size_stringf(fmt, args...);
-	string ret 	= make_string(len, a);
+	string ret;
+	u32 len = _string_printf(ret, 0, fmt, true, args...);
+	ret 	= make_string(len, a);
 	ret.len = len;
 
-	string_printf(ret, 0, fmt, args...);
+	_string_printf(ret, 0, fmt, false, args...);
 
 	return ret;
 }
