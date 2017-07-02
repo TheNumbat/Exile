@@ -59,5 +59,7 @@ arena_allocator make_arena_allocator(string name, u64 size, allocator* backing, 
 #define malloc(b) ((*CURRENT_ALLOC()->allocate_)(b, CURRENT_ALLOC(), CONTEXT)) 
 #define free(m) ((*CURRENT_ALLOC()->free_)(m, CURRENT_ALLOC(), CONTEXT)) 
 
-void memcpy(void* source, void* dest, u64 size);
-void memset(void* mem, u64 size, u8 val);
+#define memcpy(s,d,i) _memcpy(s,d,i)
+void _memcpy(void* source, void* dest, u64 size);
+#define memset(m,s,v) _memset(m,s,v)
+void _memset(void* mem, u64 size, u8 val);

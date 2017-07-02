@@ -1,97 +1,6 @@
 
 #include <iostream>
-
-struct a_thing {
-	bool* idk = 0;
-};
-struct UWU {
-	a_thing* thing = 0;
-};
-
 #include "everything.h"
-
-template<typename T>
-void print_type(T& val, _type_info* info = NULL) {
-	if(info == NULL) {
-		info = TYPEINFO(T);
-		if(!info) {
-			std::cout << "UNDEF";
-			return;
-		}
-	}
-	switch(info->type_type) {
-	case Type::_void: {
-		std::cout << "void";
-	} break;
-	case Type::_int: {
-		std::cout << *(i32*)&val;
-	} break;
-	case Type::_float: {
-		std::cout << *(float*)&val;
-	} break;
-	case Type::_bool: {
-		std::cout << (*(bool*)&val ? "true" : "false");
-	} break;
-	case Type::_ptr: {
-		std::cout << "*{";
-		if(*(u8**)&val == NULL) {
-			std::cout << info->_ptr.to->name.c_str << "|NULL";
-		} else if(info->_ptr.to == NULL) {
-			std::cout << "UNDEF";
-		} else {
-			print_type(**(u8**)&val, info->_ptr.to);
-		}
-		std::cout << "}";
-	} break;
-	case Type::_func: {
-	} break;
-	case Type::_struct: {
-		std::cout << info->name.c_str << "{";		
-		for(u32 j = 0; j < info->_struct.member_count; j++) {
-			std::cout << info->_struct.member_names[j].c_str << " : ";
-
-			_type_info* member = info->_struct.member_types[j];
-			u8* place = (u8*)&val + info->_struct.member_offsets[j];
-
-			print_type(*place, member);
-			if(j < info->_struct.member_count - 1) {
-				std::cout << ", ";
-			}
-		}
-		std::cout << "}";
-	} break;
-	case Type::_enum: {
-	} break;
-	case Type::_string: {
-		std::cout << "\"";
-		if (((string*)&val)->len) {
-			std::cout << ((string*)&val)->c_str;
-		}
-		std::cout << "\"";
-	} break;
-	}
-}
-void meta_printf(string fmt) {
-	std::cout << fmt.c_str;
-}
-template<typename T, typename... Targs>
-void meta_printf(string fmt, T value, Targs... Fargs) {
-
-	for(u32 i = 0; i < fmt.len - 1; i++) {
-		if(fmt.c_str[i] == '%') {
-			if(fmt.c_str[i + 1] == '%') {
-				std::cout << '%';
-				i++;
-			} else {
-				print_type(value);
-				meta_printf(string_from_c_str(fmt.c_str + i + 1), Fargs...);
-				return;
-			}
-		} else {
-			std::cout << fmt.c_str[i];
-		}
-	}
-}
 
 extern "C" game_state* start_up(platform_api* api) { FUNC 
 
@@ -110,7 +19,13 @@ extern "C" game_state* start_up(platform_api* api) { FUNC
 	state->log_a.suppress_messages = true;
 	state->log = make_logger(&state->log_a);
 
-	make_type_table(&state->default_platform_allocator);
+	make_type_table(&state->suppressed_platform_allocator);
+
+	test t;
+	string test = make_stringf(string_literal("owo %"), &t);
+	std::cout << test.c_str << std::endl;
+	free_string(test);
+	// exit(0);
 
 	platform_file stdout_file, log_all_file;
 	api->platform_get_stdout_as_file(&stdout_file);
@@ -173,12 +88,6 @@ extern "C" game_state* start_up(platform_api* api) { FUNC
 
 	LOG_INFO("Done with startup!");
 	LOG_POP_CONTEXT();
-
-	// testing
-	a_thing thing;
-	UWU uwu;
-	meta_printf(string_literal("%%"), &state);
-	std::cout << std::endl;
 
 	state->running = true;
 	return state;

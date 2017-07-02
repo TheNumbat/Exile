@@ -92,7 +92,7 @@ void logger_print_header(log_manager* log, log_out out) { FUNC
 
 	PUSH_ALLOC(log->alloc) {
 		
-		string header = make_stringf(string_literal("%-8s [%-36s] [%-20s] [%-5s] %-2s\r\n"), "time", "thread/context", "file:line", "level", "message");
+		string header = make_stringf(string_literal("%-8s [%-36s] [%-20s] [%-5s] %-2s\r\n"), string_literal("time"), string_literal("thread/context"), string_literal("file:line"), string_literal("level"), string_literal("message"));
 
 		global_state->api->platform_write_file(&out.file, (void*)header.c_str, header.len - 1);
 
@@ -101,17 +101,15 @@ void logger_print_header(log_manager* log, log_out out) { FUNC
 	} POP_ALLOC();
 }
 
-void logger_msgf(log_manager* log, string fmt, log_level level, code_context context, ...) { FUNC_NOCS
+template<typename... Targs> 
+void logger_msgf(log_manager* log, string fmt, log_level level, code_context context, Targs... args) { FUNC_NOCS
 
 	log_message lmsg;
 
 	lmsg.arena = MAKE_ARENA("msg arena", 1024, log->alloc, true);
 	PUSH_ALLOC(&lmsg.arena) {
 
-		va_list args;
-		va_start(args, context);
-		lmsg.msg = make_vstringf(fmt, args);
-		va_end(args);
+		lmsg.msg = make_stringf(fmt, args...);
 
 		lmsg.publisher = context;
 		lmsg.level = level;
@@ -203,7 +201,7 @@ string log_fmt_msg_call_stack(log_message* msg) { FUNC_NOCS
 
 string log_fmt_msg_file_line(log_message* msg) { FUNC
 
-	return make_stringf(string_literal("%s:%u"), msg->publisher.file.c_str, msg->publisher.line);
+	return make_stringf(string_literal("%s:%u"), msg->publisher.file, msg->publisher.line);
 }
 
 string log_fmt_msg_level(log_message* msg) { FUNC
@@ -243,7 +241,7 @@ string log_fmt_msg(log_message* msg) { FUNC
 	string file_line = log_fmt_msg_file_line(msg);
 	string level = log_fmt_msg_level(msg);
 
-	string output = make_stringf(string_literal("%-8s [%-36s] [%-20s] [%-5s] %*s\r\n"), time.c_str, call_stack.c_str, file_line.c_str, level.c_str, 3 * msg->call_stack.capacity + msg->msg.len - 1, msg->msg.c_str);
+	string output = make_stringf(string_literal("%-8s [%-36s] [%-20s] [%-5s] %*s\r\n"), time, call_stack, file_line, level, 3 * msg->call_stack.capacity + msg->msg.len - 1, msg->msg);
 
 	free_string(time);
 	free_string(call_stack);

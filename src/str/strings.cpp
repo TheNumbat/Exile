@@ -1,4 +1,152 @@
 
+u32 string_insert(string s, u32 idx, string ins) { FUNC
+	memcpy(ins.c_str, s.c_str + idx, ins.len - 1);
+	return idx + ins.len - 1;
+}
+
+u32 print_int(string s, u32 idx, i32 i) {
+	return idx;
+}
+
+u32 print_float(string s, u32 idx, f32 i) {
+	return idx;
+}
+
+template<typename... Targs>
+u32 size_stringf(string fmt, Targs... args) {
+	return 256;
+}
+
+template<typename T>
+u32 print_type(string s, u32 idx, T& val, _type_info* info) { FUNC
+	if(info == NULL) {
+		info = TYPEINFO(T);
+		if(!info) {
+			idx = string_insert(s, idx, string_literal("UNDEF"));
+			return idx;
+		}
+	}
+	switch(info->type_type) {
+	case Type::_void: {
+		idx = string_insert(s, idx, string_literal("void"));
+	} break;
+	case Type::_int: {
+		idx = print_int(s, idx, *(i32*)&val); // need bit size/signed flags
+	} break;
+	case Type::_float: {
+		idx = print_float(s, idx, *(float*)&val);		// need bit size flags
+	} break;
+	case Type::_bool: {
+		idx = string_insert(s, idx, string_literal(*(bool*)&val ? "true" : "false"));
+	} break;
+	case Type::_ptr: {
+		idx = string_insert(s, idx, string_literal("*{"));
+		if(*(u8**)&val == NULL) {
+			idx = string_insert(s, idx, info->_ptr.to->name);
+			idx = string_insert(s, idx, string_literal("|NULL"));
+		} else if(info->_ptr.to == NULL) {
+			idx = string_insert(s, idx, string_literal("UNDEF"));
+		} else {
+			idx = print_type(s, idx, **(u8**)&val, info->_ptr.to);
+		}
+		idx = string_insert(s, idx, string_literal("}"));
+	} break;
+	case Type::_func: {
+	} break;
+	case Type::_struct: {
+		idx = string_insert(s, idx, info->name);
+		idx = string_insert(s, idx, string_literal("{"));
+		for(u32 j = 0; j < info->_struct.member_count; j++) {
+			idx = string_insert(s, idx, info->_struct.member_names[j]);
+			idx = string_insert(s, idx, string_literal(" : "));
+
+			_type_info* member = info->_struct.member_types[j];
+			u8* place = (u8*)&val + info->_struct.member_offsets[j];
+
+			if(member->hash == (u64)typeid(string).hash_code()) {
+				idx = string_insert(s, idx, string_literal("\""));
+			}
+			idx = print_type(s, idx, *place, member);
+			if(member->hash == (u64)typeid(string).hash_code()) {
+				idx = string_insert(s, idx, string_literal("\""));
+			}
+
+			if(j < info->_struct.member_count - 1) {
+				idx = string_insert(s, idx, string_literal(", "));
+			}
+		}
+		idx = string_insert(s, idx, string_literal("}"));
+	} break;
+	case Type::_enum: {
+	} break;
+	case Type::_string: {
+		if (((string*)&val)->len) {
+			idx = string_insert(s, idx, *(string*)&val);
+		}
+	} break;
+	}
+	return idx;
+}
+
+u32 string_printf(string out, u32 idx, string fmt) {
+	for(u32 i = 0; i < fmt.len - 1; i++) {
+		if(fmt.c_str[i] == '%') {
+			if(fmt.c_str[i + 1] == '%') {
+				idx = string_insert(out, idx, string_literal("%"));
+				i++;
+			} else {
+				LOG_ERR("Missing parameter for string_printf!");
+				return idx;
+			}
+		} else {
+			out.c_str[idx++] = fmt.c_str[i];
+		}
+	}
+	return idx;
+}
+template<typename T, typename... Targs>
+u32 string_printf(string out, u32 idx, string fmt, T value, Targs... args) {
+
+	for(u32 i = 0; i < fmt.len - 1; i++) {
+		if(fmt.c_str[i] == '%') {
+			if(fmt.c_str[i + 1] == '%') {
+				idx = string_insert(out, idx, string_literal("%"));
+				i++;
+			} else {
+				idx = print_type(out, idx, value);
+				return string_printf(out, idx, string_from_c_str(fmt.c_str + i + 1), args...);;
+			}
+		} else {
+			out.c_str[idx++] = fmt.c_str[i];
+		}
+	}
+	return idx;
+}
+
+template<typename... Targs>
+string make_stringf(string fmt, Targs... args) {
+
+	u32 len 	= size_stringf(fmt, args...);
+	string ret 	= make_string(len);
+	ret.len = len;
+
+	string_printf(ret, 0, fmt, args...);
+
+	return ret;
+}
+
+template<typename... Targs>
+string make_stringf_a(allocator* a, string fmt, Targs... args) {
+
+	u32 len 	= size_stringf(fmt, args...);
+	string ret 	= make_string(len, a);
+	ret.len = len;
+
+	string_printf(ret, 0, fmt, args...);
+
+	return ret;
+}
+
 bool operator==(string first, string second) { FUNC
 
 	if(first.len != second.len) {
@@ -146,58 +294,6 @@ void free_string(string s, allocator* a) { FUNC
 
 	} POP_ALLOC();
 }
-
-string make_stringf_a(allocator* a, string fmt, ...) { FUNC
-	
-	string ret;
-
-	va_list args;
-	va_start(args, fmt);
-	ret = make_vstringf_a(a, fmt, args);
-	va_end(args);
-
-	return ret;
-}
-
-string make_stringf(string fmt, ...) { FUNC
-
-	va_list args;
-	va_start(args, fmt);
-
-	string ret = make_vstringf(fmt, args);
-
-	va_end(args);
-
-	return ret;
-}
-
-#include <cstdio>
-#pragma warning(push)
-#pragma warning(disable : 4996)
-string make_vstringf_a(allocator* a, string fmt, va_list args) { FUNC
-
-	i32 len = _vscprintf(fmt.c_str, args) + 1;
-
-	string ret = make_string(len, a);
-	ret.len = len;
-
-	vsnprintf(ret.c_str, ret.len, fmt.c_str, args);
-
-	return ret;
-}
-
-string make_vstringf(string fmt, va_list args) { FUNC
-
-	i32 len = _vscprintf(fmt.c_str, args) + 1;
-
-	string ret = make_string(len);
-	ret.len = len;
-
-	vsnprintf(ret.c_str, ret.len, fmt.c_str, args);
-
-	return ret;
-}
-#pragma warning(pop)
 
 string string_literal(const char* literal) { FUNC
 

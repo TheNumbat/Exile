@@ -27,13 +27,15 @@ string make_cat_string(string first, string second);
 string make_cat_strings(i32 num_strs, ...);
 string string_literal(const char* literal);
 string string_from_c_str(char* c_str);
+u32 string_insert(string s, u32 idx, string ins);
 
-// TODO(max): replace vsprintf
-string make_stringf(string fmt, ...);
-string make_vstringf(string fmt, va_list args);
+template<typename... Targs> string make_stringf(string fmt, Targs... args);
+template<typename T, typename... Targs> u32 string_printf(string out, u32 idx, string fmt, T value, Targs... args);
+u32 string_printf(string out, u32 idx, string fmt);
+
+struct _type_info;
+template<typename T> u32 print_type(string s, u32 idx, T& val, _type_info* info = NULL);
 
 string make_string(u32 cap, allocator* a);
 string make_copy_string(string src, allocator* a);
 void free_string(string s, allocator* a);
-string make_stringf_a(allocator* a, string fmt, ...);
-string make_vstringf_a(allocator* a, string fmt, va_list args);

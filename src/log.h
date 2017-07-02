@@ -74,7 +74,8 @@ void logger_print_header(log_manager* log, log_out out);
 void logger_add_output(log_manager* log, log_out out);
 void logger_rem_output(log_manager* log, log_out out);
 
-void logger_msgf(log_manager* log, string fmt, log_level level, code_context context, ...);
+template<typename... Targs>
+void logger_msgf(log_manager* log, string fmt, log_level level, code_context context, Targs... args);
 void logger_msg(log_manager* log, string msg, log_level level, code_context context);
 
 // allocate strings with current allocator

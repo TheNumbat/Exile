@@ -70,8 +70,8 @@ void struct_out(const _struct& s) {
         }
         fout << "\t\t" << s.name << "_t._struct.member_count = " << s.mem_types.size() << ";" << endl
              << "\t\t" << s.name << "_t.name = string_literal(\"" << s.name << "\");" << endl;
-        fout << "\t\tu64 hash = (u64)typeid(" << s.name << ").hash_code();" << endl
-             << "\t\tmap_insert(&type_table, hash, " << s.name << "_t, false);" << endl
+        fout << "\t\t" << s.name << "_t.hash = (u64)typeid(" << s.name << ").hash_code();" << endl
+             << "\t\tmap_insert(&type_table, " << s.name << "_t.hash, " << s.name << "_t, false);" << endl
              << "\t}" << endl;
     }
 }
@@ -106,8 +106,8 @@ void struct_out_template(const string& name, const string& type) {
     }
     fout << "\t\t" << s.name << "_t._struct.member_count = " << s.mem_types.size() << ";" << endl
          << "\t\t" << s.name << "_t.name = string_literal(\"" << nametype << "\");" << endl;
-    fout << "\t\tu64 hash = (u64)typeid(" << nametype << ").hash_code();" << endl
-         << "\t\tmap_insert(&type_table, hash, " << s.name << "_t, false);" << endl
+    fout << "\t\t" << s.name << "_t.hash = (u64)typeid(" << nametype << ").hash_code();" << endl
+         << "\t\tmap_insert(&type_table, " << s.name << "_t.hash, " << s.name << "_t, false);" << endl
          << "\t}" << endl;
 }
 
