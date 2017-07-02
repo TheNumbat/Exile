@@ -1,8 +1,13 @@
 #pragma once
 
 #include <windows.h>
-#include <windowsx.h>
 #include <gl/gl.h>
+
+// from windowsx.h
+#define GET_WPARAM(wp, lp)                      (wp)
+#define GET_LPARAM(wp, lp)                      (lp)
+#define GET_X_LPARAM(lp)                        ((int)(short)LOWORD(lp))
+#define GET_Y_LPARAM(lp)                        ((int)(short)HIWORD(lp))
 
 // API Structures (mark opaque/transparent)
 
