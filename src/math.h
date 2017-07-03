@@ -41,10 +41,12 @@ typedef v2_t<f32> v2;
 typedef v2_t<i32> iv2;
 typedef v2_t<u32> uv2;
 typedef v2_t<u8>  bv2;
+typedef v2_t<f64> dv2;
 template v2_t<f32>;
 template v2_t<i32>;
 template v2_t<u32>;
 template v2_t<u8>;
+template v2_t<f64>;
 
 template<typename T>
 union r2_t {

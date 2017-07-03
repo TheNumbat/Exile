@@ -139,24 +139,14 @@ u32 print_float(string s, u32 idx, u8 precision, T& val, _type_info* info, bool 
 	f64 d = f - (f64)whole;
 
 	idx = string_insert(s, idx, '.', size);
-	u32 start = idx;
-	u32 digits = 0;
 
 	while(precision--) {
 		d *= 10;
 		u8 digit = (u8)d;
-		digits++;
+		d = d - (f64)(u64)d;
 
 		char c = '0' + digit;
 		idx = string_insert(s, idx, c, size);
-	}
-
-	if(!size) {
-		for(u32 i = start; i < start + digits / 2; i++) {
-			char c = s.c_str[i];
-			s.c_str[i] = s.c_str[start + start + digits - i - 1];
-			s.c_str[start + start + digits - i - 1] = c;
-		}
 	}
 
 	return idx;
