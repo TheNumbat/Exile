@@ -69,7 +69,7 @@ struct _type_info {
 	_type_info() : _void(), _int(), _float(), _bool(), _ptr(), _func(), _struct(), _enum(), _string() {}
 };
 
-static map<u64,_type_info> type_table;
+thread_local map<u64,_type_info> type_table;
 
 void make_meta_types();
 
@@ -108,7 +108,7 @@ struct _get_type_info<T*> {
 
 void make_type_table(allocator* alloc) {
 
-	type_table = make_map<u64,_type_info>(1024, alloc, &hash_u64);
+	type_table = make_map<u64,_type_info>(256, alloc, &hash_u64);
 
 	{
 		_type_info void_t;

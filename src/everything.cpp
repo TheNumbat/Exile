@@ -59,9 +59,11 @@ void _begin_thread(string name, allocator* alloc, code_context start) { FUNC
 	this_thread_data.alloc_stack = make_stack<allocator*>(8, alloc);
 	this_thread_data.start_context = start;
 	PUSH_ALLOC(alloc);
+	make_type_table(alloc);
 }
 
 void end_thread() { FUNC
 	POP_ALLOC();
 	destroy_stack(&this_thread_data.alloc_stack);
+	destroy_type_table();
 }

@@ -18,8 +18,6 @@ extern "C" game_state* start_up(platform_api* api) { FUNC
 	state->log_a.suppress_messages = true;
 	state->log = make_logger(&state->log_a);
 
-	make_type_table(&state->suppressed_platform_allocator);
-
 	platform_file stdout_file, log_all_file;
 	api->platform_get_stdout_as_file(&stdout_file);
 	api->platform_create_file(&log_all_file, string_literal("log_all.txt"), platform_file_open_op::create);
@@ -81,8 +79,6 @@ extern "C" game_state* start_up(platform_api* api) { FUNC
 
 	LOG_INFO("Done with startup!");
 	LOG_POP_CONTEXT();
-
-	LOG_INFO_F("%", V2f(5.1234567, 5.0));
 
 	state->running = true;
 	return state;
@@ -151,7 +147,6 @@ extern "C" void shut_down(platform_api* api, game_state* state) { FUNC
 	LOG_DEBUG("Done with shutdown!");
 
 	logger_stop(&state->log);
-	destroy_type_table();
 	destroy_logger(&state->log);
 	destroy_dbg_manager(&state->dbg);
 	
@@ -170,7 +165,6 @@ extern "C" void on_reload(game_state* state) { FUNC
 	begin_thread(string_literal("main"), &state->suppressed_platform_allocator);
 	logger_start(&state->log);
 	threadpool_start_all(&state->thread_pool);
-	make_type_table(&state->default_platform_allocator);
 
 	LOG_INFO("End reloading game code");
 }
