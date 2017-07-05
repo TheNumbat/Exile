@@ -103,7 +103,7 @@ struct func_scope_nocs { // @NORTTI
 #define FUNC_NOCS
 #endif
 
-#include "meta_types.h"
+#include <meta_types.h>
 
 // IMPLEMENTATIONS
 #include "str/strings.cpp"

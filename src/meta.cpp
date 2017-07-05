@@ -248,7 +248,7 @@ i32 main(i32 argc, char** argv) {
         return 1;
     }
 
-    fout.open("../src/meta_types.h");
+    fout.open("meta_types.h");
 
     if(!fout.good()) {
     	printf("failed to create file meta_types.h\n");
