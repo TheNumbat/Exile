@@ -2,10 +2,18 @@
 #pragma once
 
 #include "basic_types.h"
+#include "math.h"
 #include "str/strings.h"
+
+struct code_context {
+	string file;
+	string function;
+	u32 line = 0;
+};
+
+#include "alloc.h"
 #include "platform_api.h"
 
-#include "math.h"
 #include "ds/vector.h"
 #include "ds/stack.h"
 #include "ds/array.h"
@@ -19,12 +27,6 @@
 #define BLOCK_ON_ERROR
 // #define ZERO_ARENA
 #endif
-
-struct code_context {
-	string file;
-	string function;
-	u32 line = 0;
-};
 
 #define MAX_CALL_STACK_DEPTH 256
 struct thread_data {
@@ -60,7 +62,6 @@ inline code_context _make_context(string file, string function, i32 line);
 void _begin_thread(string name, allocator* alloc, code_context context);
 void end_thread();
 
-#include "alloc.h"
 #include "ds/threadpool.h"
 
 #include "log.h"

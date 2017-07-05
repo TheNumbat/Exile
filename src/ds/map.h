@@ -21,7 +21,7 @@ struct map_element {
 };
 
 template<typename K, typename V>
-struct map {
+struct map { // @NORTTI
 	vector<map_element<K, V>> contents;
 	u32 size	 		= 0;
 	allocator* alloc 	= NULL;
@@ -29,7 +29,6 @@ struct map {
 	bool use_u32hash 	= false;
 	u32 max_probe		= 0;
 };
-
 
 template<typename K, typename V> map<K,V> make_map(i32 capacity = 16, u32 (*hash)(K) = NULL);
 template<typename K, typename V> map<K,V> make_map(i32 capacity, allocator* a, u32 (*hash)(K) = NULL);

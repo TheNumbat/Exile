@@ -80,6 +80,9 @@ extern "C" game_state* start_up(platform_api* api) { FUNC
 	LOG_INFO("Done with startup!");
 	LOG_POP_CONTEXT();
 
+	test t;
+	LOG_INFO_F("%", t);
+
 	state->running = true;
 	return state;
 }

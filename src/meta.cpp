@@ -28,7 +28,11 @@ struct _struct {
     string name;
     vector<string> mem_types;
     vector<string> mem_names;
-    bool templated;
+
+	set<string> templ_types;
+    set<vector<string>> instantiations;
+    map<string, vector<string>> member_templs;
+    bool templated = false, skip = false;
 };
 
 struct _token {
@@ -47,7 +51,95 @@ vector<_token> lib_includes;
 string path;
 ofstream fout;
 
+void struct_out_template(const string& name, vector<string> types) {
+
+    auto entry = _structs.find(name);
+    _struct& _s = entry->second;
+
+    if(_s.skip) return;
+
+    if(_s.instantiations.find(types) != _s.instantiations.end()) {
+        return;
+    }
+    _s.instantiations.insert(types);
+    _struct s = _s;
+
+    string nametype = s.name + "<";
+    for(i32 i = 0; i < types.size(); i++) {
+        nametype += types[i];
+        if(i != types.size() - 1) {
+            nametype += ",";
+        } 
+    }
+    nametype += ">";
+
+    string __name__ = "__" + s.name + "__";
+    fout << endl
+         << "\t{" << endl
+         << "#define " << __name__ << " " << nametype << endl
+         << "\t\t// " << s.name << endl
+         << "\t\t_type_info " << s.name << "_t;" << endl
+         << "\t\t" << s.name << "_t.type_type = Type::_struct;" << endl
+         << "\t\t" << s.name << "_t.size = sizeof(" << __name__ << ");" << endl;
+
+    map<string, i32> templs;
+    i32 i_templs = 0;
+    for(i32 i = 0; i < s.mem_types.size(); i++) {
+        string mtype = s.mem_types[i];
+        bool ptr = false;
+        if(mtype.back() == '*') {
+            mtype.pop_back();
+            ptr = true;
+        }
+        if (s.templ_types.find(mtype) != s.templ_types.end()) {
+            if (templs.find(mtype) == templs.end()) {
+                templs.insert({ mtype, i_templs });
+                mtype = types[i_templs];
+                ++i_templs;
+            }
+            else {
+                mtype = types[templs.find(mtype)->second];
+            }
+        }
+        if(ptr) mtype.push_back('*');
+
+        string mname = s.mem_names[i];
+        if(s.member_templs.find(mname) != s.member_templs.end()) {
+            auto entry = s.member_templs.find(mname);
+            // vector<string> inst = entry->second;
+            // for(string& str : inst) {
+            //     str = types[templs.find(str)->second];
+            // }
+            struct_out_template(mtype, types);
+            mtype += '<';
+            for(i32 i = 0; i < types.size(); i++) {
+                mtype += types[i];
+                if(i < types.size() - 1) {
+                    mtype += ",";
+                }
+            }
+            mtype += '>';
+        }
+
+        fout << "\t\t" << s.name << "_t._struct.member_types[" << i << "] = TYPEINFO("
+             << mtype << ");" << endl;
+
+        fout << "\t\t" << s.name << "_t._struct.member_names[" << i << "] = string_literal(\""
+             << mname << "\");" << endl;
+
+        fout << "\t\t" << s.name << "_t._struct.member_offsets[" << i << "] = offsetof("
+             << __name__ << ", " << mname << ");" << endl;
+    }
+    fout << "\t\t" << s.name << "_t._struct.member_count = " << s.mem_types.size() << ";" << endl
+         << "\t\t" << s.name << "_t.name = string_literal(\"" << nametype << "\");" << endl;
+    fout << "\t\t" << s.name << "_t.hash = (u64)typeid(" << __name__ << ").hash_code();" << endl
+         << "\t\tmap_insert(&type_table, " << s.name << "_t.hash, " << s.name << "_t, false);" << endl
+         << "#undef " << __name__ << endl
+         << "\t}" << endl;
+}
+
 void struct_out(const _struct& s) {
+    if(s.skip) return;
     if(!s.templated) {
         fout << endl
              << "\t{" << endl
@@ -57,16 +149,36 @@ void struct_out(const _struct& s) {
              << "\t\t" << s.name << "_t.size = sizeof(" << s.name << ");" << endl;
 
         for(i32 i = 0; i < s.mem_types.size(); i++) {
+
+            string type = s.mem_types[i];
+            string name = s.mem_names[i];
+			bool ptr = false;
+			if (type.back() == '*') {
+				type.pop_back();
+				ptr = true;
+			}
+            if(s.member_templs.find(name) != s.member_templs.end()) {
+                auto entry = s.member_templs.find(name);
+                struct_out_template(type, entry->second);
+                type += '<';
+                for(i32 i = 0; i < entry->second.size(); i++) {
+                    type += entry->second[i];
+                    if(i < entry->second.size() - 1) {
+                        type += ",";
+                    }
+                }
+                type += '>';
+            }
+			if (ptr) type.push_back('*');
+
             fout << "\t\t" << s.name << "_t._struct.member_types[" << i << "] = TYPEINFO("
-                 << s.mem_types[i] << ");" << endl;
-        }
-        for(i32 i = 0; i < s.mem_names.size(); i++) {
+                 << type << ");" << endl;
+
             fout << "\t\t" << s.name << "_t._struct.member_names[" << i << "] = string_literal(\""
-                 << s.mem_names[i] << "\");" << endl;
-        }
-        for(i32 i = 0; i < s.mem_names.size(); i++) {
+                 << name << "\");" << endl;
+
             fout << "\t\t" << s.name << "_t._struct.member_offsets[" << i << "] = offsetof("
-                 << s.name << ", " << s.mem_names[i] << ");" << endl;
+                 << s.name << ", " << name << ");" << endl;
         }
         fout << "\t\t" << s.name << "_t._struct.member_count = " << s.mem_types.size() << ";" << endl
              << "\t\t" << s.name << "_t.name = string_literal(\"" << s.name << "\");" << endl;
@@ -74,41 +186,6 @@ void struct_out(const _struct& s) {
              << "\t\tmap_insert(&type_table, " << s.name << "_t.hash, " << s.name << "_t, false);" << endl
              << "\t}" << endl;
     }
-}
-
-void struct_out_template(const string& name, const string& type) {
-
-    auto entry = _structs.find(name);
-    _struct s = entry->second;
-
-    string nametype = s.name + "<" + type + ">";
-
-    fout << endl
-         << "\t{" << endl
-         << "\t\t// " << s.name << endl
-         << "\t\t_type_info " << s.name << "_t;" << endl
-         << "\t\t" << s.name << "_t.type_type = Type::_struct;" << endl
-         << "\t\t" << s.name << "_t.size = sizeof(" << nametype << ");" << endl;
-
-    for(i32 i = 0; i < s.mem_types.size(); i++) {
-        string mtype = s.mem_types[i];
-        if(mtype == "T") mtype = type;
-        fout << "\t\t" << s.name << "_t._struct.member_types[" << i << "] = TYPEINFO("
-             << mtype << ");" << endl;
-    }
-    for(i32 i = 0; i < s.mem_names.size(); i++) {
-        fout << "\t\t" << s.name << "_t._struct.member_names[" << i << "] = string_literal(\""
-             << s.mem_names[i] << "\");" << endl;
-    }
-    for(i32 i = 0; i < s.mem_names.size(); i++) {
-        fout << "\t\t" << s.name << "_t._struct.member_offsets[" << i << "] = offsetof("
-             << nametype << ", " << s.mem_names[i] << ");" << endl;
-    }
-    fout << "\t\t" << s.name << "_t._struct.member_count = " << s.mem_types.size() << ";" << endl
-         << "\t\t" << s.name << "_t.name = string_literal(\"" << nametype << "\");" << endl;
-    fout << "\t\t" << s.name << "_t.hash = (u64)typeid(" << nametype << ").hash_code();" << endl
-         << "\t\tmap_insert(&type_table, " << s.name << "_t.hash, " << s.name << "_t, false);" << endl
-         << "\t}" << endl;
 }
 
 void load(string file) {
@@ -171,7 +248,7 @@ i32 main(i32 argc, char** argv) {
         return 1;
     }
 
-    fout.open("w:/src/meta_types.h");
+    fout.open("../src/meta_types.h");
 
     if(!fout.good()) {
     	printf("failed to create file meta_types.h\n");
@@ -192,22 +269,34 @@ i32 main(i32 argc, char** argv) {
     	_token& t = all_tokens[i];
 
         bool templated = false;
+        set<string> maybe_templ_types;
+        map<string, vector<string>> maybe_mem_templ;
     	if(t.str == "template") {
-            if(all_tokens[i+1].str == "<") {
-        		do {
-        			t = all_tokens[++i];
-    			} while (t.str != "struct" && t.str != "union" && t.str != ";");
+            if(all_tokens[i+1].str == "<") { // definition
+				++i;
+                do {
+                    t = all_tokens[++i];
+                    if(t.str == "typename") {
+						t = all_tokens[++i];
+                        maybe_templ_types.insert(t.str);
+                    }
+                    t = all_tokens[++i];
+                } while(t.str == ",");
+    			while (t.str != "struct" && t.str != "union" && t.str != ";") t = all_tokens[++i];
                 templated = true;
-            } else {
+            } else { // instantiation
                 t = all_tokens[++i];
                 string name = t.str;
                 t = all_tokens[++i];
                 if(t.str == "<") {
+                    vector<string> types;
+                    do {
+                        t = all_tokens[++i];
+                        types.push_back(t.str);
+                        t = all_tokens[++i];
+                    } while(t.str == ",");
                     t = all_tokens[++i];
-                    string type = t.str;
-                    t = all_tokens[++i];
-                    t = all_tokens[++i];
-                    struct_out_template(name, type);
+                    struct_out_template(name, types);
                 } else {
                     do {
                         t = all_tokens[++i];
@@ -215,7 +304,6 @@ i32 main(i32 argc, char** argv) {
                 }
             }
     	}
-        bool skip = false;
     	if((t.str == "struct" || t.str == "union") && all_tokens[i + 1].str != "{") {
     		if(all_tokens[i + 2].str == ";") continue;
             
@@ -223,6 +311,8 @@ i32 main(i32 argc, char** argv) {
 			string name = all_tokens[i + 1].str;
 			s.name = name;
             s.templated = templated;
+            s.templ_types = maybe_templ_types;
+            s.member_templs = maybe_mem_templ;
 
             while(all_tokens[i].str != "{") i++;
 
@@ -233,7 +323,7 @@ i32 main(i32 argc, char** argv) {
                 while(all_tokens[j].token.type == CPP_TOKEN_COMMENT) {
                     if(all_tokens[j++].str.find("@NORTTI") != string::npos) {
                         cout << all_tokens[j].str << endl;
-                        skip = true;
+                        s.skip = true;
                         break;
                     }
                 }
@@ -249,15 +339,30 @@ i32 main(i32 argc, char** argv) {
     				continue;
     			}
 
-    			if(all_tokens[j + 1].str == "*") {
-    				type += all_tokens[++j].str;	
-    			}
-				name = all_tokens[++j].str; // skip template member
-                if(name == "<") {
-                    while(all_tokens[++j].str != ";");
-                    while(all_tokens[j+1].token.type == CPP_TOKEN_COMMENT) j++;
-                    continue;
+                if(all_tokens[j + 1].str == "*") {
+                    type += all_tokens[++j].str;    
                 }
+
+				name = all_tokens[++j].str; // template member
+                if(name == "<") {
+                    vector<string> types;
+                    do {
+                        t = all_tokens[++j];
+                        types.push_back(t.str);
+                        t = all_tokens[++j];
+                        if(t.str == "*") {
+                            types.back() += t.str;
+                            t = all_tokens[++j];
+                        }
+                    } while(t.str == ",");
+                    if(all_tokens[j + 1].str == "*") {
+                       type += all_tokens[++j].str;
+                    }
+                    name = all_tokens[++j].str;
+                    s.member_templs.insert({name, types});
+                    while(all_tokens[j+1].token.type == CPP_TOKEN_COMMENT) j++;
+                }
+
 				if(name == "(" || all_tokens[j + 1].str == "(" || type == "~") {
 					if(all_tokens[j + 1].str == "*") { // skip function pointer
 						while(all_tokens[++j].str != ";");
@@ -301,10 +406,8 @@ i32 main(i32 argc, char** argv) {
     			s.mem_names.push_back(name);
     		}
 
-            if(!skip) {
-                struct_out(s);
-                _structs.insert({s.name, s});
-            }
+            struct_out(s);
+            _structs.insert({s.name, s});
     	}
 
     	if(t.str == "enum") {

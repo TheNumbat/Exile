@@ -2,7 +2,9 @@
 #pragma once
 
 template<typename T>
-struct stack {vector<T> contents;};
+struct stack {
+	vector<T> contents;
+};
 
 template<typename T> stack<T> make_stack(u32 capacity, allocator* a);
 template<typename T> stack<T> make_stack(u32 capacity = 0);

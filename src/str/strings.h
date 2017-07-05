@@ -1,12 +1,11 @@
 
 #pragma once
 
-struct string {
+struct string { // @NORTTI - hardcoded
 	char* c_str = NULL;
 	u32 cap	    = 0;	// capacity
 	u32 len		= 0;	// including null terminator
 };
-struct allocator;
 
 u32 hash_strings(string one, string two);
 u32 hash_string(string str);
@@ -55,6 +54,7 @@ u32 print_u64(string s, u32 idx, u8 base, u64 val, bool size = false);
 // print any type (calls specific prints + recurs on structure)
 template<typename T> u32 print_type(string s, u32 idx, T& val, _type_info* info = NULL, bool size = false);
 
+struct allocator;
 string make_string(u32 cap, allocator* a);
 string make_copy_string(string src, allocator* a);
 void free_string(string s, allocator* a);
