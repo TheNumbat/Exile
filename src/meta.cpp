@@ -122,7 +122,7 @@ void struct_out_template(const string& name, vector<string> types) {
         }
 
         fout << "\t\t" << s.name << "_t._struct.member_types[" << i << "] = TYPEINFO("
-             << mtype << ");" << endl;
+             << mtype << ") ? TYPEINFO(" << mtype << ")->hash : 0;" << endl;
 
         fout << "\t\t" << s.name << "_t._struct.member_names[" << i << "] = string_literal(\""
              << mname << "\");" << endl;
@@ -172,7 +172,7 @@ void struct_out(const _struct& s) {
 			if (ptr) type.push_back('*');
 
             fout << "\t\t" << s.name << "_t._struct.member_types[" << i << "] = TYPEINFO("
-                 << type << ");" << endl;
+                 << type << ") ? TYPEINFO(" << type << ")->hash : 0;" << endl;
 
             fout << "\t\t" << s.name << "_t._struct.member_names[" << i << "] = string_literal(\""
                  << name << "\");" << endl;

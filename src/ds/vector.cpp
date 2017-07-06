@@ -172,6 +172,10 @@ void vector_resize(vector<T>* v, u32 capacity, bool copy) { FUNC
 	if(capacity > 0) {
 
 		new_memory = (T*)v->alloc->allocate_(capacity * sizeof(T), v->alloc, CONTEXT);
+		
+#ifdef CONSTRUCT_DS_ELEMENTS
+		new (new_memory) T[capacity]();
+#endif
 	}
 
 	if(copy && v->memory && new_memory) {

@@ -27,21 +27,21 @@ struct Type_int_info {
 struct Type_float_info {};
 struct Type_bool_info {};
 struct Type_ptr_info {
-	_type_info* to;
+	u64 to;
 };
 struct Type_func_info {
-	_type_info* param_types[16];
+	u64 		param_types[16];
 	string 		param_names[16];
 	u32 		param_count;
 };
 struct Type_struct_info {
-	_type_info* member_types[32];
+	u64 		member_types[32];
 	string 		member_names[32];
 	u32 		member_offsets[32];
 	u32 		member_count;
 };
 struct Type_enum_info {
-	_type_info* base_type;
+	u64 base_type;
 	string 		member_names[128];
 	u64			member_values[128];
 	u32 		member_count;
@@ -73,7 +73,8 @@ thread_local map<u64,_type_info> type_table;
 
 void make_meta_types();
 
-#define TYPEINFO(...) _get_type_info<__VA_ARGS__>().get_type_info();
+#define TYPEINFO(...) _get_type_info<__VA_ARGS__>().get_type_info()
+#define TYPEINFO_H(h) map_try_get(&type_table, h)
 template<typename T>
 struct _get_type_info { 
 	_type_info* get_type_info() {
@@ -96,11 +97,13 @@ struct _get_type_info<T*> {
 
 		if (to) {
 			ptr_t.name = to->name;
+			ptr_t._ptr.to = to->hash;
 		}
 		else {
 			ptr_t.name = string_literal("UNDEF");
+			ptr_t._ptr.to = 0;
 		}
-		ptr_t._ptr.to 	= to;
+		
 		ptr_t.hash = (u64)typeid(T*).hash_code();
 		return map_insert(&type_table, ptr_t.hash, ptr_t, false);
 	}

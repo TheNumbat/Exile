@@ -1,8 +1,7 @@
 
 #pragma once
 
-// don't store addresses of elements in a map, they will be invalidated if the map grows
-// (unless you know the map will never grow)
+// don't store addresses of elements in a map - at all. Pls.
 
 const f32 MAP_MAX_LOAD_FACTOR = 0.9f;
 
@@ -15,7 +14,7 @@ struct map_element {
 	// TODO(max): test if storing hashes in a separate array performs better
 	// TODO(max): use less storage than a bool to signify occupation
 	bool occupied = false;
-	u32 hash_bucket;
+	u32 hash_bucket = 0;
 	K key;
 	V value;
 };

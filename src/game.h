@@ -1,10 +1,6 @@
 
 #pragma once
 
-struct test {
-	vector<i32> v;
-};
-
 struct game_state {
 	platform_api* api = NULL;
 	

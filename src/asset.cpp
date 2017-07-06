@@ -148,7 +148,7 @@ void load_asset_store(asset_store* as, string path) { FUNC
 
 				a.bitmap.width = bitmap->width;
 				a.bitmap.height = bitmap->height;
-				a.bitmap.mem = (u8*)(current_asset) + sizeof(file_asset_header) + sizeof(file_asset_bitmap);
+				a.mem = (u8*)(current_asset) + sizeof(file_asset_header) + sizeof(file_asset_bitmap);
 
 				map_insert(&as->assets, a.name, a);
 
@@ -170,7 +170,7 @@ void load_asset_store(asset_store* as, string path) { FUNC
 
 				a.font.glyphs = make_array_memory<file_glyph_data>(font->num_glyphs, (u8*)font + sizeof(file_asset_font));
 
-				a.font.mem = (u8*)font + sizeof(file_asset_font) + (font->num_glyphs * sizeof(file_glyph_data));
+				a.mem = (u8*)font + sizeof(file_asset_font) + (font->num_glyphs * sizeof(file_glyph_data));
 
 				map_insert(&as->assets, a.name, a);
 

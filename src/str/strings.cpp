@@ -177,13 +177,13 @@ u32 print_type(string s, u32 idx, T& val, _type_info* info, bool size) { FUNC
 	case Type::_ptr: {
 		idx = string_insert(s, idx, string_literal("*{"), size);
 		if(*(u8**)&val == NULL) {
-			idx = string_insert(s, idx, info->_ptr.to->name, size);
+			idx = string_insert(s, idx, TYPEINFO_H(info->_ptr.to)->name, size);
 			idx = string_insert(s, idx, string_literal("|NULL"), size);
 		} else if(info->_ptr.to == NULL) {
 			idx = string_insert(s, idx, string_literal("UNDEF|"), size);
 			idx = print_u64(s, idx, 16, (u64)(*(u8**)&val), size);
 		} else {
-			idx = print_type(s, idx, **(u8**)&val, info->_ptr.to, size);
+			idx = print_type(s, idx, **(u8**)&val, TYPEINFO_H(info->_ptr.to), size);
 			idx = string_insert(s, idx, '|', size);
 			idx = print_u64(s, idx, 16, (u64)(*(u8**)&val), size);
 		}
@@ -198,7 +198,7 @@ u32 print_type(string s, u32 idx, T& val, _type_info* info, bool size) { FUNC
 			idx = string_insert(s, idx, info->_struct.member_names[j], size);
 			idx = string_insert(s, idx, string_literal(" : "), size);
 
-			_type_info* member = info->_struct.member_types[j];
+			_type_info* member = TYPEINFO_H(info->_struct.member_types[j]);
 			u8* place = (u8*)&val + info->_struct.member_offsets[j];
 
 			if(member) {

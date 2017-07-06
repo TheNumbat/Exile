@@ -319,7 +319,7 @@ void texture_load_bitmap_from_font(texture* tex, asset* font) { FUNC
 
 	glBindTextureUnit(0, tex->handle);
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, font->font.width, font->font.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, font->font.mem);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, font->font.width, font->font.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, font->mem);
 	
 	glGenerateMipmap(GL_TEXTURE_2D);
 
@@ -335,7 +335,7 @@ void texture_load_bitmap_from_font(texture* tex, asset_store* as, string name) {
 
 	glBindTextureUnit(0, tex->handle);
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, a->font.width, a->font.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, a->font.mem);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, a->font.width, a->font.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, a->mem);
 	
 	glGenerateMipmap(GL_TEXTURE_2D);
 
@@ -350,7 +350,7 @@ void texture_load_bitmap(texture* tex, asset_store* as, string name) { FUNC
 
 	glBindTextureUnit(0, tex->handle);
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, a->bitmap.width, a->bitmap.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, a->bitmap.mem);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, a->bitmap.width, a->bitmap.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, a->mem);
 	
 	glGenerateMipmap(GL_TEXTURE_2D);
 

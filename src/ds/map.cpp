@@ -133,6 +133,7 @@ V* map_insert(map<K,V>* m, K key, V value, bool grow_if_needed) { FUNC
 
 	u32 index = ele.hash_bucket;
 	u32 probe_length = 0;
+	map_element<K,V>* placed_adr = NULL;
 	for(;;) {
 		if(vector_get(&m->contents, index)->occupied) {
 
@@ -143,8 +144,13 @@ V* map_insert(map<K,V>* m, K key, V value, bool grow_if_needed) { FUNC
 
 			if((u32)occupied_probe_length < probe_length) {
 
-				map_element<K,V> temp = *vector_get(&m->contents, index);
-				*vector_get(&m->contents, index) = ele;
+				map_element<K,V>* to_swap = vector_get(&m->contents, index);
+				if(!placed_adr) {
+					placed_adr = to_swap;
+				}
+
+				map_element<K,V> temp = *to_swap;
+				*to_swap = ele;
 				ele = temp;
 
 				probe_length = occupied_probe_length;
@@ -163,6 +169,9 @@ V* map_insert(map<K,V>* m, K key, V value, bool grow_if_needed) { FUNC
 			*vector_get(&m->contents, index) = ele;
 			m->size++;
 
+			if(placed_adr) {
+				return &placed_adr->value;
+			}
 			return &(vector_get(&m->contents, index)->value);
 		}
 	}

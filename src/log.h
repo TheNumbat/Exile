@@ -6,7 +6,8 @@
 // the arena is freed after the message is output.
 
 enum class log_level : u8 {
-	alloc = 0,	// super gratuitous allocation info
+	none = 0,
+	alloc,		// super gratuitous allocation info
 	ogl,		// gratuitous opengl info
 	debug,		// gratuitous info
 	info,		// relevant info
@@ -17,7 +18,7 @@ enum class log_level : u8 {
 
 struct log_message {
 	string msg;
-	log_level level;
+	log_level level = log_level::none;
 	
 	array<code_context> call_stack; // snapshot
 	string thread_name;

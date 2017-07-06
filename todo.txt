@@ -23,7 +23,6 @@ immediate to do:
 			function
 			templated members
 		printf
-			float
 			enum
 			array
 			function

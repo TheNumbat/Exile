@@ -78,24 +78,23 @@ typedef file_glyph_data glyph_data; // is this OK to be packed?
 struct _asset_bitmap {
 	i32 width = 0;
 	i32 height = 0;
-	u8* mem = NULL; // RGBA8888
 };
 
 struct _asset_font {
-	f32 point;
-	f32 ascent;
-	f32 descent;
-	f32 linegap;
-	f32 linedist;
-	i32 width;
-	i32 height;
+	f32 point    = 0;
+	f32 ascent   = 0;
+	f32 descent  = 0;
+	f32 linegap  = 0;
+	f32 linedist = 0;
+	i32 width    = 0;
+	i32 height   = 0;
 	array<file_glyph_data> 	glyphs;
-	u8* mem 		= NULL;
 };
 
 struct asset {
 	string name;
 	asset_type type = asset_type::none;
+	u8* mem = NULL;
 	union {
 		_asset_bitmap 	bitmap;
 		_asset_font 	font;
@@ -111,7 +110,7 @@ struct asset_store {
 	string path;
 	platform_file_attributes last;
 
-	allocator* 			alloc;
+	allocator* 			alloc = NULL;
 };
 
 asset_store make_asset_store(allocator* a); // allocations are done in load
