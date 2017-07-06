@@ -190,6 +190,7 @@ u32 print_type(string s, u32 idx, T& val, _type_info* info, bool size) { FUNC
 		idx = string_insert(s, idx, '}', size);
 	} break;
 	case Type::_func: {
+		idx = string_insert(s, idx, string_literal("FUNC"), size);
 	} break;
 	case Type::_struct: {
 		idx = string_insert(s, idx, info->name, size);
@@ -220,6 +221,8 @@ u32 print_type(string s, u32 idx, T& val, _type_info* info, bool size) { FUNC
 		idx = string_insert(s, idx, '}', size);
 	} break;
 	case Type::_enum: {
+		idx = string_insert(s, idx, info->name, size);
+		idx = string_insert(s, idx, string_literal("{}"), size);
 	} break;
 	case Type::_string: {
 		if (((string*)&val)->len) {

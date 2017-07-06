@@ -74,7 +74,7 @@ thread_local map<u64,_type_info> type_table;
 void make_meta_types();
 
 #define TYPEINFO(...) _get_type_info<__VA_ARGS__>().get_type_info()
-#define TYPEINFO_H(h) map_try_get(&type_table, h)
+#define TYPEINFO_H(h) (h ? map_try_get(&type_table, h) : 0)
 template<typename T>
 struct _get_type_info { 
 	_type_info* get_type_info() {

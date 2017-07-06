@@ -420,8 +420,8 @@ i32 main(i32 argc, char** argv) {
     			 << "\t\t" << ename << "_t.type_type = Type::_enum;" << endl
     			 << "\t\t" << ename << "_t.size = sizeof(" << ename << ");" << endl
                  << "\t\t" << ename << "_t.name = string_literal(\"" << ename << "\");" << endl
-    			 << "\t\tu64 hash = (u64)typeid(" << ename << ").hash_code();" << endl
-    			 << "\t\tmap_insert(&type_table, hash, " << ename << "_t, false);" << endl
+                 << "\t\t" << ename << "_t.hash = (u64)typeid(" << ename << ").hash_code();" << endl
+                 << "\t\tmap_insert(&type_table, " << ename << "_t.hash, " << ename << "_t, false);" << endl
     			 << "\t}" << endl;
     	}
     }

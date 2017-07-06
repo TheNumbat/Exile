@@ -37,7 +37,7 @@ struct platform_file_attributes {
 };
 
 struct platform_thread_id {
-	// Transparent - printf %i able
+	// Transparent
 	DWORD id 	= NULL;
 };
 

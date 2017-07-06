@@ -21,7 +21,6 @@ immediate to do:
 			array
 			enum
 			function
-			templated members
 		printf
 			enum
 			array
