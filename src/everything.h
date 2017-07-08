@@ -26,7 +26,7 @@ struct code_context {
 #define BOUNDS_CHECK
 #define BLOCK_ON_ERROR
 // #define ZERO_ARENA
-#define CONSTRUCT_DS_ELEMENTS // should remove need for zero-cleared allocation
+// #define CONSTRUCT_DS_ELEMENTS // should remove need for zero-cleared allocation
 #endif
 
 #define MAX_CALL_STACK_DEPTH 256

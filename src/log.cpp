@@ -67,6 +67,7 @@ void logger_push_context(log_manager* log, string context, code_context fake) { 
 
 void logger_pop_context(log_manager* log) { FUNC_NOCS
 
+	LOG_DEBUG_ASSERT(this_thread_data.call_stack_depth > 0);
 	this_thread_data.call_stack_depth--;
 }
 
@@ -118,11 +119,11 @@ void logger_msgf(log_manager* log, string fmt, log_level level, code_context con
 		lmsg->publisher = context;
 		lmsg->level = level;
 
-		lmsg->call_stack = make_array<code_context>(this_thread_data.call_stack_depth, &lmsg->arena);
+		lmsg->call_stack = make_array<code_context>(this_thread_data.call_stack_depth);
 		lmsg->thread_name = make_copy_string(this_thread_data.name);
 		memcpy(this_thread_data.call_stack, lmsg->call_stack.memory, sizeof(code_context) * this_thread_data.call_stack_depth);
 
-		global_state->api->platform_release_mutex(&log->queue_mutex);		
+		global_state->api->platform_release_mutex(&log->queue_mutex);
 		global_state->api->platform_signal_semaphore(&log->logging_semaphore, 1);
 
 		if(level == log_level::error) {

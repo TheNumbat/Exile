@@ -4,6 +4,7 @@
 // currently, each message enqueue allocates one 512-byte arena allocation to hold
 // a copy of the message, the thread context stack, and the thread name. 
 // the arena is freed after the message is output.
+// TODO(max): just allocate the requisite amount, or better use a free list to minimize allocations
 
 enum class log_level : u8 {
 	none = 0,
