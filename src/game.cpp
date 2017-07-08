@@ -1,4 +1,5 @@
 
+#include <iostream>
 #include "everything.h"
 
 extern "C" game_state* start_up(platform_api* api) { FUNC 
@@ -79,11 +80,6 @@ extern "C" game_state* start_up(platform_api* api) { FUNC
 
 	LOG_INFO("Done with startup!");
 	LOG_POP_CONTEXT();
-
-	// _type_info* t = TYPEINFO(_platform_event_key);
-	// string test = make_stringf(string_literal("%"), state);
-	// std::cout << test.c_str << std::endl;
-	// free_string(test);
 
 	state->running = true;
 	return state;

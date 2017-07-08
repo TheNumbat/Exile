@@ -32,7 +32,7 @@ u32 string_insert(string s, u32 idx, string ins, bool size = false);
 u32 string_insert(string s, u32 idx, char ins, bool size = false);
 
 // variadic template magic
-template<typename T, typename... Targs> inline T get_pack_first(T& val, Targs... args);
+template<typename T, typename... Targs> inline T& get_pack_first(T& val, Targs... args);
 inline u32 get_pack_first();
 template<typename T, typename... Targs> inline u32 _string_printf_fwd(string out, u32 idx, string fmt, bool size, T val, Targs... args);
 inline u32 _string_printf_fwd(string out, u32 idx, string fmt, bool size);

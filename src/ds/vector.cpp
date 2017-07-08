@@ -208,7 +208,7 @@ vector<T> make_vector_copy(vector<T> source) { FUNC
 }
 
 template<typename T>
-void vector_push(vector<T>* v, T value) { FUNC 
+T* vector_push(vector<T>* v, T value) { FUNC 
 
 	if(v->size == v->capacity) {
 
@@ -217,6 +217,8 @@ void vector_push(vector<T>* v, T value) { FUNC
 
 	v->memory[v->size] = value;
 	v->size++;
+
+	return v->memory + v->size - 1;
 }
 
 template<typename T>

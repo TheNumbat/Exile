@@ -411,8 +411,13 @@ i32 main(i32 argc, char** argv) {
     	}
 
     	if(t.str == "enum") {
+            
+            i += 2;
+    		string ename = all_tokens[i].str;
+            while(all_tokens[i].str != "{") i++;
 
-    		string ename = all_tokens[i+2].str;
+            // u64 val = 0;
+
     		fout << endl
     			 << "\t{" << endl
     			 << "\t\t// " << ename << endl
