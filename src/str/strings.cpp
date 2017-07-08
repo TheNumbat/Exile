@@ -1,5 +1,5 @@
 
-u32 parse_u32(string s, u32 idx, u32* used) {
+u32 parse_u32(string s, u32 idx, u32* used) { FUNC
 
 	u32 accum = 0;
 	char* place = s.c_str + idx;

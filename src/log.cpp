@@ -109,7 +109,7 @@ void logger_msgf(log_manager* log, string fmt, log_level level, code_context con
 
 	global_state->api->platform_aquire_mutex(&log->queue_mutex, -1);
 	queue_push(&log->message_queue, temp);
-	log_message* lmsg = queue_front(&log->message_queue);
+	log_message* lmsg = queue_back(&log->message_queue);
 
 	lmsg->arena = MAKE_ARENA("msg arena", 1024, log->alloc, true);
 	PUSH_ALLOC(&lmsg->arena) {
@@ -150,7 +150,7 @@ void logger_msg(log_manager* log, string msg, log_level level, code_context cont
 
 	global_state->api->platform_aquire_mutex(&log->queue_mutex, -1);
 	queue_push(&log->message_queue, temp);
-	log_message* lmsg = queue_front(&log->message_queue);
+	log_message* lmsg = queue_back(&log->message_queue);
 
 	lmsg->arena = MAKE_ARENA("msg arena", 1024, log->alloc, true);
 	PUSH_ALLOC(&lmsg->arena) {

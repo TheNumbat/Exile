@@ -49,6 +49,18 @@ T queue_pop(queue<T>* q) { FUNC
 }
 
 template<typename T>
+T* queue_back(queue<T>* q) { FUNC
+
+	if(q->contents.size > 0) {
+
+		return vector_back(&q->contents);
+	}
+
+	LOG_FATAL("Trying to get back of empty queue!");
+	return NULL;
+}
+
+template<typename T>
 T* queue_front(queue<T>* q) { FUNC
 
 	if(q->contents.size > 0) {

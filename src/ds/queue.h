@@ -14,4 +14,5 @@ template<typename T> void queue_push(queue<T>* q, T value);
 template<typename T> T queue_pop(queue<T>* q);
 
 template<typename T> T* queue_front(queue<T>* q);
+template<typename T> T* queue_back(queue<T>* q);
 template<typename T> bool queue_empty(queue<T>* q);
