@@ -49,6 +49,9 @@ void arena_destroy(arena_allocator* a, code_context context);
 #define	RESET_ARENA(a) arena_reset(a, CONTEXT) 
 void arena_reset(arena_allocator* a, code_context context);
 
+#define COPY_ARENA(n, a, src) arena_copy(string_literal(n), a, src, CONTEXT);
+arena_allocator arena_copy(string name, allocator* backing, arena_allocator src, code_context context);
+
 #define MAKE_ARENA_FROM_CONTEXT(n, size, s) make_arena_allocator_from_context(string_literal(n), size, s, CONTEXT) 
 arena_allocator make_arena_allocator_from_context(string name, u64 size, bool suppress, code_context context);
 

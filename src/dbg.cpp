@@ -18,9 +18,7 @@ dbg_manager make_dbg_manager(allocator* alloc) { FUNC
 void destroy_dbg_manager(dbg_manager* dbg) { FUNC
 
 	FORVEC(dbg->log_cache,
-		destroy_array(&it->call_stack);
-		free_string(it->thread_name, dbg->alloc);
-		free_string(it->msg, dbg->alloc);
+		DESTROY_ARENA(&it->arena);
 	)
 
 	destroy_vector(&dbg->log_cache);
@@ -34,16 +32,17 @@ void dbg_add_log(log_message* msg) { FUNC
 	if(dbg->log_cache.size == dbg->log_cache.capacity) {
 
 		log_message* m = vector_front(&dbg->log_cache);
-		destroy_array(&m->call_stack);
-		free_string(m->thread_name, dbg->alloc);
-		free_string(m->msg, dbg->alloc);
+		DESTROY_ARENA(&m->arena);
 		vector_pop_front(&dbg->log_cache);
 	}
 
 	log_message m = *msg;
-	m.call_stack = make_copy_array(&msg->call_stack, dbg->alloc);
-	m.thread_name = make_copy_string(msg->thread_name, dbg->alloc);
-	m.msg = make_copy_string(msg->msg, dbg->alloc);
+	m.arena = MAKE_ARENA("cmsg", msg->arena.size, dbg->alloc, msg->arena.suppress_messages);
+
+	m.call_stack = make_copy_array(&msg->call_stack, &m.arena);
+	m.thread_name = make_copy_string(msg->thread_name, &m.arena);
+	m.msg = make_copy_string(msg->msg, &m.arena);
+
 	vector_push(&dbg->log_cache, m);
 }
 

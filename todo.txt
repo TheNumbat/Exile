@@ -35,7 +35,6 @@ immediate to do:
 		pool allocator/free list?
 
 	UI
-		joint allocate cached log messages
 		stop sending mesh every frame (see OpenGL)
 		widget clipping/wrapping
 		text wrapping
