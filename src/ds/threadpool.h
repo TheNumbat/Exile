@@ -1,6 +1,8 @@
 
 #pragma once;
 
+// TODO(max): work-stealing thread local queues to minimize locking
+
 struct job {
 	i32 (*proc)(void*) = NULL;
 	void* data 		   = NULL;

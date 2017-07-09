@@ -2,21 +2,22 @@
 #include <typeinfo>
 
 enum class Type : u8 {
-	unkown,
+	_unkown,
 
 	_void,
 	_int,
 	_float,
 	_bool,
 	_ptr,		// generated on request (need to already have info of pointed-to type)
-	_func,		// unimplemented
+	_func,		// unimplemented (function pointer)
+	_array,		// unimplemented (static array)
 	_struct,
 	_enum,		// only name implemented
 
 	_string,
 	_vec,		// includes struct data - can't just use cast like string because template
 	_arr,		// ^
-	// _map,
+	_map,		// ^ | unimplemented (needs template parameter nesting)
 };
 
 struct _type_info;
@@ -35,6 +36,10 @@ struct Type_func_info {
 	string 		param_names[16];
 	u32 		param_count;
 };
+struct Type_array_info {
+	u64 of;
+	u64 length;
+};
 struct Type_struct_info {
 	u64 		member_types[32];
 	string 		member_names[32];
@@ -48,11 +53,14 @@ struct Type_enum_info {
 	// u32 			member_count;
 };
 struct Type_string_info {};
+typedef Type_struct_info Type_vec_info;
+typedef Type_struct_info Type_arr_info;
+typedef Type_struct_info Type_map_info;
 
 // TODO(max): reduce memory footprint; Type_enum_info takes up way too much space
 
 struct _type_info {
-	Type type_type 	= Type::unkown;
+	Type type_type 	= Type::_unkown;
 	u64 hash 				= 0;
 	u32 size 				= 0;
 	string name;
@@ -63,16 +71,18 @@ struct _type_info {
 		Type_bool_info   _bool;
 		Type_ptr_info    _ptr;
 		Type_func_info   _func;
+		Type_array_info	 _array;
 		Type_struct_info _struct;
 		Type_enum_info   _enum;
 		Type_string_info _string;
+		Type_vec_info	 _vec;
+		Type_arr_info	 _arr;
+		Type_map_info	 _map;
 	};
 	_type_info() : _void(), _int(), _float(), _bool(), _ptr(), _func(), _struct(), _enum(), _string() {}
 };
 
 thread_local map<u64,_type_info> type_table;
-
-void make_meta_types();
 
 #define TYPEINFO(...) _get_type_info<__VA_ARGS__>::get_type_info()
 #define TYPEINFO_H(h) (h ? map_try_get(&type_table, h) : 0)
@@ -110,6 +120,7 @@ struct _get_type_info<T*> {
 	}
 };
 
+void make_meta_types();
 void make_type_table(allocator* alloc) {
 
 	type_table = make_map<u64,_type_info>(256, alloc, &hash_u64);

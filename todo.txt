@@ -59,12 +59,11 @@ immediate to do:
 		extra kerning pairs
 
 	allocators
-		better names, force specific names for DS allocators
 
 	platform
 		fix cursor
 		wgl extension testing/loading
-		file change watcher/callback system
+		file change watcher/callback system - maybe not?
 		linux platform layer
 
 	OpenGl
@@ -84,8 +83,6 @@ immediate to do:
 		paging
 		world storage (3D chunks?)
 
-	Make concurrent vector/array/stack/hash map 
-		use for allocator stacks, logging contexts, job/logging queue
-		basically wherever we use a mutex right now.
+	Make concurrent data structures
 	
 

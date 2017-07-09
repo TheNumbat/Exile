@@ -34,10 +34,10 @@ void platform_free(void* mem, void* this_data, code_context context);
 platform_allocator make_platform_allocator(string name, code_context context);
 
 struct arena_allocator : public allocator {
-	allocator* backing;
-	void* memory 	= NULL;
-	u64 used		= 0;
-	u64 size		= 0;
+	allocator* backing 	= NULL;
+	void* memory 		= NULL;
+	u64 used			= 0;
+	u64 size			= 0;
 };
 
 void* arena_allocate(u64 bytes, void* this_data, code_context context);

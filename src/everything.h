@@ -26,7 +26,7 @@ struct code_context {
 #define BOUNDS_CHECK
 #define BLOCK_ON_ERROR
 // #define ZERO_ARENA
-// #define CONSTRUCT_DS_ELEMENTS // should remove need for zero-cleared allocation
+// #define CONSTRUCT_DS_ELEMENTS // should remove need for zero-cleared allocation (untested)
 #endif
 
 #define MAX_CALL_STACK_DEPTH 256
@@ -37,7 +37,7 @@ struct thread_data {
 	code_context start_context;
 
 	code_context call_stack[MAX_CALL_STACK_DEPTH];
-	i32 call_stack_depth = 0;
+	u32 call_stack_depth = 0;
 };
 
 thread_local thread_data this_thread_data;
@@ -50,10 +50,10 @@ thread_local thread_data this_thread_data;
 #define FORARR(a,code) 		FORVECCAP(a,code)
 #define INC__COUNTER__ 		{u32 i = __COUNTER__; i = 0;}
 
-string 	np_substring(string str, u32 start, u32 end);
-i32 	np_string_last_slash(string str);
-string 	np_string_literal(const char* literal);
-string 	np_string_from_c_str(char* c_str);
+string np_substring(string str, u32 start, u32 end);
+i32    np_string_last_slash(string str);
+string np_string_literal(const char* literal);
+string np_string_from_c_str(char* c_str);
 
 #define CONTEXT _make_context(np_string_literal(__FILE__), np_string_literal(__func__), __LINE__)
 
