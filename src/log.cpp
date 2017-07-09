@@ -111,10 +111,13 @@ void logger_msgf(log_manager* log, string fmt, log_level level, code_context con
 	queue_push(&log->message_queue, temp);
 	log_message* lmsg = queue_back(&log->message_queue);
 
-	lmsg->arena = MAKE_ARENA("msg", 1024, log->alloc, true);
+	u32 msg_len = size_stringf(fmt, args...);
+	u32 arena_size = msg_len + this_thread_data.name.len + this_thread_data.call_stack_depth * sizeof(code_context);
+	lmsg->arena = MAKE_ARENA("msg", arena_size, log->alloc, true);
+
 	PUSH_ALLOC(&lmsg->arena) {
 
-		lmsg->msg = make_stringf(fmt, args...);
+		lmsg->msg = make_stringf_len(msg_len, fmt, args...);
 
 		lmsg->publisher = context;
 		lmsg->level = level;
@@ -152,7 +155,9 @@ void logger_msg(log_manager* log, string msg, log_level level, code_context cont
 	queue_push(&log->message_queue, temp);
 	log_message* lmsg = queue_back(&log->message_queue);
 
-	lmsg->arena = MAKE_ARENA("msg", 1024, log->alloc, true);
+	u32 arena_size = msg.len + this_thread_data.name.len + this_thread_data.call_stack_depth * sizeof(code_context);
+	lmsg->arena = MAKE_ARENA("msg", arena_size, log->alloc, true);
+
 	PUSH_ALLOC(&lmsg->arena) {
 
 		lmsg->msg = make_copy_string(msg);

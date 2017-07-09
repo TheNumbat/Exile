@@ -39,6 +39,7 @@ inline u32 _string_printf_fwd(string out, u32 idx, string fmt, bool size);
 
 // more magic, but only for typed print
 template<typename... Targs> string make_stringf(string fmt, Targs... args);
+template<typename... Targs> string make_stringf_len(u32 len, string fmt, Targs... args);
 template<typename... Targs> u32 size_stringf(string fmt, Targs... args);
 
 template<typename... Targs> void string_printf(string out, string fmt, Targs... args);

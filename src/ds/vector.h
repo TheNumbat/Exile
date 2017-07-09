@@ -4,10 +4,10 @@
 // don't take addresses of elements in a vector, they will be invalidated if the vector grows
 
 template<typename T>
-struct vector {
-	T* memory 	 	 = NULL;
+struct vector { // @VEC
 	u32 size 	 	 = 0;
 	u32 capacity 	 = 0;
+	T* memory 	 	 = NULL;
 	allocator* alloc = NULL;
 };
 

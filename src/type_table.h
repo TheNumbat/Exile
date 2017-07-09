@@ -8,14 +8,15 @@ enum class Type : u8 {
 	_int,
 	_float,
 	_bool,
-	_ptr,		// only when used in struct
-	_func,		// only when used in struct
+	_ptr,		// generated on request (need to already have info of pointed-to type)
+	_func,		// unimplemented
 	_struct,
-	_enum,
+	_enum,		// only name implemented
 
 	_string,
-	// vec,	these are templates...
-	// map,	these are templates...
+	_vec,		// includes struct data - can't just use cast like string because template
+	_arr,		// ^
+	// _map,
 };
 
 struct _type_info;
@@ -42,9 +43,9 @@ struct Type_struct_info {
 };
 struct Type_enum_info {
 	u64 base_type;
-	string 		member_names[128];
-	u64			member_values[128];
-	u32 		member_count;
+	// string 		member_names[128];
+	// u64			member_values[128];
+	// u32 			member_count;
 };
 struct Type_string_info {};
 

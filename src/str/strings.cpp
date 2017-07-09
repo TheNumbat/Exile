@@ -192,6 +192,8 @@ u32 print_type(string s, u32 idx, T& val, _type_info* info, bool size) { FUNC
 	case Type::_func: {
 		idx = string_insert(s, idx, string_literal("FUNC"), size);
 	} break;
+	case Type::_vec: {}
+	case Type::_arr: {}
 	case Type::_struct: {
 		idx = string_insert(s, idx, info->name, size);
 		idx = string_insert(s, idx, string_literal("{"), size);
@@ -381,6 +383,18 @@ template<typename... Targs>
 u32 size_stringf(string fmt, Targs... args) {
 	string tmp;
 	return _string_printf(tmp, 0, fmt, true, args...);
+}
+
+template<typename... Targs> 
+string make_stringf_len(u32 len, string fmt, Targs... args) {
+
+	string ret;
+	ret 	= make_string(len);
+	ret.len = len;
+
+	_string_printf(ret, 0, fmt, false, args...);
+
+	return ret;
 }
 
 template<typename... Targs>

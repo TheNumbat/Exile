@@ -24,7 +24,13 @@ using namespace std;
 Actual RTTI generated at compile time (but structured at runtime?)
 */
 
+enum s_type_type {
+    type_struct,
+    type_vec,
+    type_arr,
+};
 struct _struct {
+    s_type_type type_type = type_struct;
     string name;
     vector<string> mem_types;
     vector<string> mem_names;
@@ -78,9 +84,17 @@ void struct_out_template(const string& name, vector<string> types) {
          << "\t{" << endl
          << "#define " << __name__ << " " << nametype << endl
          << "\t\t// " << s.name << endl
-         << "\t\t_type_info " << s.name << "_t;" << endl
-         << "\t\t" << s.name << "_t.type_type = Type::_struct;" << endl
-         << "\t\t" << s.name << "_t.size = sizeof(" << __name__ << ");" << endl;
+         << "\t\t_type_info " << s.name << "_t;" << endl;
+    
+    if(s.type_type == type_struct) {
+        fout << "\t\t" << s.name << "_t.type_type = Type::_struct;" << endl;
+    } else if(s.type_type == type_vec) {
+        fout << "\t\t" << s.name << "_t.type_type = Type::_vec;" << endl;
+    } else if(s.type_type == type_arr) {
+        fout << "\t\t" << s.name << "_t.type_type = Type::_arr;" << endl;
+    }
+    
+    fout << "\t\t" << s.name << "_t.size = sizeof(" << __name__ << ");" << endl;
 
     map<string, i32> templs;
     i32 i_templs = 0;
@@ -144,9 +158,15 @@ void struct_out(const _struct& s) {
         fout << endl
              << "\t{" << endl
              << "\t\t// " << s.name << endl
-             << "\t\t_type_info " << s.name << "_t;" << endl
-             << "\t\t" << s.name << "_t.type_type = Type::_struct;" << endl
-             << "\t\t" << s.name << "_t.size = sizeof(" << s.name << ");" << endl;
+             << "\t\t_type_info " << s.name << "_t;" << endl;
+        if(s.type_type == type_struct) {
+            fout << "\t\t" << s.name << "_t.type_type = Type::_struct;" << endl;
+        } else if(s.type_type == type_vec) {
+            fout << "\t\t" << s.name << "_t.type_type = Type::_vec;" << endl;
+        } else if(s.type_type == type_arr) {
+            fout << "\t\t" << s.name << "_t.type_type = Type::_arr;" << endl;
+        }
+        fout << "\t\t" << s.name << "_t.size = sizeof(" << s.name << ");" << endl;
 
         for(i32 i = 0; i < s.mem_types.size(); i++) {
 
@@ -321,11 +341,18 @@ i32 main(i32 argc, char** argv) {
     			string type, name;
 
                 while(all_tokens[j].token.type == CPP_TOKEN_COMMENT) {
-                    if(all_tokens[j++].str.find("@NORTTI") != string::npos) {
+                    if(all_tokens[j].str.find("@NORTTI") != string::npos) {
                         cout << all_tokens[j].str << endl;
                         s.skip = true;
                         break;
                     }
+                    if(all_tokens[j].str.find("@VEC") != string::npos) {
+                        s.type_type = type_vec;
+                    }
+                    if(all_tokens[j].str.find("@ARR") != string::npos) {
+                        s.type_type = type_arr; 
+                    }  
+                    j++;
                 }
 
     			if(depth == 0) {
