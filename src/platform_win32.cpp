@@ -475,6 +475,7 @@ void* platform_heap_alloc(u64 bytes) {
 
 	HANDLE heap = GetProcessHeap();
 	void* ret = HeapAlloc(heap, HEAP_ZERO_MEMORY | HEAP_GENERATE_EXCEPTIONS, (SIZE_T)bytes);
+	// void* ret = HeapAlloc(heap, HEAP_GENERATE_EXCEPTIONS, (SIZE_T)bytes);
 
 	// cout << "alloc " << ret << endl;
 
