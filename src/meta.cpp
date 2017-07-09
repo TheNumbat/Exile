@@ -1,6 +1,9 @@
 
 // don't care about using libraries in this; it's just to build the meta-program
 
+// This started out straightforward and now has a lot more complex functionality built on
+// ...so it got super messy. TODO(max): rewrite / at least refactor
+
 #define _CRT_SECURE_NO_WARNINGS
 #pragma warning(disable : 4505)
 #pragma warning(disable : 4456)
@@ -28,6 +31,9 @@ enum s_type_type {
     type_struct,
     type_vec,
     type_arr,
+    type_cbuf,
+    type_map,
+    type_heap,
 };
 struct _struct {
     s_type_type type_type = type_struct;
@@ -352,6 +358,19 @@ i32 main(i32 argc, char** argv) {
                     if(all_tokens[j].str.find("@ARR") != string::npos) {
                         s.type_type = type_arr; 
                     }  
+                    if(all_tokens[j].str.find("@CBUF") != string::npos) {
+                        s.type_type = type_cbuf; 
+                    }  
+                    if(all_tokens[j].str.find("@HEAP") != string::npos) {
+                        s.type_type = type_heap; 
+                    }  
+                    if(all_tokens[j].str.find("@MAP") != string::npos) {
+                        s.type_type = type_map;
+                        // TODO(max): support map (nesting template instantiations)
+                        s.skip = true;
+                        break;
+                    }  
+
                     j++;
                 }
 

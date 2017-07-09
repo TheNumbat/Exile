@@ -165,15 +165,19 @@ u32 print_type(string s, u32 idx, T& val, _type_info* info, bool size) { FUNC
 	case Type::_void: {
 		idx = string_insert(s, idx, string_literal("void"), size);
 	} break;
+	
 	case Type::_int: {
 		idx = print_int(s, idx, 10, val, info, size); 
 	} break;
+
 	case Type::_float: {
 		idx = print_float(s, idx, 6, val, info, size);		// need bit size flags
 	} break;
+
 	case Type::_bool: {
 		idx = string_insert(s, idx, string_literal(*(bool*)&val ? "true" : "false"), size);
 	} break;
+
 	case Type::_ptr: {
 		idx = string_insert(s, idx, string_literal("*{"), size);
 		if(*(u8**)&val == NULL) {
@@ -189,11 +193,16 @@ u32 print_type(string s, u32 idx, T& val, _type_info* info, bool size) { FUNC
 		}
 		idx = string_insert(s, idx, '}', size);
 	} break;
+
 	case Type::_func: {
 		idx = string_insert(s, idx, string_literal("FUNC"), size);
 	} break;
-	case Type::_vec: {}
-	case Type::_arr: {}
+
+	case Type::_vec:  {}
+	case Type::_arr:  {}
+	case Type::_map:  {}
+	case Type::_cbuf: {}
+	case Type::_heap: {}
 	case Type::_struct: {
 		idx = string_insert(s, idx, info->name, size);
 		idx = string_insert(s, idx, string_literal("{"), size);
@@ -222,10 +231,12 @@ u32 print_type(string s, u32 idx, T& val, _type_info* info, bool size) { FUNC
 		}
 		idx = string_insert(s, idx, '}', size);
 	} break;
+
 	case Type::_enum: {
 		idx = string_insert(s, idx, info->name, size);
 		idx = string_insert(s, idx, string_literal("{}"), size);
 	} break;
+
 	case Type::_string: {
 		if (((string*)&val)->len) {
 			idx = string_insert(s, idx, *(string*)&val, size);
