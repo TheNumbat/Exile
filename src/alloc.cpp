@@ -110,6 +110,36 @@ inline void arena_destroy(arena_allocator* a, code_context context) { FUNC
 	}
 }
 
+arena_allocator arena_copy(string name, allocator* backing, arena_allocator src, code_context context) {
+
+	arena_allocator ret;
+
+	ret.size = src.size;
+	ret.context = context;
+	if(backing) {
+		ret.backing = backing;
+	} else {
+		ret.backing = src.backing;
+	}
+	ret.allocate_ = src.allocate_;
+	ret.free_	  = src.free_;
+	ret.name 	  = name;
+	ret.suppress_messages = src.suppress_messages;
+
+#ifdef _DEBUG
+	if(!ret.suppress_messages) {
+		logger_msgf(&global_state->log, string_literal("creating arena \"%\" size % copied from arena \"%\""), log_level::alloc, context, name, ret.size, src.name);
+	}
+#endif
+	
+	if(ret.size > 0) {
+		ret.memory = ret.backing->allocate_(ret.size, ret.backing, context);
+		memcpy(src.memory, ret.memory, ret.size);
+	}
+
+	return ret;
+}
+
 inline arena_allocator make_arena_allocator_from_context(string name, u64 size, bool suppress, code_context context) { FUNC
 
 	arena_allocator ret;
@@ -131,11 +161,6 @@ inline arena_allocator make_arena_allocator_from_context(string name, u64 size, 
 	if(size > 0) {
 		ret.memory   = ret.backing->allocate_(size, ret.backing, context);
 	}
-
-#ifdef _DEBUG
-	if (!ret.suppress_messages) {
-	}
-#endif
 
 	return ret;
 }
@@ -161,11 +186,6 @@ inline arena_allocator make_arena_allocator(string name, u64 size, allocator* ba
 	if(size > 0) {
 		ret.memory   = ret.backing->allocate_(size, ret.backing, context);
 	}
-
-#ifdef _DEBUG
-	if (!ret.suppress_messages) {
-	}
-#endif
 
 	return ret;
 }
