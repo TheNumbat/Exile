@@ -58,7 +58,6 @@ arena_allocator make_arena_allocator_from_context(string name, u64 size, bool su
 #define MAKE_ARENA(n, size, a, s) make_arena_allocator(string_literal(n), size, a, s, CONTEXT) 
 arena_allocator make_arena_allocator(string name, u64 size, allocator* backing, bool suppress, code_context context);
 
-// USE THESE TO USE CONTEXT SYSTEM - ALWAYS USE THEM UNELSS YOU HAVE YOUR OWN ALLOCATOR STRUCT
 #define malloc(b) ((*CURRENT_ALLOC()->allocate_)(b, CURRENT_ALLOC(), CONTEXT)) 
 #define free(m) ((*CURRENT_ALLOC()->free_)(m, CURRENT_ALLOC(), CONTEXT)) 
 

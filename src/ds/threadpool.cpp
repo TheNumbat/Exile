@@ -92,13 +92,11 @@ void threadpool_start_all(threadpool* tp) { FUNC
 	}
 }
 
-i32 worker(void* data_) { FUNC_NOCS
+i32 worker(void* data_) { FUNC
 
 	worker_data* data = (worker_data*)data_;
 
-	string thread_name = make_stringf_a(&global_state->suppressed_platform_allocator, string_literal("worker %"), global_state->api->platform_this_thread_id().id);
-	begin_thread(thread_name, &global_state->suppressed_platform_allocator);
-
+	begin_thread(string_literal("worker %"), &global_state->suppressed_platform_allocator, (u32)global_state->api->platform_this_thread_id().id);
 	LOG_DEBUG("Starting worker thread");
 
 	while(data->running) {
@@ -119,8 +117,6 @@ i32 worker(void* data_) { FUNC_NOCS
 	}
 
 	LOG_DEBUG("Ending worker thread");
-
-	free_string(thread_name, &global_state->suppressed_platform_allocator);
 	end_thread();
 
 	return 0;

@@ -39,27 +39,17 @@ extern "C" game_state* start_up(platform_api* api) { FUNC
 	LOG_DEBUG("Starting logger");
 	logger_start(&state->log);
 
-	LOG_DEBUG("Starting thread pool");
-	state->thread_pool_a = MAKE_PLATFORM_ALLOCATOR("threadpool");
-	state->thread_pool = make_threadpool(&state->thread_pool_a);
-	threadpool_start_all(&state->thread_pool);
-
 	LOG_DEBUG("Setting up events");
 	state->evt_a = MAKE_PLATFORM_ALLOCATOR("event");
 	state->evt = make_evt_manager(&state->evt_a);
 	start_evt_manger(&state->evt);
-
-	LOG_DEBUG("Setting up asset system");
-	state->default_store_a = MAKE_PLATFORM_ALLOCATOR("asset");
-	state->default_store = make_asset_store(&state->default_store_a);
-	load_asset_store(&state->default_store, string_literal("assets/assets.asset"));
 
 	LOG_DEBUG("Creating window");
 	platform_error err = api->platform_create_window(&state->window, string_literal("CaveGame"), 1280, 720);
 	state->window_w = 1280;
 	state->window_h = 720;
 
-	if(!err.good) {
+	if (!err.good) {
 		LOG_FATAL_F("Failed to create window, error: %", err.error);
 		api->platform_heap_free(state);
 		return NULL;
@@ -69,6 +59,16 @@ extern "C" game_state* start_up(platform_api* api) { FUNC
 	ogl_load_global_funcs();
 	state->ogl_a = MAKE_PLATFORM_ALLOCATOR("ogl");
 	state->ogl = make_opengl(&state->ogl_a);
+
+	LOG_DEBUG("Starting thread pool");
+	state->thread_pool_a = MAKE_PLATFORM_ALLOCATOR("threadpool");
+	state->thread_pool = make_threadpool(&state->thread_pool_a);
+	threadpool_start_all(&state->thread_pool);
+
+	LOG_DEBUG("Setting up asset system");
+	state->default_store_a = MAKE_PLATFORM_ALLOCATOR("asset");
+	state->default_store = make_asset_store(&state->default_store_a);
+	load_asset_store(&state->default_store, string_literal("assets/assets.asset"));
 
 	LOG_DEBUG("Setting up GUI");
 	state->gui_a = MAKE_PLATFORM_ALLOCATOR("gui");
@@ -81,7 +81,7 @@ extern "C" game_state* start_up(platform_api* api) { FUNC
 	LOG_INFO("Done with startup!");
 	LOG_POP_CONTEXT();
 
-	LOG_INFO_F("%", state);
+	LOG_DEBUG_F("%", state);
 
 	state->running = true;
 	return state;
@@ -96,7 +96,7 @@ extern "C" bool main_loop(game_state* state) { FUNC
 	PUSH_ALLOC(&state->transient_arena) {
 
 		gui_input_state input = run_events(state); 
-
+		
 		gui_begin_frame(&state->gui, input);
 
 		render_debug_gui(state);

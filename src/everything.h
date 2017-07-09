@@ -59,8 +59,8 @@ string np_string_from_c_str(char* c_str);
 
 inline code_context _make_context(string file, string function, i32 line);
 
-#define begin_thread(n, a) _begin_thread(n, a, CONTEXT);
-void _begin_thread(string name, allocator* alloc, code_context context);
+#define begin_thread(fmt, a, ...) _begin_thread(fmt, a, CONTEXT, __VA_ARGS__);
+template<typename... Targs> void _begin_thread(string fmt, allocator* alloc, code_context start, Targs... args);
 void end_thread();
 
 #include "ds/threadpool.h"
