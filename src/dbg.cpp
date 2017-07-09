@@ -36,14 +36,11 @@ void dbg_add_log(log_message* msg) { FUNC
 		vector_pop_front(&dbg->log_cache);
 	}
 
-	log_message m = *msg;
-	m.arena = MAKE_ARENA("cmsg", msg->arena.size, dbg->alloc, msg->arena.suppress_messages);
-
-	m.call_stack = make_copy_array(&msg->call_stack, &m.arena);
-	m.thread_name = make_copy_string(msg->thread_name, &m.arena);
-	m.msg = make_copy_string(msg->msg, &m.arena);
-
-	vector_push(&dbg->log_cache, m);
+	log_message* m = vector_push(&dbg->log_cache, *msg);
+	m->arena       = MAKE_ARENA("cmsg", msg->arena.size, dbg->alloc, msg->arena.suppress_messages);
+	m->call_stack  = make_copy_array(&msg->call_stack, &m->arena);
+	m->thread_name = make_copy_string(msg->thread_name, &m->arena);
+	m->msg         = make_copy_string(msg->msg, &m->arena);
 }
 
 void render_debug_gui(game_state* state) { FUNC
