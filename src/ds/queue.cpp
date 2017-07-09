@@ -26,9 +26,9 @@ queue<T> make_queue(u32 capacity) { FUNC
 }
 
 template<typename T>
-void queue_push(queue<T>* q, T value) { FUNC
+T* queue_push(queue<T>* q, T value) { FUNC
 
-	vector_push(&q->contents, value);
+	return vector_push(&q->contents, value);
 }
 
 template<typename T>

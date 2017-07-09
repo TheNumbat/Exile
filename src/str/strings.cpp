@@ -239,7 +239,7 @@ inline u32 get_pack_first() { FUNC
 	return 0;
 }
 template<typename T, typename... Targs> 
-inline T get_pack_first(T& val, Targs... args) { FUNC
+inline T& get_pack_first(T& val, Targs... args) { FUNC
 	return val;
 }
 

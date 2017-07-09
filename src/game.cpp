@@ -1,4 +1,5 @@
 
+#include <iostream>
 #include "everything.h"
 
 extern "C" game_state* start_up(platform_api* api) { FUNC 

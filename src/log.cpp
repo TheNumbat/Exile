@@ -108,8 +108,7 @@ void logger_msgf(log_manager* log, string fmt, log_level level, code_context con
 	log_message temp;
 
 	global_state->api->platform_aquire_mutex(&log->queue_mutex, -1);
-	queue_push(&log->message_queue, temp);
-	log_message* lmsg = queue_back(&log->message_queue);
+	log_message* lmsg = queue_push(&log->message_queue, temp);
 
 	u32 msg_len = size_stringf(fmt, args...);
 	u32 arena_size = msg_len + this_thread_data.name.len + this_thread_data.call_stack_depth * sizeof(code_context);
@@ -152,8 +151,7 @@ void logger_msg(log_manager* log, string msg, log_level level, code_context cont
 	log_message temp;
 
 	global_state->api->platform_aquire_mutex(&log->queue_mutex, -1);
-	queue_push(&log->message_queue, temp);
-	log_message* lmsg = queue_back(&log->message_queue);
+	log_message* lmsg = queue_push(&log->message_queue, temp);
 
 	u32 arena_size = msg.len + this_thread_data.name.len + this_thread_data.call_stack_depth * sizeof(code_context);
 	lmsg->arena = MAKE_ARENA("msg", arena_size, log->alloc, true);
