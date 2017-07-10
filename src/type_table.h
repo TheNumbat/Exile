@@ -18,6 +18,8 @@ enum class Type : u8 {
 	_vec,		// includes struct data - can't just use cast like string because template
 	_arr,		// ^
 	_map,		// ^ | unimplemented (needs template parameter nesting)
+	_cbuf,		// ^
+	_heap,		// ^
 };
 
 struct _type_info;
