@@ -4,7 +4,7 @@
 	// matrix/vector ops (+ batch)
 	// mod, div, sign
 // TODO(max): quaternions
-#include <math.h>
+#include <cmath>
 #include <xmmintrin.h>
 
 #define PI32 3.14159265359f 
