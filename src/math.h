@@ -1,10 +1,10 @@
 #pragma once
 
-// TODO(max): remove cmath, use more SIMD intrinsics
+// TODO(max): remove math.h, use more SIMD intrinsics
 	// matrix/vector ops (+ batch)
 	// mod, div, sign
 // TODO(max): quaternions
-#include <cmath>
+#include <math.h>
 #include <xmmintrin.h>
 
 #define PI32 3.14159265359f 
