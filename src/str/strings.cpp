@@ -279,10 +279,6 @@ u32 _string_printf(string out, u32 idx, string fmt, bool size) { FUNC
 			idx++;
 		}
 	}
-	if(!size) {
-		out.c_str[idx] = '\0';
-	}
-	idx++;
 	return idx;
 }
 template<typename T, typename... Targs>
@@ -378,22 +374,19 @@ u32 _string_printf(string out, u32 idx, string fmt, bool size, T value, Targs...
 			idx++;
 		}
 	}
-	if(!size) {
-		out.c_str[idx] = '\0';
-	}
-	idx++;
 	return idx;
 }
 
 template<typename... Targs>
 void string_printf(string out, string fmt, Targs... args) { FUNC
-	_string_printf(out, 0, fmt, false, args...);
+	u32 idx = _string_printf(out, 0, fmt, false, args...);
+	out.c_str[idx++] = 0;
 }
 
 template<typename... Targs>
 u32 size_stringf(string fmt, Targs... args) {
 	string tmp;
-	return _string_printf(tmp, 0, fmt, true, args...);
+	return _string_printf(tmp, 0, fmt, true, args...) + 1;
 }
 
 template<typename... Targs> 
@@ -402,6 +395,7 @@ string make_stringf_len(u32 len, string fmt, Targs... args) {
 	string ret;
 	ret 	= make_string(len);
 	ret.len = len;
+	ret.c_str[len - 1] = 0;
 
 	_string_printf(ret, 0, fmt, false, args...);
 
@@ -415,6 +409,7 @@ string make_stringf(string fmt, Targs... args) { FUNC
 	u32 len = size_stringf(fmt, args...);
 	ret 	= make_string(len);
 	ret.len = len;
+	ret.c_str[len - 1] = 0;
 
 	_string_printf(ret, 0, fmt, false, args...);
 
@@ -428,6 +423,7 @@ string make_stringf_a(allocator* a, string fmt, Targs... args) { FUNC
 	u32 len = size_stringf(fmt, args...);
 	ret 	= make_string(len, a);
 	ret.len = len;
+	ret.c_str[len - 1] = 0;
 
 	_string_printf(ret, 0, fmt, false, args...);
 

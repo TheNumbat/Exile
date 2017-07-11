@@ -7,7 +7,7 @@ dbg_manager make_dbg_manager(allocator* alloc) { FUNC
 	ret.alloc = alloc;
 
 	log_out dbg_log;
-	dbg_log.level = log_level::debug;
+	dbg_log.level = log_level::info;
 	dbg_log.custom = true;
 	dbg_log.write = &dbg_add_log;
 	logger_add_output(&global_state->log, dbg_log);

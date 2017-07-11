@@ -81,13 +81,13 @@ extern "C" game_state* start_up(platform_api* api) { FUNC
 	LOG_INFO("Done with startup!");
 	LOG_POP_CONTEXT();
 
-	// LOG_DEBUG_F("%", state);
-
 	state->running = true;
 	return state;
 }
 
 extern "C" bool main_loop(game_state* state) { FUNC
+
+	LOG_INFO_F("%", state);
 
 	glUseProgram(0); // why tho?? https://twitter.com/fohx/status/619887799462985729?lang=en
 	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
