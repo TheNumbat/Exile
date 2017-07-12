@@ -10,7 +10,18 @@
 
 #include "platform_api.h"
 #include "platform.h"
+
+
+#ifdef _WIN32
+
 #include "platform_win32.cpp"
+
+#else
+
+#error "Unsupported platform."
+
+#endif
+
 
 // here we treat game_state* as void* so this doesn't have to know anything about the game
 typedef void* (*startup_type)(platform_api*);
