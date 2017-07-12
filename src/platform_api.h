@@ -2,6 +2,7 @@
 
 // this file is for both the platform layer and the game - this defines the interface for the game
 
+// Defined 
 struct platform_window;
 struct platform_dll;
 struct platform_file_attributes;
@@ -9,14 +10,55 @@ struct platform_thread_id;
 struct platform_thread;
 struct platform_semaphore;
 struct platform_mutex;
-struct platform_semaphore_state;
-struct platform_mutex_state;
-struct platform_thread_join_state;
 struct platform_file;
 
 struct platform_error {
 	bool good = true;
 	u32 error = 0;
+};
+
+enum class platform_file_open_op {
+	existing,
+	existing_or_create,
+	create,
+	clear_existing,
+};
+
+enum class _platform_semaphore_state {
+	signaled,
+	timed_out,
+	failed,
+};
+
+enum class _platform_mutex_state {
+	abandoned,
+	aquired,
+	timed_out,
+	failed,
+};
+
+enum class _platform_thread_join_state {
+	joined,
+	timed_out,
+	failed,
+};
+
+struct platform_semaphore_state {
+	// Transparent
+	_platform_semaphore_state state;
+	platform_error error;
+};
+
+struct platform_mutex_state {
+	// Transparent
+	_platform_mutex_state state;
+	platform_error error;
+};
+
+struct platform_thread_join_state {
+	// Transparent
+	_platform_thread_join_state state;
+	platform_error error;
 };
 
 extern u32 PLATFORM_SHARING_ERROR;
@@ -214,32 +256,6 @@ struct platform_event {
 		_platform_event_mouse 		mouse;
 	};
 	platform_event() : type(), window(), key(), mouse() {}; // c++ reee
-};
-
-enum class platform_file_open_op {
-	existing,
-	existing_or_create,
-	create,
-	clear_existing,
-};
-
-enum class _platform_semaphore_state {
-	signaled,
-	timed_out,
-	failed,
-};
-
-enum class _platform_mutex_state {
-	abandoned,
-	aquired,
-	timed_out,
-	failed,
-};
-
-enum class _platform_thread_join_state {
-	joined,
-	timed_out,
-	failed,
 };
 
 struct platform_api {
