@@ -16,11 +16,17 @@ set Platform_LinkerFlags=/NODEFAULTLIB:MSVCRT /SUBSYSTEM:console kernel32.lib us
 set Asset_CompilerFlags=-Od -MTd -nologo -Gr -EHa -Oi -W4 -Z7 -FC -Feasset.exe -wd4100 -Iw:\deps\
 set Asset_LinkerFlags=/NODEFAULTLIB:MSVCRT /SUBSYSTEM:console kernel32.lib user32.lib gdi32.lib opengl32.lib 
 
+echo compiling asset builder...
 cl %Asset_CompilerFlags% w:\src\asset_builder.cpp /link %Asset_LinkerFlags%
-cl %Asset_CompilerFlags% -Femeta.exe w:\src\meta.cpp /link %Asset_LinkerFlags%
+echo running asset builder...
+call asset.bat
 
+echo compiling metaprogram...
+cl %Asset_CompilerFlags% -Femeta.exe w:\src\meta.cpp /link %Asset_LinkerFlags%
+echo running metaprogram...
 meta.exe w:\src\game.cpp > meta_out.txt
 
+echo compiling game lib...
 if "%1"=="release" (
 	cl %Game_ReleaseCompilerFlags% w:\src\game.cpp /link %Game_LinkerFlags%
 ) else if "%2"=="release" (
@@ -34,6 +40,7 @@ popd
 goto :eof
 
 :platform
+echo compiling platform layer...
 if "%2"=="release" (
 	cl %Platform_ReleaseCompilerFlags% w:\src\platform_main.cpp /link %Platform_LinkerFlags%
 ) else (
