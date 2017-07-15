@@ -14,17 +14,24 @@ set Platform_ReleaseCompilerFlags=-O2 -MT -nologo -Gr -EHa -W4 -FC -Femain.exe -
 set Platform_LinkerFlags=/NODEFAULTLIB:MSVCRT /SUBSYSTEM:console kernel32.lib user32.lib gdi32.lib opengl32.lib 
 
 set Asset_CompilerFlags=-Od -MTd -nologo -Gr -EHa -Oi -W4 -Z7 -FC -Feasset.exe -wd4100 -Iw:\deps\
-set Asset_LinkerFlags=/NODEFAULTLIB:MSVCRT /SUBSYSTEM:console kernel32.lib user32.lib gdi32.lib opengl32.lib 
+set Asset_LinkerFlags=/SUBSYSTEM:console
+
+set Meta_CompilerFlags=-Od -MTd -nologo -Gr -EHa -Oi -W4 -Z7 -FC -Femeta.exe -Iw:\deps\
+set Meta_LinkerFlags=/SUBSYSTEM:console /LIBPATH:w:\deps\clang-c libclang.lib
 
 echo compiling asset builder...
 cl %Asset_CompilerFlags% w:\src\asset_builder.cpp /link %Asset_LinkerFlags%
+
 echo running asset builder...
-call asset.bat
+pushd w:\data\assets
+w:\build\asset.exe store.txt assets.asset
+popd
 
 echo compiling metaprogram...
-cl %Asset_CompilerFlags% -Femeta.exe w:\src\meta.cpp /link %Asset_LinkerFlags%
+cl %Meta_CompilerFlags% w:\src\meta.cpp /link %Meta_LinkerFlags%
+
 echo running metaprogram...
-meta.exe w:\src\game.cpp > meta_out.txt
+meta.exe w:\src\game.cpp
 
 echo compiling game lib...
 if "%1"=="release" (
