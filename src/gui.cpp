@@ -253,7 +253,7 @@ bool gui_begin(string name, r2 first_size, f32 first_alpha, gui_window_flags fla
 	f32 carrot_x_diff = gui_style.default_carrot_size.x * gscale + gui_style.carrot_padding.x;
 	
 	r2 top_rect = R2(real_rect.xy, V2(real_rect.w - carrot_x_diff, gscale * gui_style.font + gui_style.title_padding));	
-	r2 bod_rect = R2(real_rect.x, real_rect.y + gui_style.font + gui_style.title_padding, real_rect.w, real_rect.h - gui_style.font + gui_style.title_padding);
+	r2 bod_rect = R2(real_rect.x, real_rect.y + gscale * gui_style.font + gui_style.title_padding, real_rect.w, real_rect.h - gscale * gui_style.font + gui_style.title_padding);
 
 	bool occluded = gui_occluded();
 	if((window->flags & (u16)window_flags::nohide) != (u16)window_flags::nohide) {
