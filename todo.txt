@@ -16,11 +16,7 @@ features so far:
 immediate to do:
 
 	meta
-		clean up metaprogram code
-		introspection
-			array
-			enum
-			function
+		rewrite/switch to clang for parsing
 		printf
 			enum
 			array
@@ -36,29 +32,41 @@ immediate to do:
 
 	UI
 		stop sending mesh every frame (see OpenGL)
-		widget clipping/wrapping
-		text wrapping
+		widgets
+			clipping/wrapping/auto-layout
+			dividers
+			multiple fonts
+			image widgets - do we need this?
+			texture arrays? would be useful for multiple fonts as well
+			text wrapping
+			lots of other input types (float, text, check-box, key, etc.)
 		general window scroll
 			click/drag/hold scroll bar
 			sticky scroll (like twitch chat)
-		lots of widgets types
 		logger UI window
 			swap between levels
 			tooltip call stack / file:line
-		start profiler
-			lots to do here...
+			console + commands
+		profiler
+			lots to do here
 
 	asset
 		asset texture atlases
 		call asset.exe to re/build (do path stuff, platform_exec_cmd)
 		auto-reload asset stores
 		asset manager (general allocator?)
+		more types of assets: modding system
+
+	modding system
+		Lua
+			embedding Lua 
+			debugging Lua
+			dynamic reload
+		think about mod API structure
 
 	fonts
 		color/format specifications in string
 		extra kerning pairs
-
-	allocators
 
 	platform
 		fix cursor
@@ -85,4 +93,7 @@ immediate to do:
 
 	Make concurrent data structures
 	
-
+	threading
+		threadpool await (store job IDs, block until finished)
+		farm out initialization code
+		integration with modding system

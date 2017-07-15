@@ -220,14 +220,14 @@ bool gui_begin(string name, r2 first_size, f32 first_alpha, gui_window_flags fla
 		if(window->resizing) {
 
 			v2 wh = sub(ggui->input.mousepos, real_rect.xy);
-			if(wh.x < gui_style.min_win_size.x) {
-				wh.x = gui_style.min_win_size.x;
+			if(wh.x < gui_style.min_win_size.x * gscale) {
+				wh.x = gui_style.min_win_size.x * gscale;
 			}
-			if(wh.x < gui_style.min_win_size.x) {
-				wh.x = gui_style.min_win_size.x;
+			if(wh.x < gui_style.min_win_size.x * gscale) {
+				wh.x = gui_style.min_win_size.x * gscale;
 			}
-			if(wh.y < gui_style.min_win_size.y) {
-				wh.y = gui_style.min_win_size.y;
+			if(wh.y < gui_style.min_win_size.y * gscale) {
+				wh.y = gui_style.min_win_size.y * gscale;
 			}
 			window->rect = R2(real_rect.xy, div(wh, gscale));
 
