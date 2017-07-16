@@ -16,7 +16,7 @@ set Platform_LinkerFlags=/NODEFAULTLIB:MSVCRT /SUBSYSTEM:console kernel32.lib us
 set Asset_CompilerFlags=-Od -MTd -nologo -Gr -EHa -Oi -W4 -Z7 -FC -Feasset.exe -wd4100 -Iw:\deps\
 set Asset_LinkerFlags=/SUBSYSTEM:console
 
-set Meta_CompilerFlags=-Od -MTd -nologo -Gr -EHa -Oi -W4 -Z7 -FC -Femeta.exe -Iw:\deps\
+set Meta_CompilerFlags=-Od -MTd -nologo -Gr -EHa -Oi -W4 -Z7 -FC -Femeta.exe -Iw:\deps\ -wd4100
 set Meta_LinkerFlags=/SUBSYSTEM:console /LIBPATH:w:\deps\clang-c libclang.lib
 
 echo compiling asset builder...

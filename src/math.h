@@ -42,11 +42,11 @@ typedef v2_t<i32> iv2;
 typedef v2_t<u32> uv2;
 typedef v2_t<u8>  bv2;
 typedef v2_t<f64> dv2;
-template v2_t<f32>;
-template v2_t<i32>;
-template v2_t<u32>;
-template v2_t<u8>;
-template v2_t<f64>;
+template union v2_t<f32>;
+template union v2_t<i32>;
+template union v2_t<u32>;
+template union v2_t<u8>;
+template union v2_t<f64>;
 
 template<typename T>
 union r2_t {
@@ -68,10 +68,10 @@ typedef r2_t<i32> ir2;
 typedef r2_t<u32> ur2;
 typedef	r2_t<u8>  br2;
 typedef r2_t<u16> sr2;
-template r2_t<f32>;
-template r2_t<i32>;
-template r2_t<u32>;
-template r2_t<u8>;
+template union r2_t<f32>;
+template union r2_t<i32>;
+template union r2_t<u32>;
+template union r2_t<u8>;
 
 template<typename T>
 union v3_t {
@@ -102,10 +102,10 @@ typedef v3_t<u32> uv3;
 typedef v3_t<u8>  bv3;
 typedef bv3 	  color3;
 typedef v3 		  color3f;
-template v3_t<f32>;
-template v3_t<i32>;
-template v3_t<u32>;
-template v3_t<u8>;
+template union v3_t<f32>;
+template union v3_t<i32>;
+template union v3_t<u32>;
+template union v3_t<u8>;
 
 template<typename T>
 union v4_t {
@@ -145,10 +145,10 @@ typedef v4_t<u32> uv4;
 typedef v4_t<u8>  bv4;
 typedef bv4 	  color;
 typedef v4 		  colorf;
-template v4_t<f32>;
-template v4_t<i32>;
-template v4_t<u32>;
-template v4_t<u8>;
+template union v4_t<f32>;
+template union v4_t<i32>;
+template union v4_t<u32>;
+template union v4_t<u8>;
 
 template<typename T>
 union m4_t {
@@ -175,8 +175,8 @@ union m4_t {
 };
 typedef m4_t<f32> m4;
 typedef m4_t<u32> um4;
-template m4_t<f32>;
-template m4_t<u32>;
+template union m4_t<f32>;
+template union m4_t<u32>;
 
 inline u32 mod(u32 dividend, u32 devisor);
 inline f32 _sqrtf(f32 value);
