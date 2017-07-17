@@ -8,6 +8,10 @@
 #include <map>
 #include <string>
 #include <algorithm>
+#include <sstream>
+#include <iterator>
+#include <cctype>
+#include <locale>
 
 #include "basic_types.h"
 
@@ -20,6 +24,7 @@ struct struct_def {
 
 	bool is_template 		= false;
 	bool is_explicit_inst 	= false;
+	vector<string> template_type_params;
 
 	vector<function<void(ofstream&)>> dependancies;
 };
@@ -39,6 +44,31 @@ void output_struct(ofstream&, const struct_def&);
 void output_template_struct(ofstream& fout, const struct_def& s, const vector<CXType>& instantiation);
 bool operator==(const CXType& one, const CXType& two) {
 	return memcmp(&one, &two, sizeof(one)) == 0;
+}
+
+void trim(std::string &s) {
+    s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) {
+        return !std::isspace(ch);
+    }));
+    s.erase(std::find_if(s.rbegin(), s.rend(), [](unsigned char ch) {
+        return !std::isspace(ch);
+    }).base(), s.end());
+}
+
+template<typename Out>
+void split(const string &s, char delim, Out result) {
+    stringstream ss;
+    ss.str(s);
+    string item;
+    while (getline(ss, item, delim)) {
+        *(result++) = item;
+    }
+}
+
+vector<string> split(const string &s, char delim) {
+    vector<string> elems;
+    split(s, delim, back_inserter(elems));
+    return elems;
 }
 
 ostream& operator<<(ostream& stream, const CXString& str) {
@@ -94,6 +124,15 @@ CXChildVisitResult parse_struct_or_union(CXCursor c, CXCursor parent, CXClientDa
 
 		current_struct_def.is_explicit_inst = true;
 		current_instantiation.push_back(clang_getCursorType(c));
+
+	} else if(c.kind == CXCursor_TemplateTypeParameter) {
+
+		current_struct_def.is_template = true;
+		auto cx_type_arg = clang_getCursorSpelling(c);
+		string type_arg(clang_getCString(cx_type_arg));
+		clang_disposeString(cx_type_arg);
+
+		current_struct_def.template_type_params.push_back(type_arg);
 	}
 	return CXChildVisit_Continue;
 }
@@ -102,6 +141,7 @@ CXChildVisitResult do_parse(CXCursor c) {
 	if(is_fwd_decl(c)) return CXChildVisit_Continue;
 
 	switch(c.kind) {
+	case CXCursor_ClassTemplate:
 	case CXCursor_UnionDecl:
 	case CXCursor_StructDecl: {
 		current_struct_def = struct_def();
@@ -130,21 +170,6 @@ CXChildVisitResult do_parse(CXCursor c) {
 	} break;
 	case CXCursor_EnumDecl: {
 		// TODO(max)
-	} break;
-	case CXCursor_ClassTemplate: {
-		current_struct_def = struct_def();
-		current_struct_def.this_ = c;
-		current_struct_def.is_template = true;
-		
-		auto cx_name = clang_getCursorSpelling(c);
-		string name(clang_getCString(cx_name));
-		clang_disposeString(cx_name);
-
-		current_struct_def.name = name;
-
-		clang_visitChildren(c, parse_struct_or_union, nullptr);
-
-		structs.push_back(current_struct_def);
 	} break;
 	case CXCursor_ClassTemplatePartialSpecialization: {
 		// could do this but we only use it once for _get_type_info
@@ -182,9 +207,40 @@ void output_struct(ofstream& fout, const struct_def& s) {
 	fout << "\t// " << name << endl;
 }
 
-void output_template_struct(ofstream& fout, const struct_def& s, const vector<CXType>& _instantiation) {
+void parse_instantiation(ofstream& fout, const map<string, CXType>& translation, CXType type) {
 
-	vector<CXType> instantiation(_instantiation);
+	vector<CXType> instantiation;
+	auto num_args = clang_Type_getNumTemplateArguments(type);
+	auto cx_instname = clang_getTypeSpelling(type);
+	string instname = clang_getCString(cx_instname);
+	clang_disposeString(cx_instname);
+
+	for(u32 index = 0; index < (u32)num_args; index++) {
+		auto arg_type = clang_Type_getTemplateArgumentAsType(type, index);
+		i32 arg_type_args = clang_Type_getNumTemplateArguments(arg_type);
+		
+		if(arg_type_args == -1) {
+			auto cx_arg_type_name = clang_getTypeSpelling(arg_type);
+			string arg_type_name(clang_getCString(cx_arg_type_name));
+			clang_disposeString(cx_arg_type_name);
+
+			instantiation.push_back(translation.find(arg_type_name)->second);
+
+		} else {
+
+			parse_instantiation(fout, translation, arg_type);
+			
+			instantiation.push_back(arg_type);
+		}
+	}
+	string instname_notempl = instname.substr(0, instname.find_first_of("<"));
+	auto entry = find_if(structs.begin(), structs.end(), [instname_notempl](struct_def& def) -> bool { return instname_notempl == def.name; });
+
+	output_template_struct(fout, *entry, instantiation);
+}
+
+void output_template_struct(ofstream& fout, const struct_def& s, const vector<CXType>& instantiation) {
+	
 	if(find_if(done.begin(), done.end(), [&](const auto& val) -> bool {return val.first.name == s.name && val.second == instantiation;}) != done.end()) return;
 
 	auto cx_name = clang_getCursorSpelling(s.this_);
@@ -194,6 +250,7 @@ void output_template_struct(ofstream& fout, const struct_def& s, const vector<CX
 	if(s.is_template) {
 
 		for(auto& c : s.members) {
+			
 			auto type = clang_getCursorType(c);
 			auto num_args = clang_Type_getNumTemplateArguments(type);
 			if(num_args != -1) {
@@ -202,39 +259,33 @@ void output_template_struct(ofstream& fout, const struct_def& s, const vector<CX
 				string instname(clang_getCString(cx_instname));
 				clang_disposeString(cx_instname);
 
-				instname = instname.substr(0, instname.find_first_of("<"));
-				auto entry = find_if(structs.begin(), structs.end(), [instname](struct_def& def) -> bool { return instname == def.name; });
+				string inst_templ = instname.substr(instname.find_first_of("<"), string::npos);
+				size_t pos;
+				do {
+					pos = inst_templ.find_first_of("<");
+					inst_templ = inst_templ.substr(pos + 1, inst_templ.find_last_of(">") - pos - 1);
+				} while(pos != string::npos);
+				auto type_params = split(inst_templ, ',');
 
-				// vector<CXType> member_instantiation;
-				// for(u32 i = 0; i < (u32)num_args; i++) {
-				// 	auto template_param_kind = clang_Cursor_getTemplateArgumentKind(c, i);
+				map<string, CXType> translation;
+				for(auto& type_param : type_params) {
+					trim(type_param);
+					u32 index = 0;
+					for(;; index++) {
+						if(s.template_type_params[index] == type_param) {
+							break;
+						}
+					}
+					translation.insert({type_param, instantiation[index]});
+				}
 
-				// 	if(template_param_kind == CXTemplateArgumentKind_Type) {
-						
-				// 		member_instantiation.push_back(instantiation.front());
-				// 		instantiation.erase(instantiation.begin());
-
-				// 		cout << "WOOW" << endl;
-
-				// 	} else {
-
-				// 		auto template_param_type = clang_Cursor_getTemplateArgumentType(c, i);
-				// 		auto cx_mem_instname = clang_getTypeSpelling(type);
-				// 		string mem_instname(clang_getCString(cx_mem_instname));
-				// 		clang_disposeString(cx_mem_instname);
-						
-				// 		cout << template_param_kind << endl;
-				// 		auto mem_entry = find_if(structs.begin(), structs.end(), [mem_instname](struct_def& def) -> bool { return mem_instname == def.name; });
-				// 		output_template_struct(fout, *mem_entry, member_instantiation);
-				// 	}
-				// }
-
-				output_template_struct(fout, *entry, instantiation);
+				parse_instantiation(fout, translation, type);
 			}
 		}
 
 		fout << "\t// " << name << "<";
 		for(auto& type : instantiation) {
+			
 			fout << clang_getTypeSpelling(type) << ",";
 		}
 		fout << ">" << endl;

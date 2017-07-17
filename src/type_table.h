@@ -64,8 +64,8 @@ typedef Type_struct_info Type_map_info;
 
 struct _type_info {
 	Type type_type 	= Type::_unkown;
-	type_id hash 			= 0;
-	u32 size 				= 0;
+	type_id hash 	= 0;
+	u32 size 		= 0;
 	string name;
 	union {
 		Type_void_info	 _void;
@@ -92,7 +92,7 @@ thread_local map<type_id,_type_info> type_table;
 template<typename T>
 struct _get_type_info { 
 	static _type_info* get_type_info() {
-		return map_try_get(&type_table, typeid(T).hash_code());
+		return map_try_get(&type_table, (type_id)typeid(T).hash_code());
 	}
 };
 
@@ -100,7 +100,7 @@ template<typename T>
 struct _get_type_info<T*> {
 	static _type_info* get_type_info() {
 
-		_type_info* info = map_try_get(&type_table, typeid(T*).hash_code());
+		_type_info* info = map_try_get(&type_table, (type_id)typeid(T*).hash_code());
 		if(info) return info;
 
 		_type_info ptr_t;
