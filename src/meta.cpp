@@ -28,7 +28,7 @@ struct struct_def {
 
 	vector<function<void(ofstream&)>> dependancies;
 };
-vector<pair<struct_def, vector<CXType>>> done;
+vector<pair<struct_def, map<string, CXType>>> done;
 vector<struct_def> structs;
 struct_def current_struct_def;
 vector<CXType> current_instantiation;
@@ -36,12 +36,12 @@ vector<CXType> current_instantiation;
 ostream& operator<<(ostream&, const CXString&);
 bool is_ds_decl(CXCursorKind);
 bool is_fwd_decl(CXCursor);
-CXChildVisitResult parse_struct_or_union(CXCursor, CXCursor, CXClientData);
 CXChildVisitResult do_parse(CXCursor);
 void output_pre(ofstream&);
 void output_post(ofstream&);
 void output_struct(ofstream&, const struct_def&);
-void output_template_struct(ofstream& fout, const struct_def& s, const vector<CXType>& instantiation);
+void output_template_struct(ofstream&, const struct_def&, const map<string, CXType>&);
+map<string, CXType> make_translation(const struct_def&, const vector<CXType>&);
 bool operator==(const CXType& one, const CXType& two) {
 	return memcmp(&one, &two, sizeof(one)) == 0;
 }
@@ -112,7 +112,7 @@ CXChildVisitResult parse_struct_or_union(CXCursor c, CXCursor parent, CXClientDa
 				}
 
 				auto def = *entry;
-				current_struct_def.dependancies.push_back([instantiation, def](ofstream& fout) -> void { output_template_struct(fout, def, instantiation); });
+				current_struct_def.dependancies.push_back([instantiation, def](ofstream& fout) -> void { output_template_struct(fout, def, make_translation(def, instantiation)); });
 			}
 		}
 
@@ -133,6 +133,10 @@ CXChildVisitResult parse_struct_or_union(CXCursor c, CXCursor parent, CXClientDa
 		clang_disposeString(cx_type_arg);
 
 		current_struct_def.template_type_params.push_back(type_arg);
+
+	} else {
+
+		// cout << c.kind << endl;
 	}
 	return CXChildVisit_Continue;
 }
@@ -161,7 +165,7 @@ CXChildVisitResult do_parse(CXCursor c) {
 			auto entry = find_if(structs.begin(), structs.end(), [name](struct_def& def) -> bool { return name == def.name; });
 			if(entry != structs.end()) {
 				struct_def def = *entry;
-				entry->dependancies.push_back([_current_instantiation, def](ofstream& fout) -> void { output_template_struct(fout, def, _current_instantiation); });
+				entry->dependancies.push_back([_current_instantiation, def](ofstream& fout) -> void { output_template_struct(fout, def, make_translation(def, _current_instantiation)); });
 			}
 			current_instantiation.clear();
 		} else {
@@ -207,91 +211,94 @@ void output_struct(ofstream& fout, const struct_def& s) {
 	fout << "\t// " << name << endl;
 }
 
-void parse_instantiation(ofstream& fout, const map<string, CXType>& translation, CXType type) {
-
-	vector<CXType> instantiation;
-	auto num_args = clang_Type_getNumTemplateArguments(type);
-	auto cx_instname = clang_getTypeSpelling(type);
-	string instname = clang_getCString(cx_instname);
-	clang_disposeString(cx_instname);
-
-	for(u32 index = 0; index < (u32)num_args; index++) {
-		auto arg_type = clang_Type_getTemplateArgumentAsType(type, index);
-		i32 arg_type_args = clang_Type_getNumTemplateArguments(arg_type);
-		
-		if(arg_type_args == -1) {
-			auto cx_arg_type_name = clang_getTypeSpelling(arg_type);
-			string arg_type_name(clang_getCString(cx_arg_type_name));
-			clang_disposeString(cx_arg_type_name);
-
-			instantiation.push_back(translation.find(arg_type_name)->second);
-
-		} else {
-
-			parse_instantiation(fout, translation, arg_type);
-			
-			instantiation.push_back(arg_type);
+map<string, CXType> make_translation(const struct_def& s, const vector<CXType>& instantiation) {
+	map<string, CXType> translation;
+	for(auto type_param : s.template_type_params) {
+		trim(type_param);
+		u32 index = 0;
+		for(;; index++) {
+			if(s.template_type_params[index] == type_param) {
+				break;
+			}
 		}
+		translation.insert({type_param, instantiation[index]});
 	}
-	string instname_notempl = instname.substr(0, instname.find_first_of("<"));
-	auto entry = find_if(structs.begin(), structs.end(), [instname_notempl](struct_def& def) -> bool { return instname_notempl == def.name; });
-
-	output_template_struct(fout, *entry, instantiation);
+	return translation;
 }
 
-void output_template_struct(ofstream& fout, const struct_def& s, const vector<CXType>& instantiation) {
+void output_template_struct(ofstream& fout, const struct_def& s, const map<string, CXType>& translation) {
 	
-	if(find_if(done.begin(), done.end(), [&](const auto& val) -> bool {return val.first.name == s.name && val.second == instantiation;}) != done.end()) return;
+	if(find_if(done.begin(), done.end(), [&](const auto& val) -> bool {return val.first.name == s.name && val.second == translation;}) != done.end()) return;
 
 	auto cx_name = clang_getCursorSpelling(s.this_);
 	string name(clang_getCString(cx_name));
 	clang_disposeString(cx_name);
 
+	fout << endl;
 	if(s.is_template) {
 
-		for(auto& c : s.members) {
-			
-			auto type = clang_getCursorType(c);
-			auto num_args = clang_Type_getNumTemplateArguments(type);
-			if(num_args != -1) {
+		for(auto& t : s.template_type_params) {
 
-				auto cx_instname = clang_getTypeSpelling(type);
-				string instname(clang_getCString(cx_instname));
-				clang_disposeString(cx_instname);
+			auto entry = translation.find(t);
+			if(entry != translation.end()) {
+				fout << "#pragma push_macro(\"" << entry->first << "\")" << endl;
+				fout << "#define " << entry->first << " " << clang_getTypeSpelling(entry->second) << endl;
+			}
+		}
+		fout << "{" << endl;
 
-				string inst_templ = instname.substr(instname.find_first_of("<"), string::npos);
-				size_t pos;
-				do {
-					pos = inst_templ.find_first_of("<");
-					inst_templ = inst_templ.substr(pos + 1, inst_templ.find_last_of(">") - pos - 1);
-				} while(pos != string::npos);
-				auto type_params = split(inst_templ, ',');
+		for(auto& member : s.members) {
+			auto mem_type = clang_getCursorType(member);
+			i32 mem_templ_args = clang_Type_getNumTemplateArguments(mem_type);
+			if(mem_templ_args != -1) {
+				auto cx_mem_name = clang_getTypeSpelling(mem_type);
+				string mem_name(clang_getCString(cx_mem_name));
+				clang_disposeString(cx_mem_name);
 
-				map<string, CXType> translation;
-				for(auto& type_param : type_params) {
-					trim(type_param);
-					u32 index = 0;
-					for(;; index++) {
-						if(s.template_type_params[index] == type_param) {
-							break;
-						}
+				mem_name = mem_name.substr(0, mem_name.find_first_of("<"));
+
+				cout << mem_name << endl;
+				auto entry = find_if(structs.begin(), structs.end(), [mem_name](struct_def& def) -> bool { return mem_name == def.name; });
+
+				map<string, CXType> mem_translation;
+				u32 idx = 0;
+				for(auto& mem_param : entry->template_type_params) {
+					
+					auto mem_arg_type = clang_Type_getTemplateArgumentAsType(mem_type, idx);
+					auto mem_entry = translation.find(mem_param);
+					if(mem_entry != translation.end()) {
+						mem_arg_type = mem_entry->second;
 					}
-					translation.insert({type_param, instantiation[index]});
-				}
 
-				parse_instantiation(fout, translation, type);
+					mem_translation.insert({mem_param, mem_arg_type});
+					idx++;
+				}
+				output_template_struct(fout, *entry, mem_translation);
 			}
 		}
 
-		fout << "\t// " << name << "<";
-		for(auto& type : instantiation) {
+		fout << "\t" << name << "<";
+		for(u32 idx = 0; idx < s.template_type_params.size(); idx++) {
 			
-			fout << clang_getTypeSpelling(type) << ",";
+			fout << s.template_type_params[idx];
+			if(idx != s.template_type_params.size() - 1) {
+				fout << ",";
+			}
 		}
-		fout << ">" << endl;
+		fout << "> owo;" << endl;
 
-		done.push_back({s, instantiation});
+		fout << "}" << endl;
+		for(auto& t : s.template_type_params) {
+
+			auto entry = translation.find(t);
+			if(entry != translation.end()) {
+				fout << "#pragma pop_macro(\"" << entry->first << "\")" << endl;
+			}
+		}
+
+		done.push_back({s, translation});
 	}
+	fout << endl;
 }
 
 i32 main(i32 argc, char** argv) {
@@ -321,7 +328,7 @@ i32 main(i32 argc, char** argv) {
 		return do_parse(c);
 	}, nullptr);
 
-	ofstream fout("meta_types_new.h");
+	ofstream fout("meta_types.h");
 	output_pre(fout);
 	for(auto& s : structs) {
 		output_struct(fout, s);
