@@ -20,7 +20,7 @@ struct map_element {
 };
 
 template<typename K, typename V>
-struct map { // @MAP
+struct map {
 	vector<map_element<K, V>> contents;
 	u32 size	 		= 0;
 	allocator* alloc 	= NULL;

@@ -198,11 +198,6 @@ u32 print_type(string s, u32 idx, T& val, _type_info* info, bool size) { FUNC
 		idx = string_insert(s, idx, string_literal("FUNC"), size);
 	} break;
 
-	case Type::_vec:  {}
-	case Type::_arr:  {}
-	case Type::_map:  {}
-	case Type::_cbuf: {}
-	case Type::_heap: {}
 	case Type::_struct: {
 		idx = string_insert(s, idx, info->name, size);
 		idx = string_insert(s, idx, string_literal("{"), size);

@@ -15,11 +15,6 @@ enum class Type : u8 {
 	_enum,		// only name implemented
 
 	_string,
-	_vec,		// includes struct data - can't just use cast like string because template
-	_arr,		// ^
-	_map,		// ^ | unimplemented (needs template parameter nesting)
-	_cbuf,		// ^
-	_heap,		// ^
 };
 
 struct _type_info;
@@ -56,9 +51,6 @@ struct Type_enum_info {
 	// u32 		member_count;
 };
 struct Type_string_info {};
-typedef Type_struct_info Type_vec_info;
-typedef Type_struct_info Type_arr_info;
-typedef Type_struct_info Type_map_info;
 
 // TODO(max): reduce memory footprint; Type_enum_info takes up way too much space
 
@@ -78,9 +70,6 @@ struct _type_info {
 		Type_struct_info _struct;
 		Type_enum_info   _enum;
 		Type_string_info _string;
-		Type_vec_info	 _vec;
-		Type_arr_info	 _arr;
-		Type_map_info	 _map;
 	};
 	_type_info() : _void(), _int(), _float(), _bool(), _ptr(), _func(), _struct(), _enum(), _string() {}
 };

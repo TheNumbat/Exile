@@ -2,7 +2,7 @@
 #pragma once
 
 template<typename T>
-struct array { // @ARR
+struct array {
 	T* memory 		 = NULL;
 	u32 capacity 	 = 0;
 	allocator* alloc = NULL;

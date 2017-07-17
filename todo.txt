@@ -16,12 +16,15 @@ features so far:
 immediate to do:
 
 	meta
-		rewrite/switch to clang for parsing
+		Support
+			enum
+			static array
+			template deduction from variables/parameters	
 		printf
 			enum
 			array
 			function
-			clean up code - not sure if possible, thanks templates
+			special prints for data structures
 		integration with UI
 		profiler
 
