@@ -13,11 +13,11 @@ set Platform_DebugCompilerFlags=-Od -MTd -nologo -Gr -EHa -Oi -W4 -Z7 -FC -Femai
 set Platform_ReleaseCompilerFlags=-O2 -MT -nologo -Gr -EHa -W4 -FC -Femain.exe -wd4100
 set Platform_LinkerFlags=/NODEFAULTLIB:MSVCRT /SUBSYSTEM:console kernel32.lib user32.lib gdi32.lib opengl32.lib 
 
-set Asset_CompilerFlags=-O2 -MTd -nologo -Gr -EHa -Oi -W4 -Z7 -FC -Feasset.exe -wd4100 -Iw:\deps\
-set Asset_LinkerFlags=/SUBSYSTEM:console
+set Asset_CompilerFlags=-O2 -MT -nologo -Gr -EHa -Oi -W4 -Z7 -FC -Feasset.exe -wd4100 -Iw:\deps\
+set Asset_LinkerFlags=/NODEFAULTLIB:MSVCRT /SUBSYSTEM:console
 
-set Meta_CompilerFlags=-O2 -MTd -nologo -Gr -EHa -Oi -W4 -Z7 -FC -Femeta.exe -Iw:\deps\ -wd4100
-set Meta_LinkerFlags=/SUBSYSTEM:console /LIBPATH:w:\deps\clang-c libclang.lib
+set Meta_CompilerFlags=-O2 -MT -nologo -Gr -EHa -Oi -W4 -Z7 -FC -Femeta.exe -wd4100 -Iw:\deps\
+set Meta_LinkerFlags=/NODEFAULTLIB:MSVCRT /SUBSYSTEM:console /LIBPATH:w:\deps\clang-c libclang.lib
 
 if not exist w:\build\asset.exe (
 	echo compiling asset builder...
