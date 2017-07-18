@@ -22,18 +22,8 @@
                     "encoding": "UTF-8"
                 },
                 {
-                    "name": "Platform",
-                    "shell_cmd": "build platform",
-                    "file_regex": "^[.\\\\/]*([a-z]?:?[\\w.\\\\/]+)[(:]([0-9]+)[):]([0-9]+)?:?(.*)$"
-                },
-                {
                     "name": "Release",
                     "shell_cmd": "build release",
-                    "file_regex": "^[.\\\\/]*([a-z]?:?[\\w.\\\\/]+)[(:]([0-9]+)[):]([0-9]+)?:?(.*)$"
-                },
-                {
-                    "name": "Release Platform",
-                    "shell_cmd": "build platform release",
                     "file_regex": "^[.\\\\/]*([a-z]?:?[\\w.\\\\/]+)[(:]([0-9]+)[):]([0-9]+)?:?(.*)$"
                 }
             ]
