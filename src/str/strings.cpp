@@ -182,15 +182,22 @@ u32 print_type(string s, u32 idx, T& val, _type_info* info, bool size) { FUNC
 		idx = string_insert(s, idx, string_literal("*{"), size);
 		if (info->_ptr.to == 0) {
 			idx = string_insert(s, idx, string_literal("UNDEF|"), size);
-			idx = print_u64(s, idx, 16, (u64)(*(u8**)&val), size);
-		} else if (*(u8**)&val == NULL) {
-			idx = string_insert(s, idx, TYPEINFO_H(info->_ptr.to)->name, size);
-			idx = string_insert(s, idx, string_literal("|NULL"), size);
+
+			if (*(u8**)&val == NULL) {
+				idx = string_insert(s, idx, string_literal("NULL"), size);
+			} else {
+				idx = print_u64(s, idx, 16, (u64)(*(u8**)&val), size);
+			}
 		} else {
-			idx = print_type(s, idx, **(u8**)&val, TYPEINFO_H(info->_ptr.to), size);
-			idx = string_insert(s, idx, '|', size);
-			idx = print_u64(s, idx, 16, (u64)(*(u8**)&val), size);
-		}
+			if (*(u8**)&val == NULL) {
+				idx = string_insert(s, idx, TYPEINFO_H(info->_ptr.to)->name, size);
+				idx = string_insert(s, idx, string_literal("|NULL"), size);
+			} else {
+				idx = print_type(s, idx, **(u8**)&val, TYPEINFO_H(info->_ptr.to), size);
+				idx = string_insert(s, idx, '|', size);
+				idx = print_u64(s, idx, 16, (u64)(*(u8**)&val), size);
+			}
+		}	
 		idx = string_insert(s, idx, '}', size);
 	} break;
 
