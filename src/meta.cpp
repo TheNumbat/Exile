@@ -165,6 +165,7 @@ CXChildVisitResult do_parse(CXCursor c) {
 	if(is_fwd_decl(c)) return CXChildVisit_Continue;
 
 	switch(c.kind) {
+	case CXCursor_ClassTemplatePartialSpecialization: break; // ignore this, it's only _get_type_info<T*> and it'd mess with stuff
 	case CXCursor_ClassTemplate:
 	case CXCursor_UnionDecl:
 	case CXCursor_StructDecl: {
@@ -192,9 +193,6 @@ CXChildVisitResult do_parse(CXCursor c) {
 	} break;
 	case CXCursor_EnumDecl: {
 		// TODO(max)
-	} break;
-	case CXCursor_ClassTemplatePartialSpecialization: {
-		// could do this but we only use it once for _get_type_info
 	} break;
 	case CXCursor_VarDecl:
 	case CXCursor_ParmDecl: {
