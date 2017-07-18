@@ -39,16 +39,16 @@ struct Type_array_info {
 	u64 	length;
 };
 struct Type_struct_info {
-	type_id		member_types[32];
-	string 		member_names[32];
-	u32 		member_offsets[32];
+	type_id		member_types[64];
+	string 		member_names[64];
+	u32 		member_offsets[64];
 	u32 		member_count;
 };
 struct Type_enum_info {
 	type_id 	base_type;
-	// string 	member_names[128];
-	// u64		member_values[128];
-	// u32 		member_count;
+	string 		member_names[128];
+	u64			member_values[128];
+	u32 		member_count;
 };
 struct Type_string_info {};
 
@@ -115,7 +115,7 @@ struct _get_type_info<T*> {
 void make_meta_types();
 void make_type_table(allocator* alloc) {
 
-	type_table = make_map<type_id,_type_info>(256, alloc, &hash_u64);
+	type_table = make_map<type_id,_type_info>(512, alloc, &hash_u64);
 
 	{
 		_type_info void_t;

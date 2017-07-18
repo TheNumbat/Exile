@@ -3,6 +3,9 @@
 pushd w:\build
 
 del *.ilk > NUL 2> NUL
+del *.dll > NUL 2> NUL
+del *.h > NUL 2> NUL
+del *.i > NUL 2> NUL
 del *.obj > NUL 2> NUL
 del *.exe > NUL 2> NUL
 del *.pdb > NUL 2> NUL

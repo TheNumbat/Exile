@@ -1,7 +1,7 @@
 
 #pragma once
 
-struct string { // @NORTTI - hardcoded
+struct NOREFLECT string {
 	char* c_str = NULL;
 	u32 cap	    = 0;	// capacity
 	u32 len		= 0;	// including null terminator

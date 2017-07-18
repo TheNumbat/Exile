@@ -24,6 +24,7 @@ struct struct_def {
 
 	bool is_template 		= false;
 	bool is_explicit_inst 	= false;
+	bool noreflect		 	= false;
 	vector<string> template_type_params;
 
 	vector<function<void(ofstream&)>> dependancies;
@@ -42,6 +43,7 @@ void output_post(ofstream&);
 void output_struct(ofstream&, const struct_def&);
 void output_template_struct(ofstream&, const struct_def&, const map<string, CXType>&);
 map<string, CXType> make_translation(const struct_def&, const vector<CXType>&);
+void print_templ_struct(ofstream&, const struct_def&, const map<string, CXType>&);
 bool operator==(const CXType& one, const CXType& two) {
 	return memcmp(&one, &two, sizeof(one)) == 0;
 }
@@ -145,9 +147,16 @@ CXChildVisitResult parse_struct_or_union(CXCursor c, CXCursor parent, CXClientDa
 
 		current_struct_def.template_type_params.push_back(type_arg);
 
+	} else if(c.kind == CXCursor_AnnotateAttr) {
+
+		auto annotation = str(clang_getCursorSpelling(c));
+		if(annotation == "noreflect") {
+			current_struct_def.noreflect = true;
+		}
+
 	} else {
 
-		// cout << c.kind << endl;
+		// cout << c.kind << " " << clang_getCursorSpelling(c) << " " << clang_getTypeSpelling(clang_getCursorType(c)) << endl;
 	}
 	return CXChildVisit_Continue;
 }
@@ -177,7 +186,7 @@ CXChildVisitResult do_parse(CXCursor c) {
 				entry->dependancies.push_back([_current_instantiation, def](ofstream& fout) -> void { output_template_struct(fout, def, make_translation(def, _current_instantiation)); });
 			}
 			current_instantiation.clear();
-		} else {
+		} else if(!current_struct_def.noreflect) {
 			structs.push_back(current_struct_def);
 		}
 	} break;
@@ -207,18 +216,86 @@ void output_post(ofstream& fout) {
 
 void output_struct(ofstream& fout, const struct_def& s) {
 
-	auto name = str(clang_getCursorSpelling(s.this_));
-
 	for(auto& f : s.dependancies) {
 		f(fout);
 	}
 
 	if(s.is_template) return;
 
-	fout << "\t{" << endl << "\t\t" << name << " owo;" << endl << "\t}" << endl << endl;
+	auto name = str(clang_getCursorSpelling(s.this_));
+	auto type = clang_getCursorType(s.this_);
+
+	fout << "\t{" << endl;
+
+	fout << "\t\t_type_info " << name << "_t;" << endl
+		 << "\t\t" << name << "_t.type_type = Type::_struct;" << endl
+		 << "\t\t" << name << "_t.size = " << clang_Type_getSizeOf(type) << ";" << endl
+		 << "\t\t" << name << "_t.name = string_literal(\"" << name << "\");" << endl
+		 << "\t\t" << name << "_t.hash = (type_id)typeid(" << name << ").hash_code();" << endl
+		 << "\t\t" << name << "_t._struct.member_count = " << s.members.size() << ";" << endl;
+
+	u32 idx = 0;
+	for(auto& member : s.members) {
+		auto mem_name = str(clang_getCursorSpelling(member));
+		auto mem_type_name = str(clang_getTypeSpelling(clang_getCursorType(member)));
+
+		fout << "\t\t" << name << "_t._struct.member_types[" << idx << "] = TYPEINFO(" << mem_type_name << ") ? TYPEINFO(" << mem_type_name << ")->hash : 0;" << endl
+			 << "\t\t" << name << "_t._struct.member_names[" << idx << "] = string_literal(\"" << mem_name << "\");" << endl
+			 << "\t\t" << name << "_t._struct.member_offsets[" << idx << "] = " << clang_Type_getOffsetOf(type, mem_name.c_str()) / 8 << ";" << endl;
+
+		idx++;
+	}
+
+	fout << "\t\tmap_insert(&type_table, " << name << "_t.hash, " << name << "_t, false);" << endl;
+
+	fout << "\t}" << endl << endl;
+}
+
+void print_templ_struct(ofstream& fout, const struct_def& s, const map<string, CXType>& translation) {
+
+	auto name = str(clang_getCursorSpelling(s.this_));
+	auto type = clang_getCursorType(s.this_);
+
+	fout << "\t{" << endl;
+
+	string qual_name = name + "<";
+	for(u32 idx = 0; idx < s.template_type_params.size(); idx++) {
+		
+		qual_name += s.template_type_params[idx];
+		if(idx != s.template_type_params.size() - 1) {
+			qual_name += ",";
+		}
+	}
+	qual_name += ">";
+
+	fout << "\t\t_type_info " << name << "_t;" << endl
+		 << "\t\t" << name << "_t.type_type = Type::_struct;" << endl
+		 << "\t\t" << name << "_t.size = sizeof(" << qual_name << ");" << endl
+		 << "\t\t" << name << "_t.name = string_literal(\"" << name << "\");" << endl
+		 << "\t\t" << name << "_t.hash = (type_id)typeid(" << qual_name << ").hash_code();" << endl
+		 << "\t\t" << name << "_t._struct.member_count = " << s.members.size() << ";" << endl;
+
+	fout << "#define __" << name << "__ " << qual_name << endl;
+	u32 idx = 0;
+	for(auto& member : s.members) {
+		auto mem_name = str(clang_getCursorSpelling(member));
+		auto mem_type_name = str(clang_getTypeSpelling(clang_getCursorType(member)));
+
+		fout << "\t\t" << name << "_t._struct.member_types[" << idx << "] = TYPEINFO(" << mem_type_name << ") ? TYPEINFO(" << mem_type_name << ")->hash : 0;" << endl
+			 << "\t\t" << name << "_t._struct.member_names[" << idx << "] = string_literal(\"" << mem_name << "\");" << endl
+			 << "\t\t" << name << "_t._struct.member_offsets[" << idx << "] = offsetof(__" << name << "__, " << mem_name << ");" << endl;
+
+		idx++;
+	}
+	fout << "#undef __" << name << "__" << endl;
+
+	fout << "\t\tmap_insert(&type_table, " << name << "_t.hash, " << name << "_t, false);" << endl;
+
+	fout << "\t}" << endl;
 }
 
 map<string, CXType> make_translation(const struct_def& s, const vector<CXType>& instantiation) {
+	
 	map<string, CXType> translation;
 	for(auto type_param : s.template_type_params) {
 		trim(type_param);
@@ -253,17 +330,14 @@ void output_template_struct(ofstream& fout, const struct_def& s, const map<strin
 				fout << "#define " << entry->first << " " << type_str << endl;
 			}
 		}
-		fout << "\t{" << endl;
 
 		for(auto& member : s.members) {
 			auto mem_type = clang_getCursorType(member);
 			i32 mem_templ_args = clang_Type_getNumTemplateArguments(mem_type);
 			if(mem_templ_args != -1) {
 				auto mem_name = str(clang_getTypeSpelling(mem_type));
-
 				mem_name = mem_name.substr(0, mem_name.find_first_of("<"));
 
-				cout << mem_name << endl;
 				auto entry = find_if(structs.begin(), structs.end(), [mem_name](struct_def& def) -> bool { return mem_name == def.name; });
 
 				map<string, CXType> mem_translation;
@@ -272,6 +346,14 @@ void output_template_struct(ofstream& fout, const struct_def& s, const map<strin
 					
 					auto mem_arg_type = clang_Type_getTemplateArgumentAsType(mem_type, idx);
 					auto mem_entry = translation.find(mem_param);
+
+					if(clang_Type_getNumTemplateArguments(mem_arg_type) != -1) {
+						auto mem_arg_type_name = str(clang_getTypeSpelling(mem_arg_type));
+						mem_arg_type_name = mem_arg_type_name.substr(0, mem_arg_type_name.find_first_of("<"));
+						auto mem_arg_entry = find_if(structs.begin(), structs.end(), [mem_arg_type_name](struct_def& def) -> bool { return mem_arg_type_name == def.name; });
+						output_template_struct(fout, *mem_arg_entry, translation);
+					}
+
 					if(mem_entry != translation.end()) {
 						mem_arg_type = mem_entry->second;
 					}
@@ -286,17 +368,8 @@ void output_template_struct(ofstream& fout, const struct_def& s, const map<strin
 			}
 		}
 
-		fout << "\t\t" << name << "<";
-		for(u32 idx = 0; idx < s.template_type_params.size(); idx++) {
-			
-			fout << s.template_type_params[idx];
-			if(idx != s.template_type_params.size() - 1) {
-				fout << ",";
-			}
-		}
-		fout << "> owo;" << endl;
+		print_templ_struct(fout, s, translation);
 
-		fout << "\t}" << endl;
 		for(auto& t : s.template_type_params) {
 
 			auto entry = translation.find(t);

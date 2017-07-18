@@ -1,6 +1,12 @@
 
 #pragma once
 
+#ifdef __clang__
+#define NOREFLECT __attribute__((annotate("noreflect")))
+#else
+#define NOREFLECT
+#endif
+
 #include "basic_types.h"
 #include "math.h"
 #include "str/strings.h"
