@@ -15,6 +15,10 @@ features so far:
 
 immediate to do:
 
+	uncategorized
+		SIMD & intrinsic math (vectorized functions, vector/mat math, noise & randomness)
+		stack allocations (_malloca) where possible
+
 	meta
 		Support
 			enum
