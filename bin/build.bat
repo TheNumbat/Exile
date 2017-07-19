@@ -26,9 +26,7 @@ if not exist w:\build\asset.exe (
 
 if not exist w:\data\assets\assets.asset (
 	echo running asset builder...
-	pushd w:\data\assets
-	w:\build\asset.exe store.txt assets.asset
-	popd
+	call asset.bat
 )
 
 if not exist w:\build\meta.exe (
