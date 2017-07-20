@@ -50,12 +50,20 @@ struct def_asset_font {
 };
 
 struct def_asset {
-	asset_type type;
-	union {
-		def_asset_image image;
-		def_asset_font font;
+	asset_type type = asset_type::none;
+	
+	// can't union these...
+	def_asset_image image;
+	def_asset_font font;
+
+	def_asset(const def_asset& source) {
+		type = source.type;
+		if(type == asset_type::bitmap) {
+			image = source.image;
+		} else if(type == asset_type::font) {
+			font = source.font;
+		}
 	};
-	def_asset(const def_asset& source) {memcpy(this, &source, sizeof(def_asset));};
 	def_asset() : type(), image(), font() {};
 	~def_asset() {};
 };
@@ -225,6 +233,9 @@ int main(int argc, char** argv) {
 		return 1;
 	}
 
+	string rel_path(argv[2]);
+	rel_path = rel_path.substr(0, rel_path.find_last_of("/\\") + 1);
+
 	def_file_structure def = build_def_file(def_file);
 	def_file.close();
 
@@ -246,7 +257,7 @@ int main(int argc, char** argv) {
 
 			// load bitmap
 			i32 width, height;
-			u8* bitmap = stbi_load(def_asset.image.file.c_str(), &width, &height, NULL, 4);
+			u8* bitmap = stbi_load((rel_path + def_asset.image.file).c_str(), &width, &height, NULL, 4);
 
 			u32 pixel_stride = width * 4;
 			u32 pixel_size = pixel_stride * height;
@@ -280,7 +291,7 @@ int main(int argc, char** argv) {
 
 			file_asset_font asset_font;
 
-			ifstream font_in(def_asset.font.file, ios::binary | ios::ate);
+			ifstream font_in(rel_path + def_asset.font.file, ios::binary | ios::ate);
 			streamsize size = font_in.tellg();
 			font_in.seekg(0, ios::beg);
 
@@ -299,6 +310,7 @@ int main(int argc, char** argv) {
 			u32 pixel_stride =  def_asset.font.width;
 			u32 pixel_size = pixel_stride * def_asset.font.height;
 			u8* baked_bitmap = (u8*)malloc(pixel_size);
+			memset(baked_bitmap, 0, pixel_size);
 
 			// Two pixel-padding needed for scaling (likely because of FP rounding error)
 			stbtt_PackBegin(&pack_context, baked_bitmap, def_asset.font.width, def_asset.font.height, 0, 2, NULL);
@@ -310,7 +322,9 @@ int main(int argc, char** argv) {
 			
 				i32 cp_num = def_asset.font.ranges[ri].end - def_asset.font.ranges[ri].start + 1;
 
-				packedchars.push_back((stbtt_packedchar*)malloc(cp_num * sizeof(stbtt_packedchar)));
+				stbtt_packedchar* row = (stbtt_packedchar*)malloc(cp_num * sizeof(stbtt_packedchar));
+				memset(row, 0, cp_num * sizeof(stbtt_packedchar));
+				packedchars.push_back(row);
 				total_packedchars += cp_num;
 
 				stbtt_PackFontRange(&pack_context, (u8*)data.data(), 0, STBTT_POINT_SIZE((f32)def_asset.font.point), def_asset.font.ranges[ri].start, cp_num, packedchars[ri]);
@@ -318,7 +332,7 @@ int main(int argc, char** argv) {
 			stbtt_PackEnd(&pack_context);
 
 			if(def_asset.font.write_out) {
-				stbi_write_png((def_asset.font.name + ".png").c_str(), def_asset.font.width, def_asset.font.height, 1, baked_bitmap, 0);
+				stbi_write_png((rel_path + def_asset.font.name + ".png").c_str(), def_asset.font.width, def_asset.font.height, 1, baked_bitmap, 0);
 			}
 
 			asset_font.num_glyphs 	= total_packedchars;
@@ -338,15 +352,15 @@ int main(int argc, char** argv) {
 
 					file_glyph_data glyph;
 					glyph.codepoint = point;
-					glyph.x1 = packedchars[ri][point - r.start].x0;
-					glyph.y1 = packedchars[ri][point - r.start].y0;
-					glyph.x2 = packedchars[ri][point - r.start].x1;
-					glyph.y2 = packedchars[ri][point - r.start].y1;
-					glyph.xoff1 = packedchars[ri][point - r.start].xoff;
-					glyph.yoff1 = packedchars[ri][point - r.start].yoff;
-					glyph.xoff2 = packedchars[ri][point - r.start].xoff2;
-					glyph.yoff2 = packedchars[ri][point - r.start].yoff2;
-					glyph.advance = packedchars[ri][point - r.start].xadvance;
+					glyph.x1      	= packedchars[ri][point - r.start].x0;
+					glyph.y1      	= packedchars[ri][point - r.start].y0;
+					glyph.x2      	= packedchars[ri][point - r.start].x1;
+					glyph.y2      	= packedchars[ri][point - r.start].y1;
+					glyph.xoff1   	= packedchars[ri][point - r.start].xoff;
+					glyph.yoff1   	= packedchars[ri][point - r.start].yoff;
+					glyph.xoff2   	= packedchars[ri][point - r.start].xoff2;
+					glyph.yoff2   	= packedchars[ri][point - r.start].yoff2;
+					glyph.advance 	= packedchars[ri][point - r.start].xadvance;
 
 					glyph_data.push_back(glyph);
 				}
@@ -358,8 +372,10 @@ int main(int argc, char** argv) {
 			assets_out.write((char*)&asset_header, sizeof(file_asset_header));
 			assets_out.write((char*)&asset_font, sizeof(file_asset_font));
 			assets_out.write((char*)glyph_data.data(), sizeof(file_glyph_data) * glyph_data.size());
-
-			u8* texture_out = (u8*)malloc(def_asset.font.width * def_asset.font.height * 4);
+			
+			u32 out_size = def_asset.font.width * def_asset.font.height * 4;
+			u8* texture_out = (u8*)malloc(out_size);
+			memset(texture_out, 0, out_size);
 			u8* texture_out_place = texture_out;
 			u8* bake_last = baked_bitmap + pixel_size - pixel_stride;
 			for(; bake_last != baked_bitmap; bake_last -= pixel_stride) {
@@ -370,7 +386,7 @@ int main(int argc, char** argv) {
 					*texture_out_place++ = bake_last[pix];
 				}
 			}
-			assets_out.write((char*)texture_out, def_asset.font.width * def_asset.font.height * 4);
+			assets_out.write((char*)texture_out, out_size);
 
 			free(texture_out);
 			free(baked_bitmap);

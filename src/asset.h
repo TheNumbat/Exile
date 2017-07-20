@@ -33,42 +33,42 @@ enum class asset_type : u8 {
 
 #pragma pack(push, 1)
 struct file_glyph_data {
-	u32 codepoint;		// sorted by this
-	u16 x1;
-	u16 y1;
-	u16 x2;
-	u16 y2; // texture coordinates
-	f32 xoff1;
-	f32 yoff1;
-	f32 advance;
-	f32 xoff2;
-	f32 yoff2;
+	u32 codepoint = 0; // sorted by this
+	u16 x1        = 0;
+	u16 y1        = 0;
+	u16 x2        = 0;
+	u16 y2        = 0; // texture coordinates
+	f32 xoff1     = 0;
+	f32 yoff1     = 0;
+	f32 advance   = 0;
+	f32 xoff2     = 0;
+	f32 yoff2     = 0;
 };
 
 struct file_asset_font {
-	u32 num_glyphs;
-	f32 point;
-	f32 ascent;
-	f32 descent;
-	f32 linegap;
-	f32 linedist;
-	i32 width;
-	i32 height;
+	u32 num_glyphs = 0;
+	f32 point      = 0;
+	f32 ascent     = 0;
+	f32 descent    = 0;
+	f32 linegap    = 0;
+	f32 linedist   = 0;
+	i32 width      = 0;
+	i32 height     = 0;
 };
 
 struct file_asset_bitmap {
-	i32 width;
-	i32 height;
+	i32 width 	= 0;
+	i32 height 	= 0;
 };
 
 struct file_asset_header {
-	asset_type type;
-	char name[128];
-	u64 next; // byte offset from start of file_asset
+	asset_type type = asset_type::none;
+	char name[128] 	= {};
+	u64 next 		= 0; // byte offset from start of file_asset
 };
 
 struct asset_file_header {
-	u32 num_assets;
+	u32 num_assets = 0;
 };
 #pragma pack(pop)
 

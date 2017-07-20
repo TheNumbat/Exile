@@ -2,6 +2,7 @@
 
 pushd w:\build
 
+del w:\data\assets\assets.asset
 del *.ilk > NUL 2> NUL
 del *.dll > NUL 2> NUL
 del *.h > NUL 2> NUL

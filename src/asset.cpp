@@ -67,7 +67,7 @@ glyph_data get_glyph_data(asset* font, u32 codepoint) { FUNC
 		}
 
 		if(low == high) {
-			glyph_data ret = {0, 0, 0, 0, 0, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
+			glyph_data ret;
 			return ret;
 		}
 	}
