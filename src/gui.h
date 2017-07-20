@@ -132,7 +132,6 @@ struct _gui_style {
 	color3 win_scroll_back 	= V3b(102, 105, 185);
 	color3 win_scroll_bar 	= V3b(132, 135, 215);
 };
-static _gui_style gui_style;
 
 enum class gui_active_state {
 	active,
@@ -145,6 +144,7 @@ struct gui_manager {
 
 	guiid active_id;
 	gui_active_state active = gui_active_state::none;
+	_gui_style style;
 
 	gui_input_state input;
 	gui_opengl 		ogl;

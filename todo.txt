@@ -39,6 +39,7 @@ immediate to do:
 
 	UI
 		stop sending mesh every frame (see OpenGL)
+		we only need alpha data from font textures - compress
 		widgets
 			clipping/wrapping/auto-layout
 			dividers

@@ -48,10 +48,10 @@ gui_input_state run_events(game_state* state) { FUNC
 
 		// Debug stuff
 		if(evt.type == platform_event_type::key && evt.key.flags & (u16)platform_keyflag::release && evt.key.code == platform_keycode::plus) {
-			gui_style.gscale *= 1.5f;
+			global_state->gui.style.gscale *= 1.5f;
 		}
 		if(evt.type == platform_event_type::key && evt.key.flags & (u16)platform_keyflag::release && evt.key.code == platform_keycode::minus) {
-			gui_style.gscale /= 1.5f;
+			global_state->gui.style.gscale /= 1.5f;
 		}
 
 		// GUI: mouse

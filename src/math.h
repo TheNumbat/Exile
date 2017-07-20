@@ -128,6 +128,14 @@ union v4_t {
 		T a;
 	};
 	struct {
+		v3_t<T> xyz;
+		T w;
+	};
+	struct {
+		v3_t<T> rgb;
+		T a;
+	};
+	struct {
 		v2_t<T> xy;
 		v2_t<T> zw;
 	};
