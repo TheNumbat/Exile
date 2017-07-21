@@ -22,7 +22,7 @@ void main() {
 
 	vec4 color_f_a = multiply_alpha(color_f);
 
-	// we only need alpha from 
+	// we only need alpha from font texture
 	vec4 blended = color_f_a * tex.a;
 
 	// uf_f.z is always either zero if we are rendering geometry or one if we are rendering a texture/font

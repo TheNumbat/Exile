@@ -17,6 +17,16 @@
 
 using namespace std;
 
+struct enum_def {
+	string name;
+	CXCursor this_;
+	CXType underlying;
+	struct member {
+		string name;
+		i64 value;
+	};
+	vector<member> members;
+};
 struct struct_def {
 	string name;
 	CXCursor this_;
@@ -30,8 +40,12 @@ struct struct_def {
 	vector<function<void(ofstream&)>> dependancies;
 };
 vector<pair<struct_def, map<string, CXType>>> done;
+
 vector<struct_def> structs;
 struct_def current_struct_def;
+vector<enum_def> enums;
+enum_def current_enum_def;
+
 vector<CXType> current_instantiation;
 
 ostream& operator<<(ostream&, const CXString&);
@@ -106,6 +120,24 @@ bool is_fwd_decl(CXCursor cursor) {
 	return clang_isCursorDefinition(cursor) == 0;
 }
 
+CXChildVisitResult parse_enum(CXCursor c, CXCursor parent, CXClientData client_data) {
+
+	if(c.kind == CXCursor_EnumConstantDecl) {
+
+		enum_def::member member;
+		member.value = clang_getEnumConstantDeclValue(c);
+		member.name  = str(clang_getCursorSpelling(c));
+
+		current_enum_def.members.push_back(member);
+
+	} else {
+		
+		// cout << c.kind << " " << clang_getCursorSpelling(c) << endl;
+	}
+
+	return CXChildVisit_Continue;
+}
+
 CXChildVisitResult parse_struct_or_union(CXCursor c, CXCursor parent, CXClientData client_data) {
 
 	if(c.kind == CXCursor_FieldDecl) {
@@ -173,7 +205,6 @@ CXChildVisitResult do_parse(CXCursor c) {
 		current_struct_def.this_ = c;
 
 		auto name = str(clang_getCursorSpelling(c));
-
 		current_struct_def.name = name;
 
 		clang_visitChildren(c, parse_struct_or_union, nullptr);
@@ -192,11 +223,21 @@ CXChildVisitResult do_parse(CXCursor c) {
 		}
 	} break;
 	case CXCursor_EnumDecl: {
-		// TODO(max)
+		
+		current_enum_def = enum_def();
+		current_enum_def.this_ = c;
+		current_enum_def.underlying = clang_getEnumDeclIntegerType(c);
+
+		auto name = str(clang_getCursorSpelling(c));
+		current_enum_def.name = name;
+
+		clang_visitChildren(c, parse_enum, nullptr);
+
+		enums.push_back(current_enum_def);
 	} break;
 	case CXCursor_VarDecl:
 	case CXCursor_ParmDecl: {
-		// test if needs to add an instantiation
+		// TODO(max): test if needs to add an instantiation. (need to not skipping function bodies)
 	} break;
 	}
 	return CXChildVisit_Continue;
@@ -205,14 +246,52 @@ CXChildVisitResult do_parse(CXCursor c) {
 void output_pre(ofstream& fout) {
 	fout << endl
 		 << "void make_meta_types() {" << endl
-		 << endl;
+		 << endl << "\t_type_info this_type_info;" << endl;
 }
 
 void output_post(ofstream& fout) {
 	fout << "}" << endl;
 }
 
+void output_enum(ofstream& fout, const enum_def& e) {
+
+	auto& name = e.name;
+	auto type = str(clang_getTypeSpelling(e.underlying));
+
+	if(e.members.size() > 128) {
+		cout << "enum " << name << " has too many members!" << endl;
+		return;
+	}
+
+	fout << "\t{" << endl
+		 << "\t\tthis_type_info = _type_info();" << endl
+		 << "\t\tthis_type_info.type_type = Type::_enum;" << endl
+		 << "\t\tthis_type_info.size = " << clang_Type_getSizeOf(clang_getCursorType(e.this_)) << ";" << endl
+		 << "\t\tthis_type_info.name = string_literal(\"" << name << "\");" << endl
+		 << "\t\tthis_type_info.hash = (type_id)typeid(" << name << ").hash_code();" << endl
+		 << "\t\tthis_type_info._enum.member_count = " << e.members.size() << ";" << endl
+		 << "\t\tthis_type_info._enum.base_type = TYPEINFO(" << type << ") ? TYPEINFO(" << type << ")->hash : 0;" << endl;
+
+	u32 idx = 0;
+	for(auto& member : e.members) {
+		fout << "\t\tthis_type_info._enum.member_names[" << idx << "] = string_literal(\"" << member.name << "\");" << endl
+			 << "\t\tthis_type_info._enum.member_values[" << idx << "] = " << member.value << ";" << endl;
+		idx++;
+	}
+
+	fout << "\t\tmap_insert(&type_table, this_type_info.hash, this_type_info, false);" << endl
+		 << "\t}" << endl << endl;
+}
+
 void output_struct(ofstream& fout, const struct_def& s) {
+
+	auto& name = s.name;
+	auto type = clang_getCursorType(s.this_);
+
+	if(s.members.size() > 64) {
+		cout << "struct " << name << " has too many members!" << endl;
+		return;
+	}
 
 	for(auto& f : s.dependancies) {
 		f(fout);
@@ -220,38 +299,34 @@ void output_struct(ofstream& fout, const struct_def& s) {
 
 	if(s.is_template) return;
 
-	auto name = str(clang_getCursorSpelling(s.this_));
-	auto type = clang_getCursorType(s.this_);
-
 	fout << "\t{" << endl;
 
-	fout << "\t\t_type_info " << name << "_t;" << endl
-		 << "\t\t" << name << "_t.type_type = Type::_struct;" << endl
-		 << "\t\t" << name << "_t.size = " << clang_Type_getSizeOf(type) << ";" << endl
-		 << "\t\t" << name << "_t.name = string_literal(\"" << name << "\");" << endl
-		 << "\t\t" << name << "_t.hash = (type_id)typeid(" << name << ").hash_code();" << endl
-		 << "\t\t" << name << "_t._struct.member_count = " << s.members.size() << ";" << endl;
+	fout << "\t\tthis_type_info = _type_info();" << endl
+		 << "\t\tthis_type_info.type_type = Type::_struct;" << endl
+		 << "\t\tthis_type_info.size = " << clang_Type_getSizeOf(type) << ";" << endl
+		 << "\t\tthis_type_info.name = string_literal(\"" << name << "\");" << endl
+		 << "\t\tthis_type_info.hash = (type_id)typeid(" << name << ").hash_code();" << endl
+		 << "\t\tthis_type_info._struct.member_count = " << s.members.size() << ";" << endl;
 
 	u32 idx = 0;
 	for(auto& member : s.members) {
 		auto mem_name = str(clang_getCursorSpelling(member));
 		auto mem_type_name = str(clang_getTypeSpelling(clang_getCursorType(member)));
 
-		fout << "\t\t" << name << "_t._struct.member_types[" << idx << "] = TYPEINFO(" << mem_type_name << ") ? TYPEINFO(" << mem_type_name << ")->hash : 0;" << endl
-			 << "\t\t" << name << "_t._struct.member_names[" << idx << "] = string_literal(\"" << mem_name << "\");" << endl
-			 << "\t\t" << name << "_t._struct.member_offsets[" << idx << "] = " << clang_Type_getOffsetOf(type, mem_name.c_str()) / 8 << ";" << endl;
+		fout << "\t\tthis_type_info._struct.member_types[" << idx << "] = TYPEINFO(" << mem_type_name << ") ? TYPEINFO(" << mem_type_name << ")->hash : 0;" << endl
+			 << "\t\tthis_type_info._struct.member_names[" << idx << "] = string_literal(\"" << mem_name << "\");" << endl
+			 << "\t\tthis_type_info._struct.member_offsets[" << idx << "] = " << clang_Type_getOffsetOf(type, mem_name.c_str()) / 8 << ";" << endl;
 
 		idx++;
 	}
 
-	fout << "\t\tmap_insert(&type_table, " << name << "_t.hash, " << name << "_t, false);" << endl;
-
-	fout << "\t}" << endl << endl;
+	fout << "\t\tmap_insert(&type_table, this_type_info.hash, this_type_info, false);" << endl
+		 << "\t}" << endl << endl;
 }
 
 void print_templ_struct(ofstream& fout, const struct_def& s, const map<string, CXType>& translation) {
 
-	auto name = str(clang_getCursorSpelling(s.this_));
+	auto& name = s.name;
 	auto type = clang_getCursorType(s.this_);
 
 	fout << "\t{" << endl;
@@ -266,12 +341,12 @@ void print_templ_struct(ofstream& fout, const struct_def& s, const map<string, C
 	}
 	qual_name += ">";
 
-	fout << "\t\t_type_info " << name << "_t;" << endl
-		 << "\t\t" << name << "_t.type_type = Type::_struct;" << endl
-		 << "\t\t" << name << "_t.size = sizeof(" << qual_name << ");" << endl
-		 << "\t\t" << name << "_t.name = string_literal(\"" << name << "\");" << endl
-		 << "\t\t" << name << "_t.hash = (type_id)typeid(" << qual_name << ").hash_code();" << endl
-		 << "\t\t" << name << "_t._struct.member_count = " << s.members.size() << ";" << endl;
+	fout << "\t\tthis_type_info = _type_info();" << endl
+		 << "\t\tthis_type_info.type_type = Type::_struct;" << endl
+		 << "\t\tthis_type_info.size = sizeof(" << qual_name << ");" << endl
+		 << "\t\tthis_type_info.name = string_literal(\"" << name << "\");" << endl
+		 << "\t\tthis_type_info.hash = (type_id)typeid(" << qual_name << ").hash_code();" << endl
+		 << "\t\tthis_type_info._struct.member_count = " << s.members.size() << ";" << endl;
 
 	fout << "#define __" << name << "__ " << qual_name << endl;
 	u32 idx = 0;
@@ -279,17 +354,16 @@ void print_templ_struct(ofstream& fout, const struct_def& s, const map<string, C
 		auto mem_name = str(clang_getCursorSpelling(member));
 		auto mem_type_name = str(clang_getTypeSpelling(clang_getCursorType(member)));
 
-		fout << "\t\t" << name << "_t._struct.member_types[" << idx << "] = TYPEINFO(" << mem_type_name << ") ? TYPEINFO(" << mem_type_name << ")->hash : 0;" << endl
-			 << "\t\t" << name << "_t._struct.member_names[" << idx << "] = string_literal(\"" << mem_name << "\");" << endl
-			 << "\t\t" << name << "_t._struct.member_offsets[" << idx << "] = offsetof(__" << name << "__, " << mem_name << ");" << endl;
+		fout << "\t\tthis_type_info._struct.member_types[" << idx << "] = TYPEINFO(" << mem_type_name << ") ? TYPEINFO(" << mem_type_name << ")->hash : 0;" << endl
+			 << "\t\tthis_type_info._struct.member_names[" << idx << "] = string_literal(\"" << mem_name << "\");" << endl
+			 << "\t\tthis_type_info._struct.member_offsets[" << idx << "] = offsetof(__" << name << "__, " << mem_name << ");" << endl;
 
 		idx++;
 	}
 	fout << "#undef __" << name << "__" << endl;
 
-	fout << "\t\tmap_insert(&type_table, " << name << "_t.hash, " << name << "_t, false);" << endl;
-
-	fout << "\t}" << endl;
+	fout << "\t\tmap_insert(&type_table, this_type_info.hash, this_type_info, false);" << endl
+		 << "\t}" << endl << endl;
 }
 
 map<string, CXType> make_translation(const struct_def& s, const vector<CXType>& instantiation) {
@@ -410,6 +484,9 @@ i32 main(i32 argc, char** argv) {
 
 	ofstream fout("meta_types.h");
 	output_pre(fout);
+	for(auto& e : enums) {
+		output_enum(fout, e);
+	}
 	for(auto& s : structs) {
 		output_struct(fout, s);
 	}

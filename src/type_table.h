@@ -22,33 +22,33 @@ typedef u64 type_id;
 
 struct Type_void_info {};
 struct Type_int_info {
-	bool is_signed;
+	bool is_signed = false;
 };
 struct Type_float_info {};
 struct Type_bool_info {};
 struct Type_ptr_info {
-	type_id to;
+	type_id to = 0;
 };
 struct Type_func_info {
-	type_id 	param_types[16];
+	type_id 	param_types[16] 	= {};
 	string 		param_names[16];
-	u32 		param_count;
+	u32 		param_count 		= 0;
 };
 struct Type_array_info {
-	type_id of;
-	u64 	length;
+	type_id of 		= 0;
+	u64 	length 	= 0;
 };
 struct Type_struct_info {
-	type_id		member_types[64];
+	type_id		member_types[64]	= {};
 	string 		member_names[64];
-	u32 		member_offsets[64];
-	u32 		member_count;
+	u32 		member_offsets[64]	= {};
+	u32 		member_count		= 0;
 };
 struct Type_enum_info {
-	type_id 	base_type;
+	type_id 	base_type			= 0;
 	string 		member_names[128];
-	u64			member_values[128];
-	u32 		member_count;
+	u64			member_values[128] 	= {};
+	u32 		member_count		= 0;
 };
 struct Type_string_info {};
 
