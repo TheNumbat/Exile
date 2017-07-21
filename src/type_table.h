@@ -112,7 +112,8 @@ struct _get_type_info<T*> {
 	}
 };
 
-void make_meta_types();
+void make_meta_enums();
+void make_meta_structs();
 void make_type_table(allocator* alloc) {
 
 	type_table = make_map<type_id,_type_info>(512, alloc, &hash_u64);
@@ -257,7 +258,8 @@ void make_type_table(allocator* alloc) {
 		map_insert(&type_table, string_t.hash, string_t, false);
 	}
 
-	make_meta_types();
+	make_meta_enums();
+	make_meta_structs();
 }
 
 void destroy_type_table() {

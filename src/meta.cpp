@@ -243,9 +243,15 @@ CXChildVisitResult do_parse(CXCursor c) {
 	return CXChildVisit_Continue;
 }
 
-void output_pre(ofstream& fout) {
+void output_pre_struct(ofstream& fout) {
 	fout << endl
-		 << "void make_meta_types() {" << endl
+		 << "void make_meta_structs() {" << endl
+		 << endl << "\t_type_info this_type_info;" << endl;
+}
+
+void output_pre_enum(ofstream& fout) {
+	fout << endl
+		 << "void make_meta_enums() {" << endl
 		 << endl << "\t_type_info this_type_info;" << endl;
 }
 
@@ -483,10 +489,12 @@ i32 main(i32 argc, char** argv) {
 	}, nullptr);
 
 	ofstream fout("meta_types.h");
-	output_pre(fout);
+	output_pre_enum(fout);
 	for(auto& e : enums) {
 		output_enum(fout, e);
 	}
+	output_post(fout);
+	output_pre_struct(fout);
 	for(auto& s : structs) {
 		output_struct(fout, s);
 	}
