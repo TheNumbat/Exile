@@ -266,7 +266,7 @@ void output_enum(ofstream& fout, const enum_def& e) {
 	fout << "\t{" << endl
 		 << "\t\tthis_type_info = _type_info();" << endl
 		 << "\t\tthis_type_info.type_type = Type::_enum;" << endl
-		 << "\t\tthis_type_info.size = " << clang_Type_getSizeOf(clang_getCursorType(e.this_)) << ";" << endl
+		 << "\t\tthis_type_info.size = sizeof(" << type << ");" << endl
 		 << "\t\tthis_type_info.name = string_literal(\"" << name << "\");" << endl
 		 << "\t\tthis_type_info.hash = (type_id)typeid(" << name << ").hash_code();" << endl
 		 << "\t\tthis_type_info._enum.member_count = " << e.members.size() << ";" << endl
@@ -303,7 +303,7 @@ void output_struct(ofstream& fout, const struct_def& s) {
 
 	fout << "\t\tthis_type_info = _type_info();" << endl
 		 << "\t\tthis_type_info.type_type = Type::_struct;" << endl
-		 << "\t\tthis_type_info.size = " << clang_Type_getSizeOf(type) << ";" << endl
+		 << "\t\tthis_type_info.size = sizeof(" << name << ");" << endl
 		 << "\t\tthis_type_info.name = string_literal(\"" << name << "\");" << endl
 		 << "\t\tthis_type_info.hash = (type_id)typeid(" << name << ").hash_code();" << endl
 		 << "\t\tthis_type_info._struct.member_count = " << s.members.size() << ";" << endl;
@@ -315,7 +315,7 @@ void output_struct(ofstream& fout, const struct_def& s) {
 
 		fout << "\t\tthis_type_info._struct.member_types[" << idx << "] = TYPEINFO(" << mem_type_name << ") ? TYPEINFO(" << mem_type_name << ")->hash : 0;" << endl
 			 << "\t\tthis_type_info._struct.member_names[" << idx << "] = string_literal(\"" << mem_name << "\");" << endl
-			 << "\t\tthis_type_info._struct.member_offsets[" << idx << "] = " << clang_Type_getOffsetOf(type, mem_name.c_str()) / 8 << ";" << endl;
+			 << "\t\tthis_type_info._struct.member_offsets[" << idx << "] = offsetof(" << name << "," << mem_name << ");" << endl;
 
 		idx++;
 	}
