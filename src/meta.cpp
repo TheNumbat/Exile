@@ -39,8 +39,10 @@ struct struct_def {
 
 	vector<function<void(ofstream&)>> dependancies;
 };
-vector<pair<struct_def, map<string, CXType>>> done;
 
+// using dictionaries would be faster, but we need to preserve ordering (could sort based on monotonic ID but w/e)
+// also, this is already fast enough, it's a small portion of the full build time
+vector<pair<struct_def, map<string, CXType>>> done;
 vector<struct_def> structs;
 struct_def current_struct_def;
 vector<enum_def> enums;
@@ -48,16 +50,30 @@ enum_def current_enum_def;
 
 vector<CXType> current_instantiation;
 
-ostream& operator<<(ostream&, const CXString&);
-bool is_ds_decl(CXCursorKind);
-bool is_fwd_decl(CXCursor);
-CXChildVisitResult do_parse(CXCursor);
-void output_pre(ofstream&);
-void output_post(ofstream&);
-void output_struct(ofstream&, const struct_def&);
-void output_template_struct(ofstream&, const struct_def&, const map<string, CXType>&);
-map<string, CXType> make_translation(const struct_def&, const vector<CXType>&);
-void print_templ_struct(ofstream&, const struct_def&, const map<string, CXType>&);
+// string utility, because the STL is so fully featured
+void trim(string &s);
+template<typename Out> void split(const string &s, char delim, Out result);
+vector<string> split(const string &s, char delim);
+ostream& operator<<(ostream& stream, const CXString& str);
+string str(CXString cx_str);
+
+bool operator==(const CXType& one, const CXType& two);
+bool is_fwd_decl(CXCursor c);
+
+CXChildVisitResult parse_enum(CXCursor c, CXCursor parent, CXClientData client_data);
+CXChildVisitResult parse_struct_or_union(CXCursor c, CXCursor parent, CXClientData client_data);
+CXChildVisitResult do_parse(CXCursor c);
+
+void output_pre_struct(ofstream& fout);
+void output_pre_enum(ofstream& fout);
+void output_post(ofstream& fout);
+void output_enum(ofstream& fout, const enum_def& e);
+void output_struct(ofstream& fout, const struct_def& s);
+void output_template_struct(ofstream& fout, const struct_def& s, const map<string, CXType>& trans);
+map<string, CXType> make_translation(const struct_def& s, const vector<CXType>& inst);
+void print_templ_struct(ofstream& fout, const struct_def& s, const map<string, CXType>& trans);
+
+
 bool operator==(const CXType& one, const CXType& two) {
 	return memcmp(&one, &two, sizeof(one)) == 0;
 }
@@ -108,16 +124,8 @@ string str(CXString cx_str) {
 	return str;
 }
 
-bool is_ds_decl(CXCursorKind k) {
-	return k == CXCursor_StructDecl		||
-		   k == CXCursor_EnumDecl		||
-		   k == CXCursor_UnionDecl		||
-		   k == CXCursor_ClassTemplate	||
-		   k == CXCursor_ClassTemplatePartialSpecialization;
-}
-
-bool is_fwd_decl(CXCursor cursor) {
-	return clang_isCursorDefinition(cursor) == 0;
+bool is_fwd_decl(CXCursor c) {
+	return clang_isCursorDefinition(c) == 0;
 }
 
 CXChildVisitResult parse_enum(CXCursor c, CXCursor parent, CXClientData client_data) {
@@ -233,6 +241,8 @@ CXChildVisitResult do_parse(CXCursor c) {
 
 		clang_visitChildren(c, parse_enum, nullptr);
 
+		// sort values for binary search - stable so we can choose the first/last name for the value when printing
+		stable_sort(current_enum_def.members.begin(), current_enum_def.members.end(), [](auto& l, auto& r) -> bool { return l.value < r.value; });
 		enums.push_back(current_enum_def);
 	} break;
 	case CXCursor_VarDecl:
@@ -330,64 +340,6 @@ void output_struct(ofstream& fout, const struct_def& s) {
 		 << "\t}" << endl << endl;
 }
 
-void print_templ_struct(ofstream& fout, const struct_def& s, const map<string, CXType>& translation) {
-
-	auto& name = s.name;
-	auto type = clang_getCursorType(s.this_);
-
-	fout << "\t{" << endl;
-
-	string qual_name = name + "<";
-	for(u32 idx = 0; idx < s.template_type_params.size(); idx++) {
-		
-		qual_name += s.template_type_params[idx];
-		if(idx != s.template_type_params.size() - 1) {
-			qual_name += ",";
-		}
-	}
-	qual_name += ">";
-
-	fout << "\t\tthis_type_info = _type_info();" << endl
-		 << "\t\tthis_type_info.type_type = Type::_struct;" << endl
-		 << "\t\tthis_type_info.size = sizeof(" << qual_name << ");" << endl
-		 << "\t\tthis_type_info.name = string_literal(\"" << name << "\");" << endl
-		 << "\t\tthis_type_info.hash = (type_id)typeid(" << qual_name << ").hash_code();" << endl
-		 << "\t\tthis_type_info._struct.member_count = " << s.members.size() << ";" << endl;
-
-	fout << "#define __" << name << "__ " << qual_name << endl;
-	u32 idx = 0;
-	for(auto& member : s.members) {
-		auto mem_name = str(clang_getCursorSpelling(member));
-		auto mem_type_name = str(clang_getTypeSpelling(clang_getCursorType(member)));
-
-		fout << "\t\tthis_type_info._struct.member_types[" << idx << "] = TYPEINFO(" << mem_type_name << ") ? TYPEINFO(" << mem_type_name << ")->hash : 0;" << endl
-			 << "\t\tthis_type_info._struct.member_names[" << idx << "] = string_literal(\"" << mem_name << "\");" << endl
-			 << "\t\tthis_type_info._struct.member_offsets[" << idx << "] = offsetof(__" << name << "__, " << mem_name << ");" << endl;
-
-		idx++;
-	}
-	fout << "#undef __" << name << "__" << endl;
-
-	fout << "\t\tmap_insert(&type_table, this_type_info.hash, this_type_info, false);" << endl
-		 << "\t}" << endl << endl;
-}
-
-map<string, CXType> make_translation(const struct_def& s, const vector<CXType>& instantiation) {
-	
-	map<string, CXType> translation;
-	for(auto type_param : s.template_type_params) {
-		trim(type_param);
-		u32 index = 0;
-		for(;; index++) {
-			if(s.template_type_params[index] == type_param) {
-				break;
-			}
-		}
-		translation.insert({type_param, instantiation[index]});
-	}
-	return translation;
-}
-
 void output_template_struct(ofstream& fout, const struct_def& s, const map<string, CXType>& translation) {
 	
 	if(find_if(done.begin(), done.end(), [&](const auto& val) -> bool {return val.first.name == s.name && val.second == translation;}) != done.end()) return;
@@ -459,6 +411,64 @@ void output_template_struct(ofstream& fout, const struct_def& s, const map<strin
 		done.push_back({s, translation});
 	}
 	fout << endl;
+}
+
+map<string, CXType> make_translation(const struct_def& s, const vector<CXType>& instantiation) {
+	
+	map<string, CXType> translation;
+	for(auto type_param : s.template_type_params) {
+		trim(type_param);
+		u32 index = 0;
+		for(;; index++) {
+			if(s.template_type_params[index] == type_param) {
+				break;
+			}
+		}
+		translation.insert({type_param, instantiation[index]});
+	}
+	return translation;
+}
+
+void print_templ_struct(ofstream& fout, const struct_def& s, const map<string, CXType>& translation) {
+
+	auto& name = s.name;
+	auto type = clang_getCursorType(s.this_);
+
+	fout << "\t{" << endl;
+
+	string qual_name = name + "<";
+	for(u32 idx = 0; idx < s.template_type_params.size(); idx++) {
+		
+		qual_name += s.template_type_params[idx];
+		if(idx != s.template_type_params.size() - 1) {
+			qual_name += ",";
+		}
+	}
+	qual_name += ">";
+
+	fout << "\t\tthis_type_info = _type_info();" << endl
+		 << "\t\tthis_type_info.type_type = Type::_struct;" << endl
+		 << "\t\tthis_type_info.size = sizeof(" << qual_name << ");" << endl
+		 << "\t\tthis_type_info.name = string_literal(\"" << name << "\");" << endl
+		 << "\t\tthis_type_info.hash = (type_id)typeid(" << qual_name << ").hash_code();" << endl
+		 << "\t\tthis_type_info._struct.member_count = " << s.members.size() << ";" << endl;
+
+	fout << "#define __" << name << "__ " << qual_name << endl;
+	u32 idx = 0;
+	for(auto& member : s.members) {
+		auto mem_name = str(clang_getCursorSpelling(member));
+		auto mem_type_name = str(clang_getTypeSpelling(clang_getCursorType(member)));
+
+		fout << "\t\tthis_type_info._struct.member_types[" << idx << "] = TYPEINFO(" << mem_type_name << ") ? TYPEINFO(" << mem_type_name << ")->hash : 0;" << endl
+			 << "\t\tthis_type_info._struct.member_names[" << idx << "] = string_literal(\"" << mem_name << "\");" << endl
+			 << "\t\tthis_type_info._struct.member_offsets[" << idx << "] = offsetof(__" << name << "__, " << mem_name << ");" << endl;
+
+		idx++;
+	}
+	fout << "#undef __" << name << "__" << endl;
+
+	fout << "\t\tmap_insert(&type_table, this_type_info.hash, this_type_info, false);" << endl
+		 << "\t}" << endl << endl;
 }
 
 i32 main(i32 argc, char** argv) {
