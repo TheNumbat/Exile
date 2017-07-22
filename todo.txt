@@ -21,14 +21,15 @@ immediate to do:
 
 	meta
 		Support
-			enum
 			static array
 			template deduction from variables/parameters	
+			function pointers?
 		printf
-			enum
-			array
-			function
+			static array
 			special prints for data structures
+			function pointers?
+			get rid of templates
+			unify int stuff
 		integration with UI
 		profiler
 

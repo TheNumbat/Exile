@@ -14,6 +14,7 @@ u32 parse_u32(string s, u32 idx, u32* used) { FUNC
 }
 
 u32 string_insert(string s, u32 idx, string ins, bool size) { FUNC
+	if(ins.len == 0) return idx;
 	if(!size) memcpy(ins.c_str, s.c_str + idx, ins.len - 1);
 	return idx + ins.len - 1;
 }
@@ -53,6 +54,44 @@ u32 print_u64(string s, u32 idx, u8 base, u64 val, bool size) { FUNC
 	}
 
 	return idx;
+}
+
+template<typename T>
+i64 int_as_i64(T& val, _type_info* info) {
+	switch(info->size) {
+	case 1: {
+		if(info->_int.is_signed) {
+			return (i64)*(i8*)&val;
+		} else {
+			return (i64)*(u8*)&val;
+		}
+	} break;
+	case 2: {
+		if(info->_int.is_signed) {
+			return (i64)*(i16*)&val;
+		} else {
+			return (i64)*(u16*)&val;
+		}
+	} break;
+	case 4: {
+		if(info->_int.is_signed) {
+			return (i64)*(i32*)&val;
+		} else {
+			return (i64)*(u32*)&val;
+		}
+	} break;
+	case 8: {
+		if(info->_int.is_signed) {
+			return (i64)*(i64*)&val;
+		} else {
+			return (i64)*(u64*)&val;
+		}
+	} break;
+	default: {
+		LOG_DEBUG_ASSERT(!"Int was not 1, 2, 4, or 8 bytes?!?!");
+		return 0;
+	} break;
+	}
 }
 
 template<typename T>
@@ -153,6 +192,47 @@ u32 print_float(string s, u32 idx, u8 precision, T& val, _type_info* info, bool 
 }
 
 template<typename T>
+u32 print_enum(string s, u32 idx, T& val, _type_info* info, bool size) { FUNC
+
+	_type_info* base = TYPEINFO_H(info->_enum.base_type);
+
+	if(!base) LOG_ERR_F("Enum % with unknown base type!", info->name);
+
+	i64 value = int_as_i64(val, base);
+	string name;
+
+	// binary search
+	u32 low = 0, high = info->_enum.member_count;
+	for(;;) {
+
+		u32 search = low + ((high - low) / 2);
+
+		i64 mem = info->_enum.member_values[search];
+
+		if(value == mem) {
+			name = info->_enum.member_names[search];
+			break;
+		}
+
+		if(mem < value) {
+			low = search + 1;
+		} else {
+			high = search;
+		}
+
+		if(low == high) {
+			break;
+		}
+	}
+
+	idx = string_insert(s, idx, info->name, size);
+	idx = string_insert(s, idx, string_literal("::"), size);
+	idx = string_insert(s, idx, name, size);
+
+	return idx;
+}
+
+template<typename T>
 u32 print_type(string s, u32 idx, T& val, _type_info* info, bool size) { FUNC
 	if(info == NULL) {
 		info = TYPEINFO(T);
@@ -235,8 +315,7 @@ u32 print_type(string s, u32 idx, T& val, _type_info* info, bool size) { FUNC
 	} break;
 
 	case Type::_enum: {
-		idx = string_insert(s, idx, info->name, size);
-		idx = string_insert(s, idx, string_literal("{}"), size);
+		idx = print_enum(s, idx, val, info, size);
 	} break;
 
 	case Type::_string: {
@@ -251,6 +330,7 @@ u32 print_type(string s, u32 idx, T& val, _type_info* info, bool size) { FUNC
 inline u32 get_pack_first() { FUNC
 	return 0;
 }
+
 template<typename T, typename... Targs> 
 inline T& get_pack_first(T& val, Targs... args) { FUNC
 	return val;
@@ -260,6 +340,7 @@ template<typename T, typename... Targs>
 inline u32 _string_printf_fwd(string out, u32 idx, string fmt, bool size, T val, Targs... args) { FUNC
 	return _string_printf(out, idx, fmt, size, args...);
 }
+
 inline u32 _string_printf_fwd(string out, u32 idx, string fmt, bool size) { FUNC
 	return _string_printf(out, idx, fmt, size);
 }
@@ -283,8 +364,9 @@ u32 _string_printf(string out, u32 idx, string fmt, bool size) { FUNC
 	}
 	return idx;
 }
+
 template<typename T, typename... Targs>
-u32 _string_printf(string out, u32 idx, string fmt, bool size, T value, Targs... args) { FUNC
+u32 _string_printf(string out, u32 idx, string fmt, bool size, T& value, Targs... args) { FUNC
 
 	for(u32 i = 0; i < fmt.len - 1; i++) {
 		if(fmt.c_str[i] == '%') {
@@ -299,7 +381,7 @@ u32 _string_printf(string out, u32 idx, string fmt, bool size, T value, Targs...
 					u32 pad = 0;
 					u32 sized = 0;
 
-					if(fmt.c_str[i + 1] == '*') {	// total length passed as a parameter
+					if(fmt.c_str[idx + 1] == '*') {	// total length passed as a parameter
 						pad = *(u32*)&value;			
 						i++;
 						len_in_param = true;
@@ -367,7 +449,6 @@ u32 _string_printf(string out, u32 idx, string fmt, bool size, T value, Targs...
 					idx = print_type(out, idx, value, NULL, size);
 					return _string_printf(out, idx, string_from_c_str(fmt.c_str + i + 1), size, args...);
 				}
-
 			}
 		} else {
 			if(!size) {
