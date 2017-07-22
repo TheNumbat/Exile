@@ -47,7 +47,7 @@ struct Type_struct_info {
 struct Type_enum_info {
 	type_id 	base_type			= 0;
 	string 		member_names[128];
-	u64			member_values[128] 	= {};
+	i64			member_values[128] 	= {};
 	u32 		member_count		= 0;
 };
 struct Type_string_info {};
@@ -253,7 +253,6 @@ void make_type_table(allocator* alloc) {
 		string_t.type_type 		= Type::_string;
 		string_t.size			= sizeof(string);
 		string_t.name 			= string_literal("string");
-		string_t._int.is_signed = true;
 		string_t.hash = (type_id)typeid(string).hash_code();
 		map_insert(&type_table, string_t.hash, string_t, false);
 	}
