@@ -16,6 +16,10 @@
 
 #include "platform_win32.cpp"
 
+#elif defined(__linux__)
+
+#include "platform_linux.cpp"
+
 #else
 
 #error "Unsupported platform."
