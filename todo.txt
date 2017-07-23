@@ -32,11 +32,12 @@ immediate to do:
 			unify int stuff
 		integration with UI
 		profiler
+		support loading/writing type table for release (i.e. don't build on startup)
 
 	log
 		buffer file IO
 		can we remove allocation on message send?
-		pool allocator/free list?
+			pool allocator/free list?
 
 	UI
 		stop sending mesh every frame (see OpenGL)

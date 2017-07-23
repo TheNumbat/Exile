@@ -307,11 +307,11 @@ struct platform_api {
 
 #ifdef _WIN32
 
-#include "platform_win32.cpp"
+#include "platform_win32_api.h"
 
 #elif defined(__linux__)
 
-#include "platform_linux.cpp"
+#include "platform_linux_api.h"
 
 #else
 
