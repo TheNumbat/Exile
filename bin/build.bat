@@ -49,9 +49,9 @@ if "%1"=="release" (
 if not exist w:\build\main.exe (
 echo compiling platform layer...
 	if "%2"=="release" (
-		cl %Platform_ReleaseCompilerFlags% w:\src\platform_main.cpp /link %Platform_LinkerFlags%
+		cl %Platform_ReleaseCompilerFlags% w:\src\platform\platform_main.cpp /link %Platform_LinkerFlags%
 	) else (
-		cl %Platform_DebugCompilerFlags% w:\src\platform_main.cpp /link %Platform_LinkerFlags%
+		cl %Platform_DebugCompilerFlags% w:\src\platform\platform_main.cpp /link %Platform_LinkerFlags%
 	)
 )
 
