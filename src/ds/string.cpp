@@ -216,26 +216,7 @@ u32 print_type(string s, u32 idx, void* val, _type_info* info, bool size) { FUNC
 	} break;
 
 	case Type::_ptr: {
-		idx = string_insert(s, idx, string_literal("*{"), size);
-		if (info->_ptr.to == 0) {
-			idx = string_insert(s, idx, string_literal("UNDEF|"), size);
-
-			if (*(u8**)&val == NULL) {
-				idx = string_insert(s, idx, string_literal("NULL"), size);
-			} else {
-				idx = print_u64(s, idx, 16, (u64)(*(u8**)val), size);
-			}
-		} else {
-			if (*(u8**)val == NULL) {
-				idx = string_insert(s, idx, TYPEINFO_H(info->_ptr.to)->name, size);
-				idx = string_insert(s, idx, string_literal("|NULL"), size);
-			} else {
-				idx = print_type(s, idx, *(u8**)val, TYPEINFO_H(info->_ptr.to), size);
-				idx = string_insert(s, idx, '|', size);
-				idx = print_u64(s, idx, 16, (u64)(*(u8**)val), size);
-			}
-		}	
-		idx = string_insert(s, idx, '}', size);
+		idx = print_ptr(s, idx, val, info, size);
 	} break;
 
 	case Type::_func: {
@@ -243,32 +224,15 @@ u32 print_type(string s, u32 idx, void* val, _type_info* info, bool size) { FUNC
 	} break;
 
 	case Type::_struct: {
-		idx = string_insert(s, idx, info->name, size);
-		idx = string_insert(s, idx, string_literal("{"), size);
-		for(u32 j = 0; j < info->_struct.member_count; j++) {
-			idx = string_insert(s, idx, info->_struct.member_names[j], size);
-			idx = string_insert(s, idx, string_literal(" : "), size);
-
-			_type_info* member = TYPEINFO_H(info->_struct.member_types[j]);
-			u8* place = (u8*)val + info->_struct.member_offsets[j];
-
-			if(member) {
-				if(member->type_type == Type::_string) {
-					idx = string_insert(s, idx, string_literal("\""), size);
-				}
-				idx = print_type(s, idx, place, member, size);
-				if(member->type_type == Type::_string) {
-					idx = string_insert(s, idx, string_literal("\""), size);
-				}
-			} else {
-				idx = string_insert(s, idx, string_literal("UNDEF"), size);
-			}
-
-			if(j < info->_struct.member_count - 1) {
-				idx = string_insert(s, idx, string_literal(", "), size);
-			}
+		if(info->name == "vector") {
+			// print_vec(val, info);
+		} else if(info-> name == "array") {
+			// print_arr(val, info);
+		} else if(info-> name == "map") {
+			// print_map(val, info);
+		} else {
+			idx = print_struct(s, idx, val, info, size);
 		}
-		idx = string_insert(s, idx, '}', size);
 	} break;
 
 	case Type::_enum: {
@@ -281,6 +245,60 @@ u32 print_type(string s, u32 idx, void* val, _type_info* info, bool size) { FUNC
 		}
 	} break;
 	}
+	return idx;
+}
+
+u32 print_ptr(string s, u32 idx, void* val, _type_info* info, bool size) { FUNC 
+	idx = string_insert(s, idx, string_literal("*{"), size);
+	if (info->_ptr.to == 0) {
+		idx = string_insert(s, idx, string_literal("UNDEF|"), size);
+
+		if (*(u8**)&val == NULL) {
+			idx = string_insert(s, idx, string_literal("NULL"), size);
+		} else {
+			idx = print_u64(s, idx, 16, (u64)(*(u8**)val), size);
+		}
+	} else {
+		if (*(u8**)val == NULL) {
+			idx = string_insert(s, idx, TYPEINFO_H(info->_ptr.to)->name, size);
+			idx = string_insert(s, idx, string_literal("|NULL"), size);
+		} else {
+			idx = print_type(s, idx, *(u8**)val, TYPEINFO_H(info->_ptr.to), size);
+			idx = string_insert(s, idx, '|', size);
+			idx = print_u64(s, idx, 16, (u64)(*(u8**)val), size);
+		}
+	}	
+	idx = string_insert(s, idx, '}', size);
+	return idx;
+}
+
+u32 print_struct(string s, u32 idx, void* val, _type_info* info, bool size) { FUNC 
+	idx = string_insert(s, idx, info->name, size);
+	idx = string_insert(s, idx, string_literal("{"), size);
+	for(u32 j = 0; j < info->_struct.member_count; j++) {
+		idx = string_insert(s, idx, info->_struct.member_names[j], size);
+		idx = string_insert(s, idx, string_literal(" : "), size);
+
+		_type_info* member = TYPEINFO_H(info->_struct.member_types[j]);
+		u8* place = (u8*)val + info->_struct.member_offsets[j];
+
+		if(member) {
+			if(member->type_type == Type::_string) {
+				idx = string_insert(s, idx, string_literal("\""), size);
+			}
+			idx = print_type(s, idx, place, member, size);
+			if(member->type_type == Type::_string) {
+				idx = string_insert(s, idx, string_literal("\""), size);
+			}
+		} else {
+			idx = string_insert(s, idx, string_literal("UNDEF"), size);
+		}
+
+		if(j < info->_struct.member_count - 1) {
+			idx = string_insert(s, idx, string_literal(", "), size);
+		}
+	}
+	idx = string_insert(s, idx, '}', size);
 	return idx;
 }
 
@@ -316,7 +334,7 @@ u32 print_u64(string s, u32 idx, u8 base, u64 val, bool size) { FUNC
 	return idx;
 }
 
-i64 int_as_i64(void* val, _type_info* info) {
+i64 int_as_i64(void* val, _type_info* info) { FUNC
 	switch(info->size) {
 	case 1: {
 		if(info->_int.is_signed) {
@@ -500,6 +518,16 @@ string make_stringf_a(allocator* a, string fmt, Targs... args) { FUNC
 	_string_printf(ret, 0, fmt, false, args...);
 
 	return ret;
+}
+
+inline bool operator==(string first, const char* second) { FUNC
+
+	return first == string_literal(second);
+}
+
+inline bool operator==(const char* first, string second) { FUNC
+
+	return string_literal(first) == second;
 }
 
 bool operator==(string first, string second) { FUNC

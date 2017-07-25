@@ -28,7 +28,6 @@ immediate to do:
 			static array
 			special prints for data structures
 			function pointers?
-			get rid of templates
 			unify int stuff
 		integration with UI
 		profiler

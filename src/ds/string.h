@@ -10,6 +10,8 @@ struct NOREFLECT string { // no-reflect because hard-coded
 u32  hash_strings(string one, string two);
 u32  hash_string(string str);
 bool operator==(string first, string second);
+inline bool operator==(string first, const char* second);
+inline bool operator==(const char* first, string second);
 bool strcmp(string first, string second);
 
 // parsing stuff
@@ -60,6 +62,8 @@ struct _type_info;
 u32 print_type(string s, u32 idx, void* val, _type_info* info, bool size = false);
 
 // type-specific helpers
+u32 print_ptr(string s, u32 idx, void* val, _type_info* info, bool size = false);
+u32 print_struct(string s, u32 idx, void* val, _type_info* info, bool size = false);
 u32 print_enum(string s, u32 idx, void* val, _type_info* info, bool size = false);
 u32 print_int(string s, u32 idx, u8 base, void* val, _type_info* info, bool size = false);
 u32 print_float(string s, u32 idx, u8 precision, void* val, _type_info* info, bool size = false);
