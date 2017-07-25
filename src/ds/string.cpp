@@ -31,13 +31,13 @@ void string_printf(string out, string fmt, Targs... args) { FUNC
 }
 
 template<typename... Targs>
-u32 size_stringf(string fmt, Targs... args) {
+u32 size_stringf(string fmt, Targs... args) { FUNC
 	string tmp;
 	return _string_printf(tmp, 0, fmt, true, args...) + 1;
 }
 
 template<typename... Targs> 
-string make_stringf_len(u32 len, string fmt, Targs... args) {
+string make_stringf_len(u32 len, string fmt, Targs... args) { FUNC
 
 	string ret;
 	ret 	= make_string(len);
@@ -225,11 +225,11 @@ u32 print_type(string s, u32 idx, void* val, _type_info* info, bool size) { FUNC
 
 	case Type::_struct: {
 		if(info->name == "vector") {
-			// print_vec(val, info);
+			idx = print_struct(s, idx, val, info, size);
 		} else if(info-> name == "array") {
-			// print_arr(val, info);
+			idx = print_struct(s, idx, val, info, size);
 		} else if(info-> name == "map") {
-			// print_map(val, info);
+			idx = print_struct(s, idx, val, info, size);
 		} else {
 			idx = print_struct(s, idx, val, info, size);
 		}
