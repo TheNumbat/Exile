@@ -62,6 +62,6 @@ u32 print_type(string s, u32 idx, void* val, _type_info* info, bool size = false
 // type-specific helpers
 u32 print_enum(string s, u32 idx, void* val, _type_info* info, bool size = false);
 u32 print_int(string s, u32 idx, u8 base, void* val, _type_info* info, bool size = false);
-u32 print_float(string s, u32 idx, void* val, _type_info* info, bool size = false);
+u32 print_float(string s, u32 idx, u8 precision, void* val, _type_info* info, bool size = false);
 u32 print_u64(string s, u32 idx, u8 base, u64 val, bool size = false);
 i64 int_as_i64(void* val, _type_info* info);
