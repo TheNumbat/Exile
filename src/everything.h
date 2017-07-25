@@ -9,7 +9,7 @@
 
 #include "basic_types.h"
 #include "math.h"
-#include "str/strings.h"
+#include "ds/string.h"
 
 struct code_context {
 	string file;
@@ -113,7 +113,7 @@ struct func_scope_nocs {
 #include <meta_types.h>
 
 // IMPLEMENTATIONS
-#include "str/strings.cpp"
+#include "ds/string.cpp"
 #include "math.cpp"
 
 #include "alloc.cpp"

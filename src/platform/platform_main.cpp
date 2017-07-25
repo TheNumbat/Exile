@@ -4,8 +4,8 @@
 #pragma warning(disable : 4007)
 
 #include "../basic_types.h"
-#include "../str/platform_strings.h"
-#include "../str/platform_strings.cpp"
+#include "platform_strings.h"
+#include "platform_strings.cpp"
 #include "../platform_api.h"
 
 #ifdef _WIN32
