@@ -12,6 +12,7 @@
 #include <iterator>
 #include <cctype>
 #include <locale>
+#include <cstring>
 
 #include "basic_types.h"
 

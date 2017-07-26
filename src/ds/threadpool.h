@@ -1,5 +1,5 @@
 
-#pragma once;
+#pragma once
 
 // TODO(max): work-stealing thread local queues to minimize locking
 
