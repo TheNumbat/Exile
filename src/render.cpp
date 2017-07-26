@@ -1,5 +1,5 @@
 
-mesh_2d make_mesh_2d(u32 verts, allocator* alloc) { FUNC
+mesh_2d make_mesh_2d(u32 verts, allocator* alloc) { PROF
 
 	if(alloc == NULL) {
 		alloc = CURRENT_ALLOC();
@@ -17,7 +17,7 @@ mesh_2d make_mesh_2d(u32 verts, allocator* alloc) { FUNC
 	return ret;
 }
 
-void destroy_mesh(mesh_2d* m) { FUNC
+void destroy_mesh(mesh_2d* m) { PROF
 
 	destroy_vector(&m->verticies);
 	destroy_vector(&m->texCoords);
@@ -26,7 +26,7 @@ void destroy_mesh(mesh_2d* m) { FUNC
 	m->alloc = NULL;
 }
 
-void mesh_push_cutrect(mesh_2d* m, r2 r, f32 round, color c) { FUNC
+void mesh_push_cutrect(mesh_2d* m, r2 r, f32 round, color c) { PROF
 
 	u32 idx = m->verticies.size;
 
@@ -52,7 +52,7 @@ void mesh_push_cutrect(mesh_2d* m, r2 r, f32 round, color c) { FUNC
 	vector_push(&m->elements, V3u(idx + 3, idx + 5, idx + 6));
 }
 
-void mesh_push_rect(mesh_2d* m, r2 r, color c) { FUNC
+void mesh_push_rect(mesh_2d* m, r2 r, color c) { PROF
 
 	u32 idx = m->verticies.size;
 
@@ -70,7 +70,7 @@ void mesh_push_rect(mesh_2d* m, r2 r, color c) { FUNC
 	vector_push(&m->elements, V3u(idx + 1, idx + 2, idx + 3));
 }
 
-v2 size_text(asset* font, string text_utf8, f32 point) { FUNC
+v2 size_text(asset* font, string text_utf8, f32 point) { PROF
 
 	v2 ret;
 
@@ -90,7 +90,7 @@ v2 size_text(asset* font, string text_utf8, f32 point) { FUNC
 	return ret;
 }
 
-f32 mesh_push_text_line(mesh_2d* m, asset* font, string text_utf8, v2 pos, f32 point, color c) { FUNC
+f32 mesh_push_text_line(mesh_2d* m, asset* font, string text_utf8, v2 pos, f32 point, color c) { PROF
 
 	colorf cf = color_to_f(c);
 	f32 x = pos.x;
@@ -135,7 +135,7 @@ f32 mesh_push_text_line(mesh_2d* m, asset* font, string text_utf8, v2 pos, f32 p
 	return scale * font->font.linedist;
 }
 
-mesh_3d make_mesh_3d(u32 verts, allocator* alloc) { FUNC
+mesh_3d make_mesh_3d(u32 verts, allocator* alloc) { PROF
 
 	if(alloc == NULL) {
 		alloc = CURRENT_ALLOC();
@@ -151,7 +151,7 @@ mesh_3d make_mesh_3d(u32 verts, allocator* alloc) { FUNC
 	return ret;
 }
 
-void destroy_mesh(mesh_3d* m) { FUNC
+void destroy_mesh(mesh_3d* m) { PROF
 
 	destroy_vector(&m->verticies);
 	destroy_vector(&m->texCoords);
@@ -159,7 +159,7 @@ void destroy_mesh(mesh_3d* m) { FUNC
 	m->alloc = NULL;	
 }
 
-render_command make_render_command(render_command_type type, void* data, u32 key) { FUNC
+render_command make_render_command(render_command_type type, void* data, u32 key) { PROF
 
 	render_command ret;
 
@@ -175,11 +175,11 @@ render_command make_render_command(render_command_type type, void* data, u32 key
 	return ret;
 }
 
-bool operator<(render_command first, render_command second) { FUNC
+bool operator<(render_command first, render_command second) { PROF
 	return first.sort_key < second.sort_key;
 }
 
-render_command_list make_command_list(allocator* alloc, u32 cmds) { FUNC
+render_command_list make_command_list(allocator* alloc, u32 cmds) { PROF
 
 	if(alloc == NULL) {
 		alloc = CURRENT_ALLOC();
@@ -194,30 +194,30 @@ render_command_list make_command_list(allocator* alloc, u32 cmds) { FUNC
 	return ret;
 }
 
-void destroy_command_list(render_command_list* rcl) { FUNC
+void destroy_command_list(render_command_list* rcl) { PROF
 
 	destroy_vector(&rcl->commands);
 	rcl->alloc = NULL;
 }
 
-void render_add_command(render_command_list* rcl, render_command rc) { FUNC
+void render_add_command(render_command_list* rcl, render_command rc) { PROF
 
 	vector_push(&rcl->commands, rc);
 }
 
-void sort_render_commands(render_command_list* rcl) { FUNC
+void sort_render_commands(render_command_list* rcl) { PROF
 
 	vector_qsort(&rcl->commands);
 }
 
-void clear_mesh(mesh_2d* m) { FUNC
+void clear_mesh(mesh_2d* m) { PROF
 	clear_vector(&m->verticies);
 	clear_vector(&m->colors);
 	clear_vector(&m->texCoords);
 	clear_vector(&m->elements);
 }
 
-void clear_mesh(mesh_3d* m) { FUNC
+void clear_mesh(mesh_3d* m) { PROF
 	clear_vector(&m->verticies);
 	clear_vector(&m->texCoords);
 }

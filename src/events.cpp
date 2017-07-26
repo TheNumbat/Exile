@@ -1,5 +1,5 @@
 
-evt_manager make_evt_manager(allocator* a) { FUNC
+evt_manager make_evt_manager(allocator* a) { PROF
 	
 	evt_manager ret;
 
@@ -8,17 +8,17 @@ evt_manager make_evt_manager(allocator* a) { FUNC
 	return ret;
 }
 
-void start_evt_manger(evt_manager* em) { FUNC
+void start_evt_manger(evt_manager* em) { PROF
 
 	global_state->api->platform_set_queue_callback(&event_enqueue, &em->event_queue);
 }
 
-void destroy_evt_manager(evt_manager* em) { FUNC
+void destroy_evt_manager(evt_manager* em) { PROF
 
 	destroy_queue(&em->event_queue);
 }
 
-gui_input_state run_events(game_state* state) { FUNC
+gui_input_state run_events(game_state* state) { PROF
 
 	global_state->api->platform_queue_messages(&global_state->window);
 	gui_input_state ret = state->gui.input;
@@ -97,7 +97,7 @@ gui_input_state run_events(game_state* state) { FUNC
 	return ret;
 }
 
-void event_enqueue(void* data, platform_event evt) { FUNC
+void event_enqueue(void* data, platform_event evt) { PROF
 
 	queue<platform_event>* q = (queue<platform_event>*)data;
 

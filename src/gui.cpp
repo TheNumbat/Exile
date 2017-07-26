@@ -1,15 +1,15 @@
 
-u32 guiid_hash(guiid id) { FUNC
+u32 guiid_hash(guiid id) { PROF
 
 	u32 hash = hash_string(id.name);
 	return hash ^ id.base;
 }
 
-bool operator==(guiid l, guiid r) { FUNC
+bool operator==(guiid l, guiid r) { PROF
 	return l.base == r.base && l.name == r.name;
 }
 
-gui_manager make_gui(ogl_manager* ogl, allocator* alloc) { FUNC
+gui_manager make_gui(ogl_manager* ogl, allocator* alloc) { PROF
 
 	gui_manager ret;
 
@@ -26,7 +26,7 @@ gui_manager make_gui(ogl_manager* ogl, allocator* alloc) { FUNC
 	return ret;
 }
 
-void destroy_gui(gui_manager* gui) { FUNC
+void destroy_gui(gui_manager* gui) { PROF
 
 	FORMAP(gui->window_state_data,
 		destroy_stack(&it->value.id_hash_stack);
@@ -41,7 +41,7 @@ void destroy_gui(gui_manager* gui) { FUNC
 	DESTROY_ARENA(&gui->scratch);
 }
 
-void gui_reload_fonts(ogl_manager* ogl, gui_manager* gui) { FUNC
+void gui_reload_fonts(ogl_manager* ogl, gui_manager* gui) { PROF
 
 	FORVEC(gui->fonts,
 
@@ -54,7 +54,7 @@ void gui_reload_fonts(ogl_manager* ogl, gui_manager* gui) { FUNC
 	)
 }
 
-void gui_add_font(ogl_manager* ogl, gui_manager* gui, string asset_name, asset_store* store, bool mono) { FUNC
+void gui_add_font(ogl_manager* ogl, gui_manager* gui, string asset_name, asset_store* store, bool mono) { PROF
 
 	asset* font = get_asset(store, asset_name);
 
@@ -69,7 +69,7 @@ void gui_add_font(ogl_manager* ogl, gui_manager* gui, string asset_name, asset_s
 	vector_push(&gui->fonts, f);
 }
 
-gui_font* gui_select_best_font_scale(gui_window_state* win) { FUNC
+gui_font* gui_select_best_font_scale(gui_window_state* win) { PROF
 
 	gui_font* f = NULL;
 
@@ -86,7 +86,7 @@ gui_font* gui_select_best_font_scale(gui_window_state* win) { FUNC
 	return f;
 }
 
-void gui_begin_frame(gui_manager* gui, gui_input_state input) { FUNC
+void gui_begin_frame(gui_manager* gui, gui_input_state input) { PROF
 
 	ggui = gui;
 	gui->input = input;
@@ -98,7 +98,7 @@ void gui_begin_frame(gui_manager* gui, gui_input_state input) { FUNC
 	)
 }
 
-void gui_end_frame(ogl_manager* ogl) { FUNC
+void gui_end_frame(ogl_manager* ogl) { PROF
 
 	if(!ggui->input.lclick && !ggui->input.rclick && !ggui->input.mclick && !ggui->input.ldbl) {
 		if(ggui->active != gui_active_state::captured) {
@@ -134,7 +134,7 @@ void gui_end_frame(ogl_manager* ogl) { FUNC
 	RESET_ARENA(&ggui->scratch);
 }
 
-void gui_push_offset(v2 offset) { FUNC
+void gui_push_offset(v2 offset) { PROF
 	switch(ggui->current->offset_mode) {
 	case gui_offset_mode::xy:
 		vector_push(&ggui->current->offset_stack, V2(ggui->style.win_margin.x + offset.x, offset.y));
@@ -148,15 +148,15 @@ void gui_push_offset(v2 offset) { FUNC
 	}
 }
 
-void gui_pop_offset() { FUNC
+void gui_pop_offset() { PROF
 	vector_pop(&ggui->current->offset_stack);
 }
 
-void gui_set_offset_mode(gui_offset_mode mode) { FUNC
+void gui_set_offset_mode(gui_offset_mode mode) { PROF
 	ggui->current->offset_mode = mode;
 }
 
-bool gui_occluded() { FUNC
+bool gui_occluded() { PROF
 	FORMAP(ggui->window_state_data,
 		if(&it->value != ggui->current && it->value.z > ggui->current->z) {
 			if(it->value.active && inside(mult(it->value.rect, ggui->style.gscale), ggui->input.mousepos)) {
@@ -173,7 +173,7 @@ bool gui_occluded() { FUNC
 	return false;
 }
 
-bool gui_begin(string name, r2 first_size, f32 first_alpha, gui_window_flags flags, bool mono) { FUNC
+bool gui_begin(string name, r2 first_size, f32 first_alpha, gui_window_flags flags, bool mono) { PROF
 
 	guiid id;
 	id.name = name;
@@ -318,7 +318,7 @@ bool gui_begin(string name, r2 first_size, f32 first_alpha, gui_window_flags fla
 	return window->active;
 }
 
-void gui_log_wnd(string name, vector<log_message>* cache) { FUNC
+void gui_log_wnd(string name, vector<log_message>* cache) { PROF
 
 	f32 height = ggui->style.log_win_lines * ggui->style.font + 2 * ggui->style.font + ggui->style.title_padding + ggui->style.win_margin.x + ggui->style.win_margin.w + 7.0f;
 	gui_begin(name, R2(0.0f, global_state->window_h - height, (f32)global_state->window_w, height), 0.5f, (u16)window_flags::nowininput | (u16)window_flags::nohead | (u16)window_flags::ignorescale, true);
@@ -404,7 +404,7 @@ void gui_log_wnd(string name, vector<log_message>* cache) { FUNC
 	}
 }
 
-void gui_box_select(i32* selected, i32 num, v2 pos, ...) { FUNC
+void gui_box_select(i32* selected, i32 num, v2 pos, ...) { PROF
 
 	gui_window_state* current = ggui->current;
 
@@ -438,7 +438,7 @@ void gui_box_select(i32* selected, i32 num, v2 pos, ...) { FUNC
 	va_end(args);
 }
 
-bool gui_carrot_toggle(string name, bool initial, v2 pos, bool* toggleme) { FUNC
+bool gui_carrot_toggle(string name, bool initial, v2 pos, bool* toggleme) { PROF
 
 	guiid id;
 	id.base = *stack_top(&ggui->current->id_hash_stack);
@@ -485,7 +485,7 @@ bool gui_carrot_toggle(string name, bool initial, v2 pos, bool* toggleme) { FUNC
 	return data->b;
 }
 
-void push_carrot(gui_window_state* win, v2 pos, bool active) { FUNC
+void push_carrot(gui_window_state* win, v2 pos, bool active) { PROF
 
 	f32 gscale = 1.0f;
 	if((win->flags & (u16)window_flags::ignorescale) != (u16)window_flags::ignorescale) {
@@ -513,7 +513,7 @@ void push_carrot(gui_window_state* win, v2 pos, bool active) { FUNC
 	vector_push(&win->mesh.elements, V3(idx, idx + 1, idx + 2));
 }
 
-void push_text(gui_window_state* win, v2 pos, string text, f32 point, color c) { FUNC
+void push_text(gui_window_state* win, v2 pos, string text, f32 point, color c) { PROF
 
 	f32 gscale = 1.0f;
 	if((win->flags & (u16)window_flags::ignorescale) != (u16)window_flags::ignorescale) {
@@ -523,7 +523,7 @@ void push_text(gui_window_state* win, v2 pos, string text, f32 point, color c) {
 	mesh_push_text_line(&win->mesh, win->font->font, text, pos, point * gscale, c);
 }
 
-void push_windowhead(gui_window_state* win) { FUNC
+void push_windowhead(gui_window_state* win) { PROF
 	
 	f32 gscale = 1.0f;
 	if((win->flags & (u16)window_flags::ignorescale) != (u16)window_flags::ignorescale) {
@@ -549,7 +549,7 @@ void push_windowhead(gui_window_state* win) { FUNC
 	vector_push(&win->mesh.elements, V3u(idx + 3, idx, idx + 2));
 }
 
-void push_windowbody(gui_window_state* win) { FUNC
+void push_windowbody(gui_window_state* win) { PROF
 
 	f32 gscale = 1.0f;
 	if((win->flags & (u16)window_flags::ignorescale) != (u16)window_flags::ignorescale) {

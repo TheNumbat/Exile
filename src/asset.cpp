@@ -1,5 +1,5 @@
 
-asset_store make_asset_store(allocator* a) { FUNC
+asset_store make_asset_store(allocator* a) { PROF
 
 	asset_store ret;
 
@@ -8,7 +8,7 @@ asset_store make_asset_store(allocator* a) { FUNC
 	return ret;
 }
 
-void destroy_asset_store(asset_store* am) { FUNC
+void destroy_asset_store(asset_store* am) { PROF
 
 	if(am->store) {
 
@@ -22,7 +22,7 @@ void destroy_asset_store(asset_store* am) { FUNC
 	}
 }
 
-asset* get_asset(asset_store* as, string name) { FUNC
+asset* get_asset(asset_store* as, string name) { PROF
 
 	asset* a = map_try_get(&as->assets, name);
 
@@ -36,6 +36,10 @@ asset* get_asset(asset_store* as, string name) { FUNC
 
 glyph_data get_glyph_data(asset_store* as, string font, u32 codepoint) { 
 
+#ifdef MORE_PROF
+	PROF
+#endif
+
 	asset* a = get_asset(as, font);
 
 	LOG_ASSERT(a->type == asset_type::font);
@@ -44,6 +48,10 @@ glyph_data get_glyph_data(asset_store* as, string font, u32 codepoint) {
 }
 
 glyph_data get_glyph_data(asset* font, u32 codepoint) { 
+
+#ifdef MORE_PROF
+	PROF
+#endif
 
 	LOG_DEBUG_ASSERT(font->type == asset_type::font);
 
@@ -73,7 +81,7 @@ glyph_data get_glyph_data(asset* font, u32 codepoint) {
 	}
 }
 
-bool try_reload_asset_store(asset_store* as) { FUNC
+bool try_reload_asset_store(asset_store* as) { PROF
 
 	platform_file_attributes new_attrib;
 	
@@ -100,7 +108,7 @@ bool try_reload_asset_store(asset_store* as) { FUNC
 	return false;
 }
 
-void load_asset_store(asset_store* as, string path) { FUNC
+void load_asset_store(asset_store* as, string path) { PROF
 
 	platform_file store;
 

@@ -1,12 +1,12 @@
 
 template<typename T> 
-u32 array_len(array<T>* a) { FUNC
+u32 array_len(array<T>* a) { PROF
 
 	return a->capacity;
 }
 
 template<typename T>
-array<T> make_copy_array(array<T>* src, allocator* a) { FUNC
+array<T> make_copy_array(array<T>* src, allocator* a) { PROF
 
 	array<T> ret = make_array<T>(src->capacity, a);
 	memcpy(src->memory, ret.memory, src->capacity * sizeof(T));
@@ -15,7 +15,7 @@ array<T> make_copy_array(array<T>* src, allocator* a) { FUNC
 }
 
 template<typename T>
-void destroy_array(array<T>* a) { FUNC
+void destroy_array(array<T>* a) { PROF
 
 	if(a->alloc && a->memory) {
 
@@ -27,7 +27,7 @@ void destroy_array(array<T>* a) { FUNC
 }
 
 template<typename T>
-array<T> make_array(u32 capacity, allocator* a) { FUNC
+array<T> make_array(u32 capacity, allocator* a) { PROF
 
 	array<T> ret;
 
@@ -47,7 +47,7 @@ array<T> make_array(u32 capacity, allocator* a) { FUNC
 }
 
 template<typename T>
-array<T> make_array(u32 capacity) { FUNC
+array<T> make_array(u32 capacity) { PROF
 
 	array<T> ret;
 
@@ -57,7 +57,7 @@ array<T> make_array(u32 capacity) { FUNC
 }
 
 template<typename T>
-array<T> make_array_memory(u32 capacity, void* memory) { FUNC
+array<T> make_array_memory(u32 capacity, void* memory) { PROF
 
 	array<T> ret;
 
@@ -70,6 +70,10 @@ array<T> make_array_memory(u32 capacity, void* memory) { FUNC
 // operator[] but not a member
 template<typename T>
 inline T* array_get(array<T>* a, u32 idx) {
+
+#ifdef MORE_PROF
+	PROF
+#endif
 
 #ifdef BOUNDS_CHECK
 	if(a->memory && idx >= 0 && idx < a->capacity) {

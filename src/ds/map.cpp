@@ -1,5 +1,5 @@
 
-inline u32 hash_u32(u32 key) { FUNC
+inline u32 hash_u32(u32 key) { PROF
     key = (key ^ 61) ^ (key >> 16);
     key = key + (key << 3);
     key = key ^ (key >> 4);
@@ -9,7 +9,7 @@ inline u32 hash_u32(u32 key) { FUNC
     return key;
 }
 
-inline u32 hash_u64(u64 key) { FUNC
+inline u32 hash_u64(u64 key) { PROF
 	key = (~key) + (key << 21); // key = (key << 21) - key - 1;
 	key = key ^ (key >> 24);
 	key = (key + (key << 3)) + (key << 8); // key * 265
@@ -21,14 +21,14 @@ inline u32 hash_u64(u64 key) { FUNC
 }
 
 template<typename K, typename V>
-map<K,V> make_map(i32 capacity, u32 (*hash)(K)) { FUNC
+map<K,V> make_map(i32 capacity, u32 (*hash)(K)) { PROF
 	map<K,V> ret = make_map<K,V>(capacity, CURRENT_ALLOC(), hash);
 	
 	return ret;
 }
 
 template<typename K, typename V>
-map<K,V> make_map(i32 capacity, allocator* a, u32 (*hash)(K)) { FUNC
+map<K,V> make_map(i32 capacity, allocator* a, u32 (*hash)(K)) { PROF
 	map<K,V> ret;
 
 	capacity = (i32)ceilf(capacity / MAP_MAX_LOAD_FACTOR);
@@ -47,7 +47,7 @@ map<K,V> make_map(i32 capacity, allocator* a, u32 (*hash)(K)) { FUNC
 }
 
 template<typename K, typename V>
-void destroy_map(map<K,V>* m) { FUNC
+void destroy_map(map<K,V>* m) { PROF
 	
 	destroy_vector(&m->contents);
 
@@ -57,7 +57,7 @@ void destroy_map(map<K,V>* m) { FUNC
 }
 
 template<typename K, typename V>
-void map_clear(map<K,V>* m) { FUNC
+void map_clear(map<K,V>* m) { PROF
 	
 	FORVEC(m->contents,
 		it->occupied = false;
@@ -68,7 +68,7 @@ void map_clear(map<K,V>* m) { FUNC
 }
 
 template<typename K, typename V>
-void map_grow_rehash(map<K,V>* m) { FUNC	
+void map_grow_rehash(map<K,V>* m) { PROF	
 	
 	vector<map_element<K,V>> temp = make_vector_copy(m->contents);
 
@@ -87,7 +87,7 @@ void map_grow_rehash(map<K,V>* m) { FUNC
 }
 
 template<typename K, typename V> 
-void map_trim_rehash(map<K,V>* m) { FUNC
+void map_trim_rehash(map<K,V>* m) { PROF
 
 	vector<map_element<K,V>> temp = make_vector_copy(m->contents);
 
@@ -106,7 +106,7 @@ void map_trim_rehash(map<K,V>* m) { FUNC
 }
 
 template<typename K, typename V>
-V* map_insert(map<K,V>* m, K key, V value, bool grow_if_needed) { FUNC
+V* map_insert(map<K,V>* m, K key, V value, bool grow_if_needed) { PROF
 	
 	if(m->size >= m->contents.capacity * MAP_MAX_LOAD_FACTOR) {
 
@@ -178,7 +178,7 @@ V* map_insert(map<K,V>* m, K key, V value, bool grow_if_needed) { FUNC
 }
 
 template<typename K, typename V>
-V* map_insert_if_unique(map<K,V>* m, K key, V value, bool grow_if_needed) { FUNC
+V* map_insert_if_unique(map<K,V>* m, K key, V value, bool grow_if_needed) { PROF
 	
 	V* result = map_try_get(m, key);
 	
@@ -192,7 +192,7 @@ V* map_insert_if_unique(map<K,V>* m, K key, V value, bool grow_if_needed) { FUNC
 }
 
 template<typename K, typename V>
-V* map_get(map<K,V>* m, K key) { FUNC
+V* map_get(map<K,V>* m, K key) { PROF
 
 	V* result = map_try_get(m, key);
 	LOG_ASSERT(result != NULL);
@@ -201,7 +201,7 @@ V* map_get(map<K,V>* m, K key) { FUNC
 }
 
 template<typename K, typename V>
-V* map_try_get(map<K,V>* m, K key) { FUNC	// can return NULL
+V* map_try_get(map<K,V>* m, K key) { PROF	// can return NULL
 
 	if (m->size == 0) {
 		return NULL;
@@ -236,7 +236,7 @@ V* map_try_get(map<K,V>* m, K key) { FUNC	// can return NULL
 }
 
 template<typename K, typename V>
-void map_erase(map<K,V>* m, K key) { FUNC
+void map_erase(map<K,V>* m, K key) { PROF
 	
 	u32 hash_bucket;
 

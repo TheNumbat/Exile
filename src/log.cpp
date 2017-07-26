@@ -1,5 +1,5 @@
 
-log_manager make_logger(allocator* a) { FUNC
+log_manager make_logger(allocator* a) { PROF
 
 	log_manager ret;
 
@@ -14,7 +14,7 @@ log_manager make_logger(allocator* a) { FUNC
 	return ret;
 }
 
-void logger_start(log_manager* log) { FUNC
+void logger_start(log_manager* log) { PROF
 
 	log->thread_param.out 				= &log->out;
 	log->thread_param.message_queue 	= &log->message_queue;
@@ -27,7 +27,7 @@ void logger_start(log_manager* log) { FUNC
 	global_state->api->platform_create_thread(&log->logging_thread, &logging_thread, &log->thread_param, false);
 }
 
-void logger_stop(log_manager* log) { FUNC
+void logger_stop(log_manager* log) { PROF
 
 	log->thread_param.running = false;
 
@@ -43,7 +43,7 @@ void logger_stop(log_manager* log) { FUNC
 	log->thread_param.scratch			= NULL;
 }
 
-void destroy_logger(log_manager* log) { FUNC
+void destroy_logger(log_manager* log) { PROF
 
 	if(log->thread_param.running) {
 		logger_stop(log);
@@ -57,7 +57,7 @@ void destroy_logger(log_manager* log) { FUNC
 	log->alloc = NULL;
 }
 
-void logger_push_context(log_manager* log, string context, code_context fake) { FUNC_NOCS
+void logger_push_context(log_manager* log, string context, code_context fake) { PROF_NOCS
 
 	fake.function = context;
 
@@ -65,13 +65,13 @@ void logger_push_context(log_manager* log, string context, code_context fake) { 
 	this_thread_data.call_stack[this_thread_data.call_stack_depth++] = fake;
 }
 
-void logger_pop_context(log_manager* log) { FUNC_NOCS
+void logger_pop_context(log_manager* log) { PROF_NOCS
 
 	LOG_DEBUG_ASSERT(this_thread_data.call_stack_depth > 0);
 	this_thread_data.call_stack_depth--;
 }
 
-void logger_add_file(log_manager* log, platform_file file, log_level level) { FUNC
+void logger_add_file(log_manager* log, platform_file file, log_level level) { PROF
 
 	log_out lfile;
 	lfile.file = file;
@@ -81,7 +81,7 @@ void logger_add_file(log_manager* log, platform_file file, log_level level) { FU
 	logger_print_header(log, lfile);
 }
 
-void logger_add_output(log_manager* log, log_out out) { FUNC
+void logger_add_output(log_manager* log, log_out out) { PROF
 
 	vector_push(&log->out, out);
 	if(!out.custom) {
@@ -89,7 +89,7 @@ void logger_add_output(log_manager* log, log_out out) { FUNC
 	}
 }
 
-void logger_print_header(log_manager* log, log_out out) { FUNC
+void logger_print_header(log_manager* log, log_out out) { PROF
 
 	PUSH_ALLOC(log->alloc) {
 		
@@ -103,7 +103,7 @@ void logger_print_header(log_manager* log, log_out out) { FUNC
 }
 
 template<typename... Targs> 
-void logger_msgf(log_manager* log, string fmt, log_level level, code_context context, Targs... args) { FUNC_NOCS
+void logger_msgf(log_manager* log, string fmt, log_level level, code_context context, Targs... args) { PROF_NOCS
 
 	log_message temp;
 
@@ -147,7 +147,7 @@ void logger_msgf(log_manager* log, string fmt, log_level level, code_context con
 	} POP_ALLOC();
 }
 
-void logger_msg(log_manager* log, string msg, log_level level, code_context context) { FUNC_NOCS
+void logger_msg(log_manager* log, string msg, log_level level, code_context context) { PROF_NOCS
 
 	log_message temp;
 
@@ -188,7 +188,7 @@ void logger_msg(log_manager* log, string msg, log_level level, code_context cont
 	} POP_ALLOC();
 }
 
-string log_fmt_msg_time(log_message* msg) { FUNC
+string log_fmt_msg_time(log_message* msg) { PROF
 
 	string time = make_string(9);
 	global_state->api->platform_get_timef(string_literal("hh:mm:ss"), &time);
@@ -196,7 +196,7 @@ string log_fmt_msg_time(log_message* msg) { FUNC
 	return time;
 }
 
-string log_fmt_msg_call_stack(log_message* msg) { FUNC
+string log_fmt_msg_call_stack(log_message* msg) { PROF
 
 	string call_stack = make_cat_string(msg->thread_name, string_literal("/"));
 	for(u32 j = 0; j < msg->call_stack.capacity; j++) {
@@ -208,12 +208,12 @@ string log_fmt_msg_call_stack(log_message* msg) { FUNC
 	return call_stack;
 }
 
-string log_fmt_msg_file_line(log_message* msg) { FUNC
+string log_fmt_msg_file_line(log_message* msg) { PROF
 
 	return make_stringf(string_literal("%:%"), msg->publisher.file, msg->publisher.line);
 }
 
-string log_fmt_msg_level(log_message* msg) { FUNC
+string log_fmt_msg_level(log_message* msg) { PROF
 
 	string level;
 	switch(msg->level) {
@@ -243,7 +243,7 @@ string log_fmt_msg_level(log_message* msg) { FUNC
 	return level;
 }
 
-string log_fmt_msg(log_message* msg) { FUNC
+string log_fmt_msg(log_message* msg) { PROF
 
 	string time = log_fmt_msg_time(msg);
 	string call_stack = log_fmt_msg_call_stack(msg);
@@ -259,18 +259,18 @@ string log_fmt_msg(log_message* msg) { FUNC
 	return output;	
 }
 
-void logger_rem_output(log_manager* log, log_out out) { FUNC
+void logger_rem_output(log_manager* log, log_out out) { PROF
 
 	vector_erase(&log->out, out);
 }
 
-bool operator==(log_out l, log_out r) { FUNC
+bool operator==(log_out l, log_out r) { PROF
 	if(!(l.level == r.level && l.custom == r.custom)) return false;
 	if(l.custom && l.write == r.write) return true;
 	return l.file == r.file;
 }
 
-i32 logging_thread(void* data_) { FUNC_NOCS
+i32 logging_thread(void* data_) { PROF_NOCS
 
 	log_thread_param* data = (log_thread_param*)data_;	
 

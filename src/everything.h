@@ -31,6 +31,7 @@ struct code_context {
 #ifdef _DEBUG
 #define BOUNDS_CHECK
 #define BLOCK_ON_ERROR
+#define MORE_PROF
 // #define ZERO_ARENA
 // #define CONSTRUCT_DS_ELEMENTS // removes need for zero-cleared allocation
 #endif
@@ -104,11 +105,11 @@ struct func_scope_nocs {
 	}
 };
 
-#define FUNC func_scope __f(CONTEXT);
-#define FUNC_NOCS func_scope_nocs __f(CONTEXT);
+#define PROF func_scope __f(CONTEXT);
+#define PROF_NOCS func_scope_nocs __f(CONTEXT);
 #else
-#define FUNC 
-#define FUNC_NOCS
+#define PROF 
+#define PROF_NOCS
 #endif
 
 #include <meta_types.h>

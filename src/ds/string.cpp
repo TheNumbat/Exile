@@ -1,5 +1,5 @@
 
-u32 parse_u32(string s, u32 idx, u32* used) { FUNC
+u32 parse_u32(string s, u32 idx, u32* used) { PROF
 
 	u32 accum = 0;
 	char* place = s.c_str + idx;
@@ -14,30 +14,40 @@ u32 parse_u32(string s, u32 idx, u32* used) { FUNC
 }
 
 u32 string_insert(string s, u32 idx, string ins, bool size) { 
+
+#ifdef MORE_PROF
+	PROF
+#endif
+
 	if(ins.len == 0) return idx;
 	if(!size) memcpy(ins.c_str, s.c_str + idx, ins.len - 1);
 	return idx + ins.len - 1;
 }
 
 u32 string_insert(string s, u32 idx, char ins, bool size) { 
+
+#ifdef MORE_PROF
+	PROF
+#endif
+
 	if(!size) s.c_str[idx] = ins;
 	return idx + 1;
 }
 
 template<typename... Targs>
-void string_printf(string out, string fmt, Targs... args) { FUNC
+void string_printf(string out, string fmt, Targs... args) { PROF
 	u32 idx = _string_printf(out, 0, fmt, false, args...);
 	out.c_str[idx++] = 0;
 }
 
 template<typename... Targs>
-u32 size_stringf(string fmt, Targs... args) { FUNC
+u32 size_stringf(string fmt, Targs... args) { PROF
 	string tmp;
 	return _string_printf(tmp, 0, fmt, true, args...) + 1;
 }
 
 template<typename... Targs> 
-string make_stringf_len(u32 len, string fmt, Targs... args) { FUNC
+string make_stringf_len(u32 len, string fmt, Targs... args) { PROF
 
 	string ret;
 	ret 	= make_string(len);
@@ -50,7 +60,7 @@ string make_stringf_len(u32 len, string fmt, Targs... args) { FUNC
 }
 
 template<typename... Targs>
-string make_stringf(string fmt, Targs... args) { FUNC
+string make_stringf(string fmt, Targs... args) { PROF
 
 	string ret;
 	u32 len = size_stringf(fmt, args...);
@@ -64,23 +74,23 @@ string make_stringf(string fmt, Targs... args) { FUNC
 }
 
 template<typename T, typename... Targs> 
-inline T& get_pack_first(T& val, Targs... args) { FUNC
+inline T& get_pack_first(T& val, Targs... args) { PROF
 	return val;
 }
-inline u32 get_pack_first() { FUNC
+inline u32 get_pack_first() { PROF
 	return 0;
 }
 
 template<typename T, typename... Targs>
-inline u32 _string_printf_fwd(string out, u32 idx, string fmt, bool size, T val, Targs... args) { FUNC
+inline u32 _string_printf_fwd(string out, u32 idx, string fmt, bool size, T val, Targs... args) { PROF
 	return _string_printf(out, idx, fmt, size, args...);
 }
-inline u32 _string_printf_fwd(string out, u32 idx, string fmt, bool size) { FUNC
+inline u32 _string_printf_fwd(string out, u32 idx, string fmt, bool size) { PROF
 	return _string_printf(out, idx, fmt, size);
 }
 
 template<typename T, typename... Targs>
-u32 _string_printf(string out, u32 idx, string fmt, bool size, T& value, Targs... args) { FUNC
+u32 _string_printf(string out, u32 idx, string fmt, bool size, T& value, Targs... args) { PROF
 
 	for(u32 i = 0; i < fmt.len - 1; i++) {
 		if(fmt.c_str[i] == '%') {
@@ -173,7 +183,7 @@ u32 _string_printf(string out, u32 idx, string fmt, bool size, T& value, Targs..
 	}
 	return idx;
 }
-u32 _string_printf(string out, u32 idx, string fmt, bool size) { FUNC
+u32 _string_printf(string out, u32 idx, string fmt, bool size) { PROF
 	for(u32 i = 0; i < fmt.len - 1; i++) {
 		if(fmt.c_str[i] == '%') {
 			if(fmt.c_str[i + 1] == '%') {
@@ -193,7 +203,7 @@ u32 _string_printf(string out, u32 idx, string fmt, bool size) { FUNC
 	return idx;
 }
 
-u32 print_type(string s, u32 idx, void* val, _type_info* info, bool size) { FUNC
+u32 print_type(string s, u32 idx, void* val, _type_info* info, bool size) { PROF
 	if(info == NULL) {
 		idx = string_insert(s, idx, string_literal("UNDEF"), size);
 		return idx;
@@ -220,7 +230,7 @@ u32 print_type(string s, u32 idx, void* val, _type_info* info, bool size) { FUNC
 	} break;
 
 	case Type::_func: {
-		idx = string_insert(s, idx, string_literal("FUNC"), size);
+		idx = string_insert(s, idx, string_literal("PROF"), size);
 	} break;
 
 	case Type::_struct: {
@@ -248,7 +258,7 @@ u32 print_type(string s, u32 idx, void* val, _type_info* info, bool size) { FUNC
 	return idx;
 }
 
-u32 print_ptr(string s, u32 idx, void* val, _type_info* info, bool size) { FUNC 
+u32 print_ptr(string s, u32 idx, void* val, _type_info* info, bool size) { PROF 
 	idx = string_insert(s, idx, string_literal("*{"), size);
 	if (info->_ptr.to == 0) {
 		idx = string_insert(s, idx, string_literal("UNDEF|"), size);
@@ -272,7 +282,7 @@ u32 print_ptr(string s, u32 idx, void* val, _type_info* info, bool size) { FUNC
 	return idx;
 }
 
-u32 print_struct(string s, u32 idx, void* val, _type_info* info, bool size) { FUNC 
+u32 print_struct(string s, u32 idx, void* val, _type_info* info, bool size) { PROF 
 	idx = string_insert(s, idx, info->name, size);
 	idx = string_insert(s, idx, string_literal("{"), size);
 	for(u32 j = 0; j < info->_struct.member_count; j++) {
@@ -302,7 +312,7 @@ u32 print_struct(string s, u32 idx, void* val, _type_info* info, bool size) { FU
 	return idx;
 }
 
-u32 print_u64(string s, u32 idx, u8 base, u64 val, bool size) { FUNC
+u32 print_u64(string s, u32 idx, u8 base, u64 val, bool size) { PROF
 
 	u8 digit = 0, digits = 0;
 	u32 start = idx;
@@ -334,7 +344,7 @@ u32 print_u64(string s, u32 idx, u8 base, u64 val, bool size) { FUNC
 	return idx;
 }
 
-i64 int_as_i64(void* val, _type_info* info) { FUNC
+i64 int_as_i64(void* val, _type_info* info) { PROF
 	switch(info->size) {
 	case 1: {
 		if(info->_int.is_signed) {
@@ -371,7 +381,7 @@ i64 int_as_i64(void* val, _type_info* info) { FUNC
 	}
 }
 
-u32 print_int(string s, u32 idx, u8 base, void* val, _type_info* info, bool size) { FUNC
+u32 print_int(string s, u32 idx, u8 base, void* val, _type_info* info, bool size) { PROF
 	
 	switch(info->size) {
 	case 1: {
@@ -433,7 +443,7 @@ u32 print_int(string s, u32 idx, u8 base, void* val, _type_info* info, bool size
 	}
 }
 
-u32 print_float(string s, u32 idx, u8 precision, void* val, _type_info* info, bool size) { FUNC
+u32 print_float(string s, u32 idx, u8 precision, void* val, _type_info* info, bool size) { PROF
 	
 	// this does not respect precision, but it's fine for this purpose
 
@@ -466,7 +476,7 @@ u32 print_float(string s, u32 idx, u8 precision, void* val, _type_info* info, bo
 	return idx;
 }
 
-u32 print_enum(string s, u32 idx, void* val, _type_info* info, bool size) { FUNC
+u32 print_enum(string s, u32 idx, void* val, _type_info* info, bool size) { PROF
 
 	_type_info* base = TYPEINFO_H(info->_enum.base_type);
 
@@ -507,7 +517,7 @@ u32 print_enum(string s, u32 idx, void* val, _type_info* info, bool size) { FUNC
 }
 
 template<typename... Targs>
-string make_stringf_a(allocator* a, string fmt, Targs... args) { FUNC
+string make_stringf_a(allocator* a, string fmt, Targs... args) { PROF
 
 	string ret;
 	u32 len = size_stringf(fmt, args...);
@@ -520,17 +530,17 @@ string make_stringf_a(allocator* a, string fmt, Targs... args) { FUNC
 	return ret;
 }
 
-inline bool operator==(string first, const char* second) { FUNC
+inline bool operator==(string first, const char* second) { PROF
 
 	return first == string_literal(second);
 }
 
-inline bool operator==(const char* first, string second) { FUNC
+inline bool operator==(const char* first, string second) { PROF
 
 	return string_literal(first) == second;
 }
 
-bool operator==(string first, string second) { FUNC
+bool operator==(string first, string second) { PROF
 
 	if(first.len != second.len) {
 		return false;
@@ -545,11 +555,11 @@ bool operator==(string first, string second) { FUNC
 	return true;
 }
 
-bool strcmp(string first, string second) { FUNC
+bool strcmp(string first, string second) { PROF
 	return first == second;
 }
 
-u32 hash_strings(string one, string two) { FUNC
+u32 hash_strings(string one, string two) { PROF
 
     u32 hash = 5381;
 
@@ -563,7 +573,7 @@ u32 hash_strings(string one, string two) { FUNC
 }
 
 // from http://www.cse.yorku.ca/~oz/hash.html
-u32 hash_string(string str) { FUNC
+u32 hash_string(string str) { PROF
 
     u32 hash = 5381;
 
@@ -575,6 +585,10 @@ u32 hash_string(string str) { FUNC
 
 // adapted from http://www.json.org/JSON_checker/utf8_decode.c
 u32 get_next_codepoint(string text_utf8, u32* index) { 
+
+#ifdef MORE_PROF
+	PROF
+#endif
 
 	char first, second, third, fourth;
 	u32 codepoint;
@@ -634,7 +648,7 @@ u32 get_next_codepoint(string text_utf8, u32* index) {
 	return 0;
 }
 
-string make_copy_string(string src, allocator* a) { FUNC
+string make_copy_string(string src, allocator* a) { PROF
 
 	string ret = make_string(src.cap, a);
 
@@ -647,7 +661,7 @@ string make_copy_string(string src, allocator* a) { FUNC
 	return ret;
 }
 
-string substring(string str, u32 start, u32 end) { FUNC
+string substring(string str, u32 start, u32 end) { PROF
 
 	string ret;
 
@@ -659,7 +673,7 @@ string substring(string str, u32 start, u32 end) { FUNC
 	return ret;
 }
 
-i32 string_last_slash(string str) { FUNC
+i32 string_last_slash(string str) { PROF
 
 	for(u32 i = str.len; i >= 0; i--) {
 		if(str.c_str[i] == '\\' || str.c_str[i] == '/') {
@@ -670,7 +684,7 @@ i32 string_last_slash(string str) { FUNC
 	return -1;
 }
 
-void free_string(string s, allocator* a) { FUNC
+void free_string(string s, allocator* a) { PROF
 	PUSH_ALLOC(a) {
 
 		free_string(s);
@@ -680,10 +694,18 @@ void free_string(string s, allocator* a) { FUNC
 
 inline string string_literal(const char* literal) { 
 
+#ifdef MORE_PROF
+	PROF
+#endif
+
 	return string_from_c_str((char*)literal);
 }
 
 string string_from_c_str(char* c_str) { 
+
+#ifdef MORE_PROF
+	PROF
+#endif
 
 	string ret;
 	if(!c_str) return ret;
@@ -699,7 +721,7 @@ string string_from_c_str(char* c_str) {
 	return ret;
 }
 
-string make_string_from_c_str(char* c_str) { FUNC
+string make_string_from_c_str(char* c_str) { PROF
 
 	u32 len;
 	for(len = 0; c_str[len] != '\0'; len++);
@@ -715,7 +737,7 @@ string make_string_from_c_str(char* c_str) { FUNC
 	return ret;
 }
 
-void free_string(string s) { FUNC
+void free_string(string s) { PROF
 
 	free(s.c_str);
 
@@ -724,7 +746,7 @@ void free_string(string s) { FUNC
 	s.len = 0;
 }
 
-string make_string(u32 cap, allocator* a) { FUNC
+string make_string(u32 cap, allocator* a) { PROF
 
 	string ret;
 
@@ -734,7 +756,7 @@ string make_string(u32 cap, allocator* a) { FUNC
 	return ret;
 }
 
-string make_string(u32 cap) { FUNC
+string make_string(u32 cap) { PROF
 
 	string ret;
 
@@ -744,7 +766,7 @@ string make_string(u32 cap) { FUNC
 	return ret;
 }
 
-string make_copy_string(string src) { FUNC
+string make_copy_string(string src) { PROF
 
 	string ret = make_string(src.cap);
 
@@ -758,7 +780,7 @@ string make_copy_string(string src) { FUNC
 }
 
 // end inclusive
-string make_substring(string str, u32 start, u32 end) { FUNC
+string make_substring(string str, u32 start, u32 end) { PROF
 
 	string ret = make_string(end - start + 1);
 
@@ -771,7 +793,7 @@ string make_substring(string str, u32 start, u32 end) { FUNC
 	return ret;
 }
 
-string make_cat_strings(i32 num_strs, ...) { FUNC
+string make_cat_strings(i32 num_strs, ...) { PROF
 
 	va_list args;
 	va_start(args, num_strs);
@@ -812,7 +834,7 @@ string make_cat_strings(i32 num_strs, ...) { FUNC
 	return ret;
 }
 
-string make_cat_string(string first, string second) { FUNC
+string make_cat_string(string first, string second) { PROF
 
 	string ret = make_string(first.len + second.len - 1);
 

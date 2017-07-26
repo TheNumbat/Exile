@@ -55,7 +55,7 @@ inline code_context _make_context(string file, string function, i32 line) {
 }
 
 template<typename... Targs>
-void _begin_thread(string fmt, allocator* alloc, code_context start, Targs... args) { FUNC
+void _begin_thread(string fmt, allocator* alloc, code_context start, Targs... args) { PROF
 	make_type_table(alloc);
 	this_thread_data.alloc_stack = make_stack<allocator*>(8, alloc);
 	this_thread_data.start_context = start;
@@ -63,7 +63,7 @@ void _begin_thread(string fmt, allocator* alloc, code_context start, Targs... ar
 	this_thread_data.name = make_stringf(fmt, args...);
 }
 
-void end_thread() { FUNC
+void end_thread() { PROF
 	free_string(this_thread_data.name);
 	POP_ALLOC();
 

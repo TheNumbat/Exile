@@ -1,5 +1,5 @@
 
-shader_source make_source(string path, allocator* a) { FUNC
+shader_source make_source(string path, allocator* a) { PROF
 
 	shader_source ret;
 
@@ -11,7 +11,7 @@ shader_source make_source(string path, allocator* a) { FUNC
 	return ret;
 }
 
-void load_source(shader_source* source) { FUNC
+void load_source(shader_source* source) { PROF
 
 	platform_file source_file;
 
@@ -39,12 +39,12 @@ void load_source(shader_source* source) { FUNC
 	global_state->api->platform_get_file_attributes(&source->last_attrib, source->path);
 }
 
-void destroy_source(shader_source* source) { FUNC
+void destroy_source(shader_source* source) { PROF
 
 	free_string(source->source, source->alloc);
 }
 
-bool refresh_source(shader_source* source) { FUNC
+bool refresh_source(shader_source* source) { PROF
 
 	platform_file_attributes new_attrib;
 	
@@ -61,7 +61,7 @@ bool refresh_source(shader_source* source) { FUNC
 	return false;
 }
 
-shader_program make_program(string vert, string frag, void (*set_uniforms)(shader_program*, render_command*, render_command_list*), allocator* a) { FUNC
+shader_program make_program(string vert, string frag, void (*set_uniforms)(shader_program*, render_command*, render_command_list*), allocator* a) { PROF
 
 	shader_program ret;
 
@@ -75,7 +75,7 @@ shader_program make_program(string vert, string frag, void (*set_uniforms)(shade
 	return ret;
 }
 
-void compile_program(shader_program* prog) { FUNC
+void compile_program(shader_program* prog) { PROF
 
 	GLuint vertex, fragment;
 
@@ -96,7 +96,7 @@ void compile_program(shader_program* prog) { FUNC
 	glDeleteShader(fragment);
 }
 
-bool refresh_program(shader_program* prog) { FUNC
+bool refresh_program(shader_program* prog) { PROF
 
 	if(refresh_source(&prog->vertex) || refresh_source(&prog->fragment)) {
 
@@ -111,7 +111,7 @@ bool refresh_program(shader_program* prog) { FUNC
 	return false;
 }
 
-void destroy_program(shader_program* prog) { FUNC
+void destroy_program(shader_program* prog) { PROF
 
 	destroy_source(&prog->vertex);
 	destroy_source(&prog->fragment);
@@ -119,7 +119,7 @@ void destroy_program(shader_program* prog) { FUNC
 	glDeleteProgram(prog->handle);
 }
 
-void ogl_try_reload_programs(ogl_manager* ogl) { FUNC
+void ogl_try_reload_programs(ogl_manager* ogl) { PROF
 	FORMAP(ogl->programs,
 		if(refresh_program(&it->value)) {
 			LOG_INFO_F("Reloaded program % with files %, %", it->key, it->value.vertex.path, it->value.fragment.path);
@@ -127,7 +127,7 @@ void ogl_try_reload_programs(ogl_manager* ogl) { FUNC
 	)
 }
 
-ogl_manager make_opengl(allocator* a) { FUNC
+ogl_manager make_opengl(allocator* a) { PROF
 
 	ogl_manager ret;
 
@@ -149,7 +149,7 @@ ogl_manager make_opengl(allocator* a) { FUNC
 	return ret;
 }
 
-void destroy_opengl(ogl_manager* ogl) { FUNC
+void destroy_opengl(ogl_manager* ogl) { PROF
 
 	for(u32 i = 0; i < ogl->programs.contents.capacity; i++) {
 		if(vector_get(&ogl->programs.contents, i)->occupied) {
@@ -173,7 +173,7 @@ void destroy_opengl(ogl_manager* ogl) { FUNC
 	destroy_map(&ogl->contexts);
 }
 
-shader_program_id ogl_add_program(ogl_manager* ogl, string v_path, string f_path, void (*set_uniforms)(shader_program*, render_command*, render_command_list*)) { FUNC
+shader_program_id ogl_add_program(ogl_manager* ogl, string v_path, string f_path, void (*set_uniforms)(shader_program*, render_command*, render_command_list*)) { PROF
 
 	shader_program p = make_program(v_path, f_path, set_uniforms, ogl->alloc);
 	p.id = ogl->next_shader_id;
@@ -185,7 +185,7 @@ shader_program_id ogl_add_program(ogl_manager* ogl, string v_path, string f_path
 	return ogl->next_shader_id - 1;
 }
 
-shader_program* ogl_select_program(ogl_manager* ogl, shader_program_id id) { FUNC
+shader_program* ogl_select_program(ogl_manager* ogl, shader_program_id id) { PROF
 
 	shader_program* p = map_try_get(&ogl->programs, id);
 
@@ -199,7 +199,7 @@ shader_program* ogl_select_program(ogl_manager* ogl, shader_program_id id) { FUN
 	return p;
 }
 
-texture_id ogl_add_texture_from_font(ogl_manager* ogl, asset* font, texture_wrap wrap, bool pixelated) { FUNC
+texture_id ogl_add_texture_from_font(ogl_manager* ogl, asset* font, texture_wrap wrap, bool pixelated) { PROF
 
 	texture t = make_texture(wrap, pixelated);
 	t.id = ogl->next_texture_id;
@@ -213,7 +213,7 @@ texture_id ogl_add_texture_from_font(ogl_manager* ogl, asset* font, texture_wrap
 	return ogl->next_texture_id - 1;
 }
 
-texture_id ogl_add_texture_from_font(ogl_manager* ogl, asset_store* as, string name, texture_wrap wrap, bool pixelated) { FUNC
+texture_id ogl_add_texture_from_font(ogl_manager* ogl, asset_store* as, string name, texture_wrap wrap, bool pixelated) { PROF
 
 	texture t = make_texture(wrap, pixelated);
 	t.id = ogl->next_texture_id;
@@ -227,7 +227,7 @@ texture_id ogl_add_texture_from_font(ogl_manager* ogl, asset_store* as, string n
 	return ogl->next_texture_id - 1;
 }
 
-texture_id ogl_add_texture(ogl_manager* ogl, asset_store* as, string name, texture_wrap wrap, bool pixelated) { FUNC
+texture_id ogl_add_texture(ogl_manager* ogl, asset_store* as, string name, texture_wrap wrap, bool pixelated) { PROF
 
 	texture t = make_texture(wrap, pixelated);
 	t.id = ogl->next_texture_id;
@@ -241,7 +241,7 @@ texture_id ogl_add_texture(ogl_manager* ogl, asset_store* as, string name, textu
 	return ogl->next_texture_id - 1;
 }
 
-void ogl_destroy_texture(ogl_manager* ogl, texture_id id) { FUNC
+void ogl_destroy_texture(ogl_manager* ogl, texture_id id) { PROF
 
 	texture* t = map_try_get(&ogl->textures, id);
 
@@ -255,7 +255,7 @@ void ogl_destroy_texture(ogl_manager* ogl, texture_id id) { FUNC
 	map_erase(&ogl->textures, id);
 }
 
-texture* ogl_select_texture(ogl_manager* ogl, texture_id id) { FUNC
+texture* ogl_select_texture(ogl_manager* ogl, texture_id id) { PROF
 
 	texture* t = map_try_get(&ogl->textures, id);
 
@@ -269,7 +269,7 @@ texture* ogl_select_texture(ogl_manager* ogl, texture_id id) { FUNC
 	return t;
 }
 
-texture make_texture(texture_wrap wrap, bool pixelated) { FUNC
+texture make_texture(texture_wrap wrap, bool pixelated) { PROF
 
 	texture ret;
 
@@ -313,7 +313,7 @@ texture make_texture(texture_wrap wrap, bool pixelated) { FUNC
 	return ret;
 }
 
-void texture_load_bitmap_from_font(texture* tex, asset* font) { FUNC
+void texture_load_bitmap_from_font(texture* tex, asset* font) { PROF
 
 	LOG_DEBUG_ASSERT(font->type == asset_type::font);
 
@@ -327,7 +327,7 @@ void texture_load_bitmap_from_font(texture* tex, asset* font) { FUNC
 }
 
 
-void texture_load_bitmap_from_font(texture* tex, asset_store* as, string name) { FUNC
+void texture_load_bitmap_from_font(texture* tex, asset_store* as, string name) { PROF
 
 	asset* a = get_asset(as, name);
 
@@ -342,7 +342,7 @@ void texture_load_bitmap_from_font(texture* tex, asset_store* as, string name) {
 	glBindTextureUnit(0, 0);
 }
 
-void texture_load_bitmap(texture* tex, asset_store* as, string name) { FUNC
+void texture_load_bitmap(texture* tex, asset_store* as, string name) { PROF
 
 	asset* a = get_asset(as, name);
 
@@ -357,12 +357,12 @@ void texture_load_bitmap(texture* tex, asset_store* as, string name) { FUNC
 	glBindTextureUnit(0, 0);
 }
 
-void destroy_texture(texture* tex) { FUNC
+void destroy_texture(texture* tex) { PROF
 
 	glDeleteTextures(1, &tex->handle);
 }
 
-context_id ogl_add_draw_context(ogl_manager* ogl, void (*set_atribs)(ogl_draw_context* dc)) { FUNC
+context_id ogl_add_draw_context(ogl_manager* ogl, void (*set_atribs)(ogl_draw_context* dc)) { PROF
 
 	ogl_draw_context d;
 	glGenVertexArrays(1, &d.vao);
@@ -379,7 +379,7 @@ context_id ogl_add_draw_context(ogl_manager* ogl, void (*set_atribs)(ogl_draw_co
 	return ogl->next_context_id - 1;
 }
 
-ogl_draw_context* ogl_select_draw_context(ogl_manager* ogl, context_id id) { FUNC
+ogl_draw_context* ogl_select_draw_context(ogl_manager* ogl, context_id id) { PROF
 
 	ogl_draw_context* d = map_try_get(&ogl->contexts, id);
 
@@ -393,7 +393,7 @@ ogl_draw_context* ogl_select_draw_context(ogl_manager* ogl, context_id id) { FUN
 	return d;
 }
 
-void ogl_mesh_3d_attribs(ogl_draw_context* dc) { FUNC
+void ogl_mesh_3d_attribs(ogl_draw_context* dc) { PROF
 
 	glBindBuffer(GL_ARRAY_BUFFER, dc->vbos[0]);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(f32), (void*)0);
@@ -404,7 +404,7 @@ void ogl_mesh_3d_attribs(ogl_draw_context* dc) { FUNC
 	glEnableVertexAttribArray(1);
 }
 
-void ogl_send_mesh_3d(ogl_manager* ogl, mesh_3d* m, context_id id) { FUNC
+void ogl_send_mesh_3d(ogl_manager* ogl, mesh_3d* m, context_id id) { PROF
 
 	ogl_draw_context* dc = ogl_select_draw_context(ogl, id);
 
@@ -414,7 +414,7 @@ void ogl_send_mesh_3d(ogl_manager* ogl, mesh_3d* m, context_id id) { FUNC
 	glBufferData(GL_ARRAY_BUFFER, m->texCoords.size * sizeof(v2), m->texCoords.size ? m->texCoords.memory : NULL, GL_STREAM_DRAW);
 }
 
-void ogl_uniforms_3dtex(shader_program* prog, render_command* rc, render_command_list* rcl) { FUNC
+void ogl_uniforms_3dtex(shader_program* prog, render_command* rc, render_command_list* rcl) { PROF
 
 	GLint loc = glGetUniformLocation(prog->handle, "transform");
 
@@ -424,7 +424,7 @@ void ogl_uniforms_3dtex(shader_program* prog, render_command* rc, render_command
 	glUniformMatrix4fv(loc, 1, GL_FALSE, transform.v);
 }
 
-void ogl_mesh_2d_attribs(ogl_draw_context* dc) { FUNC
+void ogl_mesh_2d_attribs(ogl_draw_context* dc) { PROF
 
 	glBindBuffer(GL_ARRAY_BUFFER, dc->vbos[0]);
 	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(f32), (void*)0);
@@ -439,7 +439,7 @@ void ogl_mesh_2d_attribs(ogl_draw_context* dc) { FUNC
 	glEnableVertexAttribArray(2);
 }
 
-void ogl_send_mesh_2d(ogl_manager* ogl, mesh_2d* m, context_id id) { FUNC
+void ogl_send_mesh_2d(ogl_manager* ogl, mesh_2d* m, context_id id) { PROF
 
 	ogl_draw_context* dc = ogl_select_draw_context(ogl, id);
 
@@ -453,7 +453,7 @@ void ogl_send_mesh_2d(ogl_manager* ogl, mesh_2d* m, context_id id) { FUNC
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, m->elements.size * sizeof(uv3), m->elements.size ? m->elements.memory : NULL, GL_STREAM_DRAW);
 }
 
-void ogl_uniforms_gui(shader_program* prog, render_command* rc, render_command_list* rcl) { FUNC
+void ogl_uniforms_gui(shader_program* prog, render_command* rc, render_command_list* rcl) { PROF
 
 	GLint loc = glGetUniformLocation(prog->handle, "transform");
 
@@ -463,12 +463,12 @@ void ogl_uniforms_gui(shader_program* prog, render_command* rc, render_command_l
 	glUniformMatrix4fv(loc, 1, GL_FALSE, transform.v);
 }
 
-void ogl_set_uniforms(shader_program* prog, render_command* rc, render_command_list* rcl) { FUNC
+void ogl_set_uniforms(shader_program* prog, render_command* rc, render_command_list* rcl) { PROF
 
 	prog->set_uniforms(prog, rc, rcl);
 }
 
-void ogl_render_command_list(ogl_manager* ogl, render_command_list* rcl) { FUNC
+void ogl_render_command_list(ogl_manager* ogl, render_command_list* rcl) { PROF
 
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
@@ -506,7 +506,7 @@ void ogl_render_command_list(ogl_manager* ogl, render_command_list* rcl) { FUNC
 }
 
 // temporary and inefficient texture render
-void ogl_dbg_render_texture_fullscreen(ogl_manager* ogl, texture_id id) { FUNC
+void ogl_dbg_render_texture_fullscreen(ogl_manager* ogl, texture_id id) { PROF
 
 	GLfloat data[] = {
 		-1.0f, -1.0f,	0.0f, 0.0f,
@@ -547,7 +547,7 @@ void ogl_dbg_render_texture_fullscreen(ogl_manager* ogl, texture_id id) { FUNC
 	glDeleteVertexArrays(1, &VAO);
 }
 
-void debug_proc(GLenum glsource, GLenum gltype, GLuint id, GLenum severity, GLsizei length, const GLchar* glmessage, const void* up) { FUNC
+void debug_proc(GLenum glsource, GLenum gltype, GLuint id, GLenum severity, GLsizei length, const GLchar* glmessage, const void* up) { PROF
 
 	string message = string_from_c_str((char*)glmessage);
 	string source, type;
@@ -619,7 +619,7 @@ void debug_proc(GLenum glsource, GLenum gltype, GLuint id, GLenum severity, GLsi
 	}
 }
 
-void ogl_load_global_funcs() { FUNC
+void ogl_load_global_funcs() { PROF
 
 	glEnable(GL_DEBUG_OUTPUT);
 	glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
