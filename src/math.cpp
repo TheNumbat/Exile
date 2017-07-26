@@ -79,21 +79,21 @@ inline f32 _lerpf(f32 min, f32 max, f32 dist) { FUNC
 #pragma pop_macro("cosf")
 #pragma pop_macro("lerpf")
 
-template<typename T> inline v2_t<T> V2(T x, T y) { FUNC
+template<typename T> inline v2_t<T> V2(T x, T y) { 
 	v2_t<T> ret;
 	ret.x = x;
 	ret.y = y;
 	return ret;
 }
 template v2 V2(f32 x, f32 y);
-template<typename T> inline v2 V2f(T x, T y) { FUNC
+template<typename T> inline v2 V2f(T x, T y) { 
 	return V2((f32)x, (f32)y);
 }
-template<typename T> inline uv2 V2u(T x, T y) { FUNC
+template<typename T> inline uv2 V2u(T x, T y) { 
 	return V2((u32)x, (u32)y);
 }
 
-template<typename T> inline v3_t<T> V3(T x, T y, T z) { FUNC
+template<typename T> inline v3_t<T> V3(T x, T y, T z) { 
 	v3_t<T> ret;
 	ret.x = x;
 	ret.y = y;
@@ -101,17 +101,17 @@ template<typename T> inline v3_t<T> V3(T x, T y, T z) { FUNC
 	return ret;
 }
 template v3 V3(f32 x, f32 y, f32 z);
-template<typename T> inline v3 V3f(T x, T y, T z) { FUNC
+template<typename T> inline v3 V3f(T x, T y, T z) { 
 	return V3((f32)x, (f32)y, (f32)z);
 }
-template<typename T> inline uv3 V3u(T x, T y, T z) { FUNC
+template<typename T> inline uv3 V3u(T x, T y, T z) { 
 	return V3((u32)x, (u32)y, (u32)z);
 }
-template<typename T> inline bv3 V3b(T x, T y, T z) { FUNC
+template<typename T> inline bv3 V3b(T x, T y, T z) { 
 	return V3((u8)x, (u8)y, (u8)z);
 }
 
-template<typename T> inline v4_t<T> V4(T x, T y, T z, T w) { FUNC
+template<typename T> inline v4_t<T> V4(T x, T y, T z, T w) { 
 	v4_t<T> ret;
 	ret.x = x;
 	ret.y = y;
@@ -120,13 +120,13 @@ template<typename T> inline v4_t<T> V4(T x, T y, T z, T w) { FUNC
 	return ret;
 }
 template v4 V4(f32 x, f32 y, f32 z, f32 w);
-template<typename T> inline bv4 V4b(T x, T y, T z, T w) { FUNC
+template<typename T> inline bv4 V4b(T x, T y, T z, T w) { 
 	return V4((u8)x, (u8)y, (u8)z, (u8)w);
 }
-template<typename T> inline bv4 V4b(bv3 vec3, T w) { FUNC
+template<typename T> inline bv4 V4b(bv3 vec3, T w) { 
 	return V4b(vec3.x, vec3.y, vec3.z, (u8)w);
 }
-inline v4 color_to_f(color c) { FUNC
+inline v4 color_to_f(color c) { 
 	return V4(c.x / 255.0f, c.y / 255.0f, c.z / 255.0f, c.w / 255.0f);
 }
 

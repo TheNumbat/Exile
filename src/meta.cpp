@@ -256,13 +256,13 @@ CXChildVisitResult do_parse(CXCursor c) {
 
 void output_pre_struct(ofstream& fout) {
 	fout << endl << "#pragma optimize( \"\", off )" << endl
-		 << "void make_meta_structs() {" << endl
+		 << "void make_meta_structs() { FUNC" << endl
 		 << endl << "\t_type_info this_type_info;" << endl;
 }
 
 void output_pre_enum(ofstream& fout) {
 	fout << endl << "#pragma optimize( \"\", off )" << endl
-		 << "void make_meta_enums() {" << endl
+		 << "void make_meta_enums() { FUNC" << endl
 		 << endl << "\t_type_info this_type_info;" << endl;
 }
 

@@ -88,6 +88,7 @@ struct func_scope {
 	func_scope(code_context context) {
 		LOG_DEBUG_ASSERT(this_thread_data.call_stack_depth < MAX_CALL_STACK_DEPTH);
 		this_thread_data.call_stack[this_thread_data.call_stack_depth++] = context;
+		// printf("%+*s\n", this_thread_data.call_stack_depth + context.function.len, context.function.c_str);
 	}
 	~func_scope() {
 		this_thread_data.call_stack_depth--;

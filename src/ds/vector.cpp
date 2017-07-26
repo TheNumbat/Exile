@@ -108,7 +108,7 @@ vector<T> make_vector_copy_trim(vector<T> source, allocator* a) { FUNC
 
 // operator[] but not a member
 template<typename T>
-inline T* vector_get(vector<T>* v, u32 idx) { FUNC
+inline T* vector_get(vector<T>* v, u32 idx) { 
 
 #ifdef BOUNDS_CHECK
 	if(v->memory && idx >= 0 && idx < v->capacity) {
@@ -208,7 +208,7 @@ vector<T> make_vector_copy(vector<T> source) { FUNC
 }
 
 template<typename T>
-T* vector_push(vector<T>* v, T value) { FUNC 
+T* vector_push(vector<T>* v, T value) {  
 
 	if(v->size == v->capacity) {
 

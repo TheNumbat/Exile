@@ -69,7 +69,7 @@ array<T> make_array_memory(u32 capacity, void* memory) { FUNC
 
 // operator[] but not a member
 template<typename T>
-inline T* array_get(array<T>* a, u32 idx) { FUNC
+inline T* array_get(array<T>* a, u32 idx) {
 
 #ifdef BOUNDS_CHECK
 	if(a->memory && idx >= 0 && idx < a->capacity) {

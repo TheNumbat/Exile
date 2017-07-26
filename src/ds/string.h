@@ -28,7 +28,7 @@ string substring(string str, u32 start, u32 end); 	// uses same memory
 i32    string_last_slash(string str); 				// this returns an i32. just use this on non-2GB strings...
 string make_cat_string(string first, string second);
 string make_cat_strings(i32 num_strs, ...);
-string string_literal(const char* literal);
+inline string string_literal(const char* literal);
 string string_from_c_str(char* c_str); 				// does not allocate
 u32    string_insert(string s, u32 idx, string ins, bool size = false);
 u32    string_insert(string s, u32 idx, char ins, bool size = false);

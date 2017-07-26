@@ -34,7 +34,7 @@ asset* get_asset(asset_store* as, string name) { FUNC
 	return a;
 }
 
-glyph_data get_glyph_data(asset_store* as, string font, u32 codepoint) { FUNC
+glyph_data get_glyph_data(asset_store* as, string font, u32 codepoint) { 
 
 	asset* a = get_asset(as, font);
 
@@ -43,7 +43,7 @@ glyph_data get_glyph_data(asset_store* as, string font, u32 codepoint) { FUNC
 	return get_glyph_data(a, codepoint);
 }
 
-glyph_data get_glyph_data(asset* font, u32 codepoint) { FUNC
+glyph_data get_glyph_data(asset* font, u32 codepoint) { 
 
 	LOG_DEBUG_ASSERT(font->type == asset_type::font);
 

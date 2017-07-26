@@ -13,13 +13,13 @@ u32 parse_u32(string s, u32 idx, u32* used) { FUNC
 	return accum;
 }
 
-u32 string_insert(string s, u32 idx, string ins, bool size) { FUNC
+u32 string_insert(string s, u32 idx, string ins, bool size) { 
 	if(ins.len == 0) return idx;
 	if(!size) memcpy(ins.c_str, s.c_str + idx, ins.len - 1);
 	return idx + ins.len - 1;
 }
 
-u32 string_insert(string s, u32 idx, char ins, bool size) { FUNC
+u32 string_insert(string s, u32 idx, char ins, bool size) { 
 	if(!size) s.c_str[idx] = ins;
 	return idx + 1;
 }
@@ -574,7 +574,7 @@ u32 hash_string(string str) { FUNC
 }
 
 // adapted from http://www.json.org/JSON_checker/utf8_decode.c
-u32 get_next_codepoint(string text_utf8, u32* index) { FUNC
+u32 get_next_codepoint(string text_utf8, u32* index) { 
 
 	char first, second, third, fourth;
 	u32 codepoint;
@@ -678,14 +678,15 @@ void free_string(string s, allocator* a) { FUNC
 	} POP_ALLOC();
 }
 
-string string_literal(const char* literal) { FUNC
+inline string string_literal(const char* literal) { 
 
 	return string_from_c_str((char*)literal);
 }
 
-string string_from_c_str(char* c_str) { FUNC
+string string_from_c_str(char* c_str) { 
 
 	string ret;
+	if(!c_str) return ret;
 
 	u32 len;
 	for(len = 0; c_str[len] != '\0'; len++);
