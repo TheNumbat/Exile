@@ -30,8 +30,9 @@ struct Type_ptr_info {
 	type_id to = 0;
 };
 struct Type_func_info {
-	type_id 	param_types[16] 	= {};
-	string 		param_names[16];
+	string 		signature;
+	type_id 	return_type			= 0;
+	type_id 	param_types[32] 	= {};
 	u32 		param_count 		= 0;
 };
 struct Type_array_info {

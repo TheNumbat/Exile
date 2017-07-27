@@ -80,6 +80,7 @@ extern "C" game_state* start_up(platform_api* api) { PROF
 	LOG_INFO("Done with startup!");
 	LOG_POP_CONTEXT();
 
+	LOG_INFO_F("%", api);
 	// LOG_INFO_F("%", state); Don't do this anymore, it's 409 thousand characters and will only grow
 
 	state->running = true;

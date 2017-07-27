@@ -234,7 +234,7 @@ u32 print_type(string s, u32 idx, void* val, _type_info* info, bool size) { PROF
 	} break;
 
 	case Type::_func: {
-		idx = string_insert(s, idx, string_literal("PROF"), size);
+		idx = string_insert(s, idx, info->_func.signature, size);
 	} break;
 
 	case Type::_struct: {

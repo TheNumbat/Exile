@@ -40,6 +40,7 @@ struct struct_def {
 
 	vector<function<void(ofstream&)>> templ_deps;
 	vector<function<void(ofstream&)>> arr_deps;
+	vector<function<void(ofstream&)>> func_deps;
 };
 
 // NOTE(max): I realized that instead of the whole done system I could've just used
@@ -74,6 +75,7 @@ CXChildVisitResult do_parse(CXCursor c);
 
 void output_pre(ofstream& fout);
 void output_post(ofstream& fout);
+void output_func(ofstream& fout, CXType type, CXCursor func);
 void output_array(ofstream& fout, CXType type);
 void output_enum(ofstream& fout, const enum_def& e);
 void output_struct(ofstream& fout, const struct_def& s);
@@ -161,6 +163,13 @@ CXChildVisitResult parse_struct_or_union(CXCursor c, CXCursor parent, CXClientDa
 		auto type = clang_getCursorType(c);
 		if(type.kind == CXType_ConstantArray) {
 			current_struct_def.arr_deps.push_back([type](ofstream& fout) -> void {output_array(fout, type);});
+		}
+
+		if(type.kind == CXType_Pointer) {
+			auto func_type = clang_getPointeeType(type);
+			if(clang_getNumArgTypes(func_type) != -1) {
+				current_struct_def.func_deps.push_back([func_type, c](ofstream& fout) -> void {output_func(fout, func_type, c);});						
+			}
 		}
 
 		current_struct_def.members.push_back(c);
@@ -313,6 +322,33 @@ void output_post(ofstream& fout) {
 	fout << "}" << endl;
 }
 
+void output_func(ofstream& fout, CXType type, CXCursor func) {
+
+	auto ret = str(clang_getTypeSpelling(clang_getResultType(type)));
+	auto signature = str(clang_getTypeSpelling(type));
+	auto num_args = (u32)clang_getNumArgTypes(type);
+	auto name = str(clang_getCursorSpelling(func));
+
+	fout << "\t[]() -> void {" << endl
+		 << "\t\t_type_info this_type_info;" << endl
+		 << "\t\tthis_type_info.type_type = Type::_func;" << endl
+		 << "\t\tthis_type_info.size = sizeof(void*);" << endl 			// TODO(max): take real size of function pointer
+		 << "\t\tthis_type_info.hash = (type_id)typeid(" << signature << ").hash_code();" << endl
+		 << "\t\tthis_type_info.name = string_literal(\"" << name << "\");" << endl
+		 << "\t\tthis_type_info._func.signature = string_literal(CSTRING(" << signature << "));" << endl
+		 << "\t\tthis_type_info._func.return_type = TYPEINFO(" << ret << ") ? TYPEINFO(" << ret << ")->hash : 0;" << endl
+		 << "\t\tthis_type_info._func.param_count = " << num_args << ";" << endl;
+
+	for(u32 i = 0; i < num_args; i++) {
+		auto arg = str(clang_getTypeSpelling(clang_getArgType(type, i)));
+
+		fout << "\t\tthis_type_info._func.param_types[" << i << "] = TYPEINFO(" << arg << ") ? TYPEINFO(" << arg << ")->hash : 0;" << endl;
+	}
+
+	fout << "\t\tmap_insert_if_unique(&type_table, this_type_info.hash, this_type_info, false);" << endl
+		 << "\t}();" << endl << endl;
+}
+
 void output_array(ofstream& fout, CXType type) {
 
 	auto ele_type = clang_getArrayElementType(type);
@@ -387,6 +423,9 @@ void output_struct(ofstream& fout, const struct_def& s) {
 	for(auto& f : s.arr_deps) {
 		f(fout);
 	}
+	for(auto& f : s.func_deps) {
+		f(fout);
+	}
 
 	fout << "\t[]() -> void {" << endl;
 
@@ -435,6 +474,9 @@ void output_template_struct(ofstream& fout, const struct_def& s, const map<strin
 		}
 
 		for(auto& f : s.arr_deps) {
+			f(fout);
+		}
+		for(auto& f : s.func_deps) {
 			f(fout);
 		}
 

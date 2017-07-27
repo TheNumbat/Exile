@@ -20,6 +20,7 @@ immediate to do:
 		list (same API as vector, but chunked & no-copy)
 		circular buffer (+add to queue)
 		heap (+priority queue)
+		string builder
 		improve map storage/AOS
 			bit mask for occupancy
 			try separate vectors of keys, values, hashes (no map_element)
@@ -41,10 +42,8 @@ immediate to do:
 		better hotloading management (probably want callback registry)
 
 	meta
-		Support
-			function pointers?
 		printf
-			function pointers?
+			use string builder?
 		do we want to do a subtype dispatcher? https://youtu.be/lCtALewoFjc?t=1h20m16s
 		integration with UI
 		profiler
