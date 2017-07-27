@@ -302,7 +302,54 @@ u32 print_vector(string s, u32 idx, void* val, _type_info* info, bool size) { PR
 
 u32 print_map(string s, u32 idx, void* val, _type_info* info, bool size) { PROF
 
-	
+	_type_info* vec_info = TYPEINFO_H(info->_struct.member_types[0]);
+	u8* vec = (u8*)val + info->_struct.member_offsets[0];
+
+	idx = string_insert(s, idx, info->name, size);
+
+	_type_info* vec_of = TYPEINFO_H(TYPEINFO_H(vec_info->_struct.member_types[0])->_ptr.to);
+	if(!vec_of) {
+		idx = string_insert(s, idx, string_literal("[UNDEF]"), size);
+		return idx;
+	}
+
+	u32 cap = *(u32*)((u8*)vec + vec_info->_struct.member_offsets[2]);
+	u8* data = *(u8**)((u8*)vec + vec_info->_struct.member_offsets[0]);
+
+	u32 number_actually_printed = 0;
+	idx = string_insert(s, idx, '[', size);
+	for(u32 i = 0; i < cap; i++) {
+		if(!*(bool*)(data + i * vec_of->size + vec_of->_struct.member_offsets[2])) continue;
+
+		if(number_actually_printed != 0)
+			idx = string_insert(s, idx, string_literal(", "), size);
+		number_actually_printed++;
+		
+		idx = string_insert(s, idx, '{', size);
+		{
+			_type_info* key = TYPEINFO_H(vec_of->_struct.member_types[0]);
+			if(key->type_type == Type::_string) {
+				idx = string_insert(s, idx, '\"', size);
+			}
+			idx = print_type(s, idx, data + i * vec_of->size + vec_of->_struct.member_offsets[0], key, size);
+			if(key->type_type == Type::_string) {
+				idx = string_insert(s, idx, '\"', size);
+			}
+		}
+		idx = string_insert(s, idx, string_literal(", "), size);
+		{
+			_type_info* value = TYPEINFO_H(vec_of->_struct.member_types[1]);
+			if(value->type_type == Type::_string) {
+				idx = string_insert(s, idx, '\"', size);
+			}
+			idx = print_type(s, idx, data + i * vec_of->size + vec_of->_struct.member_offsets[1], value, size);
+			if(value->type_type == Type::_string) {
+				idx = string_insert(s, idx, '\"', size);
+			}
+		}
+		idx = string_insert(s, idx, '}', size);
+	}
+	idx = string_insert(s, idx, ']', size);
 	return idx;
 }
 

@@ -9,7 +9,7 @@ log_manager make_logger(allocator* a) { PROF
 	global_state->api->platform_create_semaphore(&ret.logging_semaphore, 0, INT32_MAX);
 
 	ret.alloc = a;
-	ret.scratch = MAKE_ARENA("log scratch", KILOBYTES(64), a, true);
+	ret.scratch = MAKE_ARENA("log scratch", KILOBYTES(512), a, true);
 
 	return ret;
 }

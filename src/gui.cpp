@@ -14,7 +14,7 @@ gui_manager make_gui(ogl_manager* ogl, allocator* alloc) { PROF
 	gui_manager ret;
 
 	ret.alloc = alloc;
-	ret.scratch = MAKE_ARENA("gui_scratch", KILOBYTES(64), alloc, false);
+	ret.scratch = MAKE_ARENA("gui_scratch", KILOBYTES(512), alloc, false);
 
 	ret.ogl.context = ogl_add_draw_context(ogl, &ogl_mesh_2d_attribs);
 	ret.ogl.shader 	= ogl_add_program(ogl, string_literal("shaders/gui.v"), string_literal("shaders/gui.f"), &ogl_uniforms_gui);

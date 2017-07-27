@@ -45,7 +45,6 @@ immediate to do:
 			function pointers?
 		printf
 			function pointers?
-			map print
 		do we want to do a subtype dispatcher? https://youtu.be/lCtALewoFjc?t=1h20m16s
 		integration with UI
 		profiler

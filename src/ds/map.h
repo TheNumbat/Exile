@@ -11,12 +11,12 @@ inline u32 hash_u64(u64 key);
 
 template<typename K, typename V>
 struct map_element {
+	K key;
+	V value;
 	// TODO(max): test if storing hashes in a separate array performs better
 	// TODO(max): use less storage than a bool to signify occupation
 	bool occupied = false;
 	u32 hash_bucket = 0;
-	K key;
-	V value;
 };
 
 template<typename K, typename V>
