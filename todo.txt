@@ -22,14 +22,10 @@ immediate to do:
 
 	meta
 		Support
-			static array
-			template deduction from variables/parameters	
 			function pointers?
 		printf
-			static array
 			special prints for data structures
 			function pointers?
-			unify int stuff
 		do we want to do a subtype dispatcher? https://youtu.be/lCtALewoFjc?t=1h20m16s
 		integration with UI
 		profiler
