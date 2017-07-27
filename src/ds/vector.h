@@ -5,14 +5,14 @@
 
 template<typename T>
 struct vector {
+	T* memory 	 	 = NULL;
 	u32 size 	 	 = 0;
 	u32 capacity 	 = 0;
-	T* memory 	 	 = NULL;
 	allocator* alloc = NULL;
 };
 
 template<typename T> vector<T> make_vector(u32 capacity, allocator* a);
-template<typename T> vector<T> make_vector(u32 capacity = 4);
+template<typename T> vector<T> make_vector(u32 capacity = 8);
 template<typename T> vector<T> make_vector_copy(vector<T> source);
 template<typename T> vector<T> make_vector_copy(vector<T> source, allocator* a);
 template<typename T> vector<T> make_vector_copy_trim(vector<T> source, allocator* a);

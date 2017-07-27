@@ -284,9 +284,9 @@ CXChildVisitResult do_parse(CXCursor c) {
 					struct_def def = *entry;
 					auto translation = make_translation(def, instantiation);
 
-					bool fully_specified = true;;
+					bool fully_specified = true;
 					for(auto& e : translation) {
-						if(e.second.kind == 1) {
+						if(clang_Type_getSizeOf(e.second) == CXTypeLayoutError_Dependent) {
 							fully_specified = false;
 						}
 					}
@@ -526,7 +526,7 @@ void print_templ_struct(ofstream& fout, const struct_def& s, const map<string, C
 	fout << "\t\t_type_info this_type_info;" << endl
 		 << "\t\tthis_type_info.type_type = Type::_struct;" << endl
 		 << "\t\tthis_type_info.size = sizeof(" << qual_name << ");" << endl
-		 << "\t\tthis_type_info.name = string_literal(CSTRING(" << qual_name << "));" << endl
+		 << "\t\tthis_type_info.name = string_literal(\"" << name << "\");" << endl
 		 << "\t\tthis_type_info.hash = (type_id)typeid(" << qual_name << ").hash_code();" << endl
 		 << "\t\tthis_type_info._struct.member_count = " << s.members.size() << ";" << endl;
 

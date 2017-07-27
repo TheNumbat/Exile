@@ -12,16 +12,18 @@ features so far:
 	vector/matrix math
 	opengl rendering system
 	windows platform layer
+		linux platform layer soon...
 
 immediate to do:
 
 	data structures
-		list (same API as vector, but chunked)
+		list (same API as vector, but chunked & no-copy)
 		circular buffer (+add to queue)
 		heap (+priority queue)
 		improve map storage/AOS
 			bit mask for occupancy
 			try separate vectors of keys, values, hashes (no map_element)
+		concurrent versions of most things
 
 	uncategorized
 		SIMD & intrinsic math (vectorized functions, vector/mat math, noise & randomness)
@@ -32,7 +34,6 @@ immediate to do:
 		Support
 			function pointers?
 		printf
-			special prints for data structures
 			function pointers?
 		do we want to do a subtype dispatcher? https://youtu.be/lCtALewoFjc?t=1h20m16s
 		integration with UI
@@ -106,8 +107,6 @@ immediate to do:
 		paging
 		world storage (3D chunks?)
 
-	Make concurrent data structures
-	
 	threading
 		threadpool await (store job IDs, block until finished)
 		farm out initialization code

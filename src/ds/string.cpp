@@ -230,7 +230,7 @@ u32 print_type(string s, u32 idx, void* val, _type_info* info, bool size) { PROF
 	} break;
 
 	case Type::_array: {
-		idx = print_array(s, idx, val, info, size);
+		idx = print_static_array(s, idx, val, info, size);
 	} break;
 
 	case Type::_func: {
@@ -239,11 +239,11 @@ u32 print_type(string s, u32 idx, void* val, _type_info* info, bool size) { PROF
 
 	case Type::_struct: {
 		if(info->name == "vector") {
-			idx = print_struct(s, idx, val, info, size);
+			idx = print_vector(s, idx, val, info, size);
 		} else if(info-> name == "array") {
-			idx = print_struct(s, idx, val, info, size);
+			idx = print_array(s, idx, val, info, size);
 		} else if(info-> name == "map") {
-			idx = print_struct(s, idx, val, info, size);
+			idx = print_map(s, idx, val, info, size);
 		} else {
 			idx = print_struct(s, idx, val, info, size);
 		}
@@ -262,7 +262,51 @@ u32 print_type(string s, u32 idx, void* val, _type_info* info, bool size) { PROF
 	return idx;
 }
 
-u32 print_array(string s, u32 idx, void* val, _type_info* info, bool size) { PROF 
+u32 print_array(string s, u32 idx, void* val, _type_info* info, bool size) { PROF
+
+	// TODO(max): assumes binary compatibility with vector T* first member then u32 size
+	return print_vector(s, idx, val, info, size);
+}
+
+u32 print_vector(string s, u32 idx, void* val, _type_info* info, bool size) { PROF
+
+	idx = string_insert(s, idx, info->name, size);
+
+	_type_info* of = TYPEINFO_H(TYPEINFO_H(info->_struct.member_types[0])->_ptr.to);
+	if(!of) {
+		idx = string_insert(s, idx, string_literal("[UNDEF]"), size);
+		return idx;
+	}
+
+	// TODO(max): probably shouldn't hard-code locations of members in vector
+
+	u32 len = *(u32*)((u8*)val + info->_struct.member_offsets[1]);
+	u8* data = *(u8**)((u8*)val + info->_struct.member_offsets[0]);
+
+	idx = string_insert(s, idx, '[', size);
+	for(u32 i = 0; i < len; i++) {
+		if(of->type_type == Type::_string) {
+			idx = string_insert(s, idx, '\"', size);
+		}
+		idx = print_type(s, idx, data + i * of->size, of, size);
+		if(of->type_type == Type::_string) {
+			idx = string_insert(s, idx, '\"', size);
+		}
+		if(i != len - 1)
+			idx = string_insert(s, idx, string_literal(", "), size);
+	}
+	idx = string_insert(s, idx, ']', size);
+
+	return idx;
+}
+
+u32 print_map(string s, u32 idx, void* val, _type_info* info, bool size) { PROF
+
+	
+	return idx;
+}
+
+u32 print_static_array(string s, u32 idx, void* val, _type_info* info, bool size) { PROF 
 	
 	_type_info* of = TYPEINFO_H(info->_array.of);
 
