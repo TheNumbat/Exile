@@ -54,6 +54,7 @@ vector<struct_def> structs;
 struct_def current_struct_def;
 vector<enum_def> enums;
 enum_def current_enum_def;
+vector<function<void(ofstream&)>> var_parm_deps;
 
 vector<CXType> current_instantiation;
 
@@ -216,7 +217,10 @@ CXChildVisitResult do_parse(CXCursor c) {
 	if(is_fwd_decl(c)) return CXChildVisit_Continue;
 
 	switch(c.kind) {
-	case CXCursor_ClassTemplatePartialSpecialization: break; // ignore this, it's only _get_type_info<T*> and it'd mess with stuff
+	case CXCursor_ClassTemplatePartialSpecialization: {
+		// ignore this, it's only _get_type_info<T*> and it'd mess with stuff
+		return CXChildVisit_Continue;
+	} break; 
 	case CXCursor_ClassTemplate:
 	case CXCursor_UnionDecl:
 	case CXCursor_StructDecl: {
@@ -240,6 +244,8 @@ CXChildVisitResult do_parse(CXCursor c) {
 		} else if(!current_struct_def.noreflect) {
 			structs.push_back(current_struct_def);
 		}
+
+		return CXChildVisit_Continue;
 	} break;
 	case CXCursor_EnumDecl: {
 		
@@ -255,13 +261,46 @@ CXChildVisitResult do_parse(CXCursor c) {
 		// sort values for binary search - stable so we can choose the first/last name for the value when printing
 		stable_sort(current_enum_def.members.begin(), current_enum_def.members.end(), [](auto& l, auto& r) -> bool { return l.value < r.value; });
 		enums.push_back(current_enum_def);
+
+		return CXChildVisit_Continue;
 	} break;
 	case CXCursor_VarDecl:
 	case CXCursor_ParmDecl: {
-		// TODO(max): test if needs to add an instantiation. (need to not skipping function bodies)
+		auto type = clang_getCursorType(c);
+		if(clang_Type_getNumTemplateArguments(type) != -1) {
+			auto name = str(clang_getTypeSpelling(type));
+			auto idx = name.find_first_of("<");
+
+			if(idx != string::npos) {
+				name = name.substr(0, idx);
+
+				vector<CXType> instantiation;
+				for(i32 i = 0; i < clang_Type_getNumTemplateArguments(type); i++) {
+					instantiation.push_back(clang_Type_getTemplateArgumentAsType(type, i));
+				}
+
+				auto entry = find_if(structs.begin(), structs.end(), [name](struct_def& def) -> bool { return name == def.name; });
+				if(entry != structs.end()) {
+					struct_def def = *entry;
+					auto translation = make_translation(def, instantiation);
+
+					bool fully_specified = true;;
+					for(auto& e : translation) {
+						if(e.second.kind == 1) {
+							fully_specified = false;
+						}
+					}
+					if(fully_specified)
+						var_parm_deps.push_back([translation, def](ofstream& fout) -> void {output_template_struct(fout, def, translation);});
+				}
+			}
+		}
+		return CXChildVisit_Continue;
+	} break;
+	default: {
+		return CXChildVisit_Recurse;
 	} break;
 	}
-	return CXChildVisit_Continue;
 }
 
 void output_pre(ofstream& fout) {
@@ -329,6 +368,8 @@ void output_enum(ofstream& fout, const enum_def& e) {
 void output_struct(ofstream& fout, const struct_def& s) {
 
 	auto& name = s.name;
+	if(!name.size()) return;
+
 	auto type = clang_getCursorType(s.this_);
 
 	if(s.members.size() > 64) {
@@ -514,7 +555,7 @@ i32 main(i32 argc, char** argv) {
 	}
 
 	auto index = clang_createIndex(0, 0);
-	auto unit = clang_parseTranslationUnit(index, argv[1], nullptr, 0, nullptr, 0, CXTranslationUnit_SkipFunctionBodies);
+	auto unit = clang_parseTranslationUnit(index, argv[1], nullptr, 0, nullptr, 0, CXTranslationUnit_KeepGoing);
 
 	if (unit == nullptr) {
 		cout << "Unable to parse translation unit." << endl;
@@ -530,7 +571,8 @@ i32 main(i32 argc, char** argv) {
 			return CXChildVisit_Continue;
 		}
 
-		return do_parse(c);
+		do_parse(c);
+		return CXChildVisit_Recurse;
 	}, nullptr);
 
 	ofstream fout("meta_types.h");
@@ -540,6 +582,9 @@ i32 main(i32 argc, char** argv) {
 	}
 	for(auto& s : structs) {
 		output_struct(fout, s);
+	}
+	for(auto& f : var_parm_deps) {
+		f(fout);
 	}
 	output_post(fout);
 	fout.close();

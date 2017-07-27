@@ -80,7 +80,7 @@ extern "C" game_state* start_up(platform_api* api) { PROF
 	LOG_INFO("Done with startup!");
 	LOG_POP_CONTEXT();
 
-	LOG_INFO_F("%", test<string>());
+	// LOG_INFO_F("%", state);
 
 	state->running = true;
 	return state;
