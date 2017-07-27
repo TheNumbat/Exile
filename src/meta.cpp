@@ -255,20 +255,26 @@ CXChildVisitResult do_parse(CXCursor c) {
 }
 
 void output_pre_struct(ofstream& fout) {
-	fout << endl << "#pragma optimize( \"\", off )" << endl
+	fout << endl << "#ifndef OPTIMIZE_META" << endl
+		 << "#pragma optimize( \"\", off )" << endl
+		 << "#endif" << endl
 		 << "void make_meta_structs() { PROF" << endl
 		 << endl << "\t_type_info this_type_info;" << endl;
 }
 
 void output_pre_enum(ofstream& fout) {
-	fout << endl << "#pragma optimize( \"\", off )" << endl
+	fout << endl << "#ifndef OPTIMIZE_META" << endl
+		 << "#pragma optimize( \"\", off )" << endl
+		 << "#endif" << endl
 		 << "void make_meta_enums() { PROF" << endl
 		 << endl << "\t_type_info this_type_info;" << endl;
 }
 
 void output_post(ofstream& fout) {
 	fout << "}" << endl;
-	fout << "#pragma optimize( \"\", on )" << endl << endl;
+	fout << endl << "#ifndef OPTIMIZE_META" << endl
+		 << "#pragma optimize( \"\", on )" << endl
+		 << "#endif" << endl;
 }
 
 void output_enum(ofstream& fout, const enum_def& e) {

@@ -30,6 +30,7 @@ immediate to do:
 			special prints for data structures
 			function pointers?
 			unify int stuff
+		do we want to do a subtype dispatcher? https://youtu.be/lCtALewoFjc?t=1h20m16s
 		integration with UI
 		profiler
 		support loading/writing type table for release (i.e. don't build on startup)

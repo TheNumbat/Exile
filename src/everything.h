@@ -1,12 +1,6 @@
 
 #pragma once
 
-#ifdef __clang__
-#define NOREFLECT __attribute__((annotate("noreflect")))
-#else
-#define NOREFLECT
-#endif
-
 /* debug options
 
 #define BOUNDS_CHECK 			// check access on array_get/vector_get
@@ -21,17 +15,29 @@
 #define ZERO_ARENA				// memset arena allocator store to zero on reset
 	
 #define CONSTRUCT_DS_ELEMENTS 	// removes need for zero-cleared allocation
+
+#define OPTIMIZE_META			// optimizes generated type info code 
 */
 
+// #define REAL_RELEASE // turn off everything for a true release build
+
 #ifdef _DEBUG
-#define BOUNDS_CHECK
-#define BLOCK_ON_ERROR
-#define DO_PROF
-#define CONSTRUCT_DS_ELEMENTS
+	#define BOUNDS_CHECK
+	#define BLOCK_ON_ERROR
+	#define DO_PROF
+	#define CONSTRUCT_DS_ELEMENTS
+#elif defined(REAL_RELEASE)
+	#define OPTIMIZE_META
 #else
-#define BLOCK_ON_ERROR
-#define DO_PROF
-#define MORE_PROF
+	#define BLOCK_ON_ERROR
+	#define DO_PROF
+	#define MORE_PROF
+#endif
+
+#ifdef __clang__
+#define NOREFLECT __attribute__((annotate("noreflect")))
+#else
+#define NOREFLECT
 #endif
 
 #include "basic_types.h"
