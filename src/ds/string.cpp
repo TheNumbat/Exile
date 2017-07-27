@@ -230,8 +230,7 @@ u32 print_type(string s, u32 idx, void* val, _type_info* info, bool size) { PROF
 	} break;
 
 	case Type::_array: {
-		idx = string_insert(s, idx, info->name, size);
-		idx = string_insert(s, idx, string_literal("{}"), size);
+		idx = print_array(s, idx, val, info, size);
 	} break;
 
 	case Type::_func: {
@@ -260,6 +259,36 @@ u32 print_type(string s, u32 idx, void* val, _type_info* info, bool size) { PROF
 		}
 	} break;
 	}
+	return idx;
+}
+
+u32 print_array(string s, u32 idx, void* val, _type_info* info, bool size) { PROF 
+	
+	_type_info* of = TYPEINFO_H(info->_array.of);
+
+	if (!of) {
+		idx = string_insert(s, idx, string_literal("UNDEF["), size);
+		idx = print_u64(s, idx, 10, info->_array.length, size);
+		idx = string_insert(s, idx, ']', size);
+		return idx;
+	}
+
+	idx = string_insert(s, idx, of->name, size);
+	idx = string_insert(s, idx, '[', size);
+	for(u32 i = 0; i < info->_array.length; i++) {
+		if(of->type_type == Type::_string) {
+			idx = string_insert(s, idx, '\"', size);
+		}
+		idx = print_type(s, idx, (u8*)val + i * of->size, of, size);
+		if(of->type_type == Type::_string) {
+			idx = string_insert(s, idx, '\"', size);
+		}
+		if(i != info->_array.length - 1)
+			idx = string_insert(s, idx, string_literal(", "), size);
+	}
+
+	idx = string_insert(s, idx, ']', size);
+
 	return idx;
 }
 
@@ -299,11 +328,11 @@ u32 print_struct(string s, u32 idx, void* val, _type_info* info, bool size) { PR
 
 		if(member) {
 			if(member->type_type == Type::_string) {
-				idx = string_insert(s, idx, string_literal("\""), size);
+				idx = string_insert(s, idx, '\"', size);
 			}
 			idx = print_type(s, idx, place, member, size);
 			if(member->type_type == Type::_string) {
-				idx = string_insert(s, idx, string_literal("\""), size);
+				idx = string_insert(s, idx, '\"', size);
 			}
 		} else {
 			idx = string_insert(s, idx, string_literal("UNDEF"), size);

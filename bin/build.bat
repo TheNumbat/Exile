@@ -29,10 +29,10 @@ if not exist w:\data\assets\assets.asset (
 	asset.exe w:\data\assets\store.txt w:\data\assets\assets.asset
 )
 
-if not exist w:\build\meta.exe (
+rem if not exist w:\build\meta.exe (
 	echo compiling metaprogram...
 	cl %Meta_CompilerFlags% w:\src\meta.cpp /link %Meta_LinkerFlags%
-)
+rem )
 
 echo running metaprogram...
 meta.exe w:\src\game.cpp

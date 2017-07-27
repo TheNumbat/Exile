@@ -137,6 +137,12 @@ struct func_scope_nocs {
 #define PROF_NOCS
 #endif
 
+template<typename T>
+struct test {
+	T lul[2][2][2];
+};
+template struct test<string>;
+
 #include <meta_types.h>
 
 // IMPLEMENTATIONS

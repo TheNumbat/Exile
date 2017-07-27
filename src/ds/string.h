@@ -62,6 +62,7 @@ struct _type_info;
 u32 print_type(string s, u32 idx, void* val, _type_info* info, bool size = false);
 
 // type-specific helpers
+u32 print_array(string s, u32 idx, void* val, _type_info* info, bool size = false);
 u32 print_ptr(string s, u32 idx, void* val, _type_info* info, bool size = false);
 u32 print_struct(string s, u32 idx, void* val, _type_info* info, bool size = false);
 u32 print_enum(string s, u32 idx, void* val, _type_info* info, bool size = false);

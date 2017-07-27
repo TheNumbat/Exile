@@ -265,7 +265,9 @@ CXChildVisitResult do_parse(CXCursor c) {
 }
 
 void output_pre(ofstream& fout) {
-	fout << "void make_meta_info() { PROF" << endl << endl;
+	fout << endl << "#define CSTRING2(...) #__VA_ARGS__" << endl
+		 << "#define CSTRING(...) CSTRING2(__VA_ARGS__)" << endl
+		 << "void make_meta_info() { PROF" << endl << endl;
 }
 
 void output_post(ofstream& fout) {
@@ -274,14 +276,19 @@ void output_post(ofstream& fout) {
 
 void output_array(ofstream& fout, CXType type) {
 
+	auto ele_type = clang_getArrayElementType(type);
+	if(ele_type.kind == CXType_ConstantArray) {
+		output_array(fout, ele_type);
+	}
+
 	auto name = str(clang_getTypeSpelling(type));
-	auto base = str(clang_getTypeSpelling(clang_getArrayElementType(type)));
+	auto base = str(clang_getTypeSpelling(ele_type));
 
 	fout << "\t[]() -> void {" << endl
 		 << "\t\t_type_info this_type_info;" << endl
 		 << "\t\tthis_type_info.type_type = Type::_array;" << endl
 		 << "\t\tthis_type_info.size = sizeof(" << name << ");" << endl
-		 << "\t\tthis_type_info.name = string_literal(\"" << name << "\");" << endl
+		 << "\t\tthis_type_info.name = string_literal(CSTRING(" << name << "));" << endl
 		 << "\t\tthis_type_info.hash = (type_id)typeid(" << name << ").hash_code();" << endl
 		 << "\t\tthis_type_info._array.of = TYPEINFO(" << base << ") ? TYPEINFO(" << base << ")->hash : 0;" << endl
 		 << "\t\tthis_type_info._array.length = " << clang_getNumElements(type) << ";" << endl
@@ -477,7 +484,7 @@ void print_templ_struct(ofstream& fout, const struct_def& s, const map<string, C
 	fout << "\t\t_type_info this_type_info;" << endl
 		 << "\t\tthis_type_info.type_type = Type::_struct;" << endl
 		 << "\t\tthis_type_info.size = sizeof(" << qual_name << ");" << endl
-		 << "\t\tthis_type_info.name = string_literal(\"" << name << "\");" << endl
+		 << "\t\tthis_type_info.name = string_literal(CSTRING(" << qual_name << "));" << endl
 		 << "\t\tthis_type_info.hash = (type_id)typeid(" << qual_name << ").hash_code();" << endl
 		 << "\t\tthis_type_info._struct.member_count = " << s.members.size() << ";" << endl;
 
