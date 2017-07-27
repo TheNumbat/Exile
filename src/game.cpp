@@ -30,46 +30,63 @@ extern "C" game_state* start_up(platform_api* api) { PROF
 	LOG_DEBUG("Starting logger");
 	logger_start(&state->log);
 
-	LOG_DEBUG("Allocating transient store...");
-	state->transient_arena = MAKE_ARENA("transient", MEGABYTES(16), &state->default_platform_allocator, false);
+	LOG_DEBUG("Starting thread pool");
+	state->thread_pool_a = MAKE_PLATFORM_ALLOCATOR("threadpool");
+	state->thread_pool = make_threadpool(&state->thread_pool_a);
+	threadpool_start_all(&state->thread_pool);
 
-	LOG_DEBUG("Starting debug system");
-	state->dbg_a = MAKE_PLATFORM_ALLOCATOR("dbg");
-	state->dbg_a.suppress_messages = true;
-	state->dbg = make_dbg_manager(&state->dbg_a);
+	// This stuff is parallelized mostly just to test the thread pool, they're not
+	// actually worth parallelizing (they will run on one worker anyway)
 
-	LOG_DEBUG("Setting up events");
-	state->evt_a = MAKE_PLATFORM_ALLOCATOR("event");
-	state->evt = make_evt_manager(&state->evt_a);
-	start_evt_manger(&state->evt);
+	job_id transient = threadpool_queue_job(&state->thread_pool, [](void* s) -> void {
+		game_state* state = (game_state*)s;
+		LOG_INFO("Allocating transient store...");
+		state->transient_arena = MAKE_ARENA("transient", MEGABYTES(8), &state->default_platform_allocator, false);
+	}, state);
 
-	LOG_DEBUG("Creating window");
+	job_id debug = threadpool_queue_job(&state->thread_pool, [](void* s) -> void {
+		game_state* state = (game_state*)s;
+		LOG_INFO("Starting debug system...");
+		state->dbg_a = MAKE_PLATFORM_ALLOCATOR("dbg");
+		state->dbg_a.suppress_messages = true;
+		state->dbg = make_dbg_manager(&state->dbg_a);
+	}, state);
+
+	job_id events = threadpool_queue_job(&state->thread_pool, [](void* s) -> void {
+		game_state* state = (game_state*)s;
+		LOG_INFO("Setting up events...");
+		state->evt_a = MAKE_PLATFORM_ALLOCATOR("event");
+		state->evt = make_evt_manager(&state->evt_a);
+		start_evt_manger(&state->evt);
+	}, state);
+
+	job_id assets = threadpool_queue_job(&state->thread_pool, [](void* s) -> void {
+		game_state* state = (game_state*)s;
+		LOG_INFO("Setting up asset system");
+		state->default_store_a = MAKE_PLATFORM_ALLOCATOR("asset");
+		state->default_store = make_asset_store(&state->default_store_a);
+		load_asset_store(&state->default_store, string_literal("assets/assets.asset"));
+	}, state);
+
+	threadpool_wait_job(&state->thread_pool, events);
+
+	LOG_INFO("Creating window");
 	platform_error err = api->platform_create_window(&state->window, string_literal("CaveGame"), 1280, 720);
 	state->window_w = 1280;
 	state->window_h = 720;
 
 	if (!err.good) {
 		LOG_FATAL_F("Failed to create window, error: %", err.error);
-		api->platform_heap_free(state);
-		return NULL;
 	}
 
-	LOG_DEBUG("Setting up OpenGL");
+	LOG_INFO("Setting up OpenGL");
 	ogl_load_global_funcs();
 	state->ogl_a = MAKE_PLATFORM_ALLOCATOR("ogl");
 	state->ogl = make_opengl(&state->ogl_a);
 
-	LOG_DEBUG("Starting thread pool");
-	state->thread_pool_a = MAKE_PLATFORM_ALLOCATOR("threadpool");
-	state->thread_pool = make_threadpool(&state->thread_pool_a);
-	threadpool_start_all(&state->thread_pool);
+	threadpool_wait_job(&state->thread_pool, assets);
 
-	LOG_DEBUG("Setting up asset system");
-	state->default_store_a = MAKE_PLATFORM_ALLOCATOR("asset");
-	state->default_store = make_asset_store(&state->default_store_a);
-	load_asset_store(&state->default_store, string_literal("assets/assets.asset"));
-
-	LOG_DEBUG("Setting up GUI");
+	LOG_INFO("Setting up GUI");
 	state->gui_a = MAKE_PLATFORM_ALLOCATOR("gui");
 	state->gui = make_gui(&state->ogl, &state->gui_a);
 	gui_add_font(&state->ogl, &state->gui, string_literal("gui14"), &state->default_store);
@@ -77,10 +94,12 @@ extern "C" game_state* start_up(platform_api* api) { PROF
 	gui_add_font(&state->ogl, &state->gui, string_literal("gui40"), &state->default_store);
 	gui_add_font(&state->ogl, &state->gui, string_literal("guimono"), &state->default_store, true);
 
+	threadpool_wait_job(&state->thread_pool, transient);
+	threadpool_wait_job(&state->thread_pool, debug);
+
 	LOG_INFO("Done with startup!");
 	LOG_POP_CONTEXT();
 
-	LOG_INFO_F("%", api);
 	// LOG_INFO_F("%", state); Don't do this anymore, it's 409 thousand characters and will only grow
 
 	state->running = true;
