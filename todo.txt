@@ -25,6 +25,16 @@ immediate to do:
 			try separate vectors of keys, values, hashes (no map_element)
 		concurrent versions of most things
 
+	threading
+		some sort of async system
+			registering task finishes
+				'await'?
+			parallel loop?
+			'then'?
+			is there a convenient way to pass an arbitrary function? template time?
+		parallelize initialization code
+		integration with modding system
+
 	uncategorized
 		SIMD & intrinsic math (vectorized functions, vector/mat math, noise & randomness)
 		stack allocations (_malloca? can't easily platform-abstract this...) where possible
@@ -35,6 +45,7 @@ immediate to do:
 			function pointers?
 		printf
 			function pointers?
+			map print
 		do we want to do a subtype dispatcher? https://youtu.be/lCtALewoFjc?t=1h20m16s
 		integration with UI
 		profiler
@@ -44,6 +55,7 @@ immediate to do:
 		buffer file IO
 		can we remove allocation on message send?
 			pool allocator/free list?
+		colorful console output
 
 	UI
 		stop sending mesh every frame (see OpenGL)
@@ -107,7 +119,4 @@ immediate to do:
 		paging
 		world storage (3D chunks?)
 
-	threading
-		threadpool await (store job IDs, block until finished)
-		farm out initialization code
-		integration with modding system
+
