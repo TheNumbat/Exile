@@ -53,6 +53,7 @@ struct Type_enum_info {
 struct Type_string_info {};
 
 // TODO(max): reduce memory footprint; Type_enum_info takes up way too much space
+// 			  currently 3128 bytes / _type_info, type_table size is at least 3MB
 
 struct _type_info {
 	Type type_type 	= Type::_unkown;
@@ -112,11 +113,10 @@ struct _get_type_info<T*> {
 	}
 };
 
-void make_meta_enums();
-void make_meta_structs();
+void make_meta_info();
 void make_type_table(allocator* alloc) {
 
-	type_table = make_map<type_id,_type_info>(512, alloc, &hash_u64);
+	type_table = make_map<type_id,_type_info>(1024, alloc, &hash_u64);
 
 	{
 		_type_info void_t;
@@ -257,8 +257,7 @@ void make_type_table(allocator* alloc) {
 		map_insert(&type_table, string_t.hash, string_t, false);
 	}
 
-	make_meta_enums();
-	make_meta_structs();
+	make_meta_info();
 }
 
 void destroy_type_table() {

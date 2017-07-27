@@ -229,6 +229,11 @@ u32 print_type(string s, u32 idx, void* val, _type_info* info, bool size) { PROF
 		idx = print_ptr(s, idx, val, info, size);
 	} break;
 
+	case Type::_array: {
+		idx = string_insert(s, idx, info->name, size);
+		idx = string_insert(s, idx, string_literal("{}"), size);
+	} break;
+
 	case Type::_func: {
 		idx = string_insert(s, idx, string_literal("PROF"), size);
 	} break;

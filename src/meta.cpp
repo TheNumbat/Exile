@@ -38,8 +38,14 @@ struct struct_def {
 	bool noreflect		 	= false;
 	vector<string> template_type_params;
 
-	vector<function<void(ofstream&)>> dependancies;
+	vector<function<void(ofstream&)>> templ_deps;
+	vector<function<void(ofstream&)>> arr_deps;
 };
+
+// NOTE(max): I realized that instead of the whole done system I could've just used
+// 			  map_insert_if_unique, which would have been a _lot_ simpler. However,
+//			  this works robustly (so far...), so I won't change it. I will use it
+// 			  for array meta gen, though.
 
 // using dictionaries would be faster, but we need to preserve ordering (could sort based on monotonic ID but w/e)
 // also, this is already fast enough, it's a small portion of the full build time
@@ -65,9 +71,9 @@ CXChildVisitResult parse_enum(CXCursor c, CXCursor parent, CXClientData client_d
 CXChildVisitResult parse_struct_or_union(CXCursor c, CXCursor parent, CXClientData client_data);
 CXChildVisitResult do_parse(CXCursor c);
 
-void output_pre_struct(ofstream& fout);
-void output_pre_enum(ofstream& fout);
+void output_pre(ofstream& fout);
 void output_post(ofstream& fout);
+void output_array(ofstream& fout, CXType type);
 void output_enum(ofstream& fout, const enum_def& e);
 void output_struct(ofstream& fout, const struct_def& s);
 void output_template_struct(ofstream& fout, const struct_def& s, const map<string, CXType>& trans);
@@ -151,9 +157,13 @@ CXChildVisitResult parse_struct_or_union(CXCursor c, CXCursor parent, CXClientDa
 
 	if(c.kind == CXCursor_FieldDecl) {
 		
+		auto type = clang_getCursorType(c);
+		if(type.kind == CXType_ConstantArray) {
+			current_struct_def.arr_deps.push_back([type](ofstream& fout) -> void {output_array(fout, type);});
+		}
+
 		current_struct_def.members.push_back(c);
 
-		auto type = clang_getCursorType(c);
 		i32 num_args = clang_Type_getNumTemplateArguments(type);
 		if(num_args != -1 && !current_struct_def.is_template) {
 			auto instname = str(clang_getTypeSpelling(type));
@@ -168,7 +178,7 @@ CXChildVisitResult parse_struct_or_union(CXCursor c, CXCursor parent, CXClientDa
 				}
 
 				auto def = *entry;
-				current_struct_def.dependancies.push_back([instantiation, def](ofstream& fout) -> void { output_template_struct(fout, def, make_translation(def, instantiation)); });
+				current_struct_def.templ_deps.push_back([instantiation, def](ofstream& fout) -> void { output_template_struct(fout, def, make_translation(def, instantiation)); });
 			}
 		}
 
@@ -224,7 +234,7 @@ CXChildVisitResult do_parse(CXCursor c) {
 			auto entry = find_if(structs.begin(), structs.end(), [name](struct_def& def) -> bool { return name == def.name; });
 			if(entry != structs.end()) {
 				struct_def def = *entry;
-				entry->dependancies.push_back([_current_instantiation, def](ofstream& fout) -> void { output_template_struct(fout, def, make_translation(def, _current_instantiation)); });
+				entry->templ_deps.push_back([_current_instantiation, def](ofstream& fout) -> void { output_template_struct(fout, def, make_translation(def, _current_instantiation)); });
 			}
 			current_instantiation.clear();
 		} else if(!current_struct_def.noreflect) {
@@ -254,27 +264,29 @@ CXChildVisitResult do_parse(CXCursor c) {
 	return CXChildVisit_Continue;
 }
 
-void output_pre_struct(ofstream& fout) {
-	fout << endl << "#ifndef OPTIMIZE_META" << endl
-		 << "#pragma optimize( \"\", off )" << endl
-		 << "#endif" << endl
-		 << "void make_meta_structs() { PROF" << endl
-		 << endl << "\t_type_info this_type_info;" << endl;
-}
-
-void output_pre_enum(ofstream& fout) {
-	fout << endl << "#ifndef OPTIMIZE_META" << endl
-		 << "#pragma optimize( \"\", off )" << endl
-		 << "#endif" << endl
-		 << "void make_meta_enums() { PROF" << endl
-		 << endl << "\t_type_info this_type_info;" << endl;
+void output_pre(ofstream& fout) {
+	fout << "void make_meta_info() { PROF" << endl << endl;
 }
 
 void output_post(ofstream& fout) {
 	fout << "}" << endl;
-	fout << endl << "#ifndef OPTIMIZE_META" << endl
-		 << "#pragma optimize( \"\", on )" << endl
-		 << "#endif" << endl;
+}
+
+void output_array(ofstream& fout, CXType type) {
+
+	auto name = str(clang_getTypeSpelling(type));
+	auto base = str(clang_getTypeSpelling(clang_getArrayElementType(type)));
+
+	fout << "\t[]() -> void {" << endl
+		 << "\t\t_type_info this_type_info;" << endl
+		 << "\t\tthis_type_info.type_type = Type::_array;" << endl
+		 << "\t\tthis_type_info.size = sizeof(" << name << ");" << endl
+		 << "\t\tthis_type_info.name = string_literal(\"" << name << "\");" << endl
+		 << "\t\tthis_type_info.hash = (type_id)typeid(" << name << ").hash_code();" << endl
+		 << "\t\tthis_type_info._array.of = TYPEINFO(" << base << ") ? TYPEINFO(" << base << ")->hash : 0;" << endl
+		 << "\t\tthis_type_info._array.length = " << clang_getNumElements(type) << ";" << endl
+		 << "\t\tmap_insert_if_unique(&type_table, this_type_info.hash, this_type_info, false);" << endl
+		 << "\t}();" << endl << endl;
 }
 
 void output_enum(ofstream& fout, const enum_def& e) {
@@ -287,8 +299,8 @@ void output_enum(ofstream& fout, const enum_def& e) {
 		return;
 	}
 
-	fout << "\t{" << endl
-		 << "\t\tthis_type_info = _type_info();" << endl
+	fout << "\t[]() -> void {" << endl
+		 << "\t\t_type_info this_type_info;" << endl
 		 << "\t\tthis_type_info.type_type = Type::_enum;" << endl
 		 << "\t\tthis_type_info.size = sizeof(" << type << ");" << endl
 		 << "\t\tthis_type_info.name = string_literal(\"" << name << "\");" << endl
@@ -304,7 +316,7 @@ void output_enum(ofstream& fout, const enum_def& e) {
 	}
 
 	fout << "\t\tmap_insert(&type_table, this_type_info.hash, this_type_info, false);" << endl
-		 << "\t}" << endl << endl;
+		 << "\t}();" << endl << endl;
 }
 
 void output_struct(ofstream& fout, const struct_def& s) {
@@ -317,15 +329,19 @@ void output_struct(ofstream& fout, const struct_def& s) {
 		return;
 	}
 
-	for(auto& f : s.dependancies) {
+	for(auto& f : s.templ_deps) {
 		f(fout);
 	}
 
 	if(s.is_template) return;
 
-	fout << "\t{" << endl;
+	for(auto& f : s.arr_deps) {
+		f(fout);
+	}
 
-	fout << "\t\tthis_type_info = _type_info();" << endl
+	fout << "\t[]() -> void {" << endl;
+
+	fout << "\t\t_type_info this_type_info;" << endl
 		 << "\t\tthis_type_info.type_type = Type::_struct;" << endl
 		 << "\t\tthis_type_info.size = sizeof(" << name << ");" << endl
 		 << "\t\tthis_type_info.name = string_literal(\"" << name << "\");" << endl
@@ -345,7 +361,7 @@ void output_struct(ofstream& fout, const struct_def& s) {
 	}
 
 	fout << "\t\tmap_insert(&type_table, this_type_info.hash, this_type_info, false);" << endl
-		 << "\t}" << endl << endl;
+		 << "\t}();" << endl << endl;
 }
 
 void output_template_struct(ofstream& fout, const struct_def& s, const map<string, CXType>& translation) {
@@ -367,6 +383,10 @@ void output_template_struct(ofstream& fout, const struct_def& s, const map<strin
 
 				fout << "#define " << entry->first << " " << type_str << endl;
 			}
+		}
+
+		for(auto& f : s.arr_deps) {
+			f(fout);
 		}
 
 		for(auto& member : s.members) {
@@ -442,7 +462,7 @@ void print_templ_struct(ofstream& fout, const struct_def& s, const map<string, C
 	auto& name = s.name;
 	auto type = clang_getCursorType(s.this_);
 
-	fout << "\t{" << endl;
+	fout << "\t[]() -> void {" << endl;
 
 	string qual_name = name + "<";
 	for(u32 idx = 0; idx < s.template_type_params.size(); idx++) {
@@ -454,7 +474,7 @@ void print_templ_struct(ofstream& fout, const struct_def& s, const map<string, C
 	}
 	qual_name += ">";
 
-	fout << "\t\tthis_type_info = _type_info();" << endl
+	fout << "\t\t_type_info this_type_info;" << endl
 		 << "\t\tthis_type_info.type_type = Type::_struct;" << endl
 		 << "\t\tthis_type_info.size = sizeof(" << qual_name << ");" << endl
 		 << "\t\tthis_type_info.name = string_literal(\"" << name << "\");" << endl
@@ -476,7 +496,7 @@ void print_templ_struct(ofstream& fout, const struct_def& s, const map<string, C
 	fout << "#undef __" << name << "__" << endl;
 
 	fout << "\t\tmap_insert(&type_table, this_type_info.hash, this_type_info, false);" << endl
-		 << "\t}" << endl << endl;
+		 << "\t}();" << endl << endl;
 }
 
 i32 main(i32 argc, char** argv) {
@@ -507,12 +527,10 @@ i32 main(i32 argc, char** argv) {
 	}, nullptr);
 
 	ofstream fout("meta_types.h");
-	output_pre_enum(fout);
+	output_pre(fout);
 	for(auto& e : enums) {
 		output_enum(fout, e);
 	}
-	output_post(fout);
-	output_pre_struct(fout);
 	for(auto& s : structs) {
 		output_struct(fout, s);
 	}
