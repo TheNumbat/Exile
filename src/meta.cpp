@@ -368,7 +368,8 @@ void output_enum(ofstream& fout, const enum_def& e) {
 void output_struct(ofstream& fout, const struct_def& s) {
 
 	auto& name = s.name;
-	if(!name.size()) return;
+	if(!name.size()) return; // sort of a hack, this skips anonymous member structures/unions.
+							 // we shouldn't be adding them to the structure defines at all, though?
 
 	auto type = clang_getCursorType(s.this_);
 

@@ -180,8 +180,9 @@ shader_program_id ogl_add_program(ogl_manager* ogl, string v_path, string f_path
 
 	map_insert(&ogl->programs, ogl->next_shader_id, p);
 
-	ogl->next_shader_id++;
+	LOG_DEBUG_F("Loaded shader from % and %", v_path, f_path);
 
+	ogl->next_shader_id++;
 	return ogl->next_shader_id - 1;
 }
 
@@ -208,8 +209,9 @@ texture_id ogl_add_texture_from_font(ogl_manager* ogl, asset* font, texture_wrap
 
 	map_insert(&ogl->textures, ogl->next_texture_id, t);
 
-	ogl->next_texture_id++;
+	LOG_DEBUG_F("Created texture % from font %", ogl->next_texture_id, font->name);
 
+	ogl->next_texture_id++;
 	return ogl->next_texture_id - 1;
 }
 
@@ -222,8 +224,9 @@ texture_id ogl_add_texture_from_font(ogl_manager* ogl, asset_store* as, string n
 
 	map_insert(&ogl->textures, ogl->next_texture_id, t);
 
-	ogl->next_texture_id++;
+	LOG_DEBUG_F("Created texture % from font asset %", ogl->next_texture_id, name);
 
+	ogl->next_texture_id++;
 	return ogl->next_texture_id - 1;
 }
 
@@ -236,8 +239,9 @@ texture_id ogl_add_texture(ogl_manager* ogl, asset_store* as, string name, textu
 
 	map_insert(&ogl->textures, ogl->next_texture_id, t);
 
-	ogl->next_texture_id++;
+	LOG_DEBUG_F("Created texture % from bitmap asset %", ogl->next_texture_id, name);
 
+	ogl->next_texture_id++;
 	return ogl->next_texture_id - 1;
 }
 
@@ -325,7 +329,6 @@ void texture_load_bitmap_from_font(texture* tex, asset* font) { PROF
 
 	glBindTextureUnit(0, 0);
 }
-
 
 void texture_load_bitmap_from_font(texture* tex, asset_store* as, string name) { PROF
 

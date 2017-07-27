@@ -189,6 +189,8 @@ void load_asset_store(asset_store* as, string path) { PROF
 				LOG_ERR("Only bitmaps and fonts for now!");
 				break;
 			}
+
+			LOG_DEBUG_F("Loaded asset % of type % from store %", a.name, a.type, path);
 		}
 
 	} POP_ALLOC();

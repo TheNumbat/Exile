@@ -27,6 +27,9 @@ extern "C" game_state* start_up(platform_api* api) { PROF
 	LOG_DEBUG("Beginning startup...");
 	LOG_PUSH_CONTEXT_L("");
 
+	LOG_DEBUG("Starting logger");
+	logger_start(&state->log);
+
 	LOG_DEBUG("Allocating transient store...");
 	state->transient_arena = MAKE_ARENA("transient", MEGABYTES(16), &state->default_platform_allocator, false);
 
@@ -34,9 +37,6 @@ extern "C" game_state* start_up(platform_api* api) { PROF
 	state->dbg_a = MAKE_PLATFORM_ALLOCATOR("dbg");
 	state->dbg_a.suppress_messages = true;
 	state->dbg = make_dbg_manager(&state->dbg_a);
-
-	LOG_DEBUG("Starting logger");
-	logger_start(&state->log);
 
 	LOG_DEBUG("Setting up events");
 	state->evt_a = MAKE_PLATFORM_ALLOCATOR("event");
@@ -80,7 +80,7 @@ extern "C" game_state* start_up(platform_api* api) { PROF
 	LOG_INFO("Done with startup!");
 	LOG_POP_CONTEXT();
 
-	// LOG_INFO_F("%", state);
+	LOG_INFO_F("%", state);
 
 	state->running = true;
 	return state;

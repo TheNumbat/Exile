@@ -15,6 +15,14 @@ features so far:
 
 immediate to do:
 
+	data structures
+		list (same API as vector, but chunked)
+		circular buffer (+add to queue)
+		heap (+priority queue)
+		improve map storage/AOS
+			bit mask for occupancy
+			try separate vectors of keys, values, hashes (no map_element)
+
 	uncategorized
 		SIMD & intrinsic math (vectorized functions, vector/mat math, noise & randomness)
 		stack allocations (_malloca? can't easily platform-abstract this...) where possible
