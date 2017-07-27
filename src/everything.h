@@ -7,6 +7,33 @@
 #define NOREFLECT
 #endif
 
+/* debug options
+
+#define BOUNDS_CHECK 			// check access on array_get/vector_get
+	
+#define BLOCK_ON_ERROR			// __debugbreak on log_level::error
+	
+#define DO_PROF					// do function enter/exit profiling
+	
+#define MORE_PROF				// do profiling for functions that are called a _lot_
+								// (still excludes vec constructors)
+
+#define ZERO_ARENA				// memset arena allocator store to zero on reset
+	
+#define CONSTRUCT_DS_ELEMENTS 	// removes need for zero-cleared allocation
+*/
+
+#ifdef _DEBUG
+#define BOUNDS_CHECK
+#define BLOCK_ON_ERROR
+#define DO_PROF
+#define CONSTRUCT_DS_ELEMENTS
+#else
+#define BLOCK_ON_ERROR
+#define DO_PROF
+#define MORE_PROF
+#endif
+
 #include "basic_types.h"
 #include "math.h"
 #include "ds/string.h"
@@ -28,12 +55,8 @@ struct code_context {
 
 #include "type_table.h"
 
-#ifdef _DEBUG
-#define BOUNDS_CHECK
-#define BLOCK_ON_ERROR
-#define MORE_PROF
-// #define ZERO_ARENA
-// #define CONSTRUCT_DS_ELEMENTS // removes need for zero-cleared allocation
+#ifdef CONSTRUCT_DS_ELEMENTS
+#include <new>
 #endif
 
 #define MAX_CALL_STACK_DEPTH 256
@@ -83,8 +106,7 @@ void end_thread();
 #include "game.h"
 static game_state* global_state = NULL;
 
-#ifdef _DEBUG
-
+#ifdef DO_PROF
 struct func_scope {
 	func_scope(code_context context) {
 		LOG_DEBUG_ASSERT(this_thread_data.call_stack_depth < MAX_CALL_STACK_DEPTH);
@@ -104,7 +126,6 @@ struct func_scope_nocs {
 		
 	}
 };
-
 #define PROF func_scope __f(CONTEXT);
 #define PROF_NOCS func_scope_nocs __f(CONTEXT);
 #else

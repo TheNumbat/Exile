@@ -46,13 +46,11 @@ if "%1"=="release" (
 	cl %Game_DebugCompilerFlags% w:\src\game.cpp /link %Game_LinkerFlags%
 )
 
-if not exist w:\build\main.exe (
 echo compiling platform layer...
-	if "%2"=="release" (
-		cl %Platform_ReleaseCompilerFlags% w:\src\platform\platform_main.cpp /link %Platform_LinkerFlags%
-	) else (
-		cl %Platform_DebugCompilerFlags% w:\src\platform\platform_main.cpp /link %Platform_LinkerFlags%
-	)
+if "%2"=="release" (
+	cl %Platform_ReleaseCompilerFlags% w:\src\platform\platform_main.cpp /link %Platform_LinkerFlags%
+) else (
+	cl %Platform_DebugCompilerFlags% w:\src\platform\platform_main.cpp /link %Platform_LinkerFlags%
 )
 
 popd

@@ -39,7 +39,7 @@ array<T> make_array(u32 capacity, allocator* a) { PROF
 		ret.memory = (T*)ret.alloc->allocate_(capacity * sizeof(T), ret.alloc, CONTEXT);
 
 #ifdef CONSTRUCT_DS_ELEMENTS
-		new (ret.memory) T[capacity];
+		new (ret.memory) T[capacity]();
 #endif
 	}
 	

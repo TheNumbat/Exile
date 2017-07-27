@@ -675,7 +675,7 @@ string substring(string str, u32 start, u32 end) { PROF
 
 i32 string_last_slash(string str) { PROF
 
-	for(u32 i = str.len; i >= 0; i--) {
+	for(u32 i = str.len - 1; i >= 0; i--) {
 		if(str.c_str[i] == '\\' || str.c_str[i] == '/') {
 			return i;
 		}

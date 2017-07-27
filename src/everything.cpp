@@ -28,7 +28,7 @@ string np_substring(string str, u32 start, u32 end) {
 
 i32 np_string_last_slash(string str) { 
 
-	for(u32 i = str.len; i >= 0; i--) {
+	for(u32 i = str.len - 1; i >= 0; i--) {
 		if(str.c_str[i] == '\\' || str.c_str[i] == '/') {
 			return i;
 		}
@@ -45,7 +45,7 @@ string np_string_literal(const char* literal) {
 inline code_context _make_context(string file, string function, i32 line) {
 
 	code_context ret;
-#ifdef _DEBUG
+#ifdef DO_PROF
 	ret.file = np_substring(file, np_string_last_slash(file) + 1, file.len - 1);
 	ret.function = function;
 	ret.line = line;
