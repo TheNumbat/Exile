@@ -332,7 +332,7 @@ void output_func(ofstream& fout, CXType type, CXCursor func) {
 	fout << "\t[]() -> void {" << endl
 		 << "\t\t_type_info this_type_info;" << endl
 		 << "\t\tthis_type_info.type_type = Type::_func;" << endl
-		 << "\t\tthis_type_info.size = sizeof(void*);" << endl 			// TODO(max): take real size of function pointer
+		 << "\t\tthis_type_info.size = sizeof(void(*)());" << endl
 		 << "\t\tthis_type_info.hash = (type_id)typeid(" << signature << ").hash_code();" << endl
 		 << "\t\tthis_type_info.name = string_literal(\"" << name << "\");" << endl
 		 << "\t\tthis_type_info._func.signature = string_literal(CSTRING(" << signature << "));" << endl
