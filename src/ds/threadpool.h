@@ -6,9 +6,9 @@
 typedef u64 job_id;
 
 struct job {
-	job_id id 		   = 0;
-	void (*proc)(void*) = NULL;
-	void* data 		   = NULL;
+	job_id id 		   	= 0;
+	void (*proc)(void*)	= NULL;
+	void* data 		   	= NULL;
 };
 
 struct worker_data {

@@ -24,13 +24,13 @@ extern "C" game_state* start_up(platform_api* api) { PROF
 	logger_add_file(&state->log, log_all_file, log_level::alloc);
 	logger_add_file(&state->log, stdout_file, log_level::info);
 
-	LOG_DEBUG("Beginning startup...");
+	LOG_INFO("Beginning startup...");
 	LOG_PUSH_CONTEXT_L("");
 
-	LOG_DEBUG("Starting logger");
+	LOG_INFO("Starting logger");
 	logger_start(&state->log);
 
-	LOG_DEBUG("Starting thread pool");
+	LOG_INFO("Starting thread pool");
 	state->thread_pool_a = MAKE_PLATFORM_ALLOCATOR("threadpool");
 	state->thread_pool = make_threadpool(&state->thread_pool_a);
 	threadpool_start_all(&state->thread_pool);
@@ -100,7 +100,7 @@ extern "C" game_state* start_up(platform_api* api) { PROF
 	LOG_INFO("Done with startup!");
 	LOG_POP_CONTEXT();
 
-	// LOG_INFO_F("%", state); Don't do this anymore, it's 409 thousand characters and will only grow
+	// LOG_INFO_F("%", state); // Don't do this anymore, it's 409 thousand characters and will only grow
 
 	state->running = true;
 	return state;

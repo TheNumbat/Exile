@@ -17,6 +17,7 @@ features so far:
 immediate to do:
 
 	data structures
+		realloc vector (+add to platform layer)
 		list (same API as vector, but chunked & no-copy)
 		circular buffer (+add to queue)
 		heap (+priority queue)
@@ -28,8 +29,6 @@ immediate to do:
 
 	threading
 		some sort of async system
-			registering task finishes
-				'await'?
 			parallel loop?
 			'then'?
 			is there a convenient way to pass an arbitrary function? template time?
@@ -37,9 +36,11 @@ immediate to do:
 		integration with modding system
 
 	uncategorized
+		get rid of global_state
 		SIMD & intrinsic math (vectorized functions, vector/mat math, noise & randomness)
 		stack allocations (_malloca? can't easily platform-abstract this...) where possible
 		better hotloading management (probably want callback registry)
+		ideal - no allocate/free per frame
 
 	meta
 		printf
@@ -57,7 +58,11 @@ immediate to do:
 
 	UI
 		stop sending mesh every frame (see OpenGL)
-		we only need alpha data from font textures - compress
+		fonts
+			we only need alpha data from font textures - compress
+			maybe don't pack a bunch of different sizes, just pack the TTF
+			 and use stb_tt to regenerate correctly sized fonts when they're
+			 needed. Do we really need this, though?
 		widgets
 			clipping/wrapping/auto-layout
 			dividers
@@ -95,6 +100,13 @@ immediate to do:
 		extra kerning pairs
 
 	platform
+		add realloc
+		async file io?
+		Experiment with allocation systems
+			HeapAlloc/VirtualAlloc
+			dlmalloc
+			jemalloc - heard good things
+			ptmalloc
 		fix cursor
 		wgl extension testing/loading
 		file change watcher/callback system - maybe not?
