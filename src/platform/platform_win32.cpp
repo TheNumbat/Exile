@@ -1252,6 +1252,9 @@ platform_error win32_create_window(platform_window* window, string title, u32 wi
 	// TODO(max): vsync settings
 	wglSwapIntervalEXT(0);
 
+	SetCursor(LoadCursor(0, IDC_ARROW));
+	// TODO(max): fullscreen https://blogs.msdn.microsoft.com/oldnewthing/20100412-00/?p=14353
+
 	return ret;
 }
 

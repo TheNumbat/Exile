@@ -18,6 +18,7 @@ immediate to do:
 
 	data structures
 		list (same API as vector, but chunked & no-copy)
+		buffer
 		circular buffer (+add to queue)
 		heap (+priority queue)
 		string builder
@@ -25,6 +26,10 @@ immediate to do:
 			bit mask for occupancy
 			try separate vectors of keys, values, hashes (no map_element)
 		concurrent versions of most things
+
+	allocation stuff
+		pool allocator (growing arena)
+		free list
 
 	threading
 		some sort of async system
@@ -111,7 +116,6 @@ immediate to do:
 			nedmalloc
 			http://blog.reverberate.org/2009/02/one-malloc-to-rule-them-all.html
 			Definitely try je & tc
-		fix cursor
 		wgl extension testing/loading
 		file change watcher/callback system - maybe not?
 		linux platform layer
