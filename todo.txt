@@ -104,9 +104,14 @@ immediate to do:
 		async file io?
 		Experiment with allocation systems
 			HeapAlloc/VirtualAlloc
+			TLSF (for arena-general allocations?)
 			dlmalloc
-			jemalloc - heard good things
-			ptmalloc
+			jemalloc
+			ptmalloc2
+			tcmalloc
+			nedmalloc
+			http://blog.reverberate.org/2009/02/one-malloc-to-rule-them-all.html
+			Definitely try je & tc
 		fix cursor
 		wgl extension testing/loading
 		file change watcher/callback system - maybe not?
