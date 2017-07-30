@@ -1132,7 +1132,11 @@ platform_error win32_create_window(platform_window* window, string title, u32 wi
 
 	window->title = make_copy_string(title, &win32_heap_alloc);
 
-	HINSTANCE instance = GetModuleHandleA(NULL);
+	HINSTANCE 	instance = GetModuleHandleA(NULL);
+	HGLRC 		gl_temp  = {};
+	HANDLE 		process  = GetCurrentProcess();
+
+	SetPriorityClass(process, ABOVE_NORMAL_PRIORITY_CLASS);
 
 	if(instance == NULL) {
 		ret.good = false;
@@ -1156,7 +1160,7 @@ platform_error win32_create_window(platform_window* window, string title, u32 wi
 		return ret;
 	}
 
-	window->handle = CreateWindowExA(WS_EX_ACCEPTFILES, window->title.c_str, window->title.c_str, WS_VISIBLE | WS_OVERLAPPEDWINDOW,
+	window->handle = CreateWindowExA(WS_EX_ACCEPTFILES, window->title.c_str, window->title.c_str, WS_OVERLAPPEDWINDOW,
 			           				 CW_USEDEFAULT, CW_USEDEFAULT, width, height, 0, 0, instance, 0);
 
 	if(window->handle == NULL) {
@@ -1197,15 +1201,15 @@ platform_error win32_create_window(platform_window* window, string title, u32 wi
 		return ret;		
 	}
 
-	window->gl_temp = wglCreateContext(window->device_context);
+	gl_temp = wglCreateContext(window->device_context);
 
-	if(window->gl_temp == NULL) {
+	if(gl_temp == NULL) {
 		ret.good = false;
 		ret.error = GetLastError();
 		return ret;				
 	}
 
-	if(wglMakeCurrent(window->device_context, window->gl_temp) == 0) {
+	if(wglMakeCurrent(window->device_context, gl_temp) == 0) {
 		ret.good = false;
 		ret.error = GetLastError();
 		return ret;		
@@ -1225,6 +1229,12 @@ platform_error win32_create_window(platform_window* window, string title, u32 wi
 		ret.good = false;
 		ret.error = GetLastError();
 		return ret;		
+	}
+
+	if(wglDeleteContext(gl_temp) == 0) {
+		ret.good = false;
+		ret.error = GetLastError();
+		return ret;	
 	}
 
 	window->gl_context = wglCreateContextAttribsARB(window->device_context, 0, &attribs[0]);
@@ -1249,11 +1259,12 @@ platform_error win32_create_window(platform_window* window, string title, u32 wi
 		return ret;		
 	}
 
-	// TODO(max): vsync settings
+	// TODO(max): vsync/fullscreen/AA/etc settings
+		// https://blogs.msdn.microsoft.com/oldnewthing/20100412-00/?p=14353
 	wglSwapIntervalEXT(0);
-
 	SetCursor(LoadCursor(0, IDC_ARROW));
-	// TODO(max): fullscreen https://blogs.msdn.microsoft.com/oldnewthing/20100412-00/?p=14353
+
+	ShowWindow(window->handle, SW_SHOW);
 
 	return ret;
 }
@@ -1264,11 +1275,6 @@ platform_error win32_destroy_window(platform_window* window) {
 
 	free_string(window->title, &win32_heap_free);
 
-	if(wglDeleteContext(window->gl_temp) == 0) {
-		ret.good = false;
-		ret.error = GetLastError();
-		return ret;	
-	}
 	if(wglDeleteContext(window->gl_context) == 0) {
 		ret.good = false;
 		ret.error = GetLastError();

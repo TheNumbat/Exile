@@ -48,6 +48,7 @@ void threadpool_wait_job(threadpool* tp, job_id id) { PROF
 
 job_id threadpool_queue_job(threadpool* tp, void (*proc)(void*), void* data) { PROF
 
+
 	job j;
 	j.proc = proc;
 	j.data = data;

@@ -14,7 +14,7 @@
 
 #define ZERO_ARENA				// memset arena allocator store to zero on reset
 
-#define LOG_ALLOCS				// enable logging for every allocation/free/reallocation
+#define LOG_ALLOCS				// enable logging for every allocation/free/reallocation (including arena - this is a LOT)
 	
 #define CONSTRUCT_DS_ELEMENTS 	// removes need for zero-cleared allocation
 */
@@ -26,7 +26,6 @@
 	#define BLOCK_ON_ERROR
 	#define DO_PROF	
 	#define CONSTRUCT_DS_ELEMENTS
-	#define LOG_ALLOCS
 #elif defined(REAL_RELEASE)
 
 #else
