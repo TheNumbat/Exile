@@ -18,6 +18,8 @@ inline void* platform_allocate(u64 bytes, void* this_data, code_context context)
 
 	void* mem = this_->platform_allocate(bytes);
 
+	LOG_DEBUG_ASSERT(mem != NULL);
+
 #ifdef LOG_ALLOCS
 	if(!this_->suppress_messages) {
 		logger_msgf(&global_state->log, string_literal("allocating % bytes to % with platform alloc \"%\""), log_level::alloc, context, bytes, mem, this_->name);
@@ -31,6 +33,8 @@ inline void platform_free(void* mem, void* this_data, code_context context) { PR
 
 	platform_allocator* this_ = (platform_allocator*)this_data;
 
+	LOG_DEBUG_ASSERT(mem != NULL);
+
 #ifdef LOG_ALLOCS
 	if(!this_->suppress_messages) {
 		logger_msgf(&global_state->log, string_literal("freeing % with platform alloc \"%\""), log_level::alloc, context, mem, this_->name);
@@ -40,15 +44,36 @@ inline void platform_free(void* mem, void* this_data, code_context context) { PR
 	this_->platform_free(mem);
 }
 
+void* platform_reallocate(void* mem, u64 bytes, void* this_data, code_context context) { PROF
+
+	platform_allocator* this_ = (platform_allocator*)this_data;
+
+	LOG_DEBUG_ASSERT(mem != NULL);
+
+#ifdef LOG_ALLOCS
+	if(!this_->suppress_messages) {
+		logger_msgf(&global_state->log, string_literal("reallocating % with to size % platform alloc \"%\""), log_level::alloc, context, mem, bytes, this_->name);
+	}
+#endif
+
+	void* ret = this_->platform_reallocate(mem, bytes);
+
+	LOG_DEBUG_ASSERT(ret != NULL);
+
+	return ret;
+}
+
 inline platform_allocator make_platform_allocator(string name, code_context context) { PROF
 
 	platform_allocator ret;
 	
 	ret.platform_allocate 	= global_state->api->platform_heap_alloc;
 	ret.platform_free 		= global_state->api->platform_heap_free;
+	ret.platform_reallocate = global_state->api->platform_heap_realloc;
 	ret.context  			= context;
 	ret.allocate_ 			= &platform_allocate;
 	ret.free_ 				= &platform_free;
+	ret.reallocate_			= &platform_reallocate;
 	ret.name				= name;
 
 	return ret;
@@ -79,7 +104,12 @@ inline void* arena_allocate(u64 bytes, void* this_data, code_context context) { 
 	return mem;
 }
 
-inline void arena_free(void*, void*, code_context context) { PROF}
+inline void arena_free(void*, void*, code_context context) {PROF}
+
+void* arena_reallocate(void* mem, u64 bytes, void* this_data, code_context context) { PROF
+
+	return arena_allocate(bytes, this_data, context);
+}
 
 inline void arena_reset(arena_allocator* a, code_context context) { PROF
 
@@ -104,7 +134,7 @@ inline void arena_destroy(arena_allocator* a, code_context context) { PROF
 	}
 #endif
 
-
+	LOG_DEBUG_ASSERT(a->memory != NULL);
 	if(a->memory) {
 		a->backing->free_(a->memory, a->backing, context);
 	}
@@ -121,9 +151,10 @@ arena_allocator arena_copy(string name, allocator* backing, arena_allocator src,
 	} else {
 		ret.backing = src.backing;
 	}
-	ret.allocate_ = src.allocate_;
-	ret.free_	  = src.free_;
-	ret.name 	  = name;
+	ret.allocate_ 	= src.allocate_;
+	ret.free_		= src.free_;
+	ret.reallocate_ = src.reallocate_;
+	ret.name 	  	= name;
 	ret.suppress_messages = src.suppress_messages;
 
 #ifdef LOG_ALLOCS
@@ -144,12 +175,13 @@ inline arena_allocator make_arena_allocator_from_context(string name, u64 size, 
 
 	arena_allocator ret;
 
-	ret.size 	  = size;
-	ret.context   = context;
-	ret.backing   = CURRENT_ALLOC();
-	ret.allocate_ = &arena_allocate;
-	ret.free_ 	  = &arena_free;
-	ret.name 	  = name;
+	ret.size 	  	= size;
+	ret.context   	= context;
+	ret.backing   	= CURRENT_ALLOC();
+	ret.allocate_ 	= &arena_allocate;
+	ret.free_ 	  	= &arena_free;
+	ret.reallocate_ = &arena_reallocate;
+	ret.name 	  	= name;
 	ret.suppress_messages = suppress;
 
 #ifdef LOG_ALLOCS
@@ -169,12 +201,13 @@ inline arena_allocator make_arena_allocator(string name, u64 size, allocator* ba
 
 	arena_allocator ret;
 
-	ret.size 	  = size;
-	ret.context   = context;
-	ret.backing   = backing;
-	ret.allocate_ = &arena_allocate;
-	ret.free_ 	  = &arena_free;
-	ret.name 	  = name;
+	ret.size 	  	= size;
+	ret.context   	= context;
+	ret.backing   	= backing;
+	ret.allocate_ 	= &arena_allocate;
+	ret.free_ 	  	= &arena_free;
+	ret.reallocate_ = &arena_reallocate;
+	ret.name 	  	= name;
 	ret.suppress_messages = suppress;
 
 #ifdef LOG_ALLOCS

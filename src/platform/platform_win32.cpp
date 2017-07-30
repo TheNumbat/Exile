@@ -28,6 +28,7 @@ platform_api platform_build_api() {
 	ret.platform_test_file_written		= &win32_test_file_written;
 	ret.platform_copy_file				= &win32_copy_file;
 	ret.platform_heap_alloc				= &win32_heap_alloc;
+	ret.platform_heap_realloc			= &win32_heap_realloc;
 	ret.platform_heap_free				= &win32_heap_free;
 	ret.platform_get_bin_path			= &win32_get_bin_path;
 	ret.platform_create_thread			= &win32_create_thread;
@@ -477,9 +478,18 @@ void* win32_heap_alloc(u64 bytes) {
 
 	HANDLE heap = GetProcessHeap();
 	void* ret = HeapAlloc(heap, HEAP_ZERO_MEMORY | HEAP_GENERATE_EXCEPTIONS, (SIZE_T)bytes);
-	// void* ret = HeapAlloc(heap, HEAP_GENERATE_EXCEPTIONS, (SIZE_T)bytes);
 
 	// cout << "alloc " << ret << endl;
+
+	return ret;
+}
+
+void* win32_heap_realloc(void* mem, u64 bytes) {
+
+	HANDLE heap = GetProcessHeap();
+	void* ret = HeapReAlloc(heap, HEAP_ZERO_MEMORY | HEAP_GENERATE_EXCEPTIONS, mem, (SIZE_T)bytes);
+
+	// cout << "realloc " << ret << endl;
 
 	return ret;
 }
@@ -487,8 +497,8 @@ void* win32_heap_alloc(u64 bytes) {
 void win32_heap_free(void* mem) {
 
 	// cout << "free " << mem << endl;
-
 	// *(u8*)mem = 0;
+
 	HANDLE heap = GetProcessHeap();
 	HeapFree(heap, 0, mem);
 }

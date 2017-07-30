@@ -35,6 +35,7 @@ platform_error linux_write_stdout(string str);
 
 // if this fails, we're having big problems
 void*	linux_heap_alloc(u64 bytes); // initializes memory to zero (important! the data structures assume this!)
+void*	linux_heap_realloc(void* mem, u64 bytes);
 void	linux_heap_free(void* mem);
 
 // allocates a string

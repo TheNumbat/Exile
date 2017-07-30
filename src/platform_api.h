@@ -277,6 +277,7 @@ struct platform_api {
 	platform_error 	(*platform_copy_file)(string source, string dest, bool overwrite)											= NULL;
 	void*		   	(*platform_heap_alloc)(u64 bytes)																			= NULL;
 	void	  	   	(*platform_heap_free)(void* mem)																			= NULL;
+	void* 			(*platform_heap_realloc)(void* mem, u64 bytes)																= NULL;
 	platform_error 	(*platform_get_bin_path)(string* path) /* heap_allocs a string */											= NULL;
 	platform_error 	(*platform_create_thread)(platform_thread* thread, i32 (*proc)(void*), void* param, bool start_suspended)	= NULL;
 	platform_thread_id (*platform_this_thread_id)()																				= NULL;

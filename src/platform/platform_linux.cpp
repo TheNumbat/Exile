@@ -18,6 +18,7 @@ platform_api platform_build_api() {
 	ret.platform_test_file_written		= &linux_test_file_written;
 	ret.platform_copy_file				= &linux_copy_file;
 	ret.platform_heap_alloc				= &linux_heap_alloc;
+	ret.platfomr_heap_realloc			= &linux_heap_realloc;
 	ret.platform_heap_free				= &linux_heap_free;
 	ret.platform_get_bin_path			= &linux_get_bin_path;
 	ret.platform_create_thread			= &linux_create_thread;
@@ -201,6 +202,10 @@ platform_error linux_write_stdout(string str) {
 void* linux_heap_alloc(u64 bytes) {
 
 	return NULL;
+}
+
+void* linux_heap_realloc(void* mem, u64 bytes) {
+
 }
 
 void linux_heap_free(void* mem) {

@@ -2,8 +2,9 @@
 #pragma once
 
 struct allocator {
-	void* (*allocate_)(u64 bytes, void* this_data, code_context context)  = NULL;
-	void  (*free_)(void* mem, void* this_data, code_context context)	  = NULL;
+	void* (*allocate_)(u64 bytes, void* this_data, code_context context)  			  = NULL;
+	void* (*reallocate_)(void* mem, u64 bytes, void* this_data, code_context context) = NULL;
+	void  (*free_)(void* mem, void* this_data, code_context context)	  			  = NULL;
 	code_context context;
 	bool suppress_messages = false;
 	string name;
@@ -23,12 +24,14 @@ inline void _push_alloc(allocator* a);
 inline allocator* _current_alloc();
 
 struct platform_allocator : public allocator {
-	void* (*platform_allocate)(u64 bytes) = NULL;
-	void  (*platform_free)(void* mem)	  = NULL;
+	void* (*platform_allocate)(u64 bytes) 				= NULL;
+	void  (*platform_free)(void* mem)	  				= NULL;
+	void* (*platform_reallocate)(void* mem, u64 bytes)	= NULL;
 };
 
 void* platform_allocate(u64 bytes, void* this_data, code_context context);
-void platform_free(void* mem, void* this_data, code_context context);
+void  platform_free(void* mem, void* this_data, code_context context);
+void* platform_reallocate(void* mem, u64 bytes, void* this_data, code_context context);
 
 #define MAKE_PLATFORM_ALLOCATOR(n) make_platform_allocator(string_literal(n), CONTEXT)
 platform_allocator make_platform_allocator(string name, code_context context);
@@ -41,7 +44,8 @@ struct arena_allocator : public allocator {
 };
 
 void* arena_allocate(u64 bytes, void* this_data, code_context context);
-void arena_free(void*, void*, code_context); // does nothing
+void* arena_reallocate(void* mem, u64 bytes, void* this_data, code_context context); // same as allocate, can't free from arena
+void  arena_free(void*, void*, code_context); // does nothing
 
 #define DESTROY_ARENA(a) arena_destroy(a, CONTEXT) 
 void arena_destroy(arena_allocator* a, code_context context);

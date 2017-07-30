@@ -171,28 +171,25 @@ vector<T> make_vector(u32 capacity) { PROF
 template<typename T>
 void vector_resize(vector<T>* v, u32 capacity, bool copy) { PROF
 
-	T* new_memory = NULL;
+	if(capacity == 0) {
+		v->alloc->free_(v->memory, v->alloc, CONTEXT);
+		v->memory = NULL;
+		return;
+	}
 
-	if(capacity > 0) {
-
-		new_memory = (T*)v->alloc->allocate_(capacity * sizeof(T), v->alloc, CONTEXT);
+	if(v->memory)
+		v->memory = (T*)v->alloc->reallocate_(v->memory, capacity * sizeof(T), v->alloc, CONTEXT);
+	else
+		v->memory = (T*)v->alloc->allocate_(capacity * sizeof(T), v->alloc, CONTEXT);
 		
 #ifdef CONSTRUCT_DS_ELEMENTS
-		new (new_memory) T[capacity]();
+	i64 added = capacity - v->capacity;
+	if(added > 0) {
+		T* new_place = v->memory + v->capacity;
+		new (new_place) T[added]();
+	}
 #endif
-	}
 
-	if(copy && v->memory && new_memory) {
-
-		memcpy(v->memory, new_memory, v->capacity * sizeof(T));
-	}
-
-	if(v->memory) {
-
-		v->alloc->free_(v->memory, v->alloc, CONTEXT);
-	}
-	
-	v->memory = new_memory;
 	v->capacity = capacity;
 }
 

@@ -17,7 +17,6 @@ features so far:
 immediate to do:
 
 	data structures
-		realloc vector (+add to platform layer)
 		list (same API as vector, but chunked & no-copy)
 		circular buffer (+add to queue)
 		heap (+priority queue)
