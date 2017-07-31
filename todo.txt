@@ -29,14 +29,13 @@ immediate to do:
 
 	allocation stuff
 		pool allocator (growing arena)
-		free list
+		free list (one-type pool re-using arenas)
 
 	threading
 		some sort of async system
 			parallel loop?
 			'then'?
 			is there a convenient way to pass an arbitrary function? template time?
-		parallelize initialization code
 		integration with modding system
 
 	uncategorized
@@ -104,7 +103,6 @@ immediate to do:
 		extra kerning pairs
 
 	platform
-		add realloc
 		async file io?
 		Experiment with allocation systems
 			HeapAlloc/VirtualAlloc

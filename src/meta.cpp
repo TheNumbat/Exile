@@ -376,6 +376,8 @@ void output_enum(ofstream& fout, const enum_def& e) {
 	auto& name = e.name;
 	auto type = str(clang_getTypeSpelling(e.underlying));
 
+	if(!name.size()) return;
+
 	if(e.members.size() > 128) {
 		cout << "enum " << name << " has too many members!" << endl;
 		return;
@@ -611,6 +613,9 @@ i32 main(i32 argc, char** argv) {
 	[](CXCursor c, CXCursor parent, CXClientData client_data) {
 
 		if(clang_Location_isInSystemHeader(clang_getCursorLocation(c))) {
+			
+			// skip system files because we don't care about 99% of the types and don't want to bloat our type table
+			// also, this would use the clang headers - I think this causes some undefined identifier errors
 			return CXChildVisit_Continue;
 		}
 
