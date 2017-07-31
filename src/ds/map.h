@@ -23,14 +23,14 @@ template<typename K, typename V>
 struct map {
 	vector<map_element<K, V>> contents;
 	u32 size	 		= 0;
-	allocator* alloc 	= NULL;
-	u32 (*hash)(K key) 	= NULL;
+	allocator* alloc 	= null;
+	u32 (*hash)(K key) 	= null;
 	bool use_u32hash 	= false;
 	u32 max_probe		= 0;
 };
 
-template<typename K, typename V> map<K,V> make_map(i32 capacity = 16, u32 (*hash)(K) = NULL);
-template<typename K, typename V> map<K,V> make_map(i32 capacity, allocator* a, u32 (*hash)(K) = NULL);
+template<typename K, typename V> map<K,V> make_map(i32 capacity = 16, u32 (*hash)(K) = null);
+template<typename K, typename V> map<K,V> make_map(i32 capacity, allocator* a, u32 (*hash)(K) = null);
 template<typename K, typename V> void destroy_map(map<K,V>* m);
 
 template<typename K, typename V> V* map_insert(map<K,V>* m, K key, V value, bool grow_if_needed = true);

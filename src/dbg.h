@@ -6,7 +6,7 @@ struct dbg_manager {
 	vector<log_message> log_cache;
 	log_level lvl = log_level::info;
 
-	allocator* alloc = NULL;
+	allocator* alloc = null;
 };
 
 dbg_manager make_dbg_manager(allocator* alloc);

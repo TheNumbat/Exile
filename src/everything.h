@@ -110,7 +110,7 @@ void end_thread();
 #include "dbg.h"
 
 #include "game.h"
-static game_state* global_state = NULL;
+static game_state* global_state = null;
 
 #ifdef DO_PROF
 struct func_scope {

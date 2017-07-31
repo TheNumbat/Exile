@@ -35,7 +35,7 @@ void free_string(string s, void	(*platform_heap_free)(void* mem)) {
 
 	(*platform_heap_free)(s.c_str);
 
-	s.c_str = NULL;
+	s.c_str = null;
 	s.cap = 0;
 	s.len = 0;
 }

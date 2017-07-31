@@ -12,7 +12,8 @@ platform_error linux_get_window_size(platform_window* window, i32* w, i32* h);
 platform_error linux_swap_buffers(platform_window* window);
 
 void		   linux_set_queue_callback(void (*enqueue)(void* queue_param, platform_event evt), void* queue_param);
-void 		   linux_queue_messages(platform_window* window);
+void 		   linux_pump_events(platform_window* window);
+void		   linux_queue_event(platform_event evt);
 platform_error linux_wait_message();
 bool 		   linux_keydown(platform_keycode key);
 

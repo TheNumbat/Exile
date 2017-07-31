@@ -3,9 +3,9 @@
 
 template<typename T>
 struct array {
-	T* memory 		 = NULL;
+	T* memory 		 = null;
 	u32 capacity 	 = 0;
-	allocator* alloc = NULL;
+	allocator* alloc = null;
 };
 
 template<typename T> array<T> make_array(u32 capacity, allocator* a);

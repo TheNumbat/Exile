@@ -75,6 +75,7 @@ enum class platform_event_type : u8 {
 	window, // includes quit
 	key,
 	mouse,
+	async,
 };
 
 enum class platform_keycode : u8 {
@@ -247,6 +248,19 @@ struct _platform_event_mouse {
 	i8 w = 0;
 };
 
+typedef u64 job_id;
+
+enum class platform_async_type : u8 {
+	none,
+	user,
+};
+
+struct _platform_event_async {
+	platform_async_type type = platform_async_type::none;
+	job_id user_id	 		 = 0;
+	void (*callback)()		 = null;
+};
+
 struct platform_event {
 	platform_event_type type = platform_event_type::none;
 	union { 
@@ -254,56 +268,58 @@ struct platform_event {
 		_platform_event_window		window;
 		_platform_event_key 		key;
 		_platform_event_mouse 		mouse;
+		_platform_event_async 		async;
 	};
 	platform_event() : type(), window(), key(), mouse() {}; // c++ reee
 };
 
 struct platform_api {
-	bool 			(*platform_is_debugging)()																					= NULL;
-	void 			(*platform_set_queue_callback)(void (*enqueue)(void* queue_param, platform_event evt), void* queue_param)	= NULL;
-	void 			(*platform_queue_messages)(platform_window* window)															= NULL;
-	bool 		    (*platform_keydown)(platform_keycode key)																	= NULL;
-	platform_error 	(*platform_create_window)(platform_window* window, string title, u32 width, u32 height)						= NULL;
-	platform_error 	(*platform_destroy_window)(platform_window* window)															= NULL;
-	platform_error 	(*platform_get_window_size)(platform_window* window, i32* w, i32* h)										= NULL;
-	platform_error 	(*platform_swap_buffers)(platform_window* window)															= NULL;
-	platform_error 	(*platform_wait_message)()																					= NULL;
-	platform_error 	(*platform_load_library)(platform_dll* dll, string file_path)												= NULL;
-	platform_error 	(*platform_free_library)(platform_dll* dll)																	= NULL;
-	platform_error 	(*platform_get_proc_address)(void** address, platform_dll* dll, string name)								= NULL;
-	void*		   	(*platform_get_glproc)(string name)																			= NULL;
-	platform_error 	(*platform_get_file_attributes)(platform_file_attributes* attrib, string file_path)							= NULL;
-	bool 		   	(*platform_test_file_written)(platform_file_attributes* first, platform_file_attributes* second) 			= NULL;
-	platform_error 	(*platform_copy_file)(string source, string dest, bool overwrite)											= NULL;
-	void*		   	(*platform_heap_alloc)(u64 bytes)																			= NULL;
-	void	  	   	(*platform_heap_free)(void* mem)																			= NULL;
-	void* 			(*platform_heap_realloc)(void* mem, u64 bytes)																= NULL;
-	platform_error 	(*platform_get_bin_path)(string* path) /* heap_allocs a string */											= NULL;
-	platform_error 	(*platform_create_thread)(platform_thread* thread, i32 (*proc)(void*), void* param, bool start_suspended)	= NULL;
-	platform_thread_id (*platform_this_thread_id)()																				= NULL;
-	platform_error 	(*platform_terminate_thread)(platform_thread* thread, i32 exit_code)										= NULL;
-	void 		   	(*platform_exit_this_thread)(i32 exit_code)																	= NULL;
-	void		   	(*platform_thread_sleep)(i32 ms)																			= NULL;
-	platform_error 	(*platform_destroy_thread)(platform_thread* thread)															= NULL;
-	platform_error 	(*platform_create_semaphore)(platform_semaphore* sem, i32 initial_count, i32 max_count)						= NULL;
-	platform_error 	(*platform_destroy_semaphore)(platform_semaphore* sem)														= NULL;
-	platform_error 	(*platform_signal_semaphore)(platform_semaphore* sem, i32 times)											= NULL;
-	platform_semaphore_state (*platform_wait_semaphore)(platform_semaphore* sem, i32 ms)										= NULL;
-	platform_error 	(*platform_create_mutex)(platform_mutex* mut, bool aquire)													= NULL;
-	platform_error 	(*platform_destroy_mutex)(platform_mutex* mut)																= NULL;
-	platform_mutex_state (*platform_aquire_mutex)(platform_mutex* mut, i32 ms)													= NULL;
-	platform_error 	(*platform_release_mutex)(platform_mutex* mut)																= NULL;
-	i32   		   	(*platform_get_num_cpus)()																					= NULL;
-	platform_thread_join_state (*platform_join_thread)(platform_thread* thread, i32 ms)											= NULL;
-	platform_error 	(*platform_create_file)(platform_file* file, string path, platform_file_open_op mode)						= NULL;
-	platform_error 	(*platform_close_file)(platform_file* file)																	= NULL;
-	platform_error 	(*platform_write_file)(platform_file* file, void* mem, u32 bytes)											= NULL;
-	platform_error 	(*platform_read_file)(platform_file* file, void* mem, u32 bytes)											= NULL;
-	platform_error 	(*platform_get_stdout_as_file)(platform_file* file)															= NULL;
-	platform_error 	(*platform_write_stdout)(string str)																		= NULL;
-	string 			(*platform_make_timef)(string fmt)																			= NULL;
-	void 			(*platform_get_timef)(string fmt, string* out)																= NULL;
-	u32			   	(*platform_file_size)(platform_file* file)																	= NULL;
+	bool 			(*platform_is_debugging)()																					= null;
+	void 			(*platform_set_queue_callback)(void (*enqueue)(void* queue_param, platform_event evt), void* queue_param)	= null;
+	void 			(*platform_pump_events)(platform_window* window)															= null;
+	void 			(*platform_queue_event)(platform_event evt)																	= null;
+	bool 		    (*platform_keydown)(platform_keycode key)																	= null;
+	platform_error 	(*platform_create_window)(platform_window* window, string title, u32 width, u32 height)						= null;
+	platform_error 	(*platform_destroy_window)(platform_window* window)															= null;
+	platform_error 	(*platform_get_window_size)(platform_window* window, i32* w, i32* h)										= null;
+	platform_error 	(*platform_swap_buffers)(platform_window* window)															= null;
+	platform_error 	(*platform_wait_message)()																					= null;
+	platform_error 	(*platform_load_library)(platform_dll* dll, string file_path)												= null;
+	platform_error 	(*platform_free_library)(platform_dll* dll)																	= null;
+	platform_error 	(*platform_get_proc_address)(void** address, platform_dll* dll, string name)								= null;
+	void*		   	(*platform_get_glproc)(string name)																			= null;
+	platform_error 	(*platform_get_file_attributes)(platform_file_attributes* attrib, string file_path)							= null;
+	bool 		   	(*platform_test_file_written)(platform_file_attributes* first, platform_file_attributes* second) 			= null;
+	platform_error 	(*platform_copy_file)(string source, string dest, bool overwrite)											= null;
+	void*		   	(*platform_heap_alloc)(u64 bytes)																			= null;
+	void	  	   	(*platform_heap_free)(void* mem)																			= null;
+	void* 			(*platform_heap_realloc)(void* mem, u64 bytes)																= null;
+	platform_error 	(*platform_get_bin_path)(string* path) /* heap_allocs a string */											= null;
+	platform_error 	(*platform_create_thread)(platform_thread* thread, i32 (*proc)(void*), void* param, bool start_suspended)	= null;
+	platform_thread_id (*platform_this_thread_id)()																				= null;
+	platform_error 	(*platform_terminate_thread)(platform_thread* thread, i32 exit_code)										= null;
+	void 		   	(*platform_exit_this_thread)(i32 exit_code)																	= null;
+	void		   	(*platform_thread_sleep)(i32 ms)																			= null;
+	platform_error 	(*platform_destroy_thread)(platform_thread* thread)															= null;
+	platform_error 	(*platform_create_semaphore)(platform_semaphore* sem, i32 initial_count, i32 max_count)						= null;
+	platform_error 	(*platform_destroy_semaphore)(platform_semaphore* sem)														= null;
+	platform_error 	(*platform_signal_semaphore)(platform_semaphore* sem, i32 times)											= null;
+	platform_semaphore_state (*platform_wait_semaphore)(platform_semaphore* sem, i32 ms)										= null;
+	platform_error 	(*platform_create_mutex)(platform_mutex* mut, bool aquire)													= null;
+	platform_error 	(*platform_destroy_mutex)(platform_mutex* mut)																= null;
+	platform_mutex_state (*platform_aquire_mutex)(platform_mutex* mut, i32 ms)													= null;
+	platform_error 	(*platform_release_mutex)(platform_mutex* mut)																= null;
+	i32   		   	(*platform_get_num_cpus)()																					= null;
+	platform_thread_join_state (*platform_join_thread)(platform_thread* thread, i32 ms)											= null;
+	platform_error 	(*platform_create_file)(platform_file* file, string path, platform_file_open_op mode)						= null;
+	platform_error 	(*platform_close_file)(platform_file* file)																	= null;
+	platform_error 	(*platform_write_file)(platform_file* file, void* mem, u32 bytes)											= null;
+	platform_error 	(*platform_read_file)(platform_file* file, void* mem, u32 bytes)											= null;
+	platform_error 	(*platform_get_stdout_as_file)(platform_file* file)															= null;
+	platform_error 	(*platform_write_stdout)(string str)																		= null;
+	string 			(*platform_make_timef)(string fmt)																			= null;
+	void 			(*platform_get_timef)(string fmt, string* out)																= null;
+	u32			   	(*platform_file_size)(platform_file* file)																	= null;
 };
 
 #ifdef _WIN32

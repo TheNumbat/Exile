@@ -82,8 +82,8 @@ void compile_program(shader_program* prog) { PROF
 	vertex = glCreateShader(GL_VERTEX_SHADER);
 	fragment = glCreateShader(GL_FRAGMENT_SHADER);
 
-	glShaderSource(vertex, 1, &prog->vertex.source.c_str, NULL);
-	glShaderSource(fragment, 1, &prog->fragment.source.c_str, NULL);
+	glShaderSource(vertex, 1, &prog->vertex.source.c_str, null);
+	glShaderSource(fragment, 1, &prog->fragment.source.c_str, null);
 
 	glCompileShader(vertex);
 	glCompileShader(fragment);
@@ -192,7 +192,7 @@ shader_program* ogl_select_program(ogl_manager* ogl, shader_program_id id) { PRO
 
 	if(!p) {
 		LOG_ERR_F("Failed to retrieve program %", id);
-		return NULL;
+		return null;
 	}
 	
 	glUseProgram(p->handle);
@@ -265,7 +265,7 @@ texture* ogl_select_texture(ogl_manager* ogl, texture_id id) { PROF
 
 	if(!t) {
 		LOG_ERR_F("Failed to retrieve texture %", id);
-		return NULL;
+		return null;
 	}
 	
 	glBindTextureUnit(0, t->handle);
@@ -388,7 +388,7 @@ ogl_draw_context* ogl_select_draw_context(ogl_manager* ogl, context_id id) { PRO
 
 	if(!d) {
 		LOG_ERR_F("Failed to retrieve context %", id);
-		return NULL;
+		return null;
 	}
 	
 	glBindVertexArray(d->vao);
@@ -412,9 +412,9 @@ void ogl_send_mesh_3d(ogl_manager* ogl, mesh_3d* m, context_id id) { PROF
 	ogl_draw_context* dc = ogl_select_draw_context(ogl, id);
 
 	glBindBuffer(GL_ARRAY_BUFFER, dc->vbos[0]);
-	glBufferData(GL_ARRAY_BUFFER, m->verticies.size * sizeof(v3), m->verticies.size ? m->verticies.memory : NULL, GL_STREAM_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, m->verticies.size * sizeof(v3), m->verticies.size ? m->verticies.memory : null, GL_STREAM_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, dc->vbos[1]);
-	glBufferData(GL_ARRAY_BUFFER, m->texCoords.size * sizeof(v2), m->texCoords.size ? m->texCoords.memory : NULL, GL_STREAM_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, m->texCoords.size * sizeof(v2), m->texCoords.size ? m->texCoords.memory : null, GL_STREAM_DRAW);
 }
 
 void ogl_uniforms_3dtex(shader_program* prog, render_command* rc, render_command_list* rcl) { PROF
@@ -447,13 +447,13 @@ void ogl_send_mesh_2d(ogl_manager* ogl, mesh_2d* m, context_id id) { PROF
 	ogl_draw_context* dc = ogl_select_draw_context(ogl, id);
 
 	glBindBuffer(GL_ARRAY_BUFFER, dc->vbos[0]);
-	glBufferData(GL_ARRAY_BUFFER, m->verticies.size * sizeof(v2), m->verticies.size ? m->verticies.memory : NULL, GL_STREAM_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, m->verticies.size * sizeof(v2), m->verticies.size ? m->verticies.memory : null, GL_STREAM_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, dc->vbos[1]);
-	glBufferData(GL_ARRAY_BUFFER, m->texCoords.size * sizeof(v3), m->texCoords.size ? m->texCoords.memory : NULL, GL_STREAM_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, m->texCoords.size * sizeof(v3), m->texCoords.size ? m->texCoords.memory : null, GL_STREAM_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, dc->vbos[2]);
-	glBufferData(GL_ARRAY_BUFFER, m->colors.size * sizeof(v4), m->colors.size ? m->colors.memory : NULL, GL_STREAM_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, m->colors.size * sizeof(v4), m->colors.size ? m->colors.memory : null, GL_STREAM_DRAW);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, dc->vbos[3]);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, m->elements.size * sizeof(uv3), m->elements.size ? m->elements.memory : NULL, GL_STREAM_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, m->elements.size * sizeof(uv3), m->elements.size ? m->elements.memory : null, GL_STREAM_DRAW);
 }
 
 void ogl_uniforms_gui(shader_program* prog, render_command* rc, render_command_list* rcl) { PROF
@@ -660,6 +660,6 @@ void ogl_load_global_funcs() { PROF
 	glVertexAttribPointer 	  = (glVertexAttribPointer_t) 	  global_state->api->platform_get_glproc(string_literal("glVertexAttribPointer"));
 	glEnableVertexAttribArray = (glEnableVertexAttribArray_t) global_state->api->platform_get_glproc(string_literal("glEnableVertexAttribArray"));
 	
-	glDebugMessageCallback(debug_proc, NULL);
-	glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
+	glDebugMessageCallback(debug_proc, null);
+	glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, null, GL_TRUE);
 }

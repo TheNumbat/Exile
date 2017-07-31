@@ -20,13 +20,22 @@ void destroy_evt_manager(evt_manager* em) { PROF
 
 gui_input_state run_events(game_state* state) { PROF
 
-	global_state->api->platform_queue_messages(&global_state->window);
+	global_state->api->platform_pump_events(&global_state->window);
 	gui_input_state ret = state->gui.input;
 	ret.scroll = 0;
 
 	while(!queue_empty(&state->evt.event_queue)) {
 
 		platform_event evt = queue_pop(&state->evt.event_queue);
+
+		if(evt.type == platform_event_type::async) {
+			if(evt.async.type == platform_async_type::user) {
+				LOG_INFO_F("Job ID % finished!", evt.async.user_id);
+			}
+			if(evt.async.callback) {
+				evt.async.callback();
+			}
+		}
 
 		// Exiting
 		if(evt.type == platform_event_type::window && evt.window.op == platform_windowop::close) {
@@ -99,7 +108,7 @@ gui_input_state run_events(game_state* state) { PROF
 
 void event_enqueue(void* data, platform_event evt) { PROF
 
+	// TODO(max) IMPORTANT(max): this needs to be thread-safe now
 	queue<platform_event>* q = (queue<platform_event>*)data;
-
 	queue_push(q, evt);
 }

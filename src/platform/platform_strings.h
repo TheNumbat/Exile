@@ -2,7 +2,7 @@
 #pragma once
 
 struct string {
-	char* c_str = NULL;
+	char* c_str = null;
 	u32 cap	    = 0;	// capacity
 	u32 len		= 0;	// including null terminator
 };

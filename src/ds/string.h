@@ -2,7 +2,7 @@
 #pragma once
 
 struct NOREFLECT string { // no-reflect because hard-coded
-	char* c_str = NULL;
+	char* c_str = null;
 	u32 cap	    = 0;
 	u32 len		= 0;	// including null terminator
 };
@@ -16,7 +16,7 @@ bool strcmp(string first, string second);
 
 // parsing stuff
 u32 get_next_codepoint(string text_utf8, u32* index);
-u32 parse_u32(string s, u32 idx = 0, u32* used = NULL);
+u32 parse_u32(string s, u32 idx = 0, u32* used = null);
 
 // string utilities
 string make_string_from_c_str(char* c_str); 		// copies

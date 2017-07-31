@@ -16,14 +16,14 @@ struct mesh_2d {
 	vector<v3>		texCoords;	// u v
 	vector<colorf>	colors;		// r g b a (clamp f)
 	vector<uv3> 	elements;
-	allocator* alloc = NULL;
+	allocator* alloc = null;
 };
 
 struct mesh_3d {
 	vector<v3>  verticies;	// x y z
 	vector<v2>  texCoords; 	// u v (layer)
 	// TODO(max): indices
-	allocator* alloc = NULL;
+	allocator* alloc = null;
 };
 
 struct render_command {
@@ -35,7 +35,7 @@ struct render_command {
 	u32 elements = 0;
 	u32 sort_key = 0;
 	union {
-		void* data = NULL;
+		void* data = null;
 		mesh_3d*	m3d;
 		mesh_2d* 	m2d;
 	};
@@ -48,13 +48,13 @@ struct render_camera {
 struct render_command_list {
 	vector<render_command> commands;
 	render_camera cam;
-	allocator* alloc = NULL;
+	allocator* alloc = null;
 	m4 view;
 	m4 proj;
 };
 
-mesh_2d make_mesh_2d(u32 verts = 32, allocator* alloc = NULL);
-mesh_3d make_mesh_3d(u32 verts = 32, allocator* alloc = NULL);
+mesh_2d make_mesh_2d(u32 verts = 32, allocator* alloc = null);
+mesh_3d make_mesh_3d(u32 verts = 32, allocator* alloc = null);
 
 void destroy_mesh(mesh_2d* m);
 void destroy_mesh(mesh_3d* m);
@@ -70,7 +70,7 @@ void mesh_push_cutrect(mesh_2d* m, r2 r, f32 round, color c);
 render_command make_render_command(render_command_type type, void* data, u32 key = 0);
 bool operator<(render_command first, render_command second);
 
-render_command_list make_command_list(allocator* alloc = NULL, u32 cmds = 8);
+render_command_list make_command_list(allocator* alloc = null, u32 cmds = 8);
 void destroy_command_list(render_command_list* rcl);
 void render_add_command(render_command_list* rcl, render_command rc);
 void sort_render_commands(render_command_list* rcl);

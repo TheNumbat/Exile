@@ -124,7 +124,7 @@ struct shader_source {
 	string path;
 	platform_file_attributes last_attrib;
 	string source;
-	allocator* alloc = NULL;
+	allocator* alloc = null;
 };
 
 struct shader_program {
@@ -132,7 +132,7 @@ struct shader_program {
 	GLuint handle = 0;
 	shader_source vertex;
 	shader_source fragment;
-	void (*set_uniforms)(shader_program*, render_command*, render_command_list*) = NULL;
+	void (*set_uniforms)(shader_program*, render_command*, render_command_list*) = null;
 	// tessellation control, evaluation, geometry
 };
 
@@ -167,7 +167,7 @@ struct ogl_manager {
 	texture_id 			next_texture_id = 1;
 	context_id 			next_context_id = 1;
 	
-	allocator* alloc = NULL;
+	allocator* alloc = null;
 	string version;
 	string renderer;
 	string vendor;

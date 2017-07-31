@@ -9,7 +9,8 @@ platform_api platform_build_api() {
 	ret.platform_destroy_window			= &linux_destroy_window;
 	ret.platform_swap_buffers			= &linux_swap_buffers;
 	ret.platform_set_queue_callback		= &linux_set_queue_callback;
-	ret.platform_queue_messages			= &linux_queue_messages;
+	ret.platform_pump_events			= &linux_pump_events;
+	ret.platform_queue_event 			= &linux_queue_event;
 	ret.platform_wait_message			= &linux_wait_message;
 	ret.platform_load_library			= &linux_load_library;
 	ret.platform_free_library			= &linux_free_library;
@@ -91,7 +92,11 @@ void linux_set_queue_callback(void (*enqueue)(void* queue_param, platform_event 
 
 }
 
-void linux_queue_messages(platform_window* window) {
+void linux_pump_events(platform_window* window) {
+
+}
+
+void linux_queue_event(platform_event evt) {
 
 }
 
@@ -130,7 +135,7 @@ platform_error linux_get_proc_address(void** address, platform_dll* dll, string 
 
 void* linux_get_glproc(string name) {
 
-	return NULL;
+	return null;
 }
 
 platform_error linux_copy_file(string source, string dest, bool overwrite) {
@@ -201,7 +206,7 @@ platform_error linux_write_stdout(string str) {
 
 void* linux_heap_alloc(u64 bytes) {
 
-	return NULL;
+	return null;
 }
 
 void* linux_heap_realloc(void* mem, u64 bytes) {

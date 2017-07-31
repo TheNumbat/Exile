@@ -257,7 +257,7 @@ int main(int argc, char** argv) {
 
 			// load bitmap
 			i32 width, height;
-			u8* bitmap = stbi_load((rel_path + def_asset.image.file).c_str(), &width, &height, NULL, 4);
+			u8* bitmap = stbi_load((rel_path + def_asset.image.file).c_str(), &width, &height, nullptr, 4);
 
 			u32 pixel_stride = width * 4;
 			u32 pixel_size = pixel_stride * height;
@@ -313,7 +313,7 @@ int main(int argc, char** argv) {
 			memset(baked_bitmap, 0, pixel_size);
 
 			// Two pixel-padding needed for scaling (likely because of FP rounding error)
-			stbtt_PackBegin(&pack_context, baked_bitmap, def_asset.font.width, def_asset.font.height, 0, 2, NULL);
+			stbtt_PackBegin(&pack_context, baked_bitmap, def_asset.font.width, def_asset.font.height, 0, 2, nullptr);
 			stbtt_PackSetOversampling(&pack_context, 1, 1);
 
 			u32 total_packedchars = 0;

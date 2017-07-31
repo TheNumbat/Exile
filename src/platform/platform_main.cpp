@@ -30,11 +30,11 @@ typedef void  (*shut_down_type)(platform_api*, void*);
 typedef main_loop_type on_reload_type;
 typedef main_loop_type on_unload_type;
 
-startup_type	start_up  = NULL;
-main_loop_type	main_loop = NULL;
-shut_down_type	shut_down = NULL;
-on_reload_type 	on_reload = NULL;
-on_unload_type  on_unload = NULL;
+startup_type	start_up  = null;
+main_loop_type	main_loop = null;
+shut_down_type	shut_down = null;
+on_reload_type 	on_reload = null;
+on_unload_type  on_unload = null;
 
 platform_dll 				game_dll;
 platform_file_attributes 	attrib;
@@ -81,7 +81,7 @@ int main() {
 
 	game_state = (*start_up)(&api);
 
-	if(game_state == NULL) {
+	if(game_state == null) {
 		return 1;
 	}
 

@@ -57,7 +57,7 @@ T* queue_back(queue<T>* q) { PROF
 	}
 
 	LOG_FATAL("Trying to get back of empty queue!");
-	return NULL;
+	return null;
 }
 
 template<typename T>
@@ -69,7 +69,7 @@ T* queue_front(queue<T>* q) { PROF
 	}
 
 	LOG_FATAL("Trying to get front of empty queue!");
-	return NULL;
+	return null;
 }
 
 template<typename T>

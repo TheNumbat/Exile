@@ -2,7 +2,7 @@
 #pragma once
 
 struct game_state {
-	platform_api* api = NULL;
+	platform_api* api = null;
 	
 	arena_allocator 	transient_arena;
 	platform_allocator 	default_platform_allocator, suppressed_platform_allocator;

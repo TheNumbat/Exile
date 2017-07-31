@@ -18,7 +18,7 @@ void destroy_asset_store(asset_store* am) { PROF
 			free(am->store);
 		} POP_ALLOC();
 
-		am->store = NULL;
+		am->store = null;
 	}
 }
 
@@ -28,7 +28,7 @@ asset* get_asset(asset_store* as, string name) { PROF
 
 	if(!a) {
 		LOG_ERR_F("Failed to get asset %", name);
-		return NULL;
+		return null;
 	}
 
 	return a;
@@ -92,7 +92,7 @@ bool try_reload_asset_store(asset_store* as) { PROF
 		PUSH_ALLOC(as->alloc) {
 
 			free(as->store);
-			as->store = NULL;
+			as->store = null;
 
 		} POP_ALLOC();
 

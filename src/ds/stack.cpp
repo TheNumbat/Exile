@@ -93,7 +93,7 @@ T* stack_top(stack<T>* s) { PROF
 	}
 
 	LOG_FATAL("Trying to get top of empty stack!");
-	return NULL;
+	return null;
 }
 
 template<typename T>

@@ -18,7 +18,7 @@ inline void* platform_allocate(u64 bytes, void* this_data, code_context context)
 
 	void* mem = this_->platform_allocate(bytes);
 
-	LOG_DEBUG_ASSERT(mem != NULL);
+	LOG_DEBUG_ASSERT(mem != null);
 
 #ifdef LOG_ALLOCS
 	if(!this_->suppress_messages) {
@@ -33,7 +33,7 @@ inline void platform_free(void* mem, void* this_data, code_context context) { PR
 
 	platform_allocator* this_ = (platform_allocator*)this_data;
 
-	LOG_DEBUG_ASSERT(mem != NULL);
+	LOG_DEBUG_ASSERT(mem != null);
 
 #ifdef LOG_ALLOCS
 	if(!this_->suppress_messages) {
@@ -48,7 +48,7 @@ void* platform_reallocate(void* mem, u64 bytes, void* this_data, code_context co
 
 	platform_allocator* this_ = (platform_allocator*)this_data;
 
-	LOG_DEBUG_ASSERT(mem != NULL);
+	LOG_DEBUG_ASSERT(mem != null);
 
 #ifdef LOG_ALLOCS
 	if(!this_->suppress_messages) {
@@ -58,7 +58,7 @@ void* platform_reallocate(void* mem, u64 bytes, void* this_data, code_context co
 
 	void* ret = this_->platform_reallocate(mem, bytes);
 
-	LOG_DEBUG_ASSERT(ret != NULL);
+	LOG_DEBUG_ASSERT(ret != null);
 
 	return ret;
 }
@@ -83,7 +83,7 @@ inline void* arena_allocate(u64 bytes, void* this_data, code_context context) { 
 		
 	arena_allocator* this_ = (arena_allocator*)this_data;
 
-	void* mem = NULL;
+	void* mem = null;
 
 	if(bytes <= this_->size - this_->used) {
 
@@ -134,7 +134,7 @@ inline void arena_destroy(arena_allocator* a, code_context context) { PROF
 	}
 #endif
 
-	LOG_DEBUG_ASSERT(a->memory != NULL);
+	LOG_DEBUG_ASSERT(a->memory != null);
 	if(a->memory) {
 		a->backing->free_(a->memory, a->backing, context);
 	}

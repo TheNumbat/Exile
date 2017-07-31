@@ -35,12 +35,12 @@ void logger_stop(log_manager* log) { PROF
 	global_state->api->platform_join_thread(&log->logging_thread, -1);
 	global_state->api->platform_destroy_thread(&log->logging_thread);
 
-	log->thread_param.out 				= NULL;
-	log->thread_param.message_queue 	= NULL;
-	log->thread_param.queue_mutex		= NULL;
-	log->thread_param.logging_semaphore = NULL;
-	log->thread_param.alloc 			= NULL;
-	log->thread_param.scratch			= NULL;
+	log->thread_param.out 				= null;
+	log->thread_param.message_queue 	= null;
+	log->thread_param.queue_mutex		= null;
+	log->thread_param.logging_semaphore = null;
+	log->thread_param.alloc 			= null;
+	log->thread_param.scratch			= null;
 }
 
 void destroy_logger(log_manager* log) { PROF
@@ -54,7 +54,7 @@ void destroy_logger(log_manager* log) { PROF
 	global_state->api->platform_destroy_mutex(&log->queue_mutex);
 	global_state->api->platform_destroy_semaphore(&log->logging_semaphore);
 	DESTROY_ARENA(&log->scratch);
-	log->alloc = NULL;
+	log->alloc = null;
 }
 
 void logger_push_context(log_manager* log, string context, code_context fake) { PROF_NOCS
@@ -290,7 +290,7 @@ i32 logging_thread(void* data_) { PROF_NOCS
 			
 			global_state->api->platform_release_mutex(data->queue_mutex);
 
-			if(msg.msg.c_str != NULL) {
+			if(msg.msg.c_str != null) {
 				
 				string output;
 				PUSH_ALLOC(data->scratch) {

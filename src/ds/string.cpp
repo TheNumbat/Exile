@@ -204,7 +204,7 @@ u32 _string_printf(string out, u32 idx, string fmt, bool size) { PROF
 }
 
 u32 print_type(string s, u32 idx, void* val, _type_info* info, bool size) { PROF
-	if(info == NULL) {
+	if(info == null) {
 		idx = string_insert(s, idx, string_literal("UNDEF"), size);
 		return idx;
 	}
@@ -388,15 +388,15 @@ u32 print_ptr(string s, u32 idx, void* val, _type_info* info, bool size) { PROF
 	if (info->_ptr.to == 0) {
 		idx = string_insert(s, idx, string_literal("UNDEF|"), size);
 
-		if (*(u8**)&val == NULL) {
-			idx = string_insert(s, idx, string_literal("NULL"), size);
+		if (*(u8**)&val == null) {
+			idx = string_insert(s, idx, string_literal("null"), size);
 		} else {
 			idx = print_u64(s, idx, 16, (u64)(*(u8**)val), size);
 		}
 	} else {
-		if (*(u8**)val == NULL) {
+		if (*(u8**)val == null) {
 			idx = string_insert(s, idx, TYPEINFO_H(info->_ptr.to)->name, size);
-			idx = string_insert(s, idx, string_literal("|NULL"), size);
+			idx = string_insert(s, idx, string_literal("|null"), size);
 		} else {
 			idx = print_type(s, idx, *(u8**)val, TYPEINFO_H(info->_ptr.to), size);
 			idx = string_insert(s, idx, '|', size);
@@ -870,7 +870,7 @@ void free_string(string s) { PROF
 
 	free(s.c_str);
 
-	s.c_str = NULL;
+	s.c_str = null;
 	s.cap = 0;
 	s.len = 0;
 }

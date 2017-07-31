@@ -11,7 +11,7 @@ threadpool make_threadpool(allocator* a, i32 num_threads_) { PROF
 	ret.num_threads = num_threads_ == 0 ? global_state->api->platform_get_num_cpus() : num_threads_;
 
 	ret.alloc   = a;
-	ret.catalog = make_map<job_id,platform_semaphore>(16, hash_u64);
+	ret.running = make_map<job_id,platform_semaphore>(16, hash_u64);
 	ret.threads = make_array<platform_thread>(ret.num_threads, a);
 	ret.data    = make_array<worker_data>(ret.num_threads, a);
 	ret.jobs    = make_queue<job>(16, a);
@@ -26,7 +26,7 @@ void destroy_threadpool(threadpool* tp) { PROF
 
 	threadpool_stop_all(tp);
 
-	destroy_map(&tp->catalog);
+	destroy_map(&tp->running);
 	destroy_array(&tp->threads);
 	destroy_array(&tp->data);
 	destroy_queue(&tp->jobs);
@@ -37,20 +37,16 @@ void destroy_threadpool(threadpool* tp) { PROF
 
 void threadpool_wait_job(threadpool* tp, job_id id) { PROF
 
-	platform_semaphore* sem = map_get(&tp->catalog, id);
-	global_state->api->platform_wait_semaphore(sem, -1);
-
-	global_state->api->platform_aquire_mutex(&tp->catalog_mutex, -1);
-	global_state->api->platform_destroy_semaphore(sem);
-	map_erase(&tp->catalog, id);
-	global_state->api->platform_release_mutex(&tp->catalog_mutex);
+	platform_semaphore* sem = map_try_get(&tp->running, id);
+	if(sem) {
+		global_state->api->platform_wait_semaphore(sem, -1);
+	}
 }
 
-job_id threadpool_queue_job(threadpool* tp, void (*proc)(void*), void* data) { PROF
-
+job_id threadpool_queue_job(threadpool* tp, job_work work, void* data) { PROF
 
 	job j;
-	j.proc = proc;
+	j.work = work;
 	j.data = data;
 
 	return threadpool_queue_job(tp, j);
@@ -59,19 +55,19 @@ job_id threadpool_queue_job(threadpool* tp, void (*proc)(void*), void* data) { P
 job_id threadpool_queue_job(threadpool* tp, job j) { PROF
 
 	global_state->api->platform_aquire_mutex(&tp->queue_mutex, -1);
-	
+
 	j.id = tp->next_job_id++;
 	queue_push(&tp->jobs, j);
 
 	global_state->api->platform_release_mutex(&tp->queue_mutex);
 
 	platform_semaphore jid_sem;
-	global_state->api->platform_create_semaphore(&jid_sem, 0, 1);
+	global_state->api->platform_create_semaphore(&jid_sem, 0, INT_MAX);
 
 	// is this a good way to structure this? doesn't look like it
-	global_state->api->platform_aquire_mutex(&tp->catalog_mutex, -1);
-	map_insert(&tp->catalog, j.id, jid_sem);
-	global_state->api->platform_release_mutex(&tp->catalog_mutex);
+	global_state->api->platform_aquire_mutex(&tp->running_mutex, -1);
+	map_insert(&tp->running, j.id, jid_sem);
+	global_state->api->platform_release_mutex(&tp->running_mutex);
 
 	global_state->api->platform_signal_semaphore(&tp->jobs_semaphore, 1);
 
@@ -80,11 +76,11 @@ job_id threadpool_queue_job(threadpool* tp, job j) { PROF
 
 void threadpool_stop_all(threadpool* tp) { PROF
 
-	if(tp->running) {
+	if(tp->online) {
 	
 		for(i32 i = 0; i < tp->num_threads; i++) {
 
-			array_get(&tp->data, i)->running = false;
+			array_get(&tp->data, i)->online = false;
 		}
 
 		global_state->api->platform_signal_semaphore(&tp->jobs_semaphore, tp->num_threads);
@@ -95,28 +91,28 @@ void threadpool_stop_all(threadpool* tp) { PROF
 			global_state->api->platform_destroy_thread(array_get(&tp->threads, i));
 		}
 
-		tp->running = false;
+		tp->online = false;
 	}
 } 
 
 void threadpool_start_all(threadpool* tp) { PROF
 
-	if(!tp->running) {
+	if(!tp->online) {
 	
 		FORARR(tp->data,
 
 			it->job_queue 	 	= &tp->jobs;
 			it->queue_mutex 	= &tp->queue_mutex;
 			it->jobs_semaphore 	= &tp->jobs_semaphore;
-			it->running 		= true;
+			it->online 			= true;
 			it->alloc  			= tp->alloc;
-			it->catalog 		= &tp->catalog;
-			it->catalog_mutex 	= &tp->catalog_mutex;
+			it->running 		= &tp->running;
+			it->running_mutex 	= &tp->running_mutex;
 
 			global_state->api->platform_create_thread(array_get(&tp->threads, __i), &worker, it, false);
 		)
 
-		tp->running = true;
+		tp->online = true;
 	}
 }
 
@@ -127,7 +123,7 @@ i32 worker(void* data_) { PROF
 	begin_thread(string_literal("worker %"), &global_state->suppressed_platform_allocator, (u32)global_state->api->platform_this_thread_id().id);
 	LOG_DEBUG("Starting worker thread");
 
-	while(data->running) {
+	while(data->online) {
 
 		job current_job;
 
@@ -137,12 +133,22 @@ i32 worker(void* data_) { PROF
 		}
 		global_state->api->platform_release_mutex(data->queue_mutex);
 
-		if(current_job.proc) {
-			(*current_job.proc)(current_job.data);
+		if(current_job.work) {
+			job_callback callback = (*current_job.work)(current_job.data);
 
-			global_state->api->platform_aquire_mutex(data->catalog_mutex, -1);
-			global_state->api->platform_signal_semaphore(map_get(data->catalog, current_job.id), 1);
-			global_state->api->platform_release_mutex(data->catalog_mutex);
+			platform_event a;
+			a.type 			 = platform_event_type::async;
+			a.async.type 	 = platform_async_type::user;
+			a.async.user_id  = current_job.id;
+			a.async.callback = callback;
+			global_state->api->platform_queue_event(a);
+
+			global_state->api->platform_aquire_mutex(data->running_mutex, -1);
+			platform_semaphore* sem = map_get(data->running, current_job.id);
+			global_state->api->platform_signal_semaphore(sem, INT_MAX);
+			global_state->api->platform_destroy_semaphore(sem);
+			map_erase(data->running, current_job.id);
+			global_state->api->platform_release_mutex(data->running_mutex);
 		}
 
 		global_state->api->platform_wait_semaphore(data->jobs_semaphore, -1);

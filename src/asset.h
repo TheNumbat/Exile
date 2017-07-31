@@ -94,7 +94,7 @@ struct _asset_font {
 struct asset {
 	string name;
 	asset_type type = asset_type::none;
-	u8* mem = NULL;
+	u8* mem = null;
 	union {
 		_asset_bitmap 	bitmap;
 		_asset_font 	font;
@@ -105,12 +105,12 @@ struct asset {
 struct asset_store {
 	map<string, asset> 	assets;
 
-	void* 				store = NULL;
+	void* 				store = null;
 	
 	string path;
 	platform_file_attributes last;
 
-	allocator* 			alloc = NULL;
+	allocator* 			alloc = null;
 };
 
 asset_store make_asset_store(allocator* a); // allocations are done in load

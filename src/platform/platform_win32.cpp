@@ -8,8 +8,8 @@ typedef BOOL  (WINAPI *wglSwapIntervalEXT_t)(int interval);
 static wglCreateContextAttribsARB_t wglCreateContextAttribsARB;
 static wglSwapIntervalEXT_t 		wglSwapIntervalEXT;
 
-static void (*global_enqueue)(void* queue_param, platform_event evt) = NULL;
-static void* global_enqueue_param = NULL;
+static void (*global_enqueue)(void* queue_param, platform_event evt) = null;
+static void* global_enqueue_param = null;
 
 platform_api platform_build_api() {
 
@@ -19,7 +19,8 @@ platform_api platform_build_api() {
 	ret.platform_destroy_window			= &win32_destroy_window;
 	ret.platform_swap_buffers			= &win32_swap_buffers;
 	ret.platform_set_queue_callback		= &win32_set_queue_callback;
-	ret.platform_queue_messages			= &win32_queue_messages;
+	ret.platform_pump_events			= &win32_pump_events;
+	ret.platform_queue_event 			= &win32_queue_event;
 	ret.platform_wait_message			= &win32_wait_message;
 	ret.platform_load_library			= &win32_load_library;
 	ret.platform_free_library			= &win32_free_library;
@@ -101,21 +102,21 @@ platform_error win32_get_window_size(platform_window* window, i32* w, i32* h) {
 
 void win32_get_timef(string fmt, string* out) {
 
-	i32 len = GetTimeFormat(LOCALE_USER_DEFAULT, 0, NULL, fmt.c_str, NULL, 0);
+	i32 len = GetTimeFormat(LOCALE_USER_DEFAULT, 0, null, fmt.c_str, null, 0);
 
 	out->len = len;
 
-	GetTimeFormat(LOCALE_USER_DEFAULT, 0, NULL, fmt.c_str, out->c_str, len);
+	GetTimeFormat(LOCALE_USER_DEFAULT, 0, null, fmt.c_str, out->c_str, len);
 }
 
 string win32_make_timef(string fmt) {
 
-	i32 len = GetTimeFormat(LOCALE_USER_DEFAULT, 0, NULL, fmt.c_str, NULL, 0);
+	i32 len = GetTimeFormat(LOCALE_USER_DEFAULT, 0, null, fmt.c_str, null, 0);
 
 	string ret = make_string(len, &win32_heap_alloc);
 	ret.len = ret.cap;
 
-	GetTimeFormat(LOCALE_USER_DEFAULT, 0, NULL, fmt.c_str, ret.c_str, len);	
+	GetTimeFormat(LOCALE_USER_DEFAULT, 0, null, fmt.c_str, ret.c_str, len);	
 
 	return ret;
 }
@@ -126,7 +127,7 @@ platform_error win32_get_stdout_as_file(platform_file* file) {
 
 	HANDLE std = GetStdHandle(STD_OUTPUT_HANDLE);
 
-	if(std == INVALID_HANDLE_VALUE || std == NULL) {
+	if(std == INVALID_HANDLE_VALUE || std == null) {
 		ret.good = false;
 		ret.error = GetLastError();
 		return ret;		
@@ -138,14 +139,14 @@ platform_error win32_get_stdout_as_file(platform_file* file) {
 }
 
 u32 win32_file_size(platform_file* file) {
-	return GetFileSize(file->handle, NULL);
+	return GetFileSize(file->handle, null);
 }
 
 platform_error win32_read_file(platform_file* file, void* mem, u32 bytes) {
 
 	platform_error ret;
 
-	if(ReadFile(file->handle, mem, bytes, NULL, NULL) == FALSE) {
+	if(ReadFile(file->handle, mem, bytes, null, null) == FALSE) {
 		ret.good = false;
 		ret.error = GetLastError();
 		return ret;
@@ -158,7 +159,7 @@ platform_error win32_write_file(platform_file* file, void* mem, u32 bytes) {
 
 	platform_error ret;
 
-	if(WriteFile(file->handle, mem, (DWORD)bytes, NULL, NULL) == FALSE) {
+	if(WriteFile(file->handle, mem, (DWORD)bytes, null, null) == FALSE) {
 		ret.good = false;
 		ret.error = GetLastError();
 		return ret;		
@@ -191,7 +192,7 @@ platform_error win32_create_file(platform_file* file, string path, platform_file
 		break;
 	}
 
-	file->handle = CreateFileA(path.c_str, GENERIC_READ | GENERIC_WRITE, 0, NULL, creation, FILE_ATTRIBUTE_NORMAL, NULL);
+	file->handle = CreateFileA(path.c_str, GENERIC_READ | GENERIC_WRITE, 0, null, creation, FILE_ATTRIBUTE_NORMAL, null);
 
 	if(file->handle == INVALID_HANDLE_VALUE) {
 		ret.good = false;
@@ -214,7 +215,7 @@ platform_error win32_close_file(platform_file* file) {
 		return ret;		
 	}
 
-	file->handle = NULL;
+	file->handle = null;
 
 	return ret;
 }
@@ -251,9 +252,9 @@ platform_error win32_create_semaphore(platform_semaphore* sem, i32 initial_count
 
 	platform_error ret;
 
-	sem->handle = CreateSemaphoreExA(NULL, initial_count, max_count, NULL, 0, SEMAPHORE_ALL_ACCESS);
+	sem->handle = CreateSemaphoreExA(null, initial_count, max_count, null, 0, SEMAPHORE_ALL_ACCESS);
 
-	if(sem->handle == NULL) {
+	if(sem->handle == null) {
 		ret.good = false;
 		ret.error = GetLastError();
 		return ret;				
@@ -272,7 +273,7 @@ platform_error win32_destroy_semaphore(platform_semaphore* sem) {
 		return ret;		
 	}
 
-	sem->handle = NULL;
+	sem->handle = null;
 
 	return ret;
 }
@@ -281,7 +282,7 @@ platform_error win32_signal_semaphore(platform_semaphore* sem, i32 times) {
 
 	platform_error ret;
 
-	if(ReleaseSemaphore(sem->handle, (LONG)times, NULL) == 0) {
+	if(ReleaseSemaphore(sem->handle, (LONG)times, null) == 0) {
 		ret.good = false;
 		ret.error = GetLastError();
 		return ret;		
@@ -315,9 +316,9 @@ platform_error win32_create_mutex(platform_mutex* mut, bool aquire) {
 
 	platform_error ret;
 
-	mut->handle = CreateMutexExA(NULL, NULL, aquire ? CREATE_MUTEX_INITIAL_OWNER : 0, MUTEX_ALL_ACCESS);
+	mut->handle = CreateMutexExA(null, null, aquire ? CREATE_MUTEX_INITIAL_OWNER : 0, MUTEX_ALL_ACCESS);
 
-	if(mut->handle == NULL) {
+	if(mut->handle == null) {
 		ret.good = false;
 		ret.error = GetLastError();
 		return ret;				
@@ -336,7 +337,7 @@ platform_error win32_destroy_mutex(platform_mutex* mut) {
 		return ret;		
 	}
 
-	mut->handle = NULL;
+	mut->handle = null;
 
 	return ret;
 }
@@ -388,7 +389,7 @@ platform_error win32_destroy_thread(platform_thread* thread) {
 		return ret;		
 	}
 
-	thread->handle = NULL;
+	thread->handle = null;
 
 	return ret;
 }
@@ -428,9 +429,9 @@ platform_error win32_create_thread(platform_thread* thread, i32 (*proc)(void*), 
 
 	platform_error ret;
 
-	thread->handle = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)proc, param, start_suspended ? CREATE_SUSPENDED : 0, &thread->id.id);
+	thread->handle = CreateThread(null, 0, (LPTHREAD_START_ROUTINE)proc, param, start_suspended ? CREATE_SUSPENDED : 0, &thread->id.id);
 
-	if(thread->handle == NULL) {
+	if(thread->handle == null) {
 		ret.good = false;
 		ret.error = GetLastError();
 		return ret;			
@@ -445,7 +446,7 @@ platform_error win32_get_bin_path(string* path) {
 
 	*path = make_string(MAX_PATH, &win32_heap_alloc);
 
-	DWORD len = GetModuleFileNameA(NULL, (LPSTR)path->c_str, MAX_PATH);
+	DWORD len = GetModuleFileNameA(null, (LPSTR)path->c_str, MAX_PATH);
 
 	if(len == 0) {
 		ret.good = false;
@@ -544,7 +545,7 @@ platform_error win32_get_proc_address(void** address, platform_dll* dll, string 
 
 	*address = GetProcAddress(dll->dll_handle, name.c_str);
 
-	if(*address == NULL) {
+	if(*address == null) {
 		ret.good = false;
 		ret.error = GetLastError();
 		return ret;				
@@ -559,7 +560,7 @@ platform_error win32_load_library(platform_dll* dll, string file_path) {
 
 	dll->dll_handle = LoadLibraryA(file_path.c_str);
 
-	if(dll->dll_handle == NULL) {
+	if(dll->dll_handle == null) {
 		ret.good = false;
 		ret.error = GetLastError();
 		return ret;				
@@ -615,7 +616,7 @@ void win32_set_queue_callback(void (*enqueue)(void* queue_param, platform_event 
 	global_enqueue_param = queue_param;
 }
 
-void win32_queue_messages(platform_window* window) {
+void win32_pump_events(platform_window* window) {
 	
 	MSG msg;
 
@@ -623,6 +624,11 @@ void win32_queue_messages(platform_window* window) {
 		TranslateMessage(&msg);
 		DispatchMessageA(&msg);
 	}
+}
+
+void win32_queue_event(platform_event evt) {
+
+	global_enqueue(global_enqueue_param, evt);
 }
 
 u16 translate_key_code(platform_keycode keycode) {
@@ -1132,13 +1138,13 @@ platform_error win32_create_window(platform_window* window, string title, u32 wi
 
 	window->title = make_copy_string(title, &win32_heap_alloc);
 
-	HINSTANCE 	instance = GetModuleHandleA(NULL);
+	HINSTANCE 	instance = GetModuleHandleA(null);
 	HGLRC 		gl_temp  = {};
 	HANDLE 		process  = GetCurrentProcess();
 
 	SetPriorityClass(process, ABOVE_NORMAL_PRIORITY_CLASS);
 
-	if(instance == NULL) {
+	if(instance == null) {
 		ret.good = false;
 		ret.error = GetLastError();
 		return ret;
@@ -1163,7 +1169,7 @@ platform_error win32_create_window(platform_window* window, string title, u32 wi
 	window->handle = CreateWindowExA(WS_EX_ACCEPTFILES, window->title.c_str, window->title.c_str, WS_OVERLAPPEDWINDOW,
 			           				 CW_USEDEFAULT, CW_USEDEFAULT, width, height, 0, 0, instance, 0);
 
-	if(window->handle == NULL) {
+	if(window->handle == null) {
 		ret.good = false;
 		ret.error = GetLastError();
 		return ret;
@@ -1171,7 +1177,7 @@ platform_error win32_create_window(platform_window* window, string title, u32 wi
 
 	window->device_context = GetDC(window->handle);
 
-	if(window->device_context == NULL) {
+	if(window->device_context == null) {
 		ret.good = false;
 		ret.error = GetLastError();
 		return ret;
@@ -1203,7 +1209,7 @@ platform_error win32_create_window(platform_window* window, string title, u32 wi
 
 	gl_temp = wglCreateContext(window->device_context);
 
-	if(gl_temp == NULL) {
+	if(gl_temp == null) {
 		ret.good = false;
 		ret.error = GetLastError();
 		return ret;				
@@ -1225,7 +1231,7 @@ platform_error win32_create_window(platform_window* window, string title, u32 wi
 
 	wglCreateContextAttribsARB = (wglCreateContextAttribsARB_t)wglGetProcAddress("wglCreateContextAttribsARB");
 
-	if(wglCreateContextAttribsARB == NULL) {
+	if(wglCreateContextAttribsARB == null) {
 		ret.good = false;
 		ret.error = GetLastError();
 		return ret;		
@@ -1239,7 +1245,7 @@ platform_error win32_create_window(platform_window* window, string title, u32 wi
 
 	window->gl_context = wglCreateContextAttribsARB(window->device_context, 0, &attribs[0]);
 
-	if(window->gl_context == NULL) {
+	if(window->gl_context == null) {
 		ret.good = false;
 		ret.error = GetLastError();
 		return ret;	
@@ -1253,7 +1259,7 @@ platform_error win32_create_window(platform_window* window, string title, u32 wi
 
 	wglSwapIntervalEXT = (wglSwapIntervalEXT_t)wglGetProcAddress("wglSwapIntervalEXT");
 
-	if(wglSwapIntervalEXT == NULL) {
+	if(wglSwapIntervalEXT == null) {
 		ret.good = false;
 		ret.error = GetLastError();
 		return ret;		

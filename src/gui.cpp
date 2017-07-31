@@ -71,7 +71,7 @@ void gui_add_font(ogl_manager* ogl, gui_manager* gui, string asset_name, asset_s
 
 gui_font* gui_select_best_font_scale(gui_window_state* win) { PROF
 
-	gui_font* f = NULL;
+	gui_font* f = null;
 
 	f32 defl = ggui->style.font * ggui->style.gscale;
 	f32 min_off = FLT_MAX;

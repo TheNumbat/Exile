@@ -17,7 +17,7 @@ void clear_vector(vector<T>* v) { PROF
 template<typename T>
 T* vector_find(vector<T>* v, T val) { PROF
 
-	T* ret = NULL;
+	T* ret = null;
 	FORVEC(*v, 
 		if(*it == val) {
 			ret = it;
@@ -120,7 +120,7 @@ inline T* vector_get(vector<T>* v, u32 idx) {
 	} else {
 		
 		LOG_FATAL_F("vector_get out of bounds, % < 0 || % >= %", idx, idx, v->capacity);
-		return NULL;
+		return null;
 	}
 #else
 	return v->memory + idx;
@@ -141,7 +141,7 @@ void destroy_vector(vector<T>* v) { PROF
 		v->alloc->free_(v->memory, v->alloc, CONTEXT);
 	}
 
-	v->memory = NULL;
+	v->memory = null;
 	v->size = 0;
 	v->capacity = 0;
 }
@@ -173,7 +173,7 @@ void vector_resize(vector<T>* v, u32 capacity, bool copy) { PROF
 
 	if(capacity == 0) {
 		v->alloc->free_(v->memory, v->alloc, CONTEXT);
-		v->memory = NULL;
+		v->memory = null;
 		return;
 	}
 
@@ -242,7 +242,7 @@ T* vector_front(vector<T>* v) { PROF
 	}
 
 	LOG_FATAL("Trying to get empty vector front!");
-	return NULL;
+	return null;
 }
 
 template<typename T>
@@ -253,7 +253,7 @@ T* vector_back(vector<T>* v) { PROF
 	}
 
 	LOG_FATAL("Trying to get empty vector back!");
-	return NULL;
+	return null;
 }
 
 template<typename T>

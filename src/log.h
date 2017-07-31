@@ -33,19 +33,19 @@ struct log_out {
 	bool custom = false;
 	union {
 		platform_file file;
-		void (*write)(log_message* msg) = NULL;
+		void (*write)(log_message* msg) = null;
 	};
 	log_out() : file(), write() {}
 };
 
 struct log_thread_param {
 	bool running 							= false;
-	vector<log_out>* 	out					= NULL;
-	queue<log_message>*	message_queue		= NULL;
-	platform_mutex*		queue_mutex			= NULL;
-	platform_semaphore*	logging_semaphore 	= NULL;
-	allocator* alloc 						= NULL;
-	arena_allocator* scratch				= NULL;
+	vector<log_out>* 	out					= null;
+	queue<log_message>*	message_queue		= null;
+	platform_mutex*		queue_mutex			= null;
+	platform_semaphore*	logging_semaphore 	= null;
+	allocator* alloc 						= null;
+	arena_allocator* scratch				= null;
 };
 
 struct log_manager {
@@ -55,7 +55,7 @@ struct log_manager {
 	platform_semaphore	logging_semaphore;
 	platform_thread		logging_thread;
 	log_thread_param 	thread_param;
-	allocator* alloc 	= NULL;
+	allocator* alloc 	= null;
 	arena_allocator 	scratch; // reset whenever (on the logging thread) (currently every message)
 };
 

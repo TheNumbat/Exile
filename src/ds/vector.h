@@ -5,10 +5,10 @@
 
 template<typename T>
 struct vector {
-	T* memory 	 	 = NULL;
+	T* memory 	 	 = null;
 	u32 size 	 	 = 0;
 	u32 capacity 	 = 0;
-	allocator* alloc = NULL;
+	allocator* alloc = null;
 };
 
 template<typename T> vector<T> make_vector(u32 capacity, allocator* a);

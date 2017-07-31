@@ -1,7 +1,7 @@
 
 mesh_2d make_mesh_2d(u32 verts, allocator* alloc) { PROF
 
-	if(alloc == NULL) {
+	if(alloc == null) {
 		alloc = CURRENT_ALLOC();
 	}
 
@@ -23,7 +23,7 @@ void destroy_mesh(mesh_2d* m) { PROF
 	destroy_vector(&m->texCoords);
 	destroy_vector(&m->colors);
 	destroy_vector(&m->elements);
-	m->alloc = NULL;
+	m->alloc = null;
 }
 
 void mesh_push_cutrect(mesh_2d* m, r2 r, f32 round, color c) { PROF
@@ -137,7 +137,7 @@ f32 mesh_push_text_line(mesh_2d* m, asset* font, string text_utf8, v2 pos, f32 p
 
 mesh_3d make_mesh_3d(u32 verts, allocator* alloc) { PROF
 
-	if(alloc == NULL) {
+	if(alloc == null) {
 		alloc = CURRENT_ALLOC();
 	}
 
@@ -156,7 +156,7 @@ void destroy_mesh(mesh_3d* m) { PROF
 	destroy_vector(&m->verticies);
 	destroy_vector(&m->texCoords);
 
-	m->alloc = NULL;	
+	m->alloc = null;	
 }
 
 render_command make_render_command(render_command_type type, void* data, u32 key) { PROF
@@ -181,7 +181,7 @@ bool operator<(render_command first, render_command second) { PROF
 
 render_command_list make_command_list(allocator* alloc, u32 cmds) { PROF
 
-	if(alloc == NULL) {
+	if(alloc == null) {
 		alloc = CURRENT_ALLOC();
 	}
 
@@ -197,7 +197,7 @@ render_command_list make_command_list(allocator* alloc, u32 cmds) { PROF
 void destroy_command_list(render_command_list* rcl) { PROF
 
 	destroy_vector(&rcl->commands);
-	rcl->alloc = NULL;
+	rcl->alloc = null;
 }
 
 void render_add_command(render_command_list* rcl, render_command rc) { PROF

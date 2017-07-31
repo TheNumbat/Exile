@@ -22,7 +22,7 @@ void destroy_array(array<T>* a) { PROF
 		a->alloc->free_(a->memory, a->alloc, CONTEXT);
 	}
 
-	a->memory = NULL;
+	a->memory = null;
 	a->capacity = 0;
 }
 
@@ -85,7 +85,7 @@ inline T* array_get(array<T>* a, u32 idx) {
 		LOG_FATAL_F("array_get out of bounds, % < 0 || % > %", idx, idx, a->capacity);
 
 		
-		return NULL;
+		return null;
 	}
 #else
 	return a->memory + idx;

@@ -12,7 +12,8 @@ platform_error win32_get_window_size(platform_window* window, i32* w, i32* h);
 platform_error win32_swap_buffers(platform_window* window);
 
 void		   win32_set_queue_callback(void (*enqueue)(void* queue_param, platform_event evt), void* queue_param);
-void 		   win32_queue_messages(platform_window* window);
+void 		   win32_pump_events(platform_window* window);
+void		   win32_queue_event(platform_event evt);
 platform_error win32_wait_message();
 bool 		   win32_keydown(platform_keycode key);
 

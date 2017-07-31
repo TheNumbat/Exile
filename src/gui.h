@@ -66,7 +66,7 @@ union gui_state_data {
 	i64 i64_1;
 	f64 f64_1;
 	bool b;
-	void* data = NULL;
+	void* data = null;
 };
 
 enum class gui_offset_mode {
@@ -76,11 +76,11 @@ enum class gui_offset_mode {
 };
 
 struct gui_font {
-	asset_store* store = NULL;
+	asset_store* store = null;
 	string asset_name;
 
 	bool mono = false;
-	asset* font = NULL;
+	asset* font = null;
 	texture_id texture = 0;
 };
 
@@ -100,7 +100,7 @@ struct gui_window_state {
 	stack<u32> id_hash_stack;
 
 	bool mono = false;
-	gui_font* font = NULL;
+	gui_font* font = null;
 	mesh_2d mesh;
 };
 
@@ -149,7 +149,7 @@ struct gui_manager {
 	gui_input_state input;
 	gui_opengl 		ogl;
 
-	gui_window_state* current = NULL;	// we take a pointer into a map but it's OK because we know nothing will be added while this is in use
+	gui_window_state* current = null;	// we take a pointer into a map but it's OK because we know nothing will be added while this is in use
 	u32 last_z = 0;						// this only counts up on window layer changes so we don't have
 										// to iterate through the map to check z levels. You'll never 
 										// get to >4 billion changes, right?
@@ -159,7 +159,7 @@ struct gui_manager {
 	vector<gui_font> fonts;
 
 	arena_allocator scratch; // reset whenever (on whatever thread) (currently on formatting log messages)
-	allocator* alloc = NULL;
+	allocator* alloc = null;
 };
 
 static gui_manager* ggui;
@@ -184,7 +184,7 @@ void gui_set_offset_mode(gui_offset_mode mode = gui_offset_mode::y);
 
 bool gui_occluded();
 bool gui_begin(string name, r2 first_size = R2f(40,40,0,0), f32 first_alpha = 0, gui_window_flags flags = 0, bool mono = false);
-bool gui_carrot_toggle(string name, bool initial = false, v2 pos = V2f(0,0), bool* toggleme = NULL);
+bool gui_carrot_toggle(string name, bool initial = false, v2 pos = V2f(0,0), bool* toggleme = null);
 void gui_box_select(i32* selected, i32 num, v2 pos, ...);
 
 void gui_log_wnd(string name, vector<log_message>* cache);

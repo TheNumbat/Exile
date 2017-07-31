@@ -38,7 +38,7 @@ struct platform_file_attributes {
 
 struct platform_thread_id {
 	// Transparent
-	DWORD id 	= NULL;
+	DWORD id 	= null;
 };
 
 bool operator==(platform_thread_id first, platform_thread_id second) {
@@ -50,17 +50,17 @@ struct platform_thread {
 	platform_thread_id id;
 
 	// Opaque
-	HANDLE handle 	= NULL;
+	HANDLE handle 	= null;
 };
 
 struct platform_semaphore {
 	// Opaque
-	HANDLE handle 	= NULL;
+	HANDLE handle 	= null;
 };
 
 struct platform_mutex {
 	// Opaque
-	HANDLE handle 	= NULL;
+	HANDLE handle 	= null;
 };
 
 struct platform_file {
@@ -68,7 +68,7 @@ struct platform_file {
 	string path;
 
 	// Opaque
-	HANDLE handle 	= NULL;
+	HANDLE handle 	= null;
 };
 
 bool operator==(platform_file first, platform_file second) {

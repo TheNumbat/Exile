@@ -52,8 +52,8 @@ void destroy_map(map<K,V>* m) { PROF
 	destroy_vector(&m->contents);
 
 	m->size  = 0;
-	m->alloc = NULL;
-	m->hash  = NULL;
+	m->alloc = null;
+	m->hash  = null;
 }
 
 template<typename K, typename V>
@@ -114,7 +114,7 @@ V* map_insert(map<K,V>* m, K key, V value, bool grow_if_needed) { PROF
 			map_grow_rehash(m); // this is super expensive, avoid at all costs
 		} else {
 			LOG_DEBUG_ASSERT(!"Map needs to grow, but not allowed!");
-			return NULL;
+			return null;
 		}
 	}
 
@@ -133,7 +133,7 @@ V* map_insert(map<K,V>* m, K key, V value, bool grow_if_needed) { PROF
 
 	u32 index = ele.hash_bucket;
 	u32 probe_length = 0;
-	map_element<K,V>* placed_adr = NULL;
+	map_element<K,V>* placed_adr = null;
 	for(;;) {
 		if(vector_get(&m->contents, index)->occupied) {
 
@@ -195,16 +195,16 @@ template<typename K, typename V>
 V* map_get(map<K,V>* m, K key) { PROF
 
 	V* result = map_try_get(m, key);
-	LOG_ASSERT(result != NULL);
+	LOG_ASSERT(result != null);
 
 	return result;
 }
 
 template<typename K, typename V>
-V* map_try_get(map<K,V>* m, K key) { PROF	// can return NULL
+V* map_try_get(map<K,V>* m, K key) { PROF	// can return null
 
 	if (m->size == 0) {
-		return NULL;
+		return null;
 	}
 
 	u32 hash_bucket;
@@ -225,7 +225,7 @@ V* map_try_get(map<K,V>* m, K key) { PROF	// can return NULL
 
 		probe_length++;
 		if(probe_length > m->max_probe) {
-			return NULL;
+			return null;
 		}
 
 		index++;
