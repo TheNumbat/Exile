@@ -1,8 +1,10 @@
 #pragma once
 
-// TODO(max): remove math.h, use more SIMD intrinsics
-	// matrix/vector ops (+ batch)
-	// mod, div, sign
+// TODO(max): remove cmath, use more SIMD intrinsics
+	// apply to v2_t, v3_t, v4_t, m4_t ops
+		// use for packed normal math ops
+	// make v2_t_4x, v3_t_4x, v4_t_4x, m4_t_4x
+	// mod, div, sign, trig, bit-scanning
 // TODO(max): quaternions
 #include <cmath>
 #include <xmmintrin.h>
