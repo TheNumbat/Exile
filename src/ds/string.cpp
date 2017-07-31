@@ -716,60 +716,64 @@ u32 get_next_codepoint(string text_utf8, u32* index) {
 #endif
 
 	char first, second, third, fourth;
-	u32 codepoint;
+	u32  codepoint, idx = *index;
 
 	if(*index >= text_utf8.len) return 0;
 
-	first = text_utf8.c_str[(*index)++];
+	first = text_utf8.c_str[idx++];
 
 	// one byte
 	if((first & 0x80) == 0) {
 		
 		codepoint = first;
 
+		*index += 1;
 		return codepoint;
 	}
 
 	// two bytes
 	if((first & 0xE0) == 0xC0) {
 		
-		second = text_utf8.c_str[(*index)++] & 0x3F;
+		second = text_utf8.c_str[idx++] & 0x3F;
 
 		codepoint = ((first & 0x1F) << 6) | second;
 
 		LOG_DEBUG_ASSERT(codepoint >= 128);
 
+		*index += 2;
 		return codepoint;
 	}
 
 	// three bytes
 	if((first & 0xF0) == 0xE0) {
 		
-		second = text_utf8.c_str[(*index)++] & 0x3F;
-		third  = text_utf8.c_str[(*index)++] & 0x3F;
+		second = text_utf8.c_str[idx++] & 0x3F;
+		third  = text_utf8.c_str[idx++] & 0x3F;
 
 		codepoint = ((first & 0x0F) << 12) | (second << 6) | third;
 
 		LOG_DEBUG_ASSERT(codepoint >= 2048 && (codepoint < 55296 || codepoint > 57343))
 
+		*index += 3;
 		return codepoint;
 	}
 
 	// four bytes
 	if((first & 0xF8) == 0xF0) {
 
-		second = text_utf8.c_str[(*index)++] & 0x3F;
-		third  = text_utf8.c_str[(*index)++] & 0x3F;
-		fourth = text_utf8.c_str[(*index)++] & 0x3F;
+		second = text_utf8.c_str[idx++] & 0x3F;
+		third  = text_utf8.c_str[idx++] & 0x3F;
+		fourth = text_utf8.c_str[idx++] & 0x3F;
 		
 		codepoint = ((first & 0x07) << 18) | (second << 12) | (third << 6) | fourth;
 
 		LOG_DEBUG_ASSERT(codepoint >= 65536 && codepoint <= 1114111);
 
+		*index += 4;
 		return codepoint;
 	}
 
-	LOG_DEBUG_ASSERT(!"Invalid codepoint!");
+	LOG_FATAL_F("Invalid codepoint index % in %", *index, text_utf8);
 	return 0;
 }
 
