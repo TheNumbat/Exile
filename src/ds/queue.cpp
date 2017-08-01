@@ -17,16 +17,16 @@ template<typename T>
 queue<T> make_queue(u32 capacity, allocator* a) { PROF
 
 	queue<T> ret;
-	capacity = 0;
 
 	ret.alloc = a;
 	ret.capacity = capacity;
-	if(capacity)
-		ret.memory = (T*)a->allocate_(capacity * sizeof(T), a, CONTEXT);
+	if(capacity) {
+		ret.memory = (T*)ret.alloc->allocate_(capacity * sizeof(T), ret.alloc, CONTEXT);
 
 #ifdef CONSTRUCT_DS_ELEMENTS
-	new (ret.memory) T[capacity]();
+		new (ret.memory) T[capacity]();
 #endif
+	}
 	
 	return ret;
 }
@@ -80,7 +80,7 @@ void queue_grow(queue<T>* q) { PROF
 template<typename T>
 T* queue_push(queue<T>* q, T value) { PROF
 
-	if(queue_len(q) >= q->capacity) {
+	if(queue_len(q) + 1 >= q->capacity) {
 		queue_grow(q);
 	}
 
