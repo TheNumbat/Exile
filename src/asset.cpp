@@ -10,6 +10,7 @@ asset_store make_asset_store(allocator* a) { PROF
 
 void destroy_asset_store(asset_store* am) { PROF
 
+
 	if(am->store) {
 
 		destroy_map(&am->assets);

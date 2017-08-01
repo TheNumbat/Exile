@@ -18,7 +18,11 @@
             [
                 {
                     "name": "Debug",
-                    "shell_cmd": "dev",
+                    "shell_cmd": "dev"
+                },
+                {
+                    "name": "Debug",
+                    "shell_cmd": "run",
                     "encoding": "UTF-8"
                 },
                 {
