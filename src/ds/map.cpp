@@ -62,7 +62,7 @@ void map_clear(map<K,V>* m) { PROF
 	FORVEC(m->contents,
 		it->occupied = false;
 	)
-	clear_vector(&m->contents);
+	vector_clear(&m->contents);
 	m->size = 0;
 	m->max_probe = 0;
 }
@@ -72,7 +72,8 @@ void map_grow_rehash(map<K,V>* m) { PROF
 	
 	vector<map_element<K,V>> temp = make_vector_copy(m->contents);
 
-	vector_grow(&m->contents, false);
+	vector_grow(&m->contents);
+	vector_zero(&m->contents);
 
 	m->size = 0;
 	m->max_probe = 0;

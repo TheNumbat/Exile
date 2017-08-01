@@ -126,7 +126,7 @@ void gui_end_frame(ogl_manager* ogl) { PROF
 	destroy_command_list(&rcl);
 
 	FORMAP(ggui->window_state_data,
-		clear_vector(&it->value.offset_stack);
+		vector_clear(&it->value.offset_stack);
 		clear_stack(&it->value.id_hash_stack);
 		clear_mesh(&it->value.mesh);
 	)

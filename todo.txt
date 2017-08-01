@@ -31,12 +31,9 @@ immediate to do:
 		pool allocator (growing arena)
 		free list (one-type pool re-using arenas)
 
-	threading
-		some sort of async system
-			parallel loop?
-			'then'?
-			is there a convenient way to pass an arbitrary function? template time?
-		integration with modding system
+	async
+		better integration with event system https://www.youtube.com/watch?v=gFFqYLgPOWI
+		job chaining
 
 	uncategorized
 		get rid of global_state

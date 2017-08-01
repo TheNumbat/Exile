@@ -10,8 +10,13 @@ u32 vector_capacity(vector<T>* v) { PROF
 }
 
 template<typename T> 
-void clear_vector(vector<T>* v) { PROF
+void vector_clear(vector<T>* v) { PROF
 	v->size = 0;
+}
+
+template<typename T>
+void vector_zero(vector<T>* v) { PROF
+	memset(v->memory, v->capacity * sizeof(T), 0);
 }
 
 template<typename T>
@@ -128,9 +133,9 @@ inline T* vector_get(vector<T>* v, u32 idx) {
 }
 
 template<typename T>
-void vector_grow(vector<T>* v, bool copy) { PROF
+void vector_grow(vector<T>* v) { PROF
 	
-	vector_resize(v, v->capacity > 0 ? 2 * v->capacity : 4, copy);
+	vector_resize(v, v->capacity > 0 ? 2 * v->capacity : 8);
 }
 
 template<typename T>
@@ -169,11 +174,13 @@ vector<T> make_vector(u32 capacity) { PROF
 }
 
 template<typename T>
-void vector_resize(vector<T>* v, u32 capacity, bool copy) { PROF
+void vector_resize(vector<T>* v, u32 capacity) { PROF
 
 	if(capacity == 0) {
-		v->alloc->free_(v->memory, v->alloc, CONTEXT);
-		v->memory = null;
+		if(v->memory) {
+			v->alloc->free_(v->memory, v->alloc, CONTEXT);
+			v->memory = null;
+		}
 		return;
 	}
 

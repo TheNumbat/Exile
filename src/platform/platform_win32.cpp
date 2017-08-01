@@ -471,16 +471,16 @@ platform_error win32_get_bin_path(string* path) {
 	return ret;
 }
 
-// #include <iostream>
-// using std::cout;
-// using std::endl;
+#include <iostream>
+using std::cout;
+using std::endl;
 
 void* win32_heap_alloc(u64 bytes) {
 
 	HANDLE heap = GetProcessHeap();
 	void* ret = HeapAlloc(heap, HEAP_ZERO_MEMORY | HEAP_GENERATE_EXCEPTIONS, (SIZE_T)bytes);
 
-	// cout << "alloc " << ret << endl;
+	cout << "AAAAAAAAAA " << ret << endl;
 
 	return ret;
 }
@@ -490,14 +490,14 @@ void* win32_heap_realloc(void* mem, u64 bytes) {
 	HANDLE heap = GetProcessHeap();
 	void* ret = HeapReAlloc(heap, HEAP_ZERO_MEMORY | HEAP_GENERATE_EXCEPTIONS, mem, (SIZE_T)bytes);
 
-	// cout << "realloc " << ret << endl;
+	cout << "RRRRRRRRRR " << ret << endl;
 
 	return ret;
 }
 
 void win32_heap_free(void* mem) {
 
-	// cout << "free " << mem << endl;
+	cout << "FFFFFFFFFF " << mem << endl;
 	// *(u8*)mem = 0;
 
 	HANDLE heap = GetProcessHeap();
