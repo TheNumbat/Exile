@@ -394,11 +394,18 @@ u32 print_ptr(string s, u32 idx, void* val, _type_info* info, bool size) { PROF
 			idx = print_u64(s, idx, 16, (u64)(*(u8**)val), size);
 		}
 	} else {
+		_type_info* to = TYPEINFO_H(info->_ptr.to);
 		if (*(u8**)val == null) {
-			idx = string_insert(s, idx, TYPEINFO_H(info->_ptr.to)->name, size);
+			idx = string_insert(s, idx, to->name, size);
 			idx = string_insert(s, idx, string_literal("|null"), size);
 		} else {
-			idx = print_type(s, idx, *(u8**)val, TYPEINFO_H(info->_ptr.to), size);
+			if(to->type_type == Type::_string) {
+				idx = string_insert(s, idx, '\"', size);
+			}			
+			idx = print_type(s, idx, *(u8**)val, to, size);
+			if(to->type_type == Type::_string) {
+				idx = string_insert(s, idx, '\"', size);
+			}	
 			idx = string_insert(s, idx, '|', size);
 			idx = print_u64(s, idx, 16, (u64)(*(u8**)val), size);
 		}

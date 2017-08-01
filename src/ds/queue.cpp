@@ -34,8 +34,9 @@ queue<T> make_queue(u32 capacity, allocator* a) { PROF
 template<typename T>
 queue<T> make_queue(u32 capacity) { PROF
 
-	return make_queue(capacity, CURRENT_ALLOC());
+	return make_queue<T>(capacity, CURRENT_ALLOC());
 }
+
 
 template<typename T>
 u32 queue_len(queue<T>* q) { PROF
@@ -107,6 +108,19 @@ T queue_pop(queue<T>* q) { PROF
 }
 
 template<typename T>
+bool queue_try_pop(queue<T>* q, T* out) { PROF
+
+	if(queue_len(q) > 0) {
+		
+		*out = *queue_front(q);
+		++q->start %= q->capacity;
+		return true;	
+	}
+
+	return false;
+}
+
+template<typename T>
 T* queue_back(queue<T>* q) { PROF
 
 	if(queue_len(q) > 0) {
@@ -133,4 +147,69 @@ T* queue_front(queue<T>* q) { PROF
 template<typename T>
 bool queue_empty(queue<T>* q) { PROF
 	return queue_len(q) == 0;
+}
+
+
+
+template<typename T>
+con_queue<T> make_con_queue(u32 capacity, allocator* a) {
+
+	con_queue<T> ret;
+
+	global_state->api->platform_create_semaphore(&ret.sem, 0, INT_MAX);
+	global_state->api->platform_create_mutex(&ret.mut, false);
+
+	ret.alloc = a;
+	ret.capacity = capacity;
+	if(capacity) {
+		ret.memory = (T*)ret.alloc->allocate_(capacity * sizeof(T), ret.alloc, CONTEXT);
+
+#ifdef CONSTRUCT_DS_ELEMENTS
+		new (ret.memory) T[capacity]();
+#endif
+	}
+	
+	return ret;
+}
+
+// TODO(max): I'm pretty sure this could be a lot more efficient with more fine-grained locking
+//			  via interlockedFuncs
+
+template<typename T>
+con_queue<T> make_con_queue(u32 capacity) {
+
+	return make_con_queue<T>(capacity, CURRENT_ALLOC());
+}
+
+template<typename T>
+void destroy_con_queue(con_queue<T>* q) {
+
+	destroy_queue((queue<T>*)q);	
+	global_state->api->platform_destroy_mutex(&q->mut);
+	global_state->api->platform_destroy_semaphore(&q->sem);
+}
+
+template<typename T>
+T* queue_push(con_queue<T>* q, T value) {
+	global_state->api->platform_aquire_mutex(&q->mut, -1);
+	T* ret = queue_push((queue<T>*)q, value);
+	global_state->api->platform_release_mutex(&q->mut);
+	global_state->api->platform_signal_semaphore(&q->sem, 1);
+	return ret;
+}
+
+template<typename T>
+T queue_wait_pop(con_queue<T>* q) {
+	global_state->api->platform_wait_semaphore(&q->sem, -1);
+	T ret;
+	queue_try_pop(q, &ret);
+	return ret;
+}
+
+template<typename T>
+bool queue_try_pop(con_queue<T>* q, T* out) {
+	global_state->api->platform_aquire_mutex(&q->mut, -1);
+	bool ret = queue_try_pop((queue<T>*)q, out);
+	global_state->api->platform_release_mutex(&q->mut);
+	return ret;
 }
