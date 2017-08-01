@@ -54,7 +54,7 @@ void queue_grow(queue<T>* q) { PROF
 
 		u32 len = 0;
 		T* new_mem = (T*)q->alloc->allocate_(capacity * sizeof(T), q->alloc, CONTEXT);
-		for(u32 i = q->start; i < q->end; ++i %= q->capacity) {
+		for(u32 i = q->start; i != q->end; ++i %= q->capacity) {
 			new_mem[len++] = q->memory[i];
 		}
 		q->start = 0;
