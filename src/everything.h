@@ -26,7 +26,6 @@
 	#define BLOCK_ON_ERROR
 	#define DO_PROF	
 	#define CONSTRUCT_DS_ELEMENTS
-	#define LOG_ALLOCS
 #elif defined(REAL_RELEASE)
 
 #else

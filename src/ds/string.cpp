@@ -240,10 +240,12 @@ u32 print_type(string s, u32 idx, void* val, _type_info* info, bool size) { PROF
 	case Type::_struct: {
 		if(info->name == "vector") {
 			idx = print_vector(s, idx, val, info, size);
-		} else if(info-> name == "array") {
+		} else if(info->name == "array") {
 			idx = print_array(s, idx, val, info, size);
-		} else if(info-> name == "map") {
+		} else if(info->name == "map") {
 			idx = print_map(s, idx, val, info, size);
+		} else if(info->name == "queue" || info->name == "con_queue") {
+			idx = print_queue(s, idx, val, info, size);
 		} else {
 			idx = print_struct(s, idx, val, info, size);
 		}
@@ -266,6 +268,38 @@ u32 print_array(string s, u32 idx, void* val, _type_info* info, bool size) { PRO
 
 	// TODO(max): assumes binary compatibility with vector T* first member then u32 size
 	return print_vector(s, idx, val, info, size);
+}
+
+u32 print_queue(string s, u32 idx, void* val, _type_info* info, bool size) { PROF
+
+	idx = string_insert(s, idx, info->name, size);
+
+	_type_info* of = TYPEINFO_H(TYPEINFO_H(info->_struct.member_types[0])->_ptr.to);
+	if(!of) {
+		idx = string_insert(s, idx, string_literal("[UNDEF]"), size);
+		return idx;
+	}
+
+	u32 start = *(u32*)((u8*)val + info->_struct.member_offsets[1]);
+	u32 end = *(u32*)((u8*)val + info->_struct.member_offsets[2]);
+	u32 capacity = *(u32*)((u8*)val + info->_struct.member_offsets[3]);
+	u8* data = *(u8**)((u8*)val + info->_struct.member_offsets[0]);
+
+	idx = string_insert(s, idx, '[', size);
+	for(u32 i = start; i != end; ++i %= capacity) {
+		if(of->type_type == Type::_string) {
+			idx = string_insert(s, idx, '\"', size);
+		}
+		idx = print_type(s, idx, data + i * of->size, of, size);
+		if(of->type_type == Type::_string) {
+			idx = string_insert(s, idx, '\"', size);
+		}
+		if(i != end - 1)
+			idx = string_insert(s, idx, string_literal(", "), size);
+	}
+	idx = string_insert(s, idx, ']', size);
+
+	return idx;	
 }
 
 u32 print_vector(string s, u32 idx, void* val, _type_info* info, bool size) { PROF

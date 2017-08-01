@@ -13,9 +13,8 @@ struct job {
 };
 
 struct worker_data {
-	queue<job>* job_queue 			   		= null;
+	con_queue<job>* job_queue 			   	= null;
 	map<job_id,platform_semaphore>* running = null;
-	platform_mutex* queue_mutex 	   		= null;
 	platform_mutex* running_mutex 	   		= null;
 	platform_semaphore* jobs_semaphore 		= null;
 	allocator* alloc 				   		= null;
@@ -27,13 +26,13 @@ struct threadpool {
 	job_id next_job_id	= 1;
 	bool online    		= false;
 
-	queue<job> jobs;			 			// TODO(max): priority queue
+	con_queue<job> jobs;			 			// TODO(max): priority queue
 	map<job_id,platform_semaphore> running;
 
 	array<platform_thread> threads;
 	array<worker_data> 	   data;
 	
-	platform_mutex		   queue_mutex, running_mutex; 
+	platform_mutex		   running_mutex; 
 	platform_semaphore	   jobs_semaphore;
 	allocator* 			   alloc;
 };

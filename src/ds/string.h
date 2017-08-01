@@ -62,6 +62,7 @@ struct _type_info;
 u32 print_type(string s, u32 idx, void* val, _type_info* info, bool size = false);
 
 // type-specific helpers
+u32 print_queue(string s, u32 idx, void* val, _type_info* info, bool size = false);
 u32 print_vector(string s, u32 idx, void* val, _type_info* info, bool size = false);
 u32 print_array(string s, u32 idx, void* val, _type_info* info, bool size = false);
 u32 print_static_array(string s, u32 idx, void* val, _type_info* info, bool size = false);

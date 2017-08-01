@@ -14,9 +14,8 @@ threadpool make_threadpool(allocator* a, i32 num_threads_) { PROF
 	ret.running = make_map<job_id,platform_semaphore>(16, hash_u64);
 	ret.threads = make_array<platform_thread>(ret.num_threads, a);
 	ret.data    = make_array<worker_data>(ret.num_threads, a);
-	ret.jobs    = make_queue<job>(16, a);
+	ret.jobs    = make_con_queue<job>(16, a);
 	
-	global_state->api->platform_create_mutex(&ret.queue_mutex, false);
 	global_state->api->platform_create_semaphore(&ret.jobs_semaphore, 0, ret.num_threads);
 
 	return ret;
@@ -29,9 +28,8 @@ void destroy_threadpool(threadpool* tp) { PROF
 	destroy_map(&tp->running);
 	destroy_array(&tp->threads);
 	destroy_array(&tp->data);
-	destroy_queue(&tp->jobs);
+	destroy_con_queue(&tp->jobs);
 
-	global_state->api->platform_destroy_mutex(&tp->queue_mutex);
 	global_state->api->platform_destroy_semaphore(&tp->jobs_semaphore);
 }
 
@@ -54,12 +52,8 @@ job_id threadpool_queue_job(threadpool* tp, job_work work, void* data) { PROF
 
 job_id threadpool_queue_job(threadpool* tp, job j) { PROF
 
-	global_state->api->platform_aquire_mutex(&tp->queue_mutex, -1);
-
 	j.id = tp->next_job_id++;
 	queue_push(&tp->jobs, j);
-
-	global_state->api->platform_release_mutex(&tp->queue_mutex);
 
 	platform_semaphore jid_sem;
 	global_state->api->platform_create_semaphore(&jid_sem, 0, INT_MAX);
@@ -102,7 +96,6 @@ void threadpool_start_all(threadpool* tp) { PROF
 		FORARR(tp->data,
 
 			it->job_queue 	 	= &tp->jobs;
-			it->queue_mutex 	= &tp->queue_mutex;
 			it->jobs_semaphore 	= &tp->jobs_semaphore;
 			it->online 			= true;
 			it->alloc  			= tp->alloc;
@@ -127,28 +120,25 @@ i32 worker(void* data_) { PROF
 
 		job current_job;
 
-		global_state->api->platform_aquire_mutex(data->queue_mutex, -1);
-		if(!queue_empty(data->job_queue)) {
-			current_job = queue_pop(data->job_queue);
-		}
-		global_state->api->platform_release_mutex(data->queue_mutex);
+		if(queue_try_pop(data->job_queue, &current_job)) {
 
-		if(current_job.work) {
-			job_callback callback = (*current_job.work)(current_job.data);
+			if(current_job.work) {
+				job_callback callback = (*current_job.work)(current_job.data);
 
-			platform_event a;
-			a.type 			 = platform_event_type::async;
-			a.async.type 	 = platform_async_type::user;
-			a.async.user_id  = current_job.id;
-			a.async.callback = callback;
-			global_state->api->platform_queue_event(a);
+				platform_event a;
+				a.type 			 = platform_event_type::async;
+				a.async.type 	 = platform_async_type::user;
+				a.async.user_id  = current_job.id;
+				a.async.callback = callback;
+				global_state->api->platform_queue_event(a);
 
-			global_state->api->platform_aquire_mutex(data->running_mutex, -1);
-			platform_semaphore* sem = map_get(data->running, current_job.id);
-			global_state->api->platform_signal_semaphore(sem, INT_MAX);
-			global_state->api->platform_destroy_semaphore(sem);
-			map_erase(data->running, current_job.id);
-			global_state->api->platform_release_mutex(data->running_mutex);
+				global_state->api->platform_aquire_mutex(data->running_mutex, -1);
+				platform_semaphore* sem = map_get(data->running, current_job.id);
+				global_state->api->platform_signal_semaphore(sem, INT_MAX);
+				global_state->api->platform_destroy_semaphore(sem);
+				map_erase(data->running, current_job.id);
+				global_state->api->platform_release_mutex(data->running_mutex);
+			}
 		}
 
 		global_state->api->platform_wait_semaphore(data->jobs_semaphore, -1);

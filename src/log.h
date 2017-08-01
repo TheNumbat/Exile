@@ -41,22 +41,20 @@ struct log_out {
 struct log_thread_param {
 	bool running 							= false;
 	vector<log_out>* 	out					= null;
-	queue<log_message>*	message_queue		= null;
-	platform_mutex*		queue_mutex			= null;
+	con_queue<log_message>*	message_queue	= null;
 	platform_semaphore*	logging_semaphore 	= null;
 	allocator* alloc 						= null;
 	arena_allocator* scratch				= null;
 };
 
 struct log_manager {
-	vector<log_out> 	out;
-	queue<log_message> 	message_queue;
-	platform_mutex		queue_mutex;
-	platform_semaphore	logging_semaphore;
-	platform_thread		logging_thread;
-	log_thread_param 	thread_param;
-	allocator* alloc 	= null;
-	arena_allocator 	scratch; // reset whenever (on the logging thread) (currently every message)
+	vector<log_out> 		out;
+	con_queue<log_message> 	message_queue;
+	platform_semaphore		logging_semaphore;
+	platform_thread			logging_thread;
+	log_thread_param 		thread_param;
+	allocator* 				alloc = null;
+	arena_allocator 		scratch; // reset whenever (on the logging thread) (currently every message)
 };
 
 log_manager make_logger(allocator* a); // allocator must have suppress_messages set

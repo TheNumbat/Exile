@@ -2,7 +2,7 @@
 #pragma once
 
 struct evt_manager {
-	queue<platform_event> event_queue;
+	con_queue<platform_event> event_queue;
 };
 struct game_state;
 

@@ -146,13 +146,13 @@ T* queue_front(queue<T>* q) { PROF
 
 template<typename T>
 bool queue_empty(queue<T>* q) { PROF
-	return queue_len(q) == 0;
+	return q->start == q->end;
 }
 
 
 
 template<typename T>
-con_queue<T> make_con_queue(u32 capacity, allocator* a) {
+con_queue<T> make_con_queue(u32 capacity, allocator* a) { PROF
 
 	con_queue<T> ret;
 
@@ -176,13 +176,13 @@ con_queue<T> make_con_queue(u32 capacity, allocator* a) {
 //			  via interlockedFuncs
 
 template<typename T>
-con_queue<T> make_con_queue(u32 capacity) {
+con_queue<T> make_con_queue(u32 capacity) { PROF
 
 	return make_con_queue<T>(capacity, CURRENT_ALLOC());
 }
 
 template<typename T>
-void destroy_con_queue(con_queue<T>* q) {
+void destroy_con_queue(con_queue<T>* q) { PROF
 
 	destroy_queue((queue<T>*)q);	
 	global_state->api->platform_destroy_mutex(&q->mut);
@@ -190,7 +190,7 @@ void destroy_con_queue(con_queue<T>* q) {
 }
 
 template<typename T>
-T* queue_push(con_queue<T>* q, T value) {
+T* queue_push(con_queue<T>* q, T value) { PROF
 	global_state->api->platform_aquire_mutex(&q->mut, -1);
 	T* ret = queue_push((queue<T>*)q, value);
 	global_state->api->platform_release_mutex(&q->mut);
@@ -199,7 +199,7 @@ T* queue_push(con_queue<T>* q, T value) {
 }
 
 template<typename T>
-T queue_wait_pop(con_queue<T>* q) {
+T queue_wait_pop(con_queue<T>* q) { PROF
 	global_state->api->platform_wait_semaphore(&q->sem, -1);
 	T ret;
 	queue_try_pop(q, &ret);
@@ -207,7 +207,7 @@ T queue_wait_pop(con_queue<T>* q) {
 }
 
 template<typename T>
-bool queue_try_pop(con_queue<T>* q, T* out) {
+bool queue_try_pop(con_queue<T>* q, T* out) { PROF
 	global_state->api->platform_aquire_mutex(&q->mut, -1);
 	bool ret = queue_try_pop((queue<T>*)q, out);
 	global_state->api->platform_release_mutex(&q->mut);

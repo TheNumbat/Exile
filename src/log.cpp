@@ -4,8 +4,7 @@ log_manager make_logger(allocator* a) { PROF
 	log_manager ret;
 
 	ret.out = make_vector<log_out>(4, a);
-	ret.message_queue = make_queue<log_message>(8, a);
-	global_state->api->platform_create_mutex(&ret.queue_mutex, false);
+	ret.message_queue = make_con_queue<log_message>(8, a);
 	global_state->api->platform_create_semaphore(&ret.logging_semaphore, 0, INT32_MAX);
 
 	ret.alloc = a;
@@ -18,7 +17,6 @@ void logger_start(log_manager* log) { PROF
 
 	log->thread_param.out 				= &log->out;
 	log->thread_param.message_queue 	= &log->message_queue;
-	log->thread_param.queue_mutex		= &log->queue_mutex;
 	log->thread_param.logging_semaphore = &log->logging_semaphore;
 	log->thread_param.running 			= true;
 	log->thread_param.alloc 			= log->alloc;
@@ -37,7 +35,6 @@ void logger_stop(log_manager* log) { PROF
 
 	log->thread_param.out 				= null;
 	log->thread_param.message_queue 	= null;
-	log->thread_param.queue_mutex		= null;
 	log->thread_param.logging_semaphore = null;
 	log->thread_param.alloc 			= null;
 	log->thread_param.scratch			= null;
@@ -50,8 +47,7 @@ void destroy_logger(log_manager* log) { PROF
 	}
 
 	destroy_vector(&log->out);
-	destroy_queue(&log->message_queue);
-	global_state->api->platform_destroy_mutex(&log->queue_mutex);
+	destroy_con_queue(&log->message_queue);
 	global_state->api->platform_destroy_semaphore(&log->logging_semaphore);
 	DESTROY_ARENA(&log->scratch);
 	log->alloc = null;
@@ -105,28 +101,26 @@ void logger_print_header(log_manager* log, log_out out) { PROF
 template<typename... Targs> 
 void logger_msgf(log_manager* log, string fmt, log_level level, code_context context, Targs... args) { PROF_NOCS
 
-	log_message temp;
-
-	global_state->api->platform_aquire_mutex(&log->queue_mutex, -1);
-	log_message* lmsg = queue_push(&log->message_queue, temp);
+	log_message lmsg;
 
 	u32 msg_len = size_stringf(fmt, args...);
 	u32 arena_size = msg_len + this_thread_data.name.len + this_thread_data.call_stack_depth * sizeof(code_context);
-	arena_allocator msg_arena = MAKE_ARENA("msg", arena_size, log->alloc, true);
+	arena_allocator arena = MAKE_ARENA("msg", arena_size, log->alloc, true);
 
-	PUSH_ALLOC(&msg_arena) {
+	PUSH_ALLOC(&arena) {
 
-		lmsg->msg = make_stringf_len(msg_len, fmt, args...);
+		lmsg.msg = make_stringf_len(msg_len, fmt, args...);
 
-		lmsg->arena = msg_arena;
-		lmsg->publisher = context;
-		lmsg->level = level;
+		lmsg.arena = arena;
+		lmsg.publisher = context;
+		lmsg.level = level;
 
-		lmsg->call_stack = make_array_memory<code_context>(this_thread_data.call_stack_depth, malloc(sizeof(code_context) * this_thread_data.call_stack_depth));
-		lmsg->thread_name = make_copy_string(this_thread_data.name);
-		memcpy(this_thread_data.call_stack, lmsg->call_stack.memory, sizeof(code_context) * this_thread_data.call_stack_depth);
+		lmsg.call_stack = make_array_memory<code_context>(this_thread_data.call_stack_depth, malloc(sizeof(code_context) * this_thread_data.call_stack_depth));
+		lmsg.thread_name = make_copy_string(this_thread_data.name);
+		memcpy(this_thread_data.call_stack, lmsg.call_stack.memory, sizeof(code_context) * this_thread_data.call_stack_depth);
 
-		global_state->api->platform_release_mutex(&log->queue_mutex);
+		queue_push(&log->message_queue, lmsg);
+		
 		global_state->api->platform_signal_semaphore(&log->logging_semaphore, 1);
 
 		if(level == log_level::error) {
@@ -149,25 +143,24 @@ void logger_msgf(log_manager* log, string fmt, log_level level, code_context con
 
 void logger_msg(log_manager* log, string msg, log_level level, code_context context) { PROF_NOCS
 
-	log_message temp;
-
-	global_state->api->platform_aquire_mutex(&log->queue_mutex, -1);
-	log_message* lmsg = queue_push(&log->message_queue, temp);
+	log_message lmsg;
 
 	u32 arena_size = msg.len + this_thread_data.name.len + this_thread_data.call_stack_depth * sizeof(code_context);
-	lmsg->arena = MAKE_ARENA("msg", arena_size, log->alloc, true);
+	arena_allocator arena = MAKE_ARENA("msg", arena_size, log->alloc, true);
 
-	PUSH_ALLOC(&lmsg->arena) {
+	PUSH_ALLOC(&arena) {
 
-		lmsg->msg = make_copy_string(msg);
-		lmsg->publisher = context;
-		lmsg->level = level;
+		lmsg.msg = make_copy_string(msg);
+		lmsg.publisher = context;
+		lmsg.level = level;
+		lmsg.arena = arena;
 
-		lmsg->call_stack = make_array_memory<code_context>(this_thread_data.call_stack_depth, malloc(sizeof(code_context) * this_thread_data.call_stack_depth));
-		lmsg->thread_name = make_copy_string(this_thread_data.name);
-		memcpy(this_thread_data.call_stack, lmsg->call_stack.memory, sizeof(code_context) * this_thread_data.call_stack_depth);
+		lmsg.call_stack = make_array_memory<code_context>(this_thread_data.call_stack_depth, malloc(sizeof(code_context) * this_thread_data.call_stack_depth));
+		lmsg.thread_name = make_copy_string(this_thread_data.name);
+		memcpy(this_thread_data.call_stack, lmsg.call_stack.memory, sizeof(code_context) * this_thread_data.call_stack_depth);
 		
-		global_state->api->platform_release_mutex(&log->queue_mutex);
+		queue_push(&log->message_queue, lmsg);
+
 		global_state->api->platform_signal_semaphore(&log->logging_semaphore, 1);
 
 		if(level == log_level::error) {
@@ -278,17 +271,8 @@ i32 logging_thread(void* data_) { PROF_NOCS
 
 	while(data->running) {
 
-		for(;;) {
-		
-			global_state->api->platform_aquire_mutex(data->queue_mutex, -1);
-
-			if(queue_empty(data->message_queue)) {
-				global_state->api->platform_release_mutex(data->queue_mutex);
-				break;
-			}
-			log_message msg = queue_pop(data->message_queue);
-			
-			global_state->api->platform_release_mutex(data->queue_mutex);
+		log_message msg;
+		while(queue_try_pop(data->message_queue, &msg)) {
 
 			if(msg.msg.c_str != null) {
 				
