@@ -18,14 +18,17 @@ immediate to do:
 
 	data structures
 		list (same API as vector, but chunked & no-copy)
-		buffer
-		circular buffer (+add to queue)
+		buffer (fill and output to callback)
 		heap (+priority queue)
 		string builder
 		improve map storage/AOS
 			bit mask for occupancy
 			try separate vectors of keys, values, hashes (no map_element)
-		concurrent versions of most things
+		concurrent
+			queue
+			stack
+			vector
+			map
 
 	allocation stuff
 		pool allocator (growing arena)
@@ -100,7 +103,9 @@ immediate to do:
 		extra kerning pairs
 
 	platform
-		async file io?
+		async
+			File IO
+			Networking
 		Experiment with allocation systems
 			HeapAlloc/VirtualAlloc
 			TLSF (for arena-general allocations?)
