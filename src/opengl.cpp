@@ -30,9 +30,7 @@ void load_source(shader_source* source) { PROF
 
 	u32 len = global_state->api->platform_file_size(&source_file) + 1;
 	source->source = make_string(len, source->alloc);
-	global_state->api->platform_read_file(&source_file, (void*)source->source.c_str, len - 1);
-
-	source->source.c_str[len] = 0;
+	global_state->api->platform_read_file(&source_file, (void*)source->source.c_str, len);
 
 	global_state->api->platform_close_file(&source_file);
 

@@ -1136,7 +1136,7 @@ platform_error win32_create_window(platform_window* window, string title, u32 wi
 
 	platform_error ret;
 
-	window->title = make_copy_string(title, &win32_heap_alloc);
+	window->title = title;
 
 	HINSTANCE 	instance = GetModuleHandleA(null);
 	HGLRC 		gl_temp  = {};
@@ -1278,8 +1278,6 @@ platform_error win32_create_window(platform_window* window, string title, u32 wi
 platform_error win32_destroy_window(platform_window* window) {
 
 	platform_error ret;
-
-	free_string(window->title, &win32_heap_free);
 
 	if(wglDeleteContext(window->gl_context) == 0) {
 		ret.good = false;

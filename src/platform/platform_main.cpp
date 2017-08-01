@@ -60,7 +60,7 @@ int main() {
 	}
 
 	int idx = string_last_slash(exe_path);
-	exe_folder 	  = make_substring(exe_path, 0, idx, api.platform_heap_alloc);
+	exe_folder 	  = make_substring(exe_path, 0, idx + 1, api.platform_heap_alloc);
 	dll_path 	  = make_cat_string(exe_folder, string_literal("game.dll"), api.platform_heap_alloc);
 	temp_dll_path = make_cat_string(exe_folder, string_literal("game_temp.dll"), api.platform_heap_alloc);
 

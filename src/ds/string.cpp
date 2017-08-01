@@ -949,16 +949,18 @@ string make_copy_string(string src) { PROF
 	return ret;
 }
 
-// end inclusive
+// end exclusive
 string make_substring(string str, u32 start, u32 end) { PROF
 
 	string ret = make_string(end - start + 1);
 
 	ret.len = end - start + 1;
 
-	for(u32 i = 0, s_i = start; s_i <= end; i++, s_i++) {
+	for(u32 i = 0, s_i = start; s_i < end; i++, s_i++) {
 		ret.c_str[i] = str.c_str[s_i];
 	}
+
+	ret.c_str[ret.len - 1] = '\0';
 
 	return ret;
 }
