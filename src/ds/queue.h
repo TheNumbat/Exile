@@ -23,6 +23,7 @@ template<typename T> T* queue_front(queue<T>* q);
 template<typename T> T* queue_back(queue<T>* q);
 template<typename T> bool queue_empty(queue<T>* q);
 
+// TODO(max): Lock-free dequeue for threadpool
 
 // concurrent queue (reuses queue stuff)
 template<typename T>
