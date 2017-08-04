@@ -27,7 +27,6 @@ immediate to do:
 		concurrent
 			lock-free queue & stack
 				dequeue for work-stealing
-			stack
 			vector
 			map
 
