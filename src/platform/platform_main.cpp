@@ -26,8 +26,8 @@
 // here we treat game_state* as void* so this doesn't have to know anything about the game
 typedef void* (*startup_type)(platform_api*);
 typedef bool  (*main_loop_type)(void*);
-typedef void  (*shut_down_type)(platform_api*, void*);
-typedef main_loop_type on_reload_type;
+typedef void  (*shut_down_type)(void*);
+typedef void  (*on_reload_type)(platform_api*, void*);
 typedef main_loop_type on_unload_type;
 
 startup_type	start_up  = null;
@@ -91,7 +91,7 @@ int main() {
 		}
 	}
 
-	(*shut_down)(&api, game_state);
+	(*shut_down)(game_state);
 
 	api.platform_free_library(&game_dll);
 	
@@ -147,7 +147,7 @@ bool try_reload() {
 
 		if(!load_funcs()) return false;
 
-		(*on_reload)(game_state);
+		(*on_reload)(&api, game_state);
 	}
 
 	return true;

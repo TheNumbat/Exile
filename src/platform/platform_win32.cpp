@@ -1137,6 +1137,8 @@ platform_error win32_create_window(platform_window* window, string title, u32 wi
 	platform_error ret;
 
 	window->title = title;
+	window->w = width;
+	window->h = height;
 
 	HINSTANCE 	instance = GetModuleHandleA(null);
 	HGLRC 		gl_temp  = {};

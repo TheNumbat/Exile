@@ -110,7 +110,9 @@ void end_thread();
 #include "dbg.h"
 
 #include "game.h"
-static game_state* global_state = null;
+static platform_api* global_api = null; // global because it just represents a bunch of what should be free functions
+static log_manager*  global_log = null; // global to provide printf() like functionality everywhere
+static dbg_manager*  global_dbg = null; // not used yet -- global to provide profiling functionality everywhere
 
 #ifdef DO_PROF
 struct func_scope {

@@ -5,7 +5,7 @@ log_manager make_logger(allocator* a) { PROF
 
 	ret.out = make_vector<log_out>(4, a);
 	ret.message_queue = make_con_queue<log_message>(8, a);
-	global_state->api->platform_create_semaphore(&ret.logging_semaphore, 0, INT32_MAX);
+	global_api->platform_create_semaphore(&ret.logging_semaphore, 0, INT32_MAX);
 
 	ret.alloc = a;
 	ret.scratch = MAKE_ARENA("log scratch", KILOBYTES(512), a, true);
@@ -22,16 +22,16 @@ void logger_start(log_manager* log) { PROF
 	log->thread_param.alloc 			= log->alloc;
 	log->thread_param.scratch			= &log->scratch;
 
-	global_state->api->platform_create_thread(&log->logging_thread, &logging_thread, &log->thread_param, false);
+	global_api->platform_create_thread(&log->logging_thread, &logging_thread, &log->thread_param, false);
 }
 
 void logger_stop(log_manager* log) { PROF
 
 	log->thread_param.running = false;
 
-	global_state->api->platform_signal_semaphore(&log->logging_semaphore, 1);
-	global_state->api->platform_join_thread(&log->logging_thread, -1);
-	global_state->api->platform_destroy_thread(&log->logging_thread);
+	global_api->platform_signal_semaphore(&log->logging_semaphore, 1);
+	global_api->platform_join_thread(&log->logging_thread, -1);
+	global_api->platform_destroy_thread(&log->logging_thread);
 
 	log->thread_param.out 				= null;
 	log->thread_param.message_queue 	= null;
@@ -48,7 +48,7 @@ void destroy_logger(log_manager* log) { PROF
 
 	destroy_vector(&log->out);
 	destroy_con_queue(&log->message_queue);
-	global_state->api->platform_destroy_semaphore(&log->logging_semaphore);
+	global_api->platform_destroy_semaphore(&log->logging_semaphore);
 	DESTROY_ARENA(&log->scratch);
 	log->alloc = null;
 }
@@ -91,7 +91,7 @@ void logger_print_header(log_manager* log, log_out out) { PROF
 		
 		string header = make_stringf(string_literal("%-8 [%-36] [%-20] [%-5] %-2\r\n"), string_literal("time"), string_literal("thread/context"), string_literal("file:line"), string_literal("level"), string_literal("message"));
 
-		global_state->api->platform_write_file(&out.file, (void*)header.c_str, header.len - 1);
+		global_api->platform_write_file(&out.file, (void*)header.c_str, header.len - 1);
 
 		free_string(header);
 
@@ -121,21 +121,21 @@ void logger_msgf(log_manager* log, string fmt, log_level level, code_context con
 
 		queue_push(&log->message_queue, lmsg);
 		
-		global_state->api->platform_signal_semaphore(&log->logging_semaphore, 1);
+		global_api->platform_signal_semaphore(&log->logging_semaphore, 1);
 
 		if(level == log_level::error) {
-			if(global_state->api->platform_is_debugging()) {
+			if(global_api->platform_is_debugging()) {
 				__debugbreak();	
 			}
 #ifdef BLOCK_ON_ERROR
-			global_state->api->platform_join_thread(&log->logging_thread, -1);
+			global_api->platform_join_thread(&log->logging_thread, -1);
 #endif
 		}
 		if(level == log_level::fatal) {
-			if(global_state->api->platform_is_debugging()) {
+			if(global_api->platform_is_debugging()) {
 				__debugbreak();	
 			}
-			global_state->api->platform_join_thread(&log->logging_thread, -1);
+			global_api->platform_join_thread(&log->logging_thread, -1);
 		}
 
 	} POP_ALLOC();
@@ -161,21 +161,21 @@ void logger_msg(log_manager* log, string msg, log_level level, code_context cont
 		
 		queue_push(&log->message_queue, lmsg);
 
-		global_state->api->platform_signal_semaphore(&log->logging_semaphore, 1);
+		global_api->platform_signal_semaphore(&log->logging_semaphore, 1);
 
 		if(level == log_level::error) {
-			if(global_state->api->platform_is_debugging()) {
+			if(global_api->platform_is_debugging()) {
 				__debugbreak();	
 			}
 #ifdef BLOCK_ON_ERROR
-			global_state->api->platform_join_thread(&log->logging_thread, -1);
+			global_api->platform_join_thread(&log->logging_thread, -1);
 #endif
 		}
 		if(level == log_level::fatal) {
-			if(global_state->api->platform_is_debugging()) {
+			if(global_api->platform_is_debugging()) {
 				__debugbreak();	
 			}
-			global_state->api->platform_join_thread(&log->logging_thread, -1);
+			global_api->platform_join_thread(&log->logging_thread, -1);
 		}
 
 	} POP_ALLOC();
@@ -184,7 +184,7 @@ void logger_msg(log_manager* log, string msg, log_level level, code_context cont
 string log_fmt_msg_time(log_message* msg) { PROF
 
 	string time = make_string(9);
-	global_state->api->platform_get_timef(string_literal("hh:mm:ss"), &time);
+	global_api->platform_get_timef(string_literal("hh:mm:ss"), &time);
 
 	return time;
 }
@@ -267,7 +267,7 @@ i32 logging_thread(void* data_) { PROF_NOCS
 
 	log_thread_param* data = (log_thread_param*)data_;	
 
-	begin_thread(string_literal("log"), &global_state->suppressed_platform_allocator);
+	begin_thread(string_literal("log"), data->alloc);
 
 	while(data->running) {
 
@@ -286,7 +286,7 @@ i32 logging_thread(void* data_) { PROF_NOCS
 							if(it->custom) {
 								it->write(&msg);
 							} else {
-								global_state->api->platform_write_file(&it->file, (void*)output.c_str, output.len - 1);
+								global_api->platform_write_file(&it->file, (void*)output.c_str, output.len - 1);
 							}
 						}
 					)
@@ -305,7 +305,7 @@ i32 logging_thread(void* data_) { PROF_NOCS
 			}
 		}
 
-		global_state->api->platform_wait_semaphore(data->logging_semaphore, -1);
+		global_api->platform_wait_semaphore(data->logging_semaphore, -1);
 	}
 
 	end_thread();

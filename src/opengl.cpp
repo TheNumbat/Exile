@@ -19,22 +19,22 @@ void load_source(shader_source* source) { PROF
 	u32 itr = 0;
 	do {
 		itr++;
-		err = global_state->api->platform_create_file(&source_file, source->path, platform_file_open_op::existing);
+		err = global_api->platform_create_file(&source_file, source->path, platform_file_open_op::existing);
 	} while (err.error == PLATFORM_SHARING_ERROR && itr < 100000);
 
 	if(!err.good) {
 		LOG_ERR_F("Failed to load shader source %", source->path);
-		global_state->api->platform_close_file(&source_file);
+		global_api->platform_close_file(&source_file);
 		return;
 	}
 
-	u32 len = global_state->api->platform_file_size(&source_file) + 1;
+	u32 len = global_api->platform_file_size(&source_file) + 1;
 	source->source = make_string(len, source->alloc);
-	global_state->api->platform_read_file(&source_file, (void*)source->source.c_str, len);
+	global_api->platform_read_file(&source_file, (void*)source->source.c_str, len);
 
-	global_state->api->platform_close_file(&source_file);
+	global_api->platform_close_file(&source_file);
 
-	global_state->api->platform_get_file_attributes(&source->last_attrib, source->path);
+	global_api->platform_get_file_attributes(&source->last_attrib, source->path);
 }
 
 void destroy_source(shader_source* source) { PROF
@@ -46,9 +46,9 @@ bool refresh_source(shader_source* source) { PROF
 
 	platform_file_attributes new_attrib;
 	
-	global_state->api->platform_get_file_attributes(&new_attrib, source->path);	
+	global_api->platform_get_file_attributes(&new_attrib, source->path);	
 	
-	if(global_state->api->platform_test_file_written(&source->last_attrib, &new_attrib)) {
+	if(global_api->platform_test_file_written(&source->last_attrib, &new_attrib)) {
 
 		destroy_source(source);
 		load_source(source);
@@ -469,7 +469,7 @@ void ogl_set_uniforms(shader_program* prog, render_command* rc, render_command_l
 	prog->set_uniforms(prog, rc, rcl);
 }
 
-void ogl_render_command_list(ogl_manager* ogl, render_command_list* rcl) { PROF
+void ogl_render_command_list(platform_window* win, ogl_manager* ogl, render_command_list* rcl) { PROF
 
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
@@ -484,7 +484,7 @@ void ogl_render_command_list(ogl_manager* ogl, render_command_list* rcl) { PROF
 
 		ogl_set_uniforms(prog, cmd, rcl);
 
-		glViewport(0, 0, global_state->window_w, global_state->window_h);
+		glViewport(0, 0, win->w, win->h);
 
 		if(cmd->cmd == render_command_type::mesh_2d) {
 
@@ -507,7 +507,7 @@ void ogl_render_command_list(ogl_manager* ogl, render_command_list* rcl) { PROF
 }
 
 // temporary and inefficient texture render
-void ogl_dbg_render_texture_fullscreen(ogl_manager* ogl, texture_id id) { PROF
+void ogl_dbg_render_texture_fullscreen(platform_window* win, ogl_manager* ogl, texture_id id) { PROF
 
 	GLfloat data[] = {
 		-1.0f, -1.0f,	0.0f, 0.0f,
@@ -536,7 +536,7 @@ void ogl_dbg_render_texture_fullscreen(ogl_manager* ogl, texture_id id) { PROF
 	ogl_select_program(ogl, ogl->dbg_shader);
 	ogl_select_texture(ogl, id);
 
-	glViewport(0, 0, global_state->window_w, global_state->window_h);
+	glViewport(0, 0, win->w, win->h);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -625,38 +625,38 @@ void ogl_load_global_funcs() { PROF
 	glEnable(GL_DEBUG_OUTPUT);
 	glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 
-	glDebugMessageCallback 	= (glDebugMessageCallback_t) global_state->api->platform_get_glproc(string_literal("glDebugMessageCallback"));
-	glDebugMessageInsert 	= (glDebugMessageInsert_t) 	 global_state->api->platform_get_glproc(string_literal("glDebugMessageInsert"));
-	glDebugMessageControl 	= (glDebugMessageControl_t)  global_state->api->platform_get_glproc(string_literal("glDebugMessageControl"));
+	glDebugMessageCallback 	= (glDebugMessageCallback_t) global_api->platform_get_glproc(string_literal("glDebugMessageCallback"));
+	glDebugMessageInsert 	= (glDebugMessageInsert_t) 	 global_api->platform_get_glproc(string_literal("glDebugMessageInsert"));
+	glDebugMessageControl 	= (glDebugMessageControl_t)  global_api->platform_get_glproc(string_literal("glDebugMessageControl"));
 
-	glAttachShader       = (glAttachShader_t)  global_state->api->platform_get_glproc(string_literal("glAttachShader"));
-	glCompileShader      = (glCompileShader_t) global_state->api->platform_get_glproc(string_literal("glCompileShader"));
-	glCreateProgram      = (glCreateProgram_t) global_state->api->platform_get_glproc(string_literal("glCreateProgram"));
-	glCreateShader       = (glCreateShader_t)  global_state->api->platform_get_glproc(string_literal("glCreateShader"));
-	glDeleteProgram      = (glDeleteProgram_t) global_state->api->platform_get_glproc(string_literal("glDeleteProgram"));
-	glDeleteShader       = (glDeleteShader_t)  global_state->api->platform_get_glproc(string_literal("glDeleteShader"));
-	glLinkProgram        = (glLinkProgram_t)   global_state->api->platform_get_glproc(string_literal("glLinkProgram"));
-	glShaderSource       = (glShaderSource_t)  global_state->api->platform_get_glproc(string_literal("glShaderSource"));
-	glUseProgram         = (glUseProgram_t)    global_state->api->platform_get_glproc(string_literal("glUseProgram"));
-	glGetUniformLocation = (glGetUniformLocation_t) global_state->api->platform_get_glproc(string_literal("glGetUniformLocation"));
-	glUniformMatrix4fv   = (glUniformMatrix4fv_t)   global_state->api->platform_get_glproc(string_literal("glUniformMatrix4fv"));
+	glAttachShader       = (glAttachShader_t)  global_api->platform_get_glproc(string_literal("glAttachShader"));
+	glCompileShader      = (glCompileShader_t) global_api->platform_get_glproc(string_literal("glCompileShader"));
+	glCreateProgram      = (glCreateProgram_t) global_api->platform_get_glproc(string_literal("glCreateProgram"));
+	glCreateShader       = (glCreateShader_t)  global_api->platform_get_glproc(string_literal("glCreateShader"));
+	glDeleteProgram      = (glDeleteProgram_t) global_api->platform_get_glproc(string_literal("glDeleteProgram"));
+	glDeleteShader       = (glDeleteShader_t)  global_api->platform_get_glproc(string_literal("glDeleteShader"));
+	glLinkProgram        = (glLinkProgram_t)   global_api->platform_get_glproc(string_literal("glLinkProgram"));
+	glShaderSource       = (glShaderSource_t)  global_api->platform_get_glproc(string_literal("glShaderSource"));
+	glUseProgram         = (glUseProgram_t)    global_api->platform_get_glproc(string_literal("glUseProgram"));
+	glGetUniformLocation = (glGetUniformLocation_t) global_api->platform_get_glproc(string_literal("glGetUniformLocation"));
+	glUniformMatrix4fv   = (glUniformMatrix4fv_t)   global_api->platform_get_glproc(string_literal("glUniformMatrix4fv"));
 
-	glGenerateMipmap  = (glGenerateMipmap_t)  global_state->api->platform_get_glproc(string_literal("glGenerateMipmap"));
-	glActiveTexture   = (glActiveTexture_t)   global_state->api->platform_get_glproc(string_literal("glActiveTexture"));
-	glCreateTextures  = (glCreateTextures_t)  global_state->api->platform_get_glproc(string_literal("glCreateTextures"));
-	glBindTextureUnit = (glBindTextureUnit_t) global_state->api->platform_get_glproc(string_literal("glBindTextureUnit"));
+	glGenerateMipmap  = (glGenerateMipmap_t)  global_api->platform_get_glproc(string_literal("glGenerateMipmap"));
+	glActiveTexture   = (glActiveTexture_t)   global_api->platform_get_glproc(string_literal("glActiveTexture"));
+	glCreateTextures  = (glCreateTextures_t)  global_api->platform_get_glproc(string_literal("glCreateTextures"));
+	glBindTextureUnit = (glBindTextureUnit_t) global_api->platform_get_glproc(string_literal("glBindTextureUnit"));
 
-	glBindVertexArray    = (glBindVertexArray_t)    global_state->api->platform_get_glproc(string_literal("glBindVertexArray"));
-	glDeleteVertexArrays = (glDeleteVertexArrays_t) global_state->api->platform_get_glproc(string_literal("glDeleteVertexArrays"));
-	glGenVertexArrays    = (glGenVertexArrays_t)    global_state->api->platform_get_glproc(string_literal("glGenVertexArrays"));
+	glBindVertexArray    = (glBindVertexArray_t)    global_api->platform_get_glproc(string_literal("glBindVertexArray"));
+	glDeleteVertexArrays = (glDeleteVertexArrays_t) global_api->platform_get_glproc(string_literal("glDeleteVertexArrays"));
+	glGenVertexArrays    = (glGenVertexArrays_t)    global_api->platform_get_glproc(string_literal("glGenVertexArrays"));
 
-	glBindBuffer    = (glBindBuffer_t)    global_state->api->platform_get_glproc(string_literal("glBindBuffer"));
-	glDeleteBuffers = (glDeleteBuffers_t) global_state->api->platform_get_glproc(string_literal("glDeleteBuffers"));
-	glGenBuffers    = (glGenBuffers_t)    global_state->api->platform_get_glproc(string_literal("glGenBuffers"));
-	glBufferData	= (glBufferData_t)    global_state->api->platform_get_glproc(string_literal("glBufferData"));
+	glBindBuffer    = (glBindBuffer_t)    global_api->platform_get_glproc(string_literal("glBindBuffer"));
+	glDeleteBuffers = (glDeleteBuffers_t) global_api->platform_get_glproc(string_literal("glDeleteBuffers"));
+	glGenBuffers    = (glGenBuffers_t)    global_api->platform_get_glproc(string_literal("glGenBuffers"));
+	glBufferData	= (glBufferData_t)    global_api->platform_get_glproc(string_literal("glBufferData"));
 
-	glVertexAttribPointer 	  = (glVertexAttribPointer_t) 	  global_state->api->platform_get_glproc(string_literal("glVertexAttribPointer"));
-	glEnableVertexAttribArray = (glEnableVertexAttribArray_t) global_state->api->platform_get_glproc(string_literal("glEnableVertexAttribArray"));
+	glVertexAttribPointer 	  = (glVertexAttribPointer_t) 	  global_api->platform_get_glproc(string_literal("glVertexAttribPointer"));
+	glEnableVertexAttribArray = (glEnableVertexAttribArray_t) global_api->platform_get_glproc(string_literal("glEnableVertexAttribArray"));
 	
 	glDebugMessageCallback(debug_proc, null);
 	glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, null, GL_TRUE);

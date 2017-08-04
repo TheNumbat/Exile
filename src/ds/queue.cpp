@@ -156,8 +156,8 @@ con_queue<T> make_con_queue(u32 capacity, allocator* a) { PROF
 
 	con_queue<T> ret;
 
-	global_state->api->platform_create_semaphore(&ret.sem, 0, INT_MAX);
-	global_state->api->platform_create_mutex(&ret.mut, false);
+	global_api->platform_create_semaphore(&ret.sem, 0, INT_MAX);
+	global_api->platform_create_mutex(&ret.mut, false);
 
 	ret.alloc = a;
 	ret.capacity = capacity;
@@ -185,22 +185,22 @@ template<typename T>
 void destroy_con_queue(con_queue<T>* q) { PROF
 
 	destroy_queue((queue<T>*)q);	
-	global_state->api->platform_destroy_mutex(&q->mut);
-	global_state->api->platform_destroy_semaphore(&q->sem);
+	global_api->platform_destroy_mutex(&q->mut);
+	global_api->platform_destroy_semaphore(&q->sem);
 }
 
 template<typename T>
 T* queue_push(con_queue<T>* q, T value) { PROF
-	global_state->api->platform_aquire_mutex(&q->mut, -1);
+	global_api->platform_aquire_mutex(&q->mut, -1);
 	T* ret = queue_push((queue<T>*)q, value);
-	global_state->api->platform_release_mutex(&q->mut);
-	global_state->api->platform_signal_semaphore(&q->sem, 1);
+	global_api->platform_release_mutex(&q->mut);
+	global_api->platform_signal_semaphore(&q->sem, 1);
 	return ret;
 }
 
 template<typename T>
 T queue_wait_pop(con_queue<T>* q) { PROF
-	global_state->api->platform_wait_semaphore(&q->sem, -1);
+	global_api->platform_wait_semaphore(&q->sem, -1);
 	T ret;
 	queue_try_pop(q, &ret);
 	return ret;
@@ -208,8 +208,8 @@ T queue_wait_pop(con_queue<T>* q) { PROF
 
 template<typename T>
 bool queue_try_pop(con_queue<T>* q, T* out) { PROF
-	global_state->api->platform_aquire_mutex(&q->mut, -1);
+	global_api->platform_aquire_mutex(&q->mut, -1);
 	bool ret = queue_try_pop((queue<T>*)q, out);
-	global_state->api->platform_release_mutex(&q->mut);
+	global_api->platform_release_mutex(&q->mut);
 	return ret;
 }

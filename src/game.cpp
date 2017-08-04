@@ -4,8 +4,9 @@
 extern "C" game_state* start_up(platform_api* api) { PROF 
 
 	game_state* state = (game_state*)api->platform_heap_alloc(sizeof(game_state));
-	state->api = api;
-	global_state = state;
+	global_api = api;
+	global_log = &state->log;
+	global_dbg = &state->dbg;
 
 	state->default_platform_allocator = MAKE_PLATFORM_ALLOCATOR("default");
 	state->suppressed_platform_allocator = MAKE_PLATFORM_ALLOCATOR("default/suppress");
@@ -13,7 +14,6 @@ extern "C" game_state* start_up(platform_api* api) { PROF
 
 	begin_thread(string_literal("main"), &state->suppressed_platform_allocator);
 
-	state->api = api;
 	state->log_a = MAKE_PLATFORM_ALLOCATOR("log");
 	state->log_a.suppress_messages = true;
 	state->log = make_logger(&state->log_a);
@@ -55,7 +55,7 @@ extern "C" game_state* start_up(platform_api* api) { PROF
 		LOG_INFO("Starting debug system...");
 		state->dbg_a = MAKE_PLATFORM_ALLOCATOR("dbg");
 		state->dbg_a.suppress_messages = true;
-		state->dbg = make_dbg_manager(&state->dbg_a);
+		state->dbg = make_dbg_manager(&state->log, &state->dbg_a);
 		return null;
 	}, state);
 
@@ -70,8 +70,6 @@ extern "C" game_state* start_up(platform_api* api) { PROF
 
 	LOG_INFO("Creating window");
 	platform_error err = api->platform_create_window(&state->window, string_literal("CaveGame"), 1280, 720);
-	state->window_w = 1280;
-	state->window_h = 720;
 
 	if (!err.good) {
 		LOG_FATAL_F("Failed to create window, error: %", err.error);
@@ -116,14 +114,14 @@ extern "C" bool main_loop(game_state* state) { PROF
 		
 		gui_begin_frame(&state->gui, input);
 
-		render_debug_gui(state);
+		render_debug_gui(&state->window, &state->dbg);
 
-		gui_end_frame(&state->ogl);
+		gui_end_frame(&state->window, &state->ogl);
 
 	} POP_ALLOC();
 	RESET_ARENA(&state->transient_arena);
 
-	state->api->platform_swap_buffers(&state->window);
+	global_api->platform_swap_buffers(&state->window);
 
 #ifdef _DEBUG
 	ogl_try_reload_programs(&state->ogl);
@@ -135,7 +133,7 @@ extern "C" bool main_loop(game_state* state) { PROF
 	return state->running;
 }
 
-extern "C" void shut_down(platform_api* api, game_state* state) { PROF
+extern "C" void shut_down(game_state* state) { PROF
 
 	LOG_INFO("Beginning shutdown...");
 
@@ -153,7 +151,7 @@ extern "C" void shut_down(platform_api* api, game_state* state) { PROF
 	destroy_threadpool(&state->thread_pool);
 
 	LOG_DEBUG("Destroying window");
-	platform_error err = api->platform_destroy_window(&state->window);
+	platform_error err = global_api->platform_destroy_window(&state->window);
 	if(!err.good) {
 		LOG_ERR_F("Failed to destroy window, error: %", err.error);	
 	}
@@ -172,12 +170,15 @@ extern "C" void shut_down(platform_api* api, game_state* state) { PROF
 	
 	end_thread();
 
-	api->platform_heap_free(state);
+	global_api->platform_heap_free(state);
 }
 
-extern "C" void on_reload(game_state* state) { PROF
+extern "C" void on_reload(platform_api* api, game_state* state) { PROF
 
-	global_state = state;
+	global_api = api;
+	global_log = &state->log;
+	global_dbg = &state->dbg;
+
 	ogl_load_global_funcs();
 
 	begin_thread(string_literal("main"), &state->suppressed_platform_allocator);

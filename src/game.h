@@ -2,8 +2,7 @@
 #pragma once
 
 struct game_state {
-	platform_api* api = null;
-	
+
 	arena_allocator 	transient_arena;
 	platform_allocator 	default_platform_allocator, suppressed_platform_allocator;
 
@@ -19,7 +18,6 @@ struct game_state {
 	platform_allocator log_a, ogl_a, gui_a, dbg_a, evt_a, thread_pool_a; // idk about this
 
 	platform_window window 	= {};
-	i32 window_w = 0, window_h = 0;
 
 	// testing
 	asset_store default_store;

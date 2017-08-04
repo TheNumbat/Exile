@@ -175,7 +175,7 @@ void gui_add_font(ogl_manager* ogl, gui_manager* gui, string asset_name, asset_s
 void gui_reload_fonts(ogl_manager* ogl, gui_manager* gui);
 
 void gui_begin_frame(gui_manager* gui, gui_input_state input);
-void gui_end_frame(ogl_manager* ogl);
+void gui_end_frame(platform_window* win, ogl_manager* ogl);
 gui_font* gui_select_best_font_scale();
 
 void gui_push_offset(v2 offset);
@@ -187,7 +187,7 @@ bool gui_begin(string name, r2 first_size = R2f(40,40,0,0), f32 first_alpha = 0,
 bool gui_carrot_toggle(string name, bool initial = false, v2 pos = V2f(0,0), bool* toggleme = null);
 void gui_box_select(i32* selected, i32 num, v2 pos, ...);
 
-void gui_log_wnd(string name, vector<log_message>* cache);
+void gui_log_wnd(platform_window* win, string name, vector<log_message>* cache);
 
 // these take into account only gscale & win_ignorescale - window + offset transforms occur in gui_ functions
 void push_windowhead(gui_window_state* win);

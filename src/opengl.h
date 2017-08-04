@@ -192,8 +192,8 @@ void ogl_destroy_texture(ogl_manager* ogl, texture_id id);
 context_id ogl_add_draw_context(ogl_manager* ogl, void (*set_atribs)(ogl_draw_context* dc));
 ogl_draw_context* ogl_select_draw_context(ogl_manager* ogl, context_id id);
 
-void ogl_dbg_render_texture_fullscreen(ogl_manager* ogl, texture_id id);
-void ogl_render_command_list(ogl_manager* ogl, render_command_list* rcl);
+void ogl_dbg_render_texture_fullscreen(platform_window* win, ogl_manager* ogl, texture_id id);
+void ogl_render_command_list(platform_window* win, ogl_manager* ogl, render_command_list* rcl);
 
 shader_source make_source(string path, allocator* a);
 void load_source(shader_source* source);

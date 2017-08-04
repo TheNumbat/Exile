@@ -118,8 +118,8 @@ con_stack<T> make_con_stack(u32 capacity, allocator* a) {
 
 	con_stack<T> ret;
 	ret.contents = make_vector(capacity, a);
-	global_state->api->platform_create_mutex(&ret.mut, false);
-	global_state->api->platform_create_semaphore(&ret.sem, 0, INT_MAX);
+	global_api->platform_create_mutex(&ret.mut, false);
+	global_api->platform_create_semaphore(&ret.sem, 0, INT_MAX);
 
 	return ret;
 }
@@ -134,24 +134,24 @@ template<typename T>
 void destroy_con_stack(con_stack<T>* s) {
 
 	destroy_vector(&s->contents);
-	global_state->api->platform_destroy_mutex(&s->mut);
-	global_state->api->platform_destroy_semaphore(&s->sem);
+	global_api->platform_destroy_mutex(&s->mut);
+	global_api->platform_destroy_semaphore(&s->sem);
 }
 
 template<typename T>
 T* stack_push(con_stack<T>* s, T value) {
 
-	global_state->api->platform_aquire_mutex(&s->mut, -1);
+	global_api->platform_aquire_mutex(&s->mut, -1);
 	T* ret = stack_push((stack<T>*)s, value);
-	global_state->api->platform_release_mutex(&s->mut);
-	global_state->api->platform_signal_semaphore(&s->sem, 1);
+	global_api->platform_release_mutex(&s->mut);
+	global_api->platform_signal_semaphore(&s->sem, 1);
 	return ret;
 }
 
 template<typename T>
 T stack_wait_pop(con_stack<T>* s) {
 
-	global_state->api->platform_wait_semaphore(&s->sem, -1);
+	global_api->platform_wait_semaphore(&s->sem, -1);
 	T ret;
 	stack_try_pop(s, &ret);
 	return ret;
@@ -160,8 +160,8 @@ T stack_wait_pop(con_stack<T>* s) {
 template<typename T>
 bool stack_try_pop(con_stack<T>* s, T* out) {
 
-	global_state->api->platform_aquire_mutex(&s->mut, -1);
+	global_api->platform_aquire_mutex(&s->mut, -1);
 	bool ret = stack_try_pop((stack<T>*)s, out);
-	global_state->api->platform_release_mutex(&s->mut);
+	global_api->platform_release_mutex(&s->mut);
 	return ret;
 }

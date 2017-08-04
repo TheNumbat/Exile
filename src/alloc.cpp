@@ -67,9 +67,9 @@ inline platform_allocator make_platform_allocator(string name, code_context cont
 
 	platform_allocator ret;
 	
-	ret.platform_allocate 	= global_state->api->platform_heap_alloc;
-	ret.platform_free 		= global_state->api->platform_heap_free;
-	ret.platform_reallocate = global_state->api->platform_heap_realloc;
+	ret.platform_allocate 	= global_api->platform_heap_alloc;
+	ret.platform_free 		= global_api->platform_heap_free;
+	ret.platform_reallocate = global_api->platform_heap_realloc;
 	ret.context  			= context;
 	ret.allocate_ 			= &platform_allocate;
 	ret.free_ 				= &platform_free;

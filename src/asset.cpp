@@ -86,9 +86,9 @@ bool try_reload_asset_store(asset_store* as) { PROF
 
 	platform_file_attributes new_attrib;
 	
-	global_state->api->platform_get_file_attributes(&new_attrib, as->path);	
+	global_api->platform_get_file_attributes(&new_attrib, as->path);	
 	
-	if(global_state->api->platform_test_file_written(&as->last, &new_attrib)) {
+	if(global_api->platform_test_file_written(&as->last, &new_attrib)) {
 
 		PUSH_ALLOC(as->alloc) {
 
@@ -117,27 +117,27 @@ void load_asset_store(asset_store* as, string path) { PROF
 	platform_error err;
 	do {
 		itr++;
-		err = global_state->api->platform_create_file(&store, path, platform_file_open_op::existing);
+		err = global_api->platform_create_file(&store, path, platform_file_open_op::existing);
 	} while(err.error == PLATFORM_SHARING_ERROR && itr < 100000);
 
 	if(!err.good) {
 		LOG_ERR_F("Failed to open asset store %, error %", path, err.error);
-		global_state->api->platform_close_file(&store);
+		global_api->platform_close_file(&store);
 		return;
 	}
 
 	as->path = path;
-	global_state->api->platform_get_file_attributes(&as->last, path);
+	global_api->platform_get_file_attributes(&as->last, path);
 
-	u32 store_size = global_state->api->platform_file_size(&store);
+	u32 store_size = global_api->platform_file_size(&store);
 
 	PUSH_ALLOC(as->alloc) {
 
 		as->store = malloc(store_size);
 		u8* store_mem = (u8*)as->store;
 
-		global_state->api->platform_read_file(&store, (void*)store_mem, store_size);
-		global_state->api->platform_close_file(&store);
+		global_api->platform_read_file(&store, (void*)store_mem, store_size);
+		global_api->platform_close_file(&store);
 
 		asset_file_header* header = (asset_file_header*)store_mem;
 		file_asset_header* current_asset = (file_asset_header*)(store_mem + sizeof(asset_file_header));

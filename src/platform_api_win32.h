@@ -17,6 +17,7 @@ u32 PLATFORM_SHARING_ERROR = 32;
 struct platform_window {
 	// Transparent
 	string title;
+	i32 w = 0, h = 0;
 
 	// Opaque block, do not use outside of platform code
 	WNDCLASSEX window_class				= {};

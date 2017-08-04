@@ -10,7 +10,7 @@ evt_manager make_evt_manager(allocator* a) { PROF
 
 void start_evt_manger(evt_manager* em) { PROF
 
-	global_state->api->platform_set_queue_callback(&event_enqueue, &em->event_queue);
+	global_api->platform_set_queue_callback(&event_enqueue, &em->event_queue);
 }
 
 void destroy_evt_manager(evt_manager* em) { PROF
@@ -20,7 +20,7 @@ void destroy_evt_manager(evt_manager* em) { PROF
 
 gui_input_state run_events(game_state* state) { PROF
 
-	global_state->api->platform_pump_events(&global_state->window);
+	global_api->platform_pump_events(&state->window);
 	gui_input_state ret = state->gui.input;
 	ret.scroll = 0;
 
@@ -46,20 +46,20 @@ gui_input_state run_events(game_state* state) { PROF
 
 		// Window Resize
 		if(evt.type == platform_event_type::window && evt.window.op == platform_windowop::resized) {
-			global_state->window_w = evt.window.x;
-			global_state->window_h = evt.window.y;
+			state->window.w = evt.window.x;
+			state->window.h = evt.window.y;
 		}
 		else if(evt.type == platform_event_type::window && evt.window.op == platform_windowop::maximized) {
-			global_state->window_w = evt.window.x;
-			global_state->window_h = evt.window.y;
+			state->window.w = evt.window.x;
+			state->window.h = evt.window.y;
 		}
 
 		// Debug stuff
 		if(evt.type == platform_event_type::key && evt.key.flags & (u16)platform_keyflag::release && evt.key.code == platform_keycode::plus) {
-			global_state->gui.style.gscale *= 1.5f;
+			state->gui.style.gscale *= 1.5f;
 		}
 		if(evt.type == platform_event_type::key && evt.key.flags & (u16)platform_keyflag::release && evt.key.code == platform_keycode::minus) {
-			global_state->gui.style.gscale /= 1.5f;
+			state->gui.style.gscale /= 1.5f;
 		}
 
 		// GUI: mouse

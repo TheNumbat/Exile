@@ -98,7 +98,7 @@ void gui_begin_frame(gui_manager* gui, gui_input_state input) { PROF
 	)
 }
 
-void gui_end_frame(ogl_manager* ogl) { PROF
+void gui_end_frame(platform_window* win, ogl_manager* ogl) { PROF
 
 	if(!ggui->input.lclick && !ggui->input.rclick && !ggui->input.mclick && !ggui->input.ldbl) {
 		if(ggui->active != gui_active_state::captured) {
@@ -119,10 +119,10 @@ void gui_end_frame(ogl_manager* ogl) { PROF
 		render_add_command(&rcl, cmd);
 	)
 
-	rcl.proj = ortho(0, (f32)global_state->window_w, (f32)global_state->window_h, 0, -1, 1);
+	rcl.proj = ortho(0, (f32)win->w, (f32)win->h, 0, -1, 1);
 	sort_render_commands(&rcl);
 
-	ogl_render_command_list(ogl, &rcl);
+	ogl_render_command_list(win, ogl, &rcl);
 	destroy_command_list(&rcl);
 
 	FORMAP(ggui->window_state_data,
@@ -318,14 +318,14 @@ bool gui_begin(string name, r2 first_size, f32 first_alpha, gui_window_flags fla
 	return window->active;
 }
 
-void gui_log_wnd(string name, vector<log_message>* cache) { PROF
+void gui_log_wnd(platform_window* win, string name, vector<log_message>* cache) { PROF
 
 	f32 height = ggui->style.log_win_lines * ggui->style.font + 2 * ggui->style.font + ggui->style.title_padding + ggui->style.win_margin.x + ggui->style.win_margin.w + 7.0f;
-	gui_begin(name, R2(0.0f, global_state->window_h - height, (f32)global_state->window_w, height), 0.5f, (u16)window_flags::nowininput | (u16)window_flags::nohead | (u16)window_flags::ignorescale, true);
+	gui_begin(name, R2(0.0f, win->h - height, (f32)win->w, height), 0.5f, (u16)window_flags::nowininput | (u16)window_flags::nohead | (u16)window_flags::ignorescale, true);
 	gui_pop_offset();
 
 	gui_window_state* current = ggui->current;
-	current->rect = R2(0.0f, global_state->window_h - height, (f32)global_state->window_w, height);
+	current->rect = R2(0.0f, win->h - height, (f32)win->w, height);
 
 	guiid id;
 	id.base = *stack_top(&current->id_hash_stack);
