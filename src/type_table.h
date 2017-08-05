@@ -79,11 +79,11 @@ struct _type_info {
 thread_local map<type_id,_type_info> type_table;
 
 #define TYPEINFO(...) _get_type_info<__VA_ARGS__>::get_type_info()
-#define TYPEINFO_H(h) (h ? map_try_get(&type_table, h) : 0)
+#define TYPEINFO_H(h) (h ? type_table.try_get(h) : 0)
 template<typename T>
 struct _get_type_info { 
 	static _type_info* get_type_info() {
-		return map_try_get(&type_table, (type_id)typeid(T).hash_code());
+		return type_table.try_get((type_id)typeid(T).hash_code());
 	}
 };
 
@@ -91,7 +91,7 @@ template<typename T>
 struct _get_type_info<T*> {
 	static _type_info* get_type_info() {
 
-		_type_info* info = map_try_get(&type_table, (type_id)typeid(T*).hash_code());
+		_type_info* info = type_table.try_get((type_id)typeid(T*).hash_code());
 		if(info) return info;
 
 		_type_info ptr_t;
@@ -110,14 +110,14 @@ struct _get_type_info<T*> {
 		}
 		
 		ptr_t.hash = (type_id)typeid(T*).hash_code();
-		return map_insert(&type_table, ptr_t.hash, ptr_t, false);
+		return type_table.insert(ptr_t.hash, ptr_t, false);
 	}
 };
 
 void make_meta_info();
 void make_type_table(allocator* alloc) {
 
-	type_table = make_map<type_id,_type_info>(1024, alloc, &hash_u64);
+	type_table = map<type_id,_type_info>::make(1024, alloc, &hash_u64);
 
 	{
 		_type_info void_t;
@@ -126,7 +126,7 @@ void make_type_table(allocator* alloc) {
 		void_t.name 			= string_literal("void");
 		void_t._int.is_signed 	= true;
 		void_t.hash = (type_id)typeid(void).hash_code();
-		map_insert(&type_table, void_t.hash, void_t, false);
+		type_table.insert(void_t.hash, void_t, false);
 	}
 
 	{
@@ -136,7 +136,7 @@ void make_type_table(allocator* alloc) {
 		char_t.name 			= string_literal("char");
 		char_t._int.is_signed 	= true;
 		char_t.hash = (type_id)typeid(char).hash_code();
-		map_insert(&type_table, char_t.hash, char_t, false);
+		type_table.insert(char_t.hash, char_t, false);
 	}
 
 	{
@@ -146,7 +146,7 @@ void make_type_table(allocator* alloc) {
 		u8_t.name 			= string_literal("u8");
 		u8_t._int.is_signed = false;
 		u8_t.hash = (type_id)typeid(u8).hash_code();
-		map_insert(&type_table, u8_t.hash, u8_t, false);
+		type_table.insert(u8_t.hash, u8_t, false);
 	}
 
 	{
@@ -156,7 +156,7 @@ void make_type_table(allocator* alloc) {
 		i8_t.name 			= string_literal("i8");
 		i8_t._int.is_signed = true;
 		i8_t.hash = (type_id)typeid(i8).hash_code();
-		map_insert(&type_table, i8_t.hash, i8_t, false);
+		type_table.insert(i8_t.hash, i8_t, false);
 	}
 
 	{
@@ -166,7 +166,7 @@ void make_type_table(allocator* alloc) {
 		u16_t.name 				= string_literal("u16");
 		u16_t._int.is_signed 	= false;
 		u16_t.hash = (type_id)typeid(u16).hash_code();
-		map_insert(&type_table, u16_t.hash, u16_t, false);
+		type_table.insert(u16_t.hash, u16_t, false);
 	}
 
 	{
@@ -176,7 +176,7 @@ void make_type_table(allocator* alloc) {
 		i16_t.name 				= string_literal("i16");
 		i16_t._int.is_signed 	= true;
 		i16_t.hash = (type_id)typeid(i16).hash_code();
-		map_insert(&type_table, i16_t.hash, i16_t, false);
+		type_table.insert(i16_t.hash, i16_t, false);
 	}
 
 	{
@@ -186,7 +186,7 @@ void make_type_table(allocator* alloc) {
 		u32_t.name 				= string_literal("u32");
 		u32_t._int.is_signed 	= false;
 		u32_t.hash = (type_id)typeid(u32).hash_code();
-		map_insert(&type_table, u32_t.hash, u32_t, false);
+		type_table.insert(u32_t.hash, u32_t, false);
 	}
 
 	{
@@ -196,7 +196,7 @@ void make_type_table(allocator* alloc) {
 		i32_t.name 				= string_literal("i32");
 		i32_t._int.is_signed 	= true;
 		i32_t.hash = (type_id)typeid(i32).hash_code();
-		map_insert(&type_table, i32_t.hash, i32_t, false);
+		type_table.insert(i32_t.hash, i32_t, false);
 	}
 
 	{
@@ -206,7 +206,7 @@ void make_type_table(allocator* alloc) {
 		u64_t.name 				= string_literal("u64");
 		u64_t._int.is_signed 	= false;
 		u64_t.hash = (type_id)typeid(u64).hash_code();
-		map_insert(&type_table, u64_t.hash, u64_t, false);
+		type_table.insert(u64_t.hash, u64_t, false);
 	}
 
 	{
@@ -216,7 +216,7 @@ void make_type_table(allocator* alloc) {
 		i64_t.name 				= string_literal("i64");
 		i64_t._int.is_signed 	= true;
 		i64_t.hash = (type_id)typeid(i64).hash_code();
-		map_insert(&type_table, i64_t.hash, i64_t, false);
+		type_table.insert(i64_t.hash, i64_t, false);
 	}
 
 	{
@@ -226,7 +226,7 @@ void make_type_table(allocator* alloc) {
 		f32_t.name 				= string_literal("f32");
 		f32_t._int.is_signed 	= true;
 		f32_t.hash = (type_id)typeid(f32).hash_code();
-		map_insert(&type_table, f32_t.hash, f32_t, false);
+		type_table.insert(f32_t.hash, f32_t, false);
 	}
 
 	{
@@ -236,7 +236,7 @@ void make_type_table(allocator* alloc) {
 		f64_t.name 				= string_literal("f64");
 		f64_t._int.is_signed 	= true;
 		f64_t.hash = (type_id)typeid(f64).hash_code();
-		map_insert(&type_table, f64_t.hash, f64_t, false);
+		type_table.insert(f64_t.hash, f64_t, false);
 	}
 
 	{
@@ -246,7 +246,7 @@ void make_type_table(allocator* alloc) {
 		bool_t.name 			= string_literal("bool");
 		bool_t._int.is_signed 	= true;
 		bool_t.hash = (type_id)typeid(bool).hash_code();
-		map_insert(&type_table, bool_t.hash, bool_t, false);
+		type_table.insert(bool_t.hash, bool_t, false);
 	}
 
 	{
@@ -255,14 +255,14 @@ void make_type_table(allocator* alloc) {
 		string_t.size			= sizeof(string);
 		string_t.name 			= string_literal("string");
 		string_t.hash = (type_id)typeid(string).hash_code();
-		map_insert(&type_table, string_t.hash, string_t, false);
+		type_table.insert(string_t.hash, string_t, false);
 	}
 
 	make_meta_info();
 }
 
 void destroy_type_table() {
-	destroy_map(&type_table);	
+	type_table.destroy();	
 }
 
 // we can ignore typedefs; they are simply aliases and (type_id)typeid() will be the same

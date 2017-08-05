@@ -11,7 +11,7 @@ threadpool make_threadpool(allocator* a, i32 num_threads_) { PROF
 	ret.num_threads = num_threads_ == 0 ? global_api->platform_get_num_cpus() : num_threads_;
 
 	ret.alloc   = a;
-	ret.running = make_map<job_id,platform_semaphore>(16, hash_u64);
+	ret.running = map<job_id,platform_semaphore>::make(16, hash_u64);
 	ret.threads = array<platform_thread>::make(ret.num_threads, a);
 	ret.data    = array<worker_data>::make(ret.num_threads, a);
 	ret.jobs    = make_con_queue<job>(16, a);
@@ -25,7 +25,7 @@ void destroy_threadpool(threadpool* tp) { PROF
 
 	threadpool_stop_all(tp);
 
-	destroy_map(&tp->running);
+	tp->running.destroy();
 	tp->threads.destroy();
 	tp->data.destroy();
 	destroy_con_queue(&tp->jobs);
@@ -35,7 +35,7 @@ void destroy_threadpool(threadpool* tp) { PROF
 
 void threadpool_wait_job(threadpool* tp, job_id id) { PROF
 
-	platform_semaphore* sem = map_try_get(&tp->running, id);
+	platform_semaphore* sem = tp->running.try_get(id);
 	if(sem) {
 		global_api->platform_wait_semaphore(sem, -1);
 	}
@@ -60,7 +60,7 @@ job_id threadpool_queue_job(threadpool* tp, job j) { PROF
 
 	// is this a good way to structure this? doesn't look like it
 	global_api->platform_aquire_mutex(&tp->running_mutex, -1);
-	map_insert(&tp->running, j.id, jid_sem);
+	tp->running.insert(j.id, jid_sem);
 	global_api->platform_release_mutex(&tp->running_mutex);
 
 	global_api->platform_signal_semaphore(&tp->jobs_semaphore, 1);
@@ -133,10 +133,10 @@ i32 worker(void* data_) { PROF
 				global_api->platform_queue_event(a);
 
 				global_api->platform_aquire_mutex(data->running_mutex, -1);
-				platform_semaphore* sem = map_get(data->running, current_job.id);
+				platform_semaphore* sem = data->running->get(current_job.id);
 				global_api->platform_signal_semaphore(sem, INT_MAX);
 				global_api->platform_destroy_semaphore(sem);
-				map_erase(data->running, current_job.id);
+				data->running->erase(current_job.id);
 				global_api->platform_release_mutex(data->running_mutex);
 			}
 		}

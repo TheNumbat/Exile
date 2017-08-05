@@ -13,7 +13,7 @@ void destroy_asset_store(asset_store* am) { PROF
 
 	if(am->store) {
 
-		destroy_map(&am->assets);
+		am->assets.destroy();
 
 		PUSH_ALLOC(am->alloc) {
 			free(am->store);
@@ -25,7 +25,7 @@ void destroy_asset_store(asset_store* am) { PROF
 
 asset* get_asset(asset_store* as, string name) { PROF
 
-	asset* a = map_try_get(&as->assets, name);
+	asset* a = as->assets.try_get(name);
 
 	if(!a) {
 		LOG_ERR_F("Failed to get asset %", name);
@@ -97,7 +97,7 @@ bool try_reload_asset_store(asset_store* as) { PROF
 
 		} POP_ALLOC();
 
-		map_clear(&as->assets);
+		as->assets.clear();
 
 		load_asset_store(as, as->path);
 
@@ -142,7 +142,7 @@ void load_asset_store(asset_store* as, string path) { PROF
 		asset_file_header* header = (asset_file_header*)store_mem;
 		file_asset_header* current_asset = (file_asset_header*)(store_mem + sizeof(asset_file_header));
 
-		as->assets = make_map<string,asset>(header->num_assets, as->alloc, &hash_string);
+		as->assets = map<string,asset>::make(header->num_assets, as->alloc, &hash_string);
 
 		for(u32 i = 0; i < header->num_assets; i++) {
 
@@ -159,7 +159,7 @@ void load_asset_store(asset_store* as, string path) { PROF
 				a.bitmap.height = bitmap->height;
 				a.mem = (u8*)(current_asset) + sizeof(file_asset_header) + sizeof(file_asset_bitmap);
 
-				map_insert(&as->assets, a.name, a);
+				as->assets.insert(a.name, a);
 
 				current_asset = (file_asset_header*)((u8*)current_asset + current_asset->next);
 
@@ -181,7 +181,7 @@ void load_asset_store(asset_store* as, string path) { PROF
 
 				a.mem = (u8*)font + sizeof(file_asset_font) + (font->num_glyphs * sizeof(file_glyph_data));
 
-				map_insert(&as->assets, a.name, a);
+				as->assets.insert(a.name, a);
 
 				current_asset = (file_asset_header*)((u8*)current_asset + current_asset->next);				
 
