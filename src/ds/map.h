@@ -27,23 +27,25 @@ struct map {
 	u32 (*hash)(K key) 	= null;
 	bool use_u32hash 	= false;
 	u32 max_probe		= 0;
+
+///////////////////////////////////////////////////////////////////////////////
+
+	static map<K,V> make(i32 capacity = 16, u32 (*hash)(K) = null);
+	static map<K,V> make(i32 capacity, allocator* a, u32 (*hash)(K) = null);
+	
+	void destroy();
+	
+	V* insert(K key, V value, bool grow_if_needed = true);
+	V* insert_if_unique(K key, V value, bool grow_if_needed = true);
+	void erase(K key);
+	void clear();
+
+	V* get(K key);
+	V* try_get(K key);
+
+	// this is expensive, avoid at all costs. Try to create maps with enough capacity in the first place.
+	// it will allocate & free another map-sized block for copying from the map's allocator
+	// this is called from map_insert if the map needs to grow...be wary
+	void grow_rehash();
+	void trim_rehash();
 };
-
-template<typename K, typename V> map<K,V> make_map(i32 capacity = 16, u32 (*hash)(K) = null);
-template<typename K, typename V> map<K,V> make_map(i32 capacity, allocator* a, u32 (*hash)(K) = null);
-template<typename K, typename V> void destroy_map(map<K,V>* m);
-
-template<typename K, typename V> V* map_insert(map<K,V>* m, K key, V value, bool grow_if_needed = true);
-template<typename K, typename V> V* map_insert_if_unique(map<K,V>* m, K key, V value, bool grow_if_needed = true);
-template<typename K, typename V> void map_erase(map<K,V>* m, K key);
-template<typename K, typename V> void map_clear(map<K,V>* m);
-
-template<typename K, typename V> V* map_get(map<K,V>* m, K key);
-template<typename K, typename V> V* map_try_get(map<K,V>* m, K key);
-
-// this is expensive, avoid at all costs. Try to create maps with enough capacity in the first place.
-// it will allocate & free another map-sized block for copying from the map's allocator
-// this is called from map_insert if the map needs to grow...be wary
-template<typename K, typename V> void map_grow_rehash(map<K,V>* m);
-template<typename K, typename V> void map_trim_rehash(map<K,V>* m);
-

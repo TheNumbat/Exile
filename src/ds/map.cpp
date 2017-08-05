@@ -21,14 +21,13 @@ inline u32 hash_u64(u64 key) { PROF
 }
 
 template<typename K, typename V>
-map<K,V> make_map(i32 capacity, u32 (*hash)(K)) { PROF
-	map<K,V> ret = make_map<K,V>(capacity, CURRENT_ALLOC(), hash);
+map<K,V> map<K,V>::make(i32 capacity, u32 (*hash)(K)) { PROF
 	
-	return ret;
+	return map<K,V>::make(capacity, CURRENT_ALLOC(), hash);
 }
 
 template<typename K, typename V>
-map<K,V> make_map(i32 capacity, allocator* a, u32 (*hash)(K)) { PROF
+map<K,V> map<K,V>::make(i32 capacity, allocator* a, u32 (*hash)(K)) { PROF
 	map<K,V> ret;
 
 	capacity = (i32)ceilf(capacity / MAP_MAX_LOAD_FACTOR);
@@ -47,40 +46,40 @@ map<K,V> make_map(i32 capacity, allocator* a, u32 (*hash)(K)) { PROF
 }
 
 template<typename K, typename V>
-void destroy_map(map<K,V>* m) { PROF
+void map<K,V>::destroy() { PROF
 	
-	destroy_vector(&m->contents);
+	destroy_vector(&contents);
 
-	m->size  = 0;
-	m->alloc = null;
-	m->hash  = null;
+	size  = 0;
+	alloc = null;
+	hash  = null;
 }
 
 template<typename K, typename V>
-void map_clear(map<K,V>* m) { PROF
+void map<K,V>::clear() { PROF
 	
-	FORVEC(m->contents,
+	FORVEC(contents,
 		it->occupied = false;
 	)
-	vector_clear(&m->contents);
-	m->size = 0;
-	m->max_probe = 0;
+	vector_clear(&contents);
+	size = 0;
+	max_probe = 0;
 }
 
 template<typename K, typename V>
-void map_grow_rehash(map<K,V>* m) { PROF	
+void map<K,V>::grow_rehash() { PROF	
 	
-	vector<map_element<K,V>> temp = make_vector_copy(m->contents);
+	vector<map_element<K,V>> temp = make_vector_copy(contents);
 
-	vector_grow(&m->contents);
-	vector_zero(&m->contents);
+	vector_grow(&contents);
+	vector_zero(&contents);
 
-	m->size = 0;
-	m->max_probe = 0;
+	size = 0;
+	max_probe = 0;
 
 	for(u32 i = 0; i < temp.capacity; i++) {
 		if(vector_get(&temp, i)->occupied == true) {
-			map_insert(m, vector_get(&temp, i)->key, vector_get(&temp, i)->value);
+			insert(vector_get(&temp, i)->key, vector_get(&temp, i)->value);
 		}
 	}
 
@@ -88,18 +87,18 @@ void map_grow_rehash(map<K,V>* m) { PROF
 }
 
 template<typename K, typename V> 
-void map_trim_rehash(map<K,V>* m) { PROF
+void map<K,V>::trim_rehash() { PROF
 
-	vector<map_element<K,V>> temp = make_vector_copy(m->contents);
+	vector<map_element<K,V>> temp = make_vector_copy(contents);
 
-	vector_resize(&m->contents, m->size, false);
+	vector_resize(&contents, size, false);
 
-	m->size = 0;
-	m->max_probe = 0;
+	size = 0;
+	max_probe = 0;
 	
 	for(u32 i = 0; i < temp.capacity; i++) {
 		if(vector_get(&temp, i)->occupied == true) {
-			map_insert(m, vector_get(&temp, i)->key, vector_get(&temp, i)->value);
+			insert(vector_get(&temp, i)->key, vector_get(&temp, i)->value);
 		}
 	}
 
@@ -107,12 +106,12 @@ void map_trim_rehash(map<K,V>* m) { PROF
 }
 
 template<typename K, typename V>
-V* map_insert(map<K,V>* m, K key, V value, bool grow_if_needed) { PROF
+V* map<K,V>::insert(K key, V value, bool grow_if_needed) { PROF
 	
-	if(m->size >= m->contents.capacity * MAP_MAX_LOAD_FACTOR) {
+	if(size >= contents.capacity * MAP_MAX_LOAD_FACTOR) {
 
 		if(grow_if_needed) {
-			map_grow_rehash(m); // this is super expensive, avoid at all costs
+			grow_rehash(); // this is super expensive, avoid at all costs
 		} else {
 			LOG_DEBUG_ASSERT(!"Map needs to grow, but not allowed!");
 			return null;
@@ -121,10 +120,10 @@ V* map_insert(map<K,V>* m, K key, V value, bool grow_if_needed) { PROF
 
 	map_element<K,V> ele;
 
-	if(m->use_u32hash) {
-		ele.hash_bucket = mod(hash_u32(*((u32*)&key)), m->contents.capacity);
+	if(use_u32hash) {
+		ele.hash_bucket = mod(hash_u32(*((u32*)&key)), contents.capacity);
 	} else {
-		ele.hash_bucket = mod((*m->hash)(key), m->contents.capacity);
+		ele.hash_bucket = mod((*hash)(key), contents.capacity);
 	}
 	ele.key 		= key;
 	ele.value 		= value;
@@ -136,16 +135,16 @@ V* map_insert(map<K,V>* m, K key, V value, bool grow_if_needed) { PROF
 	u32 probe_length = 0;
 	map_element<K,V>* placed_adr = null;
 	for(;;) {
-		if(vector_get(&m->contents, index)->occupied) {
+		if(vector_get(&contents, index)->occupied) {
 
-			i32 occupied_probe_length = index - vector_get(&m->contents, index)->hash_bucket;
+			i32 occupied_probe_length = index - vector_get(&contents, index)->hash_bucket;
 			if(occupied_probe_length < 0) {
-				occupied_probe_length += m->contents.capacity;
+				occupied_probe_length += contents.capacity;
 			}
 
 			if((u32)occupied_probe_length < probe_length) {
 
-				map_element<K,V>* to_swap = vector_get(&m->contents, index);
+				map_element<K,V>* to_swap = vector_get(&contents, index);
 				if(!placed_adr) {
 					placed_adr = to_swap;
 				}
@@ -159,110 +158,109 @@ V* map_insert(map<K,V>* m, K key, V value, bool grow_if_needed) { PROF
 
 			probe_length++;
 			index++;
-			if (index == m->contents.capacity) {
+			if (index == contents.capacity) {
 				index = 0;
 			}
 
-			if(probe_length > m->max_probe) {
-				m->max_probe = probe_length;
+			if(probe_length > max_probe) {
+				max_probe = probe_length;
 			}
 		} else {
-			*vector_get(&m->contents, index) = ele;
-			m->size++;
+			*vector_get(&contents, index) = ele;
+			size++;
 
 			if(placed_adr) {
 				return &placed_adr->value;
 			}
-			return &(vector_get(&m->contents, index)->value);
+			return &(vector_get(&contents, index)->value);
 		}
 	}
 }
 
 template<typename K, typename V>
-V* map_insert_if_unique(map<K,V>* m, K key, V value, bool grow_if_needed) { PROF
+V* map<K,V>::insert_if_unique(K key, V value, bool grow_if_needed) { PROF
 	
-	V* result = map_try_get(m, key);
+	V* result = try_get(key);
 	
 	if(!result) {
 		
-		return map_insert(m, key, value, grow_if_needed);
+		return insert(key, value, grow_if_needed);
 	}
-
 	
 	return result;
 }
 
 template<typename K, typename V>
-V* map_get(map<K,V>* m, K key) { PROF
+V* map<K,V>::get(K key) { PROF
 
-	V* result = map_try_get(m, key);
+	V* result = try_get(key);
 	LOG_ASSERT(result != null);
 
 	return result;
 }
 
 template<typename K, typename V>
-V* map_try_get(map<K,V>* m, K key) { PROF	// can return null
+V* map<K,V>::try_get(K key) { PROF	// can return null
 
-	if (m->size == 0) {
+	if (size == 0) {
 		return null;
 	}
 
 	u32 hash_bucket;
 
-	if(m->use_u32hash) {
-		hash_bucket = mod(hash_u32(*((u32*)&key)), m->contents.capacity);
+	if(use_u32hash) {
+		hash_bucket = mod(hash_u32(*((u32*)&key)), contents.capacity);
 	} else {
-		hash_bucket = mod((*m->hash)(key), m->contents.capacity);
+		hash_bucket = mod((*hash)(key), contents.capacity);
 	}
 
 	u32 index = hash_bucket;
 	u32 probe_length = 0;
 	for(;;) {
 
-		if(vector_get(&m->contents, index)->key == key) {
-			return &(vector_get(&m->contents, index)->value);
+		if(vector_get(&contents, index)->key == key) {
+			return &(vector_get(&contents, index)->value);
 		}
 
 		probe_length++;
-		if(probe_length > m->max_probe) {
+		if(probe_length > max_probe) {
 			return null;
 		}
 
 		index++;
-		if (index == m->contents.capacity) {
+		if (index == contents.capacity) {
 			index = 0;
 		}
 	}
 }
 
 template<typename K, typename V>
-void map_erase(map<K,V>* m, K key) { PROF
+void map<K,V>::erase(K key) { PROF
 	
 	u32 hash_bucket;
 
-	if(m->use_u32hash) {
-		hash_bucket = mod(hash_u32(*((u32*)&key)), m->contents.capacity);
+	if(use_u32hash) {
+		hash_bucket = mod(hash_u32(*((u32*)&key)), contents.capacity);
 	} else {
-		hash_bucket = mod((*m->hash)(key), m->contents.capacity);
+		hash_bucket = mod((*hash)(key), contents.capacity);
 	}
 
 	u32 index = hash_bucket;
 	u32 probe_length = 0;
 	for(;;) {
 
-		if(vector_get(&m->contents, index)->key == key) {
-			vector_get(&m->contents, index)->occupied = false;
-			m->size--;
+		if(vector_get(&contents, index)->key == key) {
+			vector_get(&contents, index)->occupied = false;
+			size--;
 		}
 
 		probe_length++;
-		if(probe_length > m->max_probe) {
+		if(probe_length > max_probe) {
 			return;
 		}
 
 		index++;
-		if (index == m->contents.capacity) {
+		if (index == contents.capacity) {
 			index = 0;
 		}
 	}

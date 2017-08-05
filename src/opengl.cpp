@@ -130,9 +130,9 @@ ogl_manager make_opengl(allocator* a) { PROF
 	ogl_manager ret;
 
 	ret.alloc = a;
-	ret.programs = make_map<shader_program_id, shader_program>(8, a);
-	ret.textures = make_map<texture_id, texture>(32, a);
-	ret.contexts = make_map<context_id, ogl_draw_context>(32, a);
+	ret.programs = map<shader_program_id, shader_program>::make(8, a);
+	ret.textures = map<texture_id, texture>::make(32, a);
+	ret.contexts = map<context_id, ogl_draw_context>::make(32, a);
 
 	ret.version 	= string_from_c_str((char*)glGetString(GL_VERSION));
 	ret.renderer 	= string_from_c_str((char*)glGetString(GL_RENDERER));
@@ -166,9 +166,9 @@ void destroy_opengl(ogl_manager* ogl) { PROF
 		}
 	}
 
-	destroy_map(&ogl->programs);
-	destroy_map(&ogl->textures);
-	destroy_map(&ogl->contexts);
+	ogl->programs.destroy();
+	ogl->textures.destroy();
+	ogl->contexts.destroy();
 }
 
 shader_program_id ogl_add_program(ogl_manager* ogl, string v_path, string f_path, void (*set_uniforms)(shader_program*, render_command*, render_command_list*)) { PROF
@@ -176,7 +176,7 @@ shader_program_id ogl_add_program(ogl_manager* ogl, string v_path, string f_path
 	shader_program p = make_program(v_path, f_path, set_uniforms, ogl->alloc);
 	p.id = ogl->next_shader_id;
 
-	map_insert(&ogl->programs, ogl->next_shader_id, p);
+	ogl->programs.insert(ogl->next_shader_id, p);
 
 	LOG_DEBUG_F("Loaded shader from % and %", v_path, f_path);
 
@@ -186,7 +186,7 @@ shader_program_id ogl_add_program(ogl_manager* ogl, string v_path, string f_path
 
 shader_program* ogl_select_program(ogl_manager* ogl, shader_program_id id) { PROF
 
-	shader_program* p = map_try_get(&ogl->programs, id);
+	shader_program* p = ogl->programs.try_get(id);
 
 	if(!p) {
 		LOG_ERR_F("Failed to retrieve program %", id);
@@ -205,7 +205,7 @@ texture_id ogl_add_texture_from_font(ogl_manager* ogl, asset* font, texture_wrap
 
 	texture_load_bitmap_from_font(&t, font);
 
-	map_insert(&ogl->textures, ogl->next_texture_id, t);
+	ogl->textures.insert(ogl->next_texture_id, t);
 
 	LOG_DEBUG_F("Created texture % from font %", ogl->next_texture_id, font->name);
 
@@ -220,7 +220,7 @@ texture_id ogl_add_texture_from_font(ogl_manager* ogl, asset_store* as, string n
 
 	texture_load_bitmap_from_font(&t, as, name);
 
-	map_insert(&ogl->textures, ogl->next_texture_id, t);
+	ogl->textures.insert(ogl->next_texture_id, t);
 
 	LOG_DEBUG_F("Created texture % from font asset %", ogl->next_texture_id, name);
 
@@ -235,7 +235,7 @@ texture_id ogl_add_texture(ogl_manager* ogl, asset_store* as, string name, textu
 
 	texture_load_bitmap(&t, as, name);
 
-	map_insert(&ogl->textures, ogl->next_texture_id, t);
+	ogl->textures.insert(ogl->next_texture_id, t);
 
 	LOG_DEBUG_F("Created texture % from bitmap asset %", ogl->next_texture_id, name);
 
@@ -245,7 +245,7 @@ texture_id ogl_add_texture(ogl_manager* ogl, asset_store* as, string name, textu
 
 void ogl_destroy_texture(ogl_manager* ogl, texture_id id) { PROF
 
-	texture* t = map_try_get(&ogl->textures, id);
+	texture* t = ogl->textures.try_get(id);
 
 	if(!t) {
 		LOG_ERR_F("Failed to find texture %", id);
@@ -254,12 +254,12 @@ void ogl_destroy_texture(ogl_manager* ogl, texture_id id) { PROF
 
 	glDeleteTextures(1, &t->handle);
 
-	map_erase(&ogl->textures, id);
+	ogl->textures.erase(id);
 }
 
 texture* ogl_select_texture(ogl_manager* ogl, texture_id id) { PROF
 
-	texture* t = map_try_get(&ogl->textures, id);
+	texture* t = ogl->textures.try_get(id);
 
 	if(!t) {
 		LOG_ERR_F("Failed to retrieve texture %", id);
@@ -373,7 +373,7 @@ context_id ogl_add_draw_context(ogl_manager* ogl, void (*set_atribs)(ogl_draw_co
 
 	set_atribs(&d);
 
-	map_insert(&ogl->contexts, ogl->next_context_id, d);
+	ogl->contexts.insert(ogl->next_context_id, d);
 
 	ogl->next_context_id++;
 
@@ -382,7 +382,7 @@ context_id ogl_add_draw_context(ogl_manager* ogl, void (*set_atribs)(ogl_draw_co
 
 ogl_draw_context* ogl_select_draw_context(ogl_manager* ogl, context_id id) { PROF
 
-	ogl_draw_context* d = map_try_get(&ogl->contexts, id);
+	ogl_draw_context* d = ogl->contexts.try_get(id);
 
 	if(!d) {
 		LOG_ERR_F("Failed to retrieve context %", id);

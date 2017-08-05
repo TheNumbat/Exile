@@ -345,7 +345,7 @@ void output_func(ofstream& fout, CXType type, CXCursor func) {
 		fout << "\t\tthis_type_info._func.param_types[" << i << "] = TYPEINFO(" << arg << ") ? TYPEINFO(" << arg << ")->hash : 0;" << endl;
 	}
 
-	fout << "\t\tmap_insert_if_unique(&type_table, this_type_info.hash, this_type_info, false);" << endl
+	fout << "\t\ttype_table.insert_if_unique(this_type_info.hash, this_type_info, false);" << endl
 		 << "\t}();" << endl << endl;
 }
 
@@ -367,7 +367,7 @@ void output_array(ofstream& fout, CXType type) {
 		 << "\t\tthis_type_info.hash = (type_id)typeid(" << name << ").hash_code();" << endl
 		 << "\t\tthis_type_info._array.of = TYPEINFO(" << base << ") ? TYPEINFO(" << base << ")->hash : 0;" << endl
 		 << "\t\tthis_type_info._array.length = " << clang_getNumElements(type) << ";" << endl
-		 << "\t\tmap_insert_if_unique(&type_table, this_type_info.hash, this_type_info, false);" << endl
+		 << "\t\ttype_table.insert_if_unique(this_type_info.hash, this_type_info, false);" << endl
 		 << "\t}();" << endl << endl;
 }
 
@@ -399,7 +399,7 @@ void output_enum(ofstream& fout, const enum_def& e) {
 		idx++;
 	}
 
-	fout << "\t\tmap_insert(&type_table, this_type_info.hash, this_type_info, false);" << endl
+	fout << "\t\ttype_table.insert(this_type_info.hash, this_type_info, false);" << endl
 		 << "\t}();" << endl << endl;
 }
 
@@ -450,7 +450,7 @@ void output_struct(ofstream& fout, const struct_def& s) {
 		idx++;
 	}
 
-	fout << "\t\tmap_insert(&type_table, this_type_info.hash, this_type_info, false);" << endl
+	fout << "\t\ttype_table.insert(this_type_info.hash, this_type_info, false);" << endl
 		 << "\t}();" << endl << endl;
 }
 
@@ -588,7 +588,7 @@ void print_templ_struct(ofstream& fout, const struct_def& s, const map<string, C
 	}
 	fout << "#undef __" << name << "__" << endl;
 
-	fout << "\t\tmap_insert(&type_table, this_type_info.hash, this_type_info, false);" << endl
+	fout << "\t\ttype_table.insert(this_type_info.hash, this_type_info, false);" << endl
 		 << "\t}();" << endl << endl;
 }
 

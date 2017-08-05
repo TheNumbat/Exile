@@ -19,8 +19,8 @@ gui_manager make_gui(ogl_manager* ogl, allocator* alloc) { PROF
 	ret.ogl.context = ogl_add_draw_context(ogl, &ogl_mesh_2d_attribs);
 	ret.ogl.shader 	= ogl_add_program(ogl, string_literal("shaders/gui.v"), string_literal("shaders/gui.f"), &ogl_uniforms_gui);
 
-	ret.window_state_data = make_map<guiid, gui_window_state>(32, alloc, &guiid_hash);
-	ret.state_data = make_map<guiid, gui_state_data>(128, alloc, &guiid_hash);
+	ret.window_state_data = map<guiid, gui_window_state>::make(32, alloc, &guiid_hash);
+	ret.state_data = map<guiid, gui_state_data>::make(128, alloc, &guiid_hash);
 	ret.fonts = make_vector<gui_font>(4, alloc);
 
 	return ret;
@@ -34,8 +34,8 @@ void destroy_gui(gui_manager* gui) { PROF
 		destroy_mesh(&it->value.mesh);
 	)
 
-	destroy_map(&gui->window_state_data);
-	destroy_map(&gui->state_data);
+	gui->window_state_data.destroy();
+	gui->state_data.destroy();
 	destroy_vector(&gui->fonts);
 
 	DESTROY_ARENA(&gui->scratch);
@@ -178,7 +178,7 @@ bool gui_begin(string name, r2 first_size, f32 first_alpha, gui_window_flags fla
 	guiid id;
 	id.name = name;
 
-	gui_window_state* window = map_try_get(&ggui->window_state_data, id);
+	gui_window_state* window = ggui->window_state_data.try_get(id);
 
 	if(!window) {
 
@@ -203,7 +203,7 @@ bool gui_begin(string name, r2 first_size, f32 first_alpha, gui_window_flags fla
 		ns.font = gui_select_best_font_scale(&ns);
 		ns.z = ggui->last_z;
 
-		window = map_insert(&ggui->window_state_data, id, ns);
+		window = ggui->window_state_data.insert(id, ns);
 	}
 
 	stack_push(&window->id_hash_stack, guiid_hash(id));
@@ -331,7 +331,7 @@ void gui_log_wnd(platform_window* win, string name, vector<log_message>* cache) 
 	id.base = *stack_top(&current->id_hash_stack);
 	id.name = string_literal("#LOG");
 
-	gui_state_data* data = map_try_get(&ggui->state_data, id);
+	gui_state_data* data = ggui->state_data.try_get(id);
 
 	if(!data) {
 
@@ -339,7 +339,7 @@ void gui_log_wnd(platform_window* win, string name, vector<log_message>* cache) 
 
 		nd.u32_1 = 0; // scroll position
 
-		data = map_insert(&ggui->state_data, id, nd);
+		data = ggui->state_data.insert(id, nd);
 	}
 
 	// we don't need real_rect, as this will always ignore global scale
@@ -444,7 +444,7 @@ bool gui_carrot_toggle(string name, bool initial, v2 pos, bool* toggleme) { PROF
 	id.base = *stack_top(&ggui->current->id_hash_stack);
 	id.name = name;
 
-	gui_state_data* data = map_try_get(&ggui->state_data, id);
+	gui_state_data* data = ggui->state_data.try_get(id);
 
 	if(!data) {
 
@@ -452,7 +452,7 @@ bool gui_carrot_toggle(string name, bool initial, v2 pos, bool* toggleme) { PROF
 
 		nd.b = initial;
 
-		data = map_insert(&ggui->state_data, id, nd);
+		data = ggui->state_data.insert(id, nd);
 	}
 
 	if(toggleme) {
