@@ -1,14 +1,14 @@
 
 inline void _pop_alloc() { PROF
-	stack_pop(&this_thread_data.alloc_stack);
+	this_thread_data.alloc_stack.pop();
 }
 
 inline void _push_alloc(allocator* a) { PROF
-	stack_push(&this_thread_data.alloc_stack,a);
+	this_thread_data.alloc_stack.push(a);
 }
 
 inline allocator* _current_alloc() { PROF
-	allocator* ret = *stack_top(&this_thread_data.alloc_stack);
+	allocator* ret = *this_thread_data.alloc_stack.top();
 	return ret;
 }
 

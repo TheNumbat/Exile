@@ -1,12 +1,12 @@
 
 template<typename T>
-void destroy_stack(stack<T>* s) { PROF
+void stack<T>::destroy() { PROF
 
-	destroy_vector(&s->contents);
+	destroy_vector(&contents);
 }
 
 template<typename T>
-stack<T> make_stack_copy(stack<T> src, allocator* a) { PROF
+stack<T> stack<T>::make_copy(stack<T> src, allocator* a) { PROF
 
 	stack<T> ret;
 
@@ -16,7 +16,7 @@ stack<T> make_stack_copy(stack<T> src, allocator* a) { PROF
 }
 
 template<typename T>
-stack<T> make_stack_copy_trim(stack<T> src, allocator* a) { PROF
+stack<T> stack<T>::make_copy_trim(stack<T> src, allocator* a) { PROF
 
 	stack<T> ret;
 
@@ -26,7 +26,7 @@ stack<T> make_stack_copy_trim(stack<T> src, allocator* a) { PROF
 }
 
 template<typename T>
-stack<T> make_stack(u32 capacity, allocator* a) { PROF
+stack<T> stack<T>::make(u32 capacity, allocator* a) { PROF
 
 	stack<T> ret;
 
@@ -36,7 +36,7 @@ stack<T> make_stack(u32 capacity, allocator* a) { PROF
 }
 
 template<typename T> 
-stack<T> make_stack_copy(stack<T> src) { PROF
+stack<T> stack<T>::make_copy(stack<T> src) { PROF
 	
 	stack<T> ret;
 
@@ -46,7 +46,7 @@ stack<T> make_stack_copy(stack<T> src) { PROF
 }
 
 template<typename T>
-stack<T> make_stack(u32 capacity) { PROF
+stack<T> stack<T>::make(u32 capacity) { PROF
 
 	stack<T> ret;
 
@@ -56,27 +56,27 @@ stack<T> make_stack(u32 capacity) { PROF
 }
 
 template<typename T>
-void clear_stack(stack<T>* s) { PROF
+void stack<T>::clear() { PROF
 
-	vector_clear(&s->contents);
+	vector_clear(&contents);
 }
 
 template<typename T>
-void stack_push(stack<T>* s, T value) { PROF
+void stack<T>::push(T value) { PROF
 
-	vector_push(&s->contents, value);
+	vector_push(&contents, value);
 }
 
 template<typename T>
-T stack_pop(stack<T>* s) { PROF
+T stack<T>::pop() { PROF
 
-	if(s->contents.size > 0) {
+	if(contents.size > 0) {
 		
-		T top = *stack_top(s);
+		T ret = *top();
 
-		vector_pop(&s->contents);
+		vector_pop(&contents);
 
-		return top;	
+		return ret;	
 	}
 
 	LOG_FATAL("Trying to pop empty stack!");
@@ -85,11 +85,11 @@ T stack_pop(stack<T>* s) { PROF
 }
 
 template<typename T>
-T* stack_top(stack<T>* s) { PROF
+T* stack<T>::top() { PROF
 
-	if(s->contents.size > 0) {
+	if(contents.size > 0) {
 
-		return vector_back(&s->contents);
+		return vector_back(&contents);
 	}
 
 	LOG_FATAL("Trying to get top of empty stack!");
@@ -97,16 +97,16 @@ T* stack_top(stack<T>* s) { PROF
 }
 
 template<typename T>
-bool stack_empty(stack<T>* s) { PROF
-	return vector_empty(&s->contents);
+bool stack<T>::empty() { PROF
+	return vector_empty(&contents);
 }
 
 template<typename T>
-bool stack_try_pop(stack<T>* s, T* out) {
+bool stack<T>::try_pop(T* out) {
 	
-	if(!stack_empty(s)) {
+	if(!empty()) {
 		
-		*out = *stack_pop(s);
+		*out = *pop();
 		return true;	
 	}
 
@@ -114,7 +114,7 @@ bool stack_try_pop(stack<T>* s, T* out) {
 }
 
 template<typename T>
-con_stack<T> make_con_stack(u32 capacity, allocator* a) {
+con_stack<T> con_stack<T>::make(u32 capacity, allocator* a) {
 
 	con_stack<T> ret;
 	ret.contents = make_vector(capacity, a);
@@ -125,43 +125,43 @@ con_stack<T> make_con_stack(u32 capacity, allocator* a) {
 }
 
 template<typename T>
-con_stack<T> make_con_stack(u32 capacity) {
+con_stack<T> con_stack<T>::make(u32 capacity) {
 
 	return make_con_stack(capacity, CURRENT_ALLOC());
 }
 
 template<typename T>
-void destroy_con_stack(con_stack<T>* s) {
+void con_stack<T>::destroy() {
 
-	destroy_vector(&s->contents);
-	global_api->platform_destroy_mutex(&s->mut);
-	global_api->platform_destroy_semaphore(&s->sem);
+	destroy_vector(&contents);
+	global_api->platform_destroy_mutex(&mut);
+	global_api->platform_destroy_semaphore(&sem);
 }
 
 template<typename T>
-T* stack_push(con_stack<T>* s, T value) {
+T* con_stack<T>::push(T value) {
 
-	global_api->platform_aquire_mutex(&s->mut, -1);
-	T* ret = stack_push((stack<T>*)s, value);
-	global_api->platform_release_mutex(&s->mut);
-	global_api->platform_signal_semaphore(&s->sem, 1);
+	global_api->platform_aquire_mutex(&mut, -1);
+	T* ret = ((stack<T>*)this)->push(value);
+	global_api->platform_release_mutex(&mut);
+	global_api->platform_signal_semaphore(&sem, 1);
 	return ret;
 }
 
 template<typename T>
-T stack_wait_pop(con_stack<T>* s) {
+T con_stack<T>::wait_pop() {
 
-	global_api->platform_wait_semaphore(&s->sem, -1);
+	global_api->platform_wait_semaphore(&sem, -1);
 	T ret;
-	stack_try_pop(s, &ret);
+	try_pop(&ret);
 	return ret;
 }
 
 template<typename T>
-bool stack_try_pop(con_stack<T>* s, T* out) {
+bool con_stack<T>::try_pop(T* out) {
 
-	global_api->platform_aquire_mutex(&s->mut, -1);
-	bool ret = stack_try_pop((stack<T>*)s, out);
-	global_api->platform_release_mutex(&s->mut);
+	global_api->platform_aquire_mutex(&mut, -1);
+	bool ret = ((stack<T>*)this)->try_pop(out);
+	global_api->platform_release_mutex(&mut);
 	return ret;
 }
