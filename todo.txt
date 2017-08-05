@@ -39,7 +39,6 @@ immediate to do:
 		job chaining
 
 	uncategorized
-		get rid of global_state
 		SIMD & intrinsic math (vectorized functions, vector/mat math, noise & randomness)
 		stack allocations (_malloca? can't easily platform-abstract this...) where possible
 		better hotloading management (probably want callback registry)
