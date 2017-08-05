@@ -162,7 +162,7 @@ struct gui_manager {
 	allocator* alloc = null;
 };
 
-static gui_manager* ggui;
+static gui_manager* ggui; // set at gui_begin_frame, used as context for gui functions
 
 // the functions you call every frame use ggui instead of passing a gui_manager pointer
 // (except begin_frame, as this sets up the global pointer)
