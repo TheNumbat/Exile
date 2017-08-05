@@ -12,8 +12,8 @@ threadpool make_threadpool(allocator* a, i32 num_threads_) { PROF
 
 	ret.alloc   = a;
 	ret.running = make_map<job_id,platform_semaphore>(16, hash_u64);
-	ret.threads = make_array<platform_thread>(ret.num_threads, a);
-	ret.data    = make_array<worker_data>(ret.num_threads, a);
+	ret.threads = array<platform_thread>::make(ret.num_threads, a);
+	ret.data    = array<worker_data>::make(ret.num_threads, a);
 	ret.jobs    = make_con_queue<job>(16, a);
 	
 	global_api->platform_create_semaphore(&ret.jobs_semaphore, 0, ret.num_threads);
@@ -26,8 +26,8 @@ void destroy_threadpool(threadpool* tp) { PROF
 	threadpool_stop_all(tp);
 
 	destroy_map(&tp->running);
-	destroy_array(&tp->threads);
-	destroy_array(&tp->data);
+	tp->threads.destroy();
+	tp->data.destroy();
 	destroy_con_queue(&tp->jobs);
 
 	global_api->platform_destroy_semaphore(&tp->jobs_semaphore);
@@ -83,15 +83,15 @@ void threadpool_stop_all(threadpool* tp) { PROF
 	
 		for(i32 i = 0; i < tp->num_threads; i++) {
 
-			array_get(&tp->data, i)->online = false;
+			tp->data.get(i)->online = false;
 		}
 
 		global_api->platform_signal_semaphore(&tp->jobs_semaphore, tp->num_threads);
 
 		for(i32 i = 0; i < tp->num_threads; i++) {
 
-			global_api->platform_join_thread(array_get(&tp->threads, i), -1);
-			global_api->platform_destroy_thread(array_get(&tp->threads, i));
+			global_api->platform_join_thread(tp->threads.get(i), -1);
+			global_api->platform_destroy_thread(tp->threads.get(i));
 		}
 
 		tp->online = false;
@@ -111,7 +111,7 @@ void threadpool_start_all(threadpool* tp) { PROF
 			it->running 		= &tp->running;
 			it->running_mutex 	= &tp->running_mutex;
 
-			global_api->platform_create_thread(array_get(&tp->threads, __i), &worker, it, false);
+			global_api->platform_create_thread(tp->threads.get(__i), &worker, it, false);
 		)
 
 		tp->online = true;

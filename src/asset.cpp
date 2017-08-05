@@ -63,7 +63,7 @@ glyph_data get_glyph_data(asset* font, u32 codepoint) {
 
 		u32 search = low + ((high - low) / 2);
 
-		glyph_data* data = array_get(&font->font.glyphs, search);
+		glyph_data* data = font->font.glyphs.get(search);
 
 		if(data->codepoint == codepoint) {
 			return *data;
@@ -177,7 +177,7 @@ void load_asset_store(asset_store* as, string path) { PROF
 				a.font.height   = font->height;
 				a.font.point 	= font->point;
 
-				a.font.glyphs = make_array_memory<file_glyph_data>(font->num_glyphs, (u8*)font + sizeof(file_asset_font));
+				a.font.glyphs = array<file_glyph_data>::make_memory(font->num_glyphs, (u8*)font + sizeof(file_asset_font));
 
 				a.mem = (u8*)font + sizeof(file_asset_font) + (font->num_glyphs * sizeof(file_glyph_data));
 

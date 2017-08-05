@@ -978,11 +978,11 @@ string make_cat_strings(i32 num_strs, ...) { PROF
 	va_list args;
 	va_start(args, num_strs);
 
-	array<string> params = make_array<string>(num_strs);
+	array<string> params = array<string>::make(num_strs);
 
 	for(i32 i = 0; i < num_strs; i++) {
 
-		*array_get(&params, i) = va_arg(args, string);
+		*params.get(i) = va_arg(args, string);
 	}
 
 	va_end(args);
@@ -991,7 +991,7 @@ string make_cat_strings(i32 num_strs, ...) { PROF
 
 	for(i32 i = 0; i < num_strs; i++) {
 
-		len += array_get(&params, i)->len - 1;
+		len += params.get(i)->len - 1;
 	}
 
 	string ret = make_string(len + 1);
@@ -1000,16 +1000,16 @@ string make_cat_strings(i32 num_strs, ...) { PROF
 
 	for(i32 i = 0; i < num_strs; i++) {
 
-		for(u32 j = 0; j < array_get(&params, i)->len - 1; j++) {
+		for(u32 j = 0; j < params.get(i)->len - 1; j++) {
 			
-			ret.c_str[place] = array_get(&params, i)->c_str[j];
+			ret.c_str[place] = params.get(i)->c_str[j];
 			place++;
 		}
 	}
 
 	ret.c_str[place] = '\0';
 
-	destroy_array(&params);
+	params.destroy();
 
 	return ret;
 }
