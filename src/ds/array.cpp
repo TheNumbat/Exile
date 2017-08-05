@@ -1,33 +1,33 @@
 
 template<typename T> 
-u32 array_len(array<T>* a) { PROF
+u32 array<T>::len() { PROF
 
-	return a->capacity;
+	return capacity;
 }
 
 template<typename T>
-array<T> make_copy_array(array<T>* src, allocator* a) { PROF
+array<T> array<T>::make_copy(array<T>* src, allocator* a) { PROF
 
-	array<T> ret = make_array<T>(src->capacity, a);
+	array<T> ret = array<T>::make(src->capacity, a);
 	memcpy(src->memory, ret.memory, src->capacity * sizeof(T));
 
 	return ret;
 }
 
 template<typename T>
-void destroy_array(array<T>* a) { PROF
+void array<T>::destroy() { PROF
 
-	if(a->alloc && a->memory) {
+	if(alloc && memory) {
 
-		a->alloc->free_(a->memory, a->alloc, CONTEXT);
+		alloc->free_(memory, alloc, CONTEXT);
 	}
 
-	a->memory = null;
-	a->capacity = 0;
+	memory = null;
+	capacity = 0;
 }
 
 template<typename T>
-array<T> make_array(u32 capacity, allocator* a) { PROF
+array<T> array<T>::make(u32 capacity, allocator* a) { PROF
 
 	array<T> ret;
 
@@ -47,17 +47,17 @@ array<T> make_array(u32 capacity, allocator* a) { PROF
 }
 
 template<typename T>
-array<T> make_array(u32 capacity) { PROF
+array<T> array<T>::make(u32 capacity) { PROF
 
 	array<T> ret;
 
-	ret = make_array<T>(capacity, CURRENT_ALLOC());
+	ret = array<T>::make(capacity, CURRENT_ALLOC());
 
 	return ret;
 }
 
 template<typename T>
-array<T> make_array_memory(u32 capacity, void* memory) { PROF
+array<T> array<T>::make_memory(u32 capacity, void* memory) { PROF
 
 	array<T> ret;
 
@@ -69,26 +69,24 @@ array<T> make_array_memory(u32 capacity, void* memory) { PROF
 
 // operator[] but not a member
 template<typename T>
-inline T* array_get(array<T>* a, u32 idx) {
+inline T* array<T>::get(u32 idx) {
 
 #ifdef MORE_PROF
 	PROF
 #endif
 
 #ifdef BOUNDS_CHECK
-	if(a->memory && idx >= 0 && idx < a->capacity) {
+	if(memory && idx >= 0 && idx < capacity) {
 
-		
-		return a->memory + idx;
+		return memory + idx;
 	} else {
 
-		LOG_FATAL_F("array_get out of bounds, % < 0 || % > %", idx, idx, a->capacity);
+		LOG_FATAL_F("array_get out of bounds, % < 0 || % > %", idx, idx, capacity);
 
-		
 		return null;
 	}
 #else
-	return a->memory + idx;
+	return memory + idx;
 #endif
 }
 
