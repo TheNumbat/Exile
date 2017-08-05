@@ -30,8 +30,8 @@ string make_cat_string(string first, string second);
 string make_cat_strings(i32 num_strs, ...);
 inline string string_literal(const char* literal);
 string string_from_c_str(char* c_str); 				// does not allocate
-u32    string_insert(string s, u32 idx, string ins, bool size = false);
-u32    string_insert(string s, u32 idx, char ins, bool size = false);
+u32    string_write(string s, u32 idx, string ins, bool size = false);
+u32    string_write(string s, u32 idx, char ins, bool size = false);
 
 struct 	allocator;
 string 	make_string(u32 cap, allocator* a);
@@ -72,5 +72,5 @@ u32 print_struct(string s, u32 idx, void* val, _type_info* info, bool size = fal
 u32 print_enum(string s, u32 idx, void* val, _type_info* info, bool size = false);
 u32 print_int(string s, u32 idx, u8 base, void* val, _type_info* info, bool size = false);
 u32 print_float(string s, u32 idx, u8 precision, void* val, _type_info* info, bool size = false);
-u32 print_u64(string s, u32 idx, u8 base, u64 val, bool size = false);
+u32 print_u64(string s, u32 idx, u8 base, u64 val, bool size = false, u32 min_len = 0);
 i64 int_as_i64(void* val, _type_info* info);
