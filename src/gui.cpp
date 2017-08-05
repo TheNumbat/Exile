@@ -29,7 +29,7 @@ gui_manager make_gui(ogl_manager* ogl, allocator* alloc) { PROF
 void destroy_gui(gui_manager* gui) { PROF
 
 	FORMAP(gui->window_state_data,
-		destroy_stack(&it->value.id_hash_stack);
+		it->value.id_hash_stack.destroy();
 		destroy_vector(&it->value.offset_stack);
 		destroy_mesh(&it->value.mesh);
 	)
@@ -127,7 +127,7 @@ void gui_end_frame(platform_window* win, ogl_manager* ogl) { PROF
 
 	FORMAP(ggui->window_state_data,
 		vector_clear(&it->value.offset_stack);
-		clear_stack(&it->value.id_hash_stack);
+		it->value.id_hash_stack.clear();
 		clear_mesh(&it->value.mesh);
 	)
 
@@ -196,7 +196,7 @@ bool gui_begin(string name, r2 first_size, f32 first_alpha, gui_window_flags fla
 		}
 
 		ns.mesh = make_mesh_2d(1024, ggui->alloc);
-		ns.id_hash_stack = make_stack<u32>(16, ggui->alloc);
+		ns.id_hash_stack = stack<u32>::make(16, ggui->alloc);
 		ns.offset_stack = make_vector<v2>(16, ggui->alloc);
 		ns.flags = flags;
 		ns.mono = mono;
@@ -206,7 +206,7 @@ bool gui_begin(string name, r2 first_size, f32 first_alpha, gui_window_flags fla
 		window = ggui->window_state_data.insert(id, ns);
 	}
 
-	stack_push(&window->id_hash_stack, guiid_hash(id));
+	window->id_hash_stack.push(guiid_hash(id));
 
 	ggui->current = window;
 
@@ -328,7 +328,7 @@ void gui_log_wnd(platform_window* win, string name, vector<log_message>* cache) 
 	current->rect = R2(0.0f, win->h - height, (f32)win->w, height);
 
 	guiid id;
-	id.base = *stack_top(&current->id_hash_stack);
+	id.base = *current->id_hash_stack.top();
 	id.name = string_literal("#LOG");
 
 	gui_state_data* data = ggui->state_data.try_get(id);
@@ -441,7 +441,7 @@ void gui_box_select(i32* selected, i32 num, v2 pos, ...) { PROF
 bool gui_carrot_toggle(string name, bool initial, v2 pos, bool* toggleme) { PROF
 
 	guiid id;
-	id.base = *stack_top(&ggui->current->id_hash_stack);
+	id.base = *ggui->current->id_hash_stack.top();
 	id.name = name;
 
 	gui_state_data* data = ggui->state_data.try_get(id);
