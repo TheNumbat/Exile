@@ -1,20 +1,20 @@
 
 template<typename T>
-void destroy_queue(queue<T>* q) { PROF
+void queue<T>::destroy() { PROF
 
-	if(q->memory) {
+	if(memory) {
 
-		q->alloc->free_(q->memory, q->alloc, CONTEXT);
+		alloc->free_(memory, alloc, CONTEXT);
 	}
 
-	q->memory = null;
-	q->start = 0;
-	q->end = 0;
-	q->capacity = 0;
+	memory = null;
+	start = 0;
+	end = 0;
+	capacity = 0;
 }
 
 template<typename T>
-queue<T> make_queue(u32 capacity, allocator* a) { PROF
+queue<T> queue<T>::make(u32 capacity, allocator* a) { PROF
 
 	queue<T> ret;
 
@@ -32,73 +32,73 @@ queue<T> make_queue(u32 capacity, allocator* a) { PROF
 }
 
 template<typename T>
-queue<T> make_queue(u32 capacity) { PROF
+queue<T> queue<T>::make(u32 capacity) { PROF
 
-	return make_queue<T>(capacity, CURRENT_ALLOC());
+	return queue<T>::make(capacity, CURRENT_ALLOC());
 }
 
 
 template<typename T>
-u32 queue_len(queue<T>* q) { PROF
-	i64 ret = (i64)q->end - (i64)q->start;
-	if(ret < 0) ret += q->capacity;
+u32 queue<T>::len() { PROF
+	i64 ret = (i64)end - (i64)start;
+	if(ret < 0) ret += capacity;
 	return (u32)ret;
 }
 
 template<typename T>
-void queue_grow(queue<T>* q) { PROF
+void queue<T>::grow() { PROF
 	
-	u32 capacity = 2 * q->capacity;
-	if(!capacity) capacity = 8;
+	u32 new_capacity = 2 * capacity;
+	if(!new_capacity) new_capacity = 8;
 
-	if(q->memory) {
+	if(memory) {
 
 		u32 len = 0;
-		T* new_mem = (T*)q->alloc->allocate_(capacity * sizeof(T), q->alloc, CONTEXT);
-		for(u32 i = q->start; i != q->end; ++i %= q->capacity) {
-			new_mem[len++] = q->memory[i];
+		T* new_mem = (T*)alloc->allocate_(new_capacity * sizeof(T), alloc, CONTEXT);
+		for(u32 i = start; i != end; ++i %= new_capacity) {
+			new_mem[len++] = memory[i];
 		}
-		q->start = 0;
-		q->end = len;
-		q->alloc->free_(q->memory, q->alloc, CONTEXT);
-		q->memory = new_mem;
+		start = 0;
+		end = len;
+		alloc->free_(memory, alloc, CONTEXT);
+		memory = new_mem;
 
 #ifdef CONSTRUCT_DS_ELEMENTS
-		new (q->memory + len) T[capacity - q->capacity]();
+		new (memory + len) T[new_capacity - new_capacity]();
 #endif		
 
 	} else {
-		q->memory = (T*)q->alloc->allocate_(capacity * sizeof(T), q->alloc, CONTEXT);
+		memory = (T*)alloc->allocate_(new_capacity * sizeof(T), alloc, CONTEXT);
 
 #ifdef CONSTRUCT_DS_ELEMENTS
-		new (q->memory) T[capacity]();
+		new (memory) T[new_capacity]();
 #endif
 	}
 
-	q->capacity = capacity;
+	capacity = new_capacity;
 }
 
 template<typename T>
-T* queue_push(queue<T>* q, T value) { PROF
+T* queue<T>::push(T value) { PROF
 
-	if(queue_len(q) + 1 >= q->capacity) {
-		queue_grow(q);
+	if(len() + 1 >= capacity) {
+		grow();
 	}
 
-	T* ret = q->memory + q->end;
+	T* ret = memory + end;
 	*ret = value;
 
-	++q->end %= q->capacity;
+	++end %= capacity;
 	return ret;
 }
 
 template<typename T>
-T queue_pop(queue<T>* q) { PROF
+T queue<T>::pop() { PROF
 
-	if(queue_len(q) > 0) {
+	if(len() > 0) {
 		
-		T top = *queue_front(q);
-		++q->start %= q->capacity;
+		T top = *front();
+		++start %= capacity;
 		return top;	
 	}
 
@@ -108,12 +108,12 @@ T queue_pop(queue<T>* q) { PROF
 }
 
 template<typename T>
-bool queue_try_pop(queue<T>* q, T* out) { PROF
+bool queue<T>::try_pop(T* out) { PROF
 
-	if(queue_len(q) > 0) {
-		
-		*out = *queue_front(q);
-		++q->start %= q->capacity;
+	if(len() > 0) {
+	
+		*out = *front();
+		++start %= capacity;
 		return true;	
 	}
 
@@ -121,11 +121,11 @@ bool queue_try_pop(queue<T>* q, T* out) { PROF
 }
 
 template<typename T>
-T* queue_back(queue<T>* q) { PROF
+T* queue<T>::back() { PROF
 
-	if(queue_len(q) > 0) {
+	if(len() > 0) {
 
-		return &q->memory[q->end - 1];
+		return &memory[end - 1];
 	}
 
 	LOG_FATAL("Trying to get back of empty queue!");
@@ -133,11 +133,11 @@ T* queue_back(queue<T>* q) { PROF
 }
 
 template<typename T>
-T* queue_front(queue<T>* q) { PROF
+T* queue<T>::front() { PROF
 
-	if(queue_len(q) > 0) {
+	if(len() > 0) {
 
-		return &q->memory[q->start];
+		return &memory[start];
 	}
 
 	LOG_FATAL("Trying to get front of empty queue!");
@@ -145,14 +145,14 @@ T* queue_front(queue<T>* q) { PROF
 }
 
 template<typename T>
-bool queue_empty(queue<T>* q) { PROF
-	return q->start == q->end;
+bool queue<T>::empty() { PROF
+	return start == end;
 }
 
 
 
 template<typename T>
-con_queue<T> make_con_queue(u32 capacity, allocator* a) { PROF
+con_queue<T> con_queue<T>::make(u32 capacity, allocator* a) { PROF
 
 	con_queue<T> ret;
 
@@ -172,44 +172,41 @@ con_queue<T> make_con_queue(u32 capacity, allocator* a) { PROF
 	return ret;
 }
 
-// TODO(max): I'm pretty sure this could be a lot more efficient with more fine-grained locking
-//			  via interlockedFuncs
-
 template<typename T>
-con_queue<T> make_con_queue(u32 capacity) { PROF
+con_queue<T> con_queue<T>::make(u32 capacity) { PROF
 
 	return make_con_queue<T>(capacity, CURRENT_ALLOC());
 }
 
 template<typename T>
-void destroy_con_queue(con_queue<T>* q) { PROF
+void con_queue<T>::destroy() { PROF
 
-	destroy_queue((queue<T>*)q);	
-	global_api->platform_destroy_mutex(&q->mut);
-	global_api->platform_destroy_semaphore(&q->sem);
+	((queue<T>*)this)->destroy(); // TODO(max): this is super kludgy
+	global_api->platform_destroy_mutex(&mut);
+	global_api->platform_destroy_semaphore(&sem);
 }
 
 template<typename T>
-T* queue_push(con_queue<T>* q, T value) { PROF
-	global_api->platform_aquire_mutex(&q->mut, -1);
-	T* ret = queue_push((queue<T>*)q, value);
-	global_api->platform_release_mutex(&q->mut);
-	global_api->platform_signal_semaphore(&q->sem, 1);
+T* con_queue<T>::push(T value) { PROF
+	global_api->platform_aquire_mutex(&mut, -1);
+	T* ret = ((queue<T>*)this)->push(value);
+	global_api->platform_release_mutex(&mut);
+	global_api->platform_signal_semaphore(&sem, 1);
 	return ret;
 }
 
 template<typename T>
-T queue_wait_pop(con_queue<T>* q) { PROF
-	global_api->platform_wait_semaphore(&q->sem, -1);
+T con_queue<T>::wait_pop() { PROF
+	global_api->platform_wait_semaphore(&sem, -1);
 	T ret;
-	queue_try_pop(q, &ret);
+	try_pop(&ret);
 	return ret;
 }
 
 template<typename T>
-bool queue_try_pop(con_queue<T>* q, T* out) { PROF
-	global_api->platform_aquire_mutex(&q->mut, -1);
-	bool ret = queue_try_pop((queue<T>*)q, out);
-	global_api->platform_release_mutex(&q->mut);
+bool con_queue<T>::try_pop(T* out) { PROF
+	global_api->platform_aquire_mutex(&mut, -1);
+	bool ret = ((queue<T>*)this)->try_pop(out);
+	global_api->platform_release_mutex(&mut);
 	return ret;
 }
