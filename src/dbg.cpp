@@ -36,7 +36,7 @@ void dbg_add_log(log_message* msg) { PROF
 
 	log_message* m = vector_push(&global_dbg->log_cache, *msg);
 	m->arena       = MAKE_ARENA("cmsg", msg->arena.size, global_dbg->alloc, msg->arena.suppress_messages);
-	m->call_stack  = make_copy_array(&msg->call_stack, &m->arena);
+	m->call_stack  = array<code_context>::make_copy(&msg->call_stack, &m->arena);
 	m->thread_name = make_copy_string(msg->thread_name, &m->arena);
 	m->msg         = make_copy_string(msg->msg, &m->arena);
 }

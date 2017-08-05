@@ -115,7 +115,7 @@ void logger_msgf(log_manager* log, string fmt, log_level level, code_context con
 		lmsg.publisher = context;
 		lmsg.level = level;
 
-		lmsg.call_stack = make_array_memory<code_context>(this_thread_data.call_stack_depth, malloc(sizeof(code_context) * this_thread_data.call_stack_depth));
+		lmsg.call_stack = array<code_context>::make_memory(this_thread_data.call_stack_depth, malloc(sizeof(code_context) * this_thread_data.call_stack_depth));
 		lmsg.thread_name = make_copy_string(this_thread_data.name);
 		memcpy(this_thread_data.call_stack, lmsg.call_stack.memory, sizeof(code_context) * this_thread_data.call_stack_depth);
 
@@ -155,7 +155,7 @@ void logger_msg(log_manager* log, string msg, log_level level, code_context cont
 		lmsg.level = level;
 		lmsg.arena = arena;
 
-		lmsg.call_stack = make_array_memory<code_context>(this_thread_data.call_stack_depth, malloc(sizeof(code_context) * this_thread_data.call_stack_depth));
+		lmsg.call_stack = array<code_context>::make_memory(this_thread_data.call_stack_depth, malloc(sizeof(code_context) * this_thread_data.call_stack_depth));
 		lmsg.thread_name = make_copy_string(this_thread_data.name);
 		memcpy(this_thread_data.call_stack, lmsg.call_stack.memory, sizeof(code_context) * this_thread_data.call_stack_depth);
 		
@@ -193,7 +193,7 @@ string log_fmt_msg_call_stack(log_message* msg) { PROF
 
 	string call_stack = make_cat_string(msg->thread_name, string_literal("/"));
 	for(u32 j = 0; j < msg->call_stack.capacity; j++) {
-		string temp = make_cat_strings(3, call_stack, array_get(&msg->call_stack, j)->function, string_literal("/"));
+		string temp = make_cat_strings(3, call_stack, msg->call_stack.get(j)->function, string_literal("/"));
 		free_string(call_stack);
 		call_stack = temp;
 	}
