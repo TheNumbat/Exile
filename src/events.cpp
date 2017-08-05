@@ -3,7 +3,7 @@ evt_manager make_evt_manager(allocator* a) { PROF
 	
 	evt_manager ret;
 
-	ret.event_queue = make_con_queue<platform_event>(256, a);
+	ret.event_queue = con_queue<platform_event>::make(256, a);
 
 	return ret;
 }
@@ -15,7 +15,7 @@ void start_evt_manger(evt_manager* em) { PROF
 
 void destroy_evt_manager(evt_manager* em) { PROF
 
-	destroy_con_queue(&em->event_queue);
+	em->event_queue.destroy();
 }
 
 gui_input_state run_events(game_state* state) { PROF
@@ -25,7 +25,7 @@ gui_input_state run_events(game_state* state) { PROF
 	ret.scroll = 0;
 
 	platform_event evt;
-	while(queue_try_pop(&state->evt.event_queue, &evt)) {
+	while(state->evt.event_queue.try_pop(&evt)) {
 
 		if(evt.type == platform_event_type::async) {
 			if(evt.async.type == platform_async_type::user) {
@@ -109,5 +109,5 @@ void event_enqueue(void* data, platform_event evt) { PROF
 
 	// TODO(max) IMPORTANT(max): this needs to be thread-safe now
 	con_queue<platform_event>* q = (con_queue<platform_event>*)data;
-	queue_push(q, evt);
+	q->push(evt);
 }

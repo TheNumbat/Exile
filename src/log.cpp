@@ -4,7 +4,7 @@ log_manager make_logger(allocator* a) { PROF
 	log_manager ret;
 
 	ret.out = make_vector<log_out>(4, a);
-	ret.message_queue = make_con_queue<log_message>(8, a);
+	ret.message_queue = con_queue<log_message>::make(8, a);
 	global_api->platform_create_semaphore(&ret.logging_semaphore, 0, INT32_MAX);
 
 	ret.alloc = a;
@@ -47,7 +47,7 @@ void destroy_logger(log_manager* log) { PROF
 	}
 
 	destroy_vector(&log->out);
-	destroy_con_queue(&log->message_queue);
+	log->message_queue.destroy();
 	global_api->platform_destroy_semaphore(&log->logging_semaphore);
 	DESTROY_ARENA(&log->scratch);
 	log->alloc = null;
@@ -119,7 +119,7 @@ void logger_msgf(log_manager* log, string fmt, log_level level, code_context con
 		lmsg.thread_name = make_copy_string(this_thread_data.name);
 		memcpy(this_thread_data.call_stack, lmsg.call_stack.memory, sizeof(code_context) * this_thread_data.call_stack_depth);
 
-		queue_push(&log->message_queue, lmsg);
+		log->message_queue.push(lmsg);
 		
 		global_api->platform_signal_semaphore(&log->logging_semaphore, 1);
 
@@ -159,7 +159,7 @@ void logger_msg(log_manager* log, string msg, log_level level, code_context cont
 		lmsg.thread_name = make_copy_string(this_thread_data.name);
 		memcpy(this_thread_data.call_stack, lmsg.call_stack.memory, sizeof(code_context) * this_thread_data.call_stack_depth);
 		
-		queue_push(&log->message_queue, lmsg);
+		log->message_queue.push(lmsg);
 
 		global_api->platform_signal_semaphore(&log->logging_semaphore, 1);
 
@@ -272,7 +272,7 @@ i32 logging_thread(void* data_) { PROF_NOCS
 	while(data->running) {
 
 		log_message msg;
-		while(queue_try_pop(data->message_queue, &msg)) {
+		while(data->message_queue->try_pop(&msg)) {
 
 			if(msg.msg.c_str != null) {
 				

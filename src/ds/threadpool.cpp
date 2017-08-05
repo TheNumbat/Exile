@@ -14,7 +14,7 @@ threadpool make_threadpool(allocator* a, i32 num_threads_) { PROF
 	ret.running = map<job_id,platform_semaphore>::make(16, hash_u64);
 	ret.threads = array<platform_thread>::make(ret.num_threads, a);
 	ret.data    = array<worker_data>::make(ret.num_threads, a);
-	ret.jobs    = make_con_queue<job>(16, a);
+	ret.jobs    = con_queue<job>::make(16, a);
 	
 	global_api->platform_create_semaphore(&ret.jobs_semaphore, 0, ret.num_threads);
 
@@ -28,7 +28,7 @@ void destroy_threadpool(threadpool* tp) { PROF
 	tp->running.destroy();
 	tp->threads.destroy();
 	tp->data.destroy();
-	destroy_con_queue(&tp->jobs);
+	tp->jobs.destroy();
 
 	global_api->platform_destroy_semaphore(&tp->jobs_semaphore);
 }
@@ -53,7 +53,7 @@ job_id threadpool_queue_job(threadpool* tp, job_work work, void* data) { PROF
 job_id threadpool_queue_job(threadpool* tp, job j) { PROF
 
 	j.id = tp->next_job_id++;
-	queue_push(&tp->jobs, j);
+	tp->jobs.push(j);
 
 	platform_semaphore jid_sem;
 	global_api->platform_create_semaphore(&jid_sem, 0, INT_MAX);
@@ -120,7 +120,7 @@ i32 worker(void* data_) { PROF
 
 		job current_job;
 
-		if(queue_try_pop(data->job_queue, &current_job)) {
+		if(data->job_queue->try_pop(&current_job)) {
 
 			if(current_job.work) {
 				job_callback callback = (*current_job.work)(current_job.data);
