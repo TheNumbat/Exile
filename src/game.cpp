@@ -37,6 +37,7 @@ extern "C" game_state* start_up(platform_api* api) { PROF
 
 	LOG_INFO("Starting thread pool");
 	state->thread_pool_a = MAKE_PLATFORM_ALLOCATOR("threadpool");
+	state->thread_pool_a.suppress_messages = true;
 	state->thread_pool = make_threadpool(&state->thread_pool_a);
 	threadpool_start_all(&state->thread_pool);
 

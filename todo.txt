@@ -21,6 +21,7 @@ immediate to do:
 		buffer (fill and output to callback)
 		heap (+priority queue)
 		string builder
+		sorted vector
 		improve map storage/AOS
 			bit mask for occupancy
 			try separate vectors of keys, values, hashes (no map_element)
@@ -50,14 +51,29 @@ immediate to do:
 			use string builder?
 		do we want to do a subtype dispatcher? https://youtu.be/lCtALewoFjc?t=1h20m16s
 		integration with UI
-		profiler
 		support loading/writing type table for release (i.e. don't build on startup)
+
+	debug
+		stats/options 
+			apply meta-types
+		profiler
+			frame buffer
+			graphs
+			sections
+			functions
+			display - hierarchal, per time, etc. See Code Modification Jai Demo
+		Interesting - https://github.com/Srekel/the-debuginator/
 
 	log
 		buffer file IO
 		can we remove allocation on message send?
 			pool allocator/free list?
 		colorful console output
+		keep & output statistics
+		discriminate output style types
+			custom function
+			plaintext
+			HTML
 
 	UI
 		stop sending mesh every frame (see OpenGL)
