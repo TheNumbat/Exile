@@ -1272,7 +1272,7 @@ platform_error win32_create_window(platform_window* window, string title, u32 wi
 	wglSwapIntervalEXT(0);
 	SetCursor(LoadCursor(0, IDC_ARROW));
 
-	ShowWindow(window->handle, SW_SHOW);
+	ShowWindowAsync(window->handle, SW_SHOW);
 
 	return ret;
 }
