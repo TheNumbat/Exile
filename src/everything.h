@@ -17,6 +17,8 @@
 #define LOG_ALLOCS				// enable logging for every allocation/free/reallocation (including arena - this is a LOT)
 	
 #define CONSTRUCT_DS_ELEMENTS 	// removes need for zero-cleared allocation
+
+#define NO_CONCURRENT_JOBS		// makes queue_job just run the job and wait_job do nothing
 */
 
 // #define REAL_RELEASE // turn off everything for a true release build

@@ -54,7 +54,9 @@ string make_stringf_len(u32 len, string fmt, Targs... args) { PROF
 	ret.len = len;
 	ret.c_str[len - 1] = 0;
 
-	_string_printf(ret, 0, fmt, false, args...);
+	u32 used = _string_printf(ret, 0, fmt, false, args...);
+
+	LOG_DEBUG_ASSERT(used == len - 1);
 
 	return ret;
 }
@@ -68,7 +70,9 @@ string make_stringf(string fmt, Targs... args) { PROF
 	ret.len = len;
 	ret.c_str[len - 1] = 0;
 
-	_string_printf(ret, 0, fmt, false, args...);
+	u32 used = _string_printf(ret, 0, fmt, false, args...);
+
+	LOG_DEBUG_ASSERT(used == len - 1);
 
 	return ret;
 }
@@ -95,7 +99,7 @@ u32 _string_printf(string out, u32 idx, string fmt, bool size, T& value, Targs..
 	for(u32 i = 0; i < fmt.len - 1; i++) {
 		if(fmt.c_str[i] == '%') {
 			if(fmt.c_str[i + 1] == '%') {
-				idx = string_write(out, idx, string_literal("%"), size);
+				idx = string_write(out, idx, '%', size);
 				i++;
 			} else {
 				if(fmt.c_str[i + 1] == '-') { // left justify
@@ -187,7 +191,7 @@ u32 _string_printf(string out, u32 idx, string fmt, bool size) { PROF
 	for(u32 i = 0; i < fmt.len - 1; i++) {
 		if(fmt.c_str[i] == '%') {
 			if(fmt.c_str[i + 1] == '%') {
-				idx = string_write(out, idx, string_literal("%"), size);
+				idx = string_write(out, idx, '%', size);
 				i++;
 			} else {
 				LOG_ERR("Missing parameter for string_printf!");

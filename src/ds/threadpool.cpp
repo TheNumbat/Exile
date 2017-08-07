@@ -35,10 +35,14 @@ void destroy_threadpool(threadpool* tp) { PROF
 
 void threadpool_wait_job(threadpool* tp, job_id id) { PROF
 
+#ifdef NO_CONCURRENT_JOBS
+	return;
+#else
 	platform_semaphore* sem = map_try_get(&tp->running, id);
 	if(sem) {
 		global_api->platform_wait_semaphore(sem, -1);
 	}
+#endif
 }
 
 job_id threadpool_queue_job(threadpool* tp, job_work work, void* data) { PROF
@@ -52,6 +56,10 @@ job_id threadpool_queue_job(threadpool* tp, job_work work, void* data) { PROF
 
 job_id threadpool_queue_job(threadpool* tp, job j) { PROF
 
+#ifdef NO_CONCURRENT_JOBS
+	j.work(j.data);
+	return j.id;
+#else
 	j.id = tp->next_job_id++;
 	queue_push(&tp->jobs, j);
 
@@ -66,6 +74,7 @@ job_id threadpool_queue_job(threadpool* tp, job j) { PROF
 	global_api->platform_signal_semaphore(&tp->jobs_semaphore, 1);
 
 	return j.id;
+#endif
 }
 
 void threadpool_stop_all(threadpool* tp) { PROF
