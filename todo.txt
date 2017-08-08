@@ -2,7 +2,7 @@
 For overall : see #high_level_systems
 
 features so far:
-	data structures: array, hash map (robin hood open addressing), queue, stack, vector, thread pool, string
+	data structures: array, hash map (robin hood open addressing), queue, stack, vector, string
 	allocation context system + arena allocators, joint allocation, etc.
 	asset processing & loading: images, fonts, font atlasing
 	event based input system
@@ -13,6 +13,7 @@ features so far:
 	opengl rendering system
 	windows platform layer
 		linux platform layer soon...
+	job based thread pool async system, event or callback driven
 
 immediate to do:
 
