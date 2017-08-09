@@ -12,7 +12,7 @@ struct job {
 	void* data 	  = null;
 };
 
-struct worker_data {
+struct worker_param {
 	con_queue<job>* job_queue 			   	= null;
 	map<job_id,platform_semaphore>* running = null;
 	platform_mutex* running_mutex 	   		= null;
@@ -29,24 +29,26 @@ struct threadpool {
 	con_queue<job> jobs;			 			// TODO(max): priority queue
 	map<job_id,platform_semaphore> running;
 
-	array<platform_thread> threads;
-	array<worker_data> 	   data;
+	array<platform_thread> 	threads;
+	array<worker_param> 	worker_data;
 	
 	platform_mutex		   running_mutex; 
 	platform_semaphore	   jobs_semaphore;
 	allocator* 			   alloc;
+
+///////////////////////////////////////////////////////////////////////////////
+
+	static threadpool make(i32 num_threads_ = 0);
+	static threadpool make(allocator* a, i32 num_threads_ = 0);
+	void destroy();
+	
+	job_id queue_job(job_work work, void* data);
+	job_id queue_job(job j);
+	void wait_job(job_id id);
+	
+	void stop_all();
+	void start_all();
 };
-
-threadpool make_threadpool(i32 num_threads_ = 0);
-threadpool make_threadpool(allocator* a, i32 num_threads_ = 0);
-void destroy_threadpool(threadpool* tp);
-
-job_id threadpool_queue_job(threadpool* tp, job_work work, void* data);
-job_id threadpool_queue_job(threadpool* tp, job j);
-void threadpool_wait_job(threadpool* tp, job_id id);
-
-void threadpool_stop_all(threadpool* tp);
-void threadpool_start_all(threadpool* tp);
 
 i32 worker(void* data_);
 

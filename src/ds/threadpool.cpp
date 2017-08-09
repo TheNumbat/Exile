@@ -1,10 +1,10 @@
 
-threadpool make_threadpool(i32 num_threads_) { PROF
+threadpool threadpool::make(i32 num_threads_) { PROF
 
-	return make_threadpool(CURRENT_ALLOC(), num_threads_);
+	return make(CURRENT_ALLOC(), num_threads_);
 }
 
-threadpool make_threadpool(allocator* a, i32 num_threads_) { PROF
+threadpool threadpool::make(allocator* a, i32 num_threads_) { PROF
 
 	threadpool ret;
 
@@ -13,114 +13,114 @@ threadpool make_threadpool(allocator* a, i32 num_threads_) { PROF
 	ret.alloc   = a;
 	ret.running = map<job_id,platform_semaphore>::make(16, hash_u64);
 	ret.threads = array<platform_thread>::make(ret.num_threads, a);
-	ret.data    = array<worker_data>::make(ret.num_threads, a);
 	ret.jobs    = con_queue<job>::make(16, a);
+	ret.worker_data = array<worker_param>::make(ret.num_threads, a);
 	
 	global_api->platform_create_semaphore(&ret.jobs_semaphore, 0, ret.num_threads);
 
 	return ret;
 }
 
-void destroy_threadpool(threadpool* tp) { PROF
+void threadpool::destroy() { PROF
 
-	threadpool_stop_all(tp);
+	stop_all();
 
-	tp->running.destroy();
-	tp->threads.destroy();
-	tp->data.destroy();
-	tp->jobs.destroy();
+	running.destroy();
+	threads.destroy();
+	worker_data.destroy();
+	jobs.destroy();
 
-	global_api->platform_destroy_semaphore(&tp->jobs_semaphore);
+	global_api->platform_destroy_semaphore(&jobs_semaphore);
 }
 
-void threadpool_wait_job(threadpool* tp, job_id id) { PROF
+void threadpool::wait_job(job_id id) { PROF
 
 #ifdef NO_CONCURRENT_JOBS
 	return;
 #else
-	platform_semaphore* sem = tp->running.try_get(id);
+	platform_semaphore* sem = running.try_get(id);
 	if(sem) {
 		global_api->platform_wait_semaphore(sem, -1);
 	}
 #endif
 }
 
-job_id threadpool_queue_job(threadpool* tp, job_work work, void* data) { PROF
+job_id threadpool::queue_job(job_work work, void* data) { PROF
 
 	job j;
 	j.work = work;
 	j.data = data;
 
-	return threadpool_queue_job(tp, j);
+	return queue_job(j);
 }
 
-job_id threadpool_queue_job(threadpool* tp, job j) { PROF
+job_id threadpool::queue_job(job j) { PROF
 
 #ifdef NO_CONCURRENT_JOBS
 	j.work(j.data);
 	return j.id;
 #else
-	j.id = tp->next_job_id++;
-	tp->jobs.push(j);
+	j.id = next_job_id++;
+	jobs.push(j);
 
 	platform_semaphore jid_sem;
 	global_api->platform_create_semaphore(&jid_sem, 0, INT_MAX);
 
 	// is this a good way to structure this? doesn't look like it
-	global_api->platform_aquire_mutex(&tp->running_mutex, -1);
-	tp->running.insert(j.id, jid_sem);
-	global_api->platform_release_mutex(&tp->running_mutex);
+	global_api->platform_aquire_mutex(&running_mutex, -1);
+	running.insert(j.id, jid_sem);
+	global_api->platform_release_mutex(&running_mutex);
 
-	global_api->platform_signal_semaphore(&tp->jobs_semaphore, 1);
+	global_api->platform_signal_semaphore(&jobs_semaphore, 1);
 
 	return j.id;
 #endif
 }
 
-void threadpool_stop_all(threadpool* tp) { PROF
+void threadpool::stop_all() { PROF
 
-	if(tp->online) {
+	if(online) {
 	
-		for(i32 i = 0; i < tp->num_threads; i++) {
+		for(i32 i = 0; i < num_threads; i++) {
 
-			tp->data.get(i)->online = false;
+			worker_data.get(i)->online = false;
 		}
 
-		global_api->platform_signal_semaphore(&tp->jobs_semaphore, tp->num_threads);
+		global_api->platform_signal_semaphore(&jobs_semaphore, num_threads);
 
-		for(i32 i = 0; i < tp->num_threads; i++) {
+		for(i32 i = 0; i < num_threads; i++) {
 
-			global_api->platform_join_thread(tp->threads.get(i), -1);
-			global_api->platform_destroy_thread(tp->threads.get(i));
+			global_api->platform_join_thread(threads.get(i), -1);
+			global_api->platform_destroy_thread(threads.get(i));
 		}
 
-		tp->online = false;
+		online = false;
 	}
 } 
 
-void threadpool_start_all(threadpool* tp) { PROF
+void threadpool::start_all() { PROF
 
-	if(!tp->online) {
+	if(!online) {
 	
-		FORARR(tp->data,
+		FORARR(worker_data,
 
-			it->job_queue 	 	= &tp->jobs;
-			it->jobs_semaphore 	= &tp->jobs_semaphore;
+			it->job_queue 	 	= &jobs;
+			it->jobs_semaphore 	= &jobs_semaphore;
 			it->online 			= true;
-			it->alloc  			= tp->alloc;
-			it->running 		= &tp->running;
-			it->running_mutex 	= &tp->running_mutex;
+			it->alloc  			= alloc;
+			it->running 		= &running;
+			it->running_mutex 	= &running_mutex;
 
-			global_api->platform_create_thread(tp->threads.get(__i), &worker, it, false);
+			global_api->platform_create_thread(threads.get(__i), &worker, it, false);
 		)
 
-		tp->online = true;
+		online = true;
 	}
 }
 
 i32 worker(void* data_) { PROF
 
-	worker_data* data = (worker_data*)data_;
+	worker_param* data = (worker_param*)data_;
 
 	begin_thread(string_literal("worker %"), data->alloc, (u32)global_api->platform_this_thread_id().id);
 	LOG_DEBUG("Starting worker thread");

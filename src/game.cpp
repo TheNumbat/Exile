@@ -43,13 +43,13 @@ extern "C" game_state* start_up(platform_api* api) { PROF
 	LOG_INFO("Starting thread pool");
 	state->thread_pool_a = MAKE_PLATFORM_ALLOCATOR("threadpool");
 	state->thread_pool_a.suppress_messages = true;
-	state->thread_pool = make_threadpool(&state->thread_pool_a);
-	threadpool_start_all(&state->thread_pool);
+	state->thread_pool = threadpool::make(&state->thread_pool_a);
+	state->thread_pool.start_all();
 
 	LOG_INFO("Allocating transient store...");
 	state->transient_arena = MAKE_ARENA("transient", MEGABYTES(8), &state->default_platform_allocator, false);
 
-	job_id assets = threadpool_queue_job(&state->thread_pool, [](void* s) -> job_callback {
+	job_id assets = state->thread_pool.queue_job([](void* s) -> job_callback {
 		game_state* state = (game_state*)s;
 		LOG_INFO("Setting up asset system");
 		state->default_store_a = MAKE_PLATFORM_ALLOCATOR("asset");
@@ -70,7 +70,7 @@ extern "C" game_state* start_up(platform_api* api) { PROF
 	state->ogl_a = MAKE_PLATFORM_ALLOCATOR("ogl");
 	state->ogl = make_opengl(&state->ogl_a);
 
-	threadpool_wait_job(&state->thread_pool, assets);
+	state->thread_pool.wait_job(assets);
 
 	LOG_INFO("Setting up GUI");
 	state->gui_a = MAKE_PLATFORM_ALLOCATOR("gui");
@@ -134,8 +134,8 @@ extern "C" void shut_down(game_state* state) { PROF
 	destroy_asset_store(&state->default_store);
 
 	LOG_DEBUG("Destroying thread pool");
-	threadpool_stop_all(&state->thread_pool);
-	destroy_threadpool(&state->thread_pool);
+	state->thread_pool.stop_all();
+	state->thread_pool.destroy();
 
 	LOG_DEBUG("Destroying window");
 	platform_error err = global_api->platform_destroy_window(&state->window);
@@ -170,7 +170,7 @@ extern "C" void on_reload(platform_api* api, game_state* state) { PROF
 
 	begin_thread(string_literal("main"), &state->suppressed_platform_allocator);
 	logger_start(&state->log);
-	threadpool_start_all(&state->thread_pool);
+	state->thread_pool.start_all();
 
 	LOG_INFO("End reloading game code");
 }
@@ -180,7 +180,7 @@ extern "C" void on_unload(game_state* state) { PROF
 	LOG_INFO("Begin reloading game code");
 
 	destroy_type_table();
-	threadpool_stop_all(&state->thread_pool);
+	state->thread_pool.stop_all();
 	logger_stop(&state->log);
 
 	end_thread();
