@@ -2,7 +2,7 @@
 template<typename T>
 void stack<T>::destroy() { PROF
 
-	destroy_vector(&contents);
+	contents.destroy();
 }
 
 template<typename T>
@@ -30,7 +30,7 @@ stack<T> stack<T>::make(u32 capacity, allocator* a) { PROF
 
 	stack<T> ret;
 
-	ret.contents = make_vector<T>(capacity, a);
+	ret.contents = vector<T>::make(capacity, a);
 	
 	return ret;
 }
@@ -58,13 +58,13 @@ stack<T> stack<T>::make(u32 capacity) { PROF
 template<typename T>
 void stack<T>::clear() { PROF
 
-	vector_clear(&contents);
+	contents.clear();
 }
 
 template<typename T>
 void stack<T>::push(T value) { PROF
 
-	vector_push(&contents, value);
+	contents.push(value);
 }
 
 template<typename T>
@@ -74,7 +74,7 @@ T stack<T>::pop() { PROF
 		
 		T ret = *top();
 
-		vector_pop(&contents);
+		contents.pop();
 
 		return ret;	
 	}
@@ -89,7 +89,7 @@ T* stack<T>::top() { PROF
 
 	if(contents.size > 0) {
 
-		return vector_back(&contents);
+		return contents.back();
 	}
 
 	LOG_FATAL("Trying to get top of empty stack!");

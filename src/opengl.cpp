@@ -150,19 +150,19 @@ ogl_manager make_opengl(allocator* a) { PROF
 void destroy_opengl(ogl_manager* ogl) { PROF
 
 	for(u32 i = 0; i < ogl->programs.contents.capacity; i++) {
-		if(vector_get(&ogl->programs.contents, i)->occupied) {
-			destroy_program(&vector_get(&ogl->programs.contents, i)->value);
+		if(ogl->programs.contents.get(i)->occupied) {
+			destroy_program(&ogl->programs.contents.get(i)->value);
 		}
 	}
 	for(u32 i = 0; i < ogl->textures.contents.capacity; i++) {
-		if(vector_get(&ogl->textures.contents, i)->occupied) {
-			destroy_texture(&vector_get(&ogl->textures.contents, i)->value);
+		if(ogl->textures.contents.get(i)->occupied) {
+			destroy_texture(&ogl->textures.contents.get(i)->value);
 		}
 	}
 	for(u32 i = 0; i < ogl->contexts.contents.capacity; i++) {
-		if(vector_get(&ogl->contexts.contents, i)->occupied) {
-			glDeleteVertexArrays(1, &(vector_get(&ogl->contexts.contents, i))->value.vao);
-			glDeleteBuffers(8, vector_get(&ogl->contexts.contents, i)->value.vbos);
+		if(ogl->contexts.contents.get(i)->occupied) {
+			glDeleteVertexArrays(1, &ogl->contexts.contents.get(i)->value.vao);
+			glDeleteBuffers(8, ogl->contexts.contents.get(i)->value.vbos);
 		}
 	}
 
@@ -476,7 +476,7 @@ void ogl_render_command_list(platform_window* win, ogl_manager* ogl, render_comm
 
 	for(u32 i = 0; i < rcl->commands.size; i++) {
 
-		render_command* cmd = vector_get(&rcl->commands, i);
+		render_command* cmd = rcl->commands.get(i);
 
 		ogl_select_draw_context(ogl, cmd->context);
 		ogl_select_texture(ogl, cmd->texture);

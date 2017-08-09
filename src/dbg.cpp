@@ -3,7 +3,7 @@ dbg_manager make_dbg_manager(log_manager* log, allocator* alloc) { PROF
 
 	dbg_manager ret;
 
-	ret.log_cache = make_vector<log_message>(1024, alloc);
+	ret.log_cache = vector<log_message>::make(1024, alloc);
 	ret.alloc = alloc;
 
 	log_out dbg_log;
@@ -21,20 +21,20 @@ void destroy_dbg_manager(dbg_manager* dbg) { PROF
 		DESTROY_ARENA(&it->arena);
 	)
 
-	destroy_vector(&dbg->log_cache);
+	dbg->log_cache.destroy();
 }
 
 void dbg_add_log(log_message* msg) { PROF
 
-	// TODO(max): circular buffer
+	// TODO(max): circular buffer (just use a queue?)
 	if(global_dbg->log_cache.size == global_dbg->log_cache.capacity) {
 
-		log_message* m = vector_front(&global_dbg->log_cache);
+		log_message* m = global_dbg->log_cache.front();
 		DESTROY_ARENA(&m->arena);
-		vector_pop_front(&global_dbg->log_cache);
+		global_dbg->log_cache.pop_front();
 	}
 
-	log_message* m = vector_push(&global_dbg->log_cache, *msg);
+	log_message* m = global_dbg->log_cache.push(*msg);
 	m->arena       = MAKE_ARENA("cmsg", msg->arena.size, global_dbg->alloc, msg->arena.suppress_messages);
 	m->call_stack  = array<code_context>::make_copy(&msg->call_stack, &m->arena);
 	m->thread_name = make_copy_string(msg->thread_name, &m->arena);

@@ -9,20 +9,20 @@ mesh_2d make_mesh_2d(u32 verts, allocator* alloc) { PROF
 
 	ret.alloc = alloc;
 
-	ret.verticies = make_vector<v2>(verts, alloc);
-	ret.texCoords = make_vector<v3>(verts, alloc);
-	ret.colors 	  =	make_vector<v4>(verts, alloc);
-	ret.elements  = make_vector<uv3>(verts, alloc); 
+	ret.verticies = vector<v2>::make(verts, alloc);
+	ret.texCoords = vector<v3>::make(verts, alloc);
+	ret.colors 	  =	vector<v4>::make(verts, alloc);
+	ret.elements  = vector<uv3>::make(verts, alloc); 
 
 	return ret;
 }
 
 void destroy_mesh(mesh_2d* m) { PROF
 
-	destroy_vector(&m->verticies);
-	destroy_vector(&m->texCoords);
-	destroy_vector(&m->colors);
-	destroy_vector(&m->elements);
+	m->verticies.destroy();
+	m->texCoords.destroy();
+	m->colors.destroy();
+	m->elements.destroy();
 	m->alloc = null;
 }
 
@@ -30,44 +30,44 @@ void mesh_push_cutrect(mesh_2d* m, r2 r, f32 round, color c) { PROF
 
 	u32 idx = m->verticies.size;
 
-	vector_push(&m->verticies, V2(r.x, r.y + round));
-	vector_push(&m->verticies, V2(r.x, r.y + r.h - round));
-	vector_push(&m->verticies, V2(r.x + round, r.y + r.h));
-	vector_push(&m->verticies, V2(r.x + r.w - round, r.y + r.h));
-	vector_push(&m->verticies, V2(r.x + r.w, r.y + r.h - round));
-	vector_push(&m->verticies, V2(r.x + r.w, r.y + round));
-	vector_push(&m->verticies, V2(r.x + r.w - round, r.y));
-	vector_push(&m->verticies, V2(r.x + round, r.y));
+	m->verticies.push(V2(r.x, r.y + round));
+	m->verticies.push(V2(r.x, r.y + r.h - round));
+	m->verticies.push(V2(r.x + round, r.y + r.h));
+	m->verticies.push(V2(r.x + r.w - round, r.y + r.h));
+	m->verticies.push(V2(r.x + r.w, r.y + r.h - round));
+	m->verticies.push(V2(r.x + r.w, r.y + round));
+	m->verticies.push(V2(r.x + r.w - round, r.y));
+	m->verticies.push(V2(r.x + round, r.y));
 
-	FOR(8) vector_push(&m->texCoords, V3(0.0f, 0.0f, 0.0f));
+	FOR(8) m->texCoords.push(V3(0.0f, 0.0f, 0.0f));
 
 	colorf cf = color_to_f(c);
-	FOR(8) vector_push(&m->colors, cf);
+	FOR(8) m->colors.push(cf);
 
-	vector_push(&m->elements, V3u(idx, idx + 1, idx + 2));
-	vector_push(&m->elements, V3u(idx, idx + 2, idx + 7));
-	vector_push(&m->elements, V3u(idx + 7, idx + 2, idx + 3));
-	vector_push(&m->elements, V3u(idx + 7, idx + 6, idx + 3));
-	vector_push(&m->elements, V3u(idx + 3, idx + 4, idx + 5));
-	vector_push(&m->elements, V3u(idx + 3, idx + 5, idx + 6));
+	m->elements.push(V3u(idx, idx + 1, idx + 2));
+	m->elements.push(V3u(idx, idx + 2, idx + 7));
+	m->elements.push(V3u(idx + 7, idx + 2, idx + 3));
+	m->elements.push(V3u(idx + 7, idx + 6, idx + 3));
+	m->elements.push(V3u(idx + 3, idx + 4, idx + 5));
+	m->elements.push(V3u(idx + 3, idx + 5, idx + 6));
 }
 
 void mesh_push_rect(mesh_2d* m, r2 r, color c) { PROF
 
 	u32 idx = m->verticies.size;
 
-	vector_push(&m->verticies, V2(r.x, r.y + r.h)); // BLC
-	vector_push(&m->verticies, r.xy);				// TLC
-	vector_push(&m->verticies, add(r.xy, r.wh));	// BRC
-	vector_push(&m->verticies, V2(r.x + r.w, r.y));	// TRC
+	m->verticies.push(V2(r.x, r.y + r.h));	// BLC
+	m->verticies.push(r.xy);				// TLC
+	m->verticies.push(add(r.xy, r.wh));		// BRC
+	m->verticies.push(V2(r.x + r.w, r.y));	// TRC
 
-	FOR(4) vector_push(&m->texCoords, V3(0.0f, 0.0f, 0.0f));
+	FOR(4) m->texCoords.push(V3(0.0f, 0.0f, 0.0f));
 
 	colorf cf = color_to_f(c);
-	FOR(4) vector_push(&m->colors, cf);
+	FOR(4) m->colors.push(cf);
 
-	vector_push(&m->elements, V3u(idx, idx + 1, idx + 2));
-	vector_push(&m->elements, V3u(idx + 1, idx + 2, idx + 3));
+	m->elements.push(V3u(idx, idx + 1, idx + 2));
+	m->elements.push(V3u(idx + 1, idx + 2, idx + 3));
 }
 
 v2 size_text(asset* font, string text_utf8, f32 point) { PROF
@@ -114,20 +114,20 @@ f32 mesh_push_text_line(mesh_2d* m, asset* font, string text_utf8, v2 pos, f32 p
 		v3 trc = V3(glyph.x2/w, 1.0f - glyph.y1/h, 1.0f);
 		v3 blc = V3(glyph.x1/w, 1.0f - glyph.y2/h, 1.0f);
 
-		vector_push(&m->verticies, V2(x + scale*glyph.xoff1, y + scale*glyph.yoff2)); 	// BLC
- 		vector_push(&m->verticies, V2(x + scale*glyph.xoff1, y + scale*glyph.yoff1));	// TLC
- 		vector_push(&m->verticies, V2(x + scale*glyph.xoff2, y + scale*glyph.yoff2));	// BRC
- 		vector_push(&m->verticies, V2(x + scale*glyph.xoff2, y + scale*glyph.yoff1));	// TRC
+		m->verticies.push(V2(x + scale*glyph.xoff1, y + scale*glyph.yoff2)); 	// BLC
+ 		m->verticies.push(V2(x + scale*glyph.xoff1, y + scale*glyph.yoff1));	// TLC
+ 		m->verticies.push(V2(x + scale*glyph.xoff2, y + scale*glyph.yoff2));	// BRC
+ 		m->verticies.push(V2(x + scale*glyph.xoff2, y + scale*glyph.yoff1));	// TRC
 
-		vector_push(&m->texCoords, blc);
-		vector_push(&m->texCoords, tlc);
-		vector_push(&m->texCoords, brc);
-		vector_push(&m->texCoords, trc);
+		m->texCoords.push(blc);
+		m->texCoords.push(tlc);
+		m->texCoords.push(brc);
+		m->texCoords.push(trc);
 
-		FOR(4) vector_push(&m->colors, cf);
+		FOR(4) m->colors.push(cf);
 
-		vector_push(&m->elements, V3u(idx, idx + 1, idx + 2));
-		vector_push(&m->elements, V3u(idx + 1, idx + 2, idx + 3));
+		m->elements.push(V3u(idx, idx + 1, idx + 2));
+		m->elements.push(V3u(idx + 1, idx + 2, idx + 3));
 
 		x += scale * glyph.advance;
 	}
@@ -145,16 +145,16 @@ mesh_3d make_mesh_3d(u32 verts, allocator* alloc) { PROF
 
 	ret.alloc = alloc;
 
-	ret.verticies = make_vector<v3>(verts, alloc);
-	ret.texCoords = make_vector<v2>(verts, alloc);
+	ret.verticies = vector<v3>::make(verts, alloc);
+	ret.texCoords = vector<v2>::make(verts, alloc);
 
 	return ret;
 }
 
 void destroy_mesh(mesh_3d* m) { PROF
 
-	destroy_vector(&m->verticies);
-	destroy_vector(&m->texCoords);
+	m->verticies.destroy();
+	m->texCoords.destroy();
 
 	m->alloc = null;	
 }
@@ -189,35 +189,35 @@ render_command_list make_command_list(allocator* alloc, u32 cmds) { PROF
 
 	ret.alloc = alloc;
 
-	ret.commands = make_vector<render_command>(cmds, alloc);
+	ret.commands = vector<render_command>::make(cmds, alloc);
 
 	return ret;
 }
 
 void destroy_command_list(render_command_list* rcl) { PROF
 
-	destroy_vector(&rcl->commands);
+	rcl->commands.destroy();
 	rcl->alloc = null;
 }
 
 void render_add_command(render_command_list* rcl, render_command rc) { PROF
 
-	vector_push(&rcl->commands, rc);
+	rcl->commands.push(rc);
 }
 
 void sort_render_commands(render_command_list* rcl) { PROF
 
-	vector_qsort(&rcl->commands);
+	rcl->commands.qsort();
 }
 
 void clear_mesh(mesh_2d* m) { PROF
-	vector_clear(&m->verticies);
-	vector_clear(&m->colors);
-	vector_clear(&m->texCoords);
-	vector_clear(&m->elements);
+	m->verticies.clear();
+	m->colors.clear();
+	m->texCoords.clear();
+	m->elements.clear();
 }
 
 void clear_mesh(mesh_3d* m) { PROF
-	vector_clear(&m->verticies);
-	vector_clear(&m->texCoords);
+	m->verticies.clear();
+	m->texCoords.clear();
 }

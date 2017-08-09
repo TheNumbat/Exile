@@ -9,34 +9,33 @@ struct vector {
 	u32 size 	 	 = 0;
 	u32 capacity 	 = 0;
 	allocator* alloc = null;
+
+///////////////////////////////////////////////////////////////////////////////
+
+	static vector<T> make(u32 capacity, allocator* a);
+	static vector<T> make(u32 capacity = 8);
+	static vector<T> make_copy(vector<T> source);
+	static vector<T> make_copy(vector<T> source, allocator* a);
+	static vector<T> make_copy_trim(vector<T> source, allocator* a);
+	void destroy();
+	void clear(); // doesn't free/resize
+
+	void grow();
+	void zero();
+	void resize(u32 capacity); // a smaller size will truncate
+	T* push(T value);
+	void pop();
+	void pop_front();
+	void erase(u32 index, u32 num = 1);
+	void erase(T val); // linear search, removes all found
+
+	T* get(u32 idx);
+	T* front();
+	T* back();
+	T* find(T val); // linear search
+
+	void qsort(u32 low = 0, u32 high = 0, bool first = true); // quick sort
+	u32 partition(u32 low, u32 high);
+
+	bool empty();
 };
-
-template<typename T> vector<T> make_vector(u32 capacity, allocator* a);
-template<typename T> vector<T> make_vector(u32 capacity = 8);
-template<typename T> vector<T> make_vector_copy(vector<T> source);
-template<typename T> vector<T> make_vector_copy(vector<T> source, allocator* a);
-template<typename T> vector<T> make_vector_copy_trim(vector<T> source, allocator* a);
-template<typename T> void destroy_vector(vector<T>* v);
-template<typename T> void vector_clear(vector<T>* v); // doesn't free/resize
-
-template<typename T> void vector_grow(vector<T>* v);
-template<typename T> void vector_zero(vector<T>* v);
-template<typename T> void vector_resize(vector<T>* v, u32 capacity); // a smaller size will truncate
-template<typename T> T* vector_push(vector<T>* v, T value);
-template<typename T> void vector_pop(vector<T>* v);
-template<typename T> void vector_pop_front(vector<T>* v);
-template<typename T> void vector_erase(vector<T>* v, u32 index, u32 num = 1);
-template<typename T> void vector_erase(vector<T>* v, T val);
-
-template<typename T> T* vector_get(vector<T>* v, u32 idx);
-template<typename T> T* vector_front(vector<T>* v);
-template<typename T> T* vector_back(vector<T>* v);
-template<typename T> T* vector_find(vector<T>* v, T val); // linear search
-
-template<typename T> void vector_qsort(vector<T>* v, u32 low = 0, u32 high = 0, bool first = true); // quick sort
-template<typename T> u32 vector_partition(vector<T>* v, u32 low, u32 high);
-
-template<typename T> u32 vector_len(vector<T>* v);
-template<typename T> u32 vector_capacity(vector<T>* v);
-template<typename T> bool vector_empty(vector<T>* v);
-

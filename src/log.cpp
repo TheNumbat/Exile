@@ -3,7 +3,7 @@ log_manager make_logger(allocator* a) { PROF
 
 	log_manager ret;
 
-	ret.out = make_vector<log_out>(4, a);
+	ret.out = vector<log_out>::make(4, a);
 	ret.message_queue = con_queue<log_message>::make(8, a);
 	global_api->platform_create_semaphore(&ret.logging_semaphore, 0, INT32_MAX);
 
@@ -46,7 +46,7 @@ void destroy_logger(log_manager* log) { PROF
 		logger_stop(log);
 	}
 
-	destroy_vector(&log->out);
+	log->out.destroy();
 	log->message_queue.destroy();
 	global_api->platform_destroy_semaphore(&log->logging_semaphore);
 	DESTROY_ARENA(&log->scratch);
@@ -72,14 +72,14 @@ void logger_add_file(log_manager* log, platform_file file, log_level level) { PR
 	log_out lfile;
 	lfile.file = file;
 	lfile.level = level;
-	vector_push(&log->out, lfile);
+	log->out.push(lfile);
 
 	logger_print_header(log, lfile);
 }
 
 void logger_add_output(log_manager* log, log_out out) { PROF
 
-	vector_push(&log->out, out);
+	log->out.push(out);
 	if(!out.custom) {
 		logger_print_header(log, out);
 	}
@@ -254,7 +254,7 @@ string log_fmt_msg(log_message* msg) { PROF
 
 void logger_rem_output(log_manager* log, log_out out) { PROF
 
-	vector_erase(&log->out, out);
+	log->out.erase(out);
 }
 
 bool operator==(log_out l, log_out r) { PROF

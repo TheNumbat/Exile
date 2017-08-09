@@ -33,7 +33,7 @@ map<K,V> map<K,V>::make(i32 capacity, allocator* a, u32 (*hash)(K)) { PROF
 	capacity = (i32)ceilf(capacity / MAP_MAX_LOAD_FACTOR);
 
 	ret.alloc 	 = a;
-	ret.contents = make_vector<map_element<K,V>>(capacity, ret.alloc);
+	ret.contents = vector<map_element<K,V>>::make(capacity, ret.alloc);
 	if(!hash) {
 		LOG_DEBUG_ASSERT(sizeof(K) == sizeof(u32));
 		ret.use_u32hash = true;
@@ -48,7 +48,7 @@ map<K,V> map<K,V>::make(i32 capacity, allocator* a, u32 (*hash)(K)) { PROF
 template<typename K, typename V>
 void map<K,V>::destroy() { PROF
 	
-	destroy_vector(&contents);
+	contents.destroy();
 
 	size  = 0;
 	alloc = null;
@@ -61,7 +61,7 @@ void map<K,V>::clear() { PROF
 	FORVEC(contents,
 		it->occupied = false;
 	)
-	vector_clear(&contents);
+	contents.clear();
 	size = 0;
 	max_probe = 0;
 }
@@ -69,21 +69,21 @@ void map<K,V>::clear() { PROF
 template<typename K, typename V>
 void map<K,V>::grow_rehash() { PROF	
 	
-	vector<map_element<K,V>> temp = make_vector_copy(contents);
+	vector<map_element<K,V>> temp = vector<map_element<K,V>>::make_copy(contents);
 
-	vector_grow(&contents);
-	vector_zero(&contents);
+	contents.grow();
+	contents.zero();
 
 	size = 0;
 	max_probe = 0;
 
 	for(u32 i = 0; i < temp.capacity; i++) {
-		if(vector_get(&temp, i)->occupied == true) {
-			insert(vector_get(&temp, i)->key, vector_get(&temp, i)->value);
+		if(temp.get(i)->occupied == true) {
+			insert(temp.get(i)->key, temp.get(i)->value);
 		}
 	}
 
-	destroy_vector(&temp);
+	temp.destroy();
 }
 
 template<typename K, typename V> 
@@ -135,16 +135,16 @@ V* map<K,V>::insert(K key, V value, bool grow_if_needed) { PROF
 	u32 probe_length = 0;
 	map_element<K,V>* placed_adr = null;
 	for(;;) {
-		if(vector_get(&contents, index)->occupied) {
+		if(contents.get(index)->occupied) {
 
-			i32 occupied_probe_length = index - vector_get(&contents, index)->hash_bucket;
+			i32 occupied_probe_length = index - contents.get(index)->hash_bucket;
 			if(occupied_probe_length < 0) {
 				occupied_probe_length += contents.capacity;
 			}
 
 			if((u32)occupied_probe_length < probe_length) {
 
-				map_element<K,V>* to_swap = vector_get(&contents, index);
+				map_element<K,V>* to_swap = contents.get(index);
 				if(!placed_adr) {
 					placed_adr = to_swap;
 				}
@@ -166,13 +166,13 @@ V* map<K,V>::insert(K key, V value, bool grow_if_needed) { PROF
 				max_probe = probe_length;
 			}
 		} else {
-			*vector_get(&contents, index) = ele;
+			*contents.get(index) = ele;
 			size++;
 
 			if(placed_adr) {
 				return &placed_adr->value;
 			}
-			return &(vector_get(&contents, index)->value);
+			return &(contents.get(index)->value);
 		}
 	}
 }
@@ -218,8 +218,8 @@ V* map<K,V>::try_get(K key) { PROF	// can return null
 	u32 probe_length = 0;
 	for(;;) {
 
-		if(vector_get(&contents, index)->key == key) {
-			return &(vector_get(&contents, index)->value);
+		if(contents.get(index)->key == key) {
+			return &(contents.get(index)->value);
 		}
 
 		probe_length++;
@@ -249,8 +249,8 @@ void map<K,V>::erase(K key) { PROF
 	u32 probe_length = 0;
 	for(;;) {
 
-		if(vector_get(&contents, index)->key == key) {
-			vector_get(&contents, index)->occupied = false;
+		if(contents.get(index)->key == key) {
+			contents.get(index)->occupied = false;
 			size--;
 		}
 

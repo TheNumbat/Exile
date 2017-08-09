@@ -1,26 +1,16 @@
 
-template<typename T>
-u32 vector_len(vector<T>* v) { PROF
-	return v->size;
-}
-
-template<typename T>
-u32 vector_capacity(vector<T>* v) { PROF
-	return v->capacity;
-}
-
 template<typename T> 
-void vector_clear(vector<T>* v) { PROF
-	v->size = 0;
+void vector<T>::clear() { PROF
+	size = 0;
 }
 
 template<typename T>
-void vector_zero(vector<T>* v) { PROF
-	memset(v->memory, v->capacity * sizeof(T), 0);
+void vector<T>::zero() { PROF
+	memset(memory, capacity * sizeof(T), 0);
 }
 
 template<typename T>
-T* vector_find(vector<T>* v, T val) { PROF
+T* vector<T>::find(T val) { PROF
 
 	T* ret = null;
 	FORVEC(*v, 
@@ -34,30 +24,30 @@ T* vector_find(vector<T>* v, T val) { PROF
 }
 
 template<typename T>
-void vector_erase(vector<T>* v, T val) { PROF
+void vector<T>::erase(T val) { PROF
 
-	FORVEC(*v, 
+	FORVEC(*this, 
 		if(*it == val) {
-			vector_erase(v, __i);
+			erase(__i);
 			it--;
 		}
 	)
 }
 
 template<typename T>
-u32 vector_partition(vector<T>* v, u32 low, u32 high) { PROF
+u32 vector<T>::partition(u32 low, u32 high) { PROF
 
-	T pivot = v->memory[high];
+	T pivot = memory[high];
 	u32 i = low;
 
 	for(u32 j = low; j < high; j++) {
-		if(pivot < v->memory[j]) {
+		if(pivot < memory[j]) {
 
 			i++;
 			if(i != j) {
-				T temp = v->memory[i];
-				v->memory[i] = v->memory[j];
-				v->memory[j] = temp;
+				T temp = memory[i];
+				memory[i] = memory[j];
+				memory[j] = temp;
 			}
 		}
 	}
@@ -65,24 +55,24 @@ u32 vector_partition(vector<T>* v, u32 low, u32 high) { PROF
 }
 
 template<typename T> 
-void vector_qsort(vector<T>* v, u32 low, u32 high, bool first) { PROF
+void vector<T>::qsort(u32 low, u32 high, bool first) { PROF
 		
-	if (!v->size) return;
+	if (!size) return;
 
 	if(first) {
-		high = v->size - 1;
+		high = size - 1;
 	}
 
 	if(low < high) {
 
-		u32 part = vector_partition(v, low, high);
-		vector_qsort(v, low, part, false);
-		vector_qsort(v, part + 1, high, false);
+		u32 part = partition(low, high);
+		qsort(low, part, false);
+		qsort(part + 1, high, false);
 	}
 }
 
 template<typename T>
-vector<T> make_vector_copy(vector<T> source, allocator* a) { PROF
+vector<T> vector<T>::make_copy(vector<T> source, allocator* a) { PROF
 
 	vector<T> ret = make_vector<T>(source.capacity, a);
 
@@ -97,7 +87,7 @@ vector<T> make_vector_copy(vector<T> source, allocator* a) { PROF
 }
 
 template<typename T>
-vector<T> make_vector_copy_trim(vector<T> source, allocator* a) { PROF
+vector<T> vector<T>::make_copy_trim(vector<T> source, allocator* a) { PROF
 
 	vector<T> ret = make_vector<T>(source.size, a);
 
@@ -113,57 +103,57 @@ vector<T> make_vector_copy_trim(vector<T> source, allocator* a) { PROF
 
 // operator[] but not a member
 template<typename T>
-inline T* vector_get(vector<T>* v, u32 idx) { 
+inline T* vector<T>::get(u32 idx) { 
 
 #ifdef MORE_PROF
 	PROF
 #endif
 
 #ifdef BOUNDS_CHECK
-	if(v->memory && idx >= 0 && idx < v->capacity) {
-		return v->memory + idx;
+	if(memory && idx >= 0 && idx < capacity) {
+		return memory + idx;
 	} else {
 		
-		LOG_FATAL_F("vector_get out of bounds, % < 0 || % >= %", idx, idx, v->capacity);
+		LOG_FATAL_F("vector_get out of bounds, % < 0 || % >= %", idx, idx, capacity);
 		return null;
 	}
 #else
-	return v->memory + idx;
+	return memory + idx;
 #endif
 }
 
 template<typename T>
-void vector_grow(vector<T>* v) { PROF
+void vector<T>::grow() { PROF
 	
-	vector_resize(v, v->capacity > 0 ? 2 * v->capacity : 8);
+	resize(capacity > 0 ? 2 * capacity : 8);
 }
 
 template<typename T>
-void destroy_vector(vector<T>* v) { PROF
+void vector<T>::destroy() { PROF
 
-	if(v->memory) {
+	if(memory) {
 
-		v->alloc->free_(v->memory, v->alloc, CONTEXT);
+		alloc->free_(memory, alloc, CONTEXT);
 	}
 
-	v->memory = null;
-	v->size = 0;
-	v->capacity = 0;
+	memory = null;
+	size = 0;
+	capacity = 0;
 }
 
 template<typename T>
-vector<T> make_vector(u32 capacity, allocator* a) { PROF
+vector<T> vector<T>::make(u32 capacity, allocator* a) { PROF
 
 	vector<T> ret;
 
 	ret.alloc = a;
-	vector_resize(&ret, capacity);
+	ret.resize(capacity);
 
 	return ret;
 }
 
 template<typename T>
-vector<T> make_vector(u32 capacity) { PROF
+vector<T> vector<T>::make(u32 capacity) { PROF
 
 	vector<T> ret;
 
@@ -174,36 +164,36 @@ vector<T> make_vector(u32 capacity) { PROF
 }
 
 template<typename T>
-void vector_resize(vector<T>* v, u32 capacity) { PROF
+void vector<T>::resize(u32 new_capacity) { PROF
 
-	if(capacity == 0) {
-		if(v->memory) {
-			v->alloc->free_(v->memory, v->alloc, CONTEXT);
-			v->memory = null;
+	if(new_capacity == 0) {
+		if(memory) {
+			alloc->free_(memory, alloc, CONTEXT);
+			memory = null;
 		}
 		return;
 	}
 
-	if(v->memory)
-		v->memory = (T*)v->alloc->reallocate_(v->memory, capacity * sizeof(T), v->alloc, CONTEXT);
+	if(memory)
+		memory = (T*)alloc->reallocate_(memory, new_capacity * sizeof(T), alloc, CONTEXT);
 	else
-		v->memory = (T*)v->alloc->allocate_(capacity * sizeof(T), v->alloc, CONTEXT);
+		memory = (T*)alloc->allocate_(new_capacity * sizeof(T), alloc, CONTEXT);
 		
 #ifdef CONSTRUCT_DS_ELEMENTS
-	i64 added = capacity - v->capacity;
+	i64 added = new_capacity - capacity;
 	if(added > 0) {
-		T* new_place = v->memory + v->capacity;
+		T* new_place = memory + capacity;
 		new (new_place) T[added]();
 	}
 #endif
 
-	v->capacity = capacity;
+	capacity = new_capacity;
 }
 
 template<typename T>
-vector<T> make_vector_copy(vector<T> source) { PROF
+vector<T> vector<T>::make_copy(vector<T> source) { PROF
 
-	vector<T> ret = make_vector<T>(source.capacity, source.alloc);
+	vector<T> ret = vector<T>::make(source.capacity, source.alloc);
 
 	if(source.memory) {
 
@@ -216,36 +206,36 @@ vector<T> make_vector_copy(vector<T> source) { PROF
 }
 
 template<typename T>
-T* vector_push(vector<T>* v, T value) {  
+T* vector<T>::push(T value) {  
 
 #ifdef MORE_PROF
 	PROF
 #endif
 
-	if(v->size == v->capacity) {
+	if(size == capacity) {
 
-		vector_grow(v);
+		grow();
 	} 
 
-	v->memory[v->size] = value;
-	v->size++;
+	memory[size] = value;
+	size++;
 
-	return v->memory + v->size - 1;
+	return memory + size - 1;
 }
 
 template<typename T>
-void vector_pop(vector<T>* v) { PROF 
+void vector<T>::pop() { PROF 
 
-	if(v->size > 0) {
-		v->size--;
+	if(size > 0) {
+		size--;
 	}
 }
 
 template<typename T>
-T* vector_front(vector<T>* v) { PROF 
+T* vector<T>::front() { PROF 
 
-	if(v->size > 0) {
-		return v->memory;
+	if(size > 0) {
+		return memory;
 	}
 
 	LOG_FATAL("Trying to get empty vector front!");
@@ -253,10 +243,10 @@ T* vector_front(vector<T>* v) { PROF
 }
 
 template<typename T>
-T* vector_back(vector<T>* v) { PROF 
+T* vector<T>::back() { PROF 
 
-	if(v->size) {
-		return v->memory + (v->size - 1);
+	if(size) {
+		return memory + (size - 1);
 	}
 
 	LOG_FATAL("Trying to get empty vector back!");
@@ -264,37 +254,37 @@ T* vector_back(vector<T>* v) { PROF
 }
 
 template<typename T>
-void vector_erase(vector<T>* v, u32 index, u32 num) { PROF
+void vector<T>::erase(u32 index, u32 num) { PROF
 
 #ifdef BOUNDS_CHECK
-	if(v->size >= num) {
-		if(index >= 0 && index < v->size) {
-			for(u32 i = index + num; i < v->size; i++) {
-				v->memory[i - num] = v->memory[i];
+	if(size >= num) {
+		if(index >= 0 && index < size) {
+			for(u32 i = index + num; i < size; i++) {
+				memory[i - num] = memory[i];
 			}
 
-			v->size -= num;
+			size -= num;
 		} else {
-			LOG_FATAL_F("vector_erase out of bounds % < 0 || % >= %", index, index, v->capacity);
+			LOG_FATAL_F("vector_erase out of bounds % < 0 || % >= %", index, index, capacity);
 		}
 	} else {
-		LOG_FATAL_F("vector_erase trying to erase % elements, % left", num, v->size);
+		LOG_FATAL_F("vector_erase trying to erase % elements, % left", num, size);
 	}
 #else
-	for(u32 i = index + num; i < v->size; i++) {
-		v->memory[i - num] = v->memory[i];
+	for(u32 i = index + num; i < size; i++) {
+		memory[i - num] = memory[i];
 	}
-	v->size -= num;
+	size -= num;
 #endif
 }
 
 template<typename T>
-void vector_pop_front(vector<T>* v) { PROF
+void vector<T>::pop_front() { PROF
 
-	vector_erase(v, 0);
+	erase(0);
 }
 
 template<typename T>
-bool vector_empty(vector<T>* v) { PROF
-	return v->size == 0;
+bool vector<T>::empty() { PROF
+	return size == 0;
 }
