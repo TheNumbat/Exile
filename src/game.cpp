@@ -27,6 +27,11 @@ extern "C" game_state* start_up(platform_api* api) { PROF
 	LOG_INFO("Beginning startup...");
 	LOG_PUSH_CONTEXT_L("");
 
+	LOG_INFO("Starting debug system...");
+	state->dbg_a = MAKE_PLATFORM_ALLOCATOR("dbg");
+	state->dbg_a.suppress_messages = true;
+	state->dbg = make_dbg_manager(&state->log, &state->dbg_a);
+
 	LOG_INFO("Starting logger");
 	logger_start(&state->log);
 
@@ -41,24 +46,8 @@ extern "C" game_state* start_up(platform_api* api) { PROF
 	state->thread_pool = make_threadpool(&state->thread_pool_a);
 	threadpool_start_all(&state->thread_pool);
 
-	// This stuff is parallelized mostly just to test the thread pool, they're not
-	// actually worth parallelizing (they will usually run on one worker anyway)
-
-	job_id transient = threadpool_queue_job(&state->thread_pool, [](void* s) -> job_callback {
-		game_state* state = (game_state*)s;
-		LOG_INFO("Allocating transient store...");
-		state->transient_arena = MAKE_ARENA("transient", MEGABYTES(8), &state->default_platform_allocator, false);
-		return null;
-	}, state);
-
-	job_id debug = threadpool_queue_job(&state->thread_pool, [](void* s) -> job_callback {
-		game_state* state = (game_state*)s;
-		LOG_INFO("Starting debug system...");
-		state->dbg_a = MAKE_PLATFORM_ALLOCATOR("dbg");
-		state->dbg_a.suppress_messages = true;
-		state->dbg = make_dbg_manager(&state->log, &state->dbg_a);
-		return null;
-	}, state);
+	LOG_INFO("Allocating transient store...");
+	state->transient_arena = MAKE_ARENA("transient", MEGABYTES(8), &state->default_platform_allocator, false);
 
 	job_id assets = threadpool_queue_job(&state->thread_pool, [](void* s) -> job_callback {
 		game_state* state = (game_state*)s;
@@ -90,9 +79,6 @@ extern "C" game_state* start_up(platform_api* api) { PROF
 	gui_add_font(&state->ogl, &state->gui, string_literal("gui24"), &state->default_store);
 	gui_add_font(&state->ogl, &state->gui, string_literal("gui40"), &state->default_store);
 	gui_add_font(&state->ogl, &state->gui, string_literal("guimono"), &state->default_store, true);
-
-	threadpool_wait_job(&state->thread_pool, transient);
-	threadpool_wait_job(&state->thread_pool, debug);
 
 	LOG_INFO("Done with startup!");
 	LOG_POP_CONTEXT();
