@@ -1,18 +1,18 @@
 
 #include "everything.h"
 
-extern "C" game_state* start_up(platform_api* api) { PROF 
+extern "C" game_state* start_up(platform_api* api) { 
 
 	game_state* state = (game_state*)api->platform_heap_alloc(sizeof(game_state));
 	global_api = api;
 	global_log = &state->log;
 	global_dbg = &state->dbg;
 
-	state->default_platform_allocator = MAKE_PLATFORM_ALLOCATOR("default");
-	state->suppressed_platform_allocator = MAKE_PLATFORM_ALLOCATOR("default/suppress");
+	state->default_platform_allocator = np_make_platform_allocator(np_string_literal("default"), CONTEXT);
+	state->suppressed_platform_allocator = np_make_platform_allocator(np_string_literal("default/suppress"), CONTEXT);
 	state->suppressed_platform_allocator.suppress_messages = true;
 
-	begin_thread(string_literal("main"), &state->suppressed_platform_allocator);
+	begin_thread(np_string_literal("main"), &state->suppressed_platform_allocator);
 
 	state->log_a = MAKE_PLATFORM_ALLOCATOR("log");
 	state->log_a.suppress_messages = true;
@@ -32,7 +32,7 @@ extern "C" game_state* start_up(platform_api* api) { PROF
 	state->dbg_a.suppress_messages = true;
 	state->dbg = dbg_manager::make(&state->log, &state->dbg_a);
 
-	LOG_INFO("Starting logger");
+	LOG_INFO("Starting logger...");
 	state->log.start();
 
 	LOG_INFO("Setting up events...");
@@ -85,11 +85,12 @@ extern "C" game_state* start_up(platform_api* api) { PROF
 
 	// LOG_INFO_F("%", state); // Don't do this anymore, it's 409 thousand characters and will only grow
 
+	state->dbg.really_running = true;
 	state->running = true;
 	return state;
 }
 
-extern "C" bool main_loop(game_state* state) { PROF
+extern "C" bool main_loop(game_state* state) { 
 
 	glUseProgram(0); // why tho?? https://twitter.com/fohx/status/619887799462985729?lang=en
 	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
@@ -116,6 +117,8 @@ extern "C" bool main_loop(game_state* state) { PROF
 		state->gui.reload_fonts(&state->ogl);
 	}
 #endif
+
+	state->dbg.collate();
 
 	return state->running;
 }
@@ -160,26 +163,26 @@ extern "C" void shut_down(game_state* state) { PROF
 	global_api->platform_heap_free(state);
 }
 
-extern "C" void on_reload(platform_api* api, game_state* state) { PROF
+extern "C" void on_reload(platform_api* api, game_state* state) { 
 
 	global_api = api;
 	global_log = &state->log;
 	global_dbg = &state->dbg;
 
+	begin_thread(np_string_literal("main"), &state->suppressed_platform_allocator);
+
 	ogl_load_global_funcs();
 
-	begin_thread(string_literal("main"), &state->suppressed_platform_allocator);
 	state->log.start();
 	state->thread_pool.start_all();
 
 	LOG_INFO("End reloading game code");
 }
 
-extern "C" void on_unload(game_state* state) { PROF
+extern "C" void on_unload(game_state* state) {
 	
 	LOG_INFO("Begin reloading game code");
 
-	destroy_type_table();
 	state->thread_pool.stop_all();
 	state->log.stop();
 

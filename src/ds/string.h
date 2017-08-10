@@ -56,9 +56,6 @@ struct NOREFLECT string { // no-reflect because hard-coded
 	u32 write_u64(u32 idx, u8 base, u64 val, bool size = false, u32 min_len = 0);
 };
 
-inline string string_literal(const char* literal);
-static const string empty_string = string_literal("");
-
 u32  hash_strings(string one, string two);
 u32  hash_string(string str);
 bool operator==(string first, string second);
@@ -84,4 +81,12 @@ template<typename T, typename... Targs>
 u32 _string_printf(string out, u32 idx, string fmt, bool size, T& value, Targs... args);
 u32 _string_printf(string out, u32 idx, string fmt, bool size = false);
 
+// for meta stuff
 
+string np_substring(string str, u32 start, u32 end);
+i32    np_string_last_slash(string str);
+string np_string_literal(const char* literal);
+string np_string_from_c_str(char* c_str);
+
+inline string string_literal(const char* literal);
+static const string empty_string = np_string_literal("");

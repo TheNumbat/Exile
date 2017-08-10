@@ -36,7 +36,8 @@ void  platform_free(void* mem, void* this_data, code_context context);
 void* platform_reallocate(void* mem, u64 bytes, void* this_data, code_context context);
 
 #define MAKE_PLATFORM_ALLOCATOR(n) make_platform_allocator(string_literal(n), CONTEXT)
-platform_allocator make_platform_allocator(string name, code_context context);
+inline platform_allocator make_platform_allocator(string name, code_context context);
+inline platform_allocator np_make_platform_allocator(string name, code_context context);
 
 struct arena_allocator : public allocator {
 	allocator* backing 	= null;

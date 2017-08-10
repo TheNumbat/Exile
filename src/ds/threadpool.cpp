@@ -118,11 +118,11 @@ void threadpool::start_all() { PROF
 	}
 }
 
-i32 worker(void* data_) { PROF
+i32 worker(void* data_) { 
 
 	worker_param* data = (worker_param*)data_;
 
-	begin_thread(string_literal("worker %"), data->alloc, (u32)global_api->platform_this_thread_id().id);
+	begin_thread(np_string_literal("worker %"), data->alloc, (u32)global_api->platform_this_thread_id().id);
 	LOG_DEBUG("Starting worker thread");
 
 	while(data->online) {

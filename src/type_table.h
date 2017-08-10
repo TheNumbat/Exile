@@ -261,10 +261,6 @@ void make_type_table(allocator* alloc) { PROF
 	make_meta_info();
 }
 
-void destroy_type_table() { PROF
-	type_table.destroy();	
-}
- 
 i64 int_as_i64(void* val, _type_info* info) { PROF
 	switch(info->size) {
 	case 1: {

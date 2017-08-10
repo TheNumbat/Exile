@@ -27,6 +27,7 @@
 	#define BOUNDS_CHECK
 	#define BLOCK_ON_ERROR
 	#define DO_PROF	
+	#define MORE_PROF
 	#define CONSTRUCT_DS_ELEMENTS
 #elif defined(REAL_RELEASE)
 
@@ -65,9 +66,13 @@ struct code_context {
 #include <new>
 #endif
 
+#include "log.h"
+#include "dbg.h"
+
 #define MAX_CALL_STACK_DEPTH 256
 struct thread_data {
 	stack<allocator*> alloc_stack;
+	vector<dbg_msg> frame;
 	
 	string name;
 	code_context start_context;
@@ -86,11 +91,6 @@ static thread_local thread_data this_thread_data;
 #define FORARR(a,code) 		FORVECCAP(a,code)
 #define INC__COUNTER__ 		{u32 i = __COUNTER__; i = 0;}
 
-string np_substring(string str, u32 start, u32 end);
-i32    np_string_last_slash(string str);
-string np_string_literal(const char* literal);
-string np_string_from_c_str(char* c_str);
-
 #define CONTEXT _make_context(np_string_literal(__FILE__), np_string_literal(__FUNCSIG__), __LINE__)
 
 inline code_context _make_context(string file, string function, i32 line);
@@ -101,13 +101,11 @@ void end_thread();
 
 #include "ds/threadpool.h"
 
-#include "log.h"
 #include "asset.h"
 #include "render.h"
 #include "opengl.h"
 #include "gui.h"
 #include "events.h"
-#include "dbg.h"
 
 #include "game.h"
 static platform_api* global_api = null; // global because it just represents a bunch of what should be free functions
@@ -119,19 +117,33 @@ struct func_scope {
 	func_scope(code_context context) {
 		LOG_DEBUG_ASSERT(this_thread_data.call_stack_depth < MAX_CALL_STACK_DEPTH);
 		this_thread_data.call_stack[this_thread_data.call_stack_depth++] = context;
+
+		dbg_msg m;
+		m.type = dbg_msg_type::enter_func;
+		m.enter_func.func = context;
+		POST(m);
 		// printf("%+*s\n", this_thread_data.call_stack_depth + context.function.len, context.function.c_str);
 	}
 	~func_scope() {
+		dbg_msg m;
+		m.type = dbg_msg_type::exit_func;
+		POST(m);
+
 		this_thread_data.call_stack_depth--;
 	}
 };
 
 struct func_scope_nocs {
 	func_scope_nocs(code_context context) {
-		
+		dbg_msg m;
+		m.type = dbg_msg_type::enter_func;
+		m.enter_func.func = context;
+		POST(m);
 	}
 	~func_scope_nocs() {
-		
+		dbg_msg m;
+		m.type = dbg_msg_type::exit_func;
+		POST(m);
 	}
 };
 #define PROF func_scope __f(CONTEXT);

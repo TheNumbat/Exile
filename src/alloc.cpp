@@ -12,7 +12,7 @@ inline allocator* _current_alloc() { PROF
 	return ret;
 }
 
-inline void* platform_allocate(u64 bytes, void* this_data, code_context context) { PROF
+inline void* platform_allocate(u64 bytes, void* this_data, code_context context) { 
 
 	platform_allocator* this_ = (platform_allocator*)this_data;
 
@@ -29,7 +29,7 @@ inline void* platform_allocate(u64 bytes, void* this_data, code_context context)
 	return mem;
 }
 
-inline void platform_free(void* mem, void* this_data, code_context context) { PROF
+inline void platform_free(void* mem, void* this_data, code_context context) { 
 
 	platform_allocator* this_ = (platform_allocator*)this_data;
 
@@ -44,7 +44,7 @@ inline void platform_free(void* mem, void* this_data, code_context context) { PR
 	this_->platform_free(mem);
 }
 
-void* platform_reallocate(void* mem, u64 bytes, void* this_data, code_context context) { PROF
+void* platform_reallocate(void* mem, u64 bytes, void* this_data, code_context context) { 
 
 	platform_allocator* this_ = (platform_allocator*)this_data;
 
@@ -64,6 +64,10 @@ void* platform_reallocate(void* mem, u64 bytes, void* this_data, code_context co
 }
 
 inline platform_allocator make_platform_allocator(string name, code_context context) { PROF
+	return np_make_platform_allocator(name, context);
+}
+
+inline platform_allocator np_make_platform_allocator(string name, code_context context) { 
 
 	platform_allocator ret;
 	

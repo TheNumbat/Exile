@@ -263,11 +263,11 @@ bool operator==(log_out l, log_out r) { PROF
 	return l.file == r.file;
 }
 
-i32 log_proc(void* data_) { PROF_NOCS
+i32 log_proc(void* data_) {
 
 	log_thread_param* data = (log_thread_param*)data_;	
 
-	begin_thread(string_literal("log"), data->alloc);
+	begin_thread(np_string_literal("log"), data->alloc);
 
 	while(data->running) {
 

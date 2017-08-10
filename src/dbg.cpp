@@ -4,6 +4,7 @@ dbg_manager dbg_manager::make(log_manager* log, allocator* alloc) { PROF
 	dbg_manager ret;
 
 	ret.log_cache = vector<log_message>::make(1024, alloc);
+	ret.frames = vector<dbg_frame>::make(1024, alloc);
 	ret.alloc = alloc;
 
 	log_out dbg_log;
@@ -17,11 +18,26 @@ dbg_manager dbg_manager::make(log_manager* log, allocator* alloc) { PROF
 
 void dbg_manager::destroy() { PROF
 
+	really_running = false;
+
 	FORVEC(log_cache,
 		DESTROY_ARENA(&it->arena);
 	)
 
+	FORVECCAP(frames,
+		it->messages.destroy();
+	)
+
 	log_cache.destroy();
+	frames.destroy();
+}
+
+void dbg_manager::collate() {
+
+	frames.get(current_frame)->messages.destroy();
+	frames.get(current_frame)->messages = this_thread_data.frame;
+	this_thread_data.frame = vector<dbg_msg>::make(16384, this_thread_data.frame.alloc);
+	++current_frame %= frames.capacity;
 }
 
 void dbg_add_log(log_message* msg) { PROF
