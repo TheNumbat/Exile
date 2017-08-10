@@ -29,7 +29,7 @@ void load_source(shader_source* source) { PROF
 	}
 
 	u32 len = global_api->platform_file_size(&source_file) + 1;
-	source->source = make_string(len, source->alloc);
+	source->source = string::make(len, source->alloc);
 	global_api->platform_read_file(&source_file, (void*)source->source.c_str, len);
 
 	global_api->platform_close_file(&source_file);
@@ -39,7 +39,7 @@ void load_source(shader_source* source) { PROF
 
 void destroy_source(shader_source* source) { PROF
 
-	free_string(source->source, source->alloc);
+	source->source.destroy(source->alloc);
 }
 
 bool refresh_source(shader_source* source) { PROF
@@ -134,9 +134,9 @@ ogl_manager make_opengl(allocator* a) { PROF
 	ret.textures = map<texture_id, texture>::make(32, a);
 	ret.contexts = map<context_id, ogl_draw_context>::make(32, a);
 
-	ret.version 	= string_from_c_str((char*)glGetString(GL_VERSION));
-	ret.renderer 	= string_from_c_str((char*)glGetString(GL_RENDERER));
-	ret.vendor  	= string_from_c_str((char*)glGetString(GL_VENDOR));
+	ret.version 	= string::from_c_str((char*)glGetString(GL_VERSION));
+	ret.renderer 	= string::from_c_str((char*)glGetString(GL_RENDERER));
+	ret.vendor  	= string::from_c_str((char*)glGetString(GL_VENDOR));
 
 	ret.dbg_shader = ogl_add_program(&ret, string_literal("shaders/dbg.v"), string_literal("shaders/dbg.f"), &ogl_uniforms_dbg);
 
@@ -550,7 +550,7 @@ void ogl_dbg_render_texture_fullscreen(platform_window* win, ogl_manager* ogl, t
 
 void debug_proc(GLenum glsource, GLenum gltype, GLuint id, GLenum severity, GLsizei length, const GLchar* glmessage, const void* up) { PROF
 
-	string message = string_from_c_str((char*)glmessage);
+	string message = string::from_c_str((char*)glmessage);
 	string source, type;
 
 	switch(glsource) {

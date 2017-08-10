@@ -1,8 +1,8 @@
 
-u32 parse_u32(string s, u32 idx, u32* used) { PROF
+u32 string::parse_u32(u32 idx, u32* used) { PROF
 
 	u32 accum = 0;
-	char* place = s.c_str + idx;
+	char* place = c_str + idx;
 	while(*place >= '0' && *place <= '9') {
 		accum *= 10;
 		accum += *place - '0';
@@ -13,24 +13,24 @@ u32 parse_u32(string s, u32 idx, u32* used) { PROF
 	return accum;
 }
 
-u32 string_write(string s, u32 idx, string ins, bool size) { 
+u32 string::write(u32 idx, string ins, bool size) { 
 
 #ifdef MORE_PROF
 	PROF
 #endif
 
 	if(ins.len == 0) return idx;
-	if(!size) memcpy(ins.c_str, s.c_str + idx, ins.len - 1);
+	if(!size) memcpy(ins.c_str, c_str + idx, ins.len - 1);
 	return idx + ins.len - 1;
 }
 
-u32 string_write(string s, u32 idx, char ins, bool size) { 
+u32 string::write(u32 idx, char ins, bool size) { 
 
 #ifdef MORE_PROF
 	PROF
 #endif
 
-	if(!size) s.c_str[idx] = ins;
+	if(!size) c_str[idx] = ins;
 	return idx + 1;
 }
 
@@ -50,7 +50,7 @@ template<typename... Targs>
 string make_stringf_len(u32 len, string fmt, Targs... args) { PROF
 
 	string ret;
-	ret 	= make_string(len);
+	ret 	= string::make(len);
 	ret.len = len;
 	ret.c_str[len - 1] = 0;
 
@@ -66,7 +66,7 @@ string make_stringf(string fmt, Targs... args) { PROF
 
 	string ret;
 	u32 len = size_stringf(fmt, args...);
-	ret 	= make_string(len);
+	ret 	= string::make(len);
 	ret.len = len;
 	ret.c_str[len - 1] = 0;
 
@@ -99,7 +99,7 @@ u32 _string_printf(string out, u32 idx, string fmt, bool size, T& value, Targs..
 	for(u32 i = 0; i < fmt.len - 1; i++) {
 		if(fmt.c_str[i] == '%') {
 			if(fmt.c_str[i + 1] == '%') {
-				idx = string_write(out, idx, '%', size);
+				idx = out.write(idx, '%', size);
 				i++;
 			} else {
 				if(fmt.c_str[i + 1] == '-') { // left justify
@@ -121,7 +121,7 @@ u32 _string_printf(string out, u32 idx, string fmt, bool size, T& value, Targs..
 					} else {	// total length passed in format string
 						u32 len = 0;
 						i++;
-						pad = parse_u32(fmt, i, &len);
+						pad = fmt.parse_u32(i, &len);
 						i += len;
 						u32 tmp_idx = print_type(out, idx, &value, TYPEINFO(T), size);
 						sized = tmp_idx - idx;
@@ -129,14 +129,14 @@ u32 _string_printf(string out, u32 idx, string fmt, bool size, T& value, Targs..
 					}
 
 					while(sized < pad) {
-						idx = string_write(out, idx, string_literal(" "), size);
+						idx = out.write(idx, string_literal(" "), size);
 						sized++;
 					}
 					
 					if (len_in_param) {
-						return _string_printf_fwd(out, idx, string_from_c_str(fmt.c_str + i + 1), size, args...);;
+						return _string_printf_fwd(out, idx, string::from_c_str(fmt.c_str + i + 1), size, args...);;
 					} else {
-						return _string_printf(out, idx, string_from_c_str(fmt.c_str + i), size, args...);
+						return _string_printf(out, idx, string::from_c_str(fmt.c_str + i), size, args...);
 					}
 				} if(fmt.c_str[i + 1] == '+') { // right justify
 					bool len_in_param = false;
@@ -155,27 +155,27 @@ u32 _string_printf(string out, u32 idx, string fmt, bool size, T& value, Targs..
 					} else {	// total length passed in format string
 						u32 len = 0;
 						i++;
-						pad = parse_u32(fmt, i, &len);
+						pad = fmt.parse_u32(i, &len);
 						i += len;
 						sized = print_type(out, idx, &value, TYPEINFO(T), true) - idx;
 					}
 
 					while(sized < pad) {
-						idx = string_write(out, idx, string_literal(" "), size);
+						idx = out.write(idx, string_literal(" "), size);
 						sized++;
 					}
 					
 					if (len_in_param) {
 						auto param = get_pack_first(args...);
 						idx = print_type(out, idx, &param, TYPEINFO(decltype(param)), size);
-						return _string_printf_fwd(out, idx, string_from_c_str(fmt.c_str + i + 1), size, args...);;
+						return _string_printf_fwd(out, idx, string::from_c_str(fmt.c_str + i + 1), size, args...);;
 					} else {
 						idx = print_type(out, idx, &value, TYPEINFO(T), size);
-						return _string_printf(out, idx, string_from_c_str(fmt.c_str + i), size, args...);
+						return _string_printf(out, idx, string::from_c_str(fmt.c_str + i), size, args...);
 					}
 				} else {
 					idx = print_type(out, idx, &value, TYPEINFO(T), size);
-					return _string_printf(out, idx, string_from_c_str(fmt.c_str + i + 1), size, args...);
+					return _string_printf(out, idx, string::from_c_str(fmt.c_str + i + 1), size, args...);
 				}
 			}
 		} else {
@@ -191,7 +191,7 @@ u32 _string_printf(string out, u32 idx, string fmt, bool size) { PROF
 	for(u32 i = 0; i < fmt.len - 1; i++) {
 		if(fmt.c_str[i] == '%') {
 			if(fmt.c_str[i + 1] == '%') {
-				idx = string_write(out, idx, '%', size);
+				idx = out.write(idx, '%', size);
 				i++;
 			} else {
 				LOG_ERR("Missing parameter for string_printf!");
@@ -209,12 +209,12 @@ u32 _string_printf(string out, u32 idx, string fmt, bool size) { PROF
 
 u32 print_type(string s, u32 idx, void* val, _type_info* info, bool size) { PROF
 	if(info == null) {
-		idx = string_write(s, idx, string_literal("UNDEF"), size);
+		idx = s.write(idx, string_literal("UNDEF"), size);
 		return idx;
 	}
 	switch(info->type_type) {
 	case Type::_void: {
-		idx = string_write(s, idx, string_literal("void"), size);
+		idx = s.write(idx, string_literal("void"), size);
 	} break;
 	
 	case Type::_int: {
@@ -226,7 +226,7 @@ u32 print_type(string s, u32 idx, void* val, _type_info* info, bool size) { PROF
 	} break;
 
 	case Type::_bool: {
-		idx = string_write(s, idx, string_literal(*(bool*)val ? "true" : "false"), size);
+		idx = s.write(idx, string_literal(*(bool*)val ? "true" : "false"), size);
 	} break;
 
 	case Type::_ptr: {
@@ -238,7 +238,7 @@ u32 print_type(string s, u32 idx, void* val, _type_info* info, bool size) { PROF
 	} break;
 
 	case Type::_func: {
-		idx = string_write(s, idx, info->_func.signature, size);
+		idx = s.write(idx, info->_func.signature, size);
 	} break;
 
 	case Type::_struct: {
@@ -261,7 +261,7 @@ u32 print_type(string s, u32 idx, void* val, _type_info* info, bool size) { PROF
 
 	case Type::_string: {
 		if (((string*)val)->len) {
-			idx = string_write(s, idx, *(string*)val, size);
+			idx = s.write(idx, *(string*)val, size);
 		}
 	} break;
 	}
@@ -276,11 +276,11 @@ u32 print_array(string s, u32 idx, void* val, _type_info* info, bool size) { PRO
 
 u32 print_queue(string s, u32 idx, void* val, _type_info* info, bool size) { PROF
 
-	idx = string_write(s, idx, info->name, size);
+	idx = s.write(idx, info->name, size);
 
 	_type_info* of = TYPEINFO_H(TYPEINFO_H(info->_struct.member_types[0])->_ptr.to);
 	if(!of) {
-		idx = string_write(s, idx, string_literal("[UNDEF]"), size);
+		idx = s.write(idx, string_literal("[UNDEF]"), size);
 		return idx;
 	}
 
@@ -289,30 +289,30 @@ u32 print_queue(string s, u32 idx, void* val, _type_info* info, bool size) { PRO
 	u32 capacity = *(u32*)((u8*)val + info->_struct.member_offsets[3]);
 	u8* data = *(u8**)((u8*)val + info->_struct.member_offsets[0]);
 
-	idx = string_write(s, idx, '[', size);
+	idx = s.write(idx, '[', size);
 	for(u32 i = start; i != end; ++i %= capacity) {
 		if(of->type_type == Type::_string) {
-			idx = string_write(s, idx, '\"', size);
+			idx = s.write(idx, '\"', size);
 		}
 		idx = print_type(s, idx, data + i * of->size, of, size);
 		if(of->type_type == Type::_string) {
-			idx = string_write(s, idx, '\"', size);
+			idx = s.write(idx, '\"', size);
 		}
 		if(i != end - 1)
-			idx = string_write(s, idx, string_literal(", "), size);
+			idx = s.write(idx, string_literal(", "), size);
 	}
-	idx = string_write(s, idx, ']', size);
+	idx = s.write(idx, ']', size);
 
 	return idx;	
 }
 
 u32 print_vector(string s, u32 idx, void* val, _type_info* info, bool size) { PROF
 
-	idx = string_write(s, idx, info->name, size);
+	idx = s.write(idx, info->name, size);
 
 	_type_info* of = TYPEINFO_H(TYPEINFO_H(info->_struct.member_types[0])->_ptr.to);
 	if(!of) {
-		idx = string_write(s, idx, string_literal("[UNDEF]"), size);
+		idx = s.write(idx, string_literal("[UNDEF]"), size);
 		return idx;
 	}
 
@@ -321,19 +321,19 @@ u32 print_vector(string s, u32 idx, void* val, _type_info* info, bool size) { PR
 	u32 len = *(u32*)((u8*)val + info->_struct.member_offsets[1]);
 	u8* data = *(u8**)((u8*)val + info->_struct.member_offsets[0]);
 
-	idx = string_write(s, idx, '[', size);
+	idx = s.write(idx, '[', size);
 	for(u32 i = 0; i < len; i++) {
 		if(of->type_type == Type::_string) {
-			idx = string_write(s, idx, '\"', size);
+			idx = s.write(idx, '\"', size);
 		}
 		idx = print_type(s, idx, data + i * of->size, of, size);
 		if(of->type_type == Type::_string) {
-			idx = string_write(s, idx, '\"', size);
+			idx = s.write(idx, '\"', size);
 		}
 		if(i != len - 1)
-			idx = string_write(s, idx, string_literal(", "), size);
+			idx = s.write(idx, string_literal(", "), size);
 	}
-	idx = string_write(s, idx, ']', size);
+	idx = s.write(idx, ']', size);
 
 	return idx;
 }
@@ -343,11 +343,11 @@ u32 print_map(string s, u32 idx, void* val, _type_info* info, bool size) { PROF
 	_type_info* vec_info = TYPEINFO_H(info->_struct.member_types[0]);
 	u8* vec = (u8*)val + info->_struct.member_offsets[0];
 
-	idx = string_write(s, idx, info->name, size);
+	idx = s.write(idx, info->name, size);
 
 	_type_info* vec_of = TYPEINFO_H(TYPEINFO_H(vec_info->_struct.member_types[0])->_ptr.to);
 	if(!vec_of) {
-		idx = string_write(s, idx, string_literal("[UNDEF]"), size);
+		idx = s.write(idx, string_literal("[UNDEF]"), size);
 		return idx;
 	}
 
@@ -355,39 +355,39 @@ u32 print_map(string s, u32 idx, void* val, _type_info* info, bool size) { PROF
 	u8* data = *(u8**)((u8*)vec + vec_info->_struct.member_offsets[0]);
 
 	u32 number_actually_printed = 0;
-	idx = string_write(s, idx, '[', size);
+	idx = s.write(idx, '[', size);
 	for(u32 i = 0; i < cap; i++) {
 		if(!*(bool*)(data + i * vec_of->size + vec_of->_struct.member_offsets[2])) continue;
 
 		if(number_actually_printed != 0)
-			idx = string_write(s, idx, string_literal(", "), size);
+			idx = s.write(idx, string_literal(", "), size);
 		number_actually_printed++;
 		
-		idx = string_write(s, idx, '{', size);
+		idx = s.write(idx, '{', size);
 		{
 			_type_info* key = TYPEINFO_H(vec_of->_struct.member_types[0]);
 			if(key->type_type == Type::_string) {
-				idx = string_write(s, idx, '\"', size);
+				idx = s.write(idx, '\"', size);
 			}
 			idx = print_type(s, idx, data + i * vec_of->size + vec_of->_struct.member_offsets[0], key, size);
 			if(key->type_type == Type::_string) {
-				idx = string_write(s, idx, '\"', size);
+				idx = s.write(idx, '\"', size);
 			}
 		}
-		idx = string_write(s, idx, string_literal(", "), size);
+		idx = s.write(idx, string_literal(", "), size);
 		{
 			_type_info* value = TYPEINFO_H(vec_of->_struct.member_types[1]);
 			if(value->type_type == Type::_string) {
-				idx = string_write(s, idx, '\"', size);
+				idx = s.write(idx, '\"', size);
 			}
 			idx = print_type(s, idx, data + i * vec_of->size + vec_of->_struct.member_offsets[1], value, size);
 			if(value->type_type == Type::_string) {
-				idx = string_write(s, idx, '\"', size);
+				idx = s.write(idx, '\"', size);
 			}
 		}
-		idx = string_write(s, idx, '}', size);
+		idx = s.write(idx, '}', size);
 	}
-	idx = string_write(s, idx, ']', size);
+	idx = s.write(idx, ']', size);
 	return idx;
 }
 
@@ -396,89 +396,89 @@ u32 print_static_array(string s, u32 idx, void* val, _type_info* info, bool size
 	_type_info* of = TYPEINFO_H(info->_array.of);
 
 	if (!of) {
-		idx = string_write(s, idx, string_literal("UNDEF["), size);
+		idx = s.write(idx, string_literal("UNDEF["), size);
 		idx = print_u64(s, idx, 10, info->_array.length, size);
-		idx = string_write(s, idx, ']', size);
+		idx = s.write(idx, ']', size);
 		return idx;
 	}
 
-	idx = string_write(s, idx, of->name, size);
-	idx = string_write(s, idx, '[', size);
+	idx = s.write(idx, of->name, size);
+	idx = s.write(idx, '[', size);
 	for(u32 i = 0; i < info->_array.length; i++) {
 		if(of->type_type == Type::_string) {
-			idx = string_write(s, idx, '\"', size);
+			idx = s.write(idx, '\"', size);
 		}
 		idx = print_type(s, idx, (u8*)val + i * of->size, of, size);
 		if(of->type_type == Type::_string) {
-			idx = string_write(s, idx, '\"', size);
+			idx = s.write(idx, '\"', size);
 		}
 		if(i != info->_array.length - 1)
-			idx = string_write(s, idx, string_literal(", "), size);
+			idx = s.write(idx, string_literal(", "), size);
 	}
 
-	idx = string_write(s, idx, ']', size);
+	idx = s.write(idx, ']', size);
 
 	return idx;
 }
 
 u32 print_ptr(string s, u32 idx, void* val, _type_info* info, bool size) { PROF 
-	idx = string_write(s, idx, string_literal("*{"), size);
+	idx = s.write(idx, string_literal("*{"), size);
 	if (info->_ptr.to == 0) {
-		idx = string_write(s, idx, string_literal("UNDEF|"), size);
+		idx = s.write(idx, string_literal("UNDEF|"), size);
 
 		if (*(u8**)&val == null) {
-			idx = string_write(s, idx, string_literal("null"), size);
+			idx = s.write(idx, string_literal("null"), size);
 		} else {
 			idx = print_u64(s, idx, 16, (u64)(*(u8**)val), size, sizeof(void*) == 8 ? 16 : 8);
 		}
 	} else {
 		_type_info* to = TYPEINFO_H(info->_ptr.to);
 		if (*(u8**)val == null) {
-			idx = string_write(s, idx, to->name, size);
-			idx = string_write(s, idx, string_literal("|null"), size);
+			idx = s.write(idx, to->name, size);
+			idx = s.write(idx, string_literal("|null"), size);
 		} else {
 			if(to->type_type == Type::_string) {
-				idx = string_write(s, idx, '\"', size);
+				idx = s.write(idx, '\"', size);
 			}			
 			idx = print_type(s, idx, *(u8**)val, to, size);
 			if(to->type_type == Type::_string) {
-				idx = string_write(s, idx, '\"', size);
+				idx = s.write(idx, '\"', size);
 			}	
-			idx = string_write(s, idx, '|', size);
+			idx = s.write(idx, '|', size);
 			idx = print_u64(s, idx, 16, (u64)(*(u8**)val), size, sizeof(void*) == 8 ? 16 : 8);
 		}
 	}	
-	idx = string_write(s, idx, '}', size);
+	idx = s.write(idx, '}', size);
 	return idx;
 }
 
 u32 print_struct(string s, u32 idx, void* val, _type_info* info, bool size) { PROF 
-	idx = string_write(s, idx, info->name, size);
-	idx = string_write(s, idx, string_literal("{"), size);
+	idx = s.write(idx, info->name, size);
+	idx = s.write(idx, string_literal("{"), size);
 	for(u32 j = 0; j < info->_struct.member_count; j++) {
-		idx = string_write(s, idx, info->_struct.member_names[j], size);
-		idx = string_write(s, idx, string_literal(" : "), size);
+		idx = s.write(idx, info->_struct.member_names[j], size);
+		idx = s.write(idx, string_literal(" : "), size);
 
 		_type_info* member = TYPEINFO_H(info->_struct.member_types[j]);
 		u8* place = (u8*)val + info->_struct.member_offsets[j];
 
 		if(member) {
 			if(member->type_type == Type::_string) {
-				idx = string_write(s, idx, '\"', size);
+				idx = s.write(idx, '\"', size);
 			}
 			idx = print_type(s, idx, place, member, size);
 			if(member->type_type == Type::_string) {
-				idx = string_write(s, idx, '\"', size);
+				idx = s.write(idx, '\"', size);
 			}
 		} else {
-			idx = string_write(s, idx, string_literal("UNDEF"), size);
+			idx = s.write(idx, string_literal("UNDEF"), size);
 		}
 
 		if(j < info->_struct.member_count - 1) {
-			idx = string_write(s, idx, string_literal(", "), size);
+			idx = s.write(idx, string_literal(", "), size);
 		}
 	}
-	idx = string_write(s, idx, '}', size);
+	idx = s.write(idx, '}', size);
 	return idx;
 }
 
@@ -487,7 +487,7 @@ u32 print_u64(string s, u32 idx, u8 base, u64 val, bool size, u32 min_len) { PRO
 	u8 digit = 0, digits = 0;
 	u32 start = idx;
 	if(val == 0) {
-		idx = string_write(s, idx, '0', size);
+		idx = s.write(idx, '0', size);
 	}
 	while(val > 0) {
 		digit = val % base;
@@ -500,11 +500,11 @@ u32 print_u64(string s, u32 idx, u8 base, u64 val, bool size, u32 min_len) { PRO
 		} else {
 			c = 'a' + digit - 9;
 		}
-		idx = string_write(s, idx, c, size);
+		idx = s.write(idx, c, size);
 	}
 	while(digits < min_len) {
 		digits++;
-		idx = string_write(s, idx, '0', size);
+		idx = s.write(idx, '0', size);
 	}
 
 	if(!size) {
@@ -562,7 +562,7 @@ u32 print_int(string s, u32 idx, u8 base, void* val, _type_info* info, bool size
 		if(info->_int.is_signed) {
 			i8 p = *(i8*)val;
 			if(p < 0) {
-				idx = string_write(s, idx, '-', size);
+				idx = s.write(idx, '-', size);
 				return print_u64(s, idx, base, (u64)-p, size);
 			} else {
 				return print_u64(s, idx, base, (u64)p, size);
@@ -575,7 +575,7 @@ u32 print_int(string s, u32 idx, u8 base, void* val, _type_info* info, bool size
 		if(info->_int.is_signed) {
 			i16 p = *(i16*)val;
 			if(p < 0) {
-				idx = string_write(s, idx, '-', size);
+				idx = s.write(idx, '-', size);
 				return print_u64(s, idx, base, (u64)-p, size);
 			} else {
 				return print_u64(s, idx, base, (u64)p, size);
@@ -588,7 +588,7 @@ u32 print_int(string s, u32 idx, u8 base, void* val, _type_info* info, bool size
 		if(info->_int.is_signed) {
 			i32 p = *(i32*)val;
 			if(p < 0) {
-				idx = string_write(s, idx, '-', size);
+				idx = s.write(idx, '-', size);
 				return print_u64(s, idx, base, (u64)-p, size);
 			} else {
 				return print_u64(s, idx, base, (u64)p, size);
@@ -601,7 +601,7 @@ u32 print_int(string s, u32 idx, u8 base, void* val, _type_info* info, bool size
 		if(info->_int.is_signed) {
 			i64 p = *(i64*)val;
 			if(p < 0) {
-				idx = string_write(s, idx, '-', size);
+				idx = s.write(idx, '-', size);
 				return print_u64(s, idx, base, (u64)-p, size);
 			} else {
 				return print_u64(s, idx, base, (u64)p, size);
@@ -628,7 +628,7 @@ u32 print_float(string s, u32 idx, u8 precision, void* val, _type_info* info, bo
 		f = *(f64*)val;
 	}
 	if(f < 0) {
-		idx = string_write(s, idx, '-', size);
+		idx = s.write(idx, '-', size);
 		f = -f;
 	}
 
@@ -636,7 +636,7 @@ u32 print_float(string s, u32 idx, u8 precision, void* val, _type_info* info, bo
 	idx = print_u64(s, idx, 10, whole, size);
 	f64 d = f - (f64)whole;
 
-	idx = string_write(s, idx, '.', size);
+	idx = s.write(idx, '.', size);
 
 	while(precision--) {
 		d *= 10;
@@ -644,7 +644,7 @@ u32 print_float(string s, u32 idx, u8 precision, void* val, _type_info* info, bo
 		d = d - (f64)(u64)d;
 
 		char c = '0' + digit;
-		idx = string_write(s, idx, c, size);
+		idx = s.write(idx, c, size);
 	}
 
 	return idx;
@@ -683,9 +683,9 @@ u32 print_enum(string s, u32 idx, void* val, _type_info* info, bool size) { PROF
 		}
 	}
 
-	idx = string_write(s, idx, info->name, size);
-	idx = string_write(s, idx, string_literal("::"), size);
-	idx = string_write(s, idx, name, size);
+	idx = s.write(idx, info->name, size);
+	idx = s.write(idx, string_literal("::"), size);
+	idx = s.write(idx, name, size);
 
 	return idx;
 }
@@ -758,7 +758,7 @@ u32 hash_string(string str) { PROF
 }
 
 // adapted from http://www.json.org/JSON_checker/utf8_decode.c
-u32 get_next_codepoint(string text_utf8, u32* index) { 
+u32 string::get_next_codepoint(u32* index) { 
 
 #ifdef MORE_PROF
 	PROF
@@ -767,9 +767,9 @@ u32 get_next_codepoint(string text_utf8, u32* index) {
 	char first, second, third, fourth;
 	u32  codepoint, idx = *index;
 
-	if(*index >= text_utf8.len) return 0;
+	if(*index >= len) return 0;
 
-	first = text_utf8.c_str[idx++];
+	first = c_str[idx++];
 
 	// one byte
 	if((first & 0x80) == 0) {
@@ -783,7 +783,7 @@ u32 get_next_codepoint(string text_utf8, u32* index) {
 	// two bytes
 	if((first & 0xE0) == 0xC0) {
 		
-		second = text_utf8.c_str[idx++] & 0x3F;
+		second = c_str[idx++] & 0x3F;
 
 		codepoint = ((first & 0x1F) << 6) | second;
 
@@ -796,8 +796,8 @@ u32 get_next_codepoint(string text_utf8, u32* index) {
 	// three bytes
 	if((first & 0xF0) == 0xE0) {
 		
-		second = text_utf8.c_str[idx++] & 0x3F;
-		third  = text_utf8.c_str[idx++] & 0x3F;
+		second = c_str[idx++] & 0x3F;
+		third  = c_str[idx++] & 0x3F;
 
 		codepoint = ((first & 0x0F) << 12) | (second << 6) | third;
 
@@ -810,9 +810,9 @@ u32 get_next_codepoint(string text_utf8, u32* index) {
 	// four bytes
 	if((first & 0xF8) == 0xF0) {
 
-		second = text_utf8.c_str[idx++] & 0x3F;
-		third  = text_utf8.c_str[idx++] & 0x3F;
-		fourth = text_utf8.c_str[idx++] & 0x3F;
+		second = c_str[idx++] & 0x3F;
+		third  = c_str[idx++] & 0x3F;
+		fourth = c_str[idx++] & 0x3F;
 		
 		codepoint = ((first & 0x07) << 18) | (second << 12) | (third << 6) | fourth;
 
@@ -822,13 +822,13 @@ u32 get_next_codepoint(string text_utf8, u32* index) {
 		return codepoint;
 	}
 
-	LOG_FATAL_F("Invalid codepoint index % in %", *index, text_utf8);
+	LOG_FATAL_F("Invalid codepoint index % in %", *index, *this);
 	return 0;
 }
 
 string make_copy_string(string src, allocator* a) { PROF
 
-	string ret = make_string(src.cap, a);
+	string ret = string::make(src.cap, a);
 
 	ret.len = src.len;
 
@@ -839,22 +839,22 @@ string make_copy_string(string src, allocator* a) { PROF
 	return ret;
 }
 
-string substring(string str, u32 start, u32 end) { PROF
+string string::substring(u32 start, u32 end) { PROF
 
 	string ret;
 
 	ret.len = end - start + 1;
 	ret.cap = end - start + 1;
 
-	ret.c_str = str.c_str + start;
+	ret.c_str = c_str + start;
 
 	return ret;
 }
 
-i32 string_last_slash(string str) { PROF
+i32 string::last_slash() { PROF
 
-	for(u32 i = str.len - 1; i >= 0; i--) {
-		if(str.c_str[i] == '\\' || str.c_str[i] == '/') {
+	for(u32 i = len - 1; i >= 0; i--) {
+		if(c_str[i] == '\\' || c_str[i] == '/') {
 			return i;
 		}
 	}
@@ -862,10 +862,10 @@ i32 string_last_slash(string str) { PROF
 	return -1;
 }
 
-void free_string(string s, allocator* a) { PROF
+void string::destroy(allocator* a) { PROF
 	PUSH_ALLOC(a) {
 
-		free_string(s);
+		destroy();
 
 	} POP_ALLOC();
 }
@@ -876,10 +876,10 @@ inline string string_literal(const char* literal) {
 	PROF
 #endif
 
-	return string_from_c_str((char*)literal);
+	return string::from_c_str((char*)literal);
 }
 
-string string_from_c_str(char* c_str) { 
+string string::from_c_str(char* c_str) { 
 
 #ifdef MORE_PROF
 	PROF
@@ -899,13 +899,13 @@ string string_from_c_str(char* c_str) {
 	return ret;
 }
 
-string make_string_from_c_str(char* c_str) { PROF
+string string::make_from_c_str(char* c_str) { PROF
 
 	u32 len;
 	for(len = 0; c_str[len] != '\0'; len++);
 	len++;
 
-	string ret = make_string(len);
+	string ret = string::make(len);
 	ret.len = len;
 
 	for(u32 i = 0; i <= len; i++) { // will copy null terminator
@@ -915,38 +915,38 @@ string make_string_from_c_str(char* c_str) { PROF
 	return ret;
 }
 
-void free_string(string s) { PROF
+void string::destroy() { PROF
 
-	free(s.c_str);
+	free(c_str);
 
-	s.c_str = null;
-	s.cap = 0;
-	s.len = 0;
+	c_str = null;
+	cap = 0;
+	len = 0;
 }
 
-string make_string(u32 cap, allocator* a) { PROF
+string string::make(u32 _cap, allocator* a) { PROF
 
 	string ret;
 
-	ret.c_str = (char*)a->allocate_(cap, a, CONTEXT);
-	ret.cap = cap;
+	ret.c_str = (char*)a->allocate_(_cap, a, CONTEXT);
+	ret.cap = _cap;
 
 	return ret;
 }
 
-string make_string(u32 cap) { PROF
+string string::make(u32 _cap) { PROF
 
 	string ret;
 
-	ret.c_str = (char*)malloc(cap);
-	ret.cap = cap;
+	ret.c_str = (char*)malloc(_cap);
+	ret.cap = _cap;
 
 	return ret;
 }
 
-string make_copy_string(string src) { PROF
+string string::make_copy(string src) { PROF
 
-	string ret = make_string(src.cap);
+	string ret = string::make(src.cap);
 
 	ret.len = src.len;
 
@@ -958,9 +958,9 @@ string make_copy_string(string src) { PROF
 }
 
 // end exclusive
-string make_substring(string str, u32 start, u32 end) { PROF
+string string::make_substring(string str, u32 start, u32 end) { PROF
 
-	string ret = make_string(end - start + 1);
+	string ret = string::make(end - start + 1);
 
 	ret.len = end - start + 1;
 
@@ -973,7 +973,7 @@ string make_substring(string str, u32 start, u32 end) { PROF
 	return ret;
 }
 
-string make_cat_strings(i32 num_strs, ...) { PROF
+string string::make_cat_v(i32 num_strs, ...) { PROF
 
 	va_list args;
 	va_start(args, num_strs);
@@ -994,7 +994,7 @@ string make_cat_strings(i32 num_strs, ...) { PROF
 		len += params.get(i)->len - 1;
 	}
 
-	string ret = make_string(len + 1);
+	string ret = string::make(len + 1);
 	ret.len = len + 1;
 	u32 place = 0;
 
@@ -1014,9 +1014,9 @@ string make_cat_strings(i32 num_strs, ...) { PROF
 	return ret;
 }
 
-string make_cat_string(string first, string second) { PROF
+string string::make_cat(string first, string second) { PROF
 
-	string ret = make_string(first.len + second.len - 1);
+	string ret = string::make(first.len + second.len - 1);
 
 	ret.len = first.len + second.len - 1;
 

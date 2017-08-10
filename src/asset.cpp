@@ -147,7 +147,7 @@ void load_asset_store(asset_store* as, string path) { PROF
 		for(u32 i = 0; i < header->num_assets; i++) {
 
 			asset a;
-			a.name = string_from_c_str(current_asset->name);
+			a.name = string::from_c_str(current_asset->name);
 
 			if(current_asset->type == asset_type::bitmap) {
 

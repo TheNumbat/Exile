@@ -64,7 +64,7 @@ void _begin_thread(string fmt, allocator* alloc, code_context start, Targs... ar
 }
 
 void end_thread() { PROF
-	free_string(this_thread_data.name);
+	this_thread_data.name.destroy();
 	POP_ALLOC();
 
 	this_thread_data.alloc_stack.destroy();

@@ -1,11 +1,46 @@
 
 #pragma once
 
+struct allocator;
+
 struct NOREFLECT string { // no-reflect because hard-coded
 	char* c_str = null;
 	u32 cap	    = 0;
 	u32 len		= 0;	// including null terminator
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+	// a lot of functions are a bit of a gray area regarding if they should
+	// be a method...if it wasn't obvious that there is one "calling object"
+	// I left them as free functions. (or if you need their signature like hash)
+
+	static string make(u32 _cap);
+	static string make(u32 _cap, allocator* a);
+	static string make_copy(string src);
+	static string make_copy(string src, allocator* a);
+	static string make_substring(string str, u32 start, u32 end);
+	static string make_from_c_str(char* c_str); // copies
+	static string make_cat(string first, string second);
+	static string make_cat_v(i32 num_strs, ...);
+	static string from_c_str(char* c_str); // does not allocate
+
+	void destroy(allocator* a);
+	void destroy();
+
+	// parsing stuff
+	u32 get_next_codepoint(u32* index);
+	u32 parse_u32(u32 idx = 0, u32* used = null);
+
+	string substring(u32 start, u32 end); 	// uses same memory
+	i32    last_slash(); 					// this returns an i32. just use this on non-2GB strings...
+
+	u32 write(u32 idx, string ins, bool size = false);
+	u32 write(u32 idx, char ins, bool size = false);
 };
+
+inline string string_literal(const char* literal);
+static const string empty_string = string_literal("");
 
 u32  hash_strings(string one, string two);
 u32  hash_string(string str);
@@ -13,30 +48,6 @@ bool operator==(string first, string second);
 inline bool operator==(string first, const char* second);
 inline bool operator==(const char* first, string second);
 bool strcmp(string first, string second);
-
-// parsing stuff
-u32 get_next_codepoint(string text_utf8, u32* index);
-u32 parse_u32(string s, u32 idx = 0, u32* used = null);
-
-// string utilities
-string make_string_from_c_str(char* c_str); 		// copies
-void   free_string(string s);
-string make_string(u32 cap);
-string make_copy_string(string src);
-string make_substring(string str, u32 start, u32 end);
-string substring(string str, u32 start, u32 end); 	// uses same memory
-i32    string_last_slash(string str); 				// this returns an i32. just use this on non-2GB strings...
-string make_cat_string(string first, string second);
-string make_cat_strings(i32 num_strs, ...);
-inline string string_literal(const char* literal);
-string string_from_c_str(char* c_str); 				// does not allocate
-u32    string_write(string s, u32 idx, string ins, bool size = false);
-u32    string_write(string s, u32 idx, char ins, bool size = false);
-
-struct 	allocator;
-string 	make_string(u32 cap, allocator* a);
-string 	make_copy_string(string src, allocator* a);
-void 	free_string(string s, allocator* a);
 
 // formating API
 template<typename... Targs> string 	make_stringf(string fmt, Targs... args);

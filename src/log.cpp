@@ -93,7 +93,7 @@ void logger_print_header(log_manager* log, log_out out) { PROF
 
 		global_api->platform_write_file(&out.file, (void*)header.c_str, header.len - 1);
 
-		free_string(header);
+		header.destroy();
 
 	} POP_ALLOC();
 }
@@ -111,14 +111,14 @@ void logger_msgf(log_manager* log, string fmt, log_level level, code_context con
 
 		lmsg.msg = make_stringf_len(msg_len, fmt, args...);
 
-		lmsg.arena = arena;
 		lmsg.publisher = context;
 		lmsg.level = level;
 
 		lmsg.call_stack = array<code_context>::make_memory(this_thread_data.call_stack_depth, malloc(sizeof(code_context) * this_thread_data.call_stack_depth));
-		lmsg.thread_name = make_copy_string(this_thread_data.name);
+		lmsg.thread_name = string::make_copy(this_thread_data.name);
 		memcpy(this_thread_data.call_stack, lmsg.call_stack.memory, sizeof(code_context) * this_thread_data.call_stack_depth);
 
+		lmsg.arena = arena;
 		log->message_queue.push(lmsg);
 		
 		global_api->platform_signal_semaphore(&log->logging_semaphore, 1);
@@ -150,15 +150,15 @@ void logger_msg(log_manager* log, string msg, log_level level, code_context cont
 
 	PUSH_ALLOC(&arena) {
 
-		lmsg.msg = make_copy_string(msg);
+		lmsg.msg = string::make_copy(msg);
 		lmsg.publisher = context;
 		lmsg.level = level;
-		lmsg.arena = arena;
 
 		lmsg.call_stack = array<code_context>::make_memory(this_thread_data.call_stack_depth, malloc(sizeof(code_context) * this_thread_data.call_stack_depth));
-		lmsg.thread_name = make_copy_string(this_thread_data.name);
+		lmsg.thread_name = string::make_copy(this_thread_data.name);
 		memcpy(this_thread_data.call_stack, lmsg.call_stack.memory, sizeof(code_context) * this_thread_data.call_stack_depth);
 		
+		lmsg.arena = arena;
 		log->message_queue.push(lmsg);
 
 		global_api->platform_signal_semaphore(&log->logging_semaphore, 1);
@@ -183,7 +183,7 @@ void logger_msg(log_manager* log, string msg, log_level level, code_context cont
 
 string log_fmt_msg_time(log_message* msg) { PROF
 
-	string time = make_string(9);
+	string time = string::make(9);
 	global_api->platform_get_timef(string_literal("hh:mm:ss"), &time);
 
 	return time;
@@ -191,10 +191,10 @@ string log_fmt_msg_time(log_message* msg) { PROF
 
 string log_fmt_msg_call_stack(log_message* msg) { PROF
 
-	string call_stack = make_cat_string(msg->thread_name, string_literal("/"));
+	string call_stack = string::make_cat(msg->thread_name, string_literal("/"));
 	for(u32 j = 0; j < msg->call_stack.capacity; j++) {
-		string temp = make_cat_strings(3, call_stack, msg->call_stack.get(j)->function, string_literal("/"));
-		free_string(call_stack);
+		string temp = string::make_cat_v(3, call_stack, msg->call_stack.get(j)->function, string_literal("/"));
+		call_stack.destroy();
 		call_stack = temp;
 	}
 
@@ -245,9 +245,9 @@ string log_fmt_msg(log_message* msg) { PROF
 
 	string output = make_stringf(string_literal("%-8 [%-36] [%-20] [%-5] %+*\r\n"), time, call_stack, file_line, level, 3 * msg->call_stack.capacity + msg->msg.len - 1, msg->msg);
 
-	free_string(time);
-	free_string(call_stack);
-	free_string(file_line);
+	time.destroy();
+	call_stack.destroy();
+	file_line.destroy();
 
 	return output;	
 }
@@ -291,7 +291,7 @@ i32 logging_thread(void* data_) { PROF_NOCS
 						}
 					)
 
-					free_string(output);
+					output.destroy();
 
 				} POP_ALLOC();
 				RESET_ARENA(data->scratch);

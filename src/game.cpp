@@ -152,8 +152,9 @@ extern "C" void shut_down(game_state* state) { PROF
 	LOG_DEBUG("Done with shutdown!");
 
 	logger_stop(&state->log);
-	destroy_logger(&state->log);
+
 	destroy_dbg_manager(&state->dbg);
+	destroy_logger(&state->log);
 	
 	end_thread();
 

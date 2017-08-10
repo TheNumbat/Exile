@@ -391,7 +391,7 @@ void gui_log_wnd(platform_window* win, string name, vector<log_message>* cache) 
 			fmt = make_stringf(string_literal("[context] [file:line] [%-5] %+*\r\n"), level, 3 * it->call_stack.capacity + it->msg.len - 1, it->msg);
 			push_text(current, pos, fmt, ggui->style.font, WHITE);
 
-			free_string(fmt);
+			fmt.destroy();
 
 		} POP_ALLOC();
 		RESET_ARENA(&ggui->scratch);
