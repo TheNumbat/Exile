@@ -16,8 +16,8 @@ gui_manager gui_manager::make(ogl_manager* ogl, allocator* alloc) { PROF
 	ret.alloc = alloc;
 	ret.scratch = MAKE_ARENA("gui_scratch", KILOBYTES(512), alloc, false);
 
-	ret.ogl_ctx.context = ogl_add_draw_context(ogl, &ogl_mesh_2d_attribs);
-	ret.ogl_ctx.shader 	= ogl_add_program(ogl, string_literal("shaders/gui.v"), string_literal("shaders/gui.f"), &ogl_uniforms_gui);
+	ret.ogl_ctx.context = ogl->add_draw_context(&ogl_mesh_2d_attribs);
+	ret.ogl_ctx.shader 	= ogl->add_program(string_literal("shaders/gui.v"), string_literal("shaders/gui.f"), &ogl_uniforms_gui);
 
 	ret.window_state_data = map<guiid, gui_window_state>::make(32, alloc, &guiid_hash);
 	ret.state_data = map<guiid, gui_state_data>::make(128, alloc, &guiid_hash);
@@ -45,12 +45,12 @@ void gui_manager::reload_fonts(ogl_manager* ogl) { PROF
 
 	FORVEC(fonts,
 
-		ogl_destroy_texture(ogl, it->texture);
+		ogl->destroy_texture(it->texture);
 
 		asset* font = it->store->get(it->asset_name);
 
 		it->font = font;
-		it->texture = ogl_add_texture_from_font(ogl, font);
+		it->texture = ogl->add_texture_from_font(font);
 	)
 }
 
@@ -64,7 +64,7 @@ void gui_manager::add_font(ogl_manager* ogl, string asset_name, asset_store* sto
 	f.store = store;
 	f.font = font;
 	f.mono = mono;
-	f.texture = ogl_add_texture_from_font(ogl, font);
+	f.texture = ogl->add_texture_from_font(font);
 
 	fonts.push(f);
 }
@@ -121,7 +121,7 @@ void gui_manager::end_frame(platform_window* win, ogl_manager* ogl) { PROF
 	rcl.proj = ortho(0, (f32)win->w, (f32)win->h, 0, -1, 1);
 	sort_render_commands(&rcl);
 
-	ogl_render_command_list(win, ogl, &rcl);
+	ogl->execute_command_list(win, &rcl);
 	destroy_command_list(&rcl);
 
 	FORMAP(ggui->window_state_data,

@@ -125,6 +125,13 @@ struct shader_source {
 	platform_file_attributes last_attrib;
 	string source;
 	allocator* alloc = null;
+
+///////////////////////////////////////////////////////////////////////////////
+
+	static shader_source make(string path, allocator* a);
+	void load();
+	void destroy();
+	bool refresh();
 };
 
 struct shader_program {
@@ -134,6 +141,13 @@ struct shader_program {
 	shader_source fragment;
 	void (*set_uniforms)(shader_program*, render_command*, render_command_list*) = null;
 	// tessellation control, evaluation, geometry
+
+///////////////////////////////////////////////////////////////////////////////
+
+	static shader_program make(string vert, string frag, void (*set_uniforms)(shader_program*, render_command*, render_command_list*), allocator* a);
+	void compile();
+	bool refresh();
+	void destroy();
 };
 
 enum class texture_wrap {
@@ -148,6 +162,15 @@ struct texture {
 	GLuint handle 		= 0;
 	texture_wrap wrap 	= texture_wrap::repeat;
 	bool pixelated 		= false;
+
+///////////////////////////////////////////////////////////////////////////////
+
+	static texture make(texture_wrap wrap, bool pixelated);
+	void destroy();
+
+	void load_bitmap(asset_store* as, string name);
+	void load_bitmap_from_font(asset_store* as, string name);
+	void load_bitmap_from_font(asset* font);
 };
 
 struct ogl_draw_context {
@@ -171,53 +194,39 @@ struct ogl_manager {
 	string version;
 	string renderer;
 	string vendor;
+
+///////////////////////////////////////////////////////////////////////////////
+
+	static ogl_manager make(allocator* a);
+	void destroy();
+
+	shader_program_id add_program(string v_path, string f_path, void (*set_uniforms)(shader_program*, render_command*, render_command_list*));
+	shader_program* select_program(shader_program_id id);
+	void try_reload_programs();
+
+	texture_id add_texture(asset_store* as, string name, texture_wrap wrap = texture_wrap::repeat, bool pixelated = false);
+	texture* select_texture(texture_id id);
+	texture_id add_texture_from_font(asset_store* as, string name, texture_wrap wrap = texture_wrap::repeat, bool pixelated = false);
+	texture_id add_texture_from_font(asset* font, texture_wrap wrap = texture_wrap::repeat, bool pixelated = false);
+	void destroy_texture(texture_id id);
+
+	context_id add_draw_context(void (*set_atribs)(ogl_draw_context* dc));
+	ogl_draw_context* select_draw_context(context_id id);
+
+	void dbg_render_texture_fullscreen(platform_window* win, texture_id id);
+	void execute_command_list(platform_window* win, render_command_list* rcl);
+
+	void send_mesh_3d(mesh_3d* m, context_id id);
+	void send_mesh_2d(mesh_2d* m, context_id id);
 };
 
 void ogl_load_global_funcs();
-
-ogl_manager make_opengl(allocator* a);
-void destroy_opengl(ogl_manager* ogl);
-
-shader_program_id ogl_add_program(ogl_manager* ogl, string v_path, string f_path, void (*set_uniforms)(shader_program*, render_command*, render_command_list*));
-shader_program* ogl_select_program(ogl_manager* ogl, shader_program_id id);
-void ogl_try_reload_programs(ogl_manager* ogl);
 void ogl_set_uniforms(shader_program* prog, render_command* rc, render_command_list* rcl);
-
-texture_id ogl_add_texture(ogl_manager* ogl, asset_store* as, string name, texture_wrap wrap = texture_wrap::repeat, bool pixelated = false);
-texture* ogl_select_texture(ogl_manager* ogl, texture_id id);
-texture_id ogl_add_texture_from_font(ogl_manager* ogl, asset_store* as, string name, texture_wrap wrap = texture_wrap::repeat, bool pixelated = false);
-texture_id ogl_add_texture_from_font(ogl_manager* ogl, asset* font, texture_wrap wrap = texture_wrap::repeat, bool pixelated = false);
-void ogl_destroy_texture(ogl_manager* ogl, texture_id id);
-
-context_id ogl_add_draw_context(ogl_manager* ogl, void (*set_atribs)(ogl_draw_context* dc));
-ogl_draw_context* ogl_select_draw_context(ogl_manager* ogl, context_id id);
-
-void ogl_dbg_render_texture_fullscreen(platform_window* win, ogl_manager* ogl, texture_id id);
-void ogl_render_command_list(platform_window* win, ogl_manager* ogl, render_command_list* rcl);
-
-shader_source make_source(string path, allocator* a);
-void load_source(shader_source* source);
-void destroy_source(shader_source* source);
-bool refresh_source(shader_source* source);
-
-shader_program make_program(string vert, string frag, void (*set_uniforms)(shader_program*, render_command*, render_command_list*), allocator* a);
-void compile_program(shader_program* prog);
-bool refresh_program(shader_program* prog);
-void destroy_program(shader_program* prog);
-
-texture make_texture(texture_wrap wrap, bool pixelated);
-void texture_load_bitmap(texture* tex, asset_store* as, string name);
-void texture_load_bitmap_from_font(texture* tex, asset_store* as, string name);
-void texture_load_bitmap_from_font(texture* tex, asset* font);
-void destroy_texture(texture* tex);
 
 void debug_proc(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userPointer);
 
 void ogl_mesh_2d_attribs(ogl_draw_context* dc);
-void ogl_send_mesh_2d(ogl_manager* ogl, mesh_2d* m, context_id id);
-
 void ogl_mesh_3d_attribs(ogl_draw_context* dc);
-void ogl_send_mesh_3d(ogl_manager* ogl, mesh_3d* m, context_id id);
 
 void ogl_uniforms_gui(shader_program* prog, render_command* rc, render_command_list* rcl);
 void ogl_uniforms_dbg(shader_program* prog, render_command* rc, render_command_list* rcl) {};

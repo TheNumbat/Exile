@@ -68,7 +68,7 @@ extern "C" game_state* start_up(platform_api* api) { PROF
 	LOG_INFO("Setting up OpenGL");
 	ogl_load_global_funcs();
 	state->ogl_a = MAKE_PLATFORM_ALLOCATOR("ogl");
-	state->ogl = make_opengl(&state->ogl_a);
+	state->ogl = ogl_manager::make(&state->ogl_a);
 
 	state->thread_pool.wait_job(assets);
 
@@ -111,7 +111,7 @@ extern "C" bool main_loop(game_state* state) { PROF
 	global_api->platform_swap_buffers(&state->window);
 
 #ifdef _DEBUG
-	ogl_try_reload_programs(&state->ogl);
+	state->ogl.try_reload_programs();
 	if(state->default_store.try_reload()) {
 		state->gui.reload_fonts(&state->ogl);
 	}
@@ -128,7 +128,7 @@ extern "C" void shut_down(game_state* state) { PROF
 	state->gui.destroy();
 
 	LOG_DEBUG("Destroying OpenGL")
-	destroy_opengl(&state->ogl);
+	state->ogl.destroy();
 
 	LOG_DEBUG("Destroying asset system");
 	state->default_store.destroy();

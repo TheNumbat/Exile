@@ -1,17 +1,17 @@
 
-shader_source make_source(string path, allocator* a) { PROF
+shader_source shader_source::make(string path, allocator* a) { PROF
 
 	shader_source ret;
 
 	ret.path = path;
 	ret.alloc = a;
 
-	load_source(&ret);
+	ret.load();
 
 	return ret;
 }
 
-void load_source(shader_source* source) { PROF
+void shader_source::load() { PROF
 
 	platform_file source_file;
 
@@ -19,39 +19,39 @@ void load_source(shader_source* source) { PROF
 	u32 itr = 0;
 	do {
 		itr++;
-		err = global_api->platform_create_file(&source_file, source->path, platform_file_open_op::existing);
+		err = global_api->platform_create_file(&source_file, path, platform_file_open_op::existing);
 	} while (err.error == PLATFORM_SHARING_ERROR && itr < 100000);
 
 	if(!err.good) {
-		LOG_ERR_F("Failed to load shader source %", source->path);
+		LOG_ERR_F("Failed to load shader source %", path);
 		global_api->platform_close_file(&source_file);
 		return;
 	}
 
 	u32 len = global_api->platform_file_size(&source_file) + 1;
-	source->source = string::make(len, source->alloc);
-	global_api->platform_read_file(&source_file, (void*)source->source.c_str, len);
+	source = string::make(len, alloc);
+	global_api->platform_read_file(&source_file, (void*)source.c_str, len);
 
 	global_api->platform_close_file(&source_file);
 
-	global_api->platform_get_file_attributes(&source->last_attrib, source->path);
+	global_api->platform_get_file_attributes(&last_attrib, path);
 }
 
-void destroy_source(shader_source* source) { PROF
+void shader_source::destroy() { PROF
 
-	source->source.destroy(source->alloc);
+	source.destroy(alloc);
 }
 
-bool refresh_source(shader_source* source) { PROF
+bool shader_source::refresh() { PROF
 
 	platform_file_attributes new_attrib;
 	
-	global_api->platform_get_file_attributes(&new_attrib, source->path);	
+	global_api->platform_get_file_attributes(&new_attrib, path);	
 	
-	if(global_api->platform_test_file_written(&source->last_attrib, &new_attrib)) {
+	if(global_api->platform_test_file_written(&last_attrib, &new_attrib)) {
 
-		destroy_source(source);
-		load_source(source);
+		destroy();
+		load();
 
 		return true;
 	}
@@ -59,49 +59,49 @@ bool refresh_source(shader_source* source) { PROF
 	return false;
 }
 
-shader_program make_program(string vert, string frag, void (*set_uniforms)(shader_program*, render_command*, render_command_list*), allocator* a) { PROF
+shader_program shader_program::make(string vert, string frag, void (*set_uniforms)(shader_program*, render_command*, render_command_list*), allocator* a) { PROF
 
 	shader_program ret;
 
-	ret.vertex = make_source(vert, a);
-	ret.fragment = make_source(frag, a);
+	ret.vertex = shader_source::make(vert, a);
+	ret.fragment = shader_source::make(frag, a);
 	ret.handle = glCreateProgram();
 	ret.set_uniforms = set_uniforms;
 
-	compile_program(&ret);
+	ret.compile();
 
 	return ret;
 }
 
-void compile_program(shader_program* prog) { PROF
+void shader_program::compile() { PROF
 
-	GLuint vertex, fragment;
+	GLuint h_vertex, h_fragment;
 
-	vertex = glCreateShader(GL_VERTEX_SHADER);
-	fragment = glCreateShader(GL_FRAGMENT_SHADER);
+	h_vertex = glCreateShader(GL_VERTEX_SHADER);
+	h_fragment = glCreateShader(GL_FRAGMENT_SHADER);
 
-	glShaderSource(vertex, 1, &prog->vertex.source.c_str, null);
-	glShaderSource(fragment, 1, &prog->fragment.source.c_str, null);
+	glShaderSource(h_vertex, 1, &vertex.source.c_str, null);
+	glShaderSource(h_fragment, 1, &fragment.source.c_str, null);
 
-	glCompileShader(vertex);
-	glCompileShader(fragment);
+	glCompileShader(h_vertex);
+	glCompileShader(h_fragment);
 
-	glAttachShader(prog->handle, vertex);
-	glAttachShader(prog->handle, fragment);
-	glLinkProgram(prog->handle);
+	glAttachShader(handle, h_vertex);
+	glAttachShader(handle, h_fragment);
+	glLinkProgram(handle);
 
-	glDeleteShader(vertex);
-	glDeleteShader(fragment);
+	glDeleteShader(h_vertex);
+	glDeleteShader(h_fragment);
 }
 
-bool refresh_program(shader_program* prog) { PROF
+bool shader_program::refresh() { PROF
 
-	if(refresh_source(&prog->vertex) || refresh_source(&prog->fragment)) {
+	if(vertex.refresh() || fragment.refresh()) {
 
-		glDeleteProgram(prog->handle);
-		prog->handle = glCreateProgram();
+		glDeleteProgram(handle);
+		handle = glCreateProgram();
 
-		compile_program(prog);
+		compile();
 
 		return true;
 	}
@@ -109,23 +109,23 @@ bool refresh_program(shader_program* prog) { PROF
 	return false;
 }
 
-void destroy_program(shader_program* prog) { PROF
+void shader_program::destroy() { PROF
 
-	destroy_source(&prog->vertex);
-	destroy_source(&prog->fragment);
+	vertex.destroy();
+	fragment.destroy();
 
-	glDeleteProgram(prog->handle);
+	glDeleteProgram(handle);
 }
 
-void ogl_try_reload_programs(ogl_manager* ogl) { PROF
-	FORMAP(ogl->programs,
-		if(refresh_program(&it->value)) {
+void ogl_manager::try_reload_programs() { PROF
+	FORMAP(programs,
+		if(it->value.refresh()) {
 			LOG_INFO_F("Reloaded program % with files %, %", it->key, it->value.vertex.path, it->value.fragment.path);
 		}
 	)
 }
 
-ogl_manager make_opengl(allocator* a) { PROF
+ogl_manager ogl_manager::make(allocator* a) { PROF
 
 	ogl_manager ret;
 
@@ -138,7 +138,7 @@ ogl_manager make_opengl(allocator* a) { PROF
 	ret.renderer 	= string::from_c_str((char*)glGetString(GL_RENDERER));
 	ret.vendor  	= string::from_c_str((char*)glGetString(GL_VENDOR));
 
-	ret.dbg_shader = ogl_add_program(&ret, string_literal("shaders/dbg.v"), string_literal("shaders/dbg.f"), &ogl_uniforms_dbg);
+	ret.dbg_shader = ret.add_program(string_literal("shaders/dbg.v"), string_literal("shaders/dbg.f"), &ogl_uniforms_dbg);
 
 	LOG_INFO_F("GL version : %", ret.version);
 	LOG_INFO_F("GL renderer: %", ret.renderer);
@@ -147,46 +147,46 @@ ogl_manager make_opengl(allocator* a) { PROF
 	return ret;
 }
 
-void destroy_opengl(ogl_manager* ogl) { PROF
+void ogl_manager::destroy() { PROF
 
-	for(u32 i = 0; i < ogl->programs.contents.capacity; i++) {
-		if(ogl->programs.contents.get(i)->occupied) {
-			destroy_program(&ogl->programs.contents.get(i)->value);
+	for(u32 i = 0; i < programs.contents.capacity; i++) {
+		if(programs.contents.get(i)->occupied) {
+			programs.contents.get(i)->value.destroy();
 		}
 	}
-	for(u32 i = 0; i < ogl->textures.contents.capacity; i++) {
-		if(ogl->textures.contents.get(i)->occupied) {
-			destroy_texture(&ogl->textures.contents.get(i)->value);
+	for(u32 i = 0; i < textures.contents.capacity; i++) {
+		if(textures.contents.get(i)->occupied) {
+			textures.contents.get(i)->value.destroy();
 		}
 	}
-	for(u32 i = 0; i < ogl->contexts.contents.capacity; i++) {
-		if(ogl->contexts.contents.get(i)->occupied) {
-			glDeleteVertexArrays(1, &ogl->contexts.contents.get(i)->value.vao);
-			glDeleteBuffers(8, ogl->contexts.contents.get(i)->value.vbos);
+	for(u32 i = 0; i < contexts.contents.capacity; i++) {
+		if(contexts.contents.get(i)->occupied) {
+			glDeleteVertexArrays(1, &contexts.contents.get(i)->value.vao);
+			glDeleteBuffers(8, contexts.contents.get(i)->value.vbos);
 		}
 	}
 
-	ogl->programs.destroy();
-	ogl->textures.destroy();
-	ogl->contexts.destroy();
+	programs.destroy();
+	textures.destroy();
+	contexts.destroy();
 }
 
-shader_program_id ogl_add_program(ogl_manager* ogl, string v_path, string f_path, void (*set_uniforms)(shader_program*, render_command*, render_command_list*)) { PROF
+shader_program_id ogl_manager::add_program(string v_path, string f_path, void (*set_uniforms)(shader_program*, render_command*, render_command_list*)) { PROF
 
-	shader_program p = make_program(v_path, f_path, set_uniforms, ogl->alloc);
-	p.id = ogl->next_shader_id;
+	shader_program p = shader_program::make(v_path, f_path, set_uniforms, alloc);
+	p.id = next_shader_id;
 
-	ogl->programs.insert(ogl->next_shader_id, p);
+	programs.insert(next_shader_id, p);
 
 	LOG_DEBUG_F("Loaded shader from % and %", v_path, f_path);
 
-	ogl->next_shader_id++;
-	return ogl->next_shader_id - 1;
+	next_shader_id++;
+	return next_shader_id - 1;
 }
 
-shader_program* ogl_select_program(ogl_manager* ogl, shader_program_id id) { PROF
+shader_program* ogl_manager::select_program(shader_program_id id) { PROF
 
-	shader_program* p = ogl->programs.try_get(id);
+	shader_program* p = programs.try_get(id);
 
 	if(!p) {
 		LOG_ERR_F("Failed to retrieve program %", id);
@@ -198,54 +198,54 @@ shader_program* ogl_select_program(ogl_manager* ogl, shader_program_id id) { PRO
 	return p;
 }
 
-texture_id ogl_add_texture_from_font(ogl_manager* ogl, asset* font, texture_wrap wrap, bool pixelated) { PROF
+texture_id ogl_manager::add_texture_from_font(asset* font, texture_wrap wrap, bool pixelated) { PROF
 
-	texture t = make_texture(wrap, pixelated);
-	t.id = ogl->next_texture_id;
+	texture t = texture::make(wrap, pixelated);
+	t.id = next_texture_id;
 
-	texture_load_bitmap_from_font(&t, font);
+	t.load_bitmap_from_font(font);
 
-	ogl->textures.insert(ogl->next_texture_id, t);
+	textures.insert(next_texture_id, t);
 
-	LOG_DEBUG_F("Created texture % from font %", ogl->next_texture_id, font->name);
+	LOG_DEBUG_F("Created texture % from font %", next_texture_id, font->name);
 
-	ogl->next_texture_id++;
-	return ogl->next_texture_id - 1;
+	next_texture_id++;
+	return next_texture_id - 1;
 }
 
-texture_id ogl_add_texture_from_font(ogl_manager* ogl, asset_store* as, string name, texture_wrap wrap, bool pixelated) { PROF
+texture_id ogl_manager::add_texture_from_font(asset_store* as, string name, texture_wrap wrap, bool pixelated) { PROF
 
-	texture t = make_texture(wrap, pixelated);
-	t.id = ogl->next_texture_id;
+	texture t = texture::make(wrap, pixelated);
+	t.id = next_texture_id;
 
-	texture_load_bitmap_from_font(&t, as, name);
+	t.load_bitmap_from_font(as, name);
 
-	ogl->textures.insert(ogl->next_texture_id, t);
+	textures.insert(next_texture_id, t);
 
-	LOG_DEBUG_F("Created texture % from font asset %", ogl->next_texture_id, name);
+	LOG_DEBUG_F("Created texture % from font asset %", next_texture_id, name);
 
-	ogl->next_texture_id++;
-	return ogl->next_texture_id - 1;
+	next_texture_id++;
+	return next_texture_id - 1;
 }
 
-texture_id ogl_add_texture(ogl_manager* ogl, asset_store* as, string name, texture_wrap wrap, bool pixelated) { PROF
+texture_id ogl_manager::add_texture(asset_store* as, string name, texture_wrap wrap, bool pixelated) { PROF
 
-	texture t = make_texture(wrap, pixelated);
-	t.id = ogl->next_texture_id;
+	texture t = texture::make(wrap, pixelated);
+	t.id = next_texture_id;
 
-	texture_load_bitmap(&t, as, name);
+	t.load_bitmap(as, name);
 
-	ogl->textures.insert(ogl->next_texture_id, t);
+	textures.insert(next_texture_id, t);
 
-	LOG_DEBUG_F("Created texture % from bitmap asset %", ogl->next_texture_id, name);
+	LOG_DEBUG_F("Created texture % from bitmap asset %", next_texture_id, name);
 
-	ogl->next_texture_id++;
-	return ogl->next_texture_id - 1;
+	next_texture_id++;
+	return next_texture_id - 1;
 }
 
-void ogl_destroy_texture(ogl_manager* ogl, texture_id id) { PROF
+void ogl_manager::destroy_texture(texture_id id) { PROF
 
-	texture* t = ogl->textures.try_get(id);
+	texture* t = textures.try_get(id);
 
 	if(!t) {
 		LOG_ERR_F("Failed to find texture %", id);
@@ -254,12 +254,12 @@ void ogl_destroy_texture(ogl_manager* ogl, texture_id id) { PROF
 
 	glDeleteTextures(1, &t->handle);
 
-	ogl->textures.erase(id);
+	textures.erase(id);
 }
 
-texture* ogl_select_texture(ogl_manager* ogl, texture_id id) { PROF
+texture* ogl_manager::select_texture(texture_id id) { PROF
 
-	texture* t = ogl->textures.try_get(id);
+	texture* t = textures.try_get(id);
 
 	if(!t) {
 		LOG_ERR_F("Failed to retrieve texture %", id);
@@ -271,7 +271,7 @@ texture* ogl_select_texture(ogl_manager* ogl, texture_id id) { PROF
 	return t;
 }
 
-texture make_texture(texture_wrap wrap, bool pixelated) { PROF
+texture texture::make(texture_wrap wrap, bool pixelated) { PROF
 
 	texture ret;
 
@@ -315,11 +315,11 @@ texture make_texture(texture_wrap wrap, bool pixelated) { PROF
 	return ret;
 }
 
-void texture_load_bitmap_from_font(texture* tex, asset* font) { PROF
+void texture::load_bitmap_from_font(asset* font) { PROF
 
 	LOG_DEBUG_ASSERT(font->type == asset_type::font);
 
-	glBindTextureUnit(0, tex->handle);
+	glBindTextureUnit(0, handle);
 
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, font->font.width, font->font.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, font->mem);
 	
@@ -328,13 +328,13 @@ void texture_load_bitmap_from_font(texture* tex, asset* font) { PROF
 	glBindTextureUnit(0, 0);
 }
 
-void texture_load_bitmap_from_font(texture* tex, asset_store* as, string name) { PROF
+void texture::load_bitmap_from_font(asset_store* as, string name) { PROF
 
 	asset* a = as->get(name);
 
 	LOG_DEBUG_ASSERT(a->type == asset_type::font);
 
-	glBindTextureUnit(0, tex->handle);
+	glBindTextureUnit(0, handle);
 
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, a->font.width, a->font.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, a->mem);
 	
@@ -343,13 +343,13 @@ void texture_load_bitmap_from_font(texture* tex, asset_store* as, string name) {
 	glBindTextureUnit(0, 0);
 }
 
-void texture_load_bitmap(texture* tex, asset_store* as, string name) { PROF
+void texture::load_bitmap(asset_store* as, string name) { PROF
 
 	asset* a = as->get(name);
 
 	LOG_DEBUG_ASSERT(a->type == asset_type::bitmap);
 
-	glBindTextureUnit(0, tex->handle);
+	glBindTextureUnit(0, handle);
 
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, a->bitmap.width, a->bitmap.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, a->mem);
 	
@@ -358,31 +358,31 @@ void texture_load_bitmap(texture* tex, asset_store* as, string name) { PROF
 	glBindTextureUnit(0, 0);
 }
 
-void destroy_texture(texture* tex) { PROF
+void texture::destroy() { PROF
 
-	glDeleteTextures(1, &tex->handle);
+	glDeleteTextures(1, &handle);
 }
 
-context_id ogl_add_draw_context(ogl_manager* ogl, void (*set_atribs)(ogl_draw_context* dc)) { PROF
+context_id ogl_manager::add_draw_context(void (*set_atribs)(ogl_draw_context* dc)) { PROF
 
 	ogl_draw_context d;
 	glGenVertexArrays(1, &d.vao);
 	glBindVertexArray(d.vao);
 	glGenBuffers(8, d.vbos);
-	d.id = ogl->next_context_id;
+	d.id = next_context_id;
 
 	set_atribs(&d);
 
-	ogl->contexts.insert(ogl->next_context_id, d);
+	contexts.insert(next_context_id, d);
 
-	ogl->next_context_id++;
+	next_context_id++;
 
-	return ogl->next_context_id - 1;
+	return next_context_id - 1;
 }
 
-ogl_draw_context* ogl_select_draw_context(ogl_manager* ogl, context_id id) { PROF
+ogl_draw_context* ogl_manager::select_draw_context(context_id id) { PROF
 
-	ogl_draw_context* d = ogl->contexts.try_get(id);
+	ogl_draw_context* d = contexts.try_get(id);
 
 	if(!d) {
 		LOG_ERR_F("Failed to retrieve context %", id);
@@ -405,9 +405,9 @@ void ogl_mesh_3d_attribs(ogl_draw_context* dc) { PROF
 	glEnableVertexAttribArray(1);
 }
 
-void ogl_send_mesh_3d(ogl_manager* ogl, mesh_3d* m, context_id id) { PROF
+void ogl_manager::send_mesh_3d(mesh_3d* m, context_id id) { PROF
 
-	ogl_draw_context* dc = ogl_select_draw_context(ogl, id);
+	ogl_draw_context* dc = select_draw_context(id);
 
 	glBindBuffer(GL_ARRAY_BUFFER, dc->vbos[0]);
 	glBufferData(GL_ARRAY_BUFFER, m->verticies.size * sizeof(v3), m->verticies.size ? m->verticies.memory : null, GL_STREAM_DRAW);
@@ -440,9 +440,9 @@ void ogl_mesh_2d_attribs(ogl_draw_context* dc) { PROF
 	glEnableVertexAttribArray(2);
 }
 
-void ogl_send_mesh_2d(ogl_manager* ogl, mesh_2d* m, context_id id) { PROF
+void ogl_manager::send_mesh_2d(mesh_2d* m, context_id id) { PROF
 
-	ogl_draw_context* dc = ogl_select_draw_context(ogl, id);
+	ogl_draw_context* dc = select_draw_context(id);
 
 	glBindBuffer(GL_ARRAY_BUFFER, dc->vbos[0]);
 	glBufferData(GL_ARRAY_BUFFER, m->verticies.size * sizeof(v2), m->verticies.size ? m->verticies.memory : null, GL_STREAM_DRAW);
@@ -469,7 +469,7 @@ void ogl_set_uniforms(shader_program* prog, render_command* rc, render_command_l
 	prog->set_uniforms(prog, rc, rcl);
 }
 
-void ogl_render_command_list(platform_window* win, ogl_manager* ogl, render_command_list* rcl) { PROF
+void ogl_manager::execute_command_list(platform_window* win, render_command_list* rcl) { PROF
 
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
@@ -478,9 +478,9 @@ void ogl_render_command_list(platform_window* win, ogl_manager* ogl, render_comm
 
 		render_command* cmd = rcl->commands.get(i);
 
-		ogl_select_draw_context(ogl, cmd->context);
-		ogl_select_texture(ogl, cmd->texture);
-		shader_program* prog = ogl_select_program(ogl, cmd->shader);
+		select_draw_context(cmd->context);
+		select_texture(cmd->texture);
+		shader_program* prog = select_program(cmd->shader);
 
 		ogl_set_uniforms(prog, cmd, rcl);
 
@@ -489,7 +489,7 @@ void ogl_render_command_list(platform_window* win, ogl_manager* ogl, render_comm
 		if(cmd->cmd == render_command_type::mesh_2d) {
 
 			// TODO(max): we don't want to send every frame, do we?
-			ogl_send_mesh_2d(ogl, cmd->m2d, cmd->context);
+			send_mesh_2d(cmd->m2d, cmd->context);
 
 			glDisable(GL_DEPTH_TEST);
 
@@ -497,7 +497,7 @@ void ogl_render_command_list(platform_window* win, ogl_manager* ogl, render_comm
 
 		} else if (cmd->cmd == render_command_type::mesh_3d) {
 
-			ogl_send_mesh_3d(ogl, cmd->m3d, cmd->context);
+			send_mesh_3d(cmd->m3d, cmd->context);
 
 			glEnable(GL_DEPTH_TEST);
 
@@ -507,7 +507,7 @@ void ogl_render_command_list(platform_window* win, ogl_manager* ogl, render_comm
 }
 
 // temporary and inefficient texture render
-void ogl_dbg_render_texture_fullscreen(platform_window* win, ogl_manager* ogl, texture_id id) { PROF
+void ogl_manager::dbg_render_texture_fullscreen(platform_window* win, texture_id id) { PROF
 
 	GLfloat data[] = {
 		-1.0f, -1.0f,	0.0f, 0.0f,
@@ -533,8 +533,8 @@ void ogl_dbg_render_texture_fullscreen(platform_window* win, ogl_manager* ogl, t
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);
 
-	ogl_select_program(ogl, ogl->dbg_shader);
-	ogl_select_texture(ogl, id);
+	select_program(dbg_shader);
+	select_texture(id);
 
 	glViewport(0, 0, win->w, win->h);
 	glEnable(GL_BLEND);
