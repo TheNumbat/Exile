@@ -47,7 +47,7 @@ void gui_reload_fonts(ogl_manager* ogl, gui_manager* gui) { PROF
 
 		ogl_destroy_texture(ogl, it->texture);
 
-		asset* font = get_asset(it->store, it->asset_name);
+		asset* font = it->store->get(it->asset_name);
 
 		it->font = font;
 		it->texture = ogl_add_texture_from_font(ogl, font);
@@ -56,7 +56,7 @@ void gui_reload_fonts(ogl_manager* ogl, gui_manager* gui) { PROF
 
 void gui_add_font(ogl_manager* ogl, gui_manager* gui, string asset_name, asset_store* store, bool mono) { PROF
 
-	asset* font = get_asset(store, asset_name);
+	asset* font = store->get(asset_name);
 
 	gui_font f;
 	

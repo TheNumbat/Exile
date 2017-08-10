@@ -330,7 +330,7 @@ void texture_load_bitmap_from_font(texture* tex, asset* font) { PROF
 
 void texture_load_bitmap_from_font(texture* tex, asset_store* as, string name) { PROF
 
-	asset* a = get_asset(as, name);
+	asset* a = as->get(name);
 
 	LOG_DEBUG_ASSERT(a->type == asset_type::font);
 
@@ -345,7 +345,7 @@ void texture_load_bitmap_from_font(texture* tex, asset_store* as, string name) {
 
 void texture_load_bitmap(texture* tex, asset_store* as, string name) { PROF
 
-	asset* a = get_asset(as, name);
+	asset* a = as->get(name);
 
 	LOG_DEBUG_ASSERT(a->type == asset_type::bitmap);
 

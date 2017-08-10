@@ -1,5 +1,5 @@
 
-asset_store make_asset_store(allocator* a) { PROF
+asset_store asset_store::make(allocator* a) { PROF
 
 	asset_store ret;
 
@@ -8,24 +8,23 @@ asset_store make_asset_store(allocator* a) { PROF
 	return ret;
 }
 
-void destroy_asset_store(asset_store* am) { PROF
+void asset_store::destroy() { PROF
 
+	if(store) {
 
-	if(am->store) {
+		assets.destroy();
 
-		am->assets.destroy();
-
-		PUSH_ALLOC(am->alloc) {
-			free(am->store);
+		PUSH_ALLOC(alloc) {
+			free(store);
 		} POP_ALLOC();
 
-		am->store = null;
+		store = null;
 	}
 }
 
-asset* get_asset(asset_store* as, string name) { PROF
+asset* asset_store::get(string name) { PROF
 
-	asset* a = as->assets.try_get(name);
+	asset* a = assets.try_get(name);
 
 	if(!a) {
 		LOG_ERR_F("Failed to get asset %", name);
@@ -35,35 +34,33 @@ asset* get_asset(asset_store* as, string name) { PROF
 	return a;
 }
 
-glyph_data get_glyph_data(asset_store* as, string font, u32 codepoint) { 
+glyph_data asset_store::get_glyph_data(string font_asset_name, u32 codepoint) { 
 
 #ifdef MORE_PROF
 	PROF
 #endif
 
-	asset* a = get_asset(as, font);
+	asset* a = get(font_asset_name);
 
 	LOG_ASSERT(a->type == asset_type::font);
 
-	return get_glyph_data(a, codepoint);
+	return a->font.get_glyph_data(codepoint);
 }
 
-glyph_data get_glyph_data(asset* font, u32 codepoint) { 
+glyph_data _asset_font::get_glyph_data(u32 codepoint) { 
 
 #ifdef MORE_PROF
 	PROF
 #endif
 
-	LOG_DEBUG_ASSERT(font->type == asset_type::font);
-
-	u32 low = 0, high = font->font.glyphs.capacity;
+	u32 low = 0, high = glyphs.capacity;
 
 	// binary search
 	for(;;) {
 
 		u32 search = low + ((high - low) / 2);
 
-		glyph_data* data = font->font.glyphs.get(search);
+		glyph_data* data = glyphs.get(search);
 
 		if(data->codepoint == codepoint) {
 			return *data;
@@ -82,26 +79,26 @@ glyph_data get_glyph_data(asset* font, u32 codepoint) {
 	}
 }
 
-bool try_reload_asset_store(asset_store* as) { PROF
+bool asset_store::try_reload() { PROF
 
 	platform_file_attributes new_attrib;
 	
-	global_api->platform_get_file_attributes(&new_attrib, as->path);	
+	global_api->platform_get_file_attributes(&new_attrib, path);	
 	
-	if(global_api->platform_test_file_written(&as->last, &new_attrib)) {
+	if(global_api->platform_test_file_written(&last, &new_attrib)) {
 
-		PUSH_ALLOC(as->alloc) {
+		PUSH_ALLOC(alloc) {
 
-			free(as->store);
-			as->store = null;
+			free(store);
+			store = null;
 
 		} POP_ALLOC();
 
-		as->assets.clear();
+		assets.clear();
 
-		load_asset_store(as, as->path);
+		load(path);
 
-		LOG_INFO_F("Reloaded asset store from %", as->path);
+		LOG_INFO_F("Reloaded asset store from %", path);
 
 		return true;
 	}
@@ -109,40 +106,40 @@ bool try_reload_asset_store(asset_store* as) { PROF
 	return false;
 }
 
-void load_asset_store(asset_store* as, string path) { PROF
+void asset_store::load(string file) { PROF
 
-	platform_file store;
+	platform_file store_file;
 
 	u32 itr = 0;
 	platform_error err;
 	do {
 		itr++;
-		err = global_api->platform_create_file(&store, path, platform_file_open_op::existing);
+		err = global_api->platform_create_file(&store_file, file, platform_file_open_op::existing);
 	} while(err.error == PLATFORM_SHARING_ERROR && itr < 100000);
 
 	if(!err.good) {
-		LOG_ERR_F("Failed to open asset store %, error %", path, err.error);
-		global_api->platform_close_file(&store);
+		LOG_ERR_F("Failed to open asset store %, error %", file, err.error);
+		global_api->platform_close_file(&store_file);
 		return;
 	}
 
-	as->path = path;
-	global_api->platform_get_file_attributes(&as->last, path);
+	path = file;
+	global_api->platform_get_file_attributes(&last, file);
 
-	u32 store_size = global_api->platform_file_size(&store);
+	u32 store_size = global_api->platform_file_size(&store_file);
 
-	PUSH_ALLOC(as->alloc) {
+	PUSH_ALLOC(alloc) {
 
-		as->store = malloc(store_size);
-		u8* store_mem = (u8*)as->store;
+		store = malloc(store_size);
+		u8* store_mem = (u8*)store;
 
-		global_api->platform_read_file(&store, (void*)store_mem, store_size);
-		global_api->platform_close_file(&store);
+		global_api->platform_read_file(&store_file, (void*)store_mem, store_size);
+		global_api->platform_close_file(&store_file);
 
 		asset_file_header* header = (asset_file_header*)store_mem;
 		file_asset_header* current_asset = (file_asset_header*)(store_mem + sizeof(asset_file_header));
 
-		as->assets = map<string,asset>::make(header->num_assets, as->alloc, &hash_string);
+		assets = map<string,asset>::make(header->num_assets, alloc, &hash_string);
 
 		for(u32 i = 0; i < header->num_assets; i++) {
 
@@ -159,7 +156,7 @@ void load_asset_store(asset_store* as, string path) { PROF
 				a.bitmap.height = bitmap->height;
 				a.mem = (u8*)(current_asset) + sizeof(file_asset_header) + sizeof(file_asset_bitmap);
 
-				as->assets.insert(a.name, a);
+				assets.insert(a.name, a);
 
 				current_asset = (file_asset_header*)((u8*)current_asset + current_asset->next);
 
@@ -181,7 +178,7 @@ void load_asset_store(asset_store* as, string path) { PROF
 
 				a.mem = (u8*)font + sizeof(file_asset_font) + (font->num_glyphs * sizeof(file_glyph_data));
 
-				as->assets.insert(a.name, a);
+				assets.insert(a.name, a);
 
 				current_asset = (file_asset_header*)((u8*)current_asset + current_asset->next);				
 
@@ -191,7 +188,7 @@ void load_asset_store(asset_store* as, string path) { PROF
 				break;
 			}
 
-			LOG_DEBUG_F("Loaded asset % of type % from store %", a.name, a.type, path);
+			LOG_DEBUG_F("Loaded asset % of type % from store %", a.name, a.type, file);
 		}
 
 	} POP_ALLOC();

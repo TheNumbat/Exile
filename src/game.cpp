@@ -53,8 +53,8 @@ extern "C" game_state* start_up(platform_api* api) { PROF
 		game_state* state = (game_state*)s;
 		LOG_INFO("Setting up asset system");
 		state->default_store_a = MAKE_PLATFORM_ALLOCATOR("asset");
-		state->default_store = make_asset_store(&state->default_store_a);
-		load_asset_store(&state->default_store, string_literal("assets/assets.asset"));
+		state->default_store = asset_store::make(&state->default_store_a);
+		state->default_store.load(string_literal("assets/assets.asset"));
 		return null;
 	}, state);
 
@@ -112,7 +112,7 @@ extern "C" bool main_loop(game_state* state) { PROF
 
 #ifdef _DEBUG
 	ogl_try_reload_programs(&state->ogl);
-	if(try_reload_asset_store(&state->default_store)) {
+	if(state->default_store.try_reload()) {
 		gui_reload_fonts(&state->ogl, &state->gui);
 	}
 #endif
@@ -131,7 +131,7 @@ extern "C" void shut_down(game_state* state) { PROF
 	destroy_opengl(&state->ogl);
 
 	LOG_DEBUG("Destroying asset system");
-	destroy_asset_store(&state->default_store);
+	state->default_store.destroy();
 
 	LOG_DEBUG("Destroying thread pool");
 	state->thread_pool.stop_all();

@@ -89,6 +89,10 @@ struct _asset_font {
 	i32 width    = 0;
 	i32 height   = 0;
 	array<file_glyph_data> 	glyphs;
+
+///////////////////////////////////////////////////////////////////////////////
+
+	glyph_data get_glyph_data(u32 codepoint);
 };
 
 struct asset {
@@ -111,15 +115,17 @@ struct asset_store {
 	platform_file_attributes last;
 
 	allocator* 			alloc = null;
+
+///////////////////////////////////////////////////////////////////////////////
+
+	static asset_store make(allocator* a); // allocations are done in load
+	void destroy();
+
+	void load(string file);
+	bool try_reload();
+	asset* get(string name);
+
+	glyph_data get_glyph_data(string font_asset_name, u32 codepoint);
 };
 
-asset_store make_asset_store(allocator* a); // allocations are done in load
-void destroy_asset_store(asset_store* as);
-
-void load_asset_store(asset_store* as, string path);
-bool try_reload_asset_store(asset_store* as);
-asset* get_asset(asset_store* as, string name);
-
-glyph_data get_glyph_data(asset_store* as, string font, u32 codepoint);
-glyph_data get_glyph_data(asset* font, u32 codepoint);
 #endif

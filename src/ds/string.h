@@ -9,7 +9,6 @@ struct NOREFLECT string { // no-reflect because hard-coded
 	u32 cap	    = 0;
 	u32 len		= 0;	// including null terminator
 
-
 ///////////////////////////////////////////////////////////////////////////////
 
 	// a lot of functions are a bit of a gray area regarding if they should
@@ -69,7 +68,8 @@ bool strcmp(string first, string second);
 
 // printf implementation
 
-template<typename... Targs> u32 size_stringf(string fmt, Targs... args);
+template<typename... Targs>
+u32 size_stringf(string fmt, Targs... args);
 
 // don't worry about these Kappa b
 

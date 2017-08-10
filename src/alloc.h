@@ -2,9 +2,11 @@
 #pragma once
 
 struct allocator {
+	// vtable haHAA
 	void* (*allocate_)(u64 bytes, void* this_data, code_context context)  			  = null;
 	void* (*reallocate_)(void* mem, u64 bytes, void* this_data, code_context context) = null;
 	void  (*free_)(void* mem, void* this_data, code_context context)	  			  = null;
+	
 	code_context context;
 	bool suppress_messages = false;
 	string name;
