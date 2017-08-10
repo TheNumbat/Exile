@@ -9,15 +9,15 @@ bool operator==(guiid l, guiid r) { PROF
 	return l.base == r.base && l.name == r.name;
 }
 
-gui_manager make_gui(ogl_manager* ogl, allocator* alloc) { PROF
+gui_manager gui_manager::make(ogl_manager* ogl, allocator* alloc) { PROF
 
 	gui_manager ret;
 
 	ret.alloc = alloc;
 	ret.scratch = MAKE_ARENA("gui_scratch", KILOBYTES(512), alloc, false);
 
-	ret.ogl.context = ogl_add_draw_context(ogl, &ogl_mesh_2d_attribs);
-	ret.ogl.shader 	= ogl_add_program(ogl, string_literal("shaders/gui.v"), string_literal("shaders/gui.f"), &ogl_uniforms_gui);
+	ret.ogl_ctx.context = ogl_add_draw_context(ogl, &ogl_mesh_2d_attribs);
+	ret.ogl_ctx.shader 	= ogl_add_program(ogl, string_literal("shaders/gui.v"), string_literal("shaders/gui.f"), &ogl_uniforms_gui);
 
 	ret.window_state_data = map<guiid, gui_window_state>::make(32, alloc, &guiid_hash);
 	ret.state_data = map<guiid, gui_state_data>::make(128, alloc, &guiid_hash);
@@ -26,24 +26,24 @@ gui_manager make_gui(ogl_manager* ogl, allocator* alloc) { PROF
 	return ret;
 }
 
-void destroy_gui(gui_manager* gui) { PROF
+void gui_manager::destroy() { PROF
 
-	FORMAP(gui->window_state_data,
+	FORMAP(window_state_data,
 		it->value.id_hash_stack.destroy();
 		it->value.offset_stack.destroy();
 		destroy_mesh(&it->value.mesh);
 	)
 
-	gui->window_state_data.destroy();
-	gui->state_data.destroy();
-	gui->fonts.destroy();
+	window_state_data.destroy();
+	state_data.destroy();
+	fonts.destroy();
 
-	DESTROY_ARENA(&gui->scratch);
+	DESTROY_ARENA(&scratch);
 }
 
-void gui_reload_fonts(ogl_manager* ogl, gui_manager* gui) { PROF
+void gui_manager::reload_fonts(ogl_manager* ogl) { PROF
 
-	FORVEC(gui->fonts,
+	FORVEC(fonts,
 
 		ogl_destroy_texture(ogl, it->texture);
 
@@ -54,7 +54,7 @@ void gui_reload_fonts(ogl_manager* ogl, gui_manager* gui) { PROF
 	)
 }
 
-void gui_add_font(ogl_manager* ogl, gui_manager* gui, string asset_name, asset_store* store, bool mono) { PROF
+void gui_manager::add_font(ogl_manager* ogl, string asset_name, asset_store* store, bool mono) { PROF
 
 	asset* font = store->get(asset_name);
 
@@ -66,7 +66,7 @@ void gui_add_font(ogl_manager* ogl, gui_manager* gui, string asset_name, asset_s
 	f.mono = mono;
 	f.texture = ogl_add_texture_from_font(ogl, font);
 
-	gui->fonts.push(f);
+	fonts.push(f);
 }
 
 gui_font* gui_select_best_font_scale(gui_window_state* win) { PROF
@@ -86,36 +86,35 @@ gui_font* gui_select_best_font_scale(gui_window_state* win) { PROF
 	return f;
 }
 
-void gui_begin_frame(gui_manager* gui, gui_input_state input) { PROF
+void gui_manager::begin_frame(gui_input_state new_input) { PROF
 
-	ggui = gui;
-	gui->input = input;
-	ggui->style = gui->style;
-	ggui->style.font = gui->fonts.front()->font->font.point;
+	ggui = this;
+	input = new_input;
+	style.font = fonts.front()->font->font.point;
 
-	FORMAP(gui->window_state_data,
+	FORMAP(window_state_data,
 		it->value.font = gui_select_best_font_scale(&it->value);
 	)
 }
 
-void gui_end_frame(platform_window* win, ogl_manager* ogl) { PROF
+void gui_manager::end_frame(platform_window* win, ogl_manager* ogl) { PROF
 
-	if(!ggui->input.lclick && !ggui->input.rclick && !ggui->input.mclick && !ggui->input.ldbl) {
-		if(ggui->active != gui_active_state::captured) {
-			ggui->active_id = {};
-			ggui->active = gui_active_state::none;
+	if(!input.lclick && !input.rclick && !input.mclick && !input.ldbl) {
+		if(active != gui_active_state::captured) {
+			active_id = {};
+			active = gui_active_state::none;
 		}
-	} else if(ggui->active == gui_active_state::none) {
-		ggui->active = gui_active_state::invalid;
+	} else if(active == gui_active_state::none) {
+		active = gui_active_state::invalid;
 	}
 
 	render_command_list rcl = make_command_list();
-	FORMAP(ggui->window_state_data,
+	FORMAP(window_state_data,
 
 		render_command cmd = make_render_command(render_command_type::mesh_2d, &it->value.mesh, it->value.z);
-		cmd.shader  = ggui->ogl.shader;
+		cmd.shader  = ggui->ogl_ctx.shader;
 		cmd.texture = it->value.font->texture;
-		cmd.context = ggui->ogl.context;
+		cmd.context = ggui->ogl_ctx.context;
 		render_add_command(&rcl, cmd);
 	)
 

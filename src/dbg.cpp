@@ -1,5 +1,5 @@
 
-dbg_manager make_dbg_manager(log_manager* log, allocator* alloc) { PROF
+dbg_manager dbg_manager::make(log_manager* log, allocator* alloc) { PROF
 
 	dbg_manager ret;
 
@@ -15,13 +15,13 @@ dbg_manager make_dbg_manager(log_manager* log, allocator* alloc) { PROF
 	return ret;
 }
 
-void destroy_dbg_manager(dbg_manager* dbg) { PROF
+void dbg_manager::destroy() { PROF
 
-	FORVEC(dbg->log_cache,
+	FORVEC(log_cache,
 		DESTROY_ARENA(&it->arena);
 	)
 
-	dbg->log_cache.destroy();
+	log_cache.destroy();
 }
 
 void dbg_add_log(log_message* msg) { PROF
@@ -41,8 +41,8 @@ void dbg_add_log(log_message* msg) { PROF
 	m->msg         = make_copy_string(msg->msg, &m->arena);
 }
 
-void render_debug_gui(platform_window* win, dbg_manager* dbg) { PROF
+void dbg_manager::render_debug_gui(platform_window* win) { PROF
 
 	gui_begin(string_literal("Debug"));
-	gui_log_wnd(win, string_literal("Log"), &dbg->log_cache);
+	gui_log_wnd(win, string_literal("Log"), &log_cache);
 }

@@ -147,7 +147,7 @@ struct gui_manager {
 	_gui_style style;
 
 	gui_input_state input;
-	gui_opengl 		ogl;
+	gui_opengl 		ogl_ctx;
 
 	gui_window_state* current = null;	// we take a pointer into a map but it's OK because we know nothing will be added while this is in use
 	u32 last_z = 0;						// this only counts up on window layer changes so we don't have
@@ -160,23 +160,26 @@ struct gui_manager {
 
 	arena_allocator scratch; // reset whenever (on whatever thread) (currently on formatting log messages)
 	allocator* alloc = null;
+
+///////////////////////////////////////////////////////////////////////////////
+
+	static gui_manager make(ogl_manager* ogl, allocator* alloc);
+	void destroy();
+
+	void add_font(ogl_manager* ogl, string asset_name, asset_store* store, bool mono = false); // the first font you add is the default size
+	void reload_fonts(ogl_manager* ogl);
+
+	void begin_frame(gui_input_state new_input);
+	void end_frame(platform_window* win, ogl_manager* ogl);
 };
 
 static gui_manager* ggui; // set at gui_begin_frame, used as context for gui functions
+gui_font* gui_select_best_font_scale();
 
 // the functions you call every frame use ggui instead of passing a gui_manager pointer
 // (except begin_frame, as this sets up the global pointer)
 
-gui_manager make_gui(ogl_manager* ogl, allocator* alloc);
-void destroy_gui(gui_manager* gui);
-
-// call these before or after a frame
-void gui_add_font(ogl_manager* ogl, gui_manager* gui, string asset_name, asset_store* store, bool mono = false); // the first font you add is the default size
-void gui_reload_fonts(ogl_manager* ogl, gui_manager* gui);
-
-void gui_begin_frame(gui_manager* gui, gui_input_state input);
-void gui_end_frame(platform_window* win, ogl_manager* ogl);
-gui_font* gui_select_best_font_scale();
+// These functions you can call from anywhere between starting and ending a frame
 
 void gui_push_offset(v2 offset);
 void gui_pop_offset();

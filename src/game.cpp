@@ -30,15 +30,15 @@ extern "C" game_state* start_up(platform_api* api) { PROF
 	LOG_INFO("Starting debug system...");
 	state->dbg_a = MAKE_PLATFORM_ALLOCATOR("dbg");
 	state->dbg_a.suppress_messages = true;
-	state->dbg = make_dbg_manager(&state->log, &state->dbg_a);
+	state->dbg = dbg_manager::make(&state->log, &state->dbg_a);
 
 	LOG_INFO("Starting logger");
 	logger_start(&state->log);
 
 	LOG_INFO("Setting up events...");
 	state->evt_a = MAKE_PLATFORM_ALLOCATOR("event");
-	state->evt = make_evt_manager(&state->evt_a);
-	start_evt_manger(&state->evt);
+	state->evt = evt_manager::make(&state->evt_a);
+	state->evt.start();
 
 	LOG_INFO("Starting thread pool");
 	state->thread_pool_a = MAKE_PLATFORM_ALLOCATOR("threadpool");
@@ -74,11 +74,11 @@ extern "C" game_state* start_up(platform_api* api) { PROF
 
 	LOG_INFO("Setting up GUI");
 	state->gui_a = MAKE_PLATFORM_ALLOCATOR("gui");
-	state->gui = make_gui(&state->ogl, &state->gui_a);
-	gui_add_font(&state->ogl, &state->gui, string_literal("gui14"), &state->default_store);
-	gui_add_font(&state->ogl, &state->gui, string_literal("gui24"), &state->default_store);
-	gui_add_font(&state->ogl, &state->gui, string_literal("gui40"), &state->default_store);
-	gui_add_font(&state->ogl, &state->gui, string_literal("guimono"), &state->default_store, true);
+	state->gui = gui_manager::make(&state->ogl, &state->gui_a);
+	state->gui.add_font(&state->ogl, string_literal("gui14"), &state->default_store);
+	state->gui.add_font(&state->ogl, string_literal("gui24"), &state->default_store);
+	state->gui.add_font(&state->ogl, string_literal("gui40"), &state->default_store);
+	state->gui.add_font(&state->ogl, string_literal("guimono"), &state->default_store, true);
 
 	LOG_INFO("Done with startup!");
 	LOG_POP_CONTEXT();
@@ -99,11 +99,11 @@ extern "C" bool main_loop(game_state* state) { PROF
 
 		gui_input_state input = run_events(state); 
 		
-		gui_begin_frame(&state->gui, input);
+		state->gui.begin_frame(input);
 
-		render_debug_gui(&state->window, &state->dbg);
+		state->dbg.render_debug_gui(&state->window);
 
-		gui_end_frame(&state->window, &state->ogl);
+		state->gui.end_frame(&state->window, &state->ogl);
 
 	} POP_ALLOC();
 	RESET_ARENA(&state->transient_arena);
@@ -113,7 +113,7 @@ extern "C" bool main_loop(game_state* state) { PROF
 #ifdef _DEBUG
 	ogl_try_reload_programs(&state->ogl);
 	if(state->default_store.try_reload()) {
-		gui_reload_fonts(&state->ogl, &state->gui);
+		state->gui.reload_fonts(&state->ogl);
 	}
 #endif
 
@@ -125,7 +125,7 @@ extern "C" void shut_down(game_state* state) { PROF
 	LOG_INFO("Beginning shutdown...");
 
 	LOG_DEBUG("Destroying GUI");
-	destroy_gui(&state->gui);
+	state->gui.destroy();
 
 	LOG_DEBUG("Destroying OpenGL")
 	destroy_opengl(&state->ogl);
@@ -144,7 +144,7 @@ extern "C" void shut_down(game_state* state) { PROF
 	}
 
 	LOG_DEBUG("Destroying events");
-	destroy_evt_manager(&state->evt);
+	state->evt.destroy();
 
 	LOG_DEBUG("Destroying transient store");
 	DESTROY_ARENA(&state->transient_arena);
@@ -153,7 +153,7 @@ extern "C" void shut_down(game_state* state) { PROF
 
 	logger_stop(&state->log);
 
-	destroy_dbg_manager(&state->dbg);
+	state->dbg.destroy();
 	destroy_logger(&state->log);
 	
 	end_thread();

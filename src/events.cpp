@@ -1,5 +1,5 @@
 
-evt_manager make_evt_manager(allocator* a) { PROF
+evt_manager evt_manager::make(allocator* a) { PROF
 	
 	evt_manager ret;
 
@@ -8,14 +8,14 @@ evt_manager make_evt_manager(allocator* a) { PROF
 	return ret;
 }
 
-void start_evt_manger(evt_manager* em) { PROF
+void evt_manager::start() { PROF
 
-	global_api->platform_set_queue_callback(&event_enqueue, &em->event_queue);
+	global_api->platform_set_queue_callback(&event_enqueue, &event_queue);
 }
 
-void destroy_evt_manager(evt_manager* em) { PROF
+void evt_manager::destroy() { PROF
 
-	em->event_queue.destroy();
+	event_queue.destroy();
 }
 
 gui_input_state run_events(game_state* state) { PROF
