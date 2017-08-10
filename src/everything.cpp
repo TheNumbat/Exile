@@ -37,6 +37,17 @@ i32 np_string_last_slash(string str) {
 	return -1;
 }
 
+i32 np_string_first(string str, char c) { 
+
+	for(u32 i = 0; i < str.len; i++) {
+		if(str.c_str[i] == c) {
+			return i;
+		}
+	}
+
+	return -1;
+}
+
 string np_string_literal(const char* literal) {
 
 	return np_string_from_c_str((char*)literal);
@@ -47,7 +58,12 @@ inline code_context _make_context(string file, string function, i32 line) {
 	code_context ret;
 #ifdef DO_PROF
 	ret.file = np_substring(file, np_string_last_slash(file) + 1, file.len - 1);
-	ret.function = function;
+	
+	i32 func_name_end = np_string_first(function, '(');
+	i32 func_name_begin = func_name_end;
+	while(function.c_str[func_name_begin--] != ' ');
+	ret.function = np_substring(function, func_name_begin + 2, func_name_end);
+
 	ret.line = line;
 #endif
 	

@@ -91,7 +91,7 @@ i32    np_string_last_slash(string str);
 string np_string_literal(const char* literal);
 string np_string_from_c_str(char* c_str);
 
-#define CONTEXT _make_context(np_string_literal(__FILE__), np_string_literal(__func__), __LINE__)
+#define CONTEXT _make_context(np_string_literal(__FILE__), np_string_literal(__FUNCSIG__), __LINE__)
 
 inline code_context _make_context(string file, string function, i32 line);
 
