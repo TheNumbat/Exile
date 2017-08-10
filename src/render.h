@@ -17,6 +17,17 @@ struct mesh_2d {
 	vector<colorf>	colors;		// r g b a (clamp f)
 	vector<uv3> 	elements;
 	allocator* alloc = null;
+
+///////////////////////////////////////////////////////////////////////////////
+
+	static mesh_2d make(u32 verts = 32, allocator* alloc = null);
+	void destroy();
+	
+	void clear();
+
+	f32 push_text_line(asset* font, string text_utf8, v2 pos, f32 point = 0.0f, color c = V4b(255, 255, 255, 255)); 
+	void push_rect(r2 rect, color c);
+	void push_cutrect(r2 r, f32 round, color c);
 };
 
 struct mesh_3d {
@@ -24,6 +35,13 @@ struct mesh_3d {
 	vector<v2>  texCoords; 	// u v (layer)
 	// TODO(max): indices
 	allocator* alloc = null;
+
+///////////////////////////////////////////////////////////////////////////////
+
+	static mesh_3d make(u32 verts = 32, allocator* alloc = null);
+	void destroy();
+	
+	void clear();
 };
 
 struct render_command {
@@ -39,6 +57,10 @@ struct render_command {
 		mesh_3d*	m3d;
 		mesh_2d* 	m2d;
 	};
+
+///////////////////////////////////////////////////////////////////////////////
+
+	static render_command make(render_command_type type, void* data, u32 key = 0);
 };
 
 struct render_camera {
@@ -51,26 +73,16 @@ struct render_command_list {
 	allocator* alloc = null;
 	m4 view;
 	m4 proj;
+
+///////////////////////////////////////////////////////////////////////////////
+
+	static render_command_list make(allocator* alloc = null, u32 cmds = 8);
+	void destroy();
+	void add_command(render_command rc);
+	void sort();
 };
-
-mesh_2d make_mesh_2d(u32 verts = 32, allocator* alloc = null);
-mesh_3d make_mesh_3d(u32 verts = 32, allocator* alloc = null);
-
-void destroy_mesh(mesh_2d* m);
-void destroy_mesh(mesh_3d* m);
-void clear_mesh(mesh_2d* m);
-void clear_mesh(mesh_3d* m);
 
 v2 size_text(asset* font, string text_utf8, f32 point);
 
-f32 mesh_push_text_line(mesh_2d* m, asset* font, string text_utf8, v2 pos, f32 point = 0.0f, color c = V4b(255, 255, 255, 255)); 
-void mesh_push_rect(mesh_2d* m, r2 rect, color c);
-void mesh_push_cutrect(mesh_2d* m, r2 r, f32 round, color c);
-
-render_command make_render_command(render_command_type type, void* data, u32 key = 0);
 bool operator<(render_command first, render_command second);
 
-render_command_list make_command_list(allocator* alloc = null, u32 cmds = 8);
-void destroy_command_list(render_command_list* rcl);
-void render_add_command(render_command_list* rcl, render_command rc);
-void sort_render_commands(render_command_list* rcl);

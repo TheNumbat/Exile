@@ -31,7 +31,7 @@ void gui_manager::destroy() { PROF
 	FORMAP(window_state_data,
 		it->value.id_hash_stack.destroy();
 		it->value.offset_stack.destroy();
-		destroy_mesh(&it->value.mesh);
+		it->value.mesh.destroy();
 	)
 
 	window_state_data.destroy();
@@ -108,26 +108,26 @@ void gui_manager::end_frame(platform_window* win, ogl_manager* ogl) { PROF
 		active = gui_active_state::invalid;
 	}
 
-	render_command_list rcl = make_command_list();
+	render_command_list rcl = render_command_list::make();
 	FORMAP(window_state_data,
 
-		render_command cmd = make_render_command(render_command_type::mesh_2d, &it->value.mesh, it->value.z);
+		render_command cmd = render_command::make(render_command_type::mesh_2d, &it->value.mesh, it->value.z);
 		cmd.shader  = ggui->ogl_ctx.shader;
 		cmd.texture = it->value.font->texture;
 		cmd.context = ggui->ogl_ctx.context;
-		render_add_command(&rcl, cmd);
+		rcl.add_command(cmd);
 	)
 
 	rcl.proj = ortho(0, (f32)win->w, (f32)win->h, 0, -1, 1);
-	sort_render_commands(&rcl);
+	rcl.sort();
 
 	ogl->execute_command_list(win, &rcl);
-	destroy_command_list(&rcl);
+	rcl.destroy();
 
 	FORMAP(ggui->window_state_data,
 		it->value.offset_stack.clear();
 		it->value.id_hash_stack.clear();
-		clear_mesh(&it->value.mesh);
+		it->value.mesh.clear();
 	)
 
 	RESET_ARENA(&ggui->scratch);
@@ -194,7 +194,7 @@ bool gui_begin(string name, r2 first_size, f32 first_alpha, gui_window_flags fla
 			ns.opacity = first_alpha;
 		}
 
-		ns.mesh = make_mesh_2d(1024, ggui->alloc);
+		ns.mesh = mesh_2d::make(1024, ggui->alloc);
 		ns.id_hash_stack = stack<u32>::make(16, ggui->alloc);
 		ns.offset_stack = vector<v2>::make(16, ggui->alloc);
 		ns.flags = flags;
@@ -358,7 +358,7 @@ void gui_log_wnd(platform_window* win, string name, vector<log_message>* cache) 
 	
 	r2 scroll_back = R2(add(current->rect.xy, V2(current->rect.w - ggui->style.win_scroll_w, ggui->style.font + ggui->style.title_padding)), V2(ggui->style.win_scroll_w, current->rect.h));
 
-	mesh_push_rect(&current->mesh, scroll_back, V4b(ggui->style.win_scroll_back, current->opacity * 255.0f));
+	current->mesh.push_rect(scroll_back, V4b(ggui->style.win_scroll_back, current->opacity * 255.0f));
 
 	f32 scroll_y = lerpf(current->rect.y + current->rect.h, current->rect.y, (f32)data->u32_1 / (f32)(cache->size - ggui->style.log_win_lines));
 	if(scroll_y < current->rect.y + ggui->style.font + ggui->style.title_padding) {
@@ -369,7 +369,7 @@ void gui_log_wnd(platform_window* win, string name, vector<log_message>* cache) 
 	}
 	r2 scroll_bar = R2(scroll_back.x + ggui->style.win_scroll_margin, scroll_y, ggui->style.win_scroll_w - ggui->style.win_scroll_margin * 2.0f, ggui->style.win_scroll_bar_h);
 
-	mesh_push_rect(&current->mesh, scroll_bar, V4b(ggui->style.win_scroll_bar, 255));
+	current->mesh.push_rect(scroll_bar, V4b(ggui->style.win_scroll_bar, 255));
 
 	v2 pos = V2(ggui->style.win_margin.x, height - ggui->style.win_margin.w - ggui->style.font);
 
@@ -428,8 +428,8 @@ void gui_box_select(i32* selected, i32 num, v2 pos, ...) { PROF
 		v2 txy = add(pos, V2(ggui->style.box_sel_padding.x / 2.0f, -ggui->style.box_sel_padding.y / 2.0f + 4.0f));
 		r2 box = R2(pos, wh);
 
-		mesh_push_rect(&current->mesh, box, V4b(ggui->style.wid_back, current->opacity * 255.0f));
-		mesh_push_text_line(&current->mesh, current->font->font, option, txy, ggui->style.font * gscale);
+		current->mesh.push_rect(box, V4b(ggui->style.wid_back, current->opacity * 255.0f));
+		current->mesh.push_text_line(current->font->font, option, txy, ggui->style.font * gscale);
 
 		pos.x += wh.x + 5.0f;
 	}
@@ -519,7 +519,7 @@ void push_text(gui_window_state* win, v2 pos, string text, f32 point, color c) {
 		gscale = ggui->style.gscale;
 	}
 
-	mesh_push_text_line(&win->mesh, win->font->font, text, pos, point * gscale, c);
+	win->mesh.push_text_line(win->font->font, text, pos, point * gscale, c);
 }
 
 void push_windowhead(gui_window_state* win) { PROF
