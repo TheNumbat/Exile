@@ -89,7 +89,7 @@ void logger_print_header(log_manager* log, log_out out) { PROF
 
 	PUSH_ALLOC(log->alloc) {
 		
-		string header = make_stringf(string_literal("%-8 [%-36] [%-20] [%-5] %-2\r\n"), string_literal("time"), string_literal("thread/context"), string_literal("file:line"), string_literal("level"), string_literal("message"));
+		string header = string::makef(string_literal("%-8 [%-36] [%-20] [%-5] %-2\r\n"), string_literal("time"), string_literal("thread/context"), string_literal("file:line"), string_literal("level"), string_literal("message"));
 
 		global_api->platform_write_file(&out.file, (void*)header.c_str, header.len - 1);
 
@@ -109,7 +109,7 @@ void logger_msgf(log_manager* log, string fmt, log_level level, code_context con
 
 	PUSH_ALLOC(&arena) {
 
-		lmsg.msg = make_stringf_len(msg_len, fmt, args...);
+		lmsg.msg = string::makef(msg_len, fmt, args...);
 
 		lmsg.publisher = context;
 		lmsg.level = level;
@@ -203,7 +203,7 @@ string log_fmt_msg_call_stack(log_message* msg) { PROF
 
 string log_fmt_msg_file_line(log_message* msg) { PROF
 
-	return make_stringf(string_literal("%:%"), msg->publisher.file, msg->publisher.line);
+	return string::makef(string_literal("%:%"), msg->publisher.file, msg->publisher.line);
 }
 
 string log_fmt_msg_level(log_message* msg) { PROF
@@ -243,7 +243,7 @@ string log_fmt_msg(log_message* msg) { PROF
 	string file_line = log_fmt_msg_file_line(msg);
 	string level = log_fmt_msg_level(msg);
 
-	string output = make_stringf(string_literal("%-8 [%-36] [%-20] [%-5] %+*\r\n"), time, call_stack, file_line, level, 3 * msg->call_stack.capacity + msg->msg.len - 1, msg->msg);
+	string output = string::makef(string_literal("%-8 [%-36] [%-20] [%-5] %+*\r\n"), time, call_stack, file_line, level, 3 * msg->call_stack.capacity + msg->msg.len - 1, msg->msg);
 
 	time.destroy();
 	call_stack.destroy();

@@ -388,7 +388,7 @@ void gui_log_wnd(platform_window* win, string name, vector<log_message>* cache) 
 			
 			string level = log_fmt_msg_level(it);
 
-			fmt = make_stringf(string_literal("[context] [file:line] [%-5] %+*\r\n"), level, 3 * it->call_stack.capacity + it->msg.len - 1, it->msg);
+			fmt = string::makef(string_literal("[context] [file:line] [%-5] %+*\r\n"), level, 3 * it->call_stack.capacity + it->msg.len - 1, it->msg);
 			push_text(current, pos, fmt, ggui->style.font, WHITE);
 
 			fmt.destroy();

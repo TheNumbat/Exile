@@ -115,7 +115,7 @@ struct _get_type_info<T*> {
 };
 
 void make_meta_info();
-void make_type_table(allocator* alloc) {
+void make_type_table(allocator* alloc) { PROF
 
 	type_table = map<type_id,_type_info>::make(1024, alloc, &hash_u64);
 
@@ -261,8 +261,43 @@ void make_type_table(allocator* alloc) {
 	make_meta_info();
 }
 
-void destroy_type_table() {
+void destroy_type_table() { PROF
 	type_table.destroy();	
 }
-
-// we can ignore typedefs; they are simply aliases and (type_id)typeid() will be the same
+ 
+i64 int_as_i64(void* val, _type_info* info) { PROF
+	switch(info->size) {
+	case 1: {
+		if(info->_int.is_signed) {
+			return (i64)*(i8*)val;
+		} else {
+			return (i64)*(u8*)val;
+		}
+	} break;
+	case 2: {
+		if(info->_int.is_signed) {
+			return (i64)*(i16*)val;
+		} else {
+			return (i64)*(u16*)val;
+		}
+	} break;
+	case 4: {
+		if(info->_int.is_signed) {
+			return (i64)*(i32*)val;
+		} else {
+			return (i64)*(u32*)val;
+		}
+	} break;
+	case 8: {
+		if(info->_int.is_signed) {
+			return (i64)*(i64*)val;
+		} else {
+			return (i64)*(u64*)val;
+		}
+	} break;
+	default: {
+		LOG_DEBUG_ASSERT(!"Int was not 1, 2, 4, or 8 bytes?!?!");
+		return 0;
+	} break;
+	}
+}

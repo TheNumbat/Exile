@@ -2,6 +2,7 @@
 #pragma once
 
 struct allocator;
+struct _type_info;
 
 struct NOREFLECT string { // no-reflect because hard-coded
 	char* c_str = null;
@@ -25,6 +26,9 @@ struct NOREFLECT string { // no-reflect because hard-coded
 	static string make_cat_v(i32 num_strs, ...);
 	static string from_c_str(char* c_str); // does not allocate
 
+	template<typename... Targs> static string makef(string fmt, Targs... args);
+	template<typename... Targs> static string makef(u32 len, string fmt, Targs... args);
+
 	void destroy(allocator* a);
 	void destroy();
 
@@ -33,10 +37,24 @@ struct NOREFLECT string { // no-reflect because hard-coded
 	u32 parse_u32(u32 idx = 0, u32* used = null);
 
 	string substring(u32 start, u32 end); 	// uses same memory
-	i32    last_slash(); 					// this returns an i32. just use this on non-2GB strings...
+	i32 last_slash(); 						// this returns an i32. just use this on non-2GB strings...
+
+	template<typename... Targs> void writef(string fmt, Targs... args);
 
 	u32 write(u32 idx, string ins, bool size = false);
 	u32 write(u32 idx, char ins, bool size = false);
+	u32 write_type(u32 idx, void* val, _type_info* info, bool size = false);
+	u32 write_queue(u32 idx, void* val, _type_info* info, bool size = false);
+	u32 write_vector(u32 idx, void* val, _type_info* info, bool size = false);
+	u32 write_array(u32 idx, void* val, _type_info* info, bool size = false);
+	u32 write_static_array(u32 idx, void* val, _type_info* info, bool size = false);
+	u32 write_map(u32 idx, void* val, _type_info* info, bool size = false);
+	u32 write_ptr(u32 idx, void* val, _type_info* info, bool size = false);
+	u32 write_struct(u32 idx, void* val, _type_info* info, bool size = false);
+	u32 write_enum(u32 idx, void* val, _type_info* info, bool size = false);
+	u32 write_int(u32 idx, u8 base, void* val, _type_info* info, bool size = false);
+	u32 write_float(u32 idx, u8 precision, void* val, _type_info* info, bool size = false);
+	u32 write_u64(u32 idx, u8 base, u64 val, bool size = false, u32 min_len = 0);
 };
 
 inline string string_literal(const char* literal);
@@ -49,13 +67,12 @@ inline bool operator==(string first, const char* second);
 inline bool operator==(const char* first, string second);
 bool strcmp(string first, string second);
 
-// formating API
-template<typename... Targs> string 	make_stringf(string fmt, Targs... args);
-template<typename... Targs> string 	make_stringf_len(u32 len, string fmt, Targs... args);
-template<typename... Targs> u32 	size_stringf(string fmt, Targs... args);
-template<typename... Targs> void 	string_printf(string out, string fmt, Targs... args);
+// printf implementation
 
-// variadic template helpers
+template<typename... Targs> u32 size_stringf(string fmt, Targs... args);
+
+// don't worry about these Kappa b
+
 template<typename T, typename... Targs> 
 inline T&  get_pack_first(T& val, Targs... args);
 inline u32 get_pack_first();
@@ -63,25 +80,8 @@ template<typename T, typename... Targs>
 inline u32 _string_printf_fwd(string out, u32 idx, string fmt, bool size, T val, Targs... args);
 inline u32 _string_printf_fwd(string out, u32 idx, string fmt, bool size);
 
-// printf implementation
 template<typename T, typename... Targs>
 u32 _string_printf(string out, u32 idx, string fmt, bool size, T& value, Targs... args);
 u32 _string_printf(string out, u32 idx, string fmt, bool size = false);
 
-struct _type_info;
-// print any type (calls specific prints + recurs on structure)
-u32 print_type(string s, u32 idx, void* val, _type_info* info, bool size = false);
 
-// type-specific helpers
-u32 print_queue(string s, u32 idx, void* val, _type_info* info, bool size = false);
-u32 print_vector(string s, u32 idx, void* val, _type_info* info, bool size = false);
-u32 print_array(string s, u32 idx, void* val, _type_info* info, bool size = false);
-u32 print_static_array(string s, u32 idx, void* val, _type_info* info, bool size = false);
-u32 print_map(string s, u32 idx, void* val, _type_info* info, bool size = false);
-u32 print_ptr(string s, u32 idx, void* val, _type_info* info, bool size = false);
-u32 print_struct(string s, u32 idx, void* val, _type_info* info, bool size = false);
-u32 print_enum(string s, u32 idx, void* val, _type_info* info, bool size = false);
-u32 print_int(string s, u32 idx, u8 base, void* val, _type_info* info, bool size = false);
-u32 print_float(string s, u32 idx, u8 precision, void* val, _type_info* info, bool size = false);
-u32 print_u64(string s, u32 idx, u8 base, u64 val, bool size = false, u32 min_len = 0);
-i64 int_as_i64(void* val, _type_info* info);

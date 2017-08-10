@@ -61,8 +61,6 @@ struct code_context {
 #include "ds/queue.h"
 #include "ds/map.h"
 
-#include "type_table.h"
-
 #ifdef CONSTRUCT_DS_ELEMENTS
 #include <new>
 #endif
@@ -143,6 +141,7 @@ struct func_scope_nocs {
 #define PROF_NOCS
 #endif
 
+#include "type_table.h"
 #include <meta_types.h>
 
 // IMPLEMENTATIONS
