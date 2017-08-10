@@ -537,3 +537,103 @@ inline m4 lookAt(v3 eye, v3 center, v3 up) { PROF
 
     return ret;
 }
+
+template<typename T> inline T operator*(v2_t<T> l, v2_t<T> r) {
+	return dot(l,r);
+}
+
+template<typename T> inline T operator*(v3_t<T> l, v3_t<T> r) {
+	return dot(l,r);
+}
+
+template<typename T> inline T operator*(v4_t<T> l, v4_t<T> r) {
+	return dot(l,r);
+}
+
+template<typename T> inline v2_t<T> operator+(v2_t<T> l, v2_t<T> r) {
+	return add(l,r);
+}
+
+template<typename T> inline v3_t<T> operator+(v3_t<T> l, v3_t<T> r) {
+	return add(l,r);
+}
+
+template<typename T> inline v4_t<T> operator+(v4_t<T> l, v4_t<T> r) {
+	return add(l,r);
+}
+
+template<typename T> inline v2_t<T> operator-(v2_t<T> l, v2_t<T> r) {
+	return sub(l,r);
+}
+
+template<typename T> inline v3_t<T> operator-(v3_t<T> l, v3_t<T> r) {
+	return sub(l,r);
+}
+
+template<typename T> inline v4_t<T> operator-(v4_t<T> l, v4_t<T> r) {
+	return sub(l,r);
+}
+
+template<typename T> inline v2_t<T> operator*(v2_t<T> l, T r) {
+	return mult(l,r);
+}
+
+template<typename T> inline v3_t<T> operator*(v3_t<T> l, T r) {
+	return mult(l,r);
+}
+
+template<typename T> inline v4_t<T> operator*(v4_t<T> l, T r) {
+	return mult(l,r);
+}
+
+template<typename T> inline v2_t<T> operator/(v2_t<T> l, T r) {
+	return div(l,r);
+}
+
+template<typename T> inline v3_t<T> operator/(v3_t<T> l, T r) {
+	return div(l,r);
+}
+
+template<typename T> inline v4_t<T> operator/(v4_t<T> l, T r) {
+	return div(l,r);
+}
+
+template<typename T> inline r2_t<T> operator+(r2_t<T> l, r2_t<T> r) {
+	return add(l,r);
+}
+
+template<typename T> inline r2_t<T> operator-(r2_t<T> l, r2_t<T> r) {
+	return sub(l,r);
+}
+
+template<typename T> inline r2_t<T> operator*(r2_t<T> r, T f) {
+	return mult(l,r);
+}
+
+template<typename T> inline m4_t<T> operator+(m4_t<T> l, m4_t<T> r) {
+	return add(l,r);
+}
+
+template<typename T> inline m4_t<T> operator-(m4_t<T> l, m4_t<T> r) {
+	return sub(l,r);
+}
+
+template<typename T> m4_t<T> operator*(m4_t<T> l, m4_t<T> r) {
+	return mult(l,r);
+}
+
+template<> inline m4 operator*(m4 l, m4 r) {
+	return mult(l,r);
+}
+
+template<typename T> inline m4_t<T> operator*(m4_t<T> m, T s) {
+	return mult(l,r);
+}
+
+template<typename T> inline v4_t<T> operator*(m4_t<T> m, v4_t<T> v) {
+	return mult(l,r);
+}
+
+template<typename T> inline m4_t<T> operator/(m4_t<T> m, T s) {
+	return div(l,r);
+}
