@@ -105,7 +105,6 @@ int main() {
 bool load_lib() {
 
 	// we just spinlock here waiting for the file to unlock
-	// TODO(max): cap infinite loop
 	platform_error err;
 	u32 itr = 0;
 	do {

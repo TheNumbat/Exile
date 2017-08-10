@@ -107,7 +107,6 @@ gui_input_state run_events(game_state* state) { PROF
 
 void event_enqueue(void* data, platform_event evt) { PROF
 
-	// TODO(max) IMPORTANT(max): this needs to be thread-safe now
 	con_queue<platform_event>* q = (con_queue<platform_event>*)data;
 	q->push(evt);
 }
