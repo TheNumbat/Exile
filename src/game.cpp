@@ -16,13 +16,13 @@ extern "C" game_state* start_up(platform_api* api) { PROF
 
 	state->log_a = MAKE_PLATFORM_ALLOCATOR("log");
 	state->log_a.suppress_messages = true;
-	state->log = make_logger(&state->log_a);
+	state->log = log_manager::make(&state->log_a);
 
 	platform_file stdout_file, log_all_file;
 	api->platform_get_stdout_as_file(&stdout_file);
 	api->platform_create_file(&log_all_file, string_literal("log_all.txt"), platform_file_open_op::create);
-	logger_add_file(&state->log, log_all_file, log_level::alloc);
-	logger_add_file(&state->log, stdout_file, log_level::info);
+	state->log.add_file(log_all_file, log_level::alloc);
+	state->log.add_file(stdout_file, log_level::info);
 
 	LOG_INFO("Beginning startup...");
 	LOG_PUSH_CONTEXT_L("");
@@ -33,7 +33,7 @@ extern "C" game_state* start_up(platform_api* api) { PROF
 	state->dbg = dbg_manager::make(&state->log, &state->dbg_a);
 
 	LOG_INFO("Starting logger");
-	logger_start(&state->log);
+	state->log.start();
 
 	LOG_INFO("Setting up events...");
 	state->evt_a = MAKE_PLATFORM_ALLOCATOR("event");
@@ -151,10 +151,9 @@ extern "C" void shut_down(game_state* state) { PROF
 
 	LOG_DEBUG("Done with shutdown!");
 
-	logger_stop(&state->log);
-
+	state->log.stop();
 	state->dbg.destroy();
-	destroy_logger(&state->log);
+	state->log.destroy();
 	
 	end_thread();
 
@@ -170,7 +169,7 @@ extern "C" void on_reload(platform_api* api, game_state* state) { PROF
 	ogl_load_global_funcs();
 
 	begin_thread(string_literal("main"), &state->suppressed_platform_allocator);
-	logger_start(&state->log);
+	state->log.start();
 	state->thread_pool.start_all();
 
 	LOG_INFO("End reloading game code");
@@ -182,7 +181,7 @@ extern "C" void on_unload(game_state* state) { PROF
 
 	destroy_type_table();
 	state->thread_pool.stop_all();
-	logger_stop(&state->log);
+	state->log.stop();
 
 	end_thread();
 }

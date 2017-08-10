@@ -10,7 +10,7 @@ dbg_manager dbg_manager::make(log_manager* log, allocator* alloc) { PROF
 	dbg_log.level = log_level::info;
 	dbg_log.custom = true;
 	dbg_log.write = &dbg_add_log;
-	logger_add_output(log, dbg_log);
+	log->add_output(dbg_log);
 
 	return ret;
 }

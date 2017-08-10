@@ -26,6 +26,16 @@ struct log_message {
 
 	code_context publisher;
 	arena_allocator arena; // joint allocation of msg, data.context_name, data.name
+
+///////////////////////////////////////////////////////////////////////////////
+
+	// allocate strings with current allocator
+	string fmt();
+	string fmt_time(); // this takes the current time?? TODO(max): real timers
+	string fmt_call_stack();
+	string fmt_file_line();
+	// will not allocate, returns literal (don't free it)
+	string fmt_level();
 };
 
 struct log_out {
@@ -55,46 +65,41 @@ struct log_manager {
 	log_thread_param 		thread_param;
 	allocator* 				alloc = null;
 	arena_allocator 		scratch; // reset whenever (on the logging thread) (currently every message)
+
+///////////////////////////////////////////////////////////////////////////////
+
+	static log_manager make(allocator* a); // allocator must have suppress_messages set
+	void destroy(); // calls logger_stop if needed, call log_end_thread() everywhere first
+
+	void start(); // begin logging thread - call from one thread
+	void stop();  // end logging thread - call from one thread
+
+	void push_context(string context, code_context fake);
+	void pop_context();
+
+	void add_file(platform_file file, log_level level); // call from one thread before starting
+	void print_header(log_out out);
+	void add_output(log_out out);
+	void rem_output(log_out rem);
+
+	template<typename... Targs>
+	void msgf(string fmt, log_level level, code_context context, Targs... args);
+	void msg(string msg, log_level level, code_context context);
 };
 
-log_manager make_logger(allocator* a); // allocator must have suppress_messages set
-void destroy_logger(log_manager* log); // calls logger_stop if needed, call log_end_thread() everywhere first
+#define LOG_PUSH_CONTEXT(str) global_log->push_context(str, CONTEXT); 
+#define LOG_PUSH_CONTEXT_L(str) global_log->push_context(string_literal(str), CONTEXT); 
+#define LOG_POP_CONTEXT() global_log->pop_context();
 
-void logger_start(log_manager* log); // begin logging thread - call from one thread
-void logger_stop(log_manager* log);  // end logging thread - call from one thread
+#define LOG_INFO(m) 	global_log->msg(string_literal(m), log_level::info,  CONTEXT);
+#define LOG_WARN(m) 	global_log->msg(string_literal(m), log_level::warn,  CONTEXT);
+#define LOG_ERR(m) 		global_log->msg(string_literal(m), log_level::error, CONTEXT);
+#define LOG_FATAL(m) 	global_log->msg(string_literal(m), log_level::fatal, CONTEXT);
 
-#define LOG_PUSH_CONTEXT(str) logger_push_context(global_log, str, CONTEXT); 
-#define LOG_PUSH_CONTEXT_L(str) logger_push_context(global_log, string_literal(str), CONTEXT); 
-void logger_push_context(log_manager* log, string context, code_context fake);
-#define LOG_POP_CONTEXT() logger_pop_context(global_log); 
-void logger_pop_context(log_manager* log);
-
-void logger_add_file(log_manager* log, platform_file file, log_level level); // call from one thread before starting
-void logger_print_header(log_manager* log, log_out out);
-void logger_add_output(log_manager* log, log_out out);
-void logger_rem_output(log_manager* log, log_out out);
-
-template<typename... Targs>
-void logger_msgf(log_manager* log, string fmt, log_level level, code_context context, Targs... args);
-void logger_msg(log_manager* log, string msg, log_level level, code_context context);
-
-// allocate strings with current allocator
-string log_fmt_msg(log_message* msg);
-string log_fmt_msg_time(log_message* msg);
-string log_fmt_msg_call_stack(log_message* msg);
-string log_fmt_msg_file_line(log_message* msg);
-// will not allocate, returns literal (don't free it)
-string log_fmt_msg_level(log_message* msg);
-
-#define LOG_INFO(msg) 	logger_msg(global_log, string_literal(msg), log_level::info,  CONTEXT); 
-#define LOG_WARN(msg) 	logger_msg(global_log, string_literal(msg), log_level::warn,  CONTEXT); 
-#define LOG_ERR(msg) 	logger_msg(global_log, string_literal(msg), log_level::error, CONTEXT); 
-#define LOG_FATAL(msg) 	logger_msg(global_log, string_literal(msg), log_level::fatal, CONTEXT); 
-
-#define LOG_INFO_F(fmt, ...) 	logger_msgf(global_log, string_literal(fmt), log_level::info,  CONTEXT, __VA_ARGS__); 
-#define LOG_WARN_F(fmt, ...) 	logger_msgf(global_log, string_literal(fmt), log_level::warn,  CONTEXT, __VA_ARGS__); 
-#define LOG_ERR_F(fmt, ...) 	logger_msgf(global_log, string_literal(fmt), log_level::error, CONTEXT, __VA_ARGS__); 
-#define LOG_FATAL_F(fmt, ...) 	logger_msgf(global_log, string_literal(fmt), log_level::fatal, CONTEXT, __VA_ARGS__); 
+#define LOG_INFO_F(fmt, ...) 	global_log->msgf(string_literal(fmt), log_level::info,  CONTEXT, __VA_ARGS__); 
+#define LOG_WARN_F(fmt, ...) 	global_log->msgf(string_literal(fmt), log_level::warn,  CONTEXT, __VA_ARGS__); 
+#define LOG_ERR_F(fmt, ...) 	global_log->msgf(string_literal(fmt), log_level::error, CONTEXT, __VA_ARGS__); 
+#define LOG_FATAL_F(fmt, ...) 	global_log->msgf(string_literal(fmt), log_level::fatal, CONTEXT, __VA_ARGS__); 
 
 #define LOG_ASSERT(cond) __pragma(warning(push)) \
 						 __pragma(warning(disable:4127)) \
@@ -102,9 +107,9 @@ string log_fmt_msg_level(log_message* msg);
 						 __pragma(warning(pop))
 
 #ifdef _DEBUG
-	#define LOG_DEBUG(msg) 			logger_msg(global_log, string_literal(msg),  log_level::debug, CONTEXT); 
-	#define LOG_DEBUG_F(fmt, ...) 	logger_msgf(global_log, string_literal(fmt), log_level::debug, CONTEXT, __VA_ARGS__) 
-	#define LOG_OGL_F(fmt, ...)		logger_msgf(global_log, string_literal(fmt), log_level::ogl,   CONTEXT, __VA_ARGS__); 
+	#define LOG_DEBUG(m) 			global_log->msg(string_literal(m),  log_level::debug, CONTEXT); 
+	#define LOG_DEBUG_F(fmt, ...) 	global_log->msgf(string_literal(fmt), log_level::debug, CONTEXT, __VA_ARGS__) 
+	#define LOG_OGL_F(fmt, ...)		global_log->msgf(string_literal(fmt), log_level::ogl,   CONTEXT, __VA_ARGS__); 
 	#define LOG_DEBUG_ASSERT(cond) 	__pragma(warning(push)) \
 							 	   	__pragma(warning(disable:4127)) \
 							 	   	{if(!(cond)) LOG_FATAL_F("Debug assertion % failed!", string_literal(#cond));} \
@@ -120,4 +125,4 @@ string log_fmt_msg_level(log_message* msg);
 
 bool operator==(log_out l, log_out r);
 
-i32 logging_thread(void* data_);
+i32 log_proc(void* data_);
