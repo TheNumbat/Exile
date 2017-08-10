@@ -176,6 +176,8 @@ typedef m4_t<u32> um4;
 template union m4_t<f32>;
 template union m4_t<u32>;
 
+// TODO(max): operators
+
 inline u32 mod(u32 dividend, u32 devisor);
 inline f32 _sqrtf(f32 value);
 inline f32 _tanf(f32 value);
