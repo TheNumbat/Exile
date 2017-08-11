@@ -6,6 +6,7 @@
 	// make v2_t_4x, v3_t_4x, v4_t_4x, m4_t_4x
 	// mod, div, sign, trig, bit-scanning
 // TODO(max): quaternions
+// TODO(max): get rid of template for matrix
 #include <cmath>
 #include <xmmintrin.h>
 

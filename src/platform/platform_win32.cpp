@@ -1,6 +1,12 @@
 
 #include "platform_win32.h"
 
+extern "C" {
+    // Request dGPU
+    __declspec(dllexport) bool NvOptimusEnablement = true;
+    __declspec(dllexport) bool AmdPowerXpressRequestHighPerformance = true;
+}
+
 typedef HGLRC (WINAPI *wglCreateContextAttribsARB_t)(HDC hDC, HGLRC hShareContext,
 													const int* attribList);
 typedef BOOL  (WINAPI *wglSwapIntervalEXT_t)(int interval);
@@ -471,16 +477,16 @@ platform_error win32_get_bin_path(string* path) {
 	return ret;
 }
 
-#include <iostream>
-using std::cout;
-using std::endl;
+// #include <iostream>
+// using std::cout;
+// using std::endl;
 
 void* win32_heap_alloc(u64 bytes) {
 
 	HANDLE heap = GetProcessHeap();
 	void* ret = HeapAlloc(heap, HEAP_ZERO_MEMORY | HEAP_GENERATE_EXCEPTIONS, (SIZE_T)bytes);
 
-	cout << "AAAAAAAAAA " << ret << endl;
+	// cout << "AAAAAAAAAA " << ret << endl;
 
 	return ret;
 }
@@ -497,7 +503,7 @@ void* win32_heap_realloc(void* mem, u64 bytes) {
 
 void win32_heap_free(void* mem) {
 
-	cout << "FFFFFFFFFF " << mem << endl;
+	// cout << "FFFFFFFFFF " << mem << endl;
 	// *(u8*)mem = 0;
 
 	HANDLE heap = GetProcessHeap();

@@ -8,6 +8,7 @@ struct game_state {
 
 	bool running = false;
 
+	// managers are really just contexts. OOP naming in 2017
 	log_manager log;
 	ogl_manager ogl;
 	gui_manager gui;
