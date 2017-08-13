@@ -12,7 +12,7 @@ Gameplay goals:
 
 ### Tools
 - Engine & Game:
-  - C-like C++: C with member functions, function/operator overloading, and some templates (no RAII, no execptions, no polymorphism, no STL, extremely minimal inheritance)
+  - C-like C++: C with member functions, function/operator overloading, and some templates (no RAII, no exceptions, no polymorphism, no STL, extremely minimal inheritance)
   - Personal standard library (data structures, type info, platform layer, etc.)
   - Extremely minimal std-lib (stdint, float, new, intrinsics)
   - Win32/Unix APIs
@@ -28,7 +28,7 @@ Tons more is planned!
 - Lib
    - Data structures
      - Checked array
-     - Hash map (roobin-hood open addressing)
+     - Hash map (robin-hood open addressing)
      - Queue/Concurrent Queue (circular buffer)
      - Stack
      - Vector (stretchy buffer)
@@ -62,13 +62,13 @@ Tons more is planned!
      - Timing & allocation event collation
      - RAD Telemetry style profiler (TODO)
    - Input
-     - Context sesitive control registry (TODO)
+     - Context sensitive control registry (TODO)
    - IMGUI
      - ImGui inspired immediate-mode GUI system
      - Render-agnostic
      - Powerful window formatting (TODO)
    - Logging 
-     - Threadsafe &amp; flexible logging system
+     - Thread-safe &amp; flexible logging system
      - Context &amp; info formatting
    - Math
      - Vector &amp; matrix math
