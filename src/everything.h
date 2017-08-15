@@ -70,15 +70,18 @@ struct code_context {
 #include "dbg.h"
 
 #define MAX_CALL_STACK_DEPTH 256
+#define MAX_DBG_MSG_CACHE 8192
 struct thread_data {
 	stack<allocator*> alloc_stack;
-	vector<dbg_msg> frame;
 	
 	string name;
 	code_context start_context;
 
 	code_context call_stack[MAX_CALL_STACK_DEPTH];
 	u32 call_stack_depth = 0;
+
+	dbg_msg dbg_cache[MAX_DBG_MSG_CACHE];
+	u32 dbg_cache_size = 0;
 };
 
 static thread_local thread_data this_thread_data;
@@ -116,18 +119,22 @@ static dbg_manager*  global_dbg = null; // not used yet -- global to provide pro
 struct func_scope {
 	func_scope(code_context context) {
 		LOG_DEBUG_ASSERT(this_thread_data.call_stack_depth < MAX_CALL_STACK_DEPTH);
+		LOG_DEBUG_ASSERT(this_thread_data.dbg_cache_size < MAX_DBG_MSG_CACHE);
+
 		this_thread_data.call_stack[this_thread_data.call_stack_depth++] = context;
 
 		dbg_msg m;
 		m.type = dbg_msg_type::enter_func;
 		m.enter_func.func = context;
-		POST(m);
+		// this_thread_data.dbg_cache[this_thread_data.dbg_cache_size++] = m;
 		// printf("%+*s\n", this_thread_data.call_stack_depth + context.function.len, context.function.c_str);
 	}
 	~func_scope() {
+		LOG_DEBUG_ASSERT(this_thread_data.dbg_cache_size < MAX_DBG_MSG_CACHE);
+
 		dbg_msg m;
 		m.type = dbg_msg_type::exit_func;
-		POST(m);
+		// this_thread_data.dbg_cache[this_thread_data.dbg_cache_size++] = m;
 
 		this_thread_data.call_stack_depth--;
 	}
@@ -135,15 +142,19 @@ struct func_scope {
 
 struct func_scope_nocs {
 	func_scope_nocs(code_context context) {
+		LOG_DEBUG_ASSERT(this_thread_data.dbg_cache_size < MAX_DBG_MSG_CACHE);
+
 		dbg_msg m;
 		m.type = dbg_msg_type::enter_func;
 		m.enter_func.func = context;
-		POST(m);
+		// this_thread_data.dbg_cache[this_thread_data.dbg_cache_size++] = m;
 	}
 	~func_scope_nocs() {
+		LOG_DEBUG_ASSERT(this_thread_data.dbg_cache_size < MAX_DBG_MSG_CACHE);
+
 		dbg_msg m;
 		m.type = dbg_msg_type::exit_func;
-		POST(m);
+		// this_thread_data.dbg_cache[this_thread_data.dbg_cache_size++] = m;
 	}
 };
 #define PROF func_scope __f(CONTEXT);

@@ -3,7 +3,8 @@
 
 enum class dbg_msg_type : u8 {
 	none,
-	collate_frame, // serves as end last + begin
+	begin_frame,
+	end_frame,
 	allocate,
 	reallocate,
 	free,
@@ -14,6 +15,14 @@ enum class dbg_msg_type : u8 {
 	sem_wait,
 	section_begin,
 	section_end,
+};
+
+struct dbg_msg_begin_frame {
+
+};
+
+struct dbg_msg_end_frame {
+
 };
 
 struct dbg_msg_collate_frame {
@@ -70,6 +79,8 @@ struct dbg_msg {
 	dbg_msg_type type = dbg_msg_type::none;
 	code_context context;
 	union {
+		dbg_msg_begin_frame   begin_frame;
+		dbg_msg_end_frame 	  end_frame;
 		dbg_msg_collate_frame collate_frame;
 		dbg_msg_allocate      allocate;
 		dbg_msg_reallocate    reallocate;
@@ -85,13 +96,12 @@ struct dbg_msg {
 	dbg_msg() {};
 };
 
-struct dbg_frame {
-	vector<dbg_msg> messages;
-};
-
 struct dbg_manager {
 
-	vector<dbg_frame> frames;
+	// IDK
+	array<array<dbg_msg>> frames;
+	vector<dbg_msg> messages;
+
 	u32 current_frame = 0;
 	bool really_running = false;
 
@@ -108,7 +118,5 @@ struct dbg_manager {
 	void collate();
 	void render_debug_gui(platform_window* win);
 };
-
-#define POST(msg) this_thread_data.frame.push_neverprof(msg);
 
 void dbg_add_log(log_message* msg);
