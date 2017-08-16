@@ -1,6 +1,9 @@
 #pragma once
 
-#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX           		1
+#define WIN32_LEAN_AND_MEAN		1
+#define WIN32_MEAN_AND_LEAN		1
+#define VC_EXTRALEAN       		1
 #include <windows.h>
 #include <gl/gl.h>
 
