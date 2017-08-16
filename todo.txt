@@ -21,7 +21,9 @@ immediate to do:
 		list (same API as vector, but chunked & no-copy)
 		buffer (fill and output to callback)
 		heap (+priority queue)
-		string builder
+		strings
+			string builder
+			could improve cache locality by doing gb-string style header then data (also can use as c_str automatically)
 		sorted vector
 		improve map storage/AOS
 			bit mask for occupancy
