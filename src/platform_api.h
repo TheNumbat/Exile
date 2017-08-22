@@ -30,13 +30,6 @@ enum class _platform_semaphore_state {
 	failed,
 };
 
-enum class _platform_mutex_state {
-	abandoned,
-	aquired,
-	timed_out,
-	failed,
-};
-
 enum class _platform_thread_join_state {
 	joined,
 	timed_out,
@@ -46,12 +39,6 @@ enum class _platform_thread_join_state {
 struct platform_semaphore_state {
 	// Transparent
 	_platform_semaphore_state state;
-	platform_error error;
-};
-
-struct platform_mutex_state {
-	// Transparent
-	_platform_mutex_state state;
 	platform_error error;
 };
 
@@ -305,10 +292,11 @@ struct platform_api {
 	platform_error 	(*platform_destroy_semaphore)(platform_semaphore* sem)														= null;
 	platform_error 	(*platform_signal_semaphore)(platform_semaphore* sem, i32 times)											= null;
 	platform_semaphore_state (*platform_wait_semaphore)(platform_semaphore* sem, i32 ms)										= null;
-	platform_error 	(*platform_create_mutex)(platform_mutex* mut, bool aquire)													= null;
-	platform_error 	(*platform_destroy_mutex)(platform_mutex* mut)																= null;
-	platform_mutex_state (*platform_aquire_mutex)(platform_mutex* mut, i32 ms)													= null;
-	platform_error 	(*platform_release_mutex)(platform_mutex* mut)																= null;
+	void 			(*platform_create_mutex)(platform_mutex* mut, bool aquire)													= null;
+	void 			(*platform_destroy_mutex)(platform_mutex* mut)																= null;
+	void 			(*platform_aquire_mutex)(platform_mutex* mut)																= null;
+	void 			(*platform_try_aquire_mutex)(platform_mutex* mut)															= null;
+	void 			(*platform_release_mutex)(platform_mutex* mut)																= null;
 	i32   		   	(*platform_get_num_cpus)()																					= null;
 	platform_thread_join_state (*platform_join_thread)(platform_thread* thread, i32 ms)											= null;
 	platform_error 	(*platform_create_file)(platform_file* file, string path, platform_file_open_op mode)						= null;

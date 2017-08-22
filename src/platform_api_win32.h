@@ -64,7 +64,7 @@ struct platform_semaphore {
 
 struct platform_mutex {
 	// Opaque
-	HANDLE handle 	= null;
+	CRITICAL_SECTION cs = {};
 };
 
 struct platform_file {

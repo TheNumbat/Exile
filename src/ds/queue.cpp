@@ -188,7 +188,7 @@ void con_queue<T>::destroy() { PROF
 
 template<typename T>
 T* con_queue<T>::push(T value) { PROF
-	global_api->platform_aquire_mutex(&mut, -1);
+	global_api->platform_aquire_mutex(&mut);
 	T* ret = ((queue<T>*)this)->push(value);
 	global_api->platform_release_mutex(&mut);
 	global_api->platform_signal_semaphore(&sem, 1);
@@ -205,7 +205,7 @@ T con_queue<T>::wait_pop() { PROF
 
 template<typename T>
 bool con_queue<T>::try_pop(T* out) { PROF
-	global_api->platform_aquire_mutex(&mut, -1);
+	global_api->platform_aquire_mutex(&mut);
 	bool ret = ((queue<T>*)this)->try_pop(out);
 	global_api->platform_release_mutex(&mut);
 	return ret;

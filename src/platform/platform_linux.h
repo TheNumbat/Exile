@@ -60,10 +60,11 @@ platform_error linux_destroy_semaphore(platform_semaphore* sem);
 platform_error linux_signal_semaphore(platform_semaphore* sem, i32 times); 
 platform_semaphore_state linux_wait_semaphore(platform_semaphore* sem, i32 ms); // ms = -1 for infinite
 
-platform_error linux_create_mutex(platform_mutex* mut, bool aquire);
-platform_error linux_destroy_mutex(platform_mutex* mut);
-platform_mutex_state linux_aquire_mutex(platform_mutex* mut, i32 ms); // ms = -1 for infinite
-platform_error linux_release_mutex(platform_mutex* mut);
+void linux_create_mutex(platform_mutex* mut, bool aquire);
+void linux_destroy_mutex(platform_mutex* mut);
+void linux_try_aquire_mutex(platform_mutex* mut);
+void linux_aquire_mutex(platform_mutex* mut);
+void linux_release_mutex(platform_mutex* mut);
 
 // allocates a string
 string linux_make_timef(string fmt);

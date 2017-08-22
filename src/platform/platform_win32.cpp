@@ -50,6 +50,7 @@ platform_api platform_build_api() {
 	ret.platform_create_mutex			= &win32_create_mutex;
 	ret.platform_destroy_mutex			= &win32_destroy_mutex;
 	ret.platform_aquire_mutex			= &win32_aquire_mutex;
+	ret.platform_try_aquire_mutex		= &win32_try_aquire_mutex;
 	ret.platform_release_mutex			= &win32_release_mutex;
 	ret.platform_destroy_thread			= &win32_destroy_thread;
 	ret.platform_get_num_cpus			= &win32_get_num_cpus;
@@ -318,71 +319,33 @@ platform_semaphore_state win32_wait_semaphore(platform_semaphore* sem, i32 ms) {
 	return ret;
 }
 
-platform_error win32_create_mutex(platform_mutex* mut, bool aquire) {
+void win32_create_mutex(platform_mutex* mut, bool aquire) {
 
-	platform_error ret;
+	InitializeCriticalSection(&mut->cs);
 
-	mut->handle = CreateMutexExA(null, null, aquire ? CREATE_MUTEX_INITIAL_OWNER : 0, MUTEX_ALL_ACCESS);
-
-	if(mut->handle == null) {
-		ret.good = false;
-		ret.error = GetLastError();
-		return ret;				
+	if(aquire) {
+		EnterCriticalSection(&mut->cs);
 	}
-
-	return ret;
 }
 
-platform_error win32_destroy_mutex(platform_mutex* mut) {
+void win32_destroy_mutex(platform_mutex* mut) {
 	
-	platform_error ret;
-
-	if(CloseHandle(mut->handle) == 0) {
-		ret.good = false;
-		ret.error = GetLastError();
-		return ret;		
-	}
-
-	mut->handle = null;
-
-	return ret;
+	DeleteCriticalSection(&mut->cs);
 }
 
-platform_mutex_state win32_aquire_mutex(platform_mutex* mut, i32 ms) {
+void win32_aquire_mutex(platform_mutex* mut) {
 
-	platform_mutex_state ret;
-
-	switch(WaitForSingleObject(mut->handle, ms == -1 ? INFINITE : (DWORD)ms)) {
-	case WAIT_ABANDONED:
-		ret.state = _platform_mutex_state::abandoned;
-		return ret;
-	case WAIT_OBJECT_0:
-		ret.state = _platform_mutex_state::aquired;
-		return ret;
-	case WAIT_TIMEOUT:
-		ret.state = _platform_mutex_state::timed_out;
-		return ret;
-	case WAIT_FAILED:
-		ret.state = _platform_mutex_state::failed;
-		ret.error.good = false;
-		ret.error.error = GetLastError();
-		return ret;		
-	}
-
-	return ret;
+	EnterCriticalSection(&mut->cs);
 }
 
-platform_error win32_release_mutex(platform_mutex* mut) {
+void win32_try_aquire_mutex(platform_mutex* mut) {
 
-	platform_error ret;
+	TryEnterCriticalSection(&mut->cs);
+}
 
-	if(ReleaseMutex(mut->handle) == 0) {
-		ret.good = false;
-		ret.error = GetLastError();
-		return ret;		
-	}
+void win32_release_mutex(platform_mutex* mut) {
 
-	return ret;	
+	LeaveCriticalSection(&mut->cs);
 }
 
 platform_error win32_destroy_thread(platform_thread* thread) {

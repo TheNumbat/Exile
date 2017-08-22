@@ -34,6 +34,7 @@ platform_api platform_build_api() {
 	ret.platform_create_mutex			= &linux_create_mutex;
 	ret.platform_destroy_mutex			= &linux_destroy_mutex;
 	ret.platform_aquire_mutex			= &linux_aquire_mutex;
+	ret.platform_try_aquire_mutex		= &linux_try_aquire_mutex;
 	ret.platform_release_mutex			= &linux_release_mutex;
 	ret.platform_destroy_thread			= &linux_destroy_thread;
 	ret.platform_get_num_cpus			= &linux_get_num_cpus;
@@ -300,28 +301,35 @@ platform_error linux_signal_semaphore(platform_semaphore* sem, i32 times) {
 	return ret;
 } 
 
-platform_error linux_create_mutex(platform_mutex* mut, bool aquire) {
+void linux_create_mutex(platform_mutex* mut, bool aquire) {
 
 	platform_error ret;
 
 	return ret;
 }
 
-platform_error linux_destroy_mutex(platform_mutex* mut) {
+void linux_destroy_mutex(platform_mutex* mut) {
 
 	platform_error ret;
 
 	return ret;
 }
 
-platform_mutex_state linux_aquire_mutex(platform_mutex* mut, i32 ms) {
+void linux_aquire_mutex(platform_mutex* mut) {
 
 	platform_mutex_state ret;
 
 	return ret;
 }
 
-platform_error linux_release_mutex(platform_mutex* mut) {
+void linux_try_aquire_mutex(platform_mutex* mut) {
+
+	platform_mutex_state ret;
+
+	return ret;
+}
+
+void linux_release_mutex(platform_mutex* mut) {
 
 	platform_error ret;
 

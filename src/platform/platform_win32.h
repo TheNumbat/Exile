@@ -60,10 +60,11 @@ platform_error win32_destroy_semaphore(platform_semaphore* sem);
 platform_error win32_signal_semaphore(platform_semaphore* sem, i32 times); 
 platform_semaphore_state win32_wait_semaphore(platform_semaphore* sem, i32 ms); // ms = -1 for infinite
 
-platform_error win32_create_mutex(platform_mutex* mut, bool aquire);
-platform_error win32_destroy_mutex(platform_mutex* mut);
-platform_mutex_state win32_aquire_mutex(platform_mutex* mut, i32 ms); // ms = -1 for infinite
-platform_error win32_release_mutex(platform_mutex* mut);
+void win32_create_mutex(platform_mutex* mut, bool aquire);
+void win32_destroy_mutex(platform_mutex* mut);
+void win32_try_aquire_mutex(platform_mutex* mut);
+void win32_aquire_mutex(platform_mutex* mut);
+void win32_release_mutex(platform_mutex* mut);
 
 // allocates a string
 string win32_make_timef(string fmt);
