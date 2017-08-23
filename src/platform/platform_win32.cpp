@@ -1234,7 +1234,7 @@ platform_error win32_create_window(platform_window* window, string title, u32 wi
 		// https://blogs.msdn.microsoft.com/oldnewthing/20100412-00/?p=14353
 	wglSwapIntervalEXT(0);
 
-	ShowWindow(window->handle, SW_SHOW);
+	ShowWindowAsync(window->handle, SW_SHOW);
 
 	return ret;
 }
