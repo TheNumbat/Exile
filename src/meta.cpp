@@ -226,6 +226,7 @@ CXChildVisitResult parse_struct_or_union(CXCursor c, CXCursor parent, CXClientDa
 }
 
 CXChildVisitResult do_parse(CXCursor c) {
+
 	if(is_fwd_decl(c)) return CXChildVisit_Continue;
 
 	switch(c.kind) {
@@ -609,15 +610,9 @@ i32 main(i32 argc, char** argv) {
 	}
 
 	auto cursor = clang_getTranslationUnitCursor(unit);
-
 	clang_visitChildren(cursor,
 	[](CXCursor c, CXCursor parent, CXClientData client_data) {
 
-		// auto loc = clang_getCursorLocation(c);
-		// CXFile file;
-		// clang_getSpellingLocation(loc, &file, nullptr, nullptr, nullptr);
-		// string filestr;
-		// if(file) filestr = str(clang_getFileName(file));
 		if(clang_Location_isInSystemHeader(clang_getCursorLocation(c))) {
 			
 			// skip system files because we don't care about 99% of the types and don't want to bloat our type table

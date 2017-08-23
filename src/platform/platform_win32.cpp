@@ -1087,6 +1087,7 @@ LRESULT CALLBACK window_proc(HWND handle, UINT msg, WPARAM wParam, LPARAM lParam
 			return 0;
 		}
 
+		// case WM_NCCREATE: return true;
 		// all others
 		default: {
 			return DefWindowProcA(handle, msg, wParam, lParam);
@@ -1233,7 +1234,7 @@ platform_error win32_create_window(platform_window* window, string title, u32 wi
 		// https://blogs.msdn.microsoft.com/oldnewthing/20100412-00/?p=14353
 	wglSwapIntervalEXT(0);
 
-	ShowWindowAsync(window->handle, SW_SHOW);
+	ShowWindow(window->handle, SW_SHOW);
 
 	return ret;
 }

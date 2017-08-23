@@ -8,8 +8,8 @@
 #define WIN32_MEAN_AND_LEAN		1
 #define VC_EXTRALEAN       		1
 #include <windows.h>
-#include <gl/gl.h>
 #include <windowsx.h>
+#include <gl/gl.h>
 #include "../../deps/glext.h"
 #include "../../deps/wglext.h"
 #else

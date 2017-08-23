@@ -6,20 +6,18 @@
 // NOTE(max): adapted from Ginger Bill's public domain C libraries
 // https://github.com/gingerBill/gb/blob/master/gb.h#L2564
 
-// Changes:
-// 		added everything after Bill's mini windows.h
-
 typedef size_t    usize;
 typedef ptrdiff_t isize;
 typedef uintptr_t uintptr;
-typedef  intptr_t  intptr;
+typedef intptr_t  intptr;
 
 #define EXTERN extern "C"
 #define DLL_EXPORT EXTERN __declspec(dllexport)
 #define DLL_IMPORT EXTERN __declspec(dllimport)
 
-// begin Bill's mini windows.h
-
+#define FAR
+#define NEAR
+#define APIENTRY FAR __stdcall
 #define WINAPI   __stdcall
 #define WINAPIV  __cdecl
 #define CALLBACK __stdcall
@@ -51,13 +49,8 @@ typedef unsigned long long ULONGLONG;
 typedef UINT WPARAM;
 typedef LONG LPARAM;
 typedef LONG LRESULT;
-#ifndef _HRESULT_DEFINED
 typedef LONG HRESULT;
-#define _HRESULT_DEFINED
-#endif
-#ifndef XFree86Server
 typedef WORD ATOM;
-#endif /* XFree86Server */
 typedef void *HANDLE;
 typedef HANDLE HGLOBAL;
 typedef HANDLE HLOCAL;
@@ -65,35 +58,33 @@ typedef HANDLE GLOBALHANDLE;
 typedef HANDLE LOCALHANDLE;
 typedef void *HGDIOBJ;
 
-#define DECLARE_HANDLE(name) typedef HANDLE name
-DECLARE_HANDLE(HACCEL);
-DECLARE_HANDLE(HBITMAP);
-DECLARE_HANDLE(HBRUSH);
-DECLARE_HANDLE(HCOLORSPACE);
-DECLARE_HANDLE(HDC);
-DECLARE_HANDLE(HGLRC);
-DECLARE_HANDLE(HDESK);
-DECLARE_HANDLE(HENHMETAFILE);
-DECLARE_HANDLE(HFONT);
-DECLARE_HANDLE(HICON);
-DECLARE_HANDLE(HKEY);
+typedef HANDLE HACCEL;
+typedef HANDLE HBITMAP;
+typedef HANDLE HBRUSH;
+typedef HANDLE HCOLORSPACE;
+typedef HANDLE HDC;
+typedef HANDLE HGLRC;
+typedef HANDLE HDESK;
+typedef HANDLE HENHMETAFILE;
+typedef HANDLE HFONT;
+typedef HANDLE HICON;
+typedef HANDLE HKEY;
 typedef HKEY *PHKEY;
-DECLARE_HANDLE(HMENU);
-DECLARE_HANDLE(HMETAFILE);
-DECLARE_HANDLE(HINSTANCE);
+typedef HANDLE HMENU;
+typedef HANDLE HMETAFILE;
+typedef HANDLE HINSTANCE;
 typedef HINSTANCE HMODULE;
-DECLARE_HANDLE(HPALETTE);
-DECLARE_HANDLE(HPEN);
-DECLARE_HANDLE(HRGN);
-DECLARE_HANDLE(HRSRC);
-DECLARE_HANDLE(HSTR);
-DECLARE_HANDLE(HTASK);
-DECLARE_HANDLE(HWND);
-DECLARE_HANDLE(HWINSTA);
-DECLARE_HANDLE(HKL);
-DECLARE_HANDLE(HRAWINPUT);
-DECLARE_HANDLE(HMONITOR);
-#undef DECLARE_HANDLE
+typedef HANDLE HPALETTE;
+typedef HANDLE HPEN;
+typedef HANDLE HRGN;
+typedef HANDLE HRSRC;
+typedef HANDLE HSTR;
+typedef HANDLE HTASK;
+typedef HANDLE HWND;
+typedef HANDLE HWINSTA;
+typedef HANDLE HKL;
+typedef HANDLE HRAWINPUT;
+typedef HANDLE HMONITOR;
 
 typedef int HFILE;
 typedef HICON HCURSOR;
@@ -328,14 +319,14 @@ typedef struct tagPIXELFORMATDESCRIPTOR {
 	DWORD dwVisibleMask;
 	DWORD dwDamageMask;
 } PIXELFORMATDESCRIPTOR;
-typedef struct tagMSG {     // msg
-	HWND   hwnd;
-	UINT   message;
-	WPARAM wParam;
-	LPARAM lParam;
-	DWORD time;
-	POINT pt;
-} MSG, *PMSG, *LPMSG;
+typedef struct tagMSG {
+    HWND        hwnd;
+    UINT        message;
+    WPARAM      wParam;
+    LPARAM      lParam;
+    DWORD       time;
+    POINT       pt;
+} MSG, *PMSG, NEAR *NPMSG, FAR *LPMSG;
 typedef struct tagWINDOWPLACEMENT {
 	UINT length;
 	UINT flags;
@@ -750,19 +741,19 @@ DLL_IMPORT HGDIOBJ WINAPI GetStockObject(int object);
 #define DISP_CHANGE_SUCCESSFUL 0
 #define IDYES 6
 
-#define WS_VISIBLE          0x10000000l
-#define WS_THICKFRAME       0x00040000l
-#define WS_MAXIMIZE         0x01000000l
-#define WS_MAXIMIZEBOX      0x00010000l
-#define WS_MINIMIZE         0x20000000l
-#define WS_MINIMIZEBOX      0x00020000l
-#define WS_POPUP            0x80000000l
-#define WS_OVERLAPPED	    0l
+#define WS_VISIBLE          0x10000000
+#define WS_THICKFRAME       0x00040000
+#define WS_MAXIMIZE         0x01000000
+#define WS_MAXIMIZEBOX      0x00010000
+#define WS_MINIMIZE         0x20000000
+#define WS_MINIMIZEBOX      0x00020000
+#define WS_POPUP            0x80000000
+#define WS_OVERLAPPED	    0
 #define WS_OVERLAPPEDWINDOW	(WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX)
-#define CW_USEDEFAULT       0x80000000l
-#define WS_BORDER           0x800000l
-#define WS_CAPTION          0xc00000l
-#define WS_SYSMENU          0x80000l
+#define CW_USEDEFAULT       ((int)0x80000000)
+#define WS_BORDER           0x800000
+#define WS_CAPTION          0xc00000
+#define WS_SYSMENU          0x80000
 
 #define HWND_NOTOPMOST (HWND)(-2)
 #define HWND_TOPMOST   (HWND)(-1)
@@ -855,7 +846,6 @@ DLL_IMPORT HWND     WINAPI SetFocus(HWND hWnd);
 DLL_IMPORT BOOL     WINAPI GetClientRect(HWND hWnd, RECT *lpRect);
 DLL_IMPORT BOOL     WINAPI IsIconic(HWND hWnd);
 DLL_IMPORT HWND     WINAPI GetFocus(void);
-DLL_IMPORT int      WINAPI ShowCursor(BOOL bShow);
 DLL_IMPORT SHORT    WINAPI GetAsyncKeyState(int key);
 DLL_IMPORT BOOL     WINAPI GetCursorPos(POINT *lpPoint);
 DLL_IMPORT BOOL     WINAPI SetCursorPos(int x, int y);
@@ -895,14 +885,6 @@ DLL_IMPORT BOOL WINAPI SwapBuffers(HDC hdc);
 DLL_IMPORT BOOL WINAPI DestroyWindow(HWND hWnd);
 
 #pragma warning(pop)
-
-// end Bill's mini windows.h
-
-// more mini windows.h
-
-#define FAR
-#define NEAR
-#define APIENTRY FAR __stdcall
 
 #define TRUE    1
 #define FALSE 	0
@@ -1023,23 +1005,6 @@ typedef struct _SYSTEMTIME {
     WORD wMilliseconds;
 } SYSTEMTIME, *PSYSTEMTIME, *LPSYSTEMTIME;
 
-typedef struct tagWNDCLASSEXA {
-    UINT        cbSize;
-    /* Win 3.x */
-    UINT        style;
-    WNDPROC     lpfnWndProc;
-    int         cbClsExtra;
-    int         cbWndExtra;
-    HINSTANCE   hInstance;
-    HICON       hIcon;
-    HCURSOR     hCursor;
-    HBRUSH      hbrBackground;
-    LPCSTR      lpszMenuName;
-    LPCSTR      lpszClassName;
-    /* Win 4.0 */
-    HICON       hIconSm;
-} WNDCLASSEXA, *PWNDCLASSEXA, NEAR *NPWNDCLASSEXA, FAR *LPWNDCLASSEXA;
-
 #define WS_EX_NOPARENTNOTIFY    0x00000004L
 #define WS_EX_TOPMOST           0x00000008L
 #define WS_EX_ACCEPTFILES       0x00000010L
@@ -1059,13 +1024,10 @@ typedef struct tagWNDCLASSEXA {
 #define IDC_SIZEWE          MAKEINTRESOURCE(32644)
 #define IDC_SIZENS          MAKEINTRESOURCE(32645)
 
-DLL_IMPORT ATOM WINAPI RegisterClassExA(CONST WNDCLASSEXA *);
-DLL_IMPORT HWND WINAPI CreateWindowExA(DWORD dwExStyle, LPCSTR lpClassName, LPCSTR lpWindowName, DWORD dwStyle, int X, int Y, int nWidth, int nHeight, HWND hWndParent, HMENU hMenu, HINSTANCE hInstance, LPVOID lpParam);
 DLL_IMPORT BOOL WINAPI ShowWindowAsync(HWND hWnd, int nCmdShow);
 
 DLL_IMPORT HCURSOR WINAPI LoadCursorA(HINSTANCE hInstance, LPCSTR lpCursorName);
 DLL_IMPORT HCURSOR WINAPI SetCursor(HCURSOR hCursor);
-DLL_IMPORT int WINAPI ShowCursor(BOOL bShow);
 
 DLL_IMPORT void WINAPI InitializeCriticalSection(LPCRITICAL_SECTION lpCriticalSection);
 DLL_IMPORT void WINAPI EnterCriticalSection(LPCRITICAL_SECTION lpCriticalSection);
@@ -1126,6 +1088,8 @@ DLL_IMPORT HMODULE WINAPI GetModuleHandleA(LPCSTR lpModuleName);
 DLL_IMPORT HANDLE WINAPI GetCurrentProcess(VOID);
 DLL_IMPORT BOOL WINAPI SetPriorityClass(HANDLE hProcess, DWORD dwPriorityClass);
 
+DLL_IMPORT int WINAPI MessageBoxA(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType);
+
 #define BELOW_NORMAL_PRIORITY_CLASS       0x00004000
 #define ABOVE_NORMAL_PRIORITY_CLASS       0x00008000
 #define REALTIME_PRIORITY_CLASS           0x00000100
@@ -1175,9 +1139,30 @@ DLL_IMPORT BOOL WINAPI HeapFree(HANDLE hHeap, DWORD dwFlags, LPVOID lpMem);
 DLL_IMPORT BOOL WINAPI WriteConsoleA(HANDLE hConsoleOutput, CONST VOID * lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved);
 DLL_IMPORT BOOL WINAPI WriteConsoleW(HANDLE hConsoleOutput, CONST VOID * lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved);
 
-// end more mini windows.h
+// WHY THO
 
-// mini GL.h
+typedef struct tagWNDCLASSEXA {
+    UINT        cbSize;
+    /* Win 3.x */
+    UINT        style;
+    WNDPROC     lpfnWndProc;
+    int         cbClsExtra;
+    int         cbWndExtra;
+    HINSTANCE   hInstance;
+    HICON       hIcon;
+    HCURSOR     hCursor;
+    HBRUSH      hbrBackground;
+    LPCSTR      lpszMenuName;
+    LPCSTR      lpszClassName;
+    /* Win 4.0 */
+    HICON       hIconSm;
+} WNDCLASSEXA, *PWNDCLASSEXA, NEAR *NPWNDCLASSEXA, FAR *LPWNDCLASSEXA;
+
+DLL_IMPORT ATOM WINAPI RegisterClassExA(CONST WNDCLASSEXA *);
+DLL_IMPORT HWND WINAPI CreateWindowExA(DWORD dwExStyle, LPCSTR lpClassName, LPCSTR lpWindowName, DWORD dwStyle, int X, int Y, int nWidth, int nHeight, HWND hWndParent, HMENU hMenu, HINSTANCE hInstance, LPVOID lpParam);
+
+
+// OpenGL 
 
 typedef unsigned int GLenum;
 typedef unsigned char GLboolean;

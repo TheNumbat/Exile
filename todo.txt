@@ -15,6 +15,15 @@ features so far:
 		linux platform layer soon...
 	job based thread pool async system, event or callback driven
 
+all includes:
+	#include <stdarg.h>
+	#include <stdint.h>
+	#include <float.h>
+	#include <new>
+	#include <cmath>
+	#include <xmmintrin.h>
+	#include <typeinfo>
+
 immediate to do:
 
 	data structures
@@ -124,6 +133,7 @@ immediate to do:
 	platform
 		Move Modern OGL to platform
 		Add check macro to all platform error-ables
+		Keep window updating during resize/move
 		async
 			File IO
 			Networking
