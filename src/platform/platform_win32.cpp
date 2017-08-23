@@ -80,7 +80,7 @@ platform_error win32_write_stdout(string str) {
 
 	platform_error ret;
 
-	if(WriteConsole(GetStdHandle(STD_OUTPUT_HANDLE), (void*)str.c_str, str.len, 0, 0) == 0) {
+	if(WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE), (void*)str.c_str, str.len, 0, 0) == 0) {
 		ret.good = false;
 		ret.error = GetLastError();
 		return ret;	
@@ -109,21 +109,21 @@ platform_error win32_get_window_size(platform_window* window, i32* w, i32* h) {
 
 void win32_get_timef(string fmt, string* out) {
 
-	i32 len = GetTimeFormat(LOCALE_USER_DEFAULT, 0, null, fmt.c_str, null, 0);
+	i32 len = GetTimeFormatA(LOCALE_USER_DEFAULT, 0, null, fmt.c_str, null, 0);
 
 	out->len = len;
 
-	GetTimeFormat(LOCALE_USER_DEFAULT, 0, null, fmt.c_str, out->c_str, len);
+	GetTimeFormatA(LOCALE_USER_DEFAULT, 0, null, fmt.c_str, out->c_str, len);
 }
 
 string win32_make_timef(string fmt) {
 
-	i32 len = GetTimeFormat(LOCALE_USER_DEFAULT, 0, null, fmt.c_str, null, 0);
+	i32 len = GetTimeFormatA(LOCALE_USER_DEFAULT, 0, null, fmt.c_str, null, 0);
 
 	string ret = make_string(len, &win32_heap_alloc);
 	ret.len = ret.cap;
 
-	GetTimeFormat(LOCALE_USER_DEFAULT, 0, null, fmt.c_str, ret.c_str, len);	
+	GetTimeFormatA(LOCALE_USER_DEFAULT, 0, null, fmt.c_str, ret.c_str, len);	
 
 	return ret;
 }
@@ -477,7 +477,7 @@ platform_error win32_copy_file(string source, string dest, bool overwrite) {
 
 	platform_error ret;
 
-	if(CopyFile(source.c_str, dest.c_str, !overwrite) == 0) {
+	if(CopyFileA(source.c_str, dest.c_str, !overwrite) == 0) {
 		ret.good = false;
 		ret.error = GetLastError();
 		return ret;			
@@ -1094,13 +1094,6 @@ LRESULT CALLBACK window_proc(HWND handle, UINT msg, WPARAM wParam, LPARAM lParam
 	}
 }
 
-#define WGL_CONTEXT_MAJOR_VERSION_ARB     0x2091
-#define WGL_CONTEXT_MINOR_VERSION_ARB     0x2092
-#define WGL_CONTEXT_FLAGS_ARB             0x2094
-#define WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB 0x00000002
-#define WGL_CONTEXT_PROFILE_MASK_ARB      0x9126
-#define WGL_CONTEXT_CORE_PROFILE_BIT_ARB  0x00000001
-
 platform_error win32_create_window(platform_window* window, string title, u32 width, u32 height) {
 
 	platform_error ret;
@@ -1122,12 +1115,12 @@ platform_error win32_create_window(platform_window* window, string title, u32 wi
 	}
 
 	window->window_class = {
-		sizeof(WNDCLASSEX),
+		sizeof(WNDCLASSEXA),
 		CS_HREDRAW | CS_VREDRAW | CS_OWNDC | CS_DBLCLKS,
-		(WNDPROC)window_proc,
+		window_proc,
 		0, 0,
 		instance,
-		0, 0, 0, 0,
+		0, LoadCursorA(0, IDC_ARROW), 0, 0,
 		window->title.c_str, 0
 	};
 
@@ -1239,7 +1232,6 @@ platform_error win32_create_window(platform_window* window, string title, u32 wi
 	// TODO(max): vsync/fullscreen/AA/etc settings
 		// https://blogs.msdn.microsoft.com/oldnewthing/20100412-00/?p=14353
 	wglSwapIntervalEXT(0);
-	SetCursor(LoadCursor(0, IDC_ARROW));
 
 	ShowWindowAsync(window->handle, SW_SHOW);
 

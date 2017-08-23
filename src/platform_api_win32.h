@@ -1,17 +1,19 @@
 #pragma once
 
+#ifdef USE_WINDOWS_H
 #define NOMINMAX           		1
 #define WIN32_LEAN_AND_MEAN		1
 #define WIN32_MEAN_AND_LEAN		1
 #define VC_EXTRALEAN       		1
 #include <windows.h>
 #include <gl/gl.h>
-
-// from windowsx.h
 #define GET_WPARAM(wp, lp)                      (wp)
 #define GET_LPARAM(wp, lp)                      (lp)
 #define GET_X_LPARAM(lp)                        ((int)(short)LOWORD(lp))
 #define GET_Y_LPARAM(lp)                        ((int)(short)HIWORD(lp))
+#else
+#include "platform/windows.h"
+#endif
 
 // API Structures (mark opaque/transparent)
 
@@ -23,7 +25,7 @@ struct platform_window {
 	i32 w = 0, h = 0;
 
 	// Opaque block, do not use outside of platform code
-	WNDCLASSEX window_class				= {};
+	WNDCLASSEXA window_class			= {};
 	HWND handle							= {};
 	HDC device_context					= {};
 	PIXELFORMATDESCRIPTOR pixel_format 	= {};

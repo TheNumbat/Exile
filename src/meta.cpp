@@ -194,7 +194,10 @@ CXChildVisitResult parse_struct_or_union(CXCursor c, CXCursor parent, CXClientDa
 
 	} else if(clang_Cursor_isAnonymous(c)) {
 		
+		struct_def temp = current_struct_def;
+		current_struct_def = struct_def();
 		clang_visitChildren(c, parse_struct_or_union, nullptr);
+		current_struct_def = temp;
 
 	} else if(c.kind == CXCursor_TypeRef) {
 
@@ -237,6 +240,7 @@ CXChildVisitResult do_parse(CXCursor c) {
 		current_struct_def.this_ = c;
 
 		auto name = str(clang_getCursorSpelling(c));
+		if(!name.size()) return CXChildVisit_Continue;
 		current_struct_def.name = name;
 
 		clang_visitChildren(c, parse_struct_or_union, nullptr);
@@ -263,6 +267,7 @@ CXChildVisitResult do_parse(CXCursor c) {
 		current_enum_def.underlying = clang_getEnumDeclIntegerType(c);
 
 		auto name = str(clang_getCursorSpelling(c));
+		if(!name.size()) return CXChildVisit_Continue;
 		current_enum_def.name = name;
 
 		clang_visitChildren(c, parse_enum, nullptr);
@@ -376,8 +381,6 @@ void output_enum(ofstream& fout, const enum_def& e) {
 	auto& name = e.name;
 	auto type = str(clang_getTypeSpelling(e.underlying));
 
-	if(!name.size()) return;
-
 	if(e.members.size() > 128) {
 		cout << "enum " << name << " has too many members!" << endl;
 		return;
@@ -406,8 +409,6 @@ void output_enum(ofstream& fout, const enum_def& e) {
 void output_struct(ofstream& fout, const struct_def& s) {
 
 	auto& name = s.name;
-	if(!name.size()) return; // sort of a hack, this skips anonymous member structures/unions.
-							 // we shouldn't be adding them to the structure defines at all, though?
 
 	auto type = clang_getCursorType(s.this_);
 
@@ -612,6 +613,11 @@ i32 main(i32 argc, char** argv) {
 	clang_visitChildren(cursor,
 	[](CXCursor c, CXCursor parent, CXClientData client_data) {
 
+		// auto loc = clang_getCursorLocation(c);
+		// CXFile file;
+		// clang_getSpellingLocation(loc, &file, nullptr, nullptr, nullptr);
+		// string filestr;
+		// if(file) filestr = str(clang_getFileName(file));
 		if(clang_Location_isInSystemHeader(clang_getCursorLocation(c))) {
 			
 			// skip system files because we don't care about 99% of the types and don't want to bloat our type table

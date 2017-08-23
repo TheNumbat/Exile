@@ -29,7 +29,6 @@ immediate to do:
 			bit mask for occupancy
 			try separate vectors of keys, values, hashes (no map_element)
 		concurrent
-			Replace mutex with CriticalSection on windows! 
 			lock-free queue & stack
 				dequeue for work-stealing
 			vector
@@ -123,6 +122,8 @@ immediate to do:
 		extra kerning pairs
 
 	platform
+		Move Modern OGL to platform
+		Add check macro to all platform error-ables
 		async
 			File IO
 			Networking
