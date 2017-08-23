@@ -14,7 +14,7 @@ Gameplay goals:
 - Engine & Game:
   - C-like C++: C with member functions, function/operator overloading, and some templates (no RAII, no exceptions, no polymorphism, no STL, extremely minimal inheritance)
   - Personal standard library (data structures, type info, platform layer, etc.)
-  - Extremely minimal std-lib (stdint, float, new, intrinsics)
+  - Extremely minimal headers (total: stdint, float, stdarg, new, typeinfo, intrinsics, cmath [will remove])
   - Win32/Unix APIs
 - Metaprogram:
   - libclang for C++ parsing

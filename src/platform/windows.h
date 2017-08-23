@@ -101,7 +101,7 @@ typedef DWORD COLORREF;
 typedef int (WINAPI *FARPROC)();
 typedef int (WINAPI *NEARPROC)();
 typedef int (WINAPI *PROC)();
-typedef LRESULT (CALLBACK *WNDPROC)(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+typedef LRESULT (CALLBACK* WNDPROC)(HWND, UINT, WPARAM, LPARAM);
 
 #if defined(_WIN64)
 typedef unsigned __int64 ULONG_PTR;
@@ -234,18 +234,7 @@ typedef struct _FILETIME {
 	DWORD dwLowDateTime;
 	DWORD dwHighDateTime;
 } FILETIME;
-typedef struct _WIN32_FIND_DATAW {
-	DWORD    dwFileAttributes;
-	FILETIME ftCreationTime;
-	FILETIME ftLastAccessTime;
-	FILETIME ftLastWriteTime;
-	DWORD    nFileSizeHigh;
-	DWORD    nFileSizeLow;
-	DWORD    dwReserved0;
-	DWORD    dwReserved1;
-	wchar_t  cFileName[MAX_PATH];
-	wchar_t  cAlternateFileName[14];
-} WIN32_FIND_DATAW;
+
 typedef struct _WIN32_FILE_ATTRIBUTE_DATA {
 	DWORD    dwFileAttributes;
 	FILETIME ftCreationTime;
@@ -310,58 +299,7 @@ typedef struct _POINTL {
 	LONG x;
 	LONG y;
 } POINTL;
-typedef struct _devicemodew {
-	wchar_t dmDeviceName[CCHDEVICENAME];
-	WORD    dmSpecVersion;
-	WORD    dmDriverVersion;
-	WORD    dmSize;
-	WORD    dmDriverExtra;
-	DWORD   dmFields;
-	union {
-		struct {
-			short dmOrientation;
-			short dmPaperSize;
-			short dmPaperLength;
-			short dmPaperWidth;
-			short dmScale;
-			short dmCopies;
-			short dmDefaultSource;
-			short dmPrintQuality;
-		};
-		struct {
-			POINTL dmPosition;
-			DWORD  dmDisplayOrientation;
-			DWORD  dmDisplayFixedOutput;
-		};
-	};
-	short   dmColor;
-	short   dmDuplex;
-	short   dmYResolution;
-	short   dmTTOption;
-	short   dmCollate;
-	wchar_t dmFormName[CCHFORMNAME];
-	WORD    dmLogPixels;
-	DWORD   dmBitsPerPel;
-	DWORD   dmPelsWidth;
-	DWORD   dmPelsHeight;
-	union {
-		DWORD dmDisplayFlags;
-		DWORD dmNup;
-	};
-	DWORD dmDisplayFrequency;
-#if (WINVER >= 0x0400)
-	DWORD dmICMMethod;
-	DWORD dmICMIntent;
-	DWORD dmMediaType;
-	DWORD dmDitherType;
-	DWORD dmReserved1;
-	DWORD dmReserved2;
-#if (WINVER >= 0x0500) || (_WIN32_WINNT >= 0x0400)
-	DWORD dmPanningWidth;
-	DWORD dmPanningHeight;
-#endif
-#endif
-} DEVMODEW;
+
 typedef struct tagPIXELFORMATDESCRIPTOR {
 	WORD  nSize;
 	WORD  nVersion;
@@ -664,19 +602,14 @@ DLL_IMPORT void   WINAPI GetSystemInfo(SYSTEM_INFO *system_info);
 #define STD_OUTPUT_HANDLE        ((DWORD)-11)
 #define STD_ERROR_HANDLE         ((DWORD)-12)
 
-DLL_IMPORT int           MultiByteToWideChar(UINT code_page, DWORD flags, char const *   multi_byte_str, int multi_byte_len, wchar_t const *wide_char_str,  int wide_char_len);
-DLL_IMPORT int           WideCharToMultiByte(UINT code_page, DWORD flags, wchar_t const *wide_char_str,  int wide_char_len, char const *    multi_byte_str, int multi_byte_len);
 DLL_IMPORT BOOL   WINAPI SetFilePointerEx(HANDLE file, LARGE_INTEGER distance_to_move,
                                              LARGE_INTEGER *new_file_pointer, DWORD move_method);
 DLL_IMPORT BOOL   WINAPI ReadFile        (HANDLE file, void *buffer, DWORD bytes_to_read, DWORD *bytes_read, OVERLAPPED *overlapped);
 DLL_IMPORT BOOL   WINAPI WriteFile       (HANDLE file, void const *buffer, DWORD bytes_to_write, DWORD *bytes_written, OVERLAPPED *overlapped);
-DLL_IMPORT HANDLE WINAPI CreateFileW     (wchar_t const *path, DWORD desired_access, DWORD share_mode,
-                                             SECURITY_ATTRIBUTES *, DWORD creation_disposition,
-                                             DWORD flags_and_attributes, HANDLE template_file);
+
 DLL_IMPORT HANDLE WINAPI GetStdHandle    (DWORD std_handle);
 DLL_IMPORT BOOL   WINAPI GetFileSizeEx   (HANDLE file, LARGE_INTEGER *size);
 DLL_IMPORT BOOL   WINAPI SetEndOfFile    (HANDLE file);
-DLL_IMPORT HANDLE WINAPI FindFirstFileW  (wchar_t const *path, WIN32_FIND_DATAW *data);
 DLL_IMPORT BOOL   WINAPI FindClose       (HANDLE find_file);
 
 DLL_IMPORT HMODULE WINAPI LoadLibraryA  (char const *filename);
@@ -1044,10 +977,8 @@ DLL_IMPORT BOOL WINAPI DestroyWindow(HWND hWnd);
 
 typedef DWORD* PDWORD;
 typedef DWORD* LPDWORD;
-typedef wchar_t* LPWSTR;
-typedef wchar_t* LPCWSTR;
-typedef char* LPCSTR;
 typedef char* LPSTR;
+typedef const char* LPCSTR;
 typedef DWORD LCID;
 typedef void* LPVOID;
 

@@ -1,16 +1,17 @@
 #pragma once
 
-#ifdef USE_WINDOWS_H
+// #define USE_DEFAULT_HEADERS
+
+#ifdef USE_DEFAULT_HEADERS
 #define NOMINMAX           		1
 #define WIN32_LEAN_AND_MEAN		1
 #define WIN32_MEAN_AND_LEAN		1
 #define VC_EXTRALEAN       		1
 #include <windows.h>
 #include <gl/gl.h>
-#define GET_WPARAM(wp, lp)                      (wp)
-#define GET_LPARAM(wp, lp)                      (lp)
-#define GET_X_LPARAM(lp)                        ((int)(short)LOWORD(lp))
-#define GET_Y_LPARAM(lp)                        ((int)(short)HIWORD(lp))
+#include <windowsx.h>
+#include "../../deps/glext.h"
+#include "../../deps/wglext.h"
 #else
 #include "platform/windows.h"
 #endif
