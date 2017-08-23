@@ -63,6 +63,7 @@
 	DLL_IMPORT LRESULT CALLBACK DefWindowProcA(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
 	DLL_IMPORT HMODULE WINAPI GetModuleHandleA(LPCSTR lpModuleName);
 	DLL_IMPORT BOOL WINAPI ShowWindow(HWND hWnd, int nCmdShow);
+	DLL_IMPORT DWORD WINAPI GetLastError(void);
 #else
 	#include <windows.h>
 #endif
@@ -80,7 +81,7 @@ int main() {
 	HINSTANCE instance = GetModuleHandleA(NULL);
 
 	if(instance == NULL) {
-		printf("Instance failed!");
+		printf("Instance failed: %d", GetLastError());
 		return 1;
 	}
 
@@ -95,7 +96,7 @@ int main() {
 	};
 
 	if(RegisterClassExA(&window_class) == 0) {
-		printf("Class failed!");
+		printf("Class failed: %d", GetLastError());
 		return 1;
 	}
 
@@ -103,7 +104,7 @@ int main() {
 			           			  CW_USEDEFAULT, CW_USEDEFAULT, width, height, 0, 0, instance, 0);
 
 	if(!handle) {
-		printf("Window failed!");
+		printf("Window failed: %d", GetLastError());
 		return 1;
 	}
 
