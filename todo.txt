@@ -131,7 +131,6 @@ immediate to do:
 		extra kerning pairs
 
 	platform
-		Move Modern OGL to platform
 		Add check macro to all platform error-ables
 		Keep window updating during resize/move
 		async
