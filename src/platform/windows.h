@@ -46,8 +46,10 @@ typedef unsigned short USHORT;
 typedef unsigned long ULONG;
 typedef unsigned long long ULONGLONG;
 
-typedef UINT WPARAM;
-typedef LONG LPARAM;
+/* ?????????? This is what it needs to be...but this isn't how it is in the default headers */
+typedef ULONGLONG WPARAM;
+typedef LONGLONG LPARAM;
+
 typedef LONG LRESULT;
 typedef LONG HRESULT;
 typedef WORD ATOM;
