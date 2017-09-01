@@ -1,6 +1,6 @@
 #pragma once
 
-#define USE_DEFAULT_HEADERS
+// #define USE_DEFAULT_HEADERS
 
 #ifdef USE_DEFAULT_HEADERS
 #define NOMINMAX           		1

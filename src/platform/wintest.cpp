@@ -20,8 +20,8 @@
 	typedef void* LPVOID;
 	typedef WORD ATOM;
 
-	typedef UINT WPARAM;
-	typedef LONG LPARAM;
+	typedef unsigned __int64 WPARAM;
+	typedef __int64 LPARAM;
 	typedef LONG LRESULT;
 
 	typedef HANDLE HINSTANCE;
@@ -81,14 +81,14 @@ int main() {
 	HINSTANCE instance = GetModuleHandleA(NULL);
 
 	if(instance == NULL) {
-		printf("Instance failed: %d", GetLastError());
+		printf("Instance failed: %z", GetLastError());
 		return 1;
 	}
 
 	WNDCLASSEXA window_class = {
 		sizeof(WNDCLASSEXA),
 		CS_HREDRAW | CS_VREDRAW,
-		window_proc,
+		(WNDPROC)window_proc,
 		0, 0,
 		instance,
 		0, 0, 0, 0,
@@ -96,7 +96,7 @@ int main() {
 	};
 
 	if(RegisterClassExA(&window_class) == 0) {
-		printf("Class failed: %d", GetLastError());
+		printf("Class failed: %z", GetLastError());
 		return 1;
 	}
 
@@ -104,7 +104,7 @@ int main() {
 			           			  CW_USEDEFAULT, CW_USEDEFAULT, width, height, 0, 0, instance, 0);
 
 	if(!handle) {
-		printf("Window failed: %d", GetLastError());
+		printf("Window failed: %z", GetLastError());
 		return 1;
 	}
 
