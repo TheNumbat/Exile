@@ -28,6 +28,7 @@ immediate to do:
 
 	BUGS
 		allocator function pointers are invalidated on DLL reload
+		assure LPARAM/WPARAM size based on 32/64 bit
 
 	data structures
 		list (same API as vector, but chunked & no-copy)

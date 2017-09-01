@@ -173,6 +173,7 @@ extern "C" void on_reload(platform_api* api, game_state* state) {
 
 	ogl_load_global_funcs();
 
+	state->evt.start(); // NOTE(max): needed to reset platform function pointer pointing into the game DLL
 	state->log.start();
 	state->thread_pool.start_all();
 

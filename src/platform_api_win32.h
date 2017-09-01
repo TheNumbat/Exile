@@ -1,20 +1,6 @@
 #pragma once
 
-// #define USE_DEFAULT_HEADERS
-
-#ifdef USE_DEFAULT_HEADERS
-#define NOMINMAX           		1
-#define WIN32_LEAN_AND_MEAN		1
-#define WIN32_MEAN_AND_LEAN		1
-#define VC_EXTRALEAN       		1
-#include <windows.h>
-#include <windowsx.h>
-#include <gl/gl.h>
-#include "../../deps/glext.h"
-#include "../../deps/wglext.h"
-#else
 #include "platform/windows.h"
-#endif
 
 // API Structures (mark opaque/transparent)
 

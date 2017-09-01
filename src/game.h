@@ -18,7 +18,7 @@ struct game_state {
 
 	platform_allocator log_a, ogl_a, gui_a, dbg_a, evt_a, thread_pool_a; // idk about this
 
-	platform_window window 	= {};
+	platform_window window;
 
 	// testing
 	asset_store default_store;

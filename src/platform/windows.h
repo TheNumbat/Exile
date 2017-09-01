@@ -1314,6 +1314,12 @@ DLL_IMPORT void APIENTRY glDrawArrays (GLenum mode, GLint first, GLsizei count);
 DLL_IMPORT void APIENTRY glDrawBuffer (GLenum mode);
 DLL_IMPORT void APIENTRY glDrawElements (GLenum mode, GLsizei count, GLenum type, const GLvoid *indices);
 
+// wglext
+
+typedef HGLRC (WINAPI *wglCreateContextAttribsARB_t)(HDC hDC, HGLRC hShareContext,
+													 const int* attribList);
+typedef BOOL  (WINAPI *wglSwapIntervalEXT_t)(int interval);
+
 // glext
 
 #define GL_FRAGMENT_SHADER                0x8B30

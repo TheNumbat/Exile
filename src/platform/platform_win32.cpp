@@ -7,15 +7,11 @@ extern "C" {
     __declspec(dllexport) bool AmdPowerXpressRequestHighPerformance = true;
 }
 
-typedef HGLRC (WINAPI *wglCreateContextAttribsARB_t)(HDC hDC, HGLRC hShareContext,
-													const int* attribList);
-typedef BOOL  (WINAPI *wglSwapIntervalEXT_t)(int interval);
+wglCreateContextAttribsARB_t	wglCreateContextAttribsARB;
+wglSwapIntervalEXT_t 			wglSwapIntervalEXT;
 
-static wglCreateContextAttribsARB_t wglCreateContextAttribsARB;
-static wglSwapIntervalEXT_t 		wglSwapIntervalEXT;
-
-static void (*global_enqueue)(void* queue_param, platform_event evt) = null;
-static void* global_enqueue_param = null;
+void (*global_enqueue)(void* queue_param, platform_event evt) = null;
+void* global_enqueue_param = null;
 
 platform_api platform_build_api() {
 
