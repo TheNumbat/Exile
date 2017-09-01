@@ -1,5 +1,5 @@
 
-#include "stdio.h"
+#include <stdio.h>
 
 #if 1
 	#define DLL_IMPORT extern "C" __declspec(dllimport)
