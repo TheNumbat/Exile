@@ -26,6 +26,9 @@ all includes:
 
 immediate to do:
 
+	BUGS
+		allocator function pointers are invalidated on DLL reload
+
 	data structures
 		list (same API as vector, but chunked & no-copy)
 		buffer (fill and output to callback)

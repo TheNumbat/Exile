@@ -426,7 +426,7 @@ u32 string::write_ptr(u32 idx, void* val, _type_info* info, bool size) { PROF
 	if (info->_ptr.to == 0) {
 		idx = write(idx, string_literal("UNDEF|"), size);
 
-		if (*(u8**)&val == null) {
+		if (*(u8**)val == null) {
 			idx = write(idx, string_literal("null"), size);
 		} else {
 			idx = write_u64(idx, 16, (u64)(*(u8**)val), size, sizeof(void*) == 8 ? 16 : 8);

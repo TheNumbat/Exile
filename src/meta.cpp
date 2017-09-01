@@ -40,7 +40,7 @@ struct struct_def {
 
 	vector<function<void(ofstream&)>> templ_deps;
 	vector<function<void(ofstream&)>> arr_deps;
-	vector<function<void(ofstream&)>> func_deps;
+	vector<function<void(ofstream&)>> ptr_deps;
 };
 
 // NOTE(max): I realized that instead of the whole done system I could've just used
@@ -72,6 +72,7 @@ bool is_fwd_decl(CXCursor c);
 CXChildVisitResult parse_enum(CXCursor c, CXCursor parent, CXClientData client_data);
 CXChildVisitResult parse_struct_or_union(CXCursor c, CXCursor parent, CXClientData client_data);
 CXChildVisitResult do_parse(CXCursor c);
+void try_add_template_dep(CXType type);
 
 void output_pre(ofstream& fout);
 void output_post(ofstream& fout);
@@ -156,6 +157,26 @@ CXChildVisitResult parse_enum(CXCursor c, CXCursor parent, CXClientData client_d
 	return CXChildVisit_Continue;
 }
 
+void try_add_template_dep(CXType type) {
+	i32 num_args = clang_Type_getNumTemplateArguments(type);
+	if(num_args != -1 && !current_struct_def.is_template) {
+		auto instname = str(clang_getTypeSpelling(type));
+
+		instname = instname.substr(0, instname.find_first_of("<"));
+		auto entry = find_if(structs.begin(), structs.end(), [instname](struct_def& def) -> bool { return instname == def.name; });
+		if(entry != structs.end()) {
+			vector<CXType> instantiation;
+
+			for(u32 i = 0; i < (u32)num_args; i++) {
+				instantiation.push_back(clang_Type_getTemplateArgumentAsType(type, i));
+			}
+
+			auto def = *entry;
+			current_struct_def.templ_deps.push_back([instantiation, def](ofstream& fout) -> void { output_template_struct(fout, def, make_translation(def, instantiation)); });
+		}
+	}
+}
+
 CXChildVisitResult parse_struct_or_union(CXCursor c, CXCursor parent, CXClientData client_data) {
 
 	if(c.kind == CXCursor_FieldDecl) {
@@ -166,31 +187,17 @@ CXChildVisitResult parse_struct_or_union(CXCursor c, CXCursor parent, CXClientDa
 		}
 
 		if(type.kind == CXType_Pointer) {
-			auto func_type = clang_getPointeeType(type);
-			if(clang_getNumArgTypes(func_type) != -1) {
-				current_struct_def.func_deps.push_back([func_type, c](ofstream& fout) -> void {output_func(fout, func_type, c);});						
+			auto ptr_type = clang_getPointeeType(type);
+			if(clang_getNumArgTypes(ptr_type) != -1) {
+				current_struct_def.ptr_deps.push_back([ptr_type, c](ofstream& fout) -> void {output_func(fout, ptr_type, c);});						
+			} else {
+			
+				try_add_template_dep(ptr_type);
 			}
 		}
 
 		current_struct_def.members.push_back(c);
-
-		i32 num_args = clang_Type_getNumTemplateArguments(type);
-		if(num_args != -1 && !current_struct_def.is_template) {
-			auto instname = str(clang_getTypeSpelling(type));
-
-			instname = instname.substr(0, instname.find_first_of("<"));
-			auto entry = find_if(structs.begin(), structs.end(), [instname](struct_def& def) -> bool { return instname == def.name; });
-			if(entry != structs.end()) {
-				vector<CXType> instantiation;
-
-				for(u32 i = 0; i < (u32)num_args; i++) {
-					instantiation.push_back(clang_Type_getTemplateArgumentAsType(type, i));
-				}
-
-				auto def = *entry;
-				current_struct_def.templ_deps.push_back([instantiation, def](ofstream& fout) -> void { output_template_struct(fout, def, make_translation(def, instantiation)); });
-			}
-		}
+		try_add_template_dep(type);
 
 	} else if(clang_Cursor_isAnonymous(c)) {
 		
@@ -410,6 +417,7 @@ void output_enum(ofstream& fout, const enum_def& e) {
 void output_struct(ofstream& fout, const struct_def& s) {
 
 	auto& name = s.name;
+	if(find_if(done.begin(), done.end(), [&](const auto& val) -> bool {return val.first.name == s.name;}) != done.end()) return;
 
 	auto type = clang_getCursorType(s.this_);
 
@@ -427,7 +435,7 @@ void output_struct(ofstream& fout, const struct_def& s) {
 	for(auto& f : s.arr_deps) {
 		f(fout);
 	}
-	for(auto& f : s.func_deps) {
+	for(auto& f : s.ptr_deps) {
 		f(fout);
 	}
 
@@ -454,6 +462,8 @@ void output_struct(ofstream& fout, const struct_def& s) {
 
 	fout << "\t\ttype_table.insert(this_type_info.hash, this_type_info, false);" << endl
 		 << "\t}();" << endl << endl;
+
+	done.push_back({s, {}});
 }
 
 void output_template_struct(ofstream& fout, const struct_def& s, const map<string, CXType>& translation) {
@@ -480,7 +490,7 @@ void output_template_struct(ofstream& fout, const struct_def& s, const map<strin
 		for(auto& f : s.arr_deps) {
 			f(fout);
 		}
-		for(auto& f : s.func_deps) {
+		for(auto& f : s.ptr_deps) {
 			f(fout);
 		}
 
