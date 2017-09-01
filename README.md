@@ -1,5 +1,5 @@
 # exile
-Handmade-style voxel engine &amp; game.
+Handmade-style voxel engine &amp; game.  
 
 Objective is to create a featureful low-level programming environment & voxel game engine with zero or minimal libraries, to dig into and perfect critical and noncritical systems, and to create a modded-minecraft-ish game on top of the engine.
 
