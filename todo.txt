@@ -95,9 +95,8 @@ immediate to do:
 		stop sending mesh every frame (see OpenGL)
 		fonts
 			we only need alpha data from font textures - compress
-			maybe don't pack a bunch of different sizes, just pack the TTF
-			 and use stb_tt to regenerate correctly sized fonts when they're
-			 needed. Do we really need this, though?
+			just pack the TTF and use stb_tt to asynchronously cache correctly sized fonts
+			when they're needed. 
 		widgets
 			clipping/wrapping/auto-layout
 			dividers
