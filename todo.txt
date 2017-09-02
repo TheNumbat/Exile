@@ -79,6 +79,7 @@ immediate to do:
 			functions
 			display - hierarchal, per time, etc. See Code Modification Jai Demo
 		Interesting - https://github.com/Srekel/the-debuginator/
+		Do we want to use CaptureStackBackTrace instead of keeping the call stack ourself? Probably...
 
 	log
 		buffer file IO

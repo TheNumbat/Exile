@@ -54,7 +54,7 @@ struct code_context {
 };
 
 #include "alloc.h"
-#include "platform_api.h"
+#include "platform/platform_api.h"
 
 #include "ds/vector.h"
 #include "ds/stack.h"
