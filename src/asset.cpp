@@ -34,20 +34,7 @@ asset* asset_store::get(string name) { PROF
 	return a;
 }
 
-glyph_data asset_store::get_glyph_data(string font_asset_name, u32 codepoint) { 
-
-#ifdef MORE_PROF
-	PROF
-#endif
-
-	asset* a = get(font_asset_name);
-
-	LOG_ASSERT(a->type == asset_type::font);
-
-	return a->font.get_glyph_data(codepoint);
-}
-
-glyph_data _asset_font::get_glyph_data(u32 codepoint) { 
+glyph_data _asset_font::get_glyph(u32 codepoint) { 
 
 #ifdef MORE_PROF
 	PROF
@@ -77,6 +64,19 @@ glyph_data _asset_font::get_glyph_data(u32 codepoint) {
 			return ret;
 		}
 	}
+}
+
+glyph_data asset_store::get_glyph(string font_asset_name, u32 codepoint) { 
+
+#ifdef MORE_PROF
+	PROF
+#endif
+
+	asset* a = get(font_asset_name);
+
+	LOG_ASSERT(a->type == asset_type::font);
+
+	return a->font.get_glyph(codepoint);
 }
 
 bool asset_store::try_reload() { PROF

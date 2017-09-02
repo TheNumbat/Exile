@@ -88,11 +88,11 @@ struct _asset_font {
 	f32 linedist = 0;
 	i32 width    = 0;
 	i32 height   = 0;
-	array<file_glyph_data> 	glyphs;
+	array<file_glyph_data> glyphs;
 
 ///////////////////////////////////////////////////////////////////////////////
 
-	glyph_data get_glyph_data(u32 codepoint);
+	glyph_data get_glyph(u32 codepoint);
 };
 
 struct asset {
@@ -103,7 +103,7 @@ struct asset {
 		_asset_bitmap 	bitmap;
 		_asset_font 	font;
 	};
-	asset() : bitmap(), font() {};
+	asset() {};
 };
 
 struct asset_store {
@@ -125,7 +125,7 @@ struct asset_store {
 	bool try_reload();
 	asset* get(string name);
 
-	glyph_data get_glyph_data(string font_asset_name, u32 codepoint);
+	glyph_data get_glyph(string font_asset_name, u32 codepoint);
 };
 
 #endif

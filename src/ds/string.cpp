@@ -37,7 +37,7 @@ u32 string::write(u32 idx, char ins, bool size) {
 template<typename... Targs>
 void string::writef(string fmt, Targs... args) { PROF
 	u32 idx = _string_printf(*this, 0, fmt, false, args...);
-	out.c_str[idx++] = 0;
+	c_str[idx++] = 0;
 }
 
 template<typename... Targs>
@@ -658,7 +658,7 @@ string make_stringf_a(allocator* a, string fmt, Targs... args) { PROF
 
 	string ret;
 	u32 len = size_stringf(fmt, args...);
-	ret 	= make_string(len, a);
+	ret 	= string::make(len, a);
 	ret.len = len;
 	ret.c_str[len - 1] = 0;
 
