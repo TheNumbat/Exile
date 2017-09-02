@@ -2,6 +2,10 @@
 
 #pragma once
 
+#define EXTERN extern "C"
+#define DLL_EXPORT EXTERN __declspec(dllexport)
+#define DLL_IMPORT EXTERN __declspec(dllimport)
+
 // this file is for both the platform layer and the game - this defines the interface for the game
 
 // Defined 
@@ -264,6 +268,7 @@ struct platform_event {
 
 struct platform_api {
 	bool 			(*platform_is_debugging)()																					= null;
+	void 			(*platform_debug_break)()																					= null;
 	void 			(*platform_set_queue_callback)(void (*enqueue)(void* queue_param, platform_event evt), void* queue_param)	= null;
 	void 			(*platform_pump_events)(platform_window* window)															= null;
 	void 			(*platform_queue_event)(platform_event evt)																	= null;
@@ -311,6 +316,8 @@ struct platform_api {
 	void 			(*platform_get_timef)(string fmt, string* out)																= null;
 	u32			   	(*platform_file_size)(platform_file* file)																	= null;
 };
+
+#include "gl.h"
 
 #ifdef _WIN32
 

@@ -2,8 +2,6 @@
 
 pushd ../build
 
-rm -rf *.pdb
-
 # set Game_DebugCompilerFlags=-Od -MTd -nologo -Gr -EHa -Oi -W4 -Z7 -FC -Fegame.dll -LD -wd4100 -wd4201 -Iw:/build/
 # set Game_ReleaseCompilerFlags=-O2 -MT -nologo -Gr -EHa -W4 -FC -Z7 -Fegame.dll -LD -wd4100 -wd4201 -Iw:/build/
 # set Game_LinkerFlags=/NODEFAULTLIB:MSVCRT /SUBSYSTEM:windows opengl32.lib -PDB:game_%random%.pdb -EXPORT:start_up -EXPORT:main_loop -EXPORT:shut_down -EXPORT:on_reload -EXPORT:on_unload
@@ -18,7 +16,7 @@ rm -rf *.pdb
 
 if [ ! -f asset ]; then
 	echo compiling asset builder
-	g++ -02 -o asset -I../deps/ ../src/asset_builder.cpp
+	g++ -O2 -o asset -I../deps/ ../src/asset_builder.cpp
 fi
 
 if [ ! -f ../data/assets/assets.asset ]; then
@@ -26,10 +24,10 @@ if [ ! -f ../data/assets/assets.asset ]; then
 	./asset ../data/assets/store.txt ../data/assets/assets.asset
 fi
 
-if [ ! -f meta ]; then
+# if [ ! -f meta ]; then
 	echo compiling metaprogram
 	g++ -O2 -o meta -I/usr/lib/llvm-4.0/include/ -L/usr/lib/llvm-4.0/lib/ ../src/meta.cpp -lclang 
-fi
+# fi
 
 echo running metaprogram
 ./meta ../src/game.cpp
@@ -44,9 +42,9 @@ fi
 if [ ! -f main ]; then
 	echo compiling platform layer...
 	if [ "$1" == "release" ]; then
-		cl %Platform_ReleaseCompilerFlags% w:/src/platform/platform_main.cpp /link %Platform_LinkerFlags%
+		g++ -g3 -o platform ../src/platform/platform_main.cpp
 	else
-		cl %Platform_DebugCompilerFlags% w:/src/platform/platform_main.cpp /link %Platform_LinkerFlags%
+		g++ -g3 -o platform ../src/platform/platform_main.cpp
 	fi
 fi
 

@@ -6,7 +6,7 @@
 #include "../basic_types.h"
 #include "platform_strings.h"
 #include "platform_strings.cpp"
-#include "../platform_api.h"
+#include "platform_api.h"
 
 #ifdef _WIN32
 

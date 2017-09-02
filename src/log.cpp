@@ -125,7 +125,7 @@ void log_manager::msgf(string fmt, log_level level, code_context context, Targs.
 
 		if(level == log_level::error) {
 			if(global_api->platform_is_debugging()) {
-				__debugbreak();	
+				global_api->platform_debug_break();
 			}
 #ifdef BLOCK_ON_ERROR
 			global_api->platform_join_thread(&logging_thread, -1);

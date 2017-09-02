@@ -1,6 +1,8 @@
 
 #include "platform_linux.h"
 
+#include "gl.h"
+
 platform_api platform_build_api() {
 
 	platform_api ret;
@@ -52,8 +54,13 @@ platform_api platform_build_api() {
 	ret.platform_get_glproc				= &linux_get_glproc;
 	ret.platform_keydown				= &linux_keydown;
 	ret.platform_is_debugging			= &linux_is_debugging;
+	ret.platform_debug_break			= &linux_debug_break;
 
 	return ret;
+}
+
+void linux_debug_break() {
+
 }
 
 bool linux_is_debugging() {
