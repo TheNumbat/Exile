@@ -22,7 +22,7 @@ struct platform_file_attributes {
 
 struct platform_thread_id {
 	// Transparent
-	
+	u32 id = 0;
 };
 
 bool operator==(platform_thread_id first, platform_thread_id second) {

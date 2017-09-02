@@ -82,7 +82,7 @@ v2 size_text(asset* font, string text_utf8, f32 point) { PROF
 	u32 index = 0;
 	while(u32 codepoint = text_utf8.get_next_codepoint(&index)) {
 
-		glyph_data glyph = font->font.get_glyph_data(codepoint);
+		glyph_data glyph = font->font.get_glyph(codepoint);
 		ret.x += scale * glyph.advance;
 	}
 
@@ -105,7 +105,7 @@ f32 mesh_2d::push_text_line(asset* font, string text_utf8, v2 pos, f32 point, co
 	while(u32 codepoint = text_utf8.get_next_codepoint(&index)) {
 
 		u32 idx = verticies.size;
-		glyph_data glyph = font->font.get_glyph_data(codepoint);
+		glyph_data glyph = font->font.get_glyph(codepoint);
 
 		f32 w = (f32)font->font.width;
 		f32 h = (f32)font->font.height;

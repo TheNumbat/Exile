@@ -606,7 +606,7 @@ template<typename T> inline r2_t<T> operator-(r2_t<T> l, r2_t<T> r) {
 	return sub(l,r);
 }
 
-template<typename T> inline r2_t<T> operator*(r2_t<T> r, T f) {
+template<typename T> inline r2_t<T> operator*(r2_t<T> l, T r) {
 	return mult(l,r);
 }
 
@@ -626,14 +626,14 @@ template<> inline m4 operator*(m4 l, m4 r) {
 	return mult(l,r);
 }
 
-template<typename T> inline m4_t<T> operator*(m4_t<T> m, T s) {
+template<typename T> inline m4_t<T> operator*(m4_t<T> l, T r) {
 	return mult(l,r);
 }
 
-template<typename T> inline v4_t<T> operator*(m4_t<T> m, v4_t<T> v) {
+template<typename T> inline v4_t<T> operator*(m4_t<T> l, v4_t<T> r) {
 	return mult(l,r);
 }
 
-template<typename T> inline m4_t<T> operator/(m4_t<T> m, T s) {
+template<typename T> inline m4_t<T> operator/(m4_t<T> l, T r) {
 	return div(l,r);
 }

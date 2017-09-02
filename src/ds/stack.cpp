@@ -10,7 +10,7 @@ stack<T> stack<T>::make_copy(stack<T> src, allocator* a) { PROF
 
 	stack<T> ret;
 
-	ret.contents = make_vector_copy(src.contents, a);
+	ret.contents = vector<T>::make_copy(src.contents, a);
 
 	return ret;
 }
@@ -20,7 +20,7 @@ stack<T> stack<T>::make_copy_trim(stack<T> src, allocator* a) { PROF
 
 	stack<T> ret;
 
-	ret.contents = make_vector_copy_trim(src.contents, a);
+	ret.contents = vector<T>::make_copy_trim(src.contents, a);
 
 	return ret;
 }
@@ -40,7 +40,7 @@ stack<T> stack<T>::make_copy(stack<T> src) { PROF
 	
 	stack<T> ret;
 
-	ret.contents = make_vector_copy(src.contents);
+	ret.contents = vector<T>::make_copy(src.contents);
 
 	return ret;
 }
@@ -50,7 +50,7 @@ stack<T> stack<T>::make(u32 capacity) { PROF
 
 	stack<T> ret;
 
-	ret.contents = make_vector<T>(capacity);
+	ret.contents = vector<T>::make(capacity);
 
 	return ret;
 }
@@ -117,7 +117,7 @@ template<typename T>
 con_stack<T> con_stack<T>::make(u32 capacity, allocator* a) {
 
 	con_stack<T> ret;
-	ret.contents = make_vector(capacity, a);
+	ret.contents = vector<T>::make(capacity, a);
 	global_api->platform_create_mutex(&ret.mut, false);
 	global_api->platform_create_semaphore(&ret.sem, 0, INT_MAX);
 
@@ -127,7 +127,7 @@ con_stack<T> con_stack<T>::make(u32 capacity, allocator* a) {
 template<typename T>
 con_stack<T> con_stack<T>::make(u32 capacity) {
 
-	return make_con_stack(capacity, CURRENT_ALLOC());
+	return con_stack<T>::make(capacity, CURRENT_ALLOC());
 }
 
 template<typename T>

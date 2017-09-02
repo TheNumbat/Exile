@@ -106,7 +106,7 @@ static thread_local thread_data this_thread_data;
 
 inline code_context _make_context(string file, string function, i32 line);
 
-#define begin_thread(fmt, a, ...) _begin_thread(fmt, a, CONTEXT, __VA_ARGS__);
+#define begin_thread(fmt, a, ...) _begin_thread(fmt, a, CONTEXT, ##__VA_ARGS__);
 template<typename... Targs> void _begin_thread(string fmt, allocator* alloc, code_context start, Targs... args);
 void end_thread();
 
@@ -182,11 +182,11 @@ struct func_scope_nocs {
 #include "alloc.cpp"
 #include "log.cpp"
 #include "events.cpp"
-#include "asset.cpp"
 #include "opengl.cpp"
 #include "render.cpp"
 #include "gui.cpp"
 #include "dbg.cpp"
+#include "asset.cpp"
 
 #include "ds/vector.cpp"
 #include "ds/stack.cpp"

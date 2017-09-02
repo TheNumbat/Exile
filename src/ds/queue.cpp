@@ -175,7 +175,7 @@ con_queue<T> con_queue<T>::make(u32 capacity, allocator* a) { PROF
 template<typename T>
 con_queue<T> con_queue<T>::make(u32 capacity) { PROF
 
-	return make_con_queue<T>(capacity, CURRENT_ALLOC());
+	return con_queue<T>::make(capacity, CURRENT_ALLOC());
 }
 
 template<typename T>

@@ -5,7 +5,11 @@
 
 #include "gl.h"
 
+<<<<<<< HEAD
 #include <X11/X.h> // Included in X11/Xlib.h, but written here for understanding
+=======
+#include <X11/X.h>
+>>>>>>> e67a7edcc970e14a6bb8ed81552ba9053208bf0a
 #include <X11/Xlib.h>
 
 platform_api platform_build_api() {

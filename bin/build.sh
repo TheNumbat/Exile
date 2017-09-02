@@ -34,17 +34,17 @@ echo running metaprogram
 
 echo compiling game lib...
 if [ "$1" == "release" ]; then
-	g++ -shared -O2 -o game.so -Wno-attributes -I../build/ ../src/game.cpp -pthread -lGL 
+	g++ -shared -O2 -fPIC -o game.so -I../build/ ../src/game.cpp -pthread -lGL -Wno-attributes -Wno-invalid-offsetof
 else 
-	g++ -shared -g3 -o game.so -Wno-attributes -I../build/ ../src/game.cpp -pthread -lGL
+	g++ -shared -g3 -fPIC -o game.so -I../build/ ../src/game.cpp -pthread -lGL -Wno-attributes -Wno-invalid-offsetof
 fi 
 
 if [ ! -f main ]; then
 	echo compiling platform layer...
 	if [ "$1" == "release" ]; then
-		g++ -g3 -o platform ../src/platform/platform_main.cpp -Wno-attributes
+		g++ -g3 -o main ../src/platform/platform_main.cpp -Wno-attributes -lX11 -lGL
 	else
-		g++ -g3 -o platform ../src/platform/platform_main.cpp -Wno-attributes
+		g++ -g3 -o main ../src/platform/platform_main.cpp -Wno-attributes -lX11 -lGL 
 	fi
 fi
 

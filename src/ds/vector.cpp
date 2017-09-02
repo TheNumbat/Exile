@@ -13,7 +13,7 @@ template<typename T>
 T* vector<T>::find(T val) { PROF
 
 	T* ret = null;
-	FORVEC(*v, 
+	FORVEC(*this, 
 		if(*it == val) {
 			ret = it;
 			break;
@@ -74,7 +74,7 @@ void vector<T>::qsort(u32 low, u32 high, bool first) { PROF
 template<typename T>
 vector<T> vector<T>::make_copy(vector<T> source, allocator* a) { PROF
 
-	vector<T> ret = make_vector<T>(source.capacity, a);
+	vector<T> ret = vector<T>::make(source.capacity, a);
 
 	if(source.memory) {
 
@@ -89,7 +89,7 @@ vector<T> vector<T>::make_copy(vector<T> source, allocator* a) { PROF
 template<typename T>
 vector<T> vector<T>::make_copy_trim(vector<T> source, allocator* a) { PROF
 
-	vector<T> ret = make_vector<T>(source.size, a);
+	vector<T> ret = vector<T>::make(source.size, a);
 
 	if(source.memory) {
 

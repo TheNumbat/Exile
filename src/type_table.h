@@ -73,7 +73,7 @@ struct _type_info {
 		Type_enum_info   _enum;
 		Type_string_info _string;
 	};
-	_type_info() : _void(), _int(), _float(), _bool(), _ptr(), _func(), _struct(), _enum(), _string() {}
+	_type_info() : _enum() {}
 };
 
 thread_local map<type_id,_type_info> type_table;
