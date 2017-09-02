@@ -64,8 +64,13 @@ platform_api platform_build_api() {
 	ret.platform_get_glproc				= &win32_get_glproc;
 	ret.platform_keydown				= &win32_keydown;
 	ret.platform_is_debugging			= &win32_is_debugging;
+	ret.platform_debug_break			= &win32_debug_break;
 
 	return ret;
+}
+
+void win32_debug_break() {
+	__debugbreak();	
 }
 
 bool win32_is_debugging() {

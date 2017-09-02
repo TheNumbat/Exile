@@ -1,6 +1,6 @@
 #pragma once
 
-#include "platform/windows.h"
+#include "windows.h"
 
 // API Structures (mark opaque/transparent)
 

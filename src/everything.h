@@ -43,6 +43,14 @@
 #define NOREFLECT
 #endif
 
+#ifdef _MSC_VER
+#define __FUNCNAME__ __FUNCSIG__
+#elif defined(__GNUC__)
+#define __FUNCNAME__ __PRETTY_FUNCTION__
+#else
+#define __FUNCNAME__ __func__
+#endif
+
 #include "basic_types.h"
 #include "math.h"
 #include "ds/string.h"
@@ -94,7 +102,7 @@ static thread_local thread_data this_thread_data;
 #define FORARR(a,code) 		FORVECCAP(a,code)
 #define INC__COUNTER__ 		{u32 i = __COUNTER__; i = 0;}
 
-#define CONTEXT _make_context(np_string_literal(__FILE__), np_string_literal(__FUNCSIG__), __LINE__)
+#define CONTEXT _make_context(np_string_literal(__FILE__), np_string_literal(__FUNCNAME__), __LINE__)
 
 inline code_context _make_context(string file, string function, i32 line);
 

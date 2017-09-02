@@ -4,6 +4,7 @@
 platform_api   platform_build_api();
 
 bool linux_is_debugging();
+void linux_debug_break();
 
 platform_error linux_create_window(platform_window* window, string title, u32 width, u32 height);
 platform_error linux_destroy_window(platform_window* window);
