@@ -42,9 +42,9 @@ fi
 if [ ! -f main ]; then
 	echo compiling platform layer...
 	if [ "$1" == "release" ]; then
-		g++ -g3 -o main ../src/platform/platform_main.cpp -Wno-attributes
+		g++ -g3 -o main ../src/platform/platform_main.cpp -Wno-attributes -lX11 -lGL
 	else
-		g++ -g3 -o main ../src/platform/platform_main.cpp -Wno-attributes
+		g++ -g3 -o main ../src/platform/platform_main.cpp -Wno-attributes -lX11 -lGL 
 	fi
 fi
 

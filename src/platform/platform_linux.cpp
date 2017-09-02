@@ -3,6 +3,9 @@
 
 #include "gl.h"
 
+#include <X11/X.h>
+#include <X11/Xlib.h>
+
 platform_api platform_build_api() {
 
 	platform_api ret;
