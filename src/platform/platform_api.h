@@ -1,3 +1,5 @@
+/* Included in platform_main.cpp and the game code */
+
 #pragma once
 
 // this file is for both the platform layer and the game - this defines the interface for the game
