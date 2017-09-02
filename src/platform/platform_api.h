@@ -3,8 +3,17 @@
 #pragma once
 
 #define EXTERN extern "C"
+
+#ifdef _MSC_VER
 #define DLL_EXPORT EXTERN __declspec(dllexport)
 #define DLL_IMPORT EXTERN __declspec(dllimport)
+#elif defined(__GNUC__)
+#define DLL_EXPORT EXTERN __attribute__((dllexport))
+#define DLL_IMPORT EXTERN __attribute__((dllimport))
+#else
+#define DLL_EXPORT
+#define DLL_IMPORT
+#endif
 
 // this file is for both the platform layer and the game - this defines the interface for the game
 
@@ -263,7 +272,7 @@ struct platform_event {
 		_platform_event_mouse 		mouse;
 		_platform_event_async 		async;
 	};
-	platform_event() : type(), window(), key(), mouse() {}; // c++ reee
+	platform_event() : type(), window() {}; // c++ reee
 };
 
 struct platform_api {

@@ -1,39 +1,6 @@
 /* Included in platform_api.h */
 
-<<<<<<< HEAD
-struct platform_window {
-
-};
-
-struct platform_dll {
-
-};
-
-struct platform_file_attributes {
-
-};
-
-struct platform_thread_id {
-
-};
-
-struct platform_thread {
-
-};
-
-struct platform_semaphore {
-
-};
-
-struct platform_mutex {
-
-};
-
-struct platform_file {
-
-};
-=======
-u32 PLATFORM_SHARING_ERROR = 32;
+u32 PLATFORM_SHARING_ERROR = 0;
 
 struct platform_window {
 	// Transparent
@@ -91,4 +58,3 @@ struct platform_file {
 bool operator==(platform_file first, platform_file second) {
 	return false;
 }
->>>>>>> 56b680cb6855c002a04dacb314bb662a4cacb4f6

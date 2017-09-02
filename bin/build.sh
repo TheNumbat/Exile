@@ -24,27 +24,27 @@ if [ ! -f ../data/assets/assets.asset ]; then
 	./asset ../data/assets/store.txt ../data/assets/assets.asset
 fi
 
-# if [ ! -f meta ]; then
+if [ ! -f meta ]; then
 	echo compiling metaprogram
 	g++ -O2 -o meta -I/usr/lib/llvm-4.0/include/ -L/usr/lib/llvm-4.0/lib/ ../src/meta.cpp -lclang 
-# fi
+fi
 
 echo running metaprogram
 ./meta ../src/game.cpp
 
 echo compiling game lib...
 if [ "$1" == "release" ]; then
-	g++ -shared -O2 -o game -I../build/ ../src/game.cpp -pthread -lGL
+	g++ -shared -O2 -o game.so -Wno-attributes -I../build/ ../src/game.cpp -pthread -lGL 
 else 
-	g++ -shared -g3 -o game -I../build/ ../src/game.cpp -pthread -lGL
-fi
+	g++ -shared -g3 -o game.so -Wno-attributes -I../build/ ../src/game.cpp -pthread -lGL
+fi 
 
 if [ ! -f main ]; then
 	echo compiling platform layer...
 	if [ "$1" == "release" ]; then
-		g++ -g3 -o platform ../src/platform/platform_main.cpp
+		g++ -g3 -o platform ../src/platform/platform_main.cpp -Wno-attributes
 	else
-		g++ -g3 -o platform ../src/platform/platform_main.cpp
+		g++ -g3 -o platform ../src/platform/platform_main.cpp -Wno-attributes
 	fi
 fi
 

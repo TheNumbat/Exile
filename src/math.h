@@ -90,10 +90,10 @@ union v3_t {
 	};
 	struct {
 		v2_t<T> xy;
-		T z;
+		T __ignore1;
 	};
 	struct {
-		T x;
+		T __ignore2;
 		v2_t<T> yz;
 	};
 	T f[3] = {};
@@ -132,20 +132,20 @@ union v4_t {
 	};
 	struct {
 		v3_t<T> xyz;
-		T w;
+		T __ignore1;
 	};
 	struct {
 		v3_t<T> rgb;
-		T a;
+		T __ignore2;
 	};
 	struct {
 		v2_t<T> xy;
 		v2_t<T> zw;
 	};
 	struct {
-		T x;
+		T __ignore3;
 		v2_t<T> yz;
-		T w;
+		T __ignore4;
 	};
 	T f[4] = {};
 	v4_t() {};

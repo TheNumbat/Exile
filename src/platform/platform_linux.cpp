@@ -21,7 +21,7 @@ platform_api platform_build_api() {
 	ret.platform_test_file_written		= &linux_test_file_written;
 	ret.platform_copy_file				= &linux_copy_file;
 	ret.platform_heap_alloc				= &linux_heap_alloc;
-	ret.platfomr_heap_realloc			= &linux_heap_realloc;
+	ret.platform_heap_realloc			= &linux_heap_realloc;
 	ret.platform_heap_free				= &linux_heap_free;
 	ret.platform_get_bin_path			= &linux_get_bin_path;
 	ret.platform_create_thread			= &linux_create_thread;
@@ -64,10 +64,8 @@ void linux_debug_break() {
 }
 
 bool linux_is_debugging() {
-	#ifdef NDEBUG
+	
 	return false;
-	#ifndef NDEBUG
-	return true;
 }
 
 platform_error linux_create_window(platform_window* window, string title, u32 width, u32 height) {
@@ -312,37 +310,22 @@ platform_error linux_signal_semaphore(platform_semaphore* sem, i32 times) {
 
 void linux_create_mutex(platform_mutex* mut, bool aquire) {
 
-	platform_error ret;
-
-	return ret;
 }
 
 void linux_destroy_mutex(platform_mutex* mut) {
 
-	platform_error ret;
-
-	return ret;
 }
 
 void linux_aquire_mutex(platform_mutex* mut) {
 
-	platform_mutex_state ret;
-
-	return ret;
 }
 
 void linux_try_aquire_mutex(platform_mutex* mut) {
 
-	platform_mutex_state ret;
-
-	return ret;
 }
 
 void linux_release_mutex(platform_mutex* mut) {
 
-	platform_error ret;
-
-	return ret;
 }
 
 string linux_make_timef(string fmt) {
