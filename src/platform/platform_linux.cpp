@@ -1,7 +1,12 @@
+// Error Code 125 - Cannont connect to X server
+// Error Code 126 - No visual found
 
 #include "platform_linux.h"
 
 #include "gl.h"
+
+#include <X11/X.h> // Included in X11/Xlib.h, but written here for understanding
+#include <X11/Xlib.h>
 
 platform_api platform_build_api() {
 
@@ -69,8 +74,31 @@ bool linux_is_debugging() {
 }
 
 platform_error linux_create_window(platform_window* window, string title, u32 width, u32 height) {
-
 	platform_error ret;
+
+	Display                 *dpy;
+	Window                  root;
+	GLint                   att[] = { GLX_RGBA, GLX_DEPTH_SIZE, 24, GLX_DOUBLEBUFFER, None };
+	XVisualInfo             *vi;
+	Colormap                cmap; // ?
+	XSetWindowAttributes    swa;
+	Window                  win;
+	GLXContext              glc;
+	XWindowAttributes       gwa;
+	XEvent                  xev;
+
+	dpy = XOpenDisplay(NULL); // NULL means that the graphical output is sent to the computer which executes the code
+	if (dpy == NULL) {
+		platform_error.good = false;
+		platform_error.error = 125; // Cannont connect to X server
+	}
+	root = DefaultRootWindow(dpy);
+	vi =glXChooseVisual(dpy, 0, att);
+	if (vi == NULL) {
+		platform_error.good = false;
+		platform_error.error =  126; // No visual found
+	}
+	win = XCreateWindow(dpy, root, 0, 0, 600, 600, 0, vi->depth, InputOut, vi->visual, CWColormap | CWEventMask, *&wa);
 
 	return ret;
 }
