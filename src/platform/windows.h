@@ -161,10 +161,10 @@ typedef struct _SYSTEM_LOGICAL_PROCESSOR_INFORMATION {
 	union {
 		struct {
 			BYTE Flags;
-		} ProcessorCore;
+		};
 		struct {
 			DWORD NodeNumber;
-		} NumaNode;
+		};
 		CACHE_DESCRIPTOR Cache;
 		ULONGLONG        Reserved[2];
 	};

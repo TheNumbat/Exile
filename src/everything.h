@@ -77,10 +77,10 @@ struct thread_data {
 	string name;
 	code_context start_context;
 
-	code_context call_stack[MAX_CALL_STACK_DEPTH];
+	code_context call_stack[MAX_CALL_STACK_DEPTH] = {};
 	u32 call_stack_depth = 0;
 
-	dbg_msg dbg_cache[MAX_DBG_MSG_CACHE];
+	dbg_msg dbg_cache[MAX_DBG_MSG_CACHE] = {};
 	u32 dbg_cache_size = 0;
 };
 

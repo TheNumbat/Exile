@@ -203,9 +203,13 @@ CXChildVisitResult parse_struct_or_union(CXCursor c, CXCursor parent, CXClientDa
 		
 		struct_def temp = current_struct_def;
 		current_struct_def = struct_def();
+		
 		clang_visitChildren(c, parse_struct_or_union, nullptr);
-		current_struct_def = temp;
 
+		temp.members.insert(temp.members.end(), current_struct_def.members.begin(), current_struct_def.members.end());
+
+		current_struct_def = temp;
+		
 	} else if(c.kind == CXCursor_TypeRef) {
 
 		current_struct_def.is_explicit_inst = true;
