@@ -270,7 +270,7 @@ u32 string::write_type(u32 idx, void* val, _type_info* info, bool size) { PROF
 
 u32 string::write_array(u32 idx, void* val, _type_info* info, bool size) { PROF
 
-	// TODO(max): assumes binary compatibility with vector T* first member then u32 size
+	// NOTE(max): assumes binary compatibility with vector T* first member then u32 size
 	return write_vector(idx, val, info, size);
 }
 
@@ -316,7 +316,7 @@ u32 string::write_vector(u32 idx, void* val, _type_info* info, bool size) { PROF
 		return idx;
 	}
 
-	// TODO(max): probably shouldn't hard-code locations of members in vector
+	// NOTE(max): hard-coded order of members in vector
 
 	u32 vec_len = *(u32*)((u8*)val + info->_struct.member_offsets[1]);
 	u8* data = *(u8**)((u8*)val + info->_struct.member_offsets[0]);

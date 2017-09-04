@@ -161,21 +161,16 @@ template union v4_t<i32>;
 template union v4_t<u32>;
 template union v4_t<u8>;
 
-template<typename T>
-union m4_t {
-	T v[16] = {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1}; 
-	T f[4][4]; // column row
+union m4 {
+	f32 v[16] = {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1}; 
+	f32 f[4][4]; // column row
 	struct {
-		T _11, _21, _31, _41;
-		T _12, _22, _32, _42;
-		T _13, _23, _33, _43;
-		T _14, _24, _34, _44;
+		f32 _11, _21, _31, _41;
+		f32 _12, _22, _32, _42;
+		f32 _13, _23, _33, _43;
+		f32 _14, _24, _34, _44;
 	};
 };
-typedef m4_t<f32> m4;
-typedef m4_t<u32> um4;
-template union m4_t<f32>;
-template union m4_t<u32>;
 
 inline u32 mod(u32 dividend, u32 devisor);
 inline f32 _sqrtf(f32 value);
@@ -261,25 +256,24 @@ template<typename T> inline r2_t<T> mult(r2_t<T> r, T f);
 template<typename T> inline r2_t<T> operator*(r2_t<T> r, T f);
 template<typename T> inline bool inside(r2_t<T> r, T x, T y);
 template<typename T> inline bool inside(r2_t<T> r, v2_t<T> v);
-template<typename T> inline m4_t<T> M4D(T diag);
-template<typename T> inline m4_t<T> add(m4_t<T> l, m4_t<T> r);
-template<typename T> inline m4_t<T> operator+(m4_t<T> l, m4_t<T> r);
-template<typename T> inline m4_t<T> sub(m4_t<T> l, m4_t<T> r);
-template<typename T> inline m4_t<T> operator-(m4_t<T> l, m4_t<T> r);
-template<typename T> m4_t<T> mult(m4_t<T> l, m4_t<T> r);
-template<typename T> m4_t<T> operator*(m4_t<T> l, m4_t<T> r);
-template<> inline m4 mult(m4 l, m4 r);
-template<> inline m4 operator*(m4 l, m4 r);
-template<typename T> inline m4_t<T> mult(m4_t<T> m, T s);
-template<typename T> inline v4_t<T> mult(m4_t<T> m, v4_t<T> v);
-template<typename T> inline m4_t<T> operator*(m4_t<T> m, T s);
-template<typename T> inline v4_t<T> operator*(m4_t<T> m, v4_t<T> v);
-template<typename T> inline m4_t<T> div(m4_t<T> m, T s);
-template<typename T> inline m4_t<T> operator/(m4_t<T> m, T s);
-template<typename T> inline m4_t<T> transpose(m4_t<T> m);
-inline m4 ortho(f32 left, f32 right, f32 bot, f32 top, f32 _near, f32 _far);
-inline m4 proj(f32 fov, f32 ar, f32 _near, f32 _far);
-inline m4 translate(v3 trans);
-inline m4 rotate(f32 angle, v3 axis);
-inline m4 scale(v3 scale);
-inline m4 lookAt(v3 eye, v3 center, v3 up);
+
+m4 M4D(f32 diag);
+m4 add(m4 l, m4 r);
+m4 operator+(m4 l, m4 r);
+m4 sub(m4 l, m4 r);
+m4 operator-(m4 l, m4 r);
+m4 mult(m4 l, m4 r);
+m4 operator*(m4 l, m4 r);
+m4 mult(m4 m, f32 s);
+v4 mult(m4 m, v4 v);
+m4 operator*(m4 m, f32 s);
+v4 operator*(m4 m, v4 v);
+m4 div(m4 m, f32 s);
+m4 operator/(m4 m, f32 s);
+m4 transpose(m4 m);
+m4 ortho(f32 left, f32 right, f32 bot, f32 top, f32 _near, f32 _far);
+m4 proj(f32 fov, f32 ar, f32 _near, f32 _far);
+m4 translate(v3 trans);
+m4 rotate(f32 angle, v3 axis);
+m4 scale(v3 scale);
+m4 lookAt(v3 eye, v3 center, v3 up);

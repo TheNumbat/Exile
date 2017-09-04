@@ -338,51 +338,34 @@ template bool inside(r2, v2);
 
 // TODO(max): more SIMD
 // Several of these matrix algorithms adapted from https://github.com/StrangeZak/Handmade-Math
-template<typename T> inline m4_t<T> M4D(T diag) { PROF
-	m4_t<T> ret;
+m4 M4D(f32 diag) { PROF
+	m4 ret;
 	ret._11 = diag;
 	ret._22 = diag;
 	ret._33 = diag;
 	ret._44 = diag;
 	return ret;
 }
-template m4 M4D(f32);
 
-template<typename T> inline m4_t<T> add(m4_t<T> l, m4_t<T> r) { PROF
-	m4_t<T> ret;
+m4 add(m4 l, m4 r) { PROF
+	m4 ret;
 	ret._11 = l._11 + r._11; ret._12 = l._12 + r._12; ret._13 = l._13 + r._13; ret._14 = l._14 + r._14;
 	ret._21 = l._21 + r._21; ret._22 = l._22 + r._22; ret._23 = l._23 + r._23; ret._24 = l._24 + r._24;
 	ret._31 = l._31 + r._31; ret._32 = l._32 + r._32; ret._33 = l._33 + r._33; ret._34 = l._34 + r._34;
 	ret._41 = l._41 + r._41; ret._42 = l._42 + r._42; ret._43 = l._43 + r._43; ret._44 = l._44 + r._44;
 	return ret;
 }
-template m4 add(m4, m4);
 
-template<typename T> inline m4_t<T> sub(m4_t<T> l, m4_t<T> r) { PROF
-	m4_t<T> ret;
+m4 sub(m4 l, m4 r) { PROF
+	m4 ret;
 	ret._11 = l._11 - r._11; ret._12 = l._12 - r._12; ret._13 = l._13 - r._13; ret._14 = l._14 - r._14;
 	ret._21 = l._21 - r._21; ret._22 = l._22 - r._22; ret._23 = l._23 - r._23; ret._24 = l._24 - r._24;
 	ret._31 = l._31 - r._31; ret._32 = l._32 - r._32; ret._33 = l._33 - r._33; ret._34 = l._34 - r._34;
 	ret._41 = l._41 - r._41; ret._42 = l._42 - r._42; ret._43 = l._43 - r._43; ret._44 = l._44 - r._44;
 	return ret;
 }
-template m4 sub(m4, m4);
 
-template<typename T> m4_t<T> mult(m4_t<T> l, m4_t<T> r) { PROF
-	m4_t<T> ret;
-    for(i32 col = 0; col < 4; col++) {
-	    for(i32 row = 0; row < 4; row++) {
-            T sum = 0;
-            for(i32 place = 0; place < 4; place++) {
-                sum += l.f[col][place] * r.f[place][row];
-            }
-            ret.f[col][row] = sum;
-        }
-    }
-    return ret;
-}
-
-template<> inline m4 mult(m4 l, m4 r) { PROF
+m4 mult(m4 l, m4 r) { PROF
     m4 ret;
     __m128 row1 = _mm_load_ps(&r.v[0]);
     __m128 row2 = _mm_load_ps(&r.v[4]);
@@ -405,20 +388,19 @@ template<> inline m4 mult(m4 l, m4 r) { PROF
     return ret;
 }
 
-template<typename T> inline m4_t<T> mult(m4_t<T> m, T s) { PROF
-	m4_t<T> ret;
+m4 mult(m4 m, f32 s) { PROF
+	m4 ret;
 	ret._11 = m._11 * s; ret._12 = m._12 * s; ret._13 = m._13 * s; ret._14 = m._14 * s;
 	ret._21 = m._21 * s; ret._22 = m._22 * s; ret._23 = m._23 * s; ret._24 = m._24 * s;
 	ret._31 = m._31 * s; ret._32 = m._32 * s; ret._33 = m._33 * s; ret._34 = m._34 * s;
 	ret._41 = m._41 * s; ret._42 = m._42 * s; ret._43 = m._43 * s; ret._44 = m._44 * s;
 	return ret;
 }
-template m4 mult(m4, f32);
 
-template<typename T> inline v4_t<T> mult(m4_t<T> m, v4_t<T> v) { PROF
-    v4_t<T> ret;
+v4 mult(m4 m, v4 v) { PROF
+    v4 ret;
     for(i32 row = 0; row < 4; row++) {
-        T sum = 0;
+        f32 sum = 0;
         for(i32 col = 0; col < 4; col++) {
             sum += m.f[row][col] * v.f[col];
         }
@@ -426,29 +408,26 @@ template<typename T> inline v4_t<T> mult(m4_t<T> m, v4_t<T> v) { PROF
     }
     return ret;
 }
-template v4 mult(m4, v4);
 
-template<typename T> inline m4_t<T> div(m4_t<T> m, T s) { PROF
-	m4_t<T> ret;
+m4 div(m4 m, f32 s) { PROF
+	m4 ret;
 	ret._11 = m._11 / s; ret._12 = m._12 / s; ret._13 = m._13 / s; ret._14 = m._14 / s;
 	ret._21 = m._21 / s; ret._22 = m._22 / s; ret._23 = m._23 / s; ret._24 = m._24 / s;
 	ret._31 = m._31 / s; ret._32 = m._32 / s; ret._33 = m._33 / s; ret._34 = m._34 / s;
 	ret._41 = m._41 / s; ret._42 = m._42 / s; ret._43 = m._43 / s; ret._44 = m._44 / s;
 	return ret;
 }
-template m4 div(m4, f32);
 
-template<typename T> inline m4_t<T> transpose(m4_t<T> m) { PROF
-	m4_t<T> ret;
+m4 transpose(m4 m) { PROF
+	m4 ret;
 	ret._11 = m._11; ret._12 = m._21; ret._13 = m._31; ret._14 = m._41;
 	ret._21 = m._12; ret._22 = m._22; ret._23 = m._32; ret._24 = m._42;
 	ret._31 = m._13; ret._32 = m._23; ret._33 = m._33; ret._34 = m._43;
 	ret._41 = m._14; ret._42 = m._24; ret._43 = m._34; ret._44 = m._44;
 	return ret;
 }
-template m4 transpose(m4);
 
-inline m4 ortho(f32 left, f32 right, f32 bot, f32 top, f32 _near, f32 _far) { PROF
+m4 ortho(f32 left, f32 right, f32 bot, f32 top, f32 _near, f32 _far) { PROF
     m4 ret;
     ret.f[0][0] = 2.0f / (right - left);
     ret.f[1][1] = 2.0f / (top - bot);
@@ -460,7 +439,7 @@ inline m4 ortho(f32 left, f32 right, f32 bot, f32 top, f32 _near, f32 _far) { PR
     return ret;
 }
 
-inline m4 proj(f32 fov, f32 ar, f32 _near, f32 _far) { PROF
+m4 proj(f32 fov, f32 ar, f32 _near, f32 _far) { PROF
     m4 ret = M4D(1.0f);
     f32 tan_over_2 = tanf(RADIANS(fov) / 2.0f);
     ret.f[1][1] = 1.0f / tan_over_2;
@@ -472,7 +451,7 @@ inline m4 proj(f32 fov, f32 ar, f32 _near, f32 _far) { PROF
     return ret;
 }
 
-inline m4 translate(v3 trans) { PROF
+m4 translate(v3 trans) { PROF
 	m4 ret = M4D(1.0f);
     ret.f[3][0] = trans.x;
     ret.f[3][1] = trans.y;
@@ -480,7 +459,7 @@ inline m4 translate(v3 trans) { PROF
     return ret;
 }
 
-inline m4 rotate(f32 angle, v3 axis) { PROF
+m4 rotate(f32 angle, v3 axis) { PROF
 
 	m4 ret;
 
@@ -503,7 +482,7 @@ inline m4 rotate(f32 angle, v3 axis) { PROF
 	return ret;
 }
 
-inline m4 scale(v3 scale) { PROF
+m4 scale(v3 scale) { PROF
     m4 ret = M4D(1.0f);
     ret.f[0][0] = scale.x;
     ret.f[1][1] = scale.y;
@@ -511,7 +490,7 @@ inline m4 scale(v3 scale) { PROF
     return ret;
 }
 
-inline m4 lookAt(v3 eye, v3 center, v3 up) { PROF
+m4 lookAt(v3 eye, v3 center, v3 up) { PROF
     m4 ret = M4D(0.0f);
 
     v3 F = normalize(sub(center, eye));
@@ -610,30 +589,26 @@ template<typename T> inline r2_t<T> operator*(r2_t<T> l, T r) {
 	return mult(l,r);
 }
 
-template<typename T> inline m4_t<T> operator+(m4_t<T> l, m4_t<T> r) {
+m4 operator+(m4 l, m4 r) {
 	return add(l,r);
 }
 
-template<typename T> inline m4_t<T> operator-(m4_t<T> l, m4_t<T> r) {
+m4 operator-(m4 l, m4 r) {
 	return sub(l,r);
 }
 
-template<typename T> m4_t<T> operator*(m4_t<T> l, m4_t<T> r) {
+m4 operator*(m4 l, m4 r) {
 	return mult(l,r);
 }
 
-template<> inline m4 operator*(m4 l, m4 r) {
+m4 operator*(m4 l, f32 r) {
 	return mult(l,r);
 }
 
-template<typename T> inline m4_t<T> operator*(m4_t<T> l, T r) {
+v4 operator*(m4 l, v4 r) {
 	return mult(l,r);
 }
 
-template<typename T> inline v4_t<T> operator*(m4_t<T> l, v4_t<T> r) {
-	return mult(l,r);
-}
-
-template<typename T> inline m4_t<T> operator/(m4_t<T> l, T r) {
+m4 operator/(m4 l, f32 r) {
 	return div(l,r);
 }
