@@ -70,6 +70,7 @@ struct code_context {
 #include "ds/queue.h"
 #include "ds/map.h"
 #include "ds/buffer.h"
+#include "ds/heap.h"
 
 #ifdef CONSTRUCT_DS_ELEMENTS
 #include <new>
@@ -190,6 +191,7 @@ struct func_scope_nocs {
 #include "ds/map.cpp"
 #include "ds/threadpool.cpp"
 #include "ds/buffer.cpp"
+#include "ds/heap.cpp"
 
 #include "everything.cpp"
 // /IMPLEMENTATIONS
