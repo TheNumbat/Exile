@@ -26,3 +26,25 @@ struct heap {
 	void reheap_up(u32 node);
 	void reheap_down(u32 root = 0);
 };
+
+template<typename T>
+struct con_heap {
+
+	T* memory = null;
+	u32 size = 0;
+	u32 capacity = 0;
+	allocator* alloc = null;
+
+	platform_mutex 		mut;
+	platform_semaphore 	sem;
+
+///////////////////////////////////////////////////////////////////////////////
+
+	static con_heap<T> make(u32 capacity = 8, allocator* alloc = null);
+	void destroy();
+
+	void push(T value);
+	T wait_pop();
+	bool try_pop(T* out);
+};
+

@@ -30,11 +30,10 @@ struct queue {
 	bool empty();
 };
 
-// TODO(max): Lock-free dequeue for threadpool
-
 // concurrent queue (reuses queue stuff)
 template<typename T>
 struct con_queue { // no inheritance LUL
+	
 	T* memory 		 = null;
 	u32 start 		 = 0, end = 0;
 	u32 capacity 	 = 0;

@@ -250,6 +250,8 @@ u32 string::write_type(u32 idx, void* val, _type_info* info, bool size) { PROF
 			idx = write_map(idx, val, info, size);
 		} else if(info->name == "queue" || info->name == "con_queue") {
 			idx = write_queue(idx, val, info, size);
+		} else if(info->name == "heap" || info->name == "con_heap") {
+			idx = write_heap(idx, val, info, size);
 		} else {
 			idx = write_struct(idx, val, info, size);
 		}
@@ -269,6 +271,12 @@ u32 string::write_type(u32 idx, void* val, _type_info* info, bool size) { PROF
 }
 
 u32 string::write_array(u32 idx, void* val, _type_info* info, bool size) { PROF
+
+	// NOTE(max): assumes binary compatibility with vector T* first member then u32 size
+	return write_vector(idx, val, info, size);
+}
+
+u32 string::write_heap(u32 idx, void* val, _type_info* info, bool size) { PROF
 
 	// NOTE(max): assumes binary compatibility with vector T* first member then u32 size
 	return write_vector(idx, val, info, size);
@@ -330,7 +338,7 @@ u32 string::write_vector(u32 idx, void* val, _type_info* info, bool size) { PROF
 		if(of->type_type == Type::_string) {
 			idx = write(idx, '\"', size);
 		}
-		if(i != len - 1)
+		if(i != vec_len - 1)
 			idx = write(idx, string_literal(", "), size);
 	}
 	idx = write(idx, ']', size);

@@ -10,6 +10,10 @@ heap<T> heap<T>::make(u32 capacity, allocator* alloc) {
 	ret.alloc = alloc;
 	ret.memory = (T*)alloc->allocate_(capacity * sizeof(T), alloc, CONTEXT);
 
+#ifdef CONSTRUCT_DS_ELEMENTS
+	new (ret.memory) T[capacity]();
+#endif
+
 	return ret;
 }	
 
@@ -134,4 +138,60 @@ void heap<T>::reheap_down(u32 root) {
 			reheap_down(r);
 		}
 	}
+}
+
+template<typename T>
+con_heap<T> con_heap<T>::make(u32 capacity, allocator* alloc) {
+
+	con_heap<T> ret;
+	ret.capacity = capacity;
+	
+	if(!alloc) alloc = CURRENT_ALLOC();
+
+	ret.alloc = alloc;
+	ret.memory = (T*)alloc->allocate_(capacity * sizeof(T), alloc, CONTEXT);
+
+#ifdef CONSTRUCT_DS_ELEMENTS
+		new (ret.memory) T[capacity]();
+#endif
+
+	global_api->platform_create_semaphore(&ret.sem, 0, INT_MAX);
+	global_api->platform_create_mutex(&ret.mut, false);
+
+	return ret;
+}
+
+template<typename T>
+void con_heap<T>::destroy() {
+
+	((heap<T>*)this)->destroy(); // TODO(max): this is super kludgy
+	global_api->platform_destroy_mutex(&mut);
+	global_api->platform_destroy_semaphore(&sem);
+}
+
+template<typename T>
+void con_heap<T>::push(T value) {
+
+	global_api->platform_aquire_mutex(&mut);
+	((heap<T>*)this)->push(value);
+	global_api->platform_release_mutex(&mut);
+	global_api->platform_signal_semaphore(&sem, 1);
+}
+
+template<typename T>
+T con_heap<T>::wait_pop() {
+
+	global_api->platform_wait_semaphore(&sem, -1);
+	T ret;
+	try_pop(&ret);
+	return ret;
+}
+
+template<typename T>
+bool con_heap<T>::try_pop(T* out) {
+
+	global_api->platform_aquire_mutex(&mut);
+	bool ret = ((heap<T>*)this)->try_pop(out);
+	global_api->platform_release_mutex(&mut);
+	return ret;
 }

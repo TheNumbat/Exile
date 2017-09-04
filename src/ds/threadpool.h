@@ -20,7 +20,7 @@ struct job {
 };
 
 struct worker_param {
-	heap<job>* job_queue 			   		= null;
+	con_heap<job>* job_queue 			   	= null;
 	map<job_id,platform_semaphore>* running = null;
 	platform_mutex* running_mutex 	   		= null;
 	platform_semaphore* jobs_semaphore 		= null;
@@ -33,7 +33,7 @@ struct threadpool {
 	job_id next_job_id	= 1;
 	bool online    		= false;
 
-	heap<job> jobs;		
+	con_heap<job> jobs;		
 	map<job_id,platform_semaphore> running;
 
 	array<platform_thread> 	threads;

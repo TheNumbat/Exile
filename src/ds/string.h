@@ -45,6 +45,7 @@ struct NOREFLECT string { // no-reflect because hard-coded
 	u32 write_type(u32 idx, void* val, _type_info* info, bool size = false);
 	u32 write_queue(u32 idx, void* val, _type_info* info, bool size = false);
 	u32 write_vector(u32 idx, void* val, _type_info* info, bool size = false);
+	u32 write_heap(u32 idx, void* val, _type_info* info, bool size = false);
 	u32 write_array(u32 idx, void* val, _type_info* info, bool size = false);
 	u32 write_static_array(u32 idx, void* val, _type_info* info, bool size = false);
 	u32 write_map(u32 idx, void* val, _type_info* info, bool size = false);
