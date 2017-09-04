@@ -105,7 +105,7 @@ struct dbg_manager {
 	u32 current_frame = 0;
 	bool really_running = false;
 
-	vector<log_message> log_cache;
+	queue<log_message> log_cache;
 	log_level lvl = log_level::info;
 
 	allocator* alloc = null;

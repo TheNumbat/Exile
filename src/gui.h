@@ -190,7 +190,7 @@ bool gui_begin(string name, r2 first_size = R2f(40,40,0,0), f32 first_alpha = 0,
 bool gui_carrot_toggle(string name, bool initial = false, v2 pos = V2f(0,0), bool* toggleme = null);
 void gui_box_select(i32* selected, i32 num, v2 pos, ...);
 
-void gui_log_wnd(platform_window* win, string name, vector<log_message>* cache);
+void gui_log_wnd(platform_window* win, string name, queue<log_message>* cache);
 
 // these take into account only gscale & win_ignorescale - window + offset transforms occur in gui_ functions
 void push_windowhead(gui_window_state* win);

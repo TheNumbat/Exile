@@ -62,7 +62,6 @@ immediate to do:
 		ideal - no allocate/free per frame
 
 	meta
-		inheritance?
 		printf
 			use string builder?
 		do we want to do a subtype dispatcher? https://youtu.be/lCtALewoFjc?t=1h20m16s

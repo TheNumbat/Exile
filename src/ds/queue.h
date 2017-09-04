@@ -20,6 +20,8 @@ struct queue {
 	bool try_pop(T* out);
 	u32 len();
 
+	T* get(u32 idx);
+
 	T* front();
 	T* back();
 	bool empty();

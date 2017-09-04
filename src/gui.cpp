@@ -317,7 +317,7 @@ bool gui_begin(string name, r2 first_size, f32 first_alpha, gui_window_flags fla
 	return window->active;
 }
 
-void gui_log_wnd(platform_window* win, string name, vector<log_message>* cache) { PROF
+void gui_log_wnd(platform_window* win, string name, queue<log_message>* cache) { PROF
 
 	f32 height = ggui->style.log_win_lines * ggui->style.font + 2 * ggui->style.font + ggui->style.title_padding + ggui->style.win_margin.x + ggui->style.win_margin.w + 7.0f;
 	gui_begin(name, R2(0.0f, win->h - height, (f32)win->w, height), 0.5f, (u16)window_flags::nowininput | (u16)window_flags::nohead | (u16)window_flags::ignorescale, true);
@@ -348,10 +348,10 @@ void gui_log_wnd(platform_window* win, string name, vector<log_message>* cache) 
 		} else {
 			data->u32_1 += ggui->input.scroll;
 		}
-		if(cache->size - data->u32_1 < ggui->style.log_win_lines) {
-			data->u32_1 = cache->size - ggui->style.log_win_lines;
+		if(cache->len() - data->u32_1 < ggui->style.log_win_lines) {
+			data->u32_1 = cache->len() - ggui->style.log_win_lines;
 		}
-		if(cache->size < ggui->style.log_win_lines) {
+		if(cache->len() < ggui->style.log_win_lines) {
 			data->u32_1 = 0;
 		}
 	}
@@ -360,7 +360,7 @@ void gui_log_wnd(platform_window* win, string name, vector<log_message>* cache) 
 
 	current->mesh.push_rect(scroll_back, V4b(ggui->style.win_scroll_back, current->opacity * 255.0f));
 
-	f32 scroll_y = lerpf(current->rect.y + current->rect.h, current->rect.y, (f32)data->u32_1 / (f32)(cache->size - ggui->style.log_win_lines));
+	f32 scroll_y = lerpf(current->rect.y + current->rect.h, current->rect.y, (f32)data->u32_1 / (f32)(cache->len() - ggui->style.log_win_lines));
 	if(scroll_y < current->rect.y + ggui->style.font + ggui->style.title_padding) {
 		scroll_y = current->rect.y + ggui->style.font + ggui->style.title_padding;
 	}
@@ -379,7 +379,7 @@ void gui_log_wnd(platform_window* win, string name, vector<log_message>* cache) 
 	pos = add(current->rect.xy, pos);
 	pos.y -= ggui->style.font + 7.0f;
 
-	for(i32 i = cache->size - data->u32_1; i > 0; i--) {
+	for(i32 i = cache->len() - data->u32_1; i > 0; i--) {
 		log_message* it = cache->get(i - 1);
 
 		string fmt;

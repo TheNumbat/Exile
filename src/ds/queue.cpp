@@ -179,6 +179,22 @@ con_queue<T> con_queue<T>::make(u32 capacity) { PROF
 }
 
 template<typename T>
+T* queue<T>::get(u32 idx) {
+
+#ifdef BOUNDS_CHECK
+	if(memory && idx >= 0 && idx < capacity) {
+		return memory + (start + idx % capacity);
+	} else {
+		
+		LOG_FATAL_F("out of bounds, % < 0 || % >= %", idx, idx, capacity);
+		return null;
+	}
+#else
+	return memory + (start + idx % capacity);
+#endif
+}
+
+template<typename T>
 void con_queue<T>::destroy() { PROF
 
 	((queue<T>*)this)->destroy(); // TODO(max): this is super kludgy

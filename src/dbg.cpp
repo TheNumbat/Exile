@@ -3,7 +3,7 @@ dbg_manager dbg_manager::make(log_manager* log, allocator* alloc) { PROF
 
 	dbg_manager ret;
 
-	ret.log_cache = vector<log_message>::make(1024, alloc);
+	ret.log_cache = queue<log_message>::make(1024, alloc);
 	ret.alloc = alloc;
 
 	log_out dbg_log;
@@ -19,7 +19,7 @@ void dbg_manager::destroy() { PROF
 
 	really_running = false;
 
-	FORVEC(log_cache,
+	FORQ(log_cache,
 		DESTROY_ARENA(&it->arena);
 	)
 
@@ -33,12 +33,11 @@ void dbg_manager::collate() {
 
 void dbg_add_log(log_message* msg) { PROF
 
-	// TODO(max): circular buffer (just use a queue?)
-	if(global_dbg->log_cache.size == global_dbg->log_cache.capacity) {
+	if(global_dbg->log_cache.len() == global_dbg->log_cache.capacity) {
 
 		log_message* m = global_dbg->log_cache.front();
 		DESTROY_ARENA(&m->arena);
-		global_dbg->log_cache.pop_front();
+		global_dbg->log_cache.pop();
 	}
 
 	log_message* m = global_dbg->log_cache.push(*msg);

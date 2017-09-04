@@ -120,7 +120,7 @@ inline T* vector<T>::get_neverprof(u32 idx) {
 		return memory + idx;
 	} else {
 		
-		LOG_FATAL_F("vector_get out of bounds, % < 0 || % >= %", idx, idx, capacity);
+		LOG_FATAL_F("out of bounds, % < 0 || % >= %", idx, idx, capacity);
 		return null;
 	}
 #else
