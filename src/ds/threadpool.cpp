@@ -1,4 +1,8 @@
 
+bool operator>(const job& l, const job& r) {
+	return (u32)l.priority > (u32)r.priority;
+}
+
 threadpool threadpool::make(i32 num_threads_) { PROF
 
 	return make(CURRENT_ALLOC(), num_threads_);
@@ -13,7 +17,7 @@ threadpool threadpool::make(allocator* a, i32 num_threads_) { PROF
 	ret.alloc   = a;
 	ret.running = map<job_id,platform_semaphore>::make(16, hash_u64);
 	ret.threads = array<platform_thread>::make(ret.num_threads, a);
-	ret.jobs    = con_queue<job>::make(16, a);
+	ret.jobs    = heap<job>::make(16, a);
 	ret.worker_data = array<worker_param>::make(ret.num_threads, a);
 	
 	global_api->platform_create_mutex(&ret.running_mutex, false);
@@ -46,9 +50,10 @@ void threadpool::wait_job(job_id id) { PROF
 #endif
 }
 
-job_id threadpool::queue_job(job_work work, void* data) { PROF
+job_id threadpool::queue_job(job_work work, void* data, job_priority priority) { PROF
 
 	job j;
+	j.priority = priority;
 	j.work = work;
 	j.data = data;
 
