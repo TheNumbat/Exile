@@ -9,14 +9,22 @@ const f32 MAP_MAX_LOAD_FACTOR = 0.9f;
 inline u32 hash_u32(u32 key);
 inline u32 hash_u64(u64 key);
 
+#define ELEMENT_OCCUPIED_FLAG 				(1<<31)
+#define ELEMENT_OCCUPIED(me) 				((me).occupied_and_bucket & ELEMENT_OCCUPIED_FLAG)
+#define ELEMENT_SET_OCCUPIED(me) 			((me).occupied_and_bucket |= ELEMENT_OCCUPIED_FLAG)
+#define ELEMENT_CLEAR_OCCUPIED(me) 			((me).occupied_and_bucket &= ~ELEMENT_OCCUPIED_FLAG)
+#define ELEMENT_HASH_BUCKET(me) 			((me).occupied_and_bucket & ~ELEMENT_OCCUPIED_FLAG)
+#define ELEMENT_SET_HASH_BUCKET(me, val) 	((me).occupied_and_bucket = val | ELEMENT_OCCUPIED(me))
+
 template<typename K, typename V>
 struct map_element {
 	K key;
 	V value;
 	// TODO(max): test if storing hashes in a separate array performs better
-	// TODO(max): use less storage than a bool to signify occupation
-	bool occupied = false;
-	u32 hash_bucket = 0;
+
+	// NOTE(max): highest bit of hash_bucket signifies occupation; bucket index can be 31 bits
+	// 			  use macros to get hash_bucket/manipulate values
+	u32 occupied_and_bucket = 0;
 };
 
 template<typename K, typename V>

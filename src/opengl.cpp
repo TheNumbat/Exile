@@ -150,17 +150,17 @@ ogl_manager ogl_manager::make(allocator* a) { PROF
 void ogl_manager::destroy() { PROF
 
 	for(u32 i = 0; i < programs.contents.capacity; i++) {
-		if(programs.contents.get(i)->occupied) {
+		if(ELEMENT_OCCUPIED(*programs.contents.get(i))) {
 			programs.contents.get(i)->value.destroy();
 		}
 	}
 	for(u32 i = 0; i < textures.contents.capacity; i++) {
-		if(textures.contents.get(i)->occupied) {
+		if(ELEMENT_OCCUPIED(*textures.contents.get(i))) {
 			textures.contents.get(i)->value.destroy();
 		}
 	}
 	for(u32 i = 0; i < contexts.contents.capacity; i++) {
-		if(contexts.contents.get(i)->occupied) {
+		if(ELEMENT_OCCUPIED(*contexts.contents.get(i))) {
 			glDeleteVertexArrays(1, &contexts.contents.get(i)->value.vao);
 			glDeleteBuffers(8, contexts.contents.get(i)->value.vbos);
 		}

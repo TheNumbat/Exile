@@ -17,7 +17,7 @@ inline u32 hash_u64(u64 key) { PROF
 	key = (key + (key << 2)) + (key << 4); // key * 21
 	key = key ^ (key >> 28);
 	key = key + (key << 31);
-	return (u32)key;			// TODO(max): uh, is this OK? probably not.
+	return key >> 32;
 }
 
 template<typename K, typename V>
@@ -59,7 +59,7 @@ template<typename K, typename V>
 void map<K,V>::clear() { PROF
 	
 	FORVEC(contents,
-		it->occupied = false;
+		ELEMENT_CLEAR_OCCUPIED(*it);
 	)
 	contents.clear();
 	size = 0;
@@ -78,7 +78,7 @@ void map<K,V>::grow_rehash() { PROF
 	max_probe = 0;
 
 	for(u32 i = 0; i < temp.capacity; i++) {
-		if(temp.get(i)->occupied == true) {
+		if(ELEMENT_OCCUPIED(*temp.get(i))) {
 			insert(temp.get(i)->key, temp.get(i)->value);
 		}
 	}
@@ -121,23 +121,23 @@ V* map<K,V>::insert(K key, V value, bool grow_if_needed) { PROF
 	map_element<K,V> ele;
 
 	if(use_u32hash) {
-		ele.hash_bucket = mod(hash_u32(*((u32*)&key)), contents.capacity);
+		ELEMENT_SET_HASH_BUCKET(ele, mod(hash_u32(*((u32*)&key)), contents.capacity));
 	} else {
-		ele.hash_bucket = mod((*hash)(key), contents.capacity);
+		ELEMENT_SET_HASH_BUCKET(ele, mod((*hash)(key), contents.capacity));
 	}
 	ele.key 		= key;
 	ele.value 		= value;
-	ele.occupied 	= true;
+	ELEMENT_SET_OCCUPIED(ele);
 
 	// robin hood open addressing
 
-	u32 index = ele.hash_bucket;
+	u32 index = ELEMENT_HASH_BUCKET(ele);
 	u32 probe_length = 0;
 	map_element<K,V>* placed_adr = null;
 	for(;;) {
-		if(contents.get(index)->occupied) {
+		if(ELEMENT_OCCUPIED(*contents.get(index))) {
 
-			i32 occupied_probe_length = index - contents.get(index)->hash_bucket;
+			i32 occupied_probe_length = index - ELEMENT_HASH_BUCKET(*contents.get(index));
 			if(occupied_probe_length < 0) {
 				occupied_probe_length += contents.capacity;
 			}
@@ -250,7 +250,7 @@ void map<K,V>::erase(K key) { PROF
 	for(;;) {
 
 		if(contents.get(index)->key == key) {
-			contents.get(index)->occupied = false;
+			ELEMENT_CLEAR_OCCUPIED(*contents.get(index));
 			size--;
 		}
 
