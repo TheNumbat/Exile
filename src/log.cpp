@@ -46,6 +46,12 @@ void log_manager::destroy() { PROF
 		stop();
 	}
 
+	FORVEC(out,
+		if(!it->custom) {
+			it->file.destroy();
+		}
+	)
+
 	out.destroy();
 	message_queue.destroy();
 	global_api->platform_destroy_semaphore(&logging_semaphore);
@@ -70,7 +76,7 @@ void log_manager::pop_context() { PROF_NOCS
 void log_manager::add_file(platform_file file, log_level level) { PROF
 
 	log_out lfile;
-	lfile.file = file;
+	lfile.file = buffer<platform_file,1024>::make(write_file_wrapper, file);
 	lfile.level = level;
 	out.push(lfile);
 
@@ -91,7 +97,8 @@ void log_manager::print_header(log_out output) { PROF
 		
 		string header = string::makef(string_literal("%-8 [%-36] [%-20] [%-5] %-2\r\n"), string_literal("time"), string_literal("thread/context"), string_literal("file:line"), string_literal("level"), string_literal("message"));
 
-		global_api->platform_write_file(&output.file, (void*)header.c_str, header.len - 1);
+		output.file.write((void*)header.c_str, header.len - 1);
+		output.file.flush();
 
 		header.destroy();
 
@@ -252,17 +259,6 @@ string log_message::fmt() { PROF
 	return output;	
 }
 
-void log_manager::rem_output(log_out rem) { PROF
-
-	out.erase(rem);
-}
-
-bool operator==(log_out l, log_out r) { PROF
-	if(!(l.level == r.level && l.custom == r.custom)) return false;
-	if(l.custom && l.write == r.write) return true;
-	return l.file == r.file;
-}
-
 i32 log_proc(void* data_) {
 
 	log_thread_param* data = (log_thread_param*)data_;	
@@ -286,7 +282,7 @@ i32 log_proc(void* data_) {
 							if(it->custom) {
 								it->write(&msg);
 							} else {
-								global_api->platform_write_file(&it->file, (void*)output.c_str, output.len - 1);
+								it->file.write(output.c_str, output.len - 1);
 							}
 						}
 					)

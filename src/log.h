@@ -41,7 +41,7 @@ struct log_out {
 	log_level 	  level;
 	bool custom = false;
 	union {
-		platform_file file;
+		buffer<platform_file,1024> file;
 		void (*write)(log_message* msg) = null;
 	};
 	log_out() : file() {}
@@ -79,7 +79,6 @@ struct log_manager {
 	void add_file(platform_file file, log_level level); // call from one thread before starting
 	void print_header(log_out out);
 	void add_output(log_out out);
-	void rem_output(log_out rem);
 
 	template<typename... Targs>
 	void msgf(string fmt, log_level level, code_context context, Targs... args);
@@ -133,7 +132,5 @@ struct log_manager {
 	#define LOG_OGL_F(fmt, ...) 
 	#define INVALID_PATH 
 #endif
-
-bool operator==(log_out l, log_out r);
 
 i32 log_proc(void* data_);

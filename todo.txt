@@ -32,7 +32,6 @@ immediate to do:
 
 	data structures
 		list (same API as vector, but chunked & no-copy)
-		buffer (fill and output to callback)
 		heap (+priority queue)
 		strings
 			string builder
@@ -81,7 +80,6 @@ immediate to do:
 		Do we want to use CaptureStackBackTrace instead of keeping the call stack ourself? Probably...
 
 	log
-		buffer file IO
 		can we remove allocation on message send?
 			pool allocator/free list?
 		colorful console output
