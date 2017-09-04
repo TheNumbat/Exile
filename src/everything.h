@@ -27,7 +27,7 @@
 	#define BOUNDS_CHECK
 	#define BLOCK_ON_ERROR
 	#define DO_PROF	
-	#define MORE_PROF
+	// #define MORE_PROF
 	#define CONSTRUCT_DS_ELEMENTS
 #elif defined(REAL_RELEASE)
 
@@ -94,14 +94,7 @@ struct thread_data {
 
 static thread_local thread_data this_thread_data;
 
-#define FOR(num) 			for(i32 __i = 0; __i < num; __i++)
-#define FORVEC(v,code) 		{u32 __i = 0; for(auto it = (v).memory; it != (v).memory + (v).size; __i++, it++) {code}}
-#define FORVECCAP(v,code) 	{u32 __i = 0; for(auto it = (v).memory; it != (v).memory + (v).capacity; __i++, it++) {code}}
-#define FORVEC_R(v,code)	{u32 __i = (v).size; for(auto it = (v).memory + (v).size; it != (v).memory; __i--, it--) {code}}
-#define FORMAP(m,code) 		{u32 __i = 0; for(auto it = (m).contents.memory; it != (m).contents.memory + (m).contents.capacity; __i++, it++) if(ELEMENT_OCCUPIED(*it)) {code}}
-#define FORQ(q,code)		{u32 __i = (q).start; for(auto it = (q).memory + (q).start; __i != (q).end; ++__i %= (q).capacity, it = &(q).memory[__i]) {code}}
-#define FORARR(a,code) 		FORVECCAP(a,code)
-#define INC__COUNTER__ 		{u32 i = __COUNTER__; i = 0;}
+#define DO(num) for(i32 __i = 0; __i < num; __i++)
 
 #define CONTEXT _make_context(np_string_literal(__FILE__), np_string_literal(__FUNCNAME__), __LINE__)
 

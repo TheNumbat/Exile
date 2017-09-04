@@ -1,6 +1,9 @@
 
 #pragma once
 
+// array foreach
+#define FORARR(a,code) 		FORVECCAP(a,code)
+
 template<typename T>
 struct array {
 	T* memory 		 = null;

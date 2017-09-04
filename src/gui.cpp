@@ -505,9 +505,9 @@ void push_carrot(gui_window_state* win, v2 pos, bool active) { PROF
 	}
 
 	colorf cf = color_to_f(V4b(ggui->style.wid_back, 255));
-	FOR(3) win->mesh.colors.push(cf);
+	DO(3) win->mesh.colors.push(cf);
 
-	FOR(3) win->mesh.texCoords.push(V3(0.0f, 0.0f, 0.0f));
+	DO(3) win->mesh.texCoords.push(V3(0.0f, 0.0f, 0.0f));
 
 	win->mesh.elements.push(V3(idx, idx + 1, idx + 2));
 }
@@ -539,10 +539,10 @@ void push_windowhead(gui_window_state* win) { PROF
 	win->mesh.verticies.push(V2(r.x, r.y + pt));
 	win->mesh.verticies.push(V2(r.x + r.w, r.y + pt));
 
-	FOR(4) win->mesh.texCoords.push(V3f(0,0,0));
+	DO(4) win->mesh.texCoords.push(V3f(0,0,0));
 
 	colorf topf = color_to_f(V4b(ggui->style.win_top, 255));
-	FOR(4) win->mesh.colors.push(topf);
+	DO(4) win->mesh.colors.push(topf);
 
 	win->mesh.elements.push(V3u(idx + 2, idx, idx + 1));
 	win->mesh.elements.push(V3u(idx + 3, idx, idx + 2));
@@ -567,11 +567,11 @@ void push_windowbody(gui_window_state* win) { PROF
 		win->mesh.verticies.push(V2(r.x + r.w, r.y + r.h));
 		win->mesh.verticies.push(V2(r.x + r.w, r.y + pt));
 
-		FOR(4) win->mesh.texCoords.push(V3f(0,0,0));
+		DO(4) win->mesh.texCoords.push(V3f(0,0,0));
 
 		colorf cf = color_to_f(V4b(ggui->style.win_back, win->opacity * 255.0f));
 
-		FOR(4) win->mesh.colors.push(cf);
+		DO(4) win->mesh.colors.push(cf);
 
 		win->mesh.elements.push(V3u(idx, idx + 1, idx + 2));
 		win->mesh.elements.push(V3u(idx, idx + 2, idx + 3));
@@ -586,11 +586,11 @@ void push_windowbody(gui_window_state* win) { PROF
 		win->mesh.verticies.push(V2(r.x + r.w, r.y + r.h - resize_tab.y));
 		win->mesh.verticies.push(V2(r.x + r.w, r.y + pt));
 
-		FOR(5) win->mesh.texCoords.push(V3f(0,0,0));
+		DO(5) win->mesh.texCoords.push(V3f(0,0,0));
 
 		colorf cf = color_to_f(V4b(ggui->style.win_back, win->opacity * 255.0f));
 
-		FOR(5) win->mesh.colors.push(cf);
+		DO(5) win->mesh.colors.push(cf);
 
 		win->mesh.elements.push(V3u(idx, idx + 1, idx + 2));
 		win->mesh.elements.push(V3u(idx, idx + 2, idx + 3));

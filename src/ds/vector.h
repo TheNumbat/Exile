@@ -3,6 +3,11 @@
 
 // don't take addresses of elements in a vector, they will be invalidated if the vector grows
 
+// Vector foreach
+#define FORVEC(v,code) 		{u32 __i = 0; for(auto it = (v).memory; it != (v).memory + (v).size; __i++, it++) {code}}
+#define FORVECCAP(v,code) 	{u32 __i = 0; for(auto it = (v).memory; it != (v).memory + (v).capacity; __i++, it++) {code}}
+#define FORVEC_R(v,code)	{u32 __i = (v).size; for(auto it = (v).memory + (v).size; it != (v).memory; __i--, it--) {code}}
+
 template<typename T>
 struct vector {
 	T* memory 	 	 = null;

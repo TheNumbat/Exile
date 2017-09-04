@@ -1,6 +1,9 @@
 
 #pragma once
 
+// queue foreach
+#define FORQ(q,code)		{u32 __i = (q).start; for(auto it = (q).memory + (q).start; __i != (q).end; ++__i %= (q).capacity, it = &(q).memory[__i]) {code}}
+
 template<typename T>
 struct queue {
 	T* memory 		 = null;

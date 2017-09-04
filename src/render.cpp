@@ -39,10 +39,10 @@ void mesh_2d::push_cutrect(r2 r, f32 round, color c) { PROF
 	verticies.push(V2(r.x + r.w - round, r.y));
 	verticies.push(V2(r.x + round, r.y));
 
-	FOR(8) texCoords.push(V3(0.0f, 0.0f, 0.0f));
+	DO(8) texCoords.push(V3(0.0f, 0.0f, 0.0f));
 
 	colorf cf = color_to_f(c);
-	FOR(8) colors.push(cf);
+	DO(8) colors.push(cf);
 
 	elements.push(V3u(idx, idx + 1, idx + 2));
 	elements.push(V3u(idx, idx + 2, idx + 7));
@@ -61,10 +61,10 @@ void mesh_2d::push_rect(r2 r, color c) { PROF
 	verticies.push(add(r.xy, r.wh));		// BRC
 	verticies.push(V2(r.x + r.w, r.y));	// TRC
 
-	FOR(4) texCoords.push(V3(0.0f, 0.0f, 0.0f));
+	DO(4) texCoords.push(V3(0.0f, 0.0f, 0.0f));
 
 	colorf cf = color_to_f(c);
-	FOR(4) colors.push(cf);
+	DO(4) colors.push(cf);
 
 	elements.push(V3u(idx, idx + 1, idx + 2));
 	elements.push(V3u(idx + 1, idx + 2, idx + 3));
@@ -124,7 +124,7 @@ f32 mesh_2d::push_text_line(asset* font, string text_utf8, v2 pos, f32 point, co
 		texCoords.push(brc);
 		texCoords.push(trc);
 
-		FOR(4) colors.push(cf);
+		DO(4) colors.push(cf);
 
 		elements.push(V3u(idx, idx + 1, idx + 2));
 		elements.push(V3u(idx + 1, idx + 2, idx + 3));
