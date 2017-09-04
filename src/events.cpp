@@ -36,7 +36,7 @@ gui_input_state run_events(game_state* state) { PROF
 			}
 		}
 
-		// Exiting
+		// Exit
 		if(evt.type == platform_event_type::window && evt.window.op == platform_windowop::close) {
 			state->running = false;
 		}
@@ -49,17 +49,9 @@ gui_input_state run_events(game_state* state) { PROF
 			state->window.w = evt.window.x;
 			state->window.h = evt.window.y;
 		}
-		else if(evt.type == platform_event_type::window && evt.window.op == platform_windowop::maximized) {
+		if(evt.type == platform_event_type::window && evt.window.op == platform_windowop::maximized) {
 			state->window.w = evt.window.x;
 			state->window.h = evt.window.y;
-		}
-
-		// Debug stuff
-		if(evt.type == platform_event_type::key && evt.key.flags & (u16)platform_keyflag::release && evt.key.code == platform_keycode::plus) {
-			state->gui.style.gscale *= 1.5f;
-		}
-		if(evt.type == platform_event_type::key && evt.key.flags & (u16)platform_keyflag::release && evt.key.code == platform_keycode::minus) {
-			state->gui.style.gscale /= 1.5f;
 		}
 
 		// GUI: mouse

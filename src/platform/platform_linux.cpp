@@ -60,6 +60,7 @@ platform_api platform_build_api() {
 	ret.platform_keydown				= &linux_keydown;
 	ret.platform_is_debugging			= &linux_is_debugging;
 	ret.platform_debug_break			= &linux_debug_break;
+	ret.platform_set_cursor				= &linux_set_cursor;
 
 	return ret;
 }
@@ -71,6 +72,10 @@ void linux_debug_break() {
 bool linux_is_debugging() {
 	
 	return false;
+}
+
+void linux_set_cursor(cursors c) {
+
 }
 
 platform_error linux_create_window(platform_window* window, string title, u32 width, u32 height) {

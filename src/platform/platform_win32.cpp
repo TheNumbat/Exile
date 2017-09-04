@@ -65,6 +65,7 @@ platform_api platform_build_api() {
 	ret.platform_keydown				= &win32_keydown;
 	ret.platform_is_debugging			= &win32_is_debugging;
 	ret.platform_debug_break			= &win32_debug_break;
+	ret.platform_set_cursor				= &win32_set_cursor;
 
 	return ret;
 }
@@ -75,6 +76,36 @@ void win32_debug_break() {
 
 bool win32_is_debugging() {
 	return IsDebuggerPresent() == TRUE;
+}
+
+void win32_set_cursor(cursors c) {
+
+	switch(c) {
+	case cursors::pointer : {
+		SetCursor(LoadCursorA(0, IDC_ARROW));
+		break;
+	}
+	case cursors::crosshair : {
+		SetCursor(LoadCursorA(0, IDC_CROSS));
+		break;
+	}
+	case cursors::hand : {
+		SetCursor(LoadCursorA(0, IDC_HAND));
+		break;
+	}
+	case cursors::help : {
+		SetCursor(LoadCursorA(0, IDC_HELP));
+		break;
+	}
+	case cursors::I : {
+		SetCursor(LoadCursorA(0, IDC_IBEAM));
+		break;
+	}
+	case cursors::hourglass : {
+		SetCursor(LoadCursorA(0, IDC_WAIT));
+		break;
+	}
+	}
 }
 
 platform_error win32_write_stdout(string str) {
@@ -890,6 +921,12 @@ LRESULT CALLBACK window_proc(HWND handle, UINT msg, WPARAM wParam, LPARAM lParam
 			evt.window.y = (i16)HIWORD(lParam);
 			global_enqueue(global_enqueue_param, evt);
 			return 0;
+		}
+		case WM_SETCURSOR: {
+			evt.type = platform_event_type::window;
+			evt.window.op = platform_windowop::setcursor;
+			global_enqueue(global_enqueue_param, evt);
+			return DefWindowProcA(handle, msg, wParam, lParam);
 		}
 
 		// keyboard messages

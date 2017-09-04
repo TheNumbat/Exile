@@ -217,6 +217,15 @@ enum class platform_mouseflag : u16 {
 	move    = 1<<9,
 };
 
+enum class cursors : u8 {
+	pointer,
+	crosshair,
+	hand,
+	help,
+	I,
+	hourglass
+};
+
 // TODO(max): cursors
 enum class platform_windowop : u8 {
 	none,
@@ -229,6 +238,7 @@ enum class platform_windowop : u8 {
 	restored,	// WM_SHOWWINDOW
 	focused,	// WM_ACTIVATEAPP
 	unfocused,	// WM_ACTIVATEAPP
+	setcursor, 	// WM_SETCURSOR
 	close,		// WM_CLOSE, WM_DESTROY, WM_QUIT
 };
 
@@ -278,6 +288,7 @@ struct platform_event {
 struct platform_api {
 	bool 			(*platform_is_debugging)()																					= null;
 	void 			(*platform_debug_break)()																					= null;
+	void 			(*platform_set_cursor)(cursors c)																			= null;
 	void 			(*platform_set_queue_callback)(void (*enqueue)(void* queue_param, platform_event evt), void* queue_param)	= null;
 	void 			(*platform_pump_events)(platform_window* window)															= null;
 	void 			(*platform_queue_event)(platform_event evt)																	= null;

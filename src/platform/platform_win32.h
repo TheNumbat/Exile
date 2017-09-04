@@ -5,6 +5,7 @@ platform_api   platform_build_api();
 
 bool win32_is_debugging();
 void win32_debug_break();
+void win32_set_cursor(cursors c);
 
 platform_error win32_create_window(platform_window* window, string title, u32 width, u32 height);
 platform_error win32_destroy_window(platform_window* window);
