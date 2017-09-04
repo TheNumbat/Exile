@@ -85,16 +85,6 @@ extern "C" game_state* start_up(platform_api* api) {
 
 	// LOG_INFO_F("%", state); // Don't do this anymore, it's 409 thousand characters and will only grow
 
-	heap<u32> h = heap<u32>::make();
-	DO(10) h.push(__i);
-	LOG_INFO_F("%", h);
-	h.destroy();
-
-	vector<u32> v = vector<u32>::make();
-	DO(10) v.push(__i);
-	LOG_INFO_F("%", v);
-	v.destroy();
-
 	state->dbg.really_running = true;
 	state->running = true;
 	return state;
