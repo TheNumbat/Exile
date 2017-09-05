@@ -77,4 +77,4 @@ const string log_html_footer = np_string_literal(R"STR(
 </html>
 )STR");
 
-const stirng log_html_msg = np_string_literal(R"STR(<tr><td class="time">%</td><td class = "cstack">%</td><td class = "location">%</td><td class = "level">%</td><td class = "message">%</td></tr>)STR""\n");
+const string log_html_msg = np_string_literal(R"STR(<tr><td class="time">%</td><td class = "cstack">%</td><td class = "location">%</td><td class = "level">%</td><td class = "message">%</td></tr>)STR""\n");
