@@ -615,7 +615,8 @@ void debug_proc(GLenum glsource, GLenum gltype, GLuint id, GLenum severity, GLsi
 		LOG_WARN_F("LOW OpenGL: % SOURCE: % TYPE: %", message, source, type);
 		break;
 	case GL_DEBUG_SEVERITY_NOTIFICATION:
-		LOG_OGL_F("NOTF OpenGL: % SOURCE: % TYPE: %", message, source, type);
+		// TODO(max): maybe re-enable when we stop updating the buffers every frame
+		// LOG_OGL_F("NOTF OpenGL: % SOURCE: % TYPE: %", message, source, type);
 		break;
 	}
 }

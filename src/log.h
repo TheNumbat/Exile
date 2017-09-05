@@ -7,8 +7,8 @@
 
 enum class log_level : u8 {
 	none = 0,
-	ogl,		// gratuitous opengl info
 	alloc,		// super gratuitous allocation info
+	ogl,		// opengl info (ignores notifications)
 	debug,		// gratuitous info
 	info,		// relevant info
 	warn,		// shouldn't happen, debug later

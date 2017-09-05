@@ -306,12 +306,11 @@ i32 log_proc(void* data_) {
 
 			if(msg.msg.c_str != null) {
 				
-				string output;
 				PUSH_ALLOC(data->scratch) {
 					
 					FORVEC(*data->out,
 
-						output = fmt_msg(&msg, it->type);
+						string output = fmt_msg(&msg, it->type);
 
 						if(it->level <= msg.level) {
 							if(it->type == log_out_type::custom) {
