@@ -5,7 +5,7 @@ typedef u32 shader_program_id;
 typedef u32 texture_id;
 typedef u32 context_id;
 
-enum class render_command_type {
+enum class render_command_type : u8 {
 	none,
 	mesh_2d,
 	mesh_3d,

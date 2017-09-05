@@ -7,13 +7,19 @@
 
 enum class log_level : u8 {
 	none = 0,
-	alloc,		// super gratuitous allocation info
 	ogl,		// gratuitous opengl info
+	alloc,		// super gratuitous allocation info
 	debug,		// gratuitous info
 	info,		// relevant info
 	warn,		// shouldn't happen, debug later
 	error,		// shouldn't happen, debug now
 	fatal,		// basically assert(false), hangs the thread and will exit the program after output
+};
+
+enum class log_out_type : u8 {
+	plaintext,
+	html,
+	custom,
 };
 
 struct log_message {
@@ -29,7 +35,6 @@ struct log_message {
 ///////////////////////////////////////////////////////////////////////////////
 
 	// allocate strings with current allocator
-	string fmt();
 	string fmt_time(); // this takes the current time?? TODO(max): real timers
 	string fmt_call_stack();
 	string fmt_file_line();
@@ -37,9 +42,11 @@ struct log_message {
 	string fmt_level();
 };
 
+string fmt_msg(log_message* msg, log_out_type type);
+
 struct log_out {
-	log_level 	  level;
-	bool custom = false;
+	log_level 	 level = log_level::debug;
+	log_out_type type  = log_out_type::plaintext;
 	union {
 		buffer<platform_file,1024> file;
 		void (*write)(log_message* msg) = null;
@@ -76,8 +83,9 @@ struct log_manager {
 	void push_context(string context, code_context fake);
 	void pop_context();
 
-	void add_file(platform_file file, log_level level); // call from one thread before starting
-	void print_header(log_out out);
+	void add_file(platform_file file, log_level level, log_out_type type = log_out_type::plaintext); // call from one thread before starting
+	void print_header(log_out* out);
+	void print_footer(log_out* out);
 	void add_output(log_out out);
 
 	template<typename... Targs>

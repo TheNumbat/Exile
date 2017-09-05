@@ -81,7 +81,6 @@ immediate to do:
 		colorful console output
 		keep & output statistics
 		discriminate output style types
-			custom function
 			plaintext
 			HTML
 

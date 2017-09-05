@@ -47,7 +47,8 @@ void log_manager::destroy() { PROF
 	}
 
 	FORVEC(out,
-		if(!it->custom) {
+		print_footer(it);
+		if(it->type != log_out_type::custom) {
 			it->file.destroy();
 		}
 	)
@@ -73,34 +74,57 @@ void log_manager::pop_context() { PROF_NOCS
 	this_thread_data.call_stack_depth--;
 }
 
-void log_manager::add_file(platform_file file, log_level level) { PROF
+void log_manager::add_file(platform_file file, log_level level, log_out_type type) { PROF
 
 	log_out lfile;
+	lfile.type = type;
 	lfile.file = buffer<platform_file,1024>::make(write_file_wrapper, file);
 	lfile.level = level;
+	
+	print_header(&lfile);
 	out.push(lfile);
-
-	print_header(lfile);
 }
 
 void log_manager::add_output(log_out output) { PROF
 
-	out.push(output);
-	if(!output.custom) {
-		print_header(output);
+	if(output.type != log_out_type::custom) {
+		print_header(&output);
 	}
+
+	out.push(output);
 }
 
-void log_manager::print_header(log_out output) { PROF
+void log_manager::print_header(log_out* output) { PROF
 
 	PUSH_ALLOC(alloc) {
 		
-		string header = string::makef(string_literal("%-8 [%-36] [%-20] [%-5] %-2\r\n"), string_literal("time"), string_literal("thread/context"), string_literal("file:line"), string_literal("level"), string_literal("message"));
+		if(output->type == log_out_type::plaintext) {
+			
+			string header = string::makef(string_literal("%-8 [%-36] [%-20] [%-5] %-2\r\n"), string_literal("time"), string_literal("thread/context"), string_literal("file:line"), string_literal("level"), string_literal("message"));
 
-		output.file.write((void*)header.c_str, header.len - 1);
-		output.file.flush();
+			output->file.write((void*)header.c_str, header.len - 1);
+			output->file.flush();
 
-		header.destroy();
+			header.destroy();
+
+		} else if(output->type == log_out_type::html) {
+
+			output->file.write((void*)log_html_header.c_str, log_html_header.len - 1);
+			output->file.flush();
+		}
+
+	} POP_ALLOC();
+}
+
+void log_manager::print_footer(log_out* output) {
+
+	PUSH_ALLOC(alloc) {
+
+		if(output->type == log_out_type::html) {
+			
+			output->file.write((void*)log_html_footer.c_str, log_html_footer.len - 1);
+			output->file.flush();
+		}
 
 	} POP_ALLOC();
 }
@@ -243,14 +267,23 @@ string log_message::fmt_level() { PROF
 	return str;
 }
 
-string log_message::fmt() { PROF
+string fmt_msg(log_message* msg, log_out_type type) { PROF
 
-	string time = fmt_time();
-	string cstack = fmt_call_stack();
-	string file_line = fmt_file_line();
-	string clevel = fmt_level();
+	string time = msg->fmt_time();
+	string cstack = msg->fmt_call_stack();
+	string file_line = msg->fmt_file_line();
+	string clevel = msg->fmt_level();
 
-	string output = string::makef(string_literal("%-8 [%-36] [%-20] [%-5] %+*\r\n"), time, cstack, file_line, clevel, 3 * call_stack.capacity + msg.len - 1, msg);
+	string output;
+
+	if(type == log_out_type::plaintext) {
+
+		output = string::makef(string_literal("%-8 [%-36] [%-20] [%-5] %+*\n"), time, cstack, file_line, clevel, 3 * msg->call_stack.capacity + msg->msg.len - 1, msg->msg);
+
+	} else if(type == log_out_type::html) {
+
+		output = string::makef(string_literal(R"STR(<tr><td class="time">%</td><td class = "cstack">%</td><td class = "location">%</td><td class = "level">%</td><td class = "message">%</td></tr>)STR" "\n"), time, cstack, file_line, clevel, msg->msg);
+	}
 
 	time.destroy();
 	cstack.destroy();
@@ -275,19 +308,20 @@ i32 log_proc(void* data_) {
 				string output;
 				PUSH_ALLOC(data->scratch) {
 					
-					output = msg.fmt();
-				
 					FORVEC(*data->out,
+
+						output = fmt_msg(&msg, it->type);
+
 						if(it->level <= msg.level) {
-							if(it->custom) {
+							if(it->type == log_out_type::custom) {
 								it->write(&msg);
 							} else {
 								it->file.write(output.c_str, output.len - 1);
 							}
 						}
-					)
 
-					output.destroy();
+						output.destroy();
+					)
 
 				} POP_ALLOC();
 				RESET_ARENA(data->scratch);

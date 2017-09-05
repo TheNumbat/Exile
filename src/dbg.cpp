@@ -8,7 +8,7 @@ dbg_manager dbg_manager::make(log_manager* log, allocator* alloc) { PROF
 
 	log_out dbg_log;
 	dbg_log.level = log_level::info;
-	dbg_log.custom = true;
+	dbg_log.type = log_out_type::custom;
 	dbg_log.write = &dbg_add_log;
 	log->add_output(dbg_log);
 

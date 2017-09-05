@@ -20,8 +20,8 @@ extern "C" game_state* start_up(platform_api* api) {
 
 	platform_file stdout_file, log_all_file;
 	api->platform_get_stdout_as_file(&stdout_file);
-	api->platform_create_file(&log_all_file, string_literal("log_all.txt"), platform_file_open_op::create);
-	state->log.add_file(log_all_file, log_level::alloc);
+	api->platform_create_file(&log_all_file, string_literal("log_all.html"), platform_file_open_op::create);
+	state->log.add_file(log_all_file, log_level::alloc, log_out_type::html);
 	state->log.add_file(stdout_file, log_level::info);
 
 	LOG_INFO("Beginning startup...");

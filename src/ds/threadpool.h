@@ -6,7 +6,7 @@
 typedef void (*job_callback)();
 typedef job_callback (*job_work)(void*);
 
-enum class job_priority {
+enum class job_priority : u8 {
 	normal = 0,
 	high,
 	asap

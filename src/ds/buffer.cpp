@@ -33,7 +33,11 @@ void buffer<T,size>::write(void* data, u32 len) {
 template<typename T, u32 size>
 void buffer<T,size>::flush() {
 
-	output(param, buf, used);
+	if(used) {
+	
+		output(param, buf, used);
+	}
+	
 	used = 0;
 }
 

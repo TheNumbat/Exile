@@ -69,7 +69,7 @@ union gui_state_data {
 	void* data = null;
 };
 
-enum class gui_offset_mode {
+enum class gui_offset_mode : u8 {
 	xy,
 	x,
 	y,
@@ -133,7 +133,7 @@ struct _gui_style {
 	color3 win_scroll_bar 	= V3b(132, 135, 215);
 };
 
-enum class gui_active_state {
+enum class gui_active_state : u8 {
 	active,
 	none,
 	invalid,

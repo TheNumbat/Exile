@@ -27,8 +27,9 @@
 	#define BOUNDS_CHECK
 	#define BLOCK_ON_ERROR
 	#define DO_PROF	
-	// #define MORE_PROF
 	#define CONSTRUCT_DS_ELEMENTS
+	// #define MORE_PROF
+	// #define LOG_ALLOCS
 #elif defined(REAL_RELEASE)
 
 #else
@@ -76,6 +77,7 @@ struct code_context {
 #include <new>
 #endif
 
+#include "log_html.h"
 #include "log.h"
 #include "dbg.h"
 

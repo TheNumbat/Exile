@@ -68,7 +68,7 @@ struct shader_program {
 	void destroy();
 };
 
-enum class texture_wrap {
+enum class texture_wrap : u8 {
 	repeat,
 	mirror,
 	clamp,

@@ -32,20 +32,20 @@ struct platform_error {
 	u32 error = 0;
 };
 
-enum class platform_file_open_op {
+enum class platform_file_open_op : u8 {
 	existing,
 	existing_or_create,
 	create,
 	clear_existing,
 };
 
-enum class _platform_semaphore_state {
+enum class _platform_semaphore_state : u8 {
 	signaled,
 	timed_out,
 	failed,
 };
 
-enum class _platform_thread_join_state {
+enum class _platform_thread_join_state : u8 {
 	joined,
 	timed_out,
 	failed,
