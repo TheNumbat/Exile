@@ -2,7 +2,7 @@
 For overall : see #high_level_systems
 
 features so far:
-	data structures: array, hash map (robin hood open addressing), queue, stack, vector, string
+	data structures: array, hash map (robin hood open addressing), queue, stack, vector, string, heap
 	allocation context system + arena allocators, joint allocation, etc.
 	asset processing & loading: images, fonts, font atlasing
 	event based input system

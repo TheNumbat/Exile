@@ -21,7 +21,7 @@ threadpool threadpool::make(allocator* a, i32 num_threads_) { PROF
 	ret.worker_data = array<worker_param>::make(ret.num_threads, a);
 	
 	global_api->platform_create_mutex(&ret.running_mutex, false);
-	global_api->platform_create_semaphore(&ret.jobs_semaphore, 0, ret.num_threads);
+	CHECKED(platform_create_semaphore, &ret.jobs_semaphore, 0, ret.num_threads);
 
 	return ret;
 }
@@ -35,7 +35,7 @@ void threadpool::destroy() { PROF
 	worker_data.destroy();
 	jobs.destroy();
 
-	global_api->platform_destroy_semaphore(&jobs_semaphore);
+	CHECKED(platform_destroy_semaphore, &jobs_semaphore);
 }
 
 void threadpool::wait_job(job_id id) { PROF
@@ -70,14 +70,14 @@ job_id threadpool::queue_job(job j) { PROF
 	jobs.push(j);
 
 	platform_semaphore jid_sem;
-	global_api->platform_create_semaphore(&jid_sem, 0, INT_MAX);
+	CHECKED(platform_create_semaphore, &jid_sem, 0, INT_MAX);
 
 	// is this a good way to structure this? doesn't look like it
 	global_api->platform_aquire_mutex(&running_mutex);
 	running.insert(j.id, jid_sem);
 	global_api->platform_release_mutex(&running_mutex);
 
-	global_api->platform_signal_semaphore(&jobs_semaphore, 1);
+	CHECKED(platform_signal_semaphore, &jobs_semaphore, 1);
 
 	return j.id;
 #endif
@@ -92,12 +92,12 @@ void threadpool::stop_all() { PROF
 			worker_data.get(i)->online = false;
 		}
 
-		global_api->platform_signal_semaphore(&jobs_semaphore, num_threads);
+		CHECKED(platform_signal_semaphore, &jobs_semaphore, num_threads);
 
 		for(i32 i = 0; i < num_threads; i++) {
 
 			global_api->platform_join_thread(threads.get(i), -1);
-			global_api->platform_destroy_thread(threads.get(i));
+			CHECKED(platform_destroy_thread, threads.get(i));
 		}
 
 		online = false;
@@ -117,7 +117,7 @@ void threadpool::start_all() { PROF
 			it->running 		= &running;
 			it->running_mutex 	= &running_mutex;
 
-			global_api->platform_create_thread(threads.get(__i), &worker, it, false);
+			CHECKED(platform_create_thread, threads.get(__i), &worker, it, false);
 		)
 
 		online = true;
@@ -149,8 +149,8 @@ i32 worker(void* data_) {
 
 				global_api->platform_aquire_mutex(data->running_mutex);
 				platform_semaphore* sem = data->running->get(current_job.id);
-				global_api->platform_signal_semaphore(sem, INT_MAX);
-				global_api->platform_destroy_semaphore(sem);
+				CHECKED(platform_signal_semaphore, sem, INT_MAX);
+				CHECKED(platform_destroy_semaphore, sem);
 				data->running->erase(current_job.id);
 				global_api->platform_release_mutex(data->running_mutex);
 			}

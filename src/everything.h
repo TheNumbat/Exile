@@ -64,6 +64,12 @@ struct code_context {
 #include "alloc.h"
 #include "platform/platform_api.h"
 
+#ifdef _DEBUG
+#define CHECKED(platform_func, ...) {platform_error err = global_api->platform_func(##__VA_ARGS__); if(!err.good) LOG_ERR_F("Error % in %", err.error, #platform_func);}
+#else
+#define CHECKED(platform_func, ...) platform_func(##__VA_ARGS__);
+#endif
+
 #include "ds/vector.h"
 #include "ds/stack.h"
 #include "ds/array.h"

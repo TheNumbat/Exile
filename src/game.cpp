@@ -19,8 +19,8 @@ extern "C" game_state* start_up(platform_api* api) {
 	state->log = log_manager::make(&state->log_a);
 
 	platform_file stdout_file, log_all_file;
-	api->platform_get_stdout_as_file(&stdout_file);
-	api->platform_create_file(&log_all_file, string_literal("log_all.html"), platform_file_open_op::create);
+	CHECKED(platform_get_stdout_as_file, &stdout_file);
+	CHECKED(platform_create_file, &log_all_file, string_literal("log_all.html"), platform_file_open_op::create);
 	state->log.add_file(log_all_file, log_level::alloc, log_out_type::html);
 	state->log.add_file(stdout_file, log_level::info, log_out_type::plaintext, true);
 
@@ -109,7 +109,7 @@ extern "C" bool main_loop(game_state* state) {
 	} POP_ALLOC();
 	RESET_ARENA(&state->transient_arena);
 
-	global_api->platform_swap_buffers(&state->window);
+	CHECKED(platform_swap_buffers, &state->window);
 
 #ifdef _DEBUG
 	state->ogl.try_reload_programs();
@@ -141,10 +141,7 @@ extern "C" void shut_down(game_state* state) { PROF
 	state->thread_pool.destroy();
 
 	LOG_DEBUG("Destroying window");
-	platform_error err = global_api->platform_destroy_window(&state->window);
-	if(!err.good) {
-		LOG_ERR_F("Failed to destroy window, error: %", err.error);	
-	}
+	CHECKED(platform_destroy_window, &state->window);
 
 	LOG_DEBUG("Destroying events");
 	state->evt.destroy();

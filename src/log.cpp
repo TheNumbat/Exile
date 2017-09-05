@@ -5,7 +5,7 @@ log_manager log_manager::make(allocator* a) { PROF
 
 	ret.out = vector<log_out>::make(4, a);
 	ret.message_queue = con_queue<log_message>::make(8, a);
-	global_api->platform_create_semaphore(&ret.logging_semaphore, 0, INT32_MAX);
+	CHECKED(platform_create_semaphore, &ret.logging_semaphore, 0, INT32_MAX);
 
 	ret.alloc = a;
 	ret.scratch = MAKE_ARENA("log scratch", KILOBYTES(512), a, true);
@@ -22,16 +22,16 @@ void log_manager::start() { PROF
 	thread_param.alloc 				= alloc;
 	thread_param.scratch			= &scratch;
 
-	global_api->platform_create_thread(&logging_thread, &log_proc, &thread_param, false);
+	CHECKED(platform_create_thread, &logging_thread, &log_proc, &thread_param, false);
 }
 
 void log_manager::stop() { PROF
 
 	thread_param.running = false;
 
-	global_api->platform_signal_semaphore(&logging_semaphore, 1);
+	CHECKED(platform_signal_semaphore, &logging_semaphore, 1);
 	global_api->platform_join_thread(&logging_thread, -1);
-	global_api->platform_destroy_thread(&logging_thread);
+	CHECKED(platform_destroy_thread, &logging_thread);
 
 	thread_param.out 				= null;
 	thread_param.message_queue 		= null;
@@ -55,7 +55,7 @@ void log_manager::destroy() { PROF
 
 	out.destroy();
 	message_queue.destroy();
-	global_api->platform_destroy_semaphore(&logging_semaphore);
+	CHECKED(platform_destroy_semaphore, &logging_semaphore);
 	DESTROY_ARENA(&scratch);
 	alloc = null;
 }
@@ -193,7 +193,7 @@ void log_manager::msg(string msg, log_level level, code_context context) { PROF_
 		lmsg.arena = arena;
 		message_queue.push(lmsg);
 
-		global_api->platform_signal_semaphore(&logging_semaphore, 1);
+		CHECKED(platform_signal_semaphore, &logging_semaphore, 1);
 
 		if(level == log_level::error) {
 			if(global_api->platform_is_debugging()) {

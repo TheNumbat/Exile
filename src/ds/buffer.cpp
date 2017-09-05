@@ -42,5 +42,5 @@ void buffer<T,size>::flush() {
 }
 
 void write_file_wrapper(platform_file file, void* mem, u32 len) {
-	global_api->platform_write_file(&file, mem, len);
+	CHECKED(platform_write_file, &file, mem, len);
 }

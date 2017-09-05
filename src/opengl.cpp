@@ -15,26 +15,26 @@ void shader_source::load() { PROF
 
 	platform_file source_file;
 
-	platform_error err;
+	platform_error error;
 	u32 itr = 0;
 	do {
 		itr++;
-		err = global_api->platform_create_file(&source_file, path, platform_file_open_op::existing);
-	} while (err.error == PLATFORM_SHARING_ERROR && itr < 100000);
+		error = global_api->platform_create_file(&source_file, path, platform_file_open_op::existing);
+	} while (error.error == PLATFORM_SHARING_ERROR && itr < 100000);
 
-	if(!err.good) {
+	if(!error.good) {
 		LOG_ERR_F("Failed to load shader source %", path);
-		global_api->platform_close_file(&source_file);
+		CHECKED(platform_close_file, &source_file);
 		return;
 	}
 
 	u32 len = global_api->platform_file_size(&source_file) + 1;
 	source = string::make(len, alloc);
-	global_api->platform_read_file(&source_file, (void*)source.c_str, len);
+	CHECKED(platform_read_file, &source_file, (void*)source.c_str, len);
 
-	global_api->platform_close_file(&source_file);
+	CHECKED(platform_close_file, &source_file);
 
-	global_api->platform_get_file_attributes(&last_attrib, path);
+	CHECKED(platform_get_file_attributes, &last_attrib, path);
 }
 
 void shader_source::destroy() { PROF
@@ -46,7 +46,7 @@ bool shader_source::refresh() { PROF
 
 	platform_file_attributes new_attrib;
 	
-	global_api->platform_get_file_attributes(&new_attrib, path);	
+	CHECKED(platform_get_file_attributes, &new_attrib, path);	
 	
 	if(global_api->platform_test_file_written(&last_attrib, &new_attrib)) {
 
