@@ -106,8 +106,8 @@ u32 _string_printf(string out, u32 idx, string fmt, bool size, T& value, Targs..
 					bool len_in_param = false;
 					i++;
 
-					u32 pad = 0;
-					u32 sized = 0;
+					i32 pad = 0;
+					i32 sized = 0;
 
 					if(fmt.c_str[idx + 1] == '*') {	// total length passed as a parameter
 						pad = *(u32*)&value;			
@@ -129,12 +129,12 @@ u32 _string_printf(string out, u32 idx, string fmt, bool size, T& value, Targs..
 					}
 
 					while(sized < pad) {
-						idx = out.write(idx, string_literal(" "), size);
+						idx = out.write(idx, ' ', size);
 						sized++;
 					}
 					
 					if (len_in_param) {
-						return _string_printf_fwd(out, idx, string::from_c_str(fmt.c_str + i + 1), size, args...);;
+						return _string_printf_fwd(out, idx, string::from_c_str(fmt.c_str + i + 1), size, args...);
 					} else {
 						return _string_printf(out, idx, string::from_c_str(fmt.c_str + i), size, args...);
 					}
