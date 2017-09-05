@@ -74,11 +74,12 @@ void log_manager::pop_context() { PROF_NOCS
 	this_thread_data.call_stack_depth--;
 }
 
-void log_manager::add_file(platform_file file, log_level level, log_out_type type) { PROF
+void log_manager::add_file(platform_file file, log_level level, log_out_type type, bool flush) { PROF
 
 	log_out lfile;
 	lfile.type = type;
-	lfile.file = buffer<platform_file,1024>::make(write_file_wrapper, file);
+	lfile.flush_on_message = flush;
+	lfile.file = buffer<platform_file,4096>::make(write_file_wrapper, file);
 	lfile.level = level;
 	
 	print_header(&lfile);
@@ -317,6 +318,8 @@ i32 log_proc(void* data_) {
 								it->write(&msg);
 							} else {
 								it->file.write(output.c_str, output.len - 1);
+								if(it->flush_on_message)
+									it->file.flush();
 							}
 						}
 

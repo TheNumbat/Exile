@@ -47,8 +47,9 @@ string fmt_msg(log_message* msg, log_out_type type);
 struct log_out {
 	log_level 	 level = log_level::debug;
 	log_out_type type  = log_out_type::plaintext;
+	bool 		 flush_on_message = false;
 	union {
-		buffer<platform_file,1024> file;
+		buffer<platform_file,4096> file;			// TODO(max): sizeof(buffer) dependent on parameter - don't do this for union?
 		void (*write)(log_message* msg) = null;
 	};
 	log_out() : file() {}
@@ -83,7 +84,7 @@ struct log_manager {
 	void push_context(string context, code_context fake);
 	void pop_context();
 
-	void add_file(platform_file file, log_level level, log_out_type type = log_out_type::plaintext); // call from one thread before starting
+	void add_file(platform_file file, log_level level, log_out_type type = log_out_type::plaintext, bool flush = false); // call from one thread before starting
 	void print_header(log_out* out);
 	void print_footer(log_out* out);
 	void add_output(log_out out);

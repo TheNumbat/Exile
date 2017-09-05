@@ -22,7 +22,7 @@ extern "C" game_state* start_up(platform_api* api) {
 	api->platform_get_stdout_as_file(&stdout_file);
 	api->platform_create_file(&log_all_file, string_literal("log_all.html"), platform_file_open_op::create);
 	state->log.add_file(log_all_file, log_level::alloc, log_out_type::html);
-	state->log.add_file(stdout_file, log_level::info);
+	state->log.add_file(stdout_file, log_level::info, log_out_type::plaintext, true);
 
 	LOG_INFO("Beginning startup...");
 	LOG_PUSH_CONTEXT_L("");
