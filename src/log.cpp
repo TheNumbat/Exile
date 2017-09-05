@@ -100,7 +100,7 @@ void log_manager::print_header(log_out* output) { PROF
 		
 		if(output->type == log_out_type::plaintext) {
 			
-			string header = string::makef(string_literal("%-8 [%-36] [%-20] [%-5] %-2\r\n"), string_literal("time"), string_literal("thread/context"), string_literal("file:line"), string_literal("level"), string_literal("message"));
+			string header = string::makef(string_literal("%-8 [%-36] [%-20] [%-5] %-2\n"), string_literal("time"), string_literal("thread/context"), string_literal("file:line"), string_literal("level"), string_literal("message"));
 
 			output->file.write((void*)header.c_str, header.len - 1);
 			output->file.flush();
@@ -282,7 +282,7 @@ string fmt_msg(log_message* msg, log_out_type type) { PROF
 
 	} else if(type == log_out_type::html) {
 
-		output = string::makef(string_literal(R"STR(<tr><td class="time">%</td><td class = "cstack">%</td><td class = "location">%</td><td class = "level">%</td><td class = "message">%</td></tr>)STR" "\n"), time, cstack, file_line, clevel, msg->msg);
+		output = string::makef(string_literal(R"STR(<tr><td class="time">%</td><td class = "cstack">%</td><td class = "location">%</td><td class = "level">%</td><td class = "message">%</td></tr>)STR""\n"), time, cstack, file_line, clevel, msg->msg);
 	}
 
 	time.destroy();

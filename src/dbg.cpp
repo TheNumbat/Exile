@@ -26,7 +26,7 @@ void dbg_manager::destroy() { PROF
 	log_cache.destroy();
 }
 
-void dbg_manager::collate() {
+void dbg_manager::collate() { PROF
 
 
 }
