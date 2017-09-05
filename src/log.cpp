@@ -282,7 +282,7 @@ string fmt_msg(log_message* msg, log_out_type type) { PROF
 
 	} else if(type == log_out_type::html) {
 
-		output = string::makef(string_literal(R"STR(<tr><td class="time">%</td><td class = "cstack">%</td><td class = "location">%</td><td class = "level">%</td><td class = "message">%</td></tr>)STR""\n"), time, cstack, file_line, clevel, msg->msg);
+		output = string::makef(log_html_msg, time, cstack, file_line, clevel, msg->msg);
 	}
 
 	time.destroy();
