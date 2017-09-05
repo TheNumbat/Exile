@@ -80,9 +80,6 @@ immediate to do:
 			pool allocator/free list?
 		colorful console output
 		keep & output statistics
-		discriminate output style types
-			plaintext
-			HTML
 
 	UI
 		stop sending mesh every frame (see OpenGL)
