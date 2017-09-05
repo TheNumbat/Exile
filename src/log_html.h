@@ -38,12 +38,8 @@ td:hover {
 	transition: all 0.1s;
 }
 
-tr:hover {
-	
-}
-
 .time {
-	width: 6%;
+	width: 5%;
 }
 
 .cstack {
