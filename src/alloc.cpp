@@ -12,11 +12,11 @@ inline allocator* _current_alloc() { PROF
 	return ret;
 }
 
-inline void* platform_allocate(u64 bytes, void* this_data, code_context context) { 
+CALLBACK void* platform_allocate(u64 bytes, allocator* this_, code_context context) { 
 
-	platform_allocator* this_ = (platform_allocator*)this_data;
+	platform_allocator* this__ = (platform_allocator*)this_;
 
-	void* mem = this_->platform_allocate(bytes);
+	void* mem = this__->platform_allocate(bytes);
 
 	LOG_DEBUG_ASSERT(mem != null);
 
@@ -29,9 +29,9 @@ inline void* platform_allocate(u64 bytes, void* this_data, code_context context)
 	return mem;
 }
 
-inline void platform_free(void* mem, void* this_data, code_context context) { 
+CALLBACK void platform_free(void* mem, allocator* this_, code_context context) { 
 
-	platform_allocator* this_ = (platform_allocator*)this_data;
+	platform_allocator* this__ = (platform_allocator*)this_;
 
 	LOG_DEBUG_ASSERT(mem != null);
 
@@ -41,12 +41,12 @@ inline void platform_free(void* mem, void* this_data, code_context context) {
 	}
 #endif
 
-	this_->platform_free(mem);
+	this__->platform_free(mem);
 }
 
-void* platform_reallocate(void* mem, u64 bytes, void* this_data, code_context context) { 
+CALLBACK void* platform_reallocate(void* mem, u64 bytes, allocator* this_, code_context context) { 
 
-	platform_allocator* this_ = (platform_allocator*)this_data;
+	platform_allocator* this__ = (platform_allocator*)this_;
 
 	LOG_DEBUG_ASSERT(mem != null);
 
@@ -56,7 +56,7 @@ void* platform_reallocate(void* mem, u64 bytes, void* this_data, code_context co
 	}
 #endif
 
-	void* ret = this_->platform_reallocate(mem, bytes);
+	void* ret = this__->platform_reallocate(mem, bytes);
 
 	LOG_DEBUG_ASSERT(ret != null);
 
@@ -75,47 +75,48 @@ inline platform_allocator np_make_platform_allocator(string name, code_context c
 	ret.platform_free 		= global_api->platform_heap_free;
 	ret.platform_reallocate = global_api->platform_heap_realloc;
 	ret.context  			= context;
-	ret.allocate_ 			= &platform_allocate;
-	ret.free_ 				= &platform_free;
-	ret.reallocate_			= &platform_reallocate;
 	ret.name				= name;
+
+	ret.allocate_.set(FPTR(platform_allocate));
+	ret.free_.set(FPTR(platform_free));
+	ret.reallocate_.set(FPTR(platform_reallocate));
 
 	return ret;
 }
 
-inline void* arena_allocate(u64 bytes, void* this_data, code_context context) { PROF
+CALLBACK void* arena_allocate(u64 bytes, allocator* this_, code_context context) { PROF
 		
-	arena_allocator* this_ = (arena_allocator*)this_data;
+	arena_allocator* this__ = (arena_allocator*)this_;
 
 	void* mem = null;
 
-	if(bytes <= this_->size - this_->used) {
+	if(bytes <= this__->size - this__->used) {
 
-		mem = (void*)((u8*)this_->memory + this_->used);
+		mem = (void*)((u8*)this__->memory + this__->used);
 
-		this_->used += bytes;
+		this__->used += bytes;
 	} else {
 
-		LOG_ERR_F("Failed to allocate % bytes in allocator %:%", bytes, this_->context.file, this_->context.line);
+		LOG_ERR_F("Failed to allocate % bytes in allocator %:%", bytes, this__->context.file, this__->context.line);
 	}
 
 #ifdef LOG_ALLOCS
-	if(!this_->suppress_messages) {
-		global_log->msgf(string_literal("allocating % bytes (used:%/%) to % with arena alloc \"%\""), log_level::alloc, context, bytes, this_->used, this_->size, mem, this_->name);
+	if(!this__->suppress_messages) {
+		global_log->msgf(string_literal("allocating % bytes (used:%/%) to % with arena alloc \"%\""), log_level::alloc, context, bytes, this__->used, this__->size, mem, this__->name);
 	}
 #endif
 
 	return mem;
 }
 
-inline void arena_free(void*, void*, code_context context) {PROF}
+CALLBACK void arena_free(void*, allocator*, code_context context) {PROF}
 
-void* arena_reallocate(void* mem, u64 bytes, void* this_data, code_context context) { PROF
+CALLBACK void* arena_reallocate(void* mem, u64 bytes, allocator* this_, code_context context) { PROF
 
-	return arena_allocate(bytes, this_data, context);
+	return arena_allocate(bytes, this_, context);
 }
 
-inline void arena_reset(arena_allocator* a, code_context context) { PROF
+void arena_reset(arena_allocator* a, code_context context) { PROF
 
 #ifdef LOG_ALLOCS
 	if(!a->suppress_messages) {
@@ -182,11 +183,12 @@ inline arena_allocator make_arena_allocator_from_context(string name, u64 size, 
 	ret.size 	  	= size;
 	ret.context   	= context;
 	ret.backing   	= CURRENT_ALLOC();
-	ret.allocate_ 	= &arena_allocate;
-	ret.free_ 	  	= &arena_free;
-	ret.reallocate_ = &arena_reallocate;
 	ret.name 	  	= name;
 	ret.suppress_messages = suppress;
+
+	ret.allocate_.set(FPTR(arena_allocate));
+	ret.free_.set(FPTR(arena_free));
+	ret.reallocate_.set(FPTR(arena_reallocate));
 
 #ifdef LOG_ALLOCS
 	if(!ret.suppress_messages) {
@@ -208,11 +210,12 @@ inline arena_allocator make_arena_allocator(string name, u64 size, allocator* ba
 	ret.size 	  	= size;
 	ret.context   	= context;
 	ret.backing   	= backing;
-	ret.allocate_ 	= &arena_allocate;
-	ret.free_ 	  	= &arena_free;
-	ret.reallocate_ = &arena_reallocate;
 	ret.name 	  	= name;
 	ret.suppress_messages = suppress;
+
+	ret.allocate_.set(FPTR(arena_allocate));
+	ret.free_.set(FPTR(arena_free));
+	ret.reallocate_.set(FPTR(arena_reallocate));
 
 #ifdef LOG_ALLOCS
 	if(!ret.suppress_messages) {

@@ -3,17 +3,30 @@
 #ifndef __clang__
 
 template<typename T>
+struct return_type {};
+
+template<typename T, typename... args>
 struct func_ptr {
 	func_ptr();
 	~func_ptr();
 
-	T* func = null;
+	T (*func)(args...) = null;
 	string name;
 
-	template<typename... args>
-	auto operator()(args...);
+	T operator()(args...) {
 
-	void set(T* f, string n);
+		if(global_func->reloading) {
+			reload();
+			global_func->ptrs_reloaded++;
+			if(global_func->ptrs_reloaded == global_func->ptrs_existing) {
+				global_func->reloading = false;
+			}
+		}
+
+		return func(args...);
+	}
+
+	void set(T (*f)(args...), string n);
 
 	void reload();
 };
@@ -24,7 +37,7 @@ struct func_ptr_state {
 	bool reloading = true;
 	platform_dll* this_dll = null;
 	
-	func_ptr<void()> test;
+	func_ptr<void> test;
 };
 
 static func_ptr_state* global_func = null;

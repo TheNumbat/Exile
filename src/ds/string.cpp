@@ -899,7 +899,7 @@ string string::make(u32 _cap, allocator* a) { PROF
 
 	string ret;
 
-	ret.c_str = (char*)a->allocate_(_cap, a, CONTEXT);
+	ret.c_str = (char*)a->allocate_((u64)_cap, a, CONTEXT);
 	ret.cap = _cap;
 
 	return ret;

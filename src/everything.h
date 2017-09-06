@@ -53,8 +53,6 @@
 #define __FUNCNAME__ __func__
 #endif
 
-#define CALLBACK EXPORT
-
 #include "basic_types.h"
 #include "math.h"
 #include "ds/string.h"
@@ -65,8 +63,15 @@ struct code_context {
 	u32 line = 0;
 };
 
-#include "alloc.h"
 #include "platform/platform_api.h"
+#include "functions.h"
+
+#ifdef CALLBACK
+#undef CALLBACK
+#endif
+#define CALLBACK EXPORT
+
+#include "alloc.h"
 
 #ifdef _DEBUG
 #define CHECKED(platform_func, ...) {platform_error err = global_api->platform_func(##__VA_ARGS__); if(!err.good) LOG_ERR_F("Error % in %", err.error, #platform_func);}
@@ -119,7 +124,6 @@ void end_thread();
 
 #include "ds/threadpool.h"
 
-#include "functions.h"
 #include "asset.h"
 #include "render.h"
 #include "opengl.h"

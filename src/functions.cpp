@@ -1,37 +1,22 @@
 
-template<typename T>
-func_ptr<T>::func_ptr() {
+template<typename T, typename... args>
+func_ptr<T, args...>::func_ptr() {
 	global_func->ptrs_existing++;
 }
 
-template<typename T>
-func_ptr<T>::~func_ptr() {
+template<typename T, typename... args>
+func_ptr<T, args...>::~func_ptr() {
 	global_func->ptrs_existing--;
 }
 
-template<typename T>
-void func_ptr<T>::set(T* f, string n) {
+template<typename T, typename... args>
+void func_ptr<T, args...>::set(T (*f)(args...), string n) {
 	func = f;
 	name = n;
 }
 
-
-template<typename T>
-template<typename... args>
-auto func_ptr<T>::operator()(args...) {
-	if(global_func->reloading) {
-		reload();
-		global_func->ptrs_reloaded++;
-		if(global_func->ptrs_reloaded == global_func->ptrs_existing) {
-			global_func->reloading = false;
-		}
-	}
-
-	return func(args...);
-}
-
-template<typename T>
-void func_ptr<T>::reload() {
+template<typename T, typename... args>
+void func_ptr<T, args...>::reload() {
 	CHECKED(platform_get_proc_address, (void**)&func, global_func->this_dll, name);
 }
 

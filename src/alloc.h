@@ -2,18 +2,17 @@
 #pragma once
 
 struct allocator {
-	// vtable haHAA
-	void* (*allocate_)(u64 bytes, void* this_data, code_context context)  			  = null;
-	void* (*reallocate_)(void* mem, u64 bytes, void* this_data, code_context context) = null;
-	void  (*free_)(void* mem, void* this_data, code_context context)	  			  = null;
-	
+	func_ptr<void*,u64,allocator*,code_context>		allocate_;
+	func_ptr<void*,void*,u64,allocator*,code_context> 	reallocate_;
+	func_ptr<void,void*,allocator*,code_context> 		free_;
+
 	code_context context;
 	bool suppress_messages = false;
 	string name;
 };
 
 #define PUSH_ALLOC(a)	_push_alloc(a);
-#define POP_ALLOC() 	_pop_alloc()
+#define POP_ALLOC() 	_pop_alloc();
 #define CURRENT_ALLOC()	_current_alloc()
 
 #define KILOBYTES(m) (m*1024)
@@ -31,9 +30,9 @@ struct platform_allocator : public allocator {
 	void* (*platform_reallocate)(void* mem, u64 bytes)	= null;
 };
 
-void* platform_allocate(u64 bytes, void* this_data, code_context context);
-void  platform_free(void* mem, void* this_data, code_context context);
-void* platform_reallocate(void* mem, u64 bytes, void* this_data, code_context context);
+CALLBACK void* platform_allocate(u64 bytes, allocator* this_, code_context context);
+CALLBACK void  platform_free(void* mem, allocator* this_, code_context context);
+CALLBACK void* platform_reallocate(void* mem, u64 bytes, allocator* this_, code_context context);
 
 #define MAKE_PLATFORM_ALLOCATOR(n) make_platform_allocator(string_literal(n), CONTEXT)
 inline platform_allocator make_platform_allocator(string name, code_context context);
@@ -46,9 +45,9 @@ struct arena_allocator : public allocator {
 	u64 size			= 0;
 };
 
-void* arena_allocate(u64 bytes, void* this_data, code_context context);
-void* arena_reallocate(void* mem, u64 bytes, void* this_data, code_context context); // same as allocate, can't free from arena
-void  arena_free(void*, void*, code_context); // does nothing
+CALLBACK void* arena_allocate(u64 bytes, allocator* this_, code_context context);
+CALLBACK void* arena_reallocate(void* mem, u64 bytes, allocator* this_, code_context context); // same as allocate, can't free from arena
+CALLBACK void  arena_free(void*, allocator*, code_context); // does nothing
 
 #define DESTROY_ARENA(a) arena_destroy(a, CONTEXT) 
 void arena_destroy(arena_allocator* a, code_context context);
@@ -65,8 +64,8 @@ arena_allocator make_arena_allocator_from_context(string name, u64 size, bool su
 #define MAKE_ARENA(n, size, a, s) make_arena_allocator(string_literal(n), size, a, s, CONTEXT) 
 arena_allocator make_arena_allocator(string name, u64 size, allocator* backing, bool suppress, code_context context);
 
-#define malloc(b) ((*CURRENT_ALLOC()->allocate_)(b, CURRENT_ALLOC(), CONTEXT)) 
-#define free(m) ((*CURRENT_ALLOC()->free_)(m, CURRENT_ALLOC(), CONTEXT)) 
+#define malloc(b) 	((CURRENT_ALLOC()->allocate_)((u64)b, CURRENT_ALLOC(), CONTEXT)) 
+#define free(m) 	((CURRENT_ALLOC()->free_)((void*)m, CURRENT_ALLOC(), CONTEXT)) 
 
 #define memcpy(s,d,i) _memcpy(s,d,i)
 void _memcpy(void* source, void* dest, u64 size);
