@@ -4,12 +4,7 @@ inline code_context _make_context(string file, string function, i32 line) {
 	code_context ret;
 #ifdef DO_PROF
 	ret.file = np_substring(file, np_string_last_slash(file) + 1, file.len - 1);
-	
-	i32 func_name_end = np_string_first(function, '(');
-	i32 func_name_begin = func_name_end;
-	while(function.c_str[func_name_begin--] != ' ');
-	ret.function = np_substring(function, func_name_begin + 2, func_name_end);
-
+	ret.function = function;
 	ret.line = line;
 #endif
 	

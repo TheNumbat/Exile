@@ -61,6 +61,14 @@ platform_api platform_build_api() {
 	ret.platform_is_debugging			= &linux_is_debugging;
 	ret.platform_debug_break			= &linux_debug_break;
 	ret.platform_set_cursor				= &linux_set_cursor;
+	ret.platform_this_dll				= &linux_this_dll;
+
+	return ret;
+}
+
+platform_error linux_this_dll(platform_dll* dll) {
+
+	platform_error ret;
 
 	return ret;
 }

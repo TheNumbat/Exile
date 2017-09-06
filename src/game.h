@@ -2,11 +2,12 @@
 #pragma once
 
 struct game_state {
-
+	
 	arena_allocator 	transient_arena;
 	platform_allocator 	default_platform_allocator, suppressed_platform_allocator;
 
 	bool running = false;
+	func_ptr_state func_state;
 
 	// managers are really just contexts. OOP naming in 2017
 	log_manager log;

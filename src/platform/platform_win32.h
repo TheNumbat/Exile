@@ -19,6 +19,7 @@ void		   win32_queue_event(platform_event evt);
 platform_error win32_wait_message();
 bool 		   win32_keydown(platform_keycode key);
 
+platform_error win32_this_dll(platform_dll* dll);
 platform_error win32_load_library(platform_dll* dll, string file_path);
 platform_error win32_free_library(platform_dll* dll);
 

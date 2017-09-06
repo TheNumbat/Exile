@@ -286,6 +286,7 @@ struct platform_event {
 };
 
 struct platform_api {
+	platform_dll* your_dll																										= null;
 	bool 			(*platform_is_debugging)()																					= null;
 	void 			(*platform_debug_break)()																					= null;
 	void 			(*platform_set_cursor)(cursors c)																			= null;
@@ -298,6 +299,7 @@ struct platform_api {
 	platform_error 	(*platform_get_window_size)(platform_window* window, i32* w, i32* h)										= null;
 	platform_error 	(*platform_swap_buffers)(platform_window* window)															= null;
 	platform_error 	(*platform_wait_message)()																					= null;
+	platform_error  (*platform_this_dll)(platform_dll* dll)																		= null;
 	platform_error 	(*platform_load_library)(platform_dll* dll, string file_path)												= null;
 	platform_error 	(*platform_free_library)(platform_dll* dll)																	= null;
 	platform_error 	(*platform_get_proc_address)(void** address, platform_dll* dll, string name)								= null;

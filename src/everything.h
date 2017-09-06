@@ -44,12 +44,16 @@
 #endif
 
 #ifdef _MSC_VER
-#define __FUNCNAME__ __FUNCSIG__
+#define __FUNCNAME__ __FUNCTION__
+#define EXPORT extern "C" __declspec(dllexport)
 #elif defined(__GNUC__)
 #define __FUNCNAME__ __PRETTY_FUNCTION__
+#define EXPORT extern "C"
 #else
 #define __FUNCNAME__ __func__
 #endif
+
+#define CALLBACK EXPORT
 
 #include "basic_types.h"
 #include "math.h"
@@ -115,6 +119,7 @@ void end_thread();
 
 #include "ds/threadpool.h"
 
+#include "functions.h"
 #include "asset.h"
 #include "render.h"
 #include "opengl.h"
@@ -182,6 +187,7 @@ struct func_scope_nocs {
 #include "ds/string.cpp"
 #include "math.cpp"
 
+#include "functions.cpp"
 #include "alloc.cpp"
 #include "log.cpp"
 #include "events.cpp"

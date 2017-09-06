@@ -66,6 +66,20 @@ platform_api platform_build_api() {
 	ret.platform_is_debugging			= &win32_is_debugging;
 	ret.platform_debug_break			= &win32_debug_break;
 	ret.platform_set_cursor				= &win32_set_cursor;
+	ret.platform_this_dll				= &win32_this_dll;
+
+	return ret;
+}
+
+platform_error win32_this_dll(platform_dll* dll) {
+
+	platform_error ret;
+
+	dll->dll_handle = GetModuleHandleA(null);
+	if(!dll->dll_handle) {
+		ret.good = false;
+		ret.error = GetLastError();
+	}
 
 	return ret;
 }

@@ -19,6 +19,7 @@ void		   linux_queue_event(platform_event evt);
 platform_error linux_wait_message();
 bool 		   linux_keydown(platform_keycode key);
 
+platform_error linux_this_dll(platform_dll* dll);
 platform_error linux_load_library(platform_dll* dll, string file_path);
 platform_error linux_free_library(platform_dll* dll);
 

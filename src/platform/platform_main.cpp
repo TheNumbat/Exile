@@ -52,6 +52,7 @@ bool try_reload();
 int main() {
 
 	api = platform_build_api();
+	api.your_dll = &game_dll;
 
 	string exe_path;
 	platform_error err = api.platform_get_bin_path(&exe_path);
