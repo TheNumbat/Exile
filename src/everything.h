@@ -48,10 +48,11 @@
 #define EXPORT extern "C" __declspec(dllexport)
 #elif defined(__GNUC__)
 #define __FUNCNAME__ __PRETTY_FUNCTION__
-#define EXPORT extern "C"
+#define EXPORT extern "C" __attribute__((dllexport))
 #else
 #define __FUNCNAME__ __func__
 #endif
+#define CALLBACK EXPORT
 
 #include "basic_types.h"
 #include "math.h"
@@ -64,12 +65,7 @@ struct code_context {
 };
 
 #include "platform/platform_api.h"
-#include "functions.h"
-
-#ifdef CALLBACK
-#undef CALLBACK
-#endif
-#define CALLBACK EXPORT
+#include "ds/functions.h"
 
 #include "alloc.h"
 
@@ -188,10 +184,10 @@ struct func_scope_nocs {
 #include <meta_types.h>
 
 // IMPLEMENTATIONS
+#include "ds/functions.cpp"
 #include "ds/string.cpp"
 #include "math.cpp"
 
-#include "functions.cpp"
 #include "alloc.cpp"
 #include "log.cpp"
 #include "events.cpp"

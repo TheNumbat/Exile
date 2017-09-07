@@ -1,9 +1,9 @@
 
 template<typename T, u32 size>
-buffer<T,size> buffer<T,size>::make(void (*out)(T, void*, u32), T param) {
+buffer<T,size> buffer<T,size>::make(_FPTR out, T param) {
 
 	buffer<T,size> ret;
-	ret.output = out;
+	ret.output.set(out);
 	ret.param = param;
 
 	return ret;
@@ -41,6 +41,6 @@ void buffer<T,size>::flush() {
 	used = 0;
 }
 
-void write_file_wrapper(platform_file file, void* mem, u32 len) {
+CALLBACK void write_file_wrapper(platform_file file, void* mem, u32 len) {
 	CHECKED(platform_write_file, &file, mem, len);
 }

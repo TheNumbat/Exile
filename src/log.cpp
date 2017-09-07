@@ -79,7 +79,7 @@ void log_manager::add_file(platform_file file, log_level level, log_out_type typ
 	log_out lfile;
 	lfile.type = type;
 	lfile.flush_on_message = flush;
-	lfile.file = buffer<platform_file,4096>::make(write_file_wrapper, file);
+	lfile.file = buffer<platform_file,4096>::make(FPTR(write_file_wrapper), file);
 	lfile.level = level;
 	
 	print_header(&lfile);

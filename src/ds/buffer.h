@@ -8,15 +8,15 @@ struct buffer {
 	u32 used = 0;
 	T param;
 
-	void (*output)(T, void*, u32) = null;
+	func_ptr<void, T, void*, u32> output;
 
 ///////////////////////////////////////////////////////////////////////////////
 
-	static buffer make(void (*out)(T, void*, u32), T param);
+	static buffer make(_FPTR out, T param);
 	void destroy();
 
 	void write(void* data, u32 len);
 	void flush();
 };
 
-void write_file_wrapper(platform_file file, void* mem, u32 len);
+CALLBACK void write_file_wrapper(platform_file file, void* mem, u32 len);

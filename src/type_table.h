@@ -117,7 +117,7 @@ struct _get_type_info<T*> {
 void make_meta_info();
 void make_type_table(allocator* alloc) { PROF
 
-	type_table = map<type_id,_type_info>::make(1024, alloc, &hash_u64);
+	type_table = map<type_id,_type_info>::make(1024, alloc, FPTR(hash_u64));
 
 	{
 		_type_info void_t;

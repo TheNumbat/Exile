@@ -704,7 +704,7 @@ bool strcmp(string first, string second) { PROF
 	return first == second;
 }
 
-u32 hash_strings(string one, string two) { PROF
+CALLBACK u32 hash_strings(string one, string two) { PROF
 
     u32 hash = 5381;
 
@@ -718,7 +718,7 @@ u32 hash_strings(string one, string two) { PROF
 }
 
 // from http://www.cse.yorku.ca/~oz/hash.html
-u32 hash_string(string str) { PROF
+CALLBACK u32 hash_string(string str) { PROF
 
     u32 hash = 5381;
 

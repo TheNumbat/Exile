@@ -53,6 +53,7 @@ struct log_out {
 		void (*write)(log_message* msg) = null;
 	};
 	log_out() : file() {}
+	~log_out() {}
 };
 
 struct log_thread_param {

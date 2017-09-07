@@ -1,5 +1,5 @@
 
-inline u32 hash_u32(u32 key) { PROF
+CALLBACK u32 hash_u32(u32 key) { PROF
     key = (key ^ 61) ^ (key >> 16);
     key = key + (key << 3);
     key = key ^ (key >> 4);
@@ -9,7 +9,7 @@ inline u32 hash_u32(u32 key) { PROF
     return key;
 }
 
-inline u32 hash_u64(u64 key) { PROF
+CALLBACK u32 hash_u64(u64 key) { PROF
 	key = (~key) + (key << 21); // key = (key << 21) - key - 1;
 	key = key ^ (key >> 24);
 	key = (key + (key << 3)) + (key << 8); // key * 265
@@ -21,27 +21,26 @@ inline u32 hash_u64(u64 key) { PROF
 }
 
 template<typename K, typename V>
-map<K,V> map<K,V>::make(i32 capacity, u32 (*hash)(K)) { PROF
+map<K,V> map<K,V>::make(i32 capacity, _FPTR hash) { PROF
 	
 	return map<K,V>::make(capacity, CURRENT_ALLOC(), hash);
 }
 
 template<typename K, typename V>
-map<K,V> map<K,V>::make(i32 capacity, allocator* a, u32 (*hash)(K)) { PROF
+map<K,V> map<K,V>::make(i32 capacity, allocator* a, _FPTR hash) { PROF
 	map<K,V> ret;
 
 	capacity = (i32)ceilf(capacity / MAP_MAX_LOAD_FACTOR);
 
 	ret.alloc 	 = a;
 	ret.contents = vector<map_element<K,V>>::make(capacity, ret.alloc);
-	if(!hash) {
+	if(!hash.data) {
 		LOG_DEBUG_ASSERT(sizeof(K) == sizeof(u32));
 		ret.use_u32hash = true;
 	} else {
-		ret.hash = hash;
+		ret.hash.set(hash);
 	}
 
-	
 	return ret;
 }
 
@@ -52,7 +51,6 @@ void map<K,V>::destroy() { PROF
 
 	size  = 0;
 	alloc = null;
-	hash  = null;
 }
 
 template<typename K, typename V>
@@ -123,7 +121,7 @@ V* map<K,V>::insert(K key, V value, bool grow_if_needed) { PROF
 	if(use_u32hash) {
 		ELEMENT_SET_HASH_BUCKET(ele, mod(hash_u32(*((u32*)&key)), contents.capacity));
 	} else {
-		ELEMENT_SET_HASH_BUCKET(ele, mod((*hash)(key), contents.capacity));
+		ELEMENT_SET_HASH_BUCKET(ele, mod(hash(key), contents.capacity));
 	}
 	ele.key 		= key;
 	ele.value 		= value;
@@ -211,7 +209,7 @@ V* map<K,V>::try_get(K key) { PROF	// can return null
 	if(use_u32hash) {
 		hash_bucket = mod(hash_u32(*((u32*)&key)), contents.capacity);
 	} else {
-		hash_bucket = mod((*hash)(key), contents.capacity);
+		hash_bucket = mod(hash(key), contents.capacity);
 	}
 
 	u32 index = hash_bucket;
@@ -242,7 +240,7 @@ void map<K,V>::erase(K key) { PROF
 	if(use_u32hash) {
 		hash_bucket = mod(hash_u32(*((u32*)&key)), contents.capacity);
 	} else {
-		hash_bucket = mod((*hash)(key), contents.capacity);
+		hash_bucket = mod(hash(key), contents.capacity);
 	}
 
 	u32 index = hash_bucket;

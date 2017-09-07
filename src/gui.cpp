@@ -1,5 +1,5 @@
 
-u32 guiid_hash(guiid id) { PROF
+CALLBACK u32 guiid_hash(guiid id) { PROF
 
 	u32 hash = hash_string(id.name);
 	return hash ^ id.base;
@@ -19,8 +19,8 @@ gui_manager gui_manager::make(ogl_manager* ogl, allocator* alloc) { PROF
 	ret.ogl_ctx.context = ogl->add_draw_context(&ogl_mesh_2d_attribs);
 	ret.ogl_ctx.shader 	= ogl->add_program(string_literal("shaders/gui.v"), string_literal("shaders/gui.f"), &ogl_uniforms_gui);
 
-	ret.window_state_data = map<guiid, gui_window_state>::make(32, alloc, &guiid_hash);
-	ret.state_data = map<guiid, gui_state_data>::make(128, alloc, &guiid_hash);
+	ret.window_state_data = map<guiid, gui_window_state>::make(32, alloc, FPTR(guiid_hash));
+	ret.state_data = map<guiid, gui_state_data>::make(128, alloc, FPTR(guiid_hash));
 	ret.fonts = vector<gui_font>::make(4, alloc);
 
 	return ret;

@@ -57,8 +57,8 @@ struct NOREFLECT string { // no-reflect because hard-coded
 	u32 write_u64(u32 idx, u8 base, u64 val, bool size = false, u32 min_len = 0);
 };
 
-u32  hash_strings(string one, string two);
-u32  hash_string(string str);
+CALLBACK u32 hash_strings(string one, string two);
+CALLBACK u32 hash_string(string str);
 bool operator==(string first, string second);
 inline bool operator==(string first, const char* second);
 inline bool operator==(const char* first, string second);

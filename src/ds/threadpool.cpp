@@ -15,7 +15,7 @@ threadpool threadpool::make(allocator* a, i32 num_threads_) { PROF
 	ret.num_threads = num_threads_ == 0 ? global_api->platform_get_num_cpus() : num_threads_;
 
 	ret.alloc   = a;
-	ret.running = map<job_id,platform_semaphore>::make(16, hash_u64);
+	ret.running = map<job_id,platform_semaphore>::make(16, FPTR(hash_u64));
 	ret.threads = array<platform_thread>::make(ret.num_threads, a);
 	ret.jobs    = con_heap<job>::make(16, a);
 	ret.worker_data = array<worker_param>::make(ret.num_threads, a);

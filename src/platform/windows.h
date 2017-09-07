@@ -16,7 +16,7 @@ typedef intptr_t  intptr;
 #define APIENTRY FAR __stdcall
 #define WINAPI   __stdcall
 #define WINAPIV  __cdecl
-#define CALLBACK __stdcall
+#define WINCALLBACK __stdcall
 #define MAX_PATH 260
 #define CCHDEVICENAME 32
 #define CCHFORMNAME   32
@@ -90,7 +90,7 @@ typedef DWORD COLORREF;
 typedef int (WINAPI *FARPROC)();
 typedef int (WINAPI *NEARPROC)();
 typedef int (WINAPI *PROC)();
-typedef LRESULT (CALLBACK* WNDPROC)(HWND, UINT, WPARAM, LPARAM);
+typedef LRESULT (WINCALLBACK* WNDPROC)(HWND, UINT, WPARAM, LPARAM);
 
 #if defined(_WIN64)
 typedef unsigned __int64 ULONG_PTR;
@@ -1080,7 +1080,7 @@ DLL_IMPORT BOOL WINAPI GetFileAttributesExA(LPCSTR lpFileName, GET_FILEEX_INFO_L
 DLL_IMPORT BOOL WINAPI WaitMessage(VOID);
 DLL_IMPORT BOOL WINAPI PeekMessageA(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsgFilterMax, UINT wRemoveMsg);
 DLL_IMPORT LRESULT WINAPI DispatchMessageA(CONST MSG *lpMsg);
-DLL_IMPORT LRESULT CALLBACK DefWindowProcA(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
+DLL_IMPORT LRESULT WINCALLBACK DefWindowProcA(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
 
 DLL_IMPORT SHORT WINAPI GetKeyState(int nVirtKey);
 

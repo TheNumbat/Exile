@@ -86,9 +86,9 @@ EXPORT game_state* start_up(platform_api* api) {
 	LOG_INFO("Done with startup!");
 	LOG_POP_CONTEXT();
 
-	// LOG_INFO_F("%", state); // Don't do this anymore, it's 409 thousand characters and will only grow
+	global_func->reload_all();
 
-	test_funcs();
+	// LOG_INFO_F("%", state); // Don't do this anymore, it's 409 thousand characters and will only grow
 
 	state->dbg.really_running = true;
 	state->running = true;
@@ -172,9 +172,7 @@ EXPORT void on_reload(platform_api* api, game_state* state) {
 	global_dbg = &state->dbg;
 	global_func = &state->func_state;
 	
-	state->func_state.reloading = true;
-	state->func_state.ptrs_reloaded = 0;
-	test_funcs();
+	state->func_state.reload_all();
 
 	begin_thread(np_string_literal("main"), &state->suppressed_platform_allocator);
 

@@ -139,7 +139,7 @@ void asset_store::load(string file) { PROF
 		asset_file_header* header = (asset_file_header*)store_mem;
 		file_asset_header* current_asset = (file_asset_header*)(store_mem + sizeof(asset_file_header));
 
-		assets = map<string,asset>::make(header->num_assets, alloc, &hash_string);
+		assets = map<string,asset>::make(header->num_assets, alloc, FPTR(hash_string));
 
 		for(u32 i = 0; i < header->num_assets; i++) {
 
