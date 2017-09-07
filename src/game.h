@@ -17,7 +17,7 @@ struct game_state {
 	evt_manager evt;
 	threadpool  thread_pool;
 
-	platform_allocator log_a, ogl_a, gui_a, dbg_a, evt_a, thread_pool_a; // idk about this
+	platform_allocator fc_a, log_a, ogl_a, gui_a, dbg_a, evt_a, thread_pool_a; // idk about this
 
 	platform_window window;
 

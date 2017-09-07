@@ -2,6 +2,9 @@
 #pragma once
 #ifndef __clang__
 
+struct func_ptr_state;
+static func_ptr_state* global_func = null;
+
 struct _FPTR {
 	void* data;
 	string n;
@@ -13,6 +16,8 @@ struct func_ptr {
 	T (*func)(args...) = null;
 	string name;
 
+	u32 id = 0;
+
 	T operator()(args... arg) {
 
 		return func(arg...);
@@ -22,22 +27,12 @@ struct func_ptr {
 		func = (T(*)(args...))f.data;
 		name = f.n;
 
-		global_func->all_func_ptrs[global_func->current_func_ptrs++] = (_FPTR*)this;
+		if(id == 0) {
+			id = global_func->next_id++;
+			global_func->all_ptrs.insert(id, (_FPTR*)this);
+		}
 	}
 };
-
-#define MAX_FUNC_PTRS 256
-struct func_ptr_state {
-
-	_FPTR* all_func_ptrs[MAX_FUNC_PTRS] = {};
-	u32 current_func_ptrs = 0;
-
-	platform_dll* this_dll = null;
-
-	void reload_all();
-};
-
-static func_ptr_state* global_func = null;
 
 #define FPTR(name) {&name, string_literal(#name)}
 

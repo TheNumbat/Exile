@@ -87,6 +87,20 @@ struct code_context {
 #include <new>
 #endif
 
+struct func_ptr_state {
+
+	u32 next_id = 1; // MAKE ATOMIC
+	map<u32,_FPTR*> all_ptrs;
+
+	platform_dll* this_dll = null;
+	allocator* alloc = null;
+	
+	static func_ptr_state make(allocator* a);
+	void destroy();
+
+	void reload_all();
+};
+
 #include "log_html.h"
 #include "log.h"
 #include "dbg.h"
