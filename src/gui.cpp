@@ -32,6 +32,10 @@ void gui_manager::destroy() { PROF
 		it->value.id_hash_stack.destroy();
 		it->value.offset_stack.destroy();
 		it->value.mesh.destroy();
+		it->key.name.destroy(alloc);
+	)
+	FORMAP(state_data,
+		it->key.name.destroy(alloc);
 	)
 
 	window_state_data.destroy();
@@ -84,6 +88,20 @@ gui_font* gui_select_best_font_scale(gui_window_state* win) { PROF
 	)
 
 	return f;
+}
+
+gui_state_data* gui_manager::add_state_data(guiid id, gui_state_data data) {
+
+	guiid cp = id;
+	cp.name = string::make_copy(cp.name, alloc);
+	return state_data.insert(cp, data);	
+}
+
+gui_window_state* gui_manager::add_window_state_data(guiid id, gui_window_state data) {
+
+	guiid cp = id;
+	cp.name = string::make_copy(cp.name, alloc);
+	return window_state_data.insert(cp, data);	
 }
 
 void gui_manager::begin_frame(gui_input_state new_input) { PROF
@@ -202,7 +220,7 @@ bool gui_begin(string name, r2 first_size, f32 first_alpha, gui_window_flags fla
 		ns.font = gui_select_best_font_scale(&ns);
 		ns.z = ggui->last_z;
 
-		window = ggui->window_state_data.insert(id, ns);
+		window = ggui->add_window_state_data(id, ns);
 	}
 
 	window->id_hash_stack.push(guiid_hash(id));
@@ -338,7 +356,7 @@ void gui_log_wnd(platform_window* win, string name, queue<log_message>* cache) {
 
 		nd.u32_1 = 0; // scroll position
 
-		data = ggui->state_data.insert(id, nd);
+		data = ggui->add_state_data(id, nd);
 	}
 
 	// we don't need real_rect, as this will always ignore global scale
@@ -451,7 +469,7 @@ bool gui_carrot_toggle(string name, bool initial, v2 pos, bool* toggleme) { PROF
 
 		nd.b = initial;
 
-		data = ggui->state_data.insert(id, nd);
+		data = ggui->add_state_data(id, nd);
 	}
 
 	if(toggleme) {

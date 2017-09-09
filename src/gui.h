@@ -169,6 +169,9 @@ struct gui_manager {
 	void add_font(ogl_manager* ogl, string asset_name, asset_store* store, bool mono = false); // the first font you add is the default size
 	void reload_fonts(ogl_manager* ogl);
 
+	gui_window_state* add_window_state_data(guiid id, gui_window_state data);
+	gui_state_data* add_state_data(guiid id, gui_state_data data);
+
 	void begin_frame(gui_input_state new_input);
 	void end_frame(platform_window* win, ogl_manager* ogl);
 };
