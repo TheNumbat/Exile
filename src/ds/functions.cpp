@@ -1,21 +1,21 @@
 
-
 void func_ptr_state::reload_all() {
-	FORMAP(all_ptrs,
-		CHECKED(platform_get_proc_address, &it->value->data, global_func->this_dll, it->value->n);
-	)
+	for(u32 i = 0; i < global_func->num_ptrs; i++) {
+		CHECKED(platform_get_proc_address, &global_func->all_ptrs[i].func, global_func->this_dll, global_func->all_ptrs[i].name);
+	}
 }
 
-func_ptr_state func_ptr_state::make(allocator* a) {
+_FPTR* _fptr(void* func, string name) {
 
-	func_ptr_state ret;
+	for(u32 i = 0; i < global_func->num_ptrs; i++) {
+		if(global_func->all_ptrs[i].func == func)  {
+			return &global_func->all_ptrs[i];
+		}
+	}
 
-	ret.all_ptrs = map<u32,_FPTR*>::make(256, a);
+	global_func->all_ptrs[global_func->num_ptrs].func = func;
+	global_func->all_ptrs[global_func->num_ptrs].name = name;
 
-	return ret;
-}
-
-void func_ptr_state::destroy() {
-
-	all_ptrs.destroy();
+	global_func->num_ptrs++;
+	return &global_func->all_ptrs[global_func->num_ptrs - 1];
 }

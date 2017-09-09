@@ -89,15 +89,11 @@ struct code_context {
 
 struct func_ptr_state {
 
-	u32 next_id = 1; // MAKE ATOMIC
-	map<u32,_FPTR*> all_ptrs;
+	_FPTR all_ptrs[256];
+	u32 num_ptrs = 0;
 
 	platform_dll* this_dll = null;
-	allocator* alloc = null;
 	
-	static func_ptr_state make(allocator* a);
-	void destroy();
-
 	void reload_all();
 };
 

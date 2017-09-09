@@ -21,20 +21,20 @@ CALLBACK u32 hash_u64(u64 key) { PROF
 }
 
 template<typename K, typename V>
-map<K,V> map<K,V>::make(i32 capacity, _FPTR hash) { PROF
+map<K,V> map<K,V>::make(i32 capacity, _FPTR* hash) { PROF
 	
 	return map<K,V>::make(capacity, CURRENT_ALLOC(), hash);
 }
 
 template<typename K, typename V>
-map<K,V> map<K,V>::make(i32 capacity, allocator* a, _FPTR hash) { PROF
+map<K,V> map<K,V>::make(i32 capacity, allocator* a, _FPTR* hash) { PROF
 	map<K,V> ret;
 
 	capacity = (i32)ceilf(capacity / MAP_MAX_LOAD_FACTOR);
 
 	ret.alloc 	 = a;
 	ret.contents = vector<map_element<K,V>>::make(capacity, ret.alloc);
-	if(!hash.data) {
+	if(!hash) {
 		LOG_DEBUG_ASSERT(sizeof(K) == sizeof(u32));
 		ret.use_u32hash = true;
 	} else {

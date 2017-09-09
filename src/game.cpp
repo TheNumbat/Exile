@@ -11,9 +11,6 @@ EXPORT game_state* start_up(platform_api* api) {
 	global_dbg = &state->dbg;
 	global_func = &state->func_state;
 
-	state->fc_a = MAKE_PLATFORM_ALLOCATOR("fc");
-	state->func_state = func_ptr_state::make(&state->fc_a);
-
 	state->default_platform_allocator = np_make_platform_allocator(np_string_literal("default"), CONTEXT);
 	state->suppressed_platform_allocator = np_make_platform_allocator(np_string_literal("default/suppress"), CONTEXT);
 	state->suppressed_platform_allocator.suppress_messages = true;
@@ -88,8 +85,6 @@ EXPORT game_state* start_up(platform_api* api) {
 
 	LOG_INFO("Done with startup!");
 	LOG_POP_CONTEXT();
-
-	global_func->reload_all();
 
 	// LOG_INFO_F("%", state); // Don't do this anymore, it's 409 thousand characters and will only grow
 

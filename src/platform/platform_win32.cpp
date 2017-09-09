@@ -859,7 +859,7 @@ bool win32_keydown(platform_keycode key) {
 	return (GetKeyState(vk_code) & 0x8000) != 0;
 }
 
-LRESULT CALLBACK window_proc(HWND handle, UINT msg, WPARAM wParam, LPARAM lParam) {
+LRESULT WINCALLBACK window_proc(HWND handle, UINT msg, WPARAM wParam, LPARAM lParam) {
 	
 	platform_event evt;
 

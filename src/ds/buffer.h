@@ -12,7 +12,7 @@ struct buffer {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-	static buffer make(_FPTR out, T param);
+	static buffer make(_FPTR* out, T param);
 	void destroy();
 
 	void write(void* data, u32 len);

@@ -1,6 +1,6 @@
 
 template<typename T, u32 size>
-buffer<T,size> buffer<T,size>::make(_FPTR out, T param) {
+buffer<T,size> buffer<T,size>::make(_FPTR* out, T param) {
 
 	buffer<T,size> ret;
 	ret.output.set(out);

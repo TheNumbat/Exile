@@ -41,8 +41,8 @@ struct map {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-	static map<K,V> make(i32 capacity = 16, _FPTR hash = {null,empty_string});
-	static map<K,V> make(i32 capacity, allocator* a, _FPTR hash = {null,empty_string});
+	static map<K,V> make(i32 capacity = 16, _FPTR* hash = null);
+	static map<K,V> make(i32 capacity, allocator* a, _FPTR* hash = null);
 	
 	void destroy();
 	

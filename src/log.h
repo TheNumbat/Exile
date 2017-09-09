@@ -52,8 +52,7 @@ struct log_out {
 		buffer<platform_file,4096> file;			// TODO(max): sizeof(buffer) dependent on parameter - don't do this for union?
 		void (*write)(log_message* msg) = null;
 	};
-	log_out() : file() {}
-	~log_out() {}
+	log_out() : file() {};
 };
 
 struct log_thread_param {
