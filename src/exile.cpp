@@ -28,7 +28,7 @@
 	#define BLOCK_ON_ERROR
 	#define DO_PROF	
 	#define CONSTRUCT_DS_ELEMENTS
-	// #define MORE_PROF
+	#define MORE_PROF
 #elif defined(REAL_RELEASE)
 
 #else

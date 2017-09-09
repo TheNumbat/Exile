@@ -1,4 +1,5 @@
 
+#ifdef DO_PROF
 func_scope::func_scope(code_context context) {
 	LOG_DEBUG_ASSERT(this_thread_data.call_stack_depth < MAX_CALL_STACK_DEPTH);
 	LOG_DEBUG_ASSERT(this_thread_data.dbg_cache_size < MAX_DBG_MSG_CACHE);
@@ -40,3 +41,4 @@ func_scope_nocs::~func_scope_nocs() {
 	m.type = dbg_msg_type::exit_func;
 	// this_thread_data.dbg_cache[this_thread_data.dbg_cache_size++] = m;
 }
+#endif

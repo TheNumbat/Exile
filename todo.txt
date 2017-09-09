@@ -40,7 +40,7 @@ immediate to do:
 
 	allocation stuff
 		pool allocator (growing arena)
-		free list (one-type pool re-using arenas)
+		free list (one-size pool re-using arenas)
 
 	async
 		better integration with event system https://www.youtube.com/watch?v=gFFqYLgPOWI
@@ -49,7 +49,6 @@ immediate to do:
 	uncategorized
 		SIMD & intrinsic math (vectorized functions, vector/mat math, noise & randomness)
 		stack allocations (_malloca? can't easily platform-abstract this...) where possible
-		better hotloading management (probably want callback registry)
 		ideal - no allocate/free per frame
 
 	meta
@@ -78,14 +77,14 @@ immediate to do:
 		keep & output statistics
 
 	UI
-		stop sending mesh every frame (see OpenGL)
 		fonts
-			we only need alpha data from font textures - compress
+			we only need alpha data from font textures - compress (GL_LUMINANCE?)
 			just pack the TTF and use stb_tt to asynchronously cache correctly sized fonts
 			when they're needed. 
 		widgets
 			clipping/wrapping/auto-layout
 			dividers
+			text input
 			multiple fonts
 			image widgets - do we need this?
 			texture arrays? would be useful for multiple fonts as well
@@ -97,9 +96,10 @@ immediate to do:
 		logger UI window
 			swap between levels
 			tooltip call stack / file:line
-			console + commands
+			console + commands (expose Lua API?)
 		profiler
-			lots to do here
+			telemetry-style
+		Subl_remote_open for profiler & logging
 
 	asset
 		asset texture atlases
@@ -109,11 +109,11 @@ immediate to do:
 		more types of assets: modding system
 
 	modding system
-		Lua
+		API considerations
+		API exposed to both C-DLL & Lua
 			embedding Lua 
 			debugging Lua
 			dynamic reload
-		think about mod API structure
 
 	fonts
 		color/format specifications in string
@@ -128,11 +128,7 @@ immediate to do:
 		Experiment with allocation systems
 			HeapAlloc/VirtualAlloc
 			TLSF (for arena-general allocations?)
-			dlmalloc
-			jemalloc
-			ptmalloc2
-			tcmalloc
-			nedmalloc
+			dlmalloc, jemalloc, ptmalloc2, tcmalloc, nedmalloc
 			http://blog.reverberate.org/2009/02/one-malloc-to-rule-them-all.html
 			Definitely try je & tc
 		wgl extension testing/loading
@@ -141,7 +137,8 @@ immediate to do:
 
 	OpenGl
 		remove sending on every command
-		start AZDO style (bindless?)
+			mark mesh as dirty to send
+		AZDO (bindless?)
 		improve shader spec API
 		3D
 			texture arrays?
@@ -155,7 +152,6 @@ immediate to do:
 		storage representation (compression?)
 		paging
 		world storage (3D chunks?)
-
 
 Stuff from #high_level_systems
 
