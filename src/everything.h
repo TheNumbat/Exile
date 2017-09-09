@@ -90,10 +90,11 @@ struct code_context {
 struct func_ptr_state {
 
 	_FPTR all_ptrs[256];
-	u32 num_ptrs = 0;		// ATOMIC ATOMIC ATOMIC
+	u32 num_ptrs = 0;
 
 	platform_dll* this_dll = null;
-	
+	platform_mutex mut;
+
 	void reload_all();
 };
 
@@ -191,9 +192,10 @@ struct func_scope_nocs {
 #endif
 
 #include "type_table.h"
-#include <meta_types.h>
 
 // IMPLEMENTATIONS
+#include <meta_types.h>
+
 #include "ds/functions.cpp"
 #include "ds/string.cpp"
 #include "math.cpp"

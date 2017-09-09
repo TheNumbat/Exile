@@ -11,6 +11,8 @@ EXPORT game_state* start_up(platform_api* api) {
 	global_dbg = &state->dbg;
 	global_func = &state->func_state;
 
+	setup_fptrs();
+
 	state->default_platform_allocator = np_make_platform_allocator(np_string_literal("default"), CONTEXT);
 	state->suppressed_platform_allocator = np_make_platform_allocator(np_string_literal("default/suppress"), CONTEXT);
 	state->suppressed_platform_allocator.suppress_messages = true;
@@ -94,6 +96,8 @@ EXPORT game_state* start_up(platform_api* api) {
 }
 
 EXPORT bool main_loop(game_state* state) { 
+
+	// LOG_INFO_F("%", string::literal("LUL"));
 
 	glUseProgram(0); // why tho?? https://twitter.com/fohx/status/619887799462985729?lang=en
 	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);

@@ -26,6 +26,8 @@ struct func_ptr {
 };
 
 _FPTR* _fptr(void* func, string name);
+
+void setup_fptrs();
 void cleanup_fptrs();
 
 #define FPTR(name) _fptr(&name, string::literal(#name))
