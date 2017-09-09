@@ -37,6 +37,8 @@
 	#define MORE_PROF
 #endif
 
+
+
 #ifdef __clang__
 #define NOREFLECT __attribute__((annotate("noreflect")))
 #else
@@ -56,24 +58,14 @@
 
 #include "basic_types.h"
 #include "math.h"
-#include "ds/string.h"
 
-struct code_context {
-	string file;
-	string function;
-	u32 line = 0;
-};
+#include "ds/string.h"
+#include "util/context.h"
 
 #include "platform/platform_api.h"
-#include "ds/functions.h"
+#include "util/fptr.h"
 
 #include "alloc.h"
-
-#ifdef _DEBUG
-#define CHECKED(platform_func, ...) {platform_error err = global_api->platform_func(##__VA_ARGS__); if(!err.good) LOG_ERR_F("Error % in %", err.error, #platform_func);}
-#else
-#define CHECKED(platform_func, ...) global_api->platform_func(##__VA_ARGS__);
-#endif
 
 #include "ds/vector.h"
 #include "ds/stack.h"
@@ -82,54 +74,11 @@ struct code_context {
 #include "ds/map.h"
 #include "ds/buffer.h"
 #include "ds/heap.h"
-
-#ifdef CONSTRUCT_DS_ELEMENTS
-#include <new>
-#endif
-
-struct func_ptr_state {
-
-	_FPTR all_ptrs[256];
-	u32 num_ptrs = 0;
-
-	platform_dll* this_dll = null;
-	platform_mutex mut;
-
-	void reload_all();
-};
+#include "ds/threadpool.h"
 
 #include "log_html.h"
 #include "log.h"
 #include "dbg.h"
-
-#define MAX_CALL_STACK_DEPTH 256
-#define MAX_DBG_MSG_CACHE 8192
-struct thread_data {
-	stack<allocator*> alloc_stack;
-	
-	string name;
-	code_context start_context;
-
-	code_context call_stack[MAX_CALL_STACK_DEPTH] = {};
-	u32 call_stack_depth = 0;
-
-	dbg_msg dbg_cache[MAX_DBG_MSG_CACHE] = {};
-	u32 dbg_cache_size = 0;
-};
-
-static thread_local thread_data this_thread_data;
-
-#define DO(num) for(i32 __i = 0; __i < num; __i++)
-
-#define CONTEXT _make_context(np_string_literal(__FILE__), np_string_literal(__FUNCNAME__), __LINE__)
-
-inline code_context _make_context(string file, string function, i32 line);
-
-#define begin_thread(fmt, a, ...) _begin_thread(fmt, a, CONTEXT, ##__VA_ARGS__);
-template<typename... Targs> void _begin_thread(string fmt, allocator* alloc, code_context start, Targs... args);
-void end_thread();
-
-#include "ds/threadpool.h"
 
 #include "asset.h"
 #include "render.h"
@@ -137,68 +86,38 @@ void end_thread();
 #include "gui.h"
 #include "events.h"
 
+#include "util/threadstate.h"
+#include "util/fscope.h"
+
 #include "game.h"
+#include "type_table.h"
+
+#ifdef CONSTRUCT_DS_ELEMENTS
+#include <new>
+#endif
+
+// IMPLEMENTATIONS
 static platform_api* global_api = null; // global because it just represents a bunch of what should be free functions
 static log_manager*  global_log = null; // global to provide printf() like functionality everywhere
 static dbg_manager*  global_dbg = null; // not used yet -- global to provide profiling functionality everywhere
 
-#ifdef DO_PROF
-struct func_scope {
-	func_scope(code_context context) {
-		LOG_DEBUG_ASSERT(this_thread_data.call_stack_depth < MAX_CALL_STACK_DEPTH);
-		LOG_DEBUG_ASSERT(this_thread_data.dbg_cache_size < MAX_DBG_MSG_CACHE);
+#define DO(num) for(i32 __i = 0; __i < num; __i++)
 
-		this_thread_data.call_stack[this_thread_data.call_stack_depth++] = context;
-
-		dbg_msg m;
-		m.type = dbg_msg_type::enter_func;
-		m.enter_func.func = context;
-		// this_thread_data.dbg_cache[this_thread_data.dbg_cache_size++] = m;
-		// printf("%+*s\n", this_thread_data.call_stack_depth + context.function.len, context.function.c_str);
-	}
-	~func_scope() {
-		LOG_DEBUG_ASSERT(this_thread_data.dbg_cache_size < MAX_DBG_MSG_CACHE);
-
-		dbg_msg m;
-		m.type = dbg_msg_type::exit_func;
-		// this_thread_data.dbg_cache[this_thread_data.dbg_cache_size++] = m;
-
-		this_thread_data.call_stack_depth--;
-	}
-};
-
-struct func_scope_nocs {
-	func_scope_nocs(code_context context) {
-		LOG_DEBUG_ASSERT(this_thread_data.dbg_cache_size < MAX_DBG_MSG_CACHE);
-
-		dbg_msg m;
-		m.type = dbg_msg_type::enter_func;
-		m.enter_func.func = context;
-		// this_thread_data.dbg_cache[this_thread_data.dbg_cache_size++] = m;
-	}
-	~func_scope_nocs() {
-		LOG_DEBUG_ASSERT(this_thread_data.dbg_cache_size < MAX_DBG_MSG_CACHE);
-
-		dbg_msg m;
-		m.type = dbg_msg_type::exit_func;
-		// this_thread_data.dbg_cache[this_thread_data.dbg_cache_size++] = m;
-	}
-};
-#define PROF func_scope __f(CONTEXT);
-#define PROF_NOCS func_scope_nocs __f(CONTEXT);
+#ifdef _DEBUG
+#define CHECKED(platform_func, ...) {platform_error err = global_api->platform_func(##__VA_ARGS__); if(!err.good) LOG_ERR_F("Error % in %", err.error, #platform_func);}
 #else
-#define PROF 
-#define PROF_NOCS
+#define CHECKED(platform_func, ...) global_api->platform_func(##__VA_ARGS__);
 #endif
 
-#include "type_table.h"
-
-// IMPLEMENTATIONS
 #include <meta_types.h>
 
-#include "ds/functions.cpp"
+#include "util/fptr.cpp"
+#include "util/context.cpp"
+#include "util/fscope.cpp"
+
 #include "ds/string.cpp"
 #include "math.cpp"
+#include "type_table.cpp"
 
 #include "alloc.cpp"
 #include "log.cpp"
