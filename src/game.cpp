@@ -1,6 +1,4 @@
 
-#include "everything.h"
-
 EXPORT game_state* start_up(platform_api* api) { 
 
 	game_state* state = (game_state*)api->platform_heap_alloc(sizeof(game_state));

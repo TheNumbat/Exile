@@ -14,7 +14,7 @@
 #include <locale>
 #include <cstring>
 
-#include "basic_types.h"
+#include "..\util\basic_types.h"
 
 using namespace std;
 
@@ -638,7 +638,7 @@ i32 main(i32 argc, char** argv) {
 		return CXChildVisit_Recurse;
 	}, nullptr);
 
-	ofstream fout("meta_types.h");
+	ofstream fout("meta_types.cpp");
 	output_pre(fout);
 	for(auto& e : enums) {
 		output_enum(fout, e);

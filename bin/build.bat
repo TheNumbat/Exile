@@ -21,7 +21,7 @@ set Meta_LinkerFlags=/NODEFAULTLIB:MSVCRT /SUBSYSTEM:console /LIBPATH:w:\deps\cl
  
 if not exist w:\build\asset.exe (
 	echo compiling asset builder...
-	cl %Asset_CompilerFlags% w:\src\asset_builder.cpp /link %Asset_LinkerFlags%
+	cl %Asset_CompilerFlags% w:\src\tools\asset_builder.cpp /link %Asset_LinkerFlags%
 )
 
 if not exist w:\data\assets\assets.asset (
@@ -31,19 +31,19 @@ if not exist w:\data\assets\assets.asset (
 
 if not exist w:\build\meta.exe (
 	echo compiling metaprogram...
-	cl %Meta_CompilerFlags% w:\src\meta.cpp /link %Meta_LinkerFlags%
+	cl %Meta_CompilerFlags% w:\src\tools\meta.cpp /link %Meta_LinkerFlags%
 )
 
 echo running metaprogram...
-meta.exe w:\src\game.cpp
+meta.exe w:\src\exile.cpp
 
 echo compiling game lib...
 if "%1"=="release" (
-	cl %Game_ReleaseCompilerFlags% w:\src\game.cpp /link %Game_LinkerFlags%
+	cl %Game_ReleaseCompilerFlags% w:\src\exile.cpp /link %Game_LinkerFlags%
 ) else if "%2"=="release" (
-	cl %Game_ReleaseCompilerFlags% w:\src\game.cpp /link %Game_LinkerFlags%
+	cl %Game_ReleaseCompilerFlags% w:\src\exile.cpp /link %Game_LinkerFlags%
 ) else (
-	cl %Game_DebugCompilerFlags% w:\src\game.cpp /link %Game_LinkerFlags%
+	cl %Game_DebugCompilerFlags% w:\src\exile.cpp /link %Game_LinkerFlags%
 )
 
 if not exist w:\build\main.exe (

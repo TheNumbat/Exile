@@ -28,9 +28,9 @@ using namespace std;
 #include <stb_truetype.h>
 #pragma warning(pop)
 
-#include "basic_types.h"
+#include "..\util\basic_types.h"
 #define BUILDER
-#include "asset.h"
+#include "..\asset.h"
 
 struct def_asset_image {
 	string name;

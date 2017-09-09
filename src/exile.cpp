@@ -56,7 +56,7 @@
 #endif
 #define CALLBACK EXPORT
 
-#include "basic_types.h"
+#include "util/basic_types.h"
 #include "math.h"
 
 #include "ds/string.h"
@@ -90,7 +90,7 @@
 #include "util/fscope.h"
 
 #include "game.h"
-#include "type_table.h"
+#include "util/type_table.h"
 
 #ifdef CONSTRUCT_DS_ELEMENTS
 #include <new>
@@ -109,15 +109,16 @@ static dbg_manager*  global_dbg = null; // not used yet -- global to provide pro
 #define CHECKED(platform_func, ...) global_api->platform_func(##__VA_ARGS__);
 #endif
 
-#include <meta_types.h>
+#include <meta_types.cpp>
 
 #include "util/fptr.cpp"
 #include "util/context.cpp"
 #include "util/fscope.cpp"
+#include "util/threadstate.cpp"
 
 #include "ds/string.cpp"
 #include "math.cpp"
-#include "type_table.cpp"
+#include "util/type_table.cpp"
 
 #include "alloc.cpp"
 #include "log.cpp"
@@ -127,6 +128,7 @@ static dbg_manager*  global_dbg = null; // not used yet -- global to provide pro
 #include "gui.cpp"
 #include "dbg.cpp"
 #include "asset.cpp"
+#include "game.cpp"
 
 #include "ds/vector.cpp"
 #include "ds/stack.cpp"
@@ -136,6 +138,4 @@ static dbg_manager*  global_dbg = null; // not used yet -- global to provide pro
 #include "ds/threadpool.cpp"
 #include "ds/buffer.cpp"
 #include "ds/heap.cpp"
-
-#include "everything.cpp"
 // /IMPLEMENTATIONS

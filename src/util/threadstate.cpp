@@ -1,6 +1,4 @@
 
-
-
 template<typename... Targs>
 void _begin_thread(string fmt, allocator* alloc, code_context start, Targs... args) {
 	make_type_table(alloc);

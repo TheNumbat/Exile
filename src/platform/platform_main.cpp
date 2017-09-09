@@ -3,7 +3,7 @@
 
 #pragma warning(disable : 4007)
 
-#include "../basic_types.h"
+#include "../util/basic_types.h"
 #include "platform_strings.h"
 #include "platform_strings.cpp"
 #include "platform_api.h"
