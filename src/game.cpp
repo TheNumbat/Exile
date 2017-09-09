@@ -23,7 +23,7 @@ EXPORT game_state* start_up(platform_api* api) {
 
 	platform_file stdout_file, log_all_file;
 	CHECKED(platform_get_stdout_as_file, &stdout_file);
-	CHECKED(platform_create_file, &log_all_file, string_literal("log_all.html"), platform_file_open_op::create);
+	CHECKED(platform_create_file, &log_all_file, string::literal("log_all.html"), platform_file_open_op::create);
 	state->log.add_file(log_all_file, log_level::alloc, log_out_type::html);
 	state->log.add_file(stdout_file, log_level::info, log_out_type::plaintext, true);
 
@@ -57,12 +57,12 @@ EXPORT game_state* start_up(platform_api* api) {
 		LOG_INFO("Setting up asset system");
 		state->default_store_a = MAKE_PLATFORM_ALLOCATOR("asset");
 		state->default_store = asset_store::make(&state->default_store_a);
-		state->default_store.load(string_literal("assets/assets.asset"));
+		state->default_store.load(string::literal("assets/assets.asset"));
 		return null;
 	}, state);
 
 	LOG_INFO("Creating window");
-	platform_error err = api->platform_create_window(&state->window, string_literal("CaveGame"), 1280, 720);
+	platform_error err = api->platform_create_window(&state->window, string::literal("CaveGame"), 1280, 720);
 
 	if (!err.good) {
 		LOG_FATAL_F("Failed to create window, error: %", err.error);
@@ -78,10 +78,10 @@ EXPORT game_state* start_up(platform_api* api) {
 	LOG_INFO("Setting up GUI");
 	state->gui_a = MAKE_PLATFORM_ALLOCATOR("gui");
 	state->gui = gui_manager::make(&state->ogl, &state->gui_a);
-	state->gui.add_font(&state->ogl, string_literal("gui14"), &state->default_store);
-	state->gui.add_font(&state->ogl, string_literal("gui24"), &state->default_store);
-	state->gui.add_font(&state->ogl, string_literal("gui40"), &state->default_store);
-	state->gui.add_font(&state->ogl, string_literal("guimono"), &state->default_store, true);
+	state->gui.add_font(&state->ogl, string::literal("gui14"), &state->default_store);
+	state->gui.add_font(&state->ogl, string::literal("gui24"), &state->default_store);
+	state->gui.add_font(&state->ogl, string::literal("gui40"), &state->default_store);
+	state->gui.add_font(&state->ogl, string::literal("guimono"), &state->default_store, true);
 
 	LOG_INFO("Done with startup!");
 	LOG_POP_CONTEXT();
@@ -159,6 +159,18 @@ EXPORT void shut_down(game_state* state) { PROF
 	state->log.destroy();
 	
 	end_thread();
+	cleanup_fptrs();
+
+	state->fc_a.destroy();
+	state->log_a.destroy();
+	state->ogl_a.destroy();
+	state->gui_a.destroy();
+	state->dbg_a.destroy();
+	state->evt_a.destroy();
+	state->thread_pool_a.destroy();
+	state->default_platform_allocator.destroy();
+	state->suppressed_platform_allocator.destroy();
+	state->default_store_a.destroy();
 
 	global_api->platform_heap_free(state);
 }

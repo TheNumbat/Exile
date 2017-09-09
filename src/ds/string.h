@@ -19,16 +19,20 @@ struct NOREFLECT string { // no-reflect because hard-coded
 	static string make(u32 _cap, allocator* a);
 	static string make_copy(string src);
 	static string make_copy(string src, allocator* a);
+	static string make_copy_plt(string src);
 	static string make_substring(string str, u32 start, u32 end);
 	static string make_from_c_str(char* c_str); // copies
+	static string make_from_c_str_plt(char* c_str); // copies
 	static string make_cat(string first, string second);
 	static string make_cat_v(i32 num_strs, ...);
 	static string from_c_str(char* c_str); // does not allocate
+	static string literal(const char* literal);
 
 	template<typename... Targs> static string makef(string fmt, Targs... args);
 	template<typename... Targs> static string makef(u32 len, string fmt, Targs... args);
 
 	void destroy(allocator* a);
+	void destroy_plt();
 	void destroy();
 
 	// parsing stuff
@@ -89,5 +93,4 @@ i32    np_string_last_slash(string str);
 string np_string_literal(const char* literal);
 string np_string_from_c_str(char* c_str);
 
-inline string string_literal(const char* literal);
 static const string empty_string = np_string_literal("");

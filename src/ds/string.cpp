@@ -161,7 +161,7 @@ u32 _string_printf(string out, u32 idx, string fmt, bool size, T& value, Targs..
 					}
 
 					while(sized < pad) {
-						idx = out.write(idx, string_literal(" "), size);
+						idx = out.write(idx, string::literal(" "), size);
 						sized++;
 					}
 					
@@ -209,12 +209,12 @@ u32 _string_printf(string out, u32 idx, string fmt, bool size) { PROF
 
 u32 string::write_type(u32 idx, void* val, _type_info* info, bool size) { PROF
 	if(info == null) {
-		idx = write(idx, string_literal("UNDEF"), size);
+		idx = write(idx, string::literal("UNDEF"), size);
 		return idx;
 	}
 	switch(info->type_type) {
 	case Type::_void: {
-		idx = write(idx, string_literal("void"), size);
+		idx = write(idx, string::literal("void"), size);
 	} break;
 	
 	case Type::_int: {
@@ -226,7 +226,7 @@ u32 string::write_type(u32 idx, void* val, _type_info* info, bool size) { PROF
 	} break;
 
 	case Type::_bool: {
-		idx = write(idx, string_literal(*(bool*)val ? "true" : "false"), size);
+		idx = write(idx, string::literal(*(bool*)val ? "true" : "false"), size);
 	} break;
 
 	case Type::_ptr: {
@@ -288,7 +288,7 @@ u32 string::write_queue(u32 idx, void* val, _type_info* info, bool size) { PROF
 
 	_type_info* of = TYPEINFO_H(TYPEINFO_H(info->_struct.member_types[0])->_ptr.to);
 	if(!of) {
-		idx = write(idx, string_literal("[UNDEF]"), size);
+		idx = write(idx, string::literal("[UNDEF]"), size);
 		return idx;
 	}
 
@@ -307,7 +307,7 @@ u32 string::write_queue(u32 idx, void* val, _type_info* info, bool size) { PROF
 			idx = write(idx, '\"', size);
 		}
 		if(i != end - 1)
-			idx = write(idx, string_literal(", "), size);
+			idx = write(idx, string::literal(", "), size);
 	}
 	idx = write(idx, ']', size);
 
@@ -320,7 +320,7 @@ u32 string::write_vector(u32 idx, void* val, _type_info* info, bool size) { PROF
 
 	_type_info* of = TYPEINFO_H(TYPEINFO_H(info->_struct.member_types[0])->_ptr.to);
 	if(!of) {
-		idx = write(idx, string_literal("[UNDEF]"), size);
+		idx = write(idx, string::literal("[UNDEF]"), size);
 		return idx;
 	}
 
@@ -339,7 +339,7 @@ u32 string::write_vector(u32 idx, void* val, _type_info* info, bool size) { PROF
 			idx = write(idx, '\"', size);
 		}
 		if(i != vec_len - 1)
-			idx = write(idx, string_literal(", "), size);
+			idx = write(idx, string::literal(", "), size);
 	}
 	idx = write(idx, ']', size);
 
@@ -355,7 +355,7 @@ u32 string::write_map(u32 idx, void* val, _type_info* info, bool size) { PROF
 
 	_type_info* vec_of = TYPEINFO_H(TYPEINFO_H(vec_info->_struct.member_types[0])->_ptr.to);
 	if(!vec_of) {
-		idx = write(idx, string_literal("[UNDEF]"), size);
+		idx = write(idx, string::literal("[UNDEF]"), size);
 		return idx;
 	}
 
@@ -368,7 +368,7 @@ u32 string::write_map(u32 idx, void* val, _type_info* info, bool size) { PROF
 		if(!*(bool*)(data + i * vec_of->size + vec_of->_struct.member_offsets[2])) continue;
 
 		if(number_actually_printed != 0)
-			idx = write(idx, string_literal(", "), size);
+			idx = write(idx, string::literal(", "), size);
 		number_actually_printed++;
 		
 		idx = write(idx, '{', size);
@@ -382,7 +382,7 @@ u32 string::write_map(u32 idx, void* val, _type_info* info, bool size) { PROF
 				idx = write(idx, '\"', size);
 			}
 		}
-		idx = write(idx, string_literal(", "), size);
+		idx = write(idx, string::literal(", "), size);
 		{
 			_type_info* value = TYPEINFO_H(vec_of->_struct.member_types[1]);
 			if(value->type_type == Type::_string) {
@@ -404,7 +404,7 @@ u32 string::write_static_array(u32 idx, void* val, _type_info* info, bool size) 
 	_type_info* of = TYPEINFO_H(info->_array.of);
 
 	if (!of) {
-		idx = write(idx, string_literal("UNDEF["), size);
+		idx = write(idx, string::literal("UNDEF["), size);
 		idx = write_u64(idx, 10, info->_array.length, size);
 		idx = write(idx, ']', size);
 		return idx;
@@ -421,7 +421,7 @@ u32 string::write_static_array(u32 idx, void* val, _type_info* info, bool size) 
 			idx = write(idx, '\"', size);
 		}
 		if(i != info->_array.length - 1)
-			idx = write(idx, string_literal(", "), size);
+			idx = write(idx, string::literal(", "), size);
 	}
 
 	idx = write(idx, ']', size);
@@ -430,12 +430,12 @@ u32 string::write_static_array(u32 idx, void* val, _type_info* info, bool size) 
 }
 
 u32 string::write_ptr(u32 idx, void* val, _type_info* info, bool size) { PROF 
-	idx = write(idx, string_literal("*{"), size);
+	idx = write(idx, string::literal("*{"), size);
 	if (info->_ptr.to == 0) {
-		idx = write(idx, string_literal("UNDEF|"), size);
+		idx = write(idx, string::literal("UNDEF|"), size);
 
 		if (*(u8**)val == null) {
-			idx = write(idx, string_literal("null"), size);
+			idx = write(idx, string::literal("null"), size);
 		} else {
 			idx = write_u64(idx, 16, (u64)(*(u8**)val), size, sizeof(void*) == 8 ? 16 : 8);
 		}
@@ -443,7 +443,7 @@ u32 string::write_ptr(u32 idx, void* val, _type_info* info, bool size) { PROF
 		_type_info* to = TYPEINFO_H(info->_ptr.to);
 		if (*(u8**)val == null) {
 			idx = write(idx, to->name, size);
-			idx = write(idx, string_literal("|null"), size);
+			idx = write(idx, string::literal("|null"), size);
 		} else {
 			if(to->type_type == Type::_string) {
 				idx = write(idx, '\"', size);
@@ -462,10 +462,10 @@ u32 string::write_ptr(u32 idx, void* val, _type_info* info, bool size) { PROF
 
 u32 string::write_struct(u32 idx, void* val, _type_info* info, bool size) { PROF 
 	idx = write(idx, info->name, size);
-	idx = write(idx, string_literal("{"), size);
+	idx = write(idx, string::literal("{"), size);
 	for(u32 j = 0; j < info->_struct.member_count; j++) {
 		idx = write(idx, info->_struct.member_names[j], size);
-		idx = write(idx, string_literal(" : "), size);
+		idx = write(idx, string::literal(" : "), size);
 
 		_type_info* member = TYPEINFO_H(info->_struct.member_types[j]);
 		u8* place = (u8*)val + info->_struct.member_offsets[j];
@@ -479,11 +479,11 @@ u32 string::write_struct(u32 idx, void* val, _type_info* info, bool size) { PROF
 				idx = write(idx, '\"', size);
 			}
 		} else {
-			idx = write(idx, string_literal("UNDEF"), size);
+			idx = write(idx, string::literal("UNDEF"), size);
 		}
 
 		if(j < info->_struct.member_count - 1) {
-			idx = write(idx, string_literal(", "), size);
+			idx = write(idx, string::literal(", "), size);
 		}
 	}
 	idx = write(idx, '}', size);
@@ -655,7 +655,7 @@ u32 string::write_enum(u32 idx, void* val, _type_info* info, bool size) { PROF
 	}
 
 	idx = write(idx, info->name, size);
-	idx = write(idx, string_literal("::"), size);
+	idx = write(idx, string::literal("::"), size);
 	idx = write(idx, name, size);
 
 	return idx;
@@ -677,12 +677,12 @@ string make_stringf_a(allocator* a, string fmt, Targs... args) { PROF
 
 inline bool operator==(string first, const char* second) { PROF
 
-	return first == string_literal(second);
+	return first == string::literal(second);
 }
 
 inline bool operator==(const char* first, string second) { PROF
 
-	return string_literal(first) == second;
+	return string::literal(first) == second;
 }
 
 bool operator==(string first, string second) { PROF
@@ -797,11 +797,25 @@ u32 string::get_next_codepoint(u32* index) {
 	return 0;
 }
 
-string make_copy_string(string src, allocator* a) { PROF
+string string::make_copy(string src, allocator* a) { PROF
 
 	string ret = string::make(src.cap, a);
 
 	ret.len = src.len;
+
+	for(u32 i = 0; i < ret.len; i++) { // will copy null terminator
+		ret.c_str[i] = src.c_str[i];
+	}
+
+	return ret;
+}
+
+string string::make_copy_plt(string src) { PROF
+
+	string ret; 
+	ret.len = src.len;
+	ret.cap = src.cap;
+	ret.c_str = (char*)global_api->platform_heap_alloc(ret.cap);
 
 	for(u32 i = 0; i < ret.len; i++) { // will copy null terminator
 		ret.c_str[i] = src.c_str[i];
@@ -841,7 +855,7 @@ void string::destroy(allocator* a) { PROF
 	} POP_ALLOC();
 }
 
-inline string string_literal(const char* literal) { 
+string string::literal(const char* literal) { 
 
 #ifdef MORE_PROF
 	PROF
@@ -1056,4 +1070,31 @@ i32 np_string_first(string str, char c) {
 string np_string_literal(const char* literal) {
 
 	return np_string_from_c_str((char*)literal);
+}
+
+string string::make_from_c_str_plt(char* c_str) {
+
+	u32 len;
+	for(len = 0; c_str[len] != '\0'; len++);
+	len++;
+
+	string ret;
+	ret.c_str = (char*)global_api->platform_heap_alloc(len);
+	ret.cap = len;
+	ret.len = len;
+
+	for(u32 i = 0; i <= len; i++) { // will copy null terminator
+		ret.c_str[i] = c_str[i];
+	}
+
+	return ret;
+}
+
+void string::destroy_plt() {
+
+	global_api->platform_heap_free(c_str);
+
+	c_str = null;
+	cap = 0;
+	len = 0;
 }

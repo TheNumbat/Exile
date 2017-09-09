@@ -14,8 +14,14 @@ _FPTR* _fptr(void* func, string name) {
 	}
 
 	global_func->all_ptrs[global_func->num_ptrs].func = func;
-	global_func->all_ptrs[global_func->num_ptrs].name = name;
+	global_func->all_ptrs[global_func->num_ptrs].name = string::make_copy_plt(name);
 
 	global_func->num_ptrs++;
 	return &global_func->all_ptrs[global_func->num_ptrs - 1];
+}
+
+void cleanup_fptrs() {
+	for(u32 i = 0; i < global_func->num_ptrs; i++) {
+		global_func->all_ptrs[i].name.destroy_plt();
+	}
 }

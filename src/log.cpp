@@ -101,7 +101,7 @@ void log_manager::print_header(log_out* output) { PROF
 		
 		if(output->type == log_out_type::plaintext) {
 			
-			string header = string::makef(string_literal("%-8 [%-36] [%-20] [%-5] %-2\n"), string_literal("time"), string_literal("thread/context"), string_literal("file:line"), string_literal("level"), string_literal("message"));
+			string header = string::makef(string::literal("%-8 [%-36] [%-20] [%-5] %-2\n"), string::literal("time"), string::literal("thread/context"), string::literal("file:line"), string::literal("level"), string::literal("message"));
 
 			output->file.write((void*)header.c_str, header.len - 1);
 			output->file.flush();
@@ -216,16 +216,16 @@ void log_manager::msg(string msg, log_level level, code_context context) { PROF_
 string log_message::fmt_time() { PROF
 
 	string time = string::make(9);
-	global_api->platform_get_timef(string_literal("hh:mm:ss"), &time);
+	global_api->platform_get_timef(string::literal("hh:mm:ss"), &time);
 
 	return time;
 }
 
 string log_message::fmt_call_stack() { PROF
 
-	string cstack = string::make_cat(thread_name, string_literal("/"));
+	string cstack = string::make_cat(thread_name, string::literal("/"));
 	for(u32 j = 0; j < call_stack.capacity; j++) {
-		string temp = string::make_cat_v(3, cstack, call_stack.get(j)->function, string_literal("/"));
+		string temp = string::make_cat_v(3, cstack, call_stack.get(j)->function, string::literal("/"));
 		cstack.destroy();
 		cstack = temp;
 	}
@@ -235,7 +235,7 @@ string log_message::fmt_call_stack() { PROF
 
 string log_message::fmt_file_line() { PROF
 
-	return string::makef(string_literal("%:%"), publisher.file, publisher.line);
+	return string::makef(string::literal("%:%"), publisher.file, publisher.line);
 }
 
 string log_message::fmt_level() { PROF
@@ -243,25 +243,25 @@ string log_message::fmt_level() { PROF
 	string str;
 	switch(level) {
 	case log_level::debug:
-		str = string_literal("DEBUG");
+		str = string::literal("DEBUG");
 		break;
 	case log_level::info:
-		str = string_literal("INFO");
+		str = string::literal("INFO");
 		break;
 	case log_level::warn:
-		str = string_literal("WARN");
+		str = string::literal("WARN");
 		break;
 	case log_level::error:
-		str = string_literal("ERROR");
+		str = string::literal("ERROR");
 		break;
 	case log_level::fatal:
-		str = string_literal("FATAL");
+		str = string::literal("FATAL");
 		break;
 	case log_level::ogl:
-		str = string_literal("OGL");
+		str = string::literal("OGL");
 		break;
 	case log_level::alloc:
-		str = string_literal("ALLOC");
+		str = string::literal("ALLOC");
 		break;
 	}
 
@@ -279,7 +279,7 @@ string fmt_msg(log_message* msg, log_out_type type) { PROF
 
 	if(type == log_out_type::plaintext) {
 
-		output = string::makef(string_literal("%-8 [%-36] [%-20] [%-5] %+*\n"), time, cstack, file_line, clevel, 3 * msg->call_stack.capacity + msg->msg.len - 1, msg->msg);
+		output = string::makef(string::literal("%-8 [%-36] [%-20] [%-5] %+*\n"), time, cstack, file_line, clevel, 3 * msg->call_stack.capacity + msg->msg.len - 1, msg->msg);
 
 	} else if(type == log_out_type::html) {
 

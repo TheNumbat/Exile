@@ -50,7 +50,7 @@ struct log_out {
 	bool 		 flush_on_message = false;
 	union {
 		buffer<platform_file,4096> file;			// TODO(max): sizeof(buffer) dependent on parameter - don't do this for union?
-		void (*write)(log_message* msg) = null;
+		func_ptr<void, log_message*> write;
 	};
 	log_out() : file() {};
 };
@@ -95,41 +95,41 @@ struct log_manager {
 };
 
 #define LOG_PUSH_CONTEXT(str) global_log->push_context(str, CONTEXT); 
-#define LOG_PUSH_CONTEXT_L(str) global_log->push_context(string_literal(str), CONTEXT); 
+#define LOG_PUSH_CONTEXT_L(str) global_log->push_context(string::literal(str), CONTEXT); 
 #define LOG_POP_CONTEXT() global_log->pop_context();
 
-#define LOG_INFO(m) 	global_log->msg(string_literal(m), log_level::info,  CONTEXT);
-#define LOG_WARN(m) 	global_log->msg(string_literal(m), log_level::warn,  CONTEXT);
-#define LOG_ERR(m) 		global_log->msg(string_literal(m), log_level::error, CONTEXT);
-#define LOG_FATAL(m) 	global_log->msg(string_literal(m), log_level::fatal, CONTEXT);
+#define LOG_INFO(m) 	global_log->msg(string::literal(m), log_level::info,  CONTEXT);
+#define LOG_WARN(m) 	global_log->msg(string::literal(m), log_level::warn,  CONTEXT);
+#define LOG_ERR(m) 		global_log->msg(string::literal(m), log_level::error, CONTEXT);
+#define LOG_FATAL(m) 	global_log->msg(string::literal(m), log_level::fatal, CONTEXT);
 
-#define LOG_INFO_F(fmt, ...) 	global_log->msgf(string_literal(fmt), log_level::info,  CONTEXT, ##__VA_ARGS__); 
-#define LOG_WARN_F(fmt, ...) 	global_log->msgf(string_literal(fmt), log_level::warn,  CONTEXT, ##__VA_ARGS__); 
-#define LOG_ERR_F(fmt, ...) 	global_log->msgf(string_literal(fmt), log_level::error, CONTEXT, ##__VA_ARGS__); 
-#define LOG_FATAL_F(fmt, ...) 	global_log->msgf(string_literal(fmt), log_level::fatal, CONTEXT, ##__VA_ARGS__); 
+#define LOG_INFO_F(fmt, ...) 	global_log->msgf(string::literal(fmt), log_level::info,  CONTEXT, ##__VA_ARGS__); 
+#define LOG_WARN_F(fmt, ...) 	global_log->msgf(string::literal(fmt), log_level::warn,  CONTEXT, ##__VA_ARGS__); 
+#define LOG_ERR_F(fmt, ...) 	global_log->msgf(string::literal(fmt), log_level::error, CONTEXT, ##__VA_ARGS__); 
+#define LOG_FATAL_F(fmt, ...) 	global_log->msgf(string::literal(fmt), log_level::fatal, CONTEXT, ##__VA_ARGS__); 
 
 #ifdef _MSC_VER
 #define LOG_ASSERT(cond) __pragma(warning(push)) \
 						 __pragma(warning(disable:4127)) \
-						 {if(!(cond)) LOG_FATAL_F("Assertion % failed!", string_literal(#cond));} \
+						 {if(!(cond)) LOG_FATAL_F("Assertion % failed!", string::literal(#cond));} \
 						 __pragma(warning(pop))
 #elif defined(__GNUC__)
-#define LOG_ASSERT(cond) {if(!(cond)) LOG_FATAL_F("Assertion % failed!", string_literal(#cond));}
+#define LOG_ASSERT(cond) {if(!(cond)) LOG_FATAL_F("Assertion % failed!", string::literal(#cond));}
 #else
 #define LOG__ASSERT(cond)
 #endif
 
 #ifdef _DEBUG
-	#define LOG_DEBUG(m) 			global_log->msg(string_literal(m),  log_level::debug, CONTEXT); 
-	#define LOG_DEBUG_F(fmt, ...) 	global_log->msgf(string_literal(fmt), log_level::debug, CONTEXT, ##__VA_ARGS__) 
-	#define LOG_OGL_F(fmt, ...)		global_log->msgf(string_literal(fmt), log_level::ogl,   CONTEXT, ##__VA_ARGS__); 
+	#define LOG_DEBUG(m) 			global_log->msg(string::literal(m),  log_level::debug, CONTEXT); 
+	#define LOG_DEBUG_F(fmt, ...) 	global_log->msgf(string::literal(fmt), log_level::debug, CONTEXT, ##__VA_ARGS__) 
+	#define LOG_OGL_F(fmt, ...)		global_log->msgf(string::literal(fmt), log_level::ogl,   CONTEXT, ##__VA_ARGS__); 
 	#ifdef _MSC_VER
 	#define LOG_DEBUG_ASSERT(cond) 	__pragma(warning(push)) \
 							 	   	__pragma(warning(disable:4127)) \
-							 	   	{if(!(cond)) LOG_FATAL_F("Debug assertion % failed!", string_literal(#cond));} \
+							 	   	{if(!(cond)) LOG_FATAL_F("Debug assertion % failed!", string::literal(#cond));} \
 							 	   	__pragma(warning(pop))
 	#elif defined(__GNUC__)
-	#define LOG_DEBUG_ASSERT(cond) 	{if(!(cond)) LOG_FATAL_F("Debug assertion % failed!", string_literal(#cond));}
+	#define LOG_DEBUG_ASSERT(cond) 	{if(!(cond)) LOG_FATAL_F("Debug assertion % failed!", string::literal(#cond));}
 	#else
 	#define LOG_DEBUG_ASSERT(cond)
 	#endif

@@ -1,4 +1,10 @@
 
+void allocator::destroy() {
+	if(name.c_str) {
+		free_(name.c_str, this, CONTEXT);
+	}
+}
+
 inline void _pop_alloc() { PROF
 	this_thread_data.alloc_stack.pop();
 }
@@ -22,7 +28,7 @@ CALLBACK void* platform_allocate(u64 bytes, allocator* this_, code_context conte
 
 #ifdef LOG_ALLOCS
 	if(!this_->suppress_messages) {
-		global_log->msgf(string_literal("allocating % bytes to % with platform alloc \"%\""), log_level::alloc, context, bytes, mem, this_->name);
+		global_log->msgf(string::literal("allocating % bytes to % with platform alloc \"%\""), log_level::alloc, context, bytes, mem, this_->name);
 	}
 #endif
 
@@ -37,7 +43,7 @@ CALLBACK void platform_free(void* mem, allocator* this_, code_context context) {
 
 #ifdef LOG_ALLOCS
 	if(!this_->suppress_messages) {
-		global_log->msgf(string_literal("freeing % with platform alloc \"%\""), log_level::alloc, context, mem, this_->name);
+		global_log->msgf(string::literal("freeing % with platform alloc \"%\""), log_level::alloc, context, mem, this_->name);
 	}
 #endif
 
@@ -52,7 +58,7 @@ CALLBACK void* platform_reallocate(void* mem, u64 bytes, allocator* this_, code_
 
 #ifdef LOG_ALLOCS
 	if(!this_->suppress_messages) {
-		global_log->msgf(string_literal("reallocating % with to size % platform alloc \"%\""), log_level::alloc, context, mem, bytes, this_->name);
+		global_log->msgf(string::literal("reallocating % with to size % platform alloc \"%\""), log_level::alloc, context, mem, bytes, this_->name);
 	}
 #endif
 
@@ -75,11 +81,12 @@ inline platform_allocator np_make_platform_allocator(string name, code_context c
 	ret.platform_free 		= global_api->platform_heap_free;
 	ret.platform_reallocate = global_api->platform_heap_realloc;
 	ret.context  			= context;
-	ret.name				= name;
-
+	
 	ret.allocate_.set(FPTR(platform_allocate));
 	ret.free_.set(FPTR(platform_free));
 	ret.reallocate_.set(FPTR(platform_reallocate));
+
+	ret.name = string::make_copy(name, &ret);
 
 	return ret;
 }
@@ -102,7 +109,7 @@ CALLBACK void* arena_allocate(u64 bytes, allocator* this_, code_context context)
 
 #ifdef LOG_ALLOCS
 	if(!this__->suppress_messages) {
-		global_log->msgf(string_literal("allocating % bytes (used:%/%) to % with arena alloc \"%\""), log_level::alloc, context, bytes, this__->used, this__->size, mem, this__->name);
+		global_log->msgf(string::literal("allocating % bytes (used:%/%) to % with arena alloc \"%\""), log_level::alloc, context, bytes, this__->used, this__->size, mem, this__->name);
 	}
 #endif
 
@@ -120,7 +127,7 @@ void arena_reset(arena_allocator* a, code_context context) { PROF
 
 #ifdef LOG_ALLOCS
 	if(!a->suppress_messages) {
-		global_log->msgf(string_literal("reseting arena \"%\""), log_level::alloc, context, a->name);
+		global_log->msgf(string::literal("reseting arena \"%\""), log_level::alloc, context, a->name);
 	}
 #endif
 
@@ -135,7 +142,7 @@ inline void arena_destroy(arena_allocator* a, code_context context) { PROF
 
 #ifdef LOG_ALLOCS
 	if(!a->suppress_messages) {
-		global_log->msgf(string_literal("destroying arena \"%\""), log_level::alloc, context, a->name);
+		global_log->msgf(string::literal("destroying arena \"%\""), log_level::alloc, context, a->name);
 	}
 #endif
 
@@ -145,40 +152,11 @@ inline void arena_destroy(arena_allocator* a, code_context context) { PROF
 	}
 }
 
-arena_allocator arena_copy(string name, allocator* backing, arena_allocator src, code_context context) {
-
-	arena_allocator ret;
-
-	ret.size = src.size;
-	ret.context = context;
-	if(backing) {
-		ret.backing = backing;
-	} else {
-		ret.backing = src.backing;
-	}
-	ret.allocate_ 	= src.allocate_;
-	ret.free_		= src.free_;
-	ret.reallocate_ = src.reallocate_;
-	ret.name 	  	= name;
-	ret.suppress_messages = src.suppress_messages;
-
-#ifdef LOG_ALLOCS
-	if(!ret.suppress_messages) {
-		global_log->msgf(string_literal("creating arena \"%\" size % copied from arena \"%\""), log_level::alloc, context, name, ret.size, src.name);
-	}
-#endif
-	
-	if(ret.size > 0) {
-		ret.memory = ret.backing->allocate_(ret.size, ret.backing, context);
-		memcpy(src.memory, ret.memory, ret.size);
-	}
-
-	return ret;
-}
-
 inline arena_allocator make_arena_allocator_from_context(string name, u64 size, bool suppress, code_context context) { PROF
 
 	arena_allocator ret;
+
+	size += name.cap;
 
 	ret.size 	  	= size;
 	ret.context   	= context;
@@ -192,13 +170,13 @@ inline arena_allocator make_arena_allocator_from_context(string name, u64 size, 
 
 #ifdef LOG_ALLOCS
 	if(!ret.suppress_messages) {
-		global_log->msgf(string_literal("creating arena \"%\" size %"), log_level::alloc, context, name, size);
+		global_log->msgf(string::literal("creating arena \"%\" size %"), log_level::alloc, context, name, size);
 	}
 #endif
 	
-	if(size > 0) {
-		ret.memory   = ret.backing->allocate_(size, ret.backing, context);
-	}
+	ret.memory = ret.backing->allocate_(size, ret.backing, context);
+
+	ret.name = string::make_copy(name, &ret);
 
 	return ret;
 }
@@ -206,6 +184,8 @@ inline arena_allocator make_arena_allocator_from_context(string name, u64 size, 
 inline arena_allocator make_arena_allocator(string name, u64 size, allocator* backing, bool suppress, code_context context) { PROF
 
 	arena_allocator ret;
+
+	size += name.cap;
 
 	ret.size 	  	= size;
 	ret.context   	= context;
@@ -219,13 +199,12 @@ inline arena_allocator make_arena_allocator(string name, u64 size, allocator* ba
 
 #ifdef LOG_ALLOCS
 	if(!ret.suppress_messages) {
-		global_log->msgf(string_literal("creating arena \"%\" size %"), log_level::alloc, context, name, size);
+		global_log->msgf(string::literal("creating arena \"%\" size %"), log_level::alloc, context, name, size);
 	}
 #endif
-
-	if(size > 0) {
-		ret.memory   = ret.backing->allocate_(size, ret.backing, context);
-	}
+	
+	ret.memory = ret.backing->allocate_(size, ret.backing, context);
+	ret.name = string::make_copy(name, &ret);
 
 	return ret;
 }

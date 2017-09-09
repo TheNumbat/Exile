@@ -119,4 +119,4 @@ struct dbg_manager {
 	void render_debug_gui(platform_window* win);
 };
 
-void dbg_add_log(log_message* msg);
+CALLBACK void dbg_add_log(log_message* msg);

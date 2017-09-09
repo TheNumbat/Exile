@@ -17,7 +17,7 @@ gui_manager gui_manager::make(ogl_manager* ogl, allocator* alloc) { PROF
 	ret.scratch = MAKE_ARENA("gui_scratch", KILOBYTES(512), alloc, false);
 
 	ret.ogl_ctx.context = ogl->add_draw_context(&ogl_mesh_2d_attribs);
-	ret.ogl_ctx.shader 	= ogl->add_program(string_literal("shaders/gui.v"), string_literal("shaders/gui.f"), &ogl_uniforms_gui);
+	ret.ogl_ctx.shader 	= ogl->add_program(string::literal("shaders/gui.v"), string::literal("shaders/gui.f"), FPTR(ogl_uniforms_gui));
 
 	ret.window_state_data = map<guiid, gui_window_state>::make(32, alloc, FPTR(guiid_hash));
 	ret.state_data = map<guiid, gui_state_data>::make(128, alloc, FPTR(guiid_hash));
@@ -259,7 +259,7 @@ bool gui_begin(string name, r2 first_size, f32 first_alpha, gui_window_flags fla
 	if((window->flags & (u16)window_flags::nohide) != (u16)window_flags::nohide) {
 
 		v2 carrot_pos = V2(real_rect.w - carrot_x_diff, ((ggui->style.font + ggui->style.title_padding) * gscale / 2.0f) - (gscale * ggui->style.default_carrot_size.y / 2.0f));
-		gui_carrot_toggle(string_literal("#CLOSE"), window->active, carrot_pos, &window->active);
+		gui_carrot_toggle(string::literal("#CLOSE"), window->active, carrot_pos, &window->active);
 
 		if(!occluded && inside(top_rect, ggui->input.mousepos)) {
 
@@ -328,7 +328,7 @@ void gui_log_wnd(platform_window* win, string name, queue<log_message>* cache) {
 
 	guiid id;
 	id.base = *current->id_hash_stack.top();
-	id.name = string_literal("#LOG");
+	id.name = string::literal("#LOG");
 
 	gui_state_data* data = ggui->state_data.try_get(id);
 
@@ -374,7 +374,7 @@ void gui_log_wnd(platform_window* win, string name, queue<log_message>* cache) {
 	v2 pos = V2(ggui->style.win_margin.x, height - ggui->style.win_margin.w - ggui->style.font);
 
 	i32 ignore;
-	gui_box_select(&ignore, 3, pos, string_literal("DEBUG"), string_literal("INFO"), string_literal("WARN/ERR"));
+	gui_box_select(&ignore, 3, pos, string::literal("DEBUG"), string::literal("INFO"), string::literal("WARN/ERR"));
 
 	pos = add(current->rect.xy, pos);
 	pos.y -= ggui->style.font + 7.0f;
@@ -387,7 +387,7 @@ void gui_log_wnd(platform_window* win, string name, queue<log_message>* cache) {
 			
 			string level = it->fmt_level();
 
-			fmt = string::makef(string_literal("[context] [file:line] [%-5] %+*\r\n"), level, 3 * it->call_stack.capacity + it->msg.len - 1, it->msg);
+			fmt = string::makef(string::literal("[context] [file:line] [%-5] %+*\r\n"), level, 3 * it->call_stack.capacity + it->msg.len - 1, it->msg);
 			push_text(current, pos, fmt, ggui->style.font, WHITE);
 
 			fmt.destroy();

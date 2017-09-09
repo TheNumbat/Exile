@@ -90,7 +90,7 @@ struct code_context {
 struct func_ptr_state {
 
 	_FPTR all_ptrs[256];
-	u32 num_ptrs = 0;
+	u32 num_ptrs = 0;		// ATOMIC ATOMIC ATOMIC
 
 	platform_dll* this_dll = null;
 	

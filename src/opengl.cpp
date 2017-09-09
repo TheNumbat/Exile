@@ -3,7 +3,7 @@ shader_source shader_source::make(string path, allocator* a) { PROF
 
 	shader_source ret;
 
-	ret.path = path;
+	ret.path = string::make_copy(path, a);
 	ret.alloc = a;
 
 	ret.load();
@@ -40,6 +40,7 @@ void shader_source::load() { PROF
 void shader_source::destroy() { PROF
 
 	source.destroy(alloc);
+	path.destroy(alloc);
 }
 
 bool shader_source::refresh() { PROF
@@ -59,14 +60,14 @@ bool shader_source::refresh() { PROF
 	return false;
 }
 
-shader_program shader_program::make(string vert, string frag, void (*set_uniforms)(shader_program*, render_command*, render_command_list*), allocator* a) { PROF
+shader_program shader_program::make(string vert, string frag, _FPTR* uniforms, allocator* a) { PROF
 
 	shader_program ret;
 
 	ret.vertex = shader_source::make(vert, a);
 	ret.fragment = shader_source::make(frag, a);
 	ret.handle = glCreateProgram();
-	ret.set_uniforms = set_uniforms;
+	ret.set_uniforms.set(uniforms);
 
 	ret.compile();
 
@@ -138,7 +139,7 @@ ogl_manager ogl_manager::make(allocator* a) { PROF
 	ret.renderer 	= string::from_c_str((char*)glGetString(GL_RENDERER));
 	ret.vendor  	= string::from_c_str((char*)glGetString(GL_VENDOR));
 
-	ret.dbg_shader = ret.add_program(string_literal("shaders/dbg.v"), string_literal("shaders/dbg.f"), &ogl_uniforms_dbg);
+	ret.dbg_shader = ret.add_program(string::literal("shaders/dbg.v"), string::literal("shaders/dbg.f"), FPTR(ogl_uniforms_dbg));
 
 	LOG_INFO_F("GL version : %", ret.version);
 	LOG_INFO_F("GL renderer: %", ret.renderer);
@@ -171,9 +172,9 @@ void ogl_manager::destroy() { PROF
 	contexts.destroy();
 }
 
-shader_program_id ogl_manager::add_program(string v_path, string f_path, void (*set_uniforms)(shader_program*, render_command*, render_command_list*)) { PROF
+shader_program_id ogl_manager::add_program(string v_path, string f_path, _FPTR* uniforms) { PROF
 
-	shader_program p = shader_program::make(v_path, f_path, set_uniforms, alloc);
+	shader_program p = shader_program::make(v_path, f_path, uniforms, alloc);
 	p.id = next_shader_id;
 
 	programs.insert(next_shader_id, p);
@@ -415,7 +416,7 @@ void ogl_manager::send_mesh_3d(mesh_3d* m, context_id id) { PROF
 	glBufferData(GL_ARRAY_BUFFER, m->texCoords.size * sizeof(v2), m->texCoords.size ? m->texCoords.memory : null, GL_STREAM_DRAW);
 }
 
-void ogl_uniforms_3dtex(shader_program* prog, render_command* rc, render_command_list* rcl) { PROF
+CALLBACK void ogl_uniforms_3dtex(shader_program* prog, render_command* rc, render_command_list* rcl) { PROF
 
 	GLint loc = glGetUniformLocation(prog->handle, "transform");
 
@@ -454,7 +455,7 @@ void ogl_manager::send_mesh_2d(mesh_2d* m, context_id id) { PROF
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, m->elements.size * sizeof(uv3), m->elements.size ? m->elements.memory : null, GL_STREAM_DRAW);
 }
 
-void ogl_uniforms_gui(shader_program* prog, render_command* rc, render_command_list* rcl) { PROF
+CALLBACK void ogl_uniforms_gui(shader_program* prog, render_command* rc, render_command_list* rcl) { PROF
 
 	GLint loc = glGetUniformLocation(prog->handle, "transform");
 
@@ -555,52 +556,52 @@ void debug_proc(GLenum glsource, GLenum gltype, GLuint id, GLenum severity, GLsi
 
 	switch(glsource) {
 	case GL_DEBUG_SOURCE_API:
-		source = string_literal("OpenGL API");
+		source = string::literal("OpenGL API");
 		break;
 	case GL_DEBUG_SOURCE_WINDOW_SYSTEM:
-		source = string_literal("Window System");
+		source = string::literal("Window System");
 		break;
 	case GL_DEBUG_SOURCE_SHADER_COMPILER:
-		source = string_literal("Shader Compiler");
+		source = string::literal("Shader Compiler");
 		break;
 	case GL_DEBUG_SOURCE_THIRD_PARTY:
-		source = string_literal("Third Party");
+		source = string::literal("Third Party");
 		break;
 	case GL_DEBUG_SOURCE_APPLICATION:
-		source = string_literal("Application");
+		source = string::literal("Application");
 		break;
 	case GL_DEBUG_SOURCE_OTHER:
-		source = string_literal("Other");
+		source = string::literal("Other");
 		break;
 	}
 
 	switch(gltype) {
 	case GL_DEBUG_TYPE_ERROR:
-		type = string_literal("Error");
+		type = string::literal("Error");
 		break;
 	case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR:
-		type = string_literal("Deprecated");
+		type = string::literal("Deprecated");
 		break;
 	case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:
-		type = string_literal("Undefined Behavior");
+		type = string::literal("Undefined Behavior");
 		break;
 	case GL_DEBUG_TYPE_PORTABILITY:
-		type = string_literal("Portability");
+		type = string::literal("Portability");
 		break;
 	case GL_DEBUG_TYPE_PERFORMANCE:
-		type = string_literal("Performance");
+		type = string::literal("Performance");
 		break;
 	case GL_DEBUG_TYPE_MARKER:
-		type = string_literal("Marker");
+		type = string::literal("Marker");
 		break;
 	case GL_DEBUG_TYPE_PUSH_GROUP:
-		type = string_literal("Push Group");
+		type = string::literal("Push Group");
 		break;
 	case GL_DEBUG_TYPE_POP_GROUP:
-		type = string_literal("Pop Group");
+		type = string::literal("Pop Group");
 		break;
 	case GL_DEBUG_TYPE_OTHER:
-		type = string_literal("Other");
+		type = string::literal("Other");
 		break;
 	}
 
@@ -626,38 +627,38 @@ void ogl_load_global_funcs() { PROF
 	glEnable(GL_DEBUG_OUTPUT);
 	glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 
-	glDebugMessageCallback 	= (glDebugMessageCallback_t) global_api->platform_get_glproc(string_literal("glDebugMessageCallback"));
-	glDebugMessageInsert 	= (glDebugMessageInsert_t) 	 global_api->platform_get_glproc(string_literal("glDebugMessageInsert"));
-	glDebugMessageControl 	= (glDebugMessageControl_t)  global_api->platform_get_glproc(string_literal("glDebugMessageControl"));
+	glDebugMessageCallback 	= (glDebugMessageCallback_t) global_api->platform_get_glproc(string::literal("glDebugMessageCallback"));
+	glDebugMessageInsert 	= (glDebugMessageInsert_t) 	 global_api->platform_get_glproc(string::literal("glDebugMessageInsert"));
+	glDebugMessageControl 	= (glDebugMessageControl_t)  global_api->platform_get_glproc(string::literal("glDebugMessageControl"));
 
-	glAttachShader       = (glAttachShader_t)  global_api->platform_get_glproc(string_literal("glAttachShader"));
-	glCompileShader      = (glCompileShader_t) global_api->platform_get_glproc(string_literal("glCompileShader"));
-	glCreateProgram      = (glCreateProgram_t) global_api->platform_get_glproc(string_literal("glCreateProgram"));
-	glCreateShader       = (glCreateShader_t)  global_api->platform_get_glproc(string_literal("glCreateShader"));
-	glDeleteProgram      = (glDeleteProgram_t) global_api->platform_get_glproc(string_literal("glDeleteProgram"));
-	glDeleteShader       = (glDeleteShader_t)  global_api->platform_get_glproc(string_literal("glDeleteShader"));
-	glLinkProgram        = (glLinkProgram_t)   global_api->platform_get_glproc(string_literal("glLinkProgram"));
-	glShaderSource       = (glShaderSource_t)  global_api->platform_get_glproc(string_literal("glShaderSource"));
-	glUseProgram         = (glUseProgram_t)    global_api->platform_get_glproc(string_literal("glUseProgram"));
-	glGetUniformLocation = (glGetUniformLocation_t) global_api->platform_get_glproc(string_literal("glGetUniformLocation"));
-	glUniformMatrix4fv   = (glUniformMatrix4fv_t)   global_api->platform_get_glproc(string_literal("glUniformMatrix4fv"));
+	glAttachShader       = (glAttachShader_t)  global_api->platform_get_glproc(string::literal("glAttachShader"));
+	glCompileShader      = (glCompileShader_t) global_api->platform_get_glproc(string::literal("glCompileShader"));
+	glCreateProgram      = (glCreateProgram_t) global_api->platform_get_glproc(string::literal("glCreateProgram"));
+	glCreateShader       = (glCreateShader_t)  global_api->platform_get_glproc(string::literal("glCreateShader"));
+	glDeleteProgram      = (glDeleteProgram_t) global_api->platform_get_glproc(string::literal("glDeleteProgram"));
+	glDeleteShader       = (glDeleteShader_t)  global_api->platform_get_glproc(string::literal("glDeleteShader"));
+	glLinkProgram        = (glLinkProgram_t)   global_api->platform_get_glproc(string::literal("glLinkProgram"));
+	glShaderSource       = (glShaderSource_t)  global_api->platform_get_glproc(string::literal("glShaderSource"));
+	glUseProgram         = (glUseProgram_t)    global_api->platform_get_glproc(string::literal("glUseProgram"));
+	glGetUniformLocation = (glGetUniformLocation_t) global_api->platform_get_glproc(string::literal("glGetUniformLocation"));
+	glUniformMatrix4fv   = (glUniformMatrix4fv_t)   global_api->platform_get_glproc(string::literal("glUniformMatrix4fv"));
 
-	glGenerateMipmap  = (glGenerateMipmap_t)  global_api->platform_get_glproc(string_literal("glGenerateMipmap"));
-	glActiveTexture   = (glActiveTexture_t)   global_api->platform_get_glproc(string_literal("glActiveTexture"));
-	glCreateTextures  = (glCreateTextures_t)  global_api->platform_get_glproc(string_literal("glCreateTextures"));
-	glBindTextureUnit = (glBindTextureUnit_t) global_api->platform_get_glproc(string_literal("glBindTextureUnit"));
+	glGenerateMipmap  = (glGenerateMipmap_t)  global_api->platform_get_glproc(string::literal("glGenerateMipmap"));
+	glActiveTexture   = (glActiveTexture_t)   global_api->platform_get_glproc(string::literal("glActiveTexture"));
+	glCreateTextures  = (glCreateTextures_t)  global_api->platform_get_glproc(string::literal("glCreateTextures"));
+	glBindTextureUnit = (glBindTextureUnit_t) global_api->platform_get_glproc(string::literal("glBindTextureUnit"));
 
-	glBindVertexArray    = (glBindVertexArray_t)    global_api->platform_get_glproc(string_literal("glBindVertexArray"));
-	glDeleteVertexArrays = (glDeleteVertexArrays_t) global_api->platform_get_glproc(string_literal("glDeleteVertexArrays"));
-	glGenVertexArrays    = (glGenVertexArrays_t)    global_api->platform_get_glproc(string_literal("glGenVertexArrays"));
+	glBindVertexArray    = (glBindVertexArray_t)    global_api->platform_get_glproc(string::literal("glBindVertexArray"));
+	glDeleteVertexArrays = (glDeleteVertexArrays_t) global_api->platform_get_glproc(string::literal("glDeleteVertexArrays"));
+	glGenVertexArrays    = (glGenVertexArrays_t)    global_api->platform_get_glproc(string::literal("glGenVertexArrays"));
 
-	glBindBuffer    = (glBindBuffer_t)    global_api->platform_get_glproc(string_literal("glBindBuffer"));
-	glDeleteBuffers = (glDeleteBuffers_t) global_api->platform_get_glproc(string_literal("glDeleteBuffers"));
-	glGenBuffers    = (glGenBuffers_t)    global_api->platform_get_glproc(string_literal("glGenBuffers"));
-	glBufferData	= (glBufferData_t)    global_api->platform_get_glproc(string_literal("glBufferData"));
+	glBindBuffer    = (glBindBuffer_t)    global_api->platform_get_glproc(string::literal("glBindBuffer"));
+	glDeleteBuffers = (glDeleteBuffers_t) global_api->platform_get_glproc(string::literal("glDeleteBuffers"));
+	glGenBuffers    = (glGenBuffers_t)    global_api->platform_get_glproc(string::literal("glGenBuffers"));
+	glBufferData	= (glBufferData_t)    global_api->platform_get_glproc(string::literal("glBufferData"));
 
-	glVertexAttribPointer 	  = (glVertexAttribPointer_t) 	  global_api->platform_get_glproc(string_literal("glVertexAttribPointer"));
-	glEnableVertexAttribArray = (glEnableVertexAttribArray_t) global_api->platform_get_glproc(string_literal("glEnableVertexAttribArray"));
+	glVertexAttribPointer 	  = (glVertexAttribPointer_t) 	  global_api->platform_get_glproc(string::literal("glVertexAttribPointer"));
+	glEnableVertexAttribArray = (glEnableVertexAttribArray_t) global_api->platform_get_glproc(string::literal("glEnableVertexAttribArray"));
 	
 	glDebugMessageCallback(debug_proc, null);
 	glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, null, GL_TRUE);

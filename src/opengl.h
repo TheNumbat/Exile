@@ -57,12 +57,12 @@ struct shader_program {
 	GLuint handle = 0;
 	shader_source vertex;
 	shader_source fragment;
-	void (*set_uniforms)(shader_program*, render_command*, render_command_list*) = null;
+	func_ptr<void, shader_program*, render_command*, render_command_list*> set_uniforms;
 	// tessellation control, evaluation, geometry
 
 ///////////////////////////////////////////////////////////////////////////////
 
-	static shader_program make(string vert, string frag, void (*set_uniforms)(shader_program*, render_command*, render_command_list*), allocator* a);
+	static shader_program make(string vert, string frag, _FPTR* uniforms, allocator* a);
 	void compile();
 	bool refresh();
 	void destroy();
@@ -118,7 +118,7 @@ struct ogl_manager {
 	static ogl_manager make(allocator* a);
 	void destroy();
 
-	shader_program_id add_program(string v_path, string f_path, void (*set_uniforms)(shader_program*, render_command*, render_command_list*));
+	shader_program_id add_program(string v_path, string f_path, _FPTR* uniforms);
 	shader_program* select_program(shader_program_id id);
 	void try_reload_programs();
 
@@ -146,6 +146,6 @@ void debug_proc(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei 
 void ogl_mesh_2d_attribs(ogl_draw_context* dc);
 void ogl_mesh_3d_attribs(ogl_draw_context* dc);
 
-void ogl_uniforms_gui(shader_program* prog, render_command* rc, render_command_list* rcl);
-void ogl_uniforms_dbg(shader_program* prog, render_command* rc, render_command_list* rcl) {};
-void ogl_uniforms_3dtex(shader_program* prog, render_command* rc, render_command_list* rcl);
+CALLBACK void ogl_uniforms_gui(shader_program* prog, render_command* rc, render_command_list* rcl);
+CALLBACK void ogl_uniforms_dbg(shader_program* prog, render_command* rc, render_command_list* rcl) {};
+CALLBACK void ogl_uniforms_3dtex(shader_program* prog, render_command* rc, render_command_list* rcl);
