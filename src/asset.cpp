@@ -10,6 +10,8 @@ asset_store asset_store::make(allocator* a) { PROF
 
 void asset_store::destroy() { PROF
 
+	path.destroy(alloc);
+
 	if(store) {
 
 		assets.destroy();
@@ -123,7 +125,7 @@ void asset_store::load(string file) { PROF
 		return;
 	}
 
-	path = file;
+	path = string::make_copy(file, alloc);
 	CHECKED(platform_get_file_attributes, &last, file);
 
 	u32 store_size = global_api->platform_file_size(&store_file);
