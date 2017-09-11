@@ -79,7 +79,6 @@ immediate to do:
 
 	UI
 		fonts
-			we only need alpha data from font textures - compress (GL_LUMINANCE?)
 			just pack the TTF and use stb_tt to asynchronously cache correctly sized fonts
 			when they're needed. 
 		widgets
