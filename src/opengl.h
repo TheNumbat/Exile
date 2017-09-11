@@ -21,6 +21,7 @@ glGenerateMipmap_t			glGenerateMipmap;
 glActiveTexture_t			glActiveTexture;
 glCreateTextures_t			glCreateTextures;
 glBindTextureUnit_t			glBindTextureUnit;
+glTexParameteriv_t 			glTexParameteriv;
 
 glBindVertexArray_t    		glBindVertexArray; 		
 glDeleteVertexArrays_t 		glDeleteVertexArrays;
@@ -33,8 +34,6 @@ glBufferData_t				glBufferData;
 
 glVertexAttribPointer_t		glVertexAttribPointer;
 glEnableVertexAttribArray_t glEnableVertexAttribArray;
-
-glTexParameteriv_t glTexParameteriv;
 
 typedef u32 shader_program_id;
 typedef u32 texture_id;

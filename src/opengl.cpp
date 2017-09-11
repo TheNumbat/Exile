@@ -651,6 +651,7 @@ void ogl_load_global_funcs() { PROF
 	glActiveTexture   = (glActiveTexture_t)   global_api->platform_get_glproc(string::literal("glActiveTexture"));
 	glCreateTextures  = (glCreateTextures_t)  global_api->platform_get_glproc(string::literal("glCreateTextures"));
 	glBindTextureUnit = (glBindTextureUnit_t) global_api->platform_get_glproc(string::literal("glBindTextureUnit"));
+	glTexParameteriv  = (glTexParameteriv_t)  global_api->platform_get_glproc(string::literal("glTexParameterIiv"));
 
 	glBindVertexArray    = (glBindVertexArray_t)    global_api->platform_get_glproc(string::literal("glBindVertexArray"));
 	glDeleteVertexArrays = (glDeleteVertexArrays_t) global_api->platform_get_glproc(string::literal("glDeleteVertexArrays"));
@@ -663,8 +664,6 @@ void ogl_load_global_funcs() { PROF
 
 	glVertexAttribPointer 	  = (glVertexAttribPointer_t) 	  global_api->platform_get_glproc(string::literal("glVertexAttribPointer"));
 	glEnableVertexAttribArray = (glEnableVertexAttribArray_t) global_api->platform_get_glproc(string::literal("glEnableVertexAttribArray"));
-	
-	glTexParameteriv = (glTexParameteriv_t) global_api->platform_get_glproc(string::literal("glTexParameteriv"));
 
 	glDebugMessageCallback(debug_proc, null);
 	glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, null, GL_TRUE);
