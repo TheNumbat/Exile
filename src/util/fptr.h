@@ -6,9 +6,11 @@ struct _FPTR {
 	string name;
 };
 
+#define MAX_FPTRS 128
+
 struct func_ptr_state {
 
-	_FPTR all_ptrs[256];
+	_FPTR all_ptrs[128];
 	u32 num_ptrs = 0;
 
 	platform_dll* this_dll = null;

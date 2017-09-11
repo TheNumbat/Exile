@@ -2,7 +2,7 @@
 #pragma once
 
 #define MAX_CALL_STACK_DEPTH 256
-#define MAX_DBG_MSG_CACHE 8192
+
 struct thread_data {
 	stack<allocator*> alloc_stack;
 	
@@ -11,9 +11,6 @@ struct thread_data {
 
 	code_context call_stack[MAX_CALL_STACK_DEPTH] = {};
 	u32 call_stack_depth = 0;
-
-	dbg_msg dbg_cache[MAX_DBG_MSG_CACHE] = {};
-	u32 dbg_cache_size = 0;
 };
 
 static thread_local thread_data this_thread_data;

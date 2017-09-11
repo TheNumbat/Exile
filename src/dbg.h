@@ -98,10 +98,6 @@ struct dbg_msg {
 
 struct dbg_manager {
 
-	// IDK
-	array<array<dbg_msg>> frames;
-	vector<dbg_msg> messages;
-
 	u32 current_frame = 0;
 	bool really_running = false;
 
