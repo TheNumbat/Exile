@@ -34,6 +34,8 @@ glBufferData_t				glBufferData;
 glVertexAttribPointer_t		glVertexAttribPointer;
 glEnableVertexAttribArray_t glEnableVertexAttribArray;
 
+glTexParameteriv_t glTexParameteriv;
+
 typedef u32 shader_program_id;
 typedef u32 texture_id;
 typedef u32 context_id; // VAO

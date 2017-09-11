@@ -5,7 +5,7 @@
 
 #define BOUNDS_CHECK 			// check access on array_get/vector_get
 	
-#define BLOCK_ON_ERROR			// __debugbreak on log_level::error
+#define BLOCK_OR_EXIT_ON_ERROR	// __debugbreak in debugger or exit() on log_level::error | log_level::fatal always does this
 	
 #define DO_PROF					// do function enter/exit profiling
 	
@@ -25,14 +25,14 @@
 
 #ifdef _DEBUG
 	#define BOUNDS_CHECK
-	#define BLOCK_ON_ERROR
+	#define BLOCK_OR_EXIT_ON_ERROR
 	#define DO_PROF	
 	#define CONSTRUCT_DS_ELEMENTS
 	#define MORE_PROF
 #elif defined(REAL_RELEASE)
 
 #else
-	#define BLOCK_ON_ERROR
+	#define BLOCK_OR_EXIT_ON_ERROR
 	#define DO_PROF
 	#define MORE_PROF
 #endif
@@ -115,10 +115,9 @@ static dbg_manager*  global_dbg = null; // not used yet -- global to provide pro
 #include "util/context.cpp"
 #include "util/fscope.cpp"
 #include "util/threadstate.cpp"
-
-#include "ds/string.cpp"
-#include "math.cpp"
 #include "util/type_table.cpp"
+
+#include "math.cpp"
 
 #include "alloc.cpp"
 #include "log.cpp"
@@ -130,6 +129,7 @@ static dbg_manager*  global_dbg = null; // not used yet -- global to provide pro
 #include "asset.cpp"
 #include "game.cpp"
 
+#include "ds/string.cpp"
 #include "ds/vector.cpp"
 #include "ds/stack.cpp"
 #include "ds/array.cpp"

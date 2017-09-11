@@ -322,8 +322,10 @@ void texture::load_bitmap_from_font(asset* font) { PROF
 
 	glBindTextureUnit(0, handle);
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, font->font.width, font->font.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, font->mem);
-	
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, font->font.width, font->font.height, 0, GL_RED, GL_UNSIGNED_BYTE, font->mem);
+	GLint swizzleMask[] = {GL_RED, GL_RED, GL_RED, GL_RED};
+	glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzleMask);
+
 	glGenerateMipmap(GL_TEXTURE_2D);
 
 	glBindTextureUnit(0, 0);
@@ -337,8 +339,10 @@ void texture::load_bitmap_from_font(asset_store* as, string name) { PROF
 
 	glBindTextureUnit(0, handle);
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, a->font.width, a->font.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, a->mem);
-	
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, a->font.width, a->font.height, 0, GL_RED, GL_UNSIGNED_BYTE, a->mem);
+	GLint swizzleMask[] = {GL_RED, GL_RED, GL_RED, GL_RED};
+	glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzleMask);
+
 	glGenerateMipmap(GL_TEXTURE_2D);
 
 	glBindTextureUnit(0, 0);
@@ -660,6 +664,8 @@ void ogl_load_global_funcs() { PROF
 	glVertexAttribPointer 	  = (glVertexAttribPointer_t) 	  global_api->platform_get_glproc(string::literal("glVertexAttribPointer"));
 	glEnableVertexAttribArray = (glEnableVertexAttribArray_t) global_api->platform_get_glproc(string::literal("glEnableVertexAttribArray"));
 	
+	glTexParameteriv = (glTexParameteriv_t) global_api->platform_get_glproc(string::literal("glTexParameteriv"));
+
 	glDebugMessageCallback(debug_proc, null);
 	glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, null, GL_TRUE);
 }

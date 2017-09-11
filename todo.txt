@@ -54,6 +54,7 @@ immediate to do:
 	meta
 		printf
 			use string builder?
+			increase speed; recursive calls are quite slow (...might not be able to get rid of the recursion, though)
 		do we want to do a subtype dispatcher? https://youtu.be/lCtALewoFjc?t=1h20m16s
 		integration with UI
 		support loading/writing type table for release (i.e. don't build on startup)

@@ -367,22 +367,19 @@ int main(int argc, char** argv) {
 			}
 			sort(glyph_data.begin(), glyph_data.end(), [](file_glyph_data& one, file_glyph_data& two) -> bool {return one.codepoint < two.codepoint;});
 
-			asset_header.next = sizeof(file_asset_header) + sizeof(file_asset_font) + sizeof(file_glyph_data) * glyph_data.size() + pixel_size * 4;
+			asset_header.next = sizeof(file_asset_header) + sizeof(file_asset_font) + sizeof(file_glyph_data) * glyph_data.size() + pixel_size;
 
 			assets_out.write((char*)&asset_header, sizeof(file_asset_header));
 			assets_out.write((char*)&asset_font, sizeof(file_asset_font));
 			assets_out.write((char*)glyph_data.data(), sizeof(file_glyph_data) * glyph_data.size());
 			
-			u32 out_size = def_asset.font.width * def_asset.font.height * 4;
+			u32 out_size = pixel_size;
 			u8* texture_out = (u8*)malloc(out_size);
 			memset(texture_out, 0, out_size);
 			u8* texture_out_place = texture_out;
 			u8* bake_last = baked_bitmap + pixel_size - pixel_stride;
 			for(; bake_last != baked_bitmap; bake_last -= pixel_stride) {
 				for(u32 pix = 0; pix < pixel_stride; pix++) {
-					*texture_out_place++ = bake_last[pix];
-					*texture_out_place++ = bake_last[pix];
-					*texture_out_place++ = bake_last[pix];
 					*texture_out_place++ = bake_last[pix];
 				}
 			}

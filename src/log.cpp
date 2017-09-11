@@ -155,14 +155,15 @@ void log_manager::msgf(string fmt, log_level level, code_context context, Targs.
 		
 		global_api->platform_signal_semaphore(&logging_semaphore, 1);
 
+#ifdef BLOCK_OR_EXIT_ON_ERROR
 		if(level == log_level::error) {
+
 			if(global_api->platform_is_debugging()) {
 				global_api->platform_debug_break();
 			}
-#ifdef BLOCK_ON_ERROR
 			global_api->platform_join_thread(&logging_thread, -1);
-#endif
 		}
+#endif
 		if(level == log_level::fatal) {
 			if(global_api->platform_is_debugging()) {
 				global_api->platform_debug_break();
@@ -195,14 +196,15 @@ void log_manager::msg(string msg, log_level level, code_context context) { PROF_
 
 		CHECKED(platform_signal_semaphore, &logging_semaphore, 1);
 
+#ifdef BLOCK_OR_EXIT_ON_ERROR
 		if(level == log_level::error) {
+
 			if(global_api->platform_is_debugging()) {
 				global_api->platform_debug_break();
 			}
-#ifdef BLOCK_ON_ERROR
 			global_api->platform_join_thread(&logging_thread, -1);
-#endif
 		}
+#endif
 		if(level == log_level::fatal) {
 			if(global_api->platform_is_debugging()) {
 				global_api->platform_debug_break();
@@ -328,8 +330,12 @@ i32 log_proc(void* data_) {
 				} POP_ALLOC();
 				RESET_ARENA(data->scratch);
 
+#ifdef BLOCK_OR_EXIT_ON_ERROR
+				if(msg.level == log_level::error) {
+					exit(1);
+				}
+#endif
 				if(msg.level == log_level::fatal) {
-					// die
 					exit(1);
 				}
 
