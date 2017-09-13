@@ -26,9 +26,9 @@
 #ifdef _DEBUG
 	#define BOUNDS_CHECK
 	#define BLOCK_OR_EXIT_ON_ERROR
-	#define DO_PROF	
 	#define CONSTRUCT_DS_ELEMENTS
-	#define MORE_PROF
+	#define DO_PROF	
+	// #define MORE_PROF
 #elif defined(REAL_RELEASE)
 
 #else
@@ -60,11 +60,8 @@
 #include <math.h> 			// TODO(max): remove
 #include <xmmintrin.h>
 #include <intrin.h>
-#include <limits.h>
 #include <stddef.h>
 #include <stdarg.h>
-#include <stdint.h>
-#include <float.h>
 #include <typeinfo>
 
 #ifdef CONSTRUCT_DS_ELEMENTS

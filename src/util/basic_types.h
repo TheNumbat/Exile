@@ -1,4 +1,8 @@
 
+#include <stdint.h>
+#include <float.h>
+#include <limits.h>
+
 typedef uint8_t 	u8;
 typedef int8_t 		i8;
 typedef uint16_t 	u16;
