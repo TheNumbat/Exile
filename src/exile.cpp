@@ -56,6 +56,22 @@
 #endif
 #define CALLBACK EXPORT
 
+// default headers
+#include <math.h> 			// TODO(max): remove
+#include <xmmintrin.h>
+#include <intrin.h>
+#include <limits.h>
+#include <stddef.h>
+#include <stdarg.h>
+#include <stdint.h>
+#include <float.h>
+#include <typeinfo>
+
+#ifdef CONSTRUCT_DS_ELEMENTS
+#include <new>
+#endif
+// 
+
 #include "util/basic_types.h"
 #include "math.h"
 
@@ -91,10 +107,6 @@
 
 #include "game.h"
 #include "util/type_table.h"
-
-#ifdef CONSTRUCT_DS_ELEMENTS
-#include <new>
-#endif
 
 // IMPLEMENTATIONS
 static platform_api* global_api = null; // global because it just represents a bunch of what should be free functions

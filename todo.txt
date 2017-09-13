@@ -102,11 +102,17 @@ immediate to do:
 		Subl_remote_open for profiler & logging
 
 	asset
+		Can we just define mods as asset packs?
+			Yes if we include logic 
+		add shaders as assets
 		asset texture atlases
 		call asset.exe to re/build (do path stuff, platform_exec_cmd)
 		auto-reload asset stores
 		asset manager (general allocator?)
-		more types of assets: modding system
+		more types of assets: 
+			Modding: Lua scripts/DLLs
+			Config Files
+			3D Models
 
 	modding system
 		API considerations

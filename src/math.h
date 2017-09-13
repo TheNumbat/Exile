@@ -7,8 +7,6 @@
 	// mod, div, sign, trig, bit-scanning
 // TODO(max): quaternions
 // TODO(max): get rid of template for matrix
-#include <cmath>
-#include <xmmintrin.h>
 
 #define PI32 3.14159265359f 
 #define PI64 3.14159265358979323846 

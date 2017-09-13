@@ -211,12 +211,16 @@ inline arena_allocator make_arena_allocator(string name, u64 size, allocator* ba
 
 void _memcpy(void* source, void* dest, u64 size) { PROF
 
+#ifdef _MSC_VER
+	__movsb((u8*)dest, (u8*)source, size);
+#else
 	u8* csource = (u8*)source;
 	u8* cdest   = (u8*)dest;
 
 	for(u64 i = 0; i < size; i++) {
 		cdest[i] = csource[i];
 	}
+#endif
 }
 
 void _memset(void* mem, u64 size, u8 val) { PROF

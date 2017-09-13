@@ -1,6 +1,4 @@
 
-#include <typeinfo>
-
 enum class Type : u8 {
 	_unkown,
 
