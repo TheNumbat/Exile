@@ -28,7 +28,6 @@ void dbg_manager::destroy() { PROF
 
 void dbg_manager::collate() { PROF
 
-
 }
 
 CALLBACK void dbg_add_log(log_message* msg) { PROF

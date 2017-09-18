@@ -4,9 +4,9 @@ EXPORT game_state* start_up(platform_api* api) {
 	game_state* state = (game_state*)api->platform_heap_alloc(sizeof(game_state));
 	state->func_state.this_dll = api->your_dll;
 
-	global_api = api;
-	global_log = &state->log;
-	global_dbg = &state->dbg;
+	global_api  = api;
+	global_log  = &state->log;
+	global_dbg  = &state->dbg;
 	global_func = &state->func_state;
 
 	setup_fptrs();
