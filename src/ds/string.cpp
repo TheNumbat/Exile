@@ -216,7 +216,7 @@ u32 string::write_type(u32 idx, void* val, _type_info* info, bool size) { PROF
 	case Type::_void: {
 		idx = write(idx, string::literal("void"), size);
 	} break;
-	
+
 	case Type::_int: {
 		idx = write_int(idx, 10, val, info, size); 
 	} break;
@@ -252,6 +252,12 @@ u32 string::write_type(u32 idx, void* val, _type_info* info, bool size) { PROF
 			idx = write_queue(idx, val, info, size);
 		} else if(info->name == "heap" || info->name == "con_heap") {
 			idx = write_heap(idx, val, info, size);
+		} else if(info->name == "_FPTR") {
+			idx = write(idx, ((_FPTR*)val)->name, size);
+			idx = write(idx, string::literal("()"), size);
+		} else if(info->name == "func_ptr") {
+			idx = write(idx, (*(_FPTR**)val)->name, size);
+			idx = write(idx, string::literal("()"), size);
 		} else {
 			idx = write_struct(idx, val, info, size);
 		}
