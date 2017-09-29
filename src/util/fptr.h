@@ -21,7 +21,6 @@ struct func_ptr_state {
 
 static func_ptr_state* global_func = null;
 
-#ifndef __clang__
 template<typename T, typename... args>
 struct func_ptr {
 
@@ -36,7 +35,6 @@ struct func_ptr {
 		data = f;
 	}
 };
-#endif
 
 _FPTR* _fptr(void* func, string name);
 
