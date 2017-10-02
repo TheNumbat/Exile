@@ -444,7 +444,7 @@ platform_error win32_create_thread(platform_thread* thread, i32 (*proc)(void*), 
 
 	platform_error ret;
 
-	thread->handle = CreateThread(null, 0, (LPTHREAD_START_ROUTINE)proc, param, start_suspended ? CREATE_SUSPENDED : 0, &thread->id.id);
+	thread->handle = CreateThread(null, 0, (LPTHREAD_START_ROUTINE)proc, param, start_suspended ? CREATE_SUSPENDED : 0, (DWORD*)&thread->id.id);
 
 	if(thread->handle == null) {
 		ret.good = false;

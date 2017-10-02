@@ -29,11 +29,6 @@ struct platform_file_attributes {
 	WIN32_FILE_ATTRIBUTE_DATA attrib = {};
 };
 
-struct platform_thread_id {
-	// Transparent
-	DWORD id 	= null;
-};
-
 bool operator==(platform_thread_id first, platform_thread_id second) {
 	return first.id == second.id;
 }

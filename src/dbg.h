@@ -106,6 +106,8 @@ struct dbg_manager {
 
 	allocator* alloc = null;
 
+	map<platform_thread_id,queue<dbg_msg>> dbg_cache;
+
 ///////////////////////////////////////////////////////////////////////////////
 
 	static dbg_manager make(log_manager* log, allocator* alloc);

@@ -4,6 +4,7 @@ dbg_manager dbg_manager::make(log_manager* log, allocator* alloc) { PROF
 	dbg_manager ret;
 
 	ret.log_cache = queue<log_message>::make(1024, alloc);
+	ret.dbg_cache = map<platform_thread_id,queue<dbg_msg>>::make(global_api->platform_get_num_cpus(), alloc);
 	ret.alloc = alloc;
 
 	log_out dbg_log;
@@ -21,13 +22,17 @@ void dbg_manager::destroy() { PROF
 
 	FORQ(log_cache,
 		DESTROY_ARENA(&it->arena);
-	)
+	);
+	FORMAP(dbg_cache,
+		it->value.destroy();
+	);
 
 	log_cache.destroy();
 }
 
 void dbg_manager::collate() { PROF
 
+	// queue<dbg_msg>* q = dbg_cache.get(global_api->platform_this_thread_id());
 }
 
 CALLBACK void dbg_add_log(log_message* msg) { PROF

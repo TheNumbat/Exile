@@ -21,11 +21,14 @@
 struct platform_window;
 struct platform_dll;
 struct platform_file_attributes;
-struct platform_thread_id;
 struct platform_thread;
 struct platform_semaphore;
 struct platform_mutex;
 struct platform_file;
+
+struct platform_thread_id {
+	u32 id = 0;
+};
 
 struct platform_error {
 	bool good = true;
