@@ -15,5 +15,7 @@ del *.txt > NUL 2> NUL
 del *.exp > NUL 2> NUL
 del *.lib > NUL 2> NUL
 del *.map > NUL 2> NUL
+del *.a1 > NUL 2> NUL
+del meta_types.cpp
 
 popd

@@ -118,8 +118,6 @@ static dbg_manager*  global_dbg = null; // not used yet -- global to provide pro
 #define CHECKED(platform_func, ...) global_api->platform_func(##__VA_ARGS__);
 #endif
 
-
-
 #include <meta_types.cpp>
 
 #include "util/fptr.cpp"
