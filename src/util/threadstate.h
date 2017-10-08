@@ -13,6 +13,7 @@ struct thread_data {
 	code_context call_stack[MAX_CALL_STACK_DEPTH] = {};
 	u32 call_stack_depth = 0;
 
+	bool profiling = false;
 	queue<dbg_msg> dbg_msgs;
 };
 

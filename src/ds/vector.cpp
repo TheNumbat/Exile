@@ -101,19 +101,8 @@ vector<T> vector<T>::make_copy_trim(vector<T> source, allocator* a) { PROF
 	return ret;	
 }
 
-// operator[] but not a member
 template<typename T>
-inline T* vector<T>::get(u32 idx) { 
-
-#ifdef MORE_PROF
-	PROF
-#endif
-
-	return get_noprof(idx);
-}
-
-template<typename T>
-inline T* vector<T>::get_noprof(u32 idx) { 
+inline T* vector<T>::get(u32 idx) { PROF
 
 #ifdef BOUNDS_CHECK
 	if(memory && idx >= 0 && idx < capacity) {
@@ -132,12 +121,6 @@ template<typename T>
 void vector<T>::grow() { PROF
 	
 	resize(capacity > 0 ? 2 * capacity : 8);
-}
-
-template<typename T>
-void vector<T>::grow_noprof() {
-	
-	resize_noprof(capacity > 0 ? 2 * capacity : 8);
 }
 
 template<typename T>
@@ -165,17 +148,6 @@ vector<T> vector<T>::make(u32 capacity, allocator* a) { PROF
 }
 
 template<typename T>
-vector<T> vector<T>::make_noprof(u32 capacity, allocator* a) {
-
-	vector<T> ret;
-
-	ret.alloc = a;
-	ret.resize_noprof(capacity);
-
-	return ret;
-}
-
-template<typename T>
 vector<T> vector<T>::make(u32 capacity) { PROF
 
 	vector<T> ret;
@@ -188,12 +160,6 @@ vector<T> vector<T>::make(u32 capacity) { PROF
 
 template<typename T>
 void vector<T>::resize(u32 new_capacity) { PROF
-
-	resize_noprof(new_capacity);
-}
-
-template<typename T>
-void vector<T>::resize_noprof(u32 new_capacity) {
 
 	if(new_capacity == 0) {
 		if(memory) {
@@ -235,21 +201,11 @@ vector<T> vector<T>::make_copy(vector<T> source) { PROF
 }
 
 template<typename T>
-T* vector<T>::push(T value) { 
-
-#ifdef MORE_PROF
-	PROF
-#endif
-
-	return push_noprof(value);
-}
-
-template<typename T>
-T* vector<T>::push_noprof(T value) {  
+T* vector<T>::push(T value) { PROF
 
 	if(size == capacity) {
 
-		grow_noprof();
+		grow();
 	} 
 
 	memory[size] = value;

@@ -1,6 +1,6 @@
 
 template<typename T>
-heap<T> heap<T>::make(u32 capacity, allocator* alloc) {
+heap<T> heap<T>::make(u32 capacity, allocator* alloc) { PROF
 
 	heap<T> ret;
 	ret.capacity = capacity;
@@ -18,7 +18,7 @@ heap<T> heap<T>::make(u32 capacity, allocator* alloc) {
 }	
 
 template<typename T>
-void heap<T>::destroy() {
+void heap<T>::destroy() { PROF
 
 	alloc->free_(memory, alloc, CONTEXT);
 
@@ -27,20 +27,20 @@ void heap<T>::destroy() {
 }
 
 template<typename T>
-void heap<T>::clear() {
+void heap<T>::clear() { PROF
 
 	size = 0;
 }
 
 template<typename T>
-void heap<T>::grow() {
+void heap<T>::grow() { PROF
 
 	capacity *= 2;
 	memory = (T*)alloc->reallocate_(memory, capacity * sizeof(T), alloc, CONTEXT);
 }
 
 template<typename T>
-void heap<T>::push(T value) {
+void heap<T>::push(T value) { PROF
 
 	if(size == capacity) {
 		grow();
@@ -53,7 +53,7 @@ void heap<T>::push(T value) {
 }
 
 template<typename T>
-T heap<T>::pop() {
+T heap<T>::pop() { PROF
 
 	LOG_DEBUG_ASSERT(size > 0);
 	
@@ -70,7 +70,7 @@ T heap<T>::pop() {
 }
 
 template<typename T>
-bool heap<T>::try_pop(T* out) {
+bool heap<T>::try_pop(T* out) { PROF
 
 	if(!empty()) {
 
@@ -82,13 +82,13 @@ bool heap<T>::try_pop(T* out) {
 }
 
 template<typename T>
-bool heap<T>::empty() {
+bool heap<T>::empty() { PROF
 
 	return size == 0;
 }
 
 template<typename T>
-void heap<T>::reheap_up(u32 node) {
+void heap<T>::reheap_up(u32 node) { PROF
 
 	if (!node) return;
 
@@ -104,7 +104,7 @@ void heap<T>::reheap_up(u32 node) {
 }
 
 template<typename T>
-void heap<T>::reheap_down(u32 root) {
+void heap<T>::reheap_down(u32 root) { PROF
 
 	T val = memory[root];
 
@@ -141,7 +141,7 @@ void heap<T>::reheap_down(u32 root) {
 }
 
 template<typename T>
-con_heap<T> con_heap<T>::make(u32 capacity, allocator* alloc) {
+con_heap<T> con_heap<T>::make(u32 capacity, allocator* alloc) { PROF
 
 	con_heap<T> ret;
 	ret.capacity = capacity;
@@ -162,7 +162,7 @@ con_heap<T> con_heap<T>::make(u32 capacity, allocator* alloc) {
 }
 
 template<typename T>
-void con_heap<T>::destroy() {
+void con_heap<T>::destroy() { PROF
 
 	((heap<T>*)this)->destroy(); // TODO(max): this is super kludgy
 	global_api->platform_destroy_mutex(&mut);
@@ -170,7 +170,7 @@ void con_heap<T>::destroy() {
 }
 
 template<typename T>
-void con_heap<T>::push(T value) {
+void con_heap<T>::push(T value) { PROF
 
 	global_api->platform_aquire_mutex(&mut);
 	((heap<T>*)this)->push(value);
@@ -179,7 +179,7 @@ void con_heap<T>::push(T value) {
 }
 
 template<typename T>
-T con_heap<T>::wait_pop() {
+T con_heap<T>::wait_pop() { PROF
 
 	global_api->platform_wait_semaphore(&sem, -1);
 	T ret;
@@ -188,7 +188,7 @@ T con_heap<T>::wait_pop() {
 }
 
 template<typename T>
-bool con_heap<T>::try_pop(T* out) {
+bool con_heap<T>::try_pop(T* out) { PROF
 
 	global_api->platform_aquire_mutex(&mut);
 	bool ret = ((heap<T>*)this)->try_pop(out);

@@ -1,6 +1,10 @@
 
 #pragma once
 
+// TODO(max): should this be an actual stack?
+#define PUSH_PROFILE(enable) bool saved = this_thread_data.profiling; this_thread_data.profiling = enable;
+#define POP_PROFILE() this_thread_data.profiling = saved;
+
 enum class dbg_msg_type : u8 {
 	none,
 	begin_frame,
@@ -99,7 +103,6 @@ struct dbg_msg {
 struct dbg_manager {
 
 	u32 current_frame = 0;
-	bool really_running = false;
 
 	queue<log_message> log_cache;
 	log_level lvl = log_level::info;

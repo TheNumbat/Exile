@@ -20,7 +20,7 @@ _FPTR* _fptr(void* func, string name) {
 	global_api->platform_release_mutex(&global_func->mut);
 
 	global_func->all_ptrs[idx].func = func;
-	global_func->all_ptrs[idx].name = string::make_copy_plt_noprof(name);
+	global_func->all_ptrs[idx].name = string::make_copy_plt(name);
 
 	return &global_func->all_ptrs[idx];
 }

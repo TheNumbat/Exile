@@ -1,5 +1,5 @@
 
-void allocator::destroy() {
+void allocator::destroy() { PROF
 	if(name.c_str) {
 		free_(name.c_str, this, CONTEXT);
 	}
@@ -18,7 +18,7 @@ inline allocator* _current_alloc() { PROF
 	return ret;
 }
 
-CALLBACK void* platform_allocate(u64 bytes, allocator* this_, code_context context) { 
+CALLBACK void* platform_allocate(u64 bytes, allocator* this_, code_context context) { PROF
 
 	platform_allocator* this__ = (platform_allocator*)this_;
 
@@ -35,7 +35,7 @@ CALLBACK void* platform_allocate(u64 bytes, allocator* this_, code_context conte
 	return mem;
 }
 
-CALLBACK void platform_free(void* mem, allocator* this_, code_context context) { 
+CALLBACK void platform_free(void* mem, allocator* this_, code_context context) { PROF
 
 	platform_allocator* this__ = (platform_allocator*)this_;
 
@@ -50,7 +50,7 @@ CALLBACK void platform_free(void* mem, allocator* this_, code_context context) {
 	this__->platform_free(mem);
 }
 
-CALLBACK void* platform_reallocate(void* mem, u64 bytes, allocator* this_, code_context context) { 
+CALLBACK void* platform_reallocate(void* mem, u64 bytes, allocator* this_, code_context context) { PROF
 
 	platform_allocator* this__ = (platform_allocator*)this_;
 
@@ -70,10 +70,6 @@ CALLBACK void* platform_reallocate(void* mem, u64 bytes, allocator* this_, code_
 }
 
 inline platform_allocator make_platform_allocator(string name, code_context context) { PROF
-	return np_make_platform_allocator(name, context);
-}
-
-inline platform_allocator np_make_platform_allocator(string name, code_context context) { 
 
 	platform_allocator ret;
 	
@@ -86,7 +82,7 @@ inline platform_allocator np_make_platform_allocator(string name, code_context c
 	ret.free_.set(FPTR(platform_free));
 	ret.reallocate_.set(FPTR(platform_reallocate));
 
-	ret.name = string::make_copy_noprof(name, &ret);
+	ret.name = string::make_copy(name, &ret);
 
 	return ret;
 }

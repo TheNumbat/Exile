@@ -19,15 +19,12 @@ struct queue {
 	
 	void clear();
 	void grow();
-	void grow_noprof();
 
 	T* push(T value);
-	T* push_noprof(T value);
 
 	T pop();
 	bool try_pop(T* out);
 	u32 len();
-	u32 len_noprof();
 
 	T* get(u32 idx);
 
@@ -51,7 +48,6 @@ struct con_queue { // no inheritance LUL
 ///////////////////////////////////////////////////////////////////////////////
 
 	static con_queue<T> make(u32 capacity, allocator* a);
-	static con_queue<T> make_noprof(u32 capacity, allocator* a);
 	static con_queue<T> make(u32 capacity = 0);
 	void destroy();
 

@@ -128,7 +128,7 @@ i32 worker(void* data_) {
 
 	worker_param* data = (worker_param*)data_;
 
-	begin_thread(np_string_literal("worker %"), data->alloc, (u32)global_api->platform_this_thread_id().id);
+	begin_thread(string::literal("worker %"), data->alloc, (u32)global_api->platform_this_thread_id().id);
 	LOG_DEBUG("Starting worker thread");
 
 	while(data->online) {
@@ -138,7 +138,11 @@ i32 worker(void* data_) {
 		if(data->job_queue->try_pop(&current_job)) {
 
 			if(current_job.work) {
-				job_callback callback = (*current_job.work)(current_job.data);
+
+				job_callback callback;
+				PUSH_PROFILE(true) {
+					callback = (*current_job.work)(current_job.data);
+				} POP_PROFILE();
 
 				platform_event a;
 				a.type 			 = platform_event_type::async;

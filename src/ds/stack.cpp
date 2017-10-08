@@ -102,7 +102,7 @@ bool stack<T>::empty() { PROF
 }
 
 template<typename T>
-bool stack<T>::try_pop(T* out) {
+bool stack<T>::try_pop(T* out) { PROF
 	
 	if(!empty()) {
 		
@@ -114,7 +114,7 @@ bool stack<T>::try_pop(T* out) {
 }
 
 template<typename T>
-con_stack<T> con_stack<T>::make(u32 capacity, allocator* a) {
+con_stack<T> con_stack<T>::make(u32 capacity, allocator* a) { PROF
 
 	con_stack<T> ret;
 	ret.contents = vector<T>::make(capacity, a);
@@ -125,13 +125,13 @@ con_stack<T> con_stack<T>::make(u32 capacity, allocator* a) {
 }
 
 template<typename T>
-con_stack<T> con_stack<T>::make(u32 capacity) {
+con_stack<T> con_stack<T>::make(u32 capacity) { PROF
 
 	return con_stack<T>::make(capacity, CURRENT_ALLOC());
 }
 
 template<typename T>
-void con_stack<T>::destroy() {
+void con_stack<T>::destroy() { PROF
 
 	destroy_vector(&contents);
 	global_api->platform_destroy_mutex(&mut);
@@ -139,7 +139,7 @@ void con_stack<T>::destroy() {
 }
 
 template<typename T>
-T* con_stack<T>::push(T value) {
+T* con_stack<T>::push(T value) { PROF
 
 	global_api->platform_aquire_mutex(&mut, -1);
 	T* ret = ((stack<T>*)this)->push(value);
@@ -149,7 +149,7 @@ T* con_stack<T>::push(T value) {
 }
 
 template<typename T>
-T con_stack<T>::wait_pop() {
+T con_stack<T>::wait_pop() { PROF
 
 	global_api->platform_wait_semaphore(&sem, -1);
 	T ret;
@@ -158,7 +158,7 @@ T con_stack<T>::wait_pop() {
 }
 
 template<typename T>
-bool con_stack<T>::try_pop(T* out) {
+bool con_stack<T>::try_pop(T* out) { PROF
 
 	global_api->platform_aquire_mutex(&mut, -1);
 	bool ret = ((stack<T>*)this)->try_pop(out);

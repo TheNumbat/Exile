@@ -1,5 +1,5 @@
 
-log_manager log_manager::make(allocator* a) { 
+log_manager log_manager::make(allocator* a) { PROF
 
 	log_manager ret;
 
@@ -117,7 +117,7 @@ void log_manager::print_header(log_out* output) { PROF
 	} POP_ALLOC();
 }
 
-void log_manager::print_footer(log_out* output) {
+void log_manager::print_footer(log_out* output) { PROF
 
 	PUSH_ALLOC(alloc) {
 
@@ -299,7 +299,7 @@ i32 log_proc(void* data_) {
 
 	log_thread_param* data = (log_thread_param*)data_;	
 
-	begin_thread(np_string_literal("log"), data->alloc);
+	begin_thread(string::literal("log"), data->alloc);
 
 	while(data->running) {
 

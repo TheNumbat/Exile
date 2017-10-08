@@ -17,12 +17,9 @@ struct NOREFLECT string { // no-reflect because hard-coded
 
 	static string make(u32 _cap);
 	static string make(u32 _cap, allocator* a);
-	static string make_noprof(u32 _cap, allocator* a);
 	static string make_copy(string src);
 	static string make_copy(string src, allocator* a);
-	static string make_copy_noprof(string src, allocator* a);
 	static string make_copy_plt(string src);
-	static string make_copy_plt_noprof(string src);
 	static string make_substring(string str, u32 start, u32 end);
 	static string make_from_c_str(char* c_str); // copies
 	static string make_from_c_str_plt(char* c_str); // copies
@@ -89,11 +86,4 @@ template<typename T, typename... Targs>
 u32 _string_printf(string out, u32 idx, string fmt, bool size, T& value, Targs... args);
 u32 _string_printf(string out, u32 idx, string fmt, bool size = false);
 
-// for meta stuff
-
-string np_substring(string str, u32 start, u32 end);
-i32    np_string_last_slash(string str);
-string np_string_literal(const char* literal);
-string np_string_from_c_str(char* c_str);
-
-static const string empty_string = np_string_literal("");
+static const string empty_string = string::literal("");

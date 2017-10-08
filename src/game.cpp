@@ -11,26 +11,26 @@ EXPORT game_state* start_up(platform_api* api) {
 
 	setup_fptrs();
 
-	state->default_platform_allocator = np_make_platform_allocator(np_string_literal("default"), CONTEXT);
-	state->suppressed_platform_allocator = np_make_platform_allocator(np_string_literal("default/suppress"), CONTEXT);
+	state->default_platform_allocator = MAKE_PLATFORM_ALLOCATOR("default");
+	state->suppressed_platform_allocator = MAKE_PLATFORM_ALLOCATOR("default/suppress");
 	state->suppressed_platform_allocator.suppress_messages = true;
 
-	state->dbg_a = np_make_platform_allocator(np_string_literal("dbg"), CONTEXT);
+	state->dbg_a = MAKE_PLATFORM_ALLOCATOR("dbg");
 	state->dbg_a.suppress_messages = true;
 	state->dbg = dbg_manager::make(&state->dbg_a);
 
-	begin_thread(np_string_literal("main"), &state->suppressed_platform_allocator);
+	begin_thread(string::literal("main"), &state->suppressed_platform_allocator);
+
+	state->log_a = MAKE_PLATFORM_ALLOCATOR("log");
+	state->log_a.suppress_messages = true;
+	state->log = log_manager::make(&state->log_a);
+	state->dbg.setup_log(&state->log);
 
 	platform_file stdout_file, log_all_file;
 	CHECKED(platform_get_stdout_as_file, &stdout_file);
 	CHECKED(platform_create_file, &log_all_file, string::literal("log_all.html"), platform_file_open_op::create);
 	state->log.add_file(log_all_file, log_level::alloc, log_out_type::html);
 	state->log.add_file(stdout_file, log_level::info, log_out_type::plaintext, true);
-
-	state->log_a = MAKE_PLATFORM_ALLOCATOR("log");
-	state->log_a.suppress_messages = true;
-	state->log = log_manager::make(&state->log_a);
-	state->dbg.setup_log(&state->log);
 
 	LOG_INFO("Beginning startup...");
 	LOG_PUSH_CONTEXT_L("");
@@ -88,45 +88,48 @@ EXPORT game_state* start_up(platform_api* api) {
 
 	// LOG_INFO_F("%", state); // Don't do this anymore, it's 409 thousand characters and will only grow
 
-	state->dbg.really_running = true;
 	state->running = true;
 	return state;
 }
 
 EXPORT bool main_loop(game_state* state) { 
 
-	glUseProgram(0); // why tho?? https://twitter.com/fohx/status/619887799462985729?lang=en
-	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	PUSH_PROFILE(true) {
 
-	PUSH_ALLOC(&state->transient_arena) {
+		glUseProgram(0); // why tho?? https://twitter.com/fohx/status/619887799462985729?lang=en
+		glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		gui_input_state input = run_events(state); 
-		
-		state->gui.begin_frame(input);
+		PUSH_ALLOC(&state->transient_arena) {
 
-		state->dbg.render_debug_gui(&state->window);
+			gui_input_state input = run_events(state); 
+			
+			state->gui.begin_frame(input);
 
-		state->gui.end_frame(&state->window, &state->ogl);
+			state->dbg.render_debug_gui(&state->window);
 
-	} POP_ALLOC();
-	RESET_ARENA(&state->transient_arena);
+			state->gui.end_frame(&state->window, &state->ogl);
 
-	CHECKED(platform_swap_buffers, &state->window);
+		} POP_ALLOC();
+		RESET_ARENA(&state->transient_arena);
 
-#ifdef _DEBUG
-	state->ogl.try_reload_programs();
-	if(state->default_store.try_reload()) {
-		state->gui.reload_fonts(&state->ogl);
-	}
-#endif
+		CHECKED(platform_swap_buffers, &state->window);
+
+	#ifdef _DEBUG
+		state->ogl.try_reload_programs();
+		if(state->default_store.try_reload()) {
+			state->gui.reload_fonts(&state->ogl);
+		}
+	#endif
+
+	} POP_PROFILE();
 
 	state->dbg.collate();
 
 	return state->running;
 }
 
-EXPORT void shut_down(game_state* state) { PROF
+EXPORT void shut_down(game_state* state) { 
 
 	LOG_INFO("Beginning shutdown...");
 
@@ -184,7 +187,7 @@ EXPORT void on_reload(platform_api* api, game_state* state) {
 	
 	state->func_state.reload_all();
 
-	begin_thread(np_string_literal("main"), &state->suppressed_platform_allocator);
+	begin_thread(string::literal("main"), &state->suppressed_platform_allocator);
 
 	ogl_load_global_funcs();
 

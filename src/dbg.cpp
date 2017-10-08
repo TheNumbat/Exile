@@ -1,5 +1,5 @@
 
-dbg_manager dbg_manager::make(allocator* alloc) { 
+dbg_manager dbg_manager::make(allocator* alloc) { PROF 
 
 	dbg_manager ret;
 
@@ -12,7 +12,7 @@ dbg_manager dbg_manager::make(allocator* alloc) {
 	return ret;
 }
 
-void dbg_manager::setup_log(log_manager* log) {
+void dbg_manager::setup_log(log_manager* log) { PROF
 	log_out dbg_log;
 	dbg_log.level = log_level::info;
 	dbg_log.type = log_out_type::custom;
@@ -20,9 +20,7 @@ void dbg_manager::setup_log(log_manager* log) {
 	log->add_output(dbg_log);
 }
 
-void dbg_manager::destroy() {
-
-	really_running = false;
+void dbg_manager::destroy() { PROF
 
 	FORQ(log_cache,
 		DESTROY_ARENA(&it->arena);
@@ -36,14 +34,14 @@ void dbg_manager::destroy() {
 	dbg_cache.destroy();
 }
 
-void dbg_manager::register_thread() {
+void dbg_manager::register_thread() { PROF
 
 	global_api->platform_aquire_mutex(&cache_mut);
 	global_dbg->dbg_cache.insert(global_api->platform_this_thread_id(), queue<dbg_msg>::make(1024, alloc));
 	global_api->platform_release_mutex(&cache_mut);
 }
 
-void dbg_manager::collate() {
+void dbg_manager::collate() { PROF
 
 	global_api->platform_aquire_mutex(&cache_mut);
 	queue<dbg_msg>* q = dbg_cache.get(global_api->platform_this_thread_id());

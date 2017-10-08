@@ -38,7 +38,6 @@ CALLBACK void* platform_reallocate(void* mem, u64 bytes, allocator* this_, code_
 
 #define MAKE_PLATFORM_ALLOCATOR(n) make_platform_allocator(string::literal(n), CONTEXT)
 inline platform_allocator make_platform_allocator(string name, code_context context);
-inline platform_allocator np_make_platform_allocator(string name, code_context context);
 
 struct arena_allocator : public allocator {
 	allocator* backing 	= null;

@@ -90,14 +90,14 @@ gui_font* gui_select_best_font_scale(gui_window_state* win) { PROF
 	return f;
 }
 
-gui_state_data* gui_manager::add_state_data(guiid id, gui_state_data data) {
+gui_state_data* gui_manager::add_state_data(guiid id, gui_state_data data) { PROF
 
 	guiid cp = id;
 	cp.name = string::make_copy(cp.name, alloc);
 	return state_data.insert(cp, data);	
 }
 
-gui_window_state* gui_manager::add_window_state_data(guiid id, gui_window_state data) {
+gui_window_state* gui_manager::add_window_state_data(guiid id, gui_window_state data) { PROF
 
 	guiid cp = id;
 	cp.name = string::make_copy(cp.name, alloc);
