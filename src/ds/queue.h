@@ -17,6 +17,7 @@ struct queue {
 	static queue<T> make(u32 capacity = 0);
 	void destroy();
 	
+	void clear();
 	void grow();
 	T* push(T value);
 	T pop();

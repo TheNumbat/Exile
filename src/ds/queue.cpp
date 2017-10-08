@@ -14,6 +14,13 @@ void queue<T>::destroy() { PROF
 }
 
 template<typename T>
+void queue<T>::clear() { PROF
+
+	start = 0;
+	end = 0;
+}
+
+template<typename T>
 queue<T> queue<T>::make(u32 capacity, allocator* a) { PROF
 
 	queue<T> ret;
@@ -183,14 +190,14 @@ T* queue<T>::get(u32 idx) {
 
 #ifdef BOUNDS_CHECK
 	if(memory && idx >= 0 && idx < capacity) {
-		return memory + (start + idx % capacity);
+		return memory + (start + idx) % capacity;
 	} else {
 		
 		LOG_FATAL_F("out of bounds, % < 0 || % >= %", idx, idx, capacity);
 		return null;
 	}
 #else
-	return memory + (start + idx % capacity);
+	return memory + (start + idx) % capacity;
 #endif
 }
 

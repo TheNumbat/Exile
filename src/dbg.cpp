@@ -7,6 +7,8 @@ dbg_manager dbg_manager::make(log_manager* log, allocator* alloc) { PROF
 	ret.dbg_cache = map<platform_thread_id,queue<dbg_msg>>::make(global_api->platform_get_num_cpus(), alloc);
 	ret.alloc = alloc;
 
+	global_api->platform_create_mutex(&ret.cache_mut, false);
+
 	log_out dbg_log;
 	dbg_log.level = log_level::info;
 	dbg_log.type = log_out_type::custom;
@@ -26,13 +28,27 @@ void dbg_manager::destroy() { PROF
 	FORMAP(dbg_cache,
 		it->value.destroy();
 	);
+	global_api->platform_destroy_mutex(&cache_mut);
 
 	log_cache.destroy();
+	dbg_cache.destroy();
+}
+
+void dbg_manager::register_thread() {
+
+	global_api->platform_aquire_mutex(&cache_mut);
+	global_dbg->dbg_cache.insert(global_api->platform_this_thread_id(), queue<dbg_msg>::make(1024, alloc));
+	global_api->platform_release_mutex(&cache_mut);
 }
 
 void dbg_manager::collate() { PROF
 
-	// queue<dbg_msg>* q = dbg_cache.get(global_api->platform_this_thread_id());
+	global_api->platform_aquire_mutex(&cache_mut);
+	queue<dbg_msg>* q = dbg_cache.get(global_api->platform_this_thread_id());
+	// q->push(this_thread_data.dbg_msgs);
+	this_thread_data.dbg_msgs.clear();
+
+	global_api->platform_release_mutex(&cache_mut);
 }
 
 CALLBACK void dbg_add_log(log_message* msg) { PROF

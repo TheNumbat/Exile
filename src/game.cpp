@@ -15,11 +15,15 @@ EXPORT game_state* start_up(platform_api* api) {
 	state->suppressed_platform_allocator = np_make_platform_allocator(np_string_literal("default/suppress"), CONTEXT);
 	state->suppressed_platform_allocator.suppress_messages = true;
 
-	begin_thread(np_string_literal("main"), &state->suppressed_platform_allocator);
-
 	state->log_a = MAKE_PLATFORM_ALLOCATOR("log");
 	state->log_a.suppress_messages = true;
 	state->log = log_manager::make(&state->log_a);
+
+	state->dbg_a = MAKE_PLATFORM_ALLOCATOR("dbg");
+	state->dbg_a.suppress_messages = true;
+	state->dbg = dbg_manager::make(&state->log, &state->dbg_a);
+
+	begin_thread(np_string_literal("main"), &state->suppressed_platform_allocator);
 
 	platform_file stdout_file, log_all_file;
 	CHECKED(platform_get_stdout_as_file, &stdout_file);
@@ -29,11 +33,6 @@ EXPORT game_state* start_up(platform_api* api) {
 
 	LOG_INFO("Beginning startup...");
 	LOG_PUSH_CONTEXT_L("");
-
-	LOG_INFO("Starting debug system...");
-	state->dbg_a = MAKE_PLATFORM_ALLOCATOR("dbg");
-	state->dbg_a.suppress_messages = true;
-	state->dbg = dbg_manager::make(&state->log, &state->dbg_a);
 
 	LOG_INFO("Starting logger...");
 	state->log.start();

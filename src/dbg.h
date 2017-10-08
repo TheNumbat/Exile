@@ -106,6 +106,7 @@ struct dbg_manager {
 
 	allocator* alloc = null;
 
+	platform_mutex cache_mut;
 	map<platform_thread_id,queue<dbg_msg>> dbg_cache;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -113,6 +114,7 @@ struct dbg_manager {
 	static dbg_manager make(log_manager* log, allocator* alloc);
 	void destroy();
 
+	void register_thread();
 	void collate();
 	void render_debug_gui(platform_window* win);
 };
