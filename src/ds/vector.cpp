@@ -109,11 +109,11 @@ inline T* vector<T>::get(u32 idx) {
 	PROF
 #endif
 
-	return get_neverprof(idx);
+	return get_noprof(idx);
 }
 
 template<typename T>
-inline T* vector<T>::get_neverprof(u32 idx) { 
+inline T* vector<T>::get_noprof(u32 idx) { 
 
 #ifdef BOUNDS_CHECK
 	if(memory && idx >= 0 && idx < capacity) {
@@ -135,9 +135,9 @@ void vector<T>::grow() { PROF
 }
 
 template<typename T>
-void vector<T>::grow_neverprof() {
+void vector<T>::grow_noprof() {
 	
-	resize_neverprof(capacity > 0 ? 2 * capacity : 8);
+	resize_noprof(capacity > 0 ? 2 * capacity : 8);
 }
 
 template<typename T>
@@ -165,12 +165,12 @@ vector<T> vector<T>::make(u32 capacity, allocator* a) { PROF
 }
 
 template<typename T>
-vector<T> vector<T>::make_neverprof(u32 capacity, allocator* a) {
+vector<T> vector<T>::make_noprof(u32 capacity, allocator* a) {
 
 	vector<T> ret;
 
 	ret.alloc = a;
-	ret.resize_neverprof(capacity);
+	ret.resize_noprof(capacity);
 
 	return ret;
 }
@@ -189,11 +189,11 @@ vector<T> vector<T>::make(u32 capacity) { PROF
 template<typename T>
 void vector<T>::resize(u32 new_capacity) { PROF
 
-	resize_neverprof(new_capacity);
+	resize_noprof(new_capacity);
 }
 
 template<typename T>
-void vector<T>::resize_neverprof(u32 new_capacity) {
+void vector<T>::resize_noprof(u32 new_capacity) {
 
 	if(new_capacity == 0) {
 		if(memory) {
@@ -241,15 +241,15 @@ T* vector<T>::push(T value) {
 	PROF
 #endif
 
-	return push_neverprof(value);
+	return push_noprof(value);
 }
 
 template<typename T>
-T* vector<T>::push_neverprof(T value) {  
+T* vector<T>::push_noprof(T value) {  
 
 	if(size == capacity) {
 
-		grow_neverprof();
+		grow_noprof();
 	} 
 
 	memory[size] = value;

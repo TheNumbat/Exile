@@ -5,7 +5,7 @@ void func_ptr_state::reload_all() {
 	}
 }
 
-_FPTR* _fptr(void* func, string name) {
+_FPTR* _fptr(void* func, string name) { 
 
 	for(u32 i = 0; i < global_func->num_ptrs; i++) {
 		if(global_func->all_ptrs[i].func == func)  {
@@ -20,7 +20,7 @@ _FPTR* _fptr(void* func, string name) {
 	global_api->platform_release_mutex(&global_func->mut);
 
 	global_func->all_ptrs[idx].func = func;
-	global_func->all_ptrs[idx].name = string::make_copy_plt(name);
+	global_func->all_ptrs[idx].name = string::make_copy_plt_noprof(name);
 
 	return &global_func->all_ptrs[idx];
 }

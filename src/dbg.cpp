@@ -1,5 +1,5 @@
 
-dbg_manager dbg_manager::make(log_manager* log, allocator* alloc) { PROF
+dbg_manager dbg_manager::make(allocator* alloc) { 
 
 	dbg_manager ret;
 
@@ -9,16 +9,18 @@ dbg_manager dbg_manager::make(log_manager* log, allocator* alloc) { PROF
 
 	global_api->platform_create_mutex(&ret.cache_mut, false);
 
+	return ret;
+}
+
+void dbg_manager::setup_log(log_manager* log) {
 	log_out dbg_log;
 	dbg_log.level = log_level::info;
 	dbg_log.type = log_out_type::custom;
 	dbg_log.write.set(FPTR(dbg_add_log));
 	log->add_output(dbg_log);
-
-	return ret;
 }
 
-void dbg_manager::destroy() { PROF
+void dbg_manager::destroy() {
 
 	really_running = false;
 
@@ -41,11 +43,14 @@ void dbg_manager::register_thread() {
 	global_api->platform_release_mutex(&cache_mut);
 }
 
-void dbg_manager::collate() { PROF
+void dbg_manager::collate() {
 
 	global_api->platform_aquire_mutex(&cache_mut);
 	queue<dbg_msg>* q = dbg_cache.get(global_api->platform_this_thread_id());
-	// q->push(this_thread_data.dbg_msgs);
+	
+	FORQ(this_thread_data.dbg_msgs,
+		q->push(*it);
+	);
 	this_thread_data.dbg_msgs.clear();
 
 	global_api->platform_release_mutex(&cache_mut);

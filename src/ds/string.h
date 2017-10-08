@@ -17,9 +17,12 @@ struct NOREFLECT string { // no-reflect because hard-coded
 
 	static string make(u32 _cap);
 	static string make(u32 _cap, allocator* a);
+	static string make_noprof(u32 _cap, allocator* a);
 	static string make_copy(string src);
 	static string make_copy(string src, allocator* a);
+	static string make_copy_noprof(string src, allocator* a);
 	static string make_copy_plt(string src);
+	static string make_copy_plt_noprof(string src);
 	static string make_substring(string str, u32 start, u32 end);
 	static string make_from_c_str(char* c_str); // copies
 	static string make_from_c_str_plt(char* c_str); // copies

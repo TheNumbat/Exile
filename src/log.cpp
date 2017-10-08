@@ -1,5 +1,5 @@
 
-log_manager log_manager::make(allocator* a) { PROF
+log_manager log_manager::make(allocator* a) { 
 
 	log_manager ret;
 

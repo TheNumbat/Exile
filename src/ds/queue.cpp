@@ -44,9 +44,13 @@ queue<T> queue<T>::make(u32 capacity) { PROF
 	return queue<T>::make(capacity, CURRENT_ALLOC());
 }
 
-
 template<typename T>
 u32 queue<T>::len() { PROF
+	return len_noprof();
+}
+
+template<typename T>
+u32 queue<T>::len_noprof() {
 	i64 ret = (i64)end - (i64)start;
 	if(ret < 0) ret += capacity;
 	return (u32)ret;
@@ -54,6 +58,11 @@ u32 queue<T>::len() { PROF
 
 template<typename T>
 void queue<T>::grow() { PROF
+	grow_noprof();
+}
+
+template<typename T>
+void queue<T>::grow_noprof() {
 	
 	u32 new_capacity = 2 * capacity;
 	if(!new_capacity) new_capacity = 8;
@@ -87,9 +96,23 @@ void queue<T>::grow() { PROF
 
 template<typename T>
 T* queue<T>::push(T value) { PROF
-
+	
 	if(len() + 1 >= capacity) {
 		grow();
+	}
+
+	T* ret = memory + end;
+	*ret = value;
+
+	++end %= capacity;
+	return ret;
+}
+
+template<typename T>
+T* queue<T>::push_noprof(T value) {
+
+	if(len_noprof() + 1 >= capacity) {
+		grow_noprof();
 	}
 
 	T* ret = memory + end;
@@ -155,8 +178,6 @@ template<typename T>
 bool queue<T>::empty() { PROF
 	return start == end;
 }
-
-
 
 template<typename T>
 con_queue<T> con_queue<T>::make(u32 capacity, allocator* a) { PROF

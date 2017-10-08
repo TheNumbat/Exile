@@ -111,10 +111,12 @@ struct dbg_manager {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-	static dbg_manager make(log_manager* log, allocator* alloc);
+	static dbg_manager make(allocator* alloc);
 	void destroy();
 
 	void register_thread();
+	void setup_log(log_manager* log);
+
 	void collate();
 	void render_debug_gui(platform_window* win);
 };

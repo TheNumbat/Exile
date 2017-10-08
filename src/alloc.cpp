@@ -86,7 +86,7 @@ inline platform_allocator np_make_platform_allocator(string name, code_context c
 	ret.free_.set(FPTR(platform_free));
 	ret.reallocate_.set(FPTR(platform_reallocate));
 
-	ret.name = string::make_copy(name, &ret);
+	ret.name = string::make_copy_noprof(name, &ret);
 
 	return ret;
 }
@@ -214,6 +214,8 @@ void _memcpy(void* source, void* dest, u64 size) { PROF
 #ifdef _MSC_VER
 	__movsb((u8*)dest, (u8*)source, size);
 #else
+
+	// TODO(max): LUL this is dumb
 	u8* csource = (u8*)source;
 	u8* cdest   = (u8*)dest;
 

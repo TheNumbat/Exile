@@ -18,7 +18,7 @@ struct vector {
 ///////////////////////////////////////////////////////////////////////////////
 
 	static vector<T> make(u32 capacity, allocator* a);
-	static vector<T> make_neverprof(u32 capacity, allocator* a);
+	static vector<T> make_noprof(u32 capacity, allocator* a);
 	static vector<T> make(u32 capacity = 8);
 	static vector<T> make_copy(vector<T> source);
 	static vector<T> make_copy(vector<T> source, allocator* a);
@@ -27,19 +27,19 @@ struct vector {
 	void clear(); // doesn't free/resize
 
 	void grow();
-	void grow_neverprof();
+	void grow_noprof();
 	void zero();
 	void resize(u32 capacity); // a smaller size will truncate
-	void resize_neverprof(u32 capacity); // a smaller size will truncate
+	void resize_noprof(u32 capacity); // a smaller size will truncate
 	T* push(T value);
-	T* push_neverprof(T value);
+	T* push_noprof(T value);
 	void pop();
 	void pop_front();
 	void erase(u32 index, u32 num = 1);
 	void erase(T val); // linear search, removes all found
 
 	T* get(u32 idx);
-	T* get_neverprof(u32 idx);
+	T* get_noprof(u32 idx);
 	T* front();
 	T* back();
 	T* find(T val); // linear search

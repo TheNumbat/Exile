@@ -816,6 +816,33 @@ string string::make_copy(string src, allocator* a) { PROF
 	return ret;
 }
 
+string string::make_copy_noprof(string src, allocator* a) { 
+
+	string ret = string::make_noprof(src.cap, a);
+
+	ret.len = src.len;
+
+	for(u32 i = 0; i < ret.len; i++) { // will copy null terminator
+		ret.c_str[i] = src.c_str[i];
+	}
+
+	return ret;
+}
+
+string string::make_copy_plt_noprof(string src) {
+
+	string ret;
+	ret.len = src.len;
+	ret.cap = src.cap;
+	ret.c_str = (char*)global_api->platform_heap_alloc(ret.cap);
+
+	for (u32 i = 0; i < ret.len; i++) { // will copy null terminator
+		ret.c_str[i] = src.c_str[i];
+	}
+
+	return ret;
+}
+
 string string::make_copy_plt(string src) { PROF
 
 	string ret; 
@@ -916,6 +943,16 @@ void string::destroy() { PROF
 }
 
 string string::make(u32 _cap, allocator* a) { PROF
+
+	string ret;
+
+	ret.c_str = (char*)a->allocate_((u64)_cap, a, CONTEXT);
+	ret.cap = _cap;
+
+	return ret;
+}
+
+string string::make_noprof(u32 _cap, allocator* a) {
 
 	string ret;
 
