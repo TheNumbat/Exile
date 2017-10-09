@@ -32,6 +32,19 @@ CALLBACK void* platform_allocate(u64 bytes, allocator* this_, code_context conte
 	}
 #endif
 
+	if(this_thread_data.profiling_allocs) {
+		dbg_msg m;
+		m.type = dbg_msg_type::allocate;
+		m.context = context;
+		m.allocate.to = mem;
+		m.allocate.bytes = bytes;
+		m.allocate.alloc = this_;
+
+		PUSH_PROFILE(false) {
+			this_thread_data.dbg_msgs.push(m);
+		} POP_PROFILE();
+	}
+
 	return mem;
 }
 
@@ -48,6 +61,18 @@ CALLBACK void platform_free(void* mem, allocator* this_, code_context context) {
 #endif
 
 	this__->platform_free(mem);
+
+	if(this_thread_data.profiling_allocs) {
+		dbg_msg m;
+		m.type = dbg_msg_type::free;
+		m.context = context;
+		m.free.from = mem;
+		m.free.alloc = this_;
+
+		PUSH_PROFILE(false) {
+			this_thread_data.dbg_msgs.push(m);
+		} POP_PROFILE();
+	}
 }
 
 CALLBACK void* platform_reallocate(void* mem, u64 bytes, allocator* this_, code_context context) { PROF
@@ -65,6 +90,20 @@ CALLBACK void* platform_reallocate(void* mem, u64 bytes, allocator* this_, code_
 	void* ret = this__->platform_reallocate(mem, bytes);
 
 	LOG_DEBUG_ASSERT(ret != null);
+
+	if(this_thread_data.profiling_allocs) {
+		dbg_msg m;
+		m.type = dbg_msg_type::reallocate;
+		m.context = context;
+		m.reallocate.bytes = bytes;
+		m.reallocate.to = ret;
+		m.reallocate.from = mem;
+		m.reallocate.alloc = this_;
+
+		PUSH_PROFILE(false) {
+			this_thread_data.dbg_msgs.push(m);
+		} POP_PROFILE();
+	}
 
 	return ret;
 }
@@ -109,10 +148,23 @@ CALLBACK void* arena_allocate(u64 bytes, allocator* this_, code_context context)
 	}
 #endif
 
+	if(this_thread_data.profiling_allocs) {
+		dbg_msg m;
+		m.type = dbg_msg_type::allocate;
+		m.context = context;
+		m.allocate.to = mem;
+		m.allocate.bytes = bytes;
+		m.allocate.alloc = this_;
+
+		PUSH_PROFILE(false) {
+			this_thread_data.dbg_msgs.push(m);
+		} POP_PROFILE();
+	}
+
 	return mem;
 }
 
-CALLBACK void arena_free(void*, allocator*, code_context context) {PROF}
+CALLBACK void arena_free(void*, allocator*, code_context context) {}
 
 CALLBACK void* arena_reallocate(void* mem, u64 bytes, allocator* this_, code_context context) { PROF
 

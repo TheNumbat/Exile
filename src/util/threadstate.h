@@ -14,6 +14,7 @@ struct thread_data {
 	u32 call_stack_depth = 0;
 
 	bool profiling = false;
+	bool profiling_allocs = false;
 	queue<dbg_msg> dbg_msgs;
 };
 

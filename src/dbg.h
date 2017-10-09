@@ -2,8 +2,8 @@
 #pragma once
 
 // TODO(max): should this be an actual stack?
-#define PUSH_PROFILE(enable) bool saved = this_thread_data.profiling; this_thread_data.profiling = enable;
-#define POP_PROFILE() this_thread_data.profiling = saved;
+#define PUSH_PROFILE(enable) bool saved = this_thread_data.profiling; this_thread_data.profiling = this_thread_data.profiling_allocs = enable;
+#define POP_PROFILE() this_thread_data.profiling = this_thread_data.profiling_allocs = saved;
 
 enum class dbg_msg_type : u8 {
 	none,
@@ -51,13 +51,9 @@ struct dbg_msg_free {
 	allocator* alloc = null;
 };
 
-struct dbg_msg_enter_func {
-	code_context func;
-};
+struct dbg_msg_enter_func {};
 
-struct dbg_msg_exit_func {
-
-};
+struct dbg_msg_exit_func {};
 
 struct dbg_msg_mut_lock {
 	platform_mutex* mut = null;
@@ -81,6 +77,7 @@ struct dbg_msg_section_end {
 
 struct dbg_msg {
 	dbg_msg_type type = dbg_msg_type::none;
+	u64 timestamp = 0;
 	code_context context;
 	union {
 		dbg_msg_begin_frame   begin_frame;

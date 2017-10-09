@@ -8,7 +8,7 @@ func_scope::func_scope(code_context context) {
 	if(this_thread_data.profiling) {
 		dbg_msg m;
 		m.type = dbg_msg_type::enter_func;
-		m.enter_func.func = context;
+		m.context = context;
 	
 		PUSH_PROFILE(false) {
 			this_thread_data.dbg_msgs.push(m);
@@ -34,7 +34,7 @@ func_scope_nocs::func_scope_nocs(code_context context) {
 	if(this_thread_data.profiling) {	
 		dbg_msg m;
 		m.type = dbg_msg_type::enter_func;
-		m.enter_func.func = context;
+		m.context = context;
 
 		PUSH_PROFILE(false) {
 			this_thread_data.dbg_msgs.push(m);

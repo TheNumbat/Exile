@@ -37,7 +37,7 @@ void dbg_manager::destroy() { PROF
 void dbg_manager::register_thread() { PROF
 
 	global_api->platform_aquire_mutex(&cache_mut);
-	global_dbg->dbg_cache.insert(global_api->platform_this_thread_id(), queue<dbg_msg>::make(1024, alloc));
+	global_dbg->dbg_cache.insert(global_api->platform_this_thread_id(), queue<dbg_msg>::make(65536, alloc));
 	global_api->platform_release_mutex(&cache_mut);
 }
 
