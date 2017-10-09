@@ -8,7 +8,7 @@ void queue<T>::destroy() { PROF
 	}
 
 	memory = null;
-	start = 0;
+	start = UINT32_MAX;
 	end = 0;
 	capacity = 0;
 }
@@ -16,7 +16,7 @@ void queue<T>::destroy() { PROF
 template<typename T>
 void queue<T>::clear() { PROF
 
-	start = 0;
+	start = UINT32_MAX;
 	end = 0;
 }
 
@@ -46,8 +46,9 @@ queue<T> queue<T>::make(u32 capacity) { PROF
 
 template<typename T>
 u32 queue<T>::len() { PROF
+	if(start == UINT32_MAX) return 0;
 	i64 ret = (i64)end - (i64)start;
-	if(ret < 0) ret += capacity;
+	if(ret <= 0) ret += capacity;
 	return (u32)ret;
 }
 
@@ -61,9 +62,11 @@ void queue<T>::grow() { PROF
 
 		u32 len = 0;
 		T* new_mem = (T*)alloc->allocate_(new_capacity * sizeof(T), alloc, CONTEXT);
-		for(u32 i = start; i != end; ++i %= capacity) {
+		u32 i = start;
+		do {
 			new_mem[len++] = memory[i];
-		}
+			++i %= capacity;
+		} while(i != end);
 		start = 0;
 		end = len;
 		alloc->free_(memory, alloc, CONTEXT);
@@ -87,8 +90,12 @@ void queue<T>::grow() { PROF
 template<typename T>
 T* queue<T>::push(T value) { PROF
 
-	if(len() + 1 >= capacity) {
+	if(len() == capacity) {
 		grow();
+	}
+
+	if(len() == 0) {
+		start = end = 0;
 	}
 
 	T* ret = memory + end;
@@ -99,12 +106,24 @@ T* queue<T>::push(T value) { PROF
 }
 
 template<typename T>
+T* queue<T>::push_overwrite(T value) { PROF
+
+	if(len() == capacity) {
+		pop();
+	}
+
+	return push(value);
+}
+
+template<typename T>
 T queue<T>::pop() { PROF
 
 	if(len() > 0) {
 		
 		T top = *front();
 		++start %= capacity;
+
+		if(start == end) start = UINT32_MAX;
 		return top;	
 	}
 
@@ -118,8 +137,7 @@ bool queue<T>::try_pop(T* out) { PROF
 
 	if(len() > 0) {
 	
-		*out = *front();
-		++start %= capacity;
+		*out = pop();
 		return true;	
 	}
 
@@ -190,6 +208,7 @@ T* queue<T>::get(u32 idx) {
 #endif
 
 #ifdef BOUNDS_CHECK
+	LOG_ASSERT(start != UINT32_MAX);
 	if(memory && idx >= 0 && idx < capacity) {
 		return memory + (start + idx) % capacity;
 	} else {

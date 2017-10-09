@@ -2,12 +2,12 @@
 #pragma once
 
 // queue foreach
-#define FORQ(q,code)		{u32 __i = (q).start; for(auto it = (q).memory + (q).start; __i != (q).end; ++__i %= (q).capacity, it = &(q).memory[__i]) {code}}
+#define FORQ(q,code)		if((q).start != UINT32_MAX){u32 __i = (q).start; for(auto it = (q).memory + (q).start; __i != (q).end; ++__i %= (q).capacity, it = &(q).memory[__i]) {code}}
 
 template<typename T>
 struct queue {
 	T* memory 		 = null;
-	u32 start 		 = 0, end = 0;
+	u32 start 		 = UINT32_MAX, end = 0;
 	u32 capacity 	 = 0;
 	allocator* alloc = null;
 
@@ -21,6 +21,7 @@ struct queue {
 	void grow();
 
 	T* push(T value);
+	T* push_overwrite(T value);
 
 	T pop();
 	bool try_pop(T* out);
@@ -38,7 +39,7 @@ template<typename T>
 struct con_queue { // no inheritance LUL
 	
 	T* memory 		 = null;
-	u32 start 		 = 0, end = 0;
+	u32 start 		 = UINT32_MAX, end = 0;
 	u32 capacity 	 = 0;
 	allocator* alloc = null;
 

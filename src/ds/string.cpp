@@ -304,16 +304,21 @@ u32 string::write_queue(u32 idx, void* val, _type_info* info, bool size) { PROF
 	u8* data = *(u8**)((u8*)val + info->_struct.member_offsets[0]);
 
 	idx = write(idx, '[', size);
-	for(u32 i = start; i != end; ++i %= capacity) {
-		if(of->type_type == Type::_string) {
-			idx = write(idx, '\"', size);
-		}
-		idx = write_type(idx, data + i * of->size, of, size);
-		if(of->type_type == Type::_string) {
-			idx = write(idx, '\"', size);
-		}
-		if(i != end - 1)
-			idx = write(idx, string::literal(", "), size);
+	if(start != UINT32_MAX) {
+		u32 i = start;
+		do {
+			if(of->type_type == Type::_string) {
+				idx = write(idx, '\"', size);
+			}
+			idx = write_type(idx, data + i * of->size, of, size);
+			if(of->type_type == Type::_string) {
+				idx = write(idx, '\"', size);
+			}
+			if((i + 1) % capacity != end)
+				idx = write(idx, string::literal(", "), size);
+
+			++i %= capacity;
+		} while (i != end);
 	}
 	idx = write(idx, ']', size);
 

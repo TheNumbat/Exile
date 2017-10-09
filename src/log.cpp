@@ -4,7 +4,7 @@ log_manager log_manager::make(allocator* a) { PROF
 	log_manager ret;
 
 	ret.out = vector<log_out>::make(4, a);
-	ret.message_queue = con_queue<log_message>::make(8, a);
+	ret.message_queue = con_queue<log_message>::make(32, a);
 	CHECKED(platform_create_semaphore, &ret.logging_semaphore, 0, INT32_MAX);
 
 	ret.alloc = a;
@@ -312,19 +312,17 @@ i32 log_proc(void* data_) {
 					
 					FORVEC(*data->out,
 
-						string output = fmt_msg(&msg, it->type);
-
 						if(it->level <= msg.level) {
 							if(it->type == log_out_type::custom) {
 								it->write(&msg);
 							} else {
+								string output = fmt_msg(&msg, it->type);
 								it->file.write(output.c_str, output.len - 1);
 								if(it->flush_on_message)
 									it->file.flush();
+								output.destroy();
 							}
 						}
-
-						output.destroy();
 					)
 
 				} POP_ALLOC();

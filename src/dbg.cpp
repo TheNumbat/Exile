@@ -45,9 +45,9 @@ void dbg_manager::collate() { PROF
 
 	global_api->platform_aquire_mutex(&cache_mut);
 	queue<dbg_msg>* q = dbg_cache.get(global_api->platform_this_thread_id());
-	
+
 	FORQ(this_thread_data.dbg_msgs,
-		q->push(*it);
+		q->push_overwrite(*it);
 	);
 	this_thread_data.dbg_msgs.clear();
 
