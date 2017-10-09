@@ -299,7 +299,7 @@ i32 log_proc(void* data_) {
 
 	log_thread_param* data = (log_thread_param*)data_;	
 
-	begin_thread(string::literal("log"), data->alloc);
+	begin_thread(string::literal("log"), data->alloc, 256);
 
 	while(data->running) {
 

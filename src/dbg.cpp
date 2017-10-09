@@ -34,24 +34,26 @@ void dbg_manager::destroy() { PROF
 	dbg_cache.destroy();
 }
 
-void dbg_manager::register_thread() { PROF
+void dbg_manager::register_thread(u32 cache_size) { PROF
 
 	global_api->platform_aquire_mutex(&cache_mut);
-	global_dbg->dbg_cache.insert(global_api->platform_this_thread_id(), queue<dbg_msg>::make(65536, alloc));
+	global_dbg->dbg_cache.insert(global_api->platform_this_thread_id(), queue<dbg_msg>::make(cache_size, alloc));
 	global_api->platform_release_mutex(&cache_mut);
 }
 
 void dbg_manager::collate() { PROF
 
-	global_api->platform_aquire_mutex(&cache_mut);
-	queue<dbg_msg>* q = dbg_cache.get(global_api->platform_this_thread_id());
+	PUSH_PROFILE(false) {
+		global_api->platform_aquire_mutex(&cache_mut);
+		queue<dbg_msg>* q = dbg_cache.get(global_api->platform_this_thread_id());
 
-	FORQ(this_thread_data.dbg_msgs,
-		q->push_overwrite(*it);
-	);
-	this_thread_data.dbg_msgs.clear();
+		FORQ(this_thread_data.dbg_msgs,
+			q->push_overwrite(*it);
+		);
+		this_thread_data.dbg_msgs.clear();
 
-	global_api->platform_release_mutex(&cache_mut);
+		global_api->platform_release_mutex(&cache_mut);
+	} POP_PROFILE();
 }
 
 CALLBACK void dbg_add_log(log_message* msg) { PROF

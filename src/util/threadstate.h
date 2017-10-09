@@ -14,12 +14,11 @@ struct thread_data {
 	u32 call_stack_depth = 0;
 
 	bool profiling = false;
-	bool profiling_allocs = false;
 	queue<dbg_msg> dbg_msgs;
 };
 
 static thread_local thread_data this_thread_data;
 
-#define begin_thread(fmt, a, ...) _begin_thread(fmt, a, CONTEXT, ##__VA_ARGS__);
-template<typename... Targs> void _begin_thread(string fmt, allocator* alloc, code_context start, Targs... args);
+#define begin_thread(fmt, a, cache, ...) _begin_thread(fmt, a, cache, CONTEXT, ##__VA_ARGS__);
+template<typename... Targs> void _begin_thread(string fmt, allocator* alloc, u32 cache, code_context start, Targs... args);
 void end_thread();

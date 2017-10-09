@@ -19,7 +19,7 @@ EXPORT game_state* start_up(platform_api* api) {
 	state->dbg_a.suppress_messages = true;
 	state->dbg = dbg_manager::make(&state->dbg_a);
 
-	begin_thread(string::literal("main"), &state->suppressed_platform_allocator);
+	begin_thread(string::literal("main"), &state->suppressed_platform_allocator, 1024 * 1024);
 
 	state->log_a = MAKE_PLATFORM_ALLOCATOR("log");
 	state->log_a.suppress_messages = true;
@@ -94,36 +94,40 @@ EXPORT game_state* start_up(platform_api* api) {
 
 EXPORT bool main_loop(game_state* state) { 
 
-	PUSH_PROFILE(true) {
+	dbg_msg m;
+	m.type = dbg_msg_type::begin_frame;
+	m.context = CONTEXT;
+	POST_MSG(m);
 
-		glUseProgram(0); // why tho?? https://twitter.com/fohx/status/619887799462985729?lang=en
-		glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glUseProgram(0); // why tho?? https://twitter.com/fohx/status/619887799462985729?lang=en
+	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		PUSH_ALLOC(&state->transient_arena) {
+	PUSH_ALLOC(&state->transient_arena) {
 
-			gui_input_state input = run_events(state); 
-			
-			state->gui.begin_frame(input);
+		gui_input_state input = run_events(state); 
+		
+		state->gui.begin_frame(input);
 
-			state->dbg.render_debug_gui(&state->window);
+		state->dbg.render_debug_gui(&state->window);
 
-			state->gui.end_frame(&state->window, &state->ogl);
+		state->gui.end_frame(&state->window, &state->ogl);
 
-		} POP_ALLOC();
-		RESET_ARENA(&state->transient_arena);
+	} POP_ALLOC();
+	RESET_ARENA(&state->transient_arena);
 
-		CHECKED(platform_swap_buffers, &state->window);
+	CHECKED(platform_swap_buffers, &state->window);
 
-	#ifdef _DEBUG
-		state->ogl.try_reload_programs();
-		if(state->default_store.try_reload()) {
-			state->gui.reload_fonts(&state->ogl);
-		}
-	#endif
+#ifdef _DEBUG
+	state->ogl.try_reload_programs();
+	if(state->default_store.try_reload()) {
+		state->gui.reload_fonts(&state->ogl);
+	}
+#endif
 
-	} POP_PROFILE();
-
+	m.type = dbg_msg_type::end_frame;
+	m.context = CONTEXT;
+	POST_MSG(m);
 	state->dbg.collate();
 
 	return state->running;
@@ -187,7 +191,7 @@ EXPORT void on_reload(platform_api* api, game_state* state) {
 	
 	state->func_state.reload_all();
 
-	begin_thread(string::literal("main"), &state->suppressed_platform_allocator);
+	begin_thread(string::literal("main"), &state->suppressed_platform_allocator, 1024 * 1024);
 
 	ogl_load_global_funcs();
 

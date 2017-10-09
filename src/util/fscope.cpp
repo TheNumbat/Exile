@@ -10,9 +10,7 @@ func_scope::func_scope(code_context context) {
 		m.type = dbg_msg_type::enter_func;
 		m.context = context;
 	
-		PUSH_PROFILE(false) {
-			this_thread_data.dbg_msgs.push(m);
-		} POP_PROFILE();
+		POST_MSG(m);
 	}
 }
 
@@ -23,9 +21,7 @@ func_scope::~func_scope() {
 		dbg_msg m;
 		m.type = dbg_msg_type::exit_func;
 
-		PUSH_PROFILE(false) {
-			this_thread_data.dbg_msgs.push(m);
-		} POP_PROFILE();
+		POST_MSG(m);
 	}
 }
 
@@ -36,9 +32,7 @@ func_scope_nocs::func_scope_nocs(code_context context) {
 		m.type = dbg_msg_type::enter_func;
 		m.context = context;
 
-		PUSH_PROFILE(false) {
-			this_thread_data.dbg_msgs.push(m);
-		} POP_PROFILE();
+		POST_MSG(m);
 	}
 }
 
@@ -48,9 +42,7 @@ func_scope_nocs::~func_scope_nocs() {
 		dbg_msg m;
 		m.type = dbg_msg_type::exit_func;
 
-		PUSH_PROFILE(false) {
-			this_thread_data.dbg_msgs.push(m);
-		} POP_PROFILE();
+		POST_MSG(m);
 	}
 }
 #endif

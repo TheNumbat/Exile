@@ -2,8 +2,10 @@
 #pragma once
 
 // TODO(max): should this be an actual stack?
-#define PUSH_PROFILE(enable) bool saved = this_thread_data.profiling; this_thread_data.profiling = this_thread_data.profiling_allocs = enable;
-#define POP_PROFILE() this_thread_data.profiling = this_thread_data.profiling_allocs = saved;
+#define PUSH_PROFILE(enable) bool __prof = this_thread_data.profiling; this_thread_data.profiling = enable;
+#define POP_PROFILE() {this_thread_data.profiling = __prof;}
+
+#define POST_MSG(m) {PUSH_PROFILE(false) {this_thread_data.dbg_msgs.push(m);} POP_PROFILE();}
 
 enum class dbg_msg_type : u8 {
 	none,
@@ -21,17 +23,9 @@ enum class dbg_msg_type : u8 {
 	section_end,
 };
 
-struct dbg_msg_begin_frame {
+struct dbg_msg_begin_frame {};
 
-};
-
-struct dbg_msg_end_frame {
-
-};
-
-struct dbg_msg_collate_frame {
-
-};
+struct dbg_msg_end_frame {};
 
 struct dbg_msg_allocate {
 	void* to 		 = null;
@@ -82,7 +76,6 @@ struct dbg_msg {
 	union {
 		dbg_msg_begin_frame   begin_frame;
 		dbg_msg_end_frame 	  end_frame;
-		dbg_msg_collate_frame collate_frame;
 		dbg_msg_allocate      allocate;
 		dbg_msg_reallocate    reallocate;
 		dbg_msg_free          free;
@@ -114,7 +107,7 @@ struct dbg_manager {
 	static dbg_manager make(allocator* alloc);
 	void destroy();
 
-	void register_thread();
+	void register_thread(u32 cache_size);
 	void setup_log(log_manager* log);
 
 	void collate();
