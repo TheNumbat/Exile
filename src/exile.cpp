@@ -38,7 +38,6 @@
 #endif
 
 
-
 #ifdef __clang__
 #define NOREFLECT __attribute__((annotate("noreflect")))
 #else

@@ -462,8 +462,7 @@ CALLBACK void ogl_uniforms_gui(shader_program* prog, render_command* rc, render_
 
 	GLint loc = glGetUniformLocation(prog->handle, "transform");
 
-	m4 transform = mult(rc->model, rcl->view);
-	transform = mult(transform, rcl->proj);
+	m4 transform = rcl->proj * rcl->view * rc->model;
 
 	glUniformMatrix4fv(loc, 1, GL_FALSE, transform.v);
 }

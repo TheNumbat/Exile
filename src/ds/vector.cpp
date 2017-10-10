@@ -102,7 +102,11 @@ vector<T> vector<T>::make_copy_trim(vector<T> source, allocator* a) { PROF
 }
 
 template<typename T>
-inline T* vector<T>::get(u32 idx) { PROF
+inline T* vector<T>::get(u32 idx) { 
+
+#ifdef MORE_PROF
+	PROF
+#endif
 
 #ifdef BOUNDS_CHECK
 	if(memory && idx >= 0 && idx < capacity) {
@@ -201,7 +205,11 @@ vector<T> vector<T>::make_copy(vector<T> source) { PROF
 }
 
 template<typename T>
-T* vector<T>::push(T value) { PROF
+T* vector<T>::push(T value) { 
+
+#ifdef MORE_PROF
+	PROF
+#endif
 
 	if(size == capacity) {
 

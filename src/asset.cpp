@@ -70,10 +70,6 @@ glyph_data _asset_font::get_glyph(u32 codepoint) {
 
 glyph_data asset_store::get_glyph(string font_asset_name, u32 codepoint) { PROF
 
-#ifdef MORE_PROF
-	PROF
-#endif
-
 	asset* a = get(font_asset_name);
 
 	LOG_ASSERT(a->type == asset_type::font);

@@ -43,7 +43,7 @@ int main(int argc, char** argv) {
 	}
 	for(auto& e : occurs) {
 		float percent = 100 * e.o / (float)total;
-		printf("%-*s%-*d%f%%\n", 50, e.f.c_str(), 15, e.o, percent);
+		printf("%-*s%-*d%f%%\n", 150, e.f.c_str(), 15, e.o, percent);
 	}
 
 	return 0;

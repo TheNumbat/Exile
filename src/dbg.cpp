@@ -26,6 +26,19 @@ void dbg_manager::destroy() { PROF
 		DESTROY_ARENA(&it->arena);
 	);
 	FORMAP(dbg_cache,
+
+		/* printing out all functions called in the last frame
+		bool start = false;
+		FORQ2(it->value,
+			if(it2->type == dbg_msg_type::begin_frame)
+				if(start) break;
+				else start = true;
+			if(start && it2->type == dbg_msg_type::enter_func) {
+				std::cout << it2->context.function.c_str << std::endl;
+			}
+		)
+		*/
+
 		it->value.destroy();
 	);
 	global_api->platform_destroy_mutex(&cache_mut);

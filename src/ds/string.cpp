@@ -13,7 +13,7 @@ u32 string::parse_u32(u32 idx, u32* used) { PROF
 	return accum;
 }
 
-u32 string::write(u32 idx, string ins, bool size) { PROF
+u32 string::write(u32 idx, string ins, bool size) { 
 
 #ifdef MORE_PROF
 	PROF
@@ -25,10 +25,6 @@ u32 string::write(u32 idx, string ins, bool size) { PROF
 }
 
 u32 string::write(u32 idx, char ins, bool size) { PROF
-
-#ifdef MORE_PROF
-	PROF
-#endif
 
 	if(!size) c_str[idx] = ins;
 	return idx + 1;
