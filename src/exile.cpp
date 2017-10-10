@@ -21,20 +21,16 @@
 #define NO_CONCURRENT_JOBS		// makes queue_job just run the job and wait_job do nothing
 */
 
-#define REAL_RELEASE // turn off everything for a true release build
+// #define REAL_RELEASE // turn off everything for a true release build
 
 #ifdef _DEBUG
 	#define BOUNDS_CHECK
 	#define BLOCK_OR_EXIT_ON_ERROR
 	#define CONSTRUCT_DS_ELEMENTS
-	#define DO_PROF	
-	// #define MORE_PROF
 #elif defined(REAL_RELEASE)
-
 #else
 	#define BLOCK_OR_EXIT_ON_ERROR
 	#define DO_PROF
-	#define MORE_PROF
 #endif
 
 
