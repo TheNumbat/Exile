@@ -8,13 +8,17 @@
 #include "platform_strings.cpp"
 #include "platform_api.h"
 
-#ifdef _WIN32
+#ifdef PLATFORM_SDL
 
-#include "platform_win32.cpp"
+#include "SDL/platform_SDL.cpp"
+
+#elif defined(_WIN32)
+
+#include "windows/platform_win32.cpp"
 
 #elif defined(__linux__)
 
-#include "platform_linux.cpp"
+#include "linux/platform_linux.cpp"
 
 #else
 
