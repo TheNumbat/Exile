@@ -1,6 +1,7 @@
 
 #pragma once
 
+#ifndef __clang__
 #ifdef DO_PROF
 struct func_scope {
 	func_scope(code_context context);
@@ -16,4 +17,5 @@ struct func_scope_nocs {
 #else
 #define PROF 
 #define PROF_NOCS
+#endif
 #endif
