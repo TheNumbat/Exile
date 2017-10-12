@@ -16,6 +16,7 @@ void evt_manager::start() { PROF
 void evt_manager::destroy() { PROF
 
 	event_queue.destroy();
+	global_api->platform_set_queue_callback(null, null);
 }
 
 gui_input_state run_events(game_state* state) { PROF

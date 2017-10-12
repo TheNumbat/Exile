@@ -27,6 +27,7 @@
 	#define BOUNDS_CHECK
 	#define BLOCK_OR_EXIT_ON_ERROR
 	#define CONSTRUCT_DS_ELEMENTS
+	#define DO_PROF
 #elif defined(REAL_RELEASE)
 #else
 	#define BLOCK_OR_EXIT_ON_ERROR
