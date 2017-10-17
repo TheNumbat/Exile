@@ -5,18 +5,18 @@ pushd w:\build
 
 del *.pdb > NUL 2> NUL
 
-set Game_DebugCompilerFlags=-Od -MTd -nologo -Gr -EHa -Oi -W4 -Z7 -FC -Fegame.dll -LD -wd4100 -wd4201 -Iw:\build\ 
-set Game_ReleaseCompilerFlags=-O2 -MT -nologo -Gr -EHa -W4 -FC -Z7 -Fegame.dll -LD -wd4100 -wd4201 -Iw:\build\ -wd4189
+set Game_DebugCompilerFlags=-Od -MTd -nologo -GR- -EHa -Oi -W4 -Z7 -FC -Fegame.dll -LD -wd4100 -wd4201 -Iw:\build\ 
+set Game_ReleaseCompilerFlags=-O2 -MT -nologo -GR- -EHa -W4 -FC -Z7 -Fegame.dll -LD -wd4100 -wd4201 -Iw:\build\ -wd4189
 set Game_LinkerFlags=/NODEFAULTLIB:MSVCRT /SUBSYSTEM:windows opengl32.lib -PDB:game_%random%.pdb 
 
-set Platform_DebugCompilerFlags=-Od -MTd -nologo -Gr -EHa -Oi -W4 -Z7 -FC -Femain.exe -wd4100
-set Platform_ReleaseCompilerFlags=-O2 -MT -nologo -Gr -EHa -W4 -FC -Femain.exe -wd4100
+set Platform_DebugCompilerFlags=-Od -MTd -nologo -GR- -EHa -Oi -W4 -Z7 -FC -Femain.exe -wd4100
+set Platform_ReleaseCompilerFlags=-O2 -MT -nologo -GR- -EHa -W4 -FC -Femain.exe -wd4100
 set Platform_LinkerFlags=/NODEFAULTLIB:MSVCRT /SUBSYSTEM:console kernel32.lib user32.lib gdi32.lib opengl32.lib 
 
-set Asset_CompilerFlags=-O2 -MT -nologo -Gr -EHa -Oi -W4 -Z7 -FC -Feasset.exe -wd4100 -Iw:\deps\
+set Asset_CompilerFlags=-O2 -MT -nologo -GR -EHa -Oi -W4 -Z7 -FC -Feasset.exe -wd4100 -Iw:\deps\
 set Asset_LinkerFlags=/NODEFAULTLIB:MSVCRT /SUBSYSTEM:console
 
-set Meta_CompilerFlags=-O2 -MT -nologo -Gr -EHa -Oi -W4 -Z7 -FC -Femeta.exe -wd4100 -Iw:\deps\
+set Meta_CompilerFlags=-O2 -MT -nologo -GR -EHa -Oi -W4 -Z7 -FC -Femeta.exe -wd4100 -Iw:\deps\
 set Meta_LinkerFlags=/NODEFAULTLIB:MSVCRT /SUBSYSTEM:console /LIBPATH:w:\deps\clang-c libclang.lib
  
 if not exist w:\build\asset.exe (

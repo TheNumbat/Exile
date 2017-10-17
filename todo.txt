@@ -24,7 +24,12 @@ all includes:
 	#include <xmmintrin.h>
 	#include <typeinfo>
 
-immediate to do:
+working:
+	Profiler statistics
+	Profiler rendering
+	SDL platform layer
+
+to do:
 
 	data structures
 		list (same API as vector, but chunked & no-copy)

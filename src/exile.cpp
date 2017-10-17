@@ -34,7 +34,6 @@
 	#define DO_PROF
 #endif
 
-
 #ifdef __clang__
 #define NOREFLECT __attribute__((annotate("noreflect")))
 #else
