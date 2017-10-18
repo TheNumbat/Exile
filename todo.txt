@@ -78,6 +78,8 @@ immediate to do:
 		keep & output statistics
 
 	UI
+		Split textured mesh2D and colored mesh2D
+		Use multiple render commands per window - shapes vs. each font vs. user textures
 		fonts
 			just pack the TTF and use stb_tt to asynchronously cache correctly sized fonts
 			when they're needed. 
