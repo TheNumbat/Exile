@@ -21,6 +21,11 @@ EXPORT game_state* start_up(platform_api* api) {
 
 	begin_thread(string::literal("main"), &state->suppressed_platform_allocator, 60, 32768);
 
+	dbg_msg m;
+	m.type = dbg_msg_type::begin_frame;
+	m.context = CONTEXT;
+	POST_MSG(m);
+
 	state->log_a = MAKE_PLATFORM_ALLOCATOR("log");
 	state->log_a.suppress_messages = true;
 	state->log = log_manager::make(&state->log_a);
@@ -88,15 +93,22 @@ EXPORT game_state* start_up(platform_api* api) {
 
 	// LOG_INFO_F("%", state); // Don't do this anymore, it's 409 thousand characters and will only grow
 
+	m.type = dbg_msg_type::end_frame;
+	m.context = CONTEXT;
+	POST_MSG(m);
+	state->dbg.collate();
+
 	state->running = true;
 	return state;
 }
 
-EXPORT bool main_loop(game_state* state) { 
+EXPORT bool main_loop(game_state* state) {
 
 	dbg_msg m;
 	m.type = dbg_msg_type::begin_frame;
 	m.context = CONTEXT;
+	POST_MSG(m);
+	m.type = dbg_msg_type::enter_func;
 	POST_MSG(m);
 
 	glUseProgram(0); // why tho?? https://twitter.com/fohx/status/619887799462985729?lang=en
@@ -125,8 +137,9 @@ EXPORT bool main_loop(game_state* state) {
 	}
 #endif
 
+	m.type = dbg_msg_type::exit_func;
+	POST_MSG(m);
 	m.type = dbg_msg_type::end_frame;
-	m.context = CONTEXT;
 	POST_MSG(m);
 	state->dbg.collate();
 

@@ -178,13 +178,11 @@ void vector<T>::resize(u32 new_capacity) { PROF
 	else
 		memory = (T*)alloc->allocate_(new_capacity * sizeof(T), alloc, CONTEXT);
 		
-#ifdef CONSTRUCT_DS_ELEMENTS
 	i64 added = new_capacity - capacity;
 	if(added > 0) {
 		T* new_place = memory + capacity;
 		new (new_place) T[added]();
 	}
-#endif
 
 	capacity = new_capacity;
 }

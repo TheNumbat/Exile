@@ -15,18 +15,6 @@ void dbg_manager::destroy() { PROF
 
 	FORMAP(it, dbg_cache,
 
-		/* printing out all functions called in the last frame
-		bool start = false;
-		FORQ2(it->value,
-			if(it2->type == dbg_msg_type::begin_frame)
-				if(start) break;
-				else start = true;
-			if(start && it2->type == dbg_msg_type::enter_func) {
-				std::cout << it2->context.function.c_str << std::endl;
-			}
-		)
-		*/
-
 		FORQ(f, it->value.frames,
 			DESTROY_ARENA(&f->arena);
 		)
@@ -42,38 +30,83 @@ void dbg_manager::register_thread(u32 frames, u32 frame_size) { PROF
 	global_api->platform_aquire_mutex(&cache_mut);
 	
 	thread_profile thread;
-	thread.frames = queue<frame_profile>::make(frames, alloc);
+	thread.frame_buf_size = frames;
 	thread.frame_size = frame_size;
+	thread.frames = queue<frame_profile>::make(frames, alloc);
 
 	global_dbg->dbg_cache.insert(global_api->platform_this_thread_id(), thread);
 	global_api->platform_release_mutex(&cache_mut);
 }
 
-void dbg_manager::collate() { PROF
+void dbg_manager::collate() {
 
 	PUSH_PROFILE(false) {
 		global_api->platform_aquire_mutex(&cache_mut);
 		thread_profile* thread = dbg_cache.get(global_api->platform_this_thread_id());
 		global_api->platform_release_mutex(&cache_mut);
 
-		PUSH_ALLOC(alloc) {
+#define NEW_NODE (new ((func_profile_node*)malloc(sizeof(func_profile_node))) func_profile_node)
 
-			FORQ(it, this_thread_data.dbg_msgs,
+		FORQ(msg, this_thread_data.dbg_msgs,
 
-				if(it->type == dbg_msg_type::begin_frame) {
-					frame_profile frame;
+			if(msg->type == dbg_msg_type::begin_frame) {
+				frame_profile frame;
 
-					string name = string::makef(string::literal("frame %"), thread->num_frames);
-					frame.arena = MAKE_ARENA_FROM_CONTEXT(name, thread->frame_size * sizeof(dbg_msg), false);
-					name.destroy();
-				
-					frame_profile overwritten = thread->frames.push_overwrite(frame);
-					if(overwritten.arena.memory)
-						DESTROY_ARENA(&overwritten.arena);
+				string name = string::makef(string::literal("frame %"), thread->num_frames);
+				frame.arena = MAKE_ARENA(name, thread->frame_size * sizeof(func_profile_node), alloc, false);
+			
+				frame_profile overwritten = thread->frames.push_overwrite(frame);
+				if(overwritten.arena.memory) {
+					DESTROY_ARENA(&overwritten.arena);
 				}
-			);
-			this_thread_data.dbg_msgs.clear();
 
-		} POP_ALLOC();
+				thread->num_frames++;
+				name.destroy();
+			};
+
+			if(thread->frames.len() != 0) {
+
+				frame_profile* frame = thread->frames.get((thread->num_frames - 1) % thread->frame_buf_size);
+				PUSH_ALLOC(&frame->arena) {
+					switch(msg->type) {
+					case dbg_msg_type::enter_func: {
+
+						if(!frame->head) {
+							frame->head = NEW_NODE;
+							frame->current = frame->head;
+						}
+
+						func_profile_node* here = frame->current;
+						FORVEC(node, here->children,
+							if((*node)->context.function == msg->context.function) {
+								here = *node;
+							}
+						);
+						if(!here) {
+							func_profile_node* new_node = *here->children.push(NEW_NODE);
+							new_node->parent = here;
+							here = new_node;
+						}
+						
+						here->context = msg->context;
+						here->calls++;
+
+					} break;
+
+					case dbg_msg_type::exit_func: {
+
+						if(frame->current->parent) {
+							frame->current = frame->current->parent;
+						}
+					} break;
+					}
+				} POP_ALLOC();
+			}
+		);
+
+#undef NEW_NODE
+
+		this_thread_data.dbg_msgs.clear();
+
 	} POP_PROFILE();
 }

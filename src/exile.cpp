@@ -16,17 +16,14 @@
 
 #define LOG_ALLOCS				// enable logging for every allocation/free/reallocation (including arena - just don't use this it generates way too much)
 	
-#define CONSTRUCT_DS_ELEMENTS 	// removes need for zero-cleared allocation
-
 #define NO_CONCURRENT_JOBS		// makes queue_job just run the job and wait_job do nothing
 */
 
-// #define REAL_RELEASE // turn off everything for a true release build
+#define REAL_RELEASE // turn off everything for a true release build
 
 #ifdef _DEBUG
 	#define BOUNDS_CHECK
 	#define BLOCK_OR_EXIT_ON_ERROR
-	#define CONSTRUCT_DS_ELEMENTS
 	#define DO_PROF
 #elif defined(REAL_RELEASE)
 #else
@@ -58,10 +55,7 @@
 #include <stddef.h>
 #include <stdarg.h>
 #include <typeinfo>
-
-#ifdef CONSTRUCT_DS_ELEMENTS
 #include <new>
-#endif
 // 
 
 #include "util/basic_types.h"

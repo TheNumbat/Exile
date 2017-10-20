@@ -30,9 +30,7 @@ queue<T> queue<T>::make(u32 capacity, allocator* a) { PROF
 	if(capacity) {
 		ret.memory = (T*)ret.alloc->allocate_(capacity * sizeof(T), ret.alloc, CONTEXT);
 
-#ifdef CONSTRUCT_DS_ELEMENTS
 		new (ret.memory) T[capacity]();
-#endif
 	}
 	
 	return ret;
@@ -72,16 +70,12 @@ void queue<T>::grow() { PROF
 		alloc->free_(memory, alloc, CONTEXT);
 		memory = new_mem;
 
-#ifdef CONSTRUCT_DS_ELEMENTS
 		new (memory + len) T[new_capacity - new_capacity]();
-#endif		
 
 	} else {
 		memory = (T*)alloc->allocate_(new_capacity * sizeof(T), alloc, CONTEXT);
 
-#ifdef CONSTRUCT_DS_ELEMENTS
 		new (memory) T[new_capacity]();
-#endif
 	}
 
 	capacity = new_capacity;
@@ -189,9 +183,7 @@ con_queue<T> con_queue<T>::make(u32 capacity, allocator* a) { PROF
 	if(capacity) {
 		ret.memory = (T*)ret.alloc->allocate_(capacity * sizeof(T), ret.alloc, CONTEXT);
 
-#ifdef CONSTRUCT_DS_ELEMENTS
 		new (ret.memory) T[capacity]();
-#endif
 	}
 	
 	return ret;

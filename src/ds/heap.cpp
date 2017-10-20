@@ -10,10 +10,7 @@ heap<T> heap<T>::make(u32 capacity, allocator* alloc) { PROF
 	ret.alloc = alloc;
 	ret.memory = (T*)alloc->allocate_(capacity * sizeof(T), alloc, CONTEXT);
 
-#ifdef CONSTRUCT_DS_ELEMENTS
 	new (ret.memory) T[capacity]();
-#endif
-
 	return ret;
 }	
 
@@ -151,9 +148,7 @@ con_heap<T> con_heap<T>::make(u32 capacity, allocator* alloc) { PROF
 	ret.alloc = alloc;
 	ret.memory = (T*)alloc->allocate_(capacity * sizeof(T), alloc, CONTEXT);
 
-#ifdef CONSTRUCT_DS_ELEMENTS
-		new (ret.memory) T[capacity]();
-#endif
+	new (ret.memory) T[capacity]();
 
 	global_api->platform_create_semaphore(&ret.sem, 0, INT_MAX);
 	global_api->platform_create_mutex(&ret.mut, false);

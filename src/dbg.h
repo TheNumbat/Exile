@@ -10,6 +10,7 @@
 typedef u64 timestamp;
 
 struct func_profile_node {
+	code_context context;
 	timestamp self = 0, heir = 0;
 	u32 calls = 0;
 
@@ -20,7 +21,7 @@ struct func_profile_node {
 struct frame_profile {
 
 	timestamp start = 0, end = 0;
-	func_profile_node* head = null;
+	func_profile_node *head = null, *current = null;
 	// vector<func_profile_node*> self_time_view, heir_time_view, calls_view;
 	// vector<dbg_msg*> allocations;
 	arena_allocator arena;
@@ -111,7 +112,7 @@ struct dbg_msg {
 
 struct thread_profile {
 	queue<frame_profile> frames;
-	u32 num_frames = 0, frame_size = 0;
+	u32 frame_buf_size = 0, num_frames = 0, frame_size = 0;
 };
 
 struct dbg_manager {

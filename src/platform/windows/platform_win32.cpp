@@ -486,16 +486,16 @@ platform_error win32_get_bin_path(string* path) {
 	return ret;
 }
 
-#include <iostream>
-using std::cout;
-using std::endl;
+// #include <iostream>
+// using std::cout;
+// using std::endl;
 
 void* win32_heap_alloc(u64 bytes) {
 
 	HANDLE heap = GetProcessHeap();
 	void* ret = HeapAlloc(heap, HEAP_ZERO_MEMORY | HEAP_GENERATE_EXCEPTIONS, (SIZE_T)bytes);
 
-	cout << "AAAAAAAAAA " << ret << endl;
+	// cout << "AAAAAAAAAA " << ret << endl;
 
 	return ret;
 }
@@ -512,7 +512,7 @@ void* win32_heap_realloc(void* mem, u64 bytes) {
 
 void win32_heap_free(void* mem) {
 
-	cout << "FFFFFFFFFF " << mem << endl;
+	// cout << "FFFFFFFFFF " << mem << endl;
 	// *(u8*)mem = 0;
 
 	HANDLE heap = GetProcessHeap();
@@ -1284,7 +1284,7 @@ platform_error win32_create_window(platform_window* window, string title, u32 wi
 
 	// TODO(max): vsync/fullscreen/AA/etc settings
 		// https://blogs.msdn.microsoft.com/oldnewthing/20100412-00/?p=14353
-	wglSwapIntervalEXT(0);
+	wglSwapIntervalEXT(1);
 
 	ShowWindowAsync(window->handle, SW_SHOW);
 
