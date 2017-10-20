@@ -33,6 +33,7 @@ struct platform_thread_id {
 struct platform_error {
 	bool good = true;
 	u32 error = 0;
+	string error_message;
 };
 
 enum class platform_file_open_op : u8 {
