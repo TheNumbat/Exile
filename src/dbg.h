@@ -21,7 +21,8 @@ struct func_profile_node {
 struct frame_profile {
 
 	timestamp start = 0, end = 0;
-	func_profile_node *head = null, *current = null;
+	vector<func_profile_node*> heads;
+	func_profile_node* current = null;
 	// vector<func_profile_node*> self_time_view, heir_time_view, calls_view;
 	// vector<dbg_msg*> allocations;
 	arena_allocator arena;

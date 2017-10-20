@@ -2,7 +2,7 @@
 #pragma once
 
 // array foreach
-#define FORARR(it, a,code) {u32 __##it = 0; for(auto it = (a).memory; it != (a).memory + (a).capacity; __##it++, it++) {code}}
+#define FORARR(it,a) u32 __##it = 0; for(auto it = (a).memory; it != (a).memory + (a).capacity; __##it++, it++)
 
 template<typename T>
 struct array {

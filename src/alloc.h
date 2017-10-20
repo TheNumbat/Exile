@@ -2,9 +2,9 @@
 #pragma once
 
 struct allocator {
-	func_ptr<void*,u64,allocator*,code_context>		allocate_;
-	func_ptr<void*,void*,u64,allocator*,code_context> 	reallocate_;
-	func_ptr<void,void*,allocator*,code_context> 		free_;
+	func_ptr<void*,u64,allocator*,code_context>				allocate_;
+	func_ptr<void*,void*,u64,u64,allocator*,code_context> 	reallocate_;
+	func_ptr<void,void*,allocator*,code_context> 			free_;
 
 	void destroy();
 
@@ -34,7 +34,7 @@ struct platform_allocator : public allocator {
 
 CALLBACK void* platform_allocate(u64 bytes, allocator* this_, code_context context);
 CALLBACK void  platform_free(void* mem, allocator* this_, code_context context);
-CALLBACK void* platform_reallocate(void* mem, u64 bytes, allocator* this_, code_context context);
+CALLBACK void* platform_reallocate(void* mem, u64, u64 bytes, allocator* this_, code_context context);
 
 #define MAKE_PLATFORM_ALLOCATOR(n) make_platform_allocator(string::literal(n), CONTEXT)
 inline platform_allocator make_platform_allocator(string name, code_context context);
@@ -47,7 +47,7 @@ struct arena_allocator : public allocator {
 };
 
 CALLBACK void* arena_allocate(u64 bytes, allocator* this_, code_context context);
-CALLBACK void* arena_reallocate(void* mem, u64 bytes, allocator* this_, code_context context); // same as allocate, can't free from arena
+CALLBACK void* arena_reallocate(void* mem, u64 sz, u64 bytes, allocator* this_, code_context context); // same as allocate, can't free from arena
 CALLBACK void  arena_free(void*, allocator*, code_context); // does nothing
 
 #define DESTROY_ARENA(a) arena_destroy(a, CONTEXT) 

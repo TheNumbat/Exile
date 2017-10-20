@@ -29,23 +29,24 @@ gui_manager gui_manager::make(ogl_manager* ogl, allocator* alloc) { PROF
 
 void gui_manager::destroy() { PROF
 
-	FORMAP(it, window_state_data,
-		it->value.id_hash_stack.destroy();
-		it->value.offset_stack.destroy();
-		it->value.mesh.destroy();
-		it->key.name.destroy(alloc);
-	)
-	FORMAP(it, state_data,
-		it->key.name.destroy(alloc);
-	)
+	FORMAP(win, window_state_data) {
+		win->value.id_hash_stack.destroy();
+		win->value.offset_stack.destroy();
+		win->value.mesh.destroy();
+		win->key.name.destroy(alloc);
+	}
+	FORMAP(st, state_data) {
+		st->key.name.destroy(alloc);
+	}
 
 	window_state_data.destroy();
 	state_data.destroy();
 	fonts.destroy();
 
-	FORQ(it, log_cache,
+	FORQ_BEGIN(it, log_cache) {
 		DESTROY_ARENA(&it->arena);
-	);
+	} FORQ_END(it, log_cache);
+
 	log_cache.destroy();
 
 	DESTROY_ARENA(&scratch);
@@ -62,7 +63,7 @@ void gui_manager::setup_log(log_manager* log) { PROF
 
 void gui_manager::reload_fonts(ogl_manager* ogl) { PROF
 
-	FORVEC(it, fonts,
+	FORVEC(it, fonts) {
 
 		ogl->destroy_texture(it->texture);
 
@@ -70,7 +71,7 @@ void gui_manager::reload_fonts(ogl_manager* ogl) { PROF
 
 		it->font = font;
 		it->texture = ogl->add_texture_from_font(font);
-	)
+	}
 }
 
 void gui_manager::add_font(ogl_manager* ogl, string asset_name, asset_store* store, bool mono) { PROF
@@ -94,13 +95,13 @@ gui_font* gui_select_best_font_scale(gui_window_state* win) { PROF
 
 	f32 defl = ggui->style.font * ggui->style.gscale;
 	f32 min_off = FLT_MAX;
-	FORVEC(it, ggui->fonts,
+	FORVEC(it, ggui->fonts) {
 		f32 off = absf(defl - it->font->font.point);
 		if(off < min_off && it->mono == win->mono) {
 			min_off = off;
 			f = it;
 		}
-	)
+	}
 
 	return f;
 }
@@ -125,9 +126,9 @@ void gui_manager::begin_frame(gui_input_state new_input) { PROF
 	input = new_input;
 	style.font = fonts.front()->font->font.point;
 
-	FORMAP(it, window_state_data,
+	FORMAP(it, window_state_data) {
 		it->value.font = gui_select_best_font_scale(&it->value);
-	)
+	}
 }
 
 void gui_manager::end_frame(platform_window* win, ogl_manager* ogl) { PROF
@@ -142,14 +143,14 @@ void gui_manager::end_frame(platform_window* win, ogl_manager* ogl) { PROF
 	}
 
 	render_command_list rcl = render_command_list::make();
-	FORMAP(it, window_state_data,
+	FORMAP(winst, window_state_data) {
 
-		render_command cmd = render_command::make(render_command_type::mesh_2d, &it->value.mesh, it->value.z);
+		render_command cmd = render_command::make(render_command_type::mesh_2d, &winst->value.mesh, winst->value.z);
 		cmd.shader  = ggui->ogl_ctx.shader;
-		cmd.texture = it->value.font->texture;
+		cmd.texture = winst->value.font->texture;
 		cmd.context = ggui->ogl_ctx.context;
 		rcl.add_command(cmd);
-	)
+	}
 
 	rcl.proj = ortho(0, (f32)win->w, (f32)win->h, 0, -1, 1);
 	rcl.sort();
@@ -157,11 +158,11 @@ void gui_manager::end_frame(platform_window* win, ogl_manager* ogl) { PROF
 	ogl->execute_command_list(win, &rcl);
 	rcl.destroy();
 
-	FORMAP(it, ggui->window_state_data,
-		it->value.offset_stack.clear();
-		it->value.id_hash_stack.clear();
-		it->value.mesh.clear();
-	)
+	FORMAP(st, ggui->window_state_data) {
+		st->value.offset_stack.clear();
+		st->value.id_hash_stack.clear();
+		st->value.mesh.clear();
+	}
 
 	RESET_ARENA(&ggui->scratch);
 }
@@ -189,7 +190,7 @@ void gui_set_offset_mode(gui_offset_mode mode) { PROF
 }
 
 bool gui_occluded() { PROF
-	FORMAP(it, ggui->window_state_data,
+	FORMAP(it, ggui->window_state_data) {
 		if(&it->value != ggui->current && it->value.z > ggui->current->z) {
 			if(it->value.active && inside(mult(it->value.rect, ggui->style.gscale), ggui->input.mousepos)) {
 				return true;
@@ -201,7 +202,7 @@ bool gui_occluded() { PROF
 				}
 			}
 		}
-	)
+	}
 	return false;
 }
 
@@ -473,9 +474,9 @@ void gui_box_select(i32* selected, i32 num, v2 pos, ...) { PROF
 	va_start(args, pos);
 
 	pos = add(current->rect.xy, pos);
-	FORVEC(it, ggui->current->offset_stack,
+	FORVEC(it, ggui->current->offset_stack) {
 		pos = add(pos, *it);
-	)
+	}
 
 	for(i32 i = 0; i < num; i++) {
 
@@ -516,9 +517,9 @@ bool gui_carrot_toggle(string name, bool initial, v2 pos, bool* toggleme) { PROF
 	}
 
 	pos = add(ggui->current->rect.xy, pos);
-	FORVEC(it, ggui->current->offset_stack,
+	FORVEC(it, ggui->current->offset_stack) {
 		pos = add(pos, *it);
-	)
+	}
 
 	v2 size = ggui->style.default_carrot_size;
 	size = mult(size, ggui->style.gscale);

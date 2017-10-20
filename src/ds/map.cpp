@@ -56,9 +56,10 @@ void map<K,V>::destroy() { PROF
 template<typename K, typename V>
 void map<K,V>::clear() { PROF
 	
-	FORVEC(it, contents,
+	FORVEC(it, contents) {
 		ELEMENT_CLEAR_OCCUPIED(*it);
-	)
+	}
+
 	contents.clear();
 	size = 0;
 	max_probe = 0;

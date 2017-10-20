@@ -71,7 +71,7 @@ CALLBACK void platform_free(void* mem, allocator* this_, code_context context) {
 	}
 }
 
-CALLBACK void* platform_reallocate(void* mem, u64 bytes, allocator* this_, code_context context) { PROF
+CALLBACK void* platform_reallocate(void* mem, u64, u64 bytes, allocator* this_, code_context context) { PROF
 
 	platform_allocator* this__ = (platform_allocator*)this_;
 
@@ -158,9 +158,11 @@ CALLBACK void* arena_allocate(u64 bytes, allocator* this_, code_context context)
 
 CALLBACK void arena_free(void*, allocator*, code_context context) {}
 
-CALLBACK void* arena_reallocate(void* mem, u64 bytes, allocator* this_, code_context context) { PROF
+CALLBACK void* arena_reallocate(void* mem, u64 sz, u64 bytes, allocator* this_, code_context context) { PROF
 
-	return arena_allocate(bytes, this_, context);
+	void* ret = arena_allocate(bytes, this_, context);
+	memcpy(mem, ret, sz);
+	return ret;
 }
 
 void arena_reset(arena_allocator* a, code_context context) { PROF

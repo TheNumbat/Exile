@@ -13,12 +13,12 @@ template<typename T>
 T* vector<T>::find(T val) { PROF
 
 	T* ret = null;
-	FORVEC(it, *this, 
+	FORVEC(it, *this) {
 		if(*it == val) {
 			ret = it;
 			break;
 		}
-	)
+	}
 
 	return ret;
 }
@@ -26,12 +26,12 @@ T* vector<T>::find(T val) { PROF
 template<typename T>
 void vector<T>::erase(T val) { PROF
 
-	FORVEC(it, *this, 
+	FORVEC(it, *this) {
 		if(*it == val) {
 			erase(__i);
 			it--;
 		}
-	)
+	}
 }
 
 template<typename T>
@@ -174,7 +174,7 @@ void vector<T>::resize(u32 new_capacity) { PROF
 	}
 
 	if(memory)
-		memory = (T*)alloc->reallocate_(memory, new_capacity * sizeof(T), alloc, CONTEXT);
+		memory = (T*)alloc->reallocate_(memory, capacity * sizeof(T), new_capacity * sizeof(T), alloc, CONTEXT);
 	else
 		memory = (T*)alloc->allocate_(new_capacity * sizeof(T), alloc, CONTEXT);
 		

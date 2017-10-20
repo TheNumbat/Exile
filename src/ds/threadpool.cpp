@@ -108,7 +108,7 @@ void threadpool::start_all() { PROF
 
 	if(!online) {
 	
-		FORARR(it, worker_data,
+		FORARR(it, worker_data) {
 
 			it->job_queue 	 	= &jobs;
 			it->jobs_semaphore 	= &jobs_semaphore;
@@ -118,7 +118,7 @@ void threadpool::start_all() { PROF
 			it->running_mutex 	= &running_mutex;
 
 			CHECKED(platform_create_thread, threads.get(__it), &worker, it, false);
-		)
+		}
 
 		online = true;
 	}

@@ -32,8 +32,8 @@ void heap<T>::clear() { PROF
 template<typename T>
 void heap<T>::grow() { PROF
 
+	memory = (T*)alloc->reallocate_(memory, capacity * sizeof(T), 2 * capacity * sizeof(T), alloc, CONTEXT);
 	capacity *= 2;
-	memory = (T*)alloc->reallocate_(memory, capacity * sizeof(T), alloc, CONTEXT);
 }
 
 template<typename T>

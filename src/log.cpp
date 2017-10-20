@@ -46,12 +46,12 @@ void log_manager::destroy() { PROF
 		stop();
 	}
 
-	FORVEC(it, out,
+	FORVEC(it, out) {
 		print_footer(it);
 		if(it->type != log_out_type::custom) {
 			it->file.destroy();
 		}
-	)
+	}
 
 	out.destroy();
 	message_queue.destroy();
@@ -310,7 +310,7 @@ i32 log_proc(void* data_) {
 				
 				PUSH_ALLOC(data->scratch) {
 					
-					FORVEC(it, *data->out,
+					FORVEC(it, *data->out) {
 
 						if(it->level <= msg.level) {
 							if(it->type == log_out_type::custom) {
@@ -323,7 +323,7 @@ i32 log_proc(void* data_) {
 								output.destroy();
 							}
 						}
-					)
+					}
 
 				} POP_ALLOC();
 				RESET_ARENA(data->scratch);
@@ -344,11 +344,11 @@ i32 log_proc(void* data_) {
 		global_api->platform_wait_semaphore(data->logging_semaphore, -1);
 	}
 
-	FORVEC(it, *data->out,
+	FORVEC(it, *data->out) {
 		if(it->type != log_out_type::custom) {
 			it->file.flush();
 		}
-	)
+	}
 	end_thread();
 
 	return 0;
