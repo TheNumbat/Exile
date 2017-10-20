@@ -14,7 +14,7 @@
 #include <locale>
 #include <cstring>
 
-#include "..\util\basic_types.h"
+#include "../util/basic_types.h"
 
 using namespace std;
 

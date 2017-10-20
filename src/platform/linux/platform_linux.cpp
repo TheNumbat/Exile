@@ -3,8 +3,6 @@
 
 #include "platform_linux.h"
 
-#include "gl.h"
-
 // #include <X11/X.h> // Included in X11/Xlib.h, but written here for understanding
 // #include <X11/Xlib.h>
 

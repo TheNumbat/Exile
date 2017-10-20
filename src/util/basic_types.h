@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <float.h>
 #include <limits.h>
+#include <stddef.h>
 
 typedef uint8_t 	u8;
 typedef int8_t 		i8;

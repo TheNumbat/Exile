@@ -1,6 +1,4 @@
 
-#pragma once
-
 /* debug options
 
 #define BOUNDS_CHECK 			// check access on array_get/vector_get
@@ -51,11 +49,13 @@
 // default headers
 #include <math.h> 			// TODO(max): remove
 #include <xmmintrin.h>
-#include <intrin.h>
 #include <stddef.h>
 #include <stdarg.h>
 #include <typeinfo>
 #include <new>
+#ifdef _MSC_VER
+#include <intrin.h>
+#endif
 // 
 
 #include "util/basic_types.h"
@@ -102,9 +102,9 @@ static dbg_manager*  global_dbg = null; // not used yet -- global to provide pro
 #define DO(num) for(i32 __i = 0; __i < num; __i++)
 
 #ifdef _DEBUG
-#define CHECKED(platform_func, ...) {platform_error err = global_api->platform_func(##__VA_ARGS__); if(!err.good) LOG_ERR_F("Error % in %", err.error, #platform_func);}
+#define CHECKED(platform_func, ...) {platform_error err = global_api->platform_func(__VA_ARGS__); if(!err.good) LOG_ERR_F("Error % in %", err.error, #platform_func);}
 #else
-#define CHECKED(platform_func, ...) global_api->platform_func(##__VA_ARGS__);
+#define CHECKED(platform_func, ...) global_api->platform_func(__VA_ARGS__);
 #endif
 
 #include <meta_types.cpp>

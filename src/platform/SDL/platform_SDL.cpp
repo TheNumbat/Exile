@@ -1,8 +1,7 @@
 
 #include "platform_SDL.h"
-#include "gl.h"
 
-// #include <SDL2/SDL.h>
+#include <SDL2/SDL.h>
 
 platform_api platform_build_api() {
 

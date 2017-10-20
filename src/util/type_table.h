@@ -76,7 +76,7 @@ struct _type_info {
 
 thread_local map<type_id,_type_info> type_table;
 
-#define TYPEINFO(...) _get_type_info< ##__VA_ARGS__ >::get_type_info()
+#define TYPEINFO(...) _get_type_info< __VA_ARGS__ >::get_type_info()
 #define TYPEINFO_H(h) (h ? type_table.try_get(h) : 0)
 template<typename T>
 struct _get_type_info { 

@@ -1,7 +1,5 @@
 #!/bin/bash
 
-pushd ../build
-
 if [ ! -f asset ]; then
 	echo compiling asset builder
 	g++ -O2 -o asset -I../deps/ ../src/tools/asset_builder.cpp
@@ -14,7 +12,7 @@ fi
 
 if [ ! -f meta ]; then
 	echo compiling metaprogram
-	g++ -O2 -o meta -I/usr/lib/llvm-4.0/include/ -L/usr/lib/llvm-4.0/lib/ ../src/tools/meta.cpp -lclang 
+	g++ -O2 -o meta -I../deps/ -I/usr/lib/llvm-4.0/include/ -L/usr/lib/llvm-4.0/lib/ ../src/tools/meta.cpp -lclang 
 fi
 
 echo running metaprogram
@@ -22,18 +20,16 @@ echo running metaprogram
 
 echo compiling game lib...
 if [ "$1" == "release" ]; then
-	g++ -shared -O2 -fPIC -o game.so -I../build/ ../src/exile.cpp -pthread -lGL -Wno-attributes -Wno-invalid-offsetof
+	g++ -shared -O2 -fPIC -o game.so -I../build/ ../src/exile.cpp -pthread -lGL -fpermissive -Wno-attributes -Wno-invalid-offsetof
 else 
-	g++ -shared -g3 -fPIC -o game.so -I../build/ ../src/exile.cpp -pthread -lGL -Wno-attributes -Wno-invalid-offsetof
+	g++ -shared -g3 -fPIC -o game.so -I../build/ ../src/exile.cpp -pthread -lGL -fpermissive -Wno-attributes -Wno-invalid-offsetof
 fi 
 
 if [ ! -f main ]; then
 	echo compiling platform layer...
 	if [ "$1" == "release" ]; then
-		g++ -g3 -o main ../src/platform/platform_main.cpp -Wno-attributes -lX11 -lGL
+		g++ -O2 -o main ../src/platform/platform_main.cpp -Wno-attributes -lSDL -lGL
 	else
-		g++ -g3 -o main ../src/platform/platform_main.cpp -Wno-attributes -lX11 -lGL 
+		g++ -g3 -o main ../src/platform/platform_main.cpp -Wno-attributes -lSDL -lGL 
 	fi
 fi
-
-popd
