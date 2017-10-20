@@ -24,7 +24,6 @@ EXPORT game_state* start_up(platform_api* api) {
 	state->log_a = MAKE_PLATFORM_ALLOCATOR("log");
 	state->log_a.suppress_messages = true;
 	state->log = log_manager::make(&state->log_a);
-	state->dbg.setup_log(&state->log);
 
 	platform_file stdout_file, log_all_file;
 	CHECKED(platform_get_stdout_as_file, &stdout_file);
@@ -35,15 +34,12 @@ EXPORT game_state* start_up(platform_api* api) {
 	LOG_INFO("Beginning startup...");
 	LOG_PUSH_CONTEXT_L("");
 
-	LOG_INFO("Starting logger...");
-	state->log.start();
-
 	LOG_INFO("Setting up events...");
 	state->evt_a = MAKE_PLATFORM_ALLOCATOR("event");
 	state->evt = evt_manager::make(&state->evt_a);
 	state->evt.start();
 
-	LOG_INFO("Starting thread pool");
+	LOG_INFO("Starting thread pool...");
 	state->thread_pool_a = MAKE_PLATFORM_ALLOCATOR("threadpool");
 	state->thread_pool_a.suppress_messages = true;
 	state->thread_pool = threadpool::make(&state->thread_pool_a);
@@ -54,34 +50,38 @@ EXPORT game_state* start_up(platform_api* api) {
 
 	job_id assets = state->thread_pool.queue_job([](void* s) -> job_callback {
 		game_state* state = (game_state*)s;
-		LOG_INFO("Setting up asset system");
+		LOG_INFO("Setting up asset system...");
 		state->default_store_a = MAKE_PLATFORM_ALLOCATOR("asset");
 		state->default_store = asset_store::make(&state->default_store_a);
 		state->default_store.load(string::literal("assets/assets.asset"));
 		return null;
 	}, state);
 
-	LOG_INFO("Creating window");
+	LOG_INFO("Creating window...");
 	platform_error err = api->platform_create_window(&state->window, string::literal("CaveGame"), 1280, 720);
 
 	if (!err.good) {
 		LOG_FATAL_F("Failed to create window, error: %", err.error);
 	}
 
-	LOG_INFO("Setting up OpenGL");
+	LOG_INFO("Setting up OpenGL...");
 	ogl_load_global_funcs();
 	state->ogl_a = MAKE_PLATFORM_ALLOCATOR("ogl");
 	state->ogl = ogl_manager::make(&state->ogl_a);
 
 	state->thread_pool.wait_job(assets);
 
-	LOG_INFO("Setting up GUI");
+	LOG_INFO("Setting up GUI...");
 	state->gui_a = MAKE_PLATFORM_ALLOCATOR("gui");
 	state->gui = gui_manager::make(&state->ogl, &state->gui_a);
 	state->gui.add_font(&state->ogl, string::literal("gui14"), &state->default_store);
 	state->gui.add_font(&state->ogl, string::literal("gui24"), &state->default_store);
 	state->gui.add_font(&state->ogl, string::literal("gui40"), &state->default_store);
 	state->gui.add_font(&state->ogl, string::literal("guimono"), &state->default_store, true);
+	state->gui.setup_log(&state->log);
+
+	LOG_INFO("Starting logger...");
+	state->log.start();
 
 	LOG_INFO("Done with startup!");
 	LOG_POP_CONTEXT();
@@ -109,7 +109,7 @@ EXPORT bool main_loop(game_state* state) {
 		
 		state->gui.begin_frame(input);
 
-		state->dbg.render_debug_gui(&state->window);
+		gui_debug_ui(&state->window);
 
 		state->gui.end_frame(&state->window, &state->ogl);
 
@@ -137,9 +137,6 @@ EXPORT void shut_down(game_state* state) {
 
 	LOG_INFO("Beginning shutdown...");
 
-	LOG_DEBUG("Destroying GUI");
-	state->gui.destroy();
-
 	LOG_DEBUG("Destroying OpenGL")
 	state->ogl.destroy();
 
@@ -156,15 +153,18 @@ EXPORT void shut_down(game_state* state) {
 	LOG_DEBUG("Destroying events");
 	state->evt.destroy();
 
+	LOG_DEBUG("Destroying debug system");
+	state->dbg.destroy();
+
 	LOG_DEBUG("Destroying transient store");
 	DESTROY_ARENA(&state->transient_arena);
 
 	LOG_DEBUG("Done with shutdown!");
 
 	state->log.stop();
-	state->dbg.destroy();
 	state->log.destroy();
-	
+	state->gui.destroy();
+
 	end_thread();
 	cleanup_fptrs();
 

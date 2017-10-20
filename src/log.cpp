@@ -314,7 +314,7 @@ i32 log_proc(void* data_) {
 
 						if(it->level <= msg.level) {
 							if(it->type == log_out_type::custom) {
-								it->write(&msg);
+								it->write(&msg, it->param);
 							} else {
 								string output = fmt_msg(&msg, it->type);
 								it->file.write(output.c_str, output.len - 1);
@@ -344,6 +344,11 @@ i32 log_proc(void* data_) {
 		global_api->platform_wait_semaphore(data->logging_semaphore, -1);
 	}
 
+	FORVEC(it, *data->out,
+		if(it->type != log_out_type::custom) {
+			it->file.flush();
+		}
+	)
 	end_thread();
 
 	return 0;

@@ -50,7 +50,10 @@ struct log_out {
 	bool 		 flush_on_message = false;
 	union {
 		buffer<platform_file,4096> file;			// TODO(max): sizeof(buffer) dependent on parameter - don't do this for union?
-		func_ptr<void, log_message*> write;
+		struct {
+			func_ptr<void, log_message*, void*> write;
+			void * param;
+		};
 	};
 	log_out() : file() {};
 };

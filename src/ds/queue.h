@@ -2,7 +2,7 @@
 #pragma once
 
 // queue foreach
-#define FORQ(it,q,code) {if((q).start != UINT32_MAX){u32 __##it = (q).start; for(auto it = (q).memory + (q).start; __##it != (q).end; ++__##it %= (q).capacity, it = &(q).memory[__##it]) {code}}}
+#define FORQ(it,q,code) {if((q).start != UINT32_MAX){u32 __##it = (q).start; do {auto it = &(q).memory[__##it]; {code} ++__##it %= (q).capacity;} while(__##it != (q).end);}}
 
 template<typename T>
 struct queue {

@@ -22,6 +22,7 @@ gui_manager gui_manager::make(ogl_manager* ogl, allocator* alloc) { PROF
 	ret.window_state_data = map<guiid, gui_window_state>::make(32, alloc, FPTR(guiid_hash));
 	ret.state_data = map<guiid, gui_state_data>::make(128, alloc, FPTR(guiid_hash));
 	ret.fonts = vector<gui_font>::make(4, alloc);
+	ret.log_cache = queue<log_message>::make(1024, alloc);
 
 	return ret;
 }
@@ -42,7 +43,21 @@ void gui_manager::destroy() { PROF
 	state_data.destroy();
 	fonts.destroy();
 
+	FORQ(it, log_cache,
+		DESTROY_ARENA(&it->arena);
+	);
+	log_cache.destroy();
+
 	DESTROY_ARENA(&scratch);
+}
+
+void gui_manager::setup_log(log_manager* log) { PROF
+	log_out dbg_log;
+	dbg_log.level = log_level::info;
+	dbg_log.type = log_out_type::custom;
+	dbg_log.write.set(FPTR(gui_add_log));
+	dbg_log.param = this;
+	log->add_output(dbg_log);
 }
 
 void gui_manager::reload_fonts(ogl_manager* ogl) { PROF
@@ -335,7 +350,31 @@ bool gui_begin(string name, r2 first_size, f32 first_alpha, gui_window_flags fla
 	return window->active;
 }
 
-void gui_log_wnd(platform_window* win, string name, queue<log_message>* cache) { PROF
+CALLBACK void gui_add_log(log_message* msg, void* param) { PROF
+
+	gui_manager* gui = (gui_manager*)param;
+
+	if(gui->log_cache.len() == gui->log_cache.capacity) {
+
+		log_message* m = gui->log_cache.front();
+		DESTROY_ARENA(&m->arena);
+		gui->log_cache.pop();
+	}
+
+	log_message* m = gui->log_cache.push(*msg);
+	m->arena       = MAKE_ARENA(string::literal("cmsg"), msg->arena.size, gui->alloc, msg->arena.suppress_messages);
+	m->call_stack  = array<code_context>::make_copy(&msg->call_stack, &m->arena);
+	m->thread_name = string::make_copy(msg->thread_name, &m->arena);
+	m->msg         = string::make_copy(msg->msg, &m->arena);
+}
+
+void gui_debug_ui(platform_window* win) { PROF
+
+	gui_begin(string::literal("Debug"));
+	gui_log_wnd(win, string::literal("Log"));
+}
+
+void gui_log_wnd(platform_window* win, string name) { PROF
 
 	f32 height = ggui->style.log_win_lines * ggui->style.font + 2 * ggui->style.font + ggui->style.title_padding + ggui->style.win_margin.x + ggui->style.win_margin.w + 7.0f;
 	gui_begin(name, R2(0.0f, win->h - height, (f32)win->w, height), 0.5f, (u16)window_flags::nowininput | (u16)window_flags::nohead | (u16)window_flags::ignorescale, true);
@@ -366,10 +405,10 @@ void gui_log_wnd(platform_window* win, string name, queue<log_message>* cache) {
 		} else {
 			data->u32_1 += ggui->input.scroll;
 		}
-		if(cache->len() - data->u32_1 < ggui->style.log_win_lines) {
-			data->u32_1 = cache->len() - ggui->style.log_win_lines;
+		if(ggui->log_cache.len() - data->u32_1 < ggui->style.log_win_lines) {
+			data->u32_1 = ggui->log_cache.len() - ggui->style.log_win_lines;
 		}
-		if(cache->len() < ggui->style.log_win_lines) {
+		if(ggui->log_cache.len() < ggui->style.log_win_lines) {
 			data->u32_1 = 0;
 		}
 	}
@@ -378,7 +417,7 @@ void gui_log_wnd(platform_window* win, string name, queue<log_message>* cache) {
 
 	current->mesh.push_rect(scroll_back, V4b(ggui->style.win_scroll_back, current->opacity * 255.0f));
 
-	f32 scroll_y = lerpf(current->rect.y + current->rect.h, current->rect.y, (f32)data->u32_1 / (f32)(cache->len() - ggui->style.log_win_lines));
+	f32 scroll_y = lerpf(current->rect.y + current->rect.h, current->rect.y, (f32)data->u32_1 / (f32)(ggui->log_cache.len() - ggui->style.log_win_lines));
 	if(scroll_y < current->rect.y + ggui->style.font + ggui->style.title_padding) {
 		scroll_y = current->rect.y + ggui->style.font + ggui->style.title_padding;
 	}
@@ -397,8 +436,8 @@ void gui_log_wnd(platform_window* win, string name, queue<log_message>* cache) {
 	pos = add(current->rect.xy, pos);
 	pos.y -= ggui->style.font + 7.0f;
 
-	for(i32 i = cache->len() - data->u32_1; i > 0; i--) {
-		log_message* it = cache->get(i - 1);
+	for(i32 i = ggui->log_cache.len() - data->u32_1; i > 0; i--) {
+		log_message* it = ggui->log_cache.get(i - 1);
 
 		string fmt;
 		PUSH_ALLOC(&ggui->scratch) {

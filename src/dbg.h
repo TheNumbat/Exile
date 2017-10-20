@@ -117,10 +117,6 @@ struct thread_profile {
 struct dbg_manager {
 
 	u32 current_frame = 0;
-
-	queue<log_message> log_cache;
-	log_level lvl = log_level::info;
-
 	allocator* alloc = null;
 
 	platform_mutex cache_mut;
@@ -132,10 +128,7 @@ struct dbg_manager {
 	void destroy();
 
 	void register_thread(u32 frames, u32 frame_size);
-	void setup_log(log_manager* log);
 
 	void collate();
-	void render_debug_gui(platform_window* win);
 };
 
-CALLBACK void dbg_add_log(log_message* msg);
