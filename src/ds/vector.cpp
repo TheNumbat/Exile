@@ -13,7 +13,7 @@ template<typename T>
 T* vector<T>::find(T val) { PROF
 
 	T* ret = null;
-	FORVEC(*this, 
+	FORVEC(it, *this, 
 		if(*it == val) {
 			ret = it;
 			break;
@@ -26,7 +26,7 @@ T* vector<T>::find(T val) { PROF
 template<typename T>
 void vector<T>::erase(T val) { PROF
 
-	FORVEC(*this, 
+	FORVEC(it, *this, 
 		if(*it == val) {
 			erase(__i);
 			it--;

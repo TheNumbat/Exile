@@ -7,6 +7,25 @@
 
 #define POST_MSG(m) {PUSH_PROFILE(false) {this_thread_data.dbg_msgs.push(m);} POP_PROFILE();}
 
+typedef u64 timestamp;
+
+struct func_profile_node {
+	timestamp self = 0, heir = 0;
+	u32 calls = 0;
+
+	vector<func_profile_node*> children;
+	func_profile_node* parent = null;
+};
+
+struct frame_profile {
+
+	timestamp start = 0, end = 0;
+	func_profile_node* head = null;
+	// vector<func_profile_node*> self_time_view, heir_time_view, calls_view;
+	// vector<dbg_msg*> allocations;
+	arena_allocator arena;
+};
+
 enum class dbg_msg_type : u8 {
 	none,
 	begin_frame,
@@ -71,7 +90,7 @@ struct dbg_msg_section_end {
 
 struct dbg_msg {
 	dbg_msg_type type = dbg_msg_type::none;
-	u64 timestamp = 0;
+	timestamp t = 0;
 	code_context context;
 	union {
 		dbg_msg_begin_frame   begin_frame;
@@ -90,6 +109,11 @@ struct dbg_msg {
 	dbg_msg() {};
 };
 
+struct thread_profile {
+	queue<frame_profile> frames;
+	u32 num_frames = 0, frame_size = 0;
+};
+
 struct dbg_manager {
 
 	u32 current_frame = 0;
@@ -100,14 +124,14 @@ struct dbg_manager {
 	allocator* alloc = null;
 
 	platform_mutex cache_mut;
-	map<platform_thread_id,queue<dbg_msg>> dbg_cache;
+	map<platform_thread_id, thread_profile> dbg_cache;
 
 ///////////////////////////////////////////////////////////////////////////////
 
 	static dbg_manager make(allocator* alloc);
 	void destroy();
 
-	void register_thread(u32 cache_size);
+	void register_thread(u32 frames, u32 frame_size);
 	void setup_log(log_manager* log);
 
 	void collate();

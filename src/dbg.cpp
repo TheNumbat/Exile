@@ -4,7 +4,7 @@ dbg_manager dbg_manager::make(allocator* alloc) { PROF
 	dbg_manager ret;
 
 	ret.log_cache = queue<log_message>::make(1024, alloc);
-	ret.dbg_cache = map<platform_thread_id,queue<dbg_msg>>::make(global_api->platform_get_num_cpus(), alloc);
+	ret.dbg_cache = map<platform_thread_id,thread_profile>::make(global_api->platform_get_num_cpus(), alloc);
 	ret.alloc = alloc;
 
 	global_api->platform_create_mutex(&ret.cache_mut, false);
@@ -22,10 +22,11 @@ void dbg_manager::setup_log(log_manager* log) { PROF
 
 void dbg_manager::destroy() { PROF
 
-	FORQ(log_cache,
+	FORQ(it, log_cache,
 		DESTROY_ARENA(&it->arena);
 	);
-	FORMAP(dbg_cache,
+	LOG_INFO("LSJDFKL:SJDLKF:JDSLKF");
+	FORMAP(it, dbg_cache,
 
 		/* printing out all functions called in the last frame
 		bool start = false;
@@ -39,7 +40,10 @@ void dbg_manager::destroy() { PROF
 		)
 		*/
 
-		it->value.destroy();
+		FORQ(f, it->value.frames,
+			DESTROY_ARENA(&f->arena);
+		)
+		it->value.frames.destroy();
 	);
 	global_api->platform_destroy_mutex(&cache_mut);
 
@@ -47,10 +51,15 @@ void dbg_manager::destroy() { PROF
 	dbg_cache.destroy();
 }
 
-void dbg_manager::register_thread(u32 cache_size) { PROF
+void dbg_manager::register_thread(u32 frames, u32 frame_size) { PROF
 
 	global_api->platform_aquire_mutex(&cache_mut);
-	global_dbg->dbg_cache.insert(global_api->platform_this_thread_id(), queue<dbg_msg>::make(cache_size, alloc));
+	
+	thread_profile thread;
+	thread.frames = queue<frame_profile>::make(frames, alloc);
+	thread.frame_size = frame_size;
+
+	global_dbg->dbg_cache.insert(global_api->platform_this_thread_id(), thread);
 	global_api->platform_release_mutex(&cache_mut);
 }
 
@@ -58,14 +67,29 @@ void dbg_manager::collate() { PROF
 
 	PUSH_PROFILE(false) {
 		global_api->platform_aquire_mutex(&cache_mut);
-		queue<dbg_msg>* q = dbg_cache.get(global_api->platform_this_thread_id());
-
-		FORQ(this_thread_data.dbg_msgs,
-			q->push_overwrite(*it);
-		);
-		this_thread_data.dbg_msgs.clear();
-
+		thread_profile* thread = dbg_cache.get(global_api->platform_this_thread_id());
 		global_api->platform_release_mutex(&cache_mut);
+
+		PUSH_ALLOC(alloc) {
+
+			FORQ(it, this_thread_data.dbg_msgs,
+
+				if(it->type == dbg_msg_type::begin_frame) {
+					frame_profile frame;
+
+					string name = string::makef(string::literal("frame %"), thread->num_frames);
+					frame.arena = MAKE_ARENA_FROM_CONTEXT(name, thread->frame_size * sizeof(dbg_msg), false);
+					name.destroy();
+				
+					frame_profile overwritten = thread->frames.push_overwrite(frame);
+					LOG_INFO_F("%", overwritten);
+					if(overwritten.arena.memory)
+						DESTROY_ARENA(&overwritten.arena);
+				}
+			);
+			this_thread_data.dbg_msgs.clear();
+
+		} POP_ALLOC();
 	} POP_PROFILE();
 }
 
@@ -79,7 +103,7 @@ CALLBACK void dbg_add_log(log_message* msg) { PROF
 	}
 
 	log_message* m = global_dbg->log_cache.push(*msg);
-	m->arena       = MAKE_ARENA("cmsg", msg->arena.size, global_dbg->alloc, msg->arena.suppress_messages);
+	m->arena       = MAKE_ARENA(string::literal("cmsg"), msg->arena.size, global_dbg->alloc, msg->arena.suppress_messages);
 	m->call_stack  = array<code_context>::make_copy(&msg->call_stack, &m->arena);
 	m->thread_name = string::make_copy(msg->thread_name, &m->arena);
 	m->msg         = string::make_copy(msg->msg, &m->arena);

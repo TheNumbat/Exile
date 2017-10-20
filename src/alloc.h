@@ -56,10 +56,10 @@ void arena_destroy(arena_allocator* a, code_context context);
 #define	RESET_ARENA(a) arena_reset(a, CONTEXT) 
 void arena_reset(arena_allocator* a, code_context context);
 
-#define MAKE_ARENA_FROM_CONTEXT(n, size, s) make_arena_allocator_from_context(string::literal(n), size, s, CONTEXT) 
+#define MAKE_ARENA_FROM_CONTEXT(n, size, s) make_arena_allocator_from_context(n, size, s, CONTEXT) 
 arena_allocator make_arena_allocator_from_context(string name, u64 size, bool suppress, code_context context);
 
-#define MAKE_ARENA(n, size, a, s) make_arena_allocator(string::literal(n), size, a, s, CONTEXT) 
+#define MAKE_ARENA(n, size, a, s) make_arena_allocator(n, size, a, s, CONTEXT) 
 arena_allocator make_arena_allocator(string name, u64 size, allocator* backing, bool suppress, code_context context);
 
 #define malloc(b) 	((CURRENT_ALLOC()->allocate_)((u64)b, CURRENT_ALLOC(), CONTEXT)) 

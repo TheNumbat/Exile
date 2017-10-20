@@ -14,7 +14,7 @@ gui_manager gui_manager::make(ogl_manager* ogl, allocator* alloc) { PROF
 	gui_manager ret;
 
 	ret.alloc = alloc;
-	ret.scratch = MAKE_ARENA("gui_scratch", KILOBYTES(512), alloc, false);
+	ret.scratch = MAKE_ARENA(string::literal("gui_scratch"), KILOBYTES(512), alloc, false);
 
 	ret.ogl_ctx.context = ogl->add_draw_context(&ogl_mesh_2d_attribs);
 	ret.ogl_ctx.shader 	= ogl->add_program(string::literal("shaders/gui.v"), string::literal("shaders/gui.f"), FPTR(ogl_uniforms_gui));
@@ -28,13 +28,13 @@ gui_manager gui_manager::make(ogl_manager* ogl, allocator* alloc) { PROF
 
 void gui_manager::destroy() { PROF
 
-	FORMAP(window_state_data,
+	FORMAP(it, window_state_data,
 		it->value.id_hash_stack.destroy();
 		it->value.offset_stack.destroy();
 		it->value.mesh.destroy();
 		it->key.name.destroy(alloc);
 	)
-	FORMAP(state_data,
+	FORMAP(it, state_data,
 		it->key.name.destroy(alloc);
 	)
 
@@ -47,7 +47,7 @@ void gui_manager::destroy() { PROF
 
 void gui_manager::reload_fonts(ogl_manager* ogl) { PROF
 
-	FORVEC(fonts,
+	FORVEC(it, fonts,
 
 		ogl->destroy_texture(it->texture);
 
@@ -79,7 +79,7 @@ gui_font* gui_select_best_font_scale(gui_window_state* win) { PROF
 
 	f32 defl = ggui->style.font * ggui->style.gscale;
 	f32 min_off = FLT_MAX;
-	FORVEC(ggui->fonts,
+	FORVEC(it, ggui->fonts,
 		f32 off = absf(defl - it->font->font.point);
 		if(off < min_off && it->mono == win->mono) {
 			min_off = off;
@@ -110,7 +110,7 @@ void gui_manager::begin_frame(gui_input_state new_input) { PROF
 	input = new_input;
 	style.font = fonts.front()->font->font.point;
 
-	FORMAP(window_state_data,
+	FORMAP(it, window_state_data,
 		it->value.font = gui_select_best_font_scale(&it->value);
 	)
 }
@@ -127,7 +127,7 @@ void gui_manager::end_frame(platform_window* win, ogl_manager* ogl) { PROF
 	}
 
 	render_command_list rcl = render_command_list::make();
-	FORMAP(window_state_data,
+	FORMAP(it, window_state_data,
 
 		render_command cmd = render_command::make(render_command_type::mesh_2d, &it->value.mesh, it->value.z);
 		cmd.shader  = ggui->ogl_ctx.shader;
@@ -142,7 +142,7 @@ void gui_manager::end_frame(platform_window* win, ogl_manager* ogl) { PROF
 	ogl->execute_command_list(win, &rcl);
 	rcl.destroy();
 
-	FORMAP(ggui->window_state_data,
+	FORMAP(it, ggui->window_state_data,
 		it->value.offset_stack.clear();
 		it->value.id_hash_stack.clear();
 		it->value.mesh.clear();
@@ -174,7 +174,7 @@ void gui_set_offset_mode(gui_offset_mode mode) { PROF
 }
 
 bool gui_occluded() { PROF
-	FORMAP(ggui->window_state_data,
+	FORMAP(it, ggui->window_state_data,
 		if(&it->value != ggui->current && it->value.z > ggui->current->z) {
 			if(it->value.active && inside(mult(it->value.rect, ggui->style.gscale), ggui->input.mousepos)) {
 				return true;
@@ -434,7 +434,7 @@ void gui_box_select(i32* selected, i32 num, v2 pos, ...) { PROF
 	va_start(args, pos);
 
 	pos = add(current->rect.xy, pos);
-	FORVEC(ggui->current->offset_stack,
+	FORVEC(it, ggui->current->offset_stack,
 		pos = add(pos, *it);
 	)
 
@@ -477,7 +477,7 @@ bool gui_carrot_toggle(string name, bool initial, v2 pos, bool* toggleme) { PROF
 	}
 
 	pos = add(ggui->current->rect.xy, pos);
-	FORVEC(ggui->current->offset_stack,
+	FORVEC(it, ggui->current->offset_stack,
 		pos = add(pos, *it);
 	)
 

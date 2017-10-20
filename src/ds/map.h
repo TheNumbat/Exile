@@ -10,7 +10,7 @@ CALLBACK u32 hash_u32(u32 key);
 CALLBACK u32 hash_u64(u64 key);
 
 // map foreach
-#define FORMAP(m,code) {u32 __i = 0; for(auto it = (m).contents.memory; it != (m).contents.memory + (m).contents.capacity; __i++, it++) if(ELEMENT_OCCUPIED(*it)) {code}}
+#define FORMAP(it,m,code) {u32 __##it = 0; for(auto it = (m).contents.memory; it != (m).contents.memory + (m).contents.capacity; __##it++, it++) if(ELEMENT_OCCUPIED(*it)) {code}}
 
 #define ELEMENT_OCCUPIED_FLAG 				(1<<31)
 #define ELEMENT_OCCUPIED(me) 				((me).occupied_and_bucket & ELEMENT_OCCUPIED_FLAG)

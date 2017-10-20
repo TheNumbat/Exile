@@ -119,7 +119,7 @@ void shader_program::destroy() { PROF
 }
 
 void ogl_manager::try_reload_programs() { PROF
-	FORMAP(programs,
+	FORMAP(it, programs,
 		if(it->value.refresh()) {
 			LOG_INFO_F("Reloaded program % with files %, %", it->key, it->value.vertex.path, it->value.fragment.path);
 		}

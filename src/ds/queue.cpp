@@ -106,13 +106,16 @@ T* queue<T>::push(T value) { PROF
 }
 
 template<typename T>
-T* queue<T>::push_overwrite(T value) { PROF
+T queue<T>::push_overwrite(T value) { PROF
 
+	T ret;
 	if(len() == capacity) {
-		pop();
+		ret = pop();
 	}
 
-	return push(value);
+	push(value);
+
+	return ret;
 }
 
 template<typename T>

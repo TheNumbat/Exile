@@ -108,7 +108,7 @@ void threadpool::start_all() { PROF
 
 	if(!online) {
 	
-		FORARR(worker_data,
+		FORARR(it, worker_data,
 
 			it->job_queue 	 	= &jobs;
 			it->jobs_semaphore 	= &jobs_semaphore;
@@ -117,7 +117,7 @@ void threadpool::start_all() { PROF
 			it->running 		= &running;
 			it->running_mutex 	= &running_mutex;
 
-			CHECKED(platform_create_thread, threads.get(__i), &worker, it, false);
+			CHECKED(platform_create_thread, threads.get(__it), &worker, it, false);
 		)
 
 		online = true;
@@ -128,7 +128,7 @@ i32 worker(void* data_) {
 
 	worker_param* data = (worker_param*)data_;
 
-	begin_thread(string::literal("worker %"), data->alloc, 8192, (u32)global_api->platform_this_thread_id().id);
+	begin_thread(string::literal("worker %"), data->alloc, 1, 8192, (u32)global_api->platform_this_thread_id().id);
 	LOG_DEBUG("Starting worker thread");
 
 	while(data->online) {

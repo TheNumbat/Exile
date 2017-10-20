@@ -19,7 +19,7 @@ EXPORT game_state* start_up(platform_api* api) {
 	state->dbg_a.suppress_messages = true;
 	state->dbg = dbg_manager::make(&state->dbg_a);
 
-	begin_thread(string::literal("main"), &state->suppressed_platform_allocator, 1024 * 1024);
+	begin_thread(string::literal("main"), &state->suppressed_platform_allocator, 60, 32768);
 
 	state->log_a = MAKE_PLATFORM_ALLOCATOR("log");
 	state->log_a.suppress_messages = true;
@@ -50,7 +50,7 @@ EXPORT game_state* start_up(platform_api* api) {
 	state->thread_pool.start_all();
 
 	LOG_INFO("Allocating transient store...");
-	state->transient_arena = MAKE_ARENA("transient", MEGABYTES(8), &state->default_platform_allocator, false);
+	state->transient_arena = MAKE_ARENA(string::literal("transient"), MEGABYTES(8), &state->default_platform_allocator, false);
 
 	job_id assets = state->thread_pool.queue_job([](void* s) -> job_callback {
 		game_state* state = (game_state*)s;
@@ -191,7 +191,7 @@ EXPORT void on_reload(platform_api* api, game_state* state) {
 	
 	state->func_state.reload_all();
 
-	begin_thread(string::literal("main"), &state->suppressed_platform_allocator, 1024 * 1024);
+	begin_thread(string::literal("main"), &state->suppressed_platform_allocator, 600, 32768);
 
 	ogl_load_global_funcs();
 

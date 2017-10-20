@@ -8,7 +8,7 @@ log_manager log_manager::make(allocator* a) { PROF
 	CHECKED(platform_create_semaphore, &ret.logging_semaphore, 0, INT32_MAX);
 
 	ret.alloc = a;
-	ret.scratch = MAKE_ARENA("log scratch", KILOBYTES(512), a, true);
+	ret.scratch = MAKE_ARENA(string::literal("log scratch"), KILOBYTES(512), a, true);
 
 	return ret;
 }
@@ -46,7 +46,7 @@ void log_manager::destroy() { PROF
 		stop();
 	}
 
-	FORVEC(out,
+	FORVEC(it, out,
 		print_footer(it);
 		if(it->type != log_out_type::custom) {
 			it->file.destroy();
@@ -137,7 +137,7 @@ void log_manager::msgf(string fmt, log_level level, code_context context, Targs.
 
 	u32 msg_len = size_stringf(fmt, args...);
 	u32 arena_size = msg_len + this_thread_data.name.len + this_thread_data.call_stack_depth * sizeof(code_context);
-	arena_allocator arena = MAKE_ARENA("msg", arena_size, alloc, true);
+	arena_allocator arena = MAKE_ARENA(string::literal("msg"), arena_size, alloc, true);
 
 	PUSH_ALLOC(&arena) {
 
@@ -179,7 +179,7 @@ void log_manager::msg(string msg, log_level level, code_context context) { PROF_
 	log_message lmsg;
 
 	u32 arena_size = msg.len + this_thread_data.name.len + this_thread_data.call_stack_depth * sizeof(code_context);
-	arena_allocator arena = MAKE_ARENA("msg", arena_size, alloc, true);
+	arena_allocator arena = MAKE_ARENA(string::literal("msg"), arena_size, alloc, true);
 
 	PUSH_ALLOC(&arena) {
 
@@ -299,7 +299,7 @@ i32 log_proc(void* data_) {
 
 	log_thread_param* data = (log_thread_param*)data_;	
 
-	begin_thread(string::literal("log"), data->alloc, 256);
+	begin_thread(string::literal("log"), data->alloc, 1, 256);
 
 	while(data->running) {
 
@@ -310,7 +310,7 @@ i32 log_proc(void* data_) {
 				
 				PUSH_ALLOC(data->scratch) {
 					
-					FORVEC(*data->out,
+					FORVEC(it, *data->out,
 
 						if(it->level <= msg.level) {
 							if(it->type == log_out_type::custom) {
