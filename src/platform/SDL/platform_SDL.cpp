@@ -85,7 +85,13 @@ void sdl_set_cursor(cursors c) {
 platform_error sdl_create_window(platform_window* window, string title, u32 width, u32 height) {
 
 	platform_error ret;
-
+	u32  flags = SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZEABLE | SDL_WINDOW_BORDERLESS;
+	window.window = SDL_CreateWindow(title.c_str(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, flags);
+	if (!window.window)
+	{
+		ret.good = false;
+		ret.error_message = string::from_c_str(SDL_GetError());
+	}
 	return ret;
 }
 
