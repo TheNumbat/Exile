@@ -197,12 +197,12 @@ CXChildVisitResult parse_struct_or_union(CXCursor c, CXCursor parent, CXClientDa
 
 	if(c.kind == CXCursor_FieldDecl) {
 		
-		bool circuluar = false;
+		bool circular = false;
 		CXCursor attr = first_attr(c);
 		if(!clang_Cursor_isNull(attr)) {
 			auto annotation = str(clang_getCursorSpelling(attr));
-			if(annotation == "circuluar") {
-				circuluar = true;
+			if(annotation == "circular") {
+				circular = true;
 			}
 		}
 
@@ -221,7 +221,7 @@ CXChildVisitResult parse_struct_or_union(CXCursor c, CXCursor parent, CXClientDa
 			}
 		}
 
-		current_struct_def.members.push_back({circuluar,c});
+		current_struct_def.members.push_back({circular,c});
 		try_add_template_dep(type);
 
 	} else if(clang_Cursor_isAnonymous(c)) {
