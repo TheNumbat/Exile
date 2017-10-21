@@ -41,6 +41,7 @@ struct Type_struct_info {
 	type_id		member_types[64]	= {};
 	string 		member_names[64];
 	u32 		member_offsets[64]	= {};
+	u8 			member_circular[64] = {};
 	u32 		member_count		= 0;
 };
 struct Type_enum_info {
@@ -257,6 +258,10 @@ void make_type_table(allocator* alloc) { PROF
 	}
 
 	make_meta_info();
+
+	// dirty hack
+	TYPEINFO(func_profile_node*)->name = string::literal("func_profile_node");
+	TYPEINFO(func_profile_node*)->_ptr.to = TYPEINFO(func_profile_node)->hash;
 }
 
 i64 int_as_i64(void* val, _type_info* info);

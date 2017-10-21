@@ -31,8 +31,10 @@
 
 #ifdef __clang__
 #define NOREFLECT __attribute__((annotate("noreflect")))
+#define CIRCULUAR __attribute__((annotate("circuluar")))
 #else
 #define NOREFLECT
+#define CIRCULUAR
 #endif
 
 #ifdef _MSC_VER

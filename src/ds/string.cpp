@@ -477,7 +477,7 @@ u32 string::write_struct(u32 idx, void* val, _type_info* info, bool size) { PROF
 		_type_info* member = TYPEINFO_H(info->_struct.member_types[j]);
 		u8* place = (u8*)val + info->_struct.member_offsets[j];
 
-		if(member) {
+		if(member && !info->_struct.member_circular[j]) {
 			if(member->type_type == Type::_string) {
 				idx = write(idx, '\"', size);
 			}

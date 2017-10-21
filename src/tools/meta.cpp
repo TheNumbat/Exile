@@ -31,7 +31,7 @@ struct enum_def {
 struct struct_def {
 	string name;
 	CXCursor this_;
-	vector<CXCursor> members;
+	vector<pair<bool,CXCursor>> members;
 
 	bool is_template 		= false;
 	bool is_explicit_inst 	= false;
@@ -177,10 +177,35 @@ void try_add_template_dep(CXType type) {
 	}
 }
 
+CXChildVisitResult attr_visit(CXCursor cursor, CXCursor parent, CXClientData data) {
+    if (clang_isAttribute(cursor.kind)) {
+        *(CXCursor*)data = cursor;
+        return CXChildVisit_Break;
+    }
+    return CXChildVisit_Continue;
+}
+
+CXCursor first_attr(const CXCursor& c) {
+    CXCursor attr;
+    unsigned visit_result = clang_visitChildren(c, attr_visit, &attr);
+    if (!visit_result) // attribute not found
+        attr = clang_getNullCursor();
+    return attr;
+}
+
 CXChildVisitResult parse_struct_or_union(CXCursor c, CXCursor parent, CXClientData client_data) {
 
 	if(c.kind == CXCursor_FieldDecl) {
 		
+		bool circuluar = false;
+		CXCursor attr = first_attr(c);
+		if(!clang_Cursor_isNull(attr)) {
+			auto annotation = str(clang_getCursorSpelling(attr));
+			if(annotation == "circuluar") {
+				circuluar = true;
+			}
+		}
+
 		auto type = clang_getCursorType(c);
 		if(type.kind == CXType_ConstantArray) {
 			current_struct_def.arr_deps.push_back([type](ofstream& fout) -> void {output_array(fout, type);});
@@ -196,7 +221,7 @@ CXChildVisitResult parse_struct_or_union(CXCursor c, CXCursor parent, CXClientDa
 			}
 		}
 
-		current_struct_def.members.push_back(c);
+		current_struct_def.members.push_back({circuluar,c});
 		try_add_template_dep(type);
 
 	} else if(clang_Cursor_isAnonymous(c)) {
@@ -454,12 +479,13 @@ void output_struct(ofstream& fout, const struct_def& s) {
 
 	u32 idx = 0;
 	for(auto& member : s.members) {
-		auto mem_name = str(clang_getCursorSpelling(member));
-		auto mem_type_name = str(clang_getTypeSpelling(clang_getCursorType(member)));
+		auto mem_name = str(clang_getCursorSpelling(member.second));
+		auto mem_type_name = str(clang_getTypeSpelling(clang_getCursorType(member.second)));
 
 		fout << "\t\tthis_type_info._struct.member_types[" << idx << "] = TYPEINFO(" << mem_type_name << ") ? TYPEINFO(" << mem_type_name << ")->hash : 0;" << endl
 			 << "\t\tthis_type_info._struct.member_names[" << idx << "] = string::literal(\"" << mem_name << "\");" << endl
-			 << "\t\tthis_type_info._struct.member_offsets[" << idx << "] = offsetof(" << name << "," << mem_name << ");" << endl;
+			 << "\t\tthis_type_info._struct.member_offsets[" << idx << "] = offsetof(" << name << "," << mem_name << ");" << endl
+			 << "\t\tthis_type_info._struct.member_circular[" << idx << "] = " << member.first << ";" << endl;
 
 		idx++;
 	}
@@ -499,7 +525,7 @@ void output_template_struct(ofstream& fout, const struct_def& s, const map<strin
 		}
 
 		for(auto& member : s.members) {
-			auto mem_type = clang_getCursorType(member);
+			auto mem_type = clang_getCursorType(member.second);
 			i32 mem_templ_args = clang_Type_getNumTemplateArguments(mem_type);
 			if(mem_templ_args != -1) {
 				auto mem_name = str(clang_getTypeSpelling(mem_type));
@@ -593,12 +619,13 @@ void print_templ_struct(ofstream& fout, const struct_def& s, const map<string, C
 	fout << "#define __" << name << "__ " << qual_name << endl;
 	u32 idx = 0;
 	for(auto& member : s.members) {
-		auto mem_name = str(clang_getCursorSpelling(member));
-		auto mem_type_name = str(clang_getTypeSpelling(clang_getCursorType(member)));
+		auto mem_name = str(clang_getCursorSpelling(member.second));
+		auto mem_type_name = str(clang_getTypeSpelling(clang_getCursorType(member.second)));
 
 		fout << "\t\tthis_type_info._struct.member_types[" << idx << "] = TYPEINFO(" << mem_type_name << ") ? TYPEINFO(" << mem_type_name << ")->hash : 0;" << endl
 			 << "\t\tthis_type_info._struct.member_names[" << idx << "] = string::literal(\"" << mem_name << "\");" << endl
-			 << "\t\tthis_type_info._struct.member_offsets[" << idx << "] = offsetof(__" << name << "__, " << mem_name << ");" << endl;
+			 << "\t\tthis_type_info._struct.member_offsets[" << idx << "] = offsetof(__" << name << "__, " << mem_name << ");" << endl
+			 << "\t\tthis_type_info._struct.member_circular[" << idx << "] = " << member.first << ";" << endl;
 
 		idx++;
 	}

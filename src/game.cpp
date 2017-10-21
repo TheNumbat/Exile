@@ -91,12 +91,13 @@ EXPORT game_state* start_up(platform_api* api) {
 	LOG_INFO("Done with startup!");
 	LOG_POP_CONTEXT();
 
-	// LOG_INFO_F("%", state); // Don't do this anymore, it's 409 thousand characters and will only grow
-
 	m.type = dbg_msg_type::end_frame;
 	m.context = CONTEXT;
 	POST_MSG(m);
 	state->dbg.collate();
+
+	func_profile_node test;
+	LOG_INFO_F("%", test);
 
 	state->running = true;
 	return state;

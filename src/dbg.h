@@ -15,7 +15,7 @@ struct func_profile_node {
 	u32 calls = 0;
 
 	vector<func_profile_node*> children;
-	func_profile_node* parent = null;
+	CIRCULUAR func_profile_node* parent = null; 
 };
 
 struct frame_profile {
