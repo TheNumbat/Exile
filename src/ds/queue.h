@@ -27,6 +27,7 @@ struct queue {
 	T pop();
 	bool try_pop(T* out);
 	u32 len();
+	bool full();
 
 	T* get(u32 idx);
 

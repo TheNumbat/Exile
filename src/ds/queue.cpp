@@ -100,6 +100,11 @@ T* queue<T>::push(T value) { PROF
 }
 
 template<typename T>
+bool queue<T>::full() {
+	return len() == capacity;
+}
+
+template<typename T>
 T queue<T>::push_overwrite(T value) { PROF
 
 	T ret;

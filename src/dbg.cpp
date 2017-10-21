@@ -49,17 +49,17 @@ void dbg_manager::collate() {
 		FORQ_BEGIN(msg, this_thread_data.dbg_msgs) {
 
 			if(msg->type == dbg_msg_type::begin_frame) {
-				frame_profile frame;
+			
+				if(thread->frames.full()) {
+					frame_profile rem = thread->frames.pop();
+					DESTROY_ARENA(&rem.arena);
+				}
+				frame_profile* frame = thread->frames.push(frame_profile());
 
 				string name = string::makef(string::literal("frame %"), thread->num_frames);
-				frame.arena = MAKE_ARENA(name, this_thread_data.dbg_msgs.len() * sizeof(func_profile_node), alloc, false);
-				frame.heads = vector<func_profile_node*>::make(8, &frame.arena);
-			
-				frame_profile overwritten = thread->frames.push_overwrite(frame);
-				if(overwritten.arena.memory) {
-					DESTROY_ARENA(&overwritten.arena);
-				}
-
+				frame->arena = MAKE_ARENA(name, this_thread_data.dbg_msgs.len() * sizeof(func_profile_node), alloc, false);
+				frame->heads = vector<func_profile_node*>::make(2, &frame->arena);
+		
 				thread->num_frames++;
 				name.destroy();
 			}
@@ -69,11 +69,12 @@ void dbg_manager::collate() {
 			if(thread->frames.len() != 0) {
 
 				frame_profile* frame = thread->frames.get((thread->num_frames - 1) % thread->frame_buf_size);
+
 				PUSH_ALLOC(&frame->arena) {
 					switch(msg->type) {
 					case dbg_msg_type::enter_func: {
 
-						if(!frame->current) {
+						if(!frame->current) { 	
 							frame->current = *frame->heads.push(NEW_NODE);
 							frame->current->children = vector<func_profile_node*>::make(4);
 							frame->current->context = msg->context;
