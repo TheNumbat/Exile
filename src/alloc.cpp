@@ -247,12 +247,6 @@ CALLBACK void* pool_allocate(u64 bytes, allocator* this_, code_context context) 
 	mem = (void*)((u8*)page + sizeof(pool_page) + page->used);
 	page->used += bytes;
 
-#ifdef LOG_ALLOCS
-	if(!this__->suppress_messages) {
-		global_log->msgf(string::literal("allocating % bytes (used:%/%) to % with arena alloc \"%\""), log_level::alloc, context, bytes, this__->used, this__->size, mem, this__->name);
-	}
-#endif
-
 	if(this_thread_data.profiling) {
 		dbg_msg m;
 		m.type = dbg_msg_type::allocate;

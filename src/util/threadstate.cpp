@@ -8,11 +8,11 @@ void _begin_thread(string fmt, allocator* alloc, u32 frames, u32 frame_size, cod
 	this_thread_data.dbg_msgs = queue<dbg_msg>::make(1024, alloc);
 	global_dbg->register_thread(frames, frame_size);
 
-	this_thread_data.profiling = true;
-
 	this_thread_data.start_context = start;
 	PUSH_ALLOC(alloc);
 	this_thread_data.name = string::makef(fmt, args...);
+
+	this_thread_data.profiling = true;
 }
 
 void end_thread() { 

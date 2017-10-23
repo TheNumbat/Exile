@@ -16,7 +16,7 @@ void dbg_manager::destroy() { PROF
 	FORMAP(it, dbg_cache) {
 
 		FORQ_BEGIN(f, it->value.frames) {
-			DESTROY_ARENA(&f->arena);
+			DESTROY_POOL(&f->pool);
 		} FORQ_END(f, it->value.frames);
 
 		it->value.frames.destroy();
@@ -52,13 +52,13 @@ void dbg_manager::collate() {
 			
 				if(thread->frames.full()) {
 					frame_profile rem = thread->frames.pop();
-					DESTROY_ARENA(&rem.arena);
+					DESTROY_POOL(&rem.pool);
 				}
 				frame_profile* frame = thread->frames.push(frame_profile());
 
 				string name = string::makef(string::literal("frame %"), thread->num_frames);
-				frame->arena = MAKE_ARENA(name, this_thread_data.dbg_msgs.len() * sizeof(func_profile_node), alloc, false);
-				frame->heads = vector<func_profile_node*>::make(2, &frame->arena);
+				frame->pool = MAKE_POOL(name, 4096, alloc, false);
+				frame->heads = vector<func_profile_node*>::make(2, &frame->pool);
 		
 				thread->num_frames++;
 				name.destroy();
@@ -66,11 +66,11 @@ void dbg_manager::collate() {
 
 #define NEW_NODE (new ((func_profile_node*)malloc(sizeof(func_profile_node))) func_profile_node)
 
-			if(thread->frames.len() != 0) {
+			if(thread->frames.len() > thread->num_frames % thread->frame_buf_size) {
 
-				frame_profile* frame = thread->frames.get((thread->num_frames - 1) % thread->frame_buf_size);
+				frame_profile* frame = thread->frames.get(thread->num_frames % thread->frame_buf_size);
 
-				PUSH_ALLOC(&frame->arena) {
+				PUSH_ALLOC(&frame->pool) {
 					switch(msg->type) {
 					case dbg_msg_type::enter_func: {
 

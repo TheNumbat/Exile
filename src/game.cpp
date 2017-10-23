@@ -91,9 +91,6 @@ EXPORT game_state* start_up(platform_api* api) {
 	LOG_INFO("Done with startup!");
 	LOG_POP_CONTEXT();
 
-	m.type = dbg_msg_type::end_frame;
-	m.context = CONTEXT;
-	POST_MSG(m);
 	state->dbg.collate();
 
 	state->running = true;

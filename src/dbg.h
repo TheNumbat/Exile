@@ -25,7 +25,7 @@ struct frame_profile {
 	func_profile_node* current = null;
 	// vector<func_profile_node*> self_time_view, heir_time_view, calls_view;
 	// vector<dbg_msg*> allocations;
-	arena_allocator arena;
+	pool_allocator pool;
 };
 
 enum class dbg_msg_type : u8 {
