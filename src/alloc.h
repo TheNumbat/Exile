@@ -56,11 +56,34 @@ void arena_destroy(arena_allocator* a, code_context context);
 #define	RESET_ARENA(a) arena_reset(a, CONTEXT) 
 void arena_reset(arena_allocator* a, code_context context);
 
-#define MAKE_ARENA_FROM_CONTEXT(n, size, s) make_arena_allocator_from_context(n, size, s, CONTEXT) 
-arena_allocator make_arena_allocator_from_context(string name, u64 size, bool suppress, code_context context);
-
+#define MAKE_ARENA_FROM_CONTEXT(n, size, s) make_arena_allocator(n, size, CURRENT_ALLOC(), s, CONTEXT) 
 #define MAKE_ARENA(n, size, a, s) make_arena_allocator(n, size, a, s, CONTEXT) 
 arena_allocator make_arena_allocator(string name, u64 size, allocator* backing, bool suppress, code_context context);
+
+struct pool_page {
+	u64 used 		= 0;
+	pool_page* next = null;
+	// page_mem after header
+};
+
+struct pool_allocator : public allocator {
+
+	allocator* backing 	= null;
+	u64 page_size 		= 0;
+	pool_page* head 	= null;
+	pool_page* current 	= null;
+};
+
+CALLBACK void* pool_allocate(u64 bytes, allocator* this_, code_context context);
+CALLBACK void* pool_reallocate(void* mem, u64 sz, u64 bytes, allocator* this_, code_context context); // same as allocate, can't free from arena
+CALLBACK void  pool_free(void*, allocator*, code_context); // does nothing
+
+#define DESTROY_POOL(a) pool_destroy(a, CONTEXT) 
+void pool_destroy(pool_allocator* a, code_context context);
+
+#define MAKE_POOL_FROM_CONTEXT(n, size, s) make_pool_allocator(n, size, CURRENT_ALLOC(), s, CONTEXT) 
+#define MAKE_POOL(n, size, a, s) make_pool_allocator(n, size, a, s, CONTEXT) 
+pool_allocator make_pool_allocator(string name, u64 page_size, allocator* backing, bool suppress, code_context context);
 
 #define malloc(b) 	((CURRENT_ALLOC()->allocate_)((u64)b, CURRENT_ALLOC(), CONTEXT)) 
 #define free(m) 	((CURRENT_ALLOC()->free_)((void*)m, CURRENT_ALLOC(), CONTEXT)) 

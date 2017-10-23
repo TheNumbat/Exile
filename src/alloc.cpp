@@ -194,36 +194,7 @@ inline void arena_destroy(arena_allocator* a, code_context context) { PROF
 	}
 }
 
-inline arena_allocator make_arena_allocator_from_context(string name, u64 size, bool suppress, code_context context) { PROF
-
-	arena_allocator ret;
-
-	size += name.cap;
-
-	ret.size 	  	= size;
-	ret.context   	= context;
-	ret.backing   	= CURRENT_ALLOC();
-	ret.name 	  	= name;
-	ret.suppress_messages = suppress;
-
-	ret.allocate_.set(FPTR(arena_allocate));
-	ret.free_.set(FPTR(arena_free));
-	ret.reallocate_.set(FPTR(arena_reallocate));
-
-#ifdef LOG_ALLOCS
-	if(!ret.suppress_messages) {
-		global_log->msgf(string::literal("creating arena \"%\" size %"), log_level::alloc, context, name, size);
-	}
-#endif
-	
-	ret.memory = ret.backing->allocate_(size, ret.backing, context);
-
-	ret.name = string::make_copy(name, &ret);
-
-	return ret;
-}
-
-inline arena_allocator make_arena_allocator(string name, u64 size, allocator* backing, bool suppress, code_context context) { PROF
+arena_allocator make_arena_allocator(string name, u64 size, allocator* backing, bool suppress, code_context context) { PROF
 
 	arena_allocator ret;
 
@@ -232,7 +203,6 @@ inline arena_allocator make_arena_allocator(string name, u64 size, allocator* ba
 	ret.size 	  	= size;
 	ret.context   	= context;
 	ret.backing   	= backing;
-	ret.name 	  	= name;
 	ret.suppress_messages = suppress;
 
 	ret.allocate_.set(FPTR(arena_allocate));
@@ -247,6 +217,111 @@ inline arena_allocator make_arena_allocator(string name, u64 size, allocator* ba
 	
 	ret.memory = ret.backing->allocate_(size, ret.backing, context);
 	ret.name = string::make_copy(name, &ret);
+
+	return ret;
+}
+
+CALLBACK void* pool_allocate(u64 bytes, allocator* this_, code_context context) {
+
+	pool_allocator* this__ = (pool_allocator*)this_;
+
+	if(bytes > this__->page_size) {
+		LOG_ERR_F("Requesting allocation of % bytes (page size %) in pool allocator %", bytes, this__->page_size, this__->name);
+		return null;
+	}
+
+	void* mem = null;
+	pool_page* page = this__->current;
+	if(bytes > this__->page_size - page->used) {
+
+		page->next = (pool_page*)this__->backing->allocate_(sizeof(pool_page) + this__->page_size, this__->backing, context);
+		page = this__->current = page->next;
+
+#ifdef LOG_ALLOCS
+		if(!this__->suppress_messages) {
+			global_log->msgf(string::literal("adding page of size % to pool alloc \"%\""), log_level::alloc, context, this__->page_size, this__->name);
+		}
+#endif
+	}
+
+	mem = (void*)((u8*)page + sizeof(pool_page) + page->used);
+	page->used += bytes;
+
+#ifdef LOG_ALLOCS
+	if(!this__->suppress_messages) {
+		global_log->msgf(string::literal("allocating % bytes (used:%/%) to % with arena alloc \"%\""), log_level::alloc, context, bytes, this__->used, this__->size, mem, this__->name);
+	}
+#endif
+
+	if(this_thread_data.profiling) {
+		dbg_msg m;
+		m.type = dbg_msg_type::allocate;
+		m.context = context;
+		m.allocate.to = mem;
+		m.allocate.bytes = bytes;
+		m.allocate.alloc = this_;
+
+		POST_MSG(m);
+	}
+
+	return mem;
+}
+
+CALLBACK void* pool_reallocate(void* mem, u64 sz, u64 bytes, allocator* this_, code_context context) {
+
+	void* ret = pool_allocate(bytes, this_, context);
+	memcpy(mem, ret, sz);
+	return ret;
+}
+
+CALLBACK void  pool_free(void*, allocator*, code_context) {}
+
+void pool_destroy(pool_allocator* a, code_context context) {
+
+#ifdef LOG_ALLOCS
+	if(!a->suppress_messages) {
+		global_log->msgf(string::literal("destroying pool \"%\""), log_level::alloc, context, a->name);
+	}
+#endif
+
+	LOG_DEBUG_ASSERT(a->head != null);
+
+	pool_page* cursor = a->head;
+	while(cursor) {
+
+		pool_page* next = cursor->next;
+		a->backing->free_(cursor, a->backing, context);
+		cursor = next;
+	}
+
+	a->name.destroy(a->backing);
+}
+
+pool_allocator make_pool_allocator(string name, u64 page_size, allocator* backing, bool suppress, code_context context) {
+
+	pool_allocator ret;
+
+	ret.page_size 	= page_size;
+	ret.context   	= context;
+	ret.backing   	= backing;
+	ret.suppress_messages = suppress;
+
+	ret.allocate_.set(FPTR(pool_allocate));
+	ret.free_.set(FPTR(pool_free));
+	ret.reallocate_.set(FPTR(pool_reallocate));
+
+#ifdef LOG_ALLOCS
+	if(!ret.suppress_messages) {
+		global_log->msgf(string::literal("creating pool \"%\" size %"), log_level::alloc, context, name, page_size);
+	}
+#endif
+	
+	ret.head = (pool_page*)ret.backing->allocate_(sizeof(pool_page) + page_size, ret.backing, context);
+	ret.current = ret.head;
+	ret.name = string::make_copy(name, backing);
+
+	ret.head->used = 0;
+	ret.head->next = 0;
 
 	return ret;
 }
