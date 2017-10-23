@@ -176,7 +176,6 @@ EXPORT void shut_down(game_state* state) {
 	end_thread();
 	cleanup_fptrs();
 
-	state->fc_a.destroy();
 	state->log_a.destroy();
 	state->ogl_a.destroy();
 	state->gui_a.destroy();
