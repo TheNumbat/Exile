@@ -9,7 +9,6 @@ func_scope::func_scope(code_context context) {
 		dbg_msg m;
 		m.type = dbg_msg_type::enter_func;
 		m.context = context;
-		m.time = global_api->platform_get_perfcount();
 	
 		POST_MSG(m);
 	}
@@ -21,7 +20,6 @@ func_scope::~func_scope() {
 	if(this_thread_data.profiling) {
 		dbg_msg m;
 		m.type = dbg_msg_type::exit_func;
-		m.time = global_api->platform_get_perfcount();
 
 		POST_MSG(m);
 	}
@@ -33,7 +31,6 @@ func_scope_nocs::func_scope_nocs(code_context context) {
 		dbg_msg m;
 		m.type = dbg_msg_type::enter_func;
 		m.context = context;
-		m.time = global_api->platform_get_perfcount();
 
 		POST_MSG(m);
 	}
@@ -44,7 +41,6 @@ func_scope_nocs::~func_scope_nocs() {
 	if(this_thread_data.profiling) {
 		dbg_msg m;
 		m.type = dbg_msg_type::exit_func;
-		m.time = global_api->platform_get_perfcount();
 
 		POST_MSG(m);
 	}

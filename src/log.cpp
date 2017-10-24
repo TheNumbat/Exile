@@ -8,7 +8,7 @@ log_manager log_manager::make(allocator* a) { PROF
 	CHECKED(platform_create_semaphore, &ret.logging_semaphore, 0, INT32_MAX);
 
 	ret.alloc = a;
-	ret.scratch = MAKE_ARENA(string::literal("log scratch"), KILOBYTES(512), a, true);
+	ret.scratch = MAKE_ARENA(string::literal("log scratch"), MEGABYTES(1), a, true);
 
 	return ret;
 }

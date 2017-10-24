@@ -1300,7 +1300,7 @@ platform_error win32_create_window(platform_window* window, string title, u32 wi
 
 	// TODO(max): vsync/fullscreen/AA/etc settings
 		// https://blogs.msdn.microsoft.com/oldnewthing/20100412-00/?p=14353
-	wglSwapIntervalEXT(1);
+	wglSwapIntervalEXT(0);
 
 	ShowWindowAsync(window->handle, SW_SHOW);
 
