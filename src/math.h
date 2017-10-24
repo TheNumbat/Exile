@@ -182,6 +182,8 @@ inline f32 _floorf(f32 value);
 inline f32 _sinf(f32 value);
 inline f32 _cosf(f32 value);
 inline f32 _lerpf(f32 min, f32 max, f32 dist);
+inline u32 last_pow_two(u32 val);
+inline u32 next_pow_two(u32 val);
 template<typename T> inline v2_t<T> V2(T x, T y);
 template<typename T> inline v2 V2f(T x, T y);
 template<typename T> inline uv2 V2u(T x, T y);

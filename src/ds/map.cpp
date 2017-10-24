@@ -30,7 +30,7 @@ template<typename K, typename V>
 map<K,V> map<K,V>::make(i32 capacity, allocator* a, _FPTR* hash) { PROF
 	map<K,V> ret;
 
-	capacity = (i32)ceilf(capacity / MAP_MAX_LOAD_FACTOR);
+	capacity = next_pow_two(capacity);
 
 	ret.alloc 	 = a;
 	ret.contents = vector<map_element<K,V>>::make(capacity, ret.alloc);
@@ -76,9 +76,9 @@ void map<K,V>::grow_rehash() { PROF
 	size = 0;
 	max_probe = 0;
 
-	for(u32 i = 0; i < temp.capacity; i++) {
-		if(ELEMENT_OCCUPIED(*temp.get(i))) {
-			insert(temp.get(i)->key, temp.get(i)->value);
+	FORVEC(it, temp) {
+		if(ELEMENT_OCCUPIED(*it)) {
+			insert(it->key, it->value);
 		}
 	}
 
@@ -90,14 +90,14 @@ void map<K,V>::trim_rehash() { PROF
 
 	vector<map_element<K,V>> temp = make_vector_copy(contents);
 
-	vector_resize(&contents, size, false);
+	contents.resize(size, false);
 
 	size = 0;
 	max_probe = 0;
 	
-	for(u32 i = 0; i < temp.capacity; i++) {
-		if(vector_get(&temp, i)->occupied == true) {
-			insert(vector_get(&temp, i)->key, vector_get(&temp, i)->value);
+	FORVEC(it, temp) {
+		if(ELEMENT_OCCUPIED(*it)) {
+			insert(it->key, it->value);
 		}
 	}
 
@@ -120,9 +120,9 @@ V* map<K,V>::insert(K key, V value, bool grow_if_needed) { PROF
 	map_element<K,V> ele;
 
 	if(use_u32hash) {
-		ELEMENT_SET_HASH_BUCKET(ele, mod(hash_u32(*((u32*)&key)), contents.capacity));
+		ELEMENT_SET_HASH_BUCKET(ele, hash_u32(*((u32*)&key)) & (contents.capacity - 1));
 	} else {
-		ELEMENT_SET_HASH_BUCKET(ele, mod(hash(key), contents.capacity));
+		ELEMENT_SET_HASH_BUCKET(ele, hash(key) & (contents.capacity - 1));
 	}
 	ele.key 		= key;
 	ele.value 		= value;

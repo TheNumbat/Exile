@@ -3,6 +3,7 @@
 
 // don't store addresses of elements in a map - at all. Pls.
 
+// if the map is filled beyond this load factor, it will try to grow
 const f32 MAP_MAX_LOAD_FACTOR = 0.9f;
 
 // from Thomas Wang, http://burtleburtle.net/bob/hash/integer.html
@@ -33,7 +34,7 @@ struct map_element {
 template<typename K, typename V>
 struct map {
 	vector<map_element<K, V>> contents;
-	u32 size	 		= 0;
+	u32 size	 		= 0;				// always a power of two so mod is only a bit-and
 	allocator* alloc 	= null;
 	func_ptr<u32, K> hash;
 	bool use_u32hash 	= false;

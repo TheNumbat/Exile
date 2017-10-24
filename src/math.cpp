@@ -20,6 +20,26 @@
 #undef sinf
 #undef cosf
 
+inline u32 last_pow_two(u32 val) {
+
+	u32 pos = 0;
+#ifdef _MSC_VER
+	_BitScanReverse((unsigned long*)&pos, val);
+#else
+    for(u32 bit = 31; bit >= 0; bit--) {
+        if(val & (1 << bit)) {
+            pos = bit;
+            break;
+        }
+    }
+#endif
+	return 1 << pos;
+}
+
+inline u32 next_pow_two(u32 val) {
+	return last_pow_two(val) << 1;
+}
+
 inline u32 mod(u32 dividend, u32 devisor) { PROF
 	return dividend % devisor;
 }
