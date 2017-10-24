@@ -63,7 +63,7 @@ arena_allocator make_arena_allocator(string name, u64 size, allocator* backing, 
 struct pool_page {
 	u64 used 		= 0;
 	pool_page* next = null;
-	// page_mem after header
+	// page memory is allocated directly after the header
 };
 
 struct pool_allocator : public allocator {
@@ -71,7 +71,9 @@ struct pool_allocator : public allocator {
 	allocator* backing 	= null;
 	u64 page_size 		= 0;
 	pool_page* head 	= null;
-	pool_page* current 	= null;
+	pool_page* current 	= null; // TODO(max): do we want a current page, or should each allocation iterate the pages attempting to find one with space?
+								// currently if an allocation is too big to fit on the current page, another page is allocated and any space in the 
+								// last page is wasted.
 };
 
 CALLBACK void* pool_allocate(u64 bytes, allocator* this_, code_context context);

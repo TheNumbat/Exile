@@ -103,8 +103,6 @@ EXPORT bool main_loop(game_state* state) {
 	m.type = dbg_msg_type::begin_frame;
 	m.context = CONTEXT;
 	POST_MSG(m);
-	m.type = dbg_msg_type::enter_func;
-	POST_MSG(m);
 
 	glUseProgram(0); // why tho?? https://twitter.com/fohx/status/619887799462985729?lang=en
 	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
@@ -132,8 +130,6 @@ EXPORT bool main_loop(game_state* state) {
 	}
 #endif
 
-	m.type = dbg_msg_type::exit_func;
-	POST_MSG(m);
 	m.type = dbg_msg_type::end_frame;
 	POST_MSG(m);
 	state->dbg.collate();
