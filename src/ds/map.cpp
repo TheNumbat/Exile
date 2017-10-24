@@ -21,16 +21,16 @@ CALLBACK u32 hash_u64(u64 key) { PROF
 }
 
 template<typename K, typename V>
-map<K,V> map<K,V>::make(i32 capacity, _FPTR* hash) { PROF
+map<K,V> map<K,V>::make(u32 capacity, _FPTR* hash) { PROF
 	
 	return map<K,V>::make(capacity, CURRENT_ALLOC(), hash);
 }
 
 template<typename K, typename V>
-map<K,V> map<K,V>::make(i32 capacity, allocator* a, _FPTR* hash) { PROF
+map<K,V> map<K,V>::make(u32 capacity, allocator* a, _FPTR* hash) { PROF
 	map<K,V> ret;
 
-	capacity = next_pow_two(capacity);
+	capacity = last_pow_two(capacity) == capacity ? capacity : next_pow_two(capacity);
 
 	ret.alloc 	 = a;
 	ret.contents = vector<map_element<K,V>>::make(capacity, ret.alloc);
@@ -76,7 +76,7 @@ void map<K,V>::grow_rehash() { PROF
 	size = 0;
 	max_probe = 0;
 
-	FORVEC(it, temp) {
+	FORVECCAP(it, temp) {
 		if(ELEMENT_OCCUPIED(*it)) {
 			insert(it->key, it->value);
 		}
@@ -95,7 +95,7 @@ void map<K,V>::trim_rehash() { PROF
 	size = 0;
 	max_probe = 0;
 	
-	FORVEC(it, temp) {
+	FORVECCAP(it, temp) {
 		if(ELEMENT_OCCUPIED(*it)) {
 			insert(it->key, it->value);
 		}
@@ -208,10 +208,10 @@ V* map<K,V>::try_get(K key) { PROF	// can return null
 	u32 hash_bucket;
 
 	if(use_u32hash) {
-		hash_bucket = mod(hash_u32(*((u32*)&key)), contents.capacity);
+		hash_bucket = hash_u32(*((u32*)&key)) & (contents.capacity - 1);
 	} else {
-		hash_bucket = mod(hash(key), contents.capacity);
-	}
+		hash_bucket = hash(key) & (contents.capacity - 1);
+	}	
 
 	u32 index = hash_bucket;
 	u32 probe_length = 0;
