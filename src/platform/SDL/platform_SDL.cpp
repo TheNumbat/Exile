@@ -7,6 +7,8 @@ platform_api platform_build_api() {
 
 	platform_api ret;
 
+	ret.platform_get_perfcount			= &sdl_get_perfcount;
+	ret.platform_get_perfcount_freq		= &sdl_get_perfcount_freq;
 	ret.platform_create_window			= &sdl_create_window;
 	ret.platform_destroy_window			= &sdl_destroy_window;
 	ret.platform_swap_buffers			= &sdl_swap_buffers;
@@ -59,6 +61,16 @@ platform_api platform_build_api() {
 	ret.platform_this_dll				= &sdl_this_dll;
 
 	return ret;
+}
+
+platform_perfcount sdl_get_perfcount() {
+
+	return 0;
+}
+
+platform_perfcount sdl_get_perfcount_freq() {
+
+	return 0;
 }
 
 platform_error sdl_this_dll(platform_dll* dll) {

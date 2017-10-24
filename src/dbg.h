@@ -7,11 +7,11 @@
 
 #define POST_MSG(m) {PUSH_PROFILE(false) {this_thread_data.dbg_msgs.push(m);} POP_PROFILE();}
 
-typedef u64 timestamp;
+typedef platform_perfcount timestamp;
 
 struct func_profile_node {
 	code_context context;
-	timestamp self = 0, heir = 0;
+	timestamp self = 0, heir = 0, current = 0;
 	u32 calls = 0;
 
 	vector<func_profile_node*> children;
@@ -92,7 +92,7 @@ struct dbg_msg_section_end {
 
 struct dbg_msg {
 	dbg_msg_type type = dbg_msg_type::none;
-	timestamp t = 0;
+	timestamp time = 0;
 	code_context context;
 	union {
 		dbg_msg_begin_frame   begin_frame;

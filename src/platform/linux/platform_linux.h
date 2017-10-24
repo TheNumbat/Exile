@@ -3,6 +3,9 @@
 
 platform_api   platform_build_api();
 
+platform_perfcount linux_get_perfcount();
+platform_perfcount linux_get_perfcount_freq();
+
 bool linux_is_debugging();
 void linux_debug_break();
 void linux_set_cursor(cursors c);

@@ -3,6 +3,9 @@
 
 platform_api   platform_build_api();
 
+platform_perfcount sdl_get_perfcount();
+platform_perfcount sdl_get_perfcount_freq();
+
 bool sdl_is_debugging();
 void sdl_debug_break();
 void sdl_set_cursor(cursors c);

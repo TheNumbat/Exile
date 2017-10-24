@@ -66,6 +66,7 @@ struct pool_page {
 	// page memory is allocated directly after the header
 };
 
+// basically an arena that pushes new arenas onto a list if it needs more memory
 struct pool_allocator : public allocator {
 
 	allocator* backing 	= null;

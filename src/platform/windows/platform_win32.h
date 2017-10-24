@@ -3,6 +3,9 @@
 
 platform_api   platform_build_api();
 
+platform_perfcount win32_get_perfcount();
+platform_perfcount win32_get_perfcount_freq();
+
 bool win32_is_debugging();
 void win32_debug_break();
 void win32_set_cursor(cursors c);

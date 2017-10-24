@@ -10,6 +10,8 @@ platform_api platform_build_api() {
 
 	platform_api ret;
 
+	ret.platform_get_perfcount			= &linux_get_perfcount;
+	ret.platform_get_perfcount_freq		= &linux_get_perfcount_freq;
 	ret.platform_create_window			= &linux_create_window;
 	ret.platform_destroy_window			= &linux_destroy_window;
 	ret.platform_swap_buffers			= &linux_swap_buffers;
@@ -62,6 +64,16 @@ platform_api platform_build_api() {
 	ret.platform_this_dll				= &linux_this_dll;
 
 	return ret;
+}
+
+platform_perfcount linux_get_perfcount() {
+
+	return 0;
+}
+
+platform_perfcount linux_get_perfcount_freq() {
+
+	return 0;
 }
 
 platform_error linux_this_dll(platform_dll* dll) {

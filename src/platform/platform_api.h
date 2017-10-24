@@ -25,6 +25,7 @@ struct platform_thread;
 struct platform_semaphore;
 struct platform_mutex;
 struct platform_file;
+typedef u64 platform_perfcount;
 
 struct platform_thread_id {
 	u32 id = 0;
@@ -291,6 +292,8 @@ struct platform_event {
 
 struct platform_api {
 	platform_dll* your_dll																										= null;
+	platform_perfcount (*platform_get_perfcount)()																				= null;
+	platform_perfcount (*platform_get_perfcount_freq)()																			= null;
 	bool 			(*platform_is_debugging)()																					= null;
 	void 			(*platform_debug_break)()																					= null;
 	void 			(*platform_set_cursor)(cursors c)																			= null;

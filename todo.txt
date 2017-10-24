@@ -44,7 +44,6 @@ to do:
 			map
 
 	allocation stuff
-		pool allocator (growing arena)
 		free list (one-size pool re-using arenas)
 
 	async

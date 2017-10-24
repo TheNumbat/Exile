@@ -17,6 +17,8 @@ platform_api platform_build_api() {
 
 	platform_api ret;
 
+	ret.platform_get_perfcount			= &win32_get_perfcount;
+	ret.platform_get_perfcount_freq		= &win32_get_perfcount_freq;
 	ret.platform_create_window			= &win32_create_window;
 	ret.platform_destroy_window			= &win32_destroy_window;
 	ret.platform_swap_buffers			= &win32_swap_buffers;
@@ -68,6 +70,20 @@ platform_api platform_build_api() {
 	ret.platform_set_cursor				= &win32_set_cursor;
 	ret.platform_this_dll				= &win32_this_dll;
 
+	return ret;
+}
+
+platform_perfcount win32_get_perfcount() {
+
+	platform_perfcount ret;
+	QueryPerformanceCounter((LARGE_INTEGER*)&ret);
+	return ret;
+}
+
+platform_perfcount win32_get_perfcount_freq() {
+
+	platform_perfcount ret;
+	QueryPerformanceFrequency((LARGE_INTEGER*)&ret);
 	return ret;
 }
 

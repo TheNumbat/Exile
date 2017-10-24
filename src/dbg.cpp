@@ -57,7 +57,7 @@ void dbg_manager::collate() {
 				frame_profile* frame = thread->frames.push(frame_profile());
 
 				string name = string::makef(string::literal("frame %"), thread->num_frames);
-				frame->pool = MAKE_POOL(name, 4096, alloc, false);
+				frame->pool = MAKE_POOL(name, KILOBYTES(8), alloc, false);
 				frame->heads = vector<func_profile_node*>::make(2, &frame->pool);
 		
 				thread->num_frames++;
@@ -66,9 +66,9 @@ void dbg_manager::collate() {
 
 #define NEW_NODE (new ((func_profile_node*)malloc(sizeof(func_profile_node))) func_profile_node)
 
-			if(thread->frames.len() > thread->num_frames % thread->frame_buf_size) {
+			if(thread->num_frames && thread->frames.len() >= thread->num_frames % thread->frame_buf_size) {
 
-				frame_profile* frame = thread->frames.get(thread->num_frames % thread->frame_buf_size);
+				frame_profile* frame = thread->frames.get((thread->num_frames - 1) % thread->frame_buf_size);
 
 				PUSH_ALLOC(&frame->pool) {
 					switch(msg->type) {
@@ -78,6 +78,7 @@ void dbg_manager::collate() {
 							frame->current = *frame->heads.push(NEW_NODE);
 							frame->current->children = vector<func_profile_node*>::make(4);
 							frame->current->context = msg->context;
+							frame->current->current = msg->time;
 							frame->current->calls++;
 							break;
 						}
@@ -98,14 +99,29 @@ void dbg_manager::collate() {
 						
 						here->context = msg->context;
 						here->calls++;
+						here->current = msg->time;
 						frame->current = here;
 
 					} break;
 
 					case dbg_msg_type::exit_func: {
 
+						frame->current->heir += msg->time - frame->current->current;
+						
+						frame->current->self += frame->current->heir;
+						timestamp children = 0;
+						FORVEC(it, frame->current->children) {
+							children += (*it)->heir;
+						}
+						frame->current->self -= children;
+
+						frame->current->current = 0;
 						frame->current = frame->current->parent;
 
+					} break;
+
+					case dbg_msg_type::end_frame: {
+						frame->end = msg->time;
 					} break;
 					}
 				} POP_ALLOC();

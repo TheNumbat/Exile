@@ -24,6 +24,7 @@ EXPORT game_state* start_up(platform_api* api) {
 	dbg_msg m;
 	m.type = dbg_msg_type::begin_frame;
 	m.context = CONTEXT;
+	m.time = global_api->platform_get_perfcount();
 	POST_MSG(m);
 
 	state->log_a = MAKE_PLATFORM_ALLOCATOR("log");
@@ -91,6 +92,9 @@ EXPORT game_state* start_up(platform_api* api) {
 	LOG_INFO("Done with startup!");
 	LOG_POP_CONTEXT();
 
+	m.type = dbg_msg_type::end_frame;
+	m.time = global_api->platform_get_perfcount();
+	POST_MSG(m);
 	state->dbg.collate();
 
 	state->running = true;
@@ -102,6 +106,7 @@ EXPORT bool main_loop(game_state* state) {
 	dbg_msg m;
 	m.type = dbg_msg_type::begin_frame;
 	m.context = CONTEXT;
+	m.time = global_api->platform_get_perfcount();
 	POST_MSG(m);
 
 	glUseProgram(0); // why tho?? https://twitter.com/fohx/status/619887799462985729?lang=en
@@ -131,6 +136,7 @@ EXPORT bool main_loop(game_state* state) {
 #endif
 
 	m.type = dbg_msg_type::end_frame;
+	m.time = global_api->platform_get_perfcount();
 	POST_MSG(m);
 	state->dbg.collate();
 
