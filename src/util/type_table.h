@@ -15,7 +15,6 @@ enum class Type : u8 {
 	_string,
 };
 
-struct _type_info;
 typedef u64 type_id;
 
 struct Type_void_info {};

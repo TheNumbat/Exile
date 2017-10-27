@@ -99,7 +99,7 @@ struct ogl_draw_context {
 };
 
 struct ogl_manager {
-	map<shader_program_id, shader_program> programs;
+	map<shader_program_id, shader_program> programs; // TODO(max): Slot maps?
 	map<texture_id, texture> 			   textures;
 	map<context_id, ogl_draw_context> 	   contexts;
 	
