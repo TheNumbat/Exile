@@ -1255,10 +1255,10 @@ platform_error win32_create_window(platform_window* window, string title, u32 wi
 	}
 
 	i32 attribs[9] = {
-		WGL_CONTEXT_MAJOR_VERSION_ARB, 4,
-    	WGL_CONTEXT_MINOR_VERSION_ARB, 5,
-    	WGL_CONTEXT_FLAGS_ARB, WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB,
-    	WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
+		(i32)wgl_context::major_version_arb, 	4,
+    	(i32)wgl_context::minor_version_arb, 	5,
+    	(i32)wgl_context::flags_arb, 			(i32)wgl_context::forward_compatible_bit_arb,
+    	(i32)wgl_context::profile_mask_arb, 	(i32)wgl_context::core_profile_bit_arb,
     	0
 	};
 

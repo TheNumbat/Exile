@@ -380,6 +380,15 @@ enum class gl_tex_wrap : GLint {
 	mirror_clamp_to_edge      	= 0x8743
 };
 
+enum class wgl_context : int {
+	major_version_arb     		= 0x2091,
+	minor_version_arb     		= 0x2092,
+	flags_arb             		= 0x2094,
+	forward_compatible_bit_arb 	= 0x00000002,
+	profile_mask_arb      		= 0x9126,
+	core_profile_bit_arb  		= 0x00000001
+};
+
 DLL_IMPORT const GLubyte* glGetString(gl_info name);
 
 DLL_IMPORT void glDeleteTextures(GLsizei n, const GLuint *textures);
