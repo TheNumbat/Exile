@@ -78,8 +78,8 @@ void shader_program::compile() { PROF
 
 	GLuint h_vertex, h_fragment;
 
-	h_vertex = glCreateShader(GL_VERTEX_SHADER);
-	h_fragment = glCreateShader(GL_FRAGMENT_SHADER);
+	h_vertex = glCreateShader(gl_shader_type::vertex);
+	h_fragment = glCreateShader(gl_shader_type::fragment);
 
 	glShaderSource(h_vertex, 1, &vertex.source.c_str, null);
 	glShaderSource(h_fragment, 1, &fragment.source.c_str, null);
@@ -135,9 +135,9 @@ ogl_manager ogl_manager::make(allocator* a) { PROF
 	ret.textures = map<texture_id, texture>::make(32, a);
 	ret.contexts = map<context_id, ogl_draw_context>::make(32, a);
 
-	ret.version 	= string::from_c_str((char*)glGetString(GL_VERSION));
-	ret.renderer 	= string::from_c_str((char*)glGetString(GL_RENDERER));
-	ret.vendor  	= string::from_c_str((char*)glGetString(GL_VENDOR));
+	ret.version 	= string::from_c_str((char*)glGetString(gl_info::version));
+	ret.renderer 	= string::from_c_str((char*)glGetString(gl_info::renderer));
+	ret.vendor  	= string::from_c_str((char*)glGetString(gl_info::vendor));
 
 	ret.dbg_shader = ret.add_program(string::literal("shaders/dbg.v"), string::literal("shaders/dbg.f"), FPTR(ogl_uniforms_dbg));
 
@@ -272,37 +272,37 @@ texture texture::make(texture_wrap wrap, bool pixelated) { PROF
 
 	ret.wrap = wrap;
 	ret.pixelated = pixelated;
-	glCreateTextures(GL_TEXTURE_2D, 1, &ret.handle);
+	glCreateTextures(gl_tex_target::_2D, 1, &ret.handle);
 
 	glBindTextureUnit(0, ret.handle);
 	
 	switch(wrap) {
 	case texture_wrap::repeat:
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		glTexParameteri(gl_tex_target::_2D, gl_tex_param::wrap_s, (GLint)gl_tex_wrap::repeat);
+		glTexParameteri(gl_tex_target::_2D, gl_tex_param::wrap_t, (GLint)gl_tex_wrap::repeat);
 		break;
 	case texture_wrap::mirror:
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+		glTexParameteri(gl_tex_target::_2D, gl_tex_param::wrap_s, (GLint)gl_tex_wrap::mirrored_repeat);
+		glTexParameteri(gl_tex_target::_2D, gl_tex_param::wrap_t, (GLint)gl_tex_wrap::mirrored_repeat);
 		break;
 	case texture_wrap::clamp:
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexParameteri(gl_tex_target::_2D, gl_tex_param::wrap_s, (GLint)gl_tex_wrap::clamp_to_edge);
+		glTexParameteri(gl_tex_target::_2D, gl_tex_param::wrap_t, (GLint)gl_tex_wrap::clamp_to_edge);
 		break;
 	case texture_wrap::clamp_border:
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+		glTexParameteri(gl_tex_target::_2D, gl_tex_param::wrap_s, (GLint)gl_tex_wrap::clamp_to_border);
+		glTexParameteri(gl_tex_target::_2D, gl_tex_param::wrap_t, (GLint)gl_tex_wrap::clamp_to_border);
 		f32 borderColor[] = { 0.0f, 0.0f, 0.0f, 1.0f };
-		glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);  
+		glTexParameterfv(gl_tex_target::_2D, gl_tex_param::border_color, borderColor);  
 		break;
 	}
 
 	if(pixelated) {
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(gl_tex_target::_2D, gl_tex_param::min_filter, (GLint)gl_tex_filter::nearest);
+		glTexParameteri(gl_tex_target::_2D, gl_tex_param::mag_filter, (GLint)gl_tex_filter::nearest);
 	} else {
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(gl_tex_target::_2D, gl_tex_param::min_filter, (GLint)gl_tex_filter::linear_mipmap_linear);
+		glTexParameteri(gl_tex_target::_2D, gl_tex_param::mag_filter, (GLint)gl_tex_filter::linear);
 	}
 
 	glBindTextureUnit(0, 0);
@@ -316,11 +316,11 @@ void texture::load_bitmap_from_font(asset* font) { PROF
 
 	glBindTextureUnit(0, handle);
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, font->font.width, font->font.height, 0, GL_RED, GL_UNSIGNED_BYTE, font->mem);
-	GLint swizzleMask[] = {GL_RED, GL_RED, GL_RED, GL_RED};
-	glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzleMask);
+	glTexImage2D(gl_tex_target::_2D, 0, gl_tex_format::rgba8, font->font.width, font->font.height, 0, gl_pixel_data_format::red, gl_pixel_data_type::unsigned_byte, font->mem);
+	GLint swizzleMask[] = {(GLint)gl_tex_swizzle::red, (GLint)gl_tex_swizzle::red, (GLint)gl_tex_swizzle::red, (GLint)gl_tex_swizzle::red};
+	glTexParameteriv(gl_tex_target::_2D, gl_tex_param::swizzle_rgba, swizzleMask);
 
-	glGenerateMipmap(GL_TEXTURE_2D);
+	glGenerateMipmap(gl_tex_target::_2D);
 
 	glBindTextureUnit(0, 0);
 }
@@ -333,11 +333,11 @@ void texture::load_bitmap_from_font(asset_store* as, string name) { PROF
 
 	glBindTextureUnit(0, handle);
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, a->font.width, a->font.height, 0, GL_RED, GL_UNSIGNED_BYTE, a->mem);
-	GLint swizzleMask[] = {GL_RED, GL_RED, GL_RED, GL_RED};
-	glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzleMask);
+	glTexImage2D(gl_tex_target::_2D, 0, gl_tex_format::rgba8, a->font.width, a->font.height, 0, gl_pixel_data_format::red, gl_pixel_data_type::unsigned_byte, a->mem);
+	GLint swizzleMask[] = {(GLint)gl_tex_swizzle::red, (GLint)gl_tex_swizzle::red, (GLint)gl_tex_swizzle::red, (GLint)gl_tex_swizzle::red};
+	glTexParameteriv(gl_tex_target::_2D, gl_tex_param::swizzle_rgba, swizzleMask);
 
-	glGenerateMipmap(GL_TEXTURE_2D);
+	glGenerateMipmap(gl_tex_target::_2D);
 
 	glBindTextureUnit(0, 0);
 }
@@ -350,9 +350,9 @@ void texture::load_bitmap(asset_store* as, string name) { PROF
 
 	glBindTextureUnit(0, handle);
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, a->bitmap.width, a->bitmap.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, a->mem);
+	glTexImage2D(gl_tex_target::_2D, 0, gl_tex_format::rgba8, a->bitmap.width, a->bitmap.height, 0, gl_pixel_data_format::red, gl_pixel_data_type::unsigned_byte, a->mem);
 	
-	glGenerateMipmap(GL_TEXTURE_2D);
+	glGenerateMipmap(gl_tex_target::_2D);
 
 	glBindTextureUnit(0, 0);
 }
@@ -395,10 +395,10 @@ ogl_draw_context* ogl_manager::select_draw_context(context_id id) { PROF
 
 void ogl_mesh_3d_attribs(ogl_draw_context* dc) { PROF
 
-	glBindBuffer(GL_ARRAY_BUFFER, dc->vbos[0]);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(f32), (void*)0);
-	glBindBuffer(GL_ARRAY_BUFFER, dc->vbos[1]);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(f32), (void*)0);
+	glBindBuffer(gl_buf_target::array, dc->vbos[0]);
+	glVertexAttribPointer(0, 3, gl_vert_attrib_type::_float, gl_bool::_false, 3 * sizeof(f32), (void*)0);
+	glBindBuffer(gl_buf_target::array, dc->vbos[1]);
+	glVertexAttribPointer(1, 2, gl_vert_attrib_type::_float, gl_bool::_false, 2 * sizeof(f32), (void*)0);
 
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);
@@ -408,10 +408,10 @@ void ogl_manager::send_mesh_3d(mesh_3d* m, context_id id) { PROF
 
 	ogl_draw_context* dc = select_draw_context(id);
 
-	glBindBuffer(GL_ARRAY_BUFFER, dc->vbos[0]);
-	glBufferData(GL_ARRAY_BUFFER, m->verticies.size * sizeof(v3), m->verticies.size ? m->verticies.memory : null, GL_STREAM_DRAW);
-	glBindBuffer(GL_ARRAY_BUFFER, dc->vbos[1]);
-	glBufferData(GL_ARRAY_BUFFER, m->texCoords.size * sizeof(v2), m->texCoords.size ? m->texCoords.memory : null, GL_STREAM_DRAW);
+	glBindBuffer(gl_buf_target::array, dc->vbos[0]);
+	glBufferData(gl_buf_target::array, m->verticies.size * sizeof(v3), m->verticies.size ? m->verticies.memory : null, gl_buf_usage::stream_draw);
+	glBindBuffer(gl_buf_target::array, dc->vbos[1]);
+	glBufferData(gl_buf_target::array, m->texCoords.size * sizeof(v2), m->texCoords.size ? m->texCoords.memory : null, gl_buf_usage::stream_draw);
 }
 
 CALLBACK void ogl_uniforms_3dtex(shader_program* prog, render_command* rc, render_command_list* rcl) { PROF
@@ -420,18 +420,18 @@ CALLBACK void ogl_uniforms_3dtex(shader_program* prog, render_command* rc, rende
 
 	m4 transform = rcl->proj * rcl->view * rc->model;
 
-	glUniformMatrix4fv(loc, 1, GL_FALSE, transform.v);
+	glUniformMatrix4fv(loc, 1, gl_bool::_false, transform.v);
 }
 
 void ogl_mesh_2d_attribs(ogl_draw_context* dc) { PROF
 
-	glBindBuffer(GL_ARRAY_BUFFER, dc->vbos[0]);
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(f32), (void*)0);
-	glBindBuffer(GL_ARRAY_BUFFER, dc->vbos[1]);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(f32), (void*)0);
-	glBindBuffer(GL_ARRAY_BUFFER, dc->vbos[2]);
-	glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(f32), (void*)0);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, dc->vbos[3]);
+	glBindBuffer(gl_buf_target::array, dc->vbos[0]);
+	glVertexAttribPointer(0, 2, gl_vert_attrib_type::_float, gl_bool::_false, 2 * sizeof(f32), (void*)0);
+	glBindBuffer(gl_buf_target::array, dc->vbos[1]);
+	glVertexAttribPointer(1, 3, gl_vert_attrib_type::_float, gl_bool::_false, 3 * sizeof(f32), (void*)0);
+	glBindBuffer(gl_buf_target::array, dc->vbos[2]);
+	glVertexAttribPointer(2, 4, gl_vert_attrib_type::_float, gl_bool::_false, 4 * sizeof(f32), (void*)0);
+	glBindBuffer(gl_buf_target::element_array, dc->vbos[3]);
 
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);
@@ -442,14 +442,14 @@ void ogl_manager::send_mesh_2d(mesh_2d* m, context_id id) { PROF
 
 	ogl_draw_context* dc = select_draw_context(id);
 
-	glBindBuffer(GL_ARRAY_BUFFER, dc->vbos[0]);
-	glBufferData(GL_ARRAY_BUFFER, m->verticies.size * sizeof(v2), m->verticies.size ? m->verticies.memory : null, GL_STREAM_DRAW);
-	glBindBuffer(GL_ARRAY_BUFFER, dc->vbos[1]);
-	glBufferData(GL_ARRAY_BUFFER, m->texCoords.size * sizeof(v3), m->texCoords.size ? m->texCoords.memory : null, GL_STREAM_DRAW);
-	glBindBuffer(GL_ARRAY_BUFFER, dc->vbos[2]);
-	glBufferData(GL_ARRAY_BUFFER, m->colors.size * sizeof(v4), m->colors.size ? m->colors.memory : null, GL_STREAM_DRAW);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, dc->vbos[3]);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, m->elements.size * sizeof(uv3), m->elements.size ? m->elements.memory : null, GL_STREAM_DRAW);
+	glBindBuffer(gl_buf_target::array, dc->vbos[0]);
+	glBufferData(gl_buf_target::array, m->verticies.size * sizeof(v2), m->verticies.size ? m->verticies.memory : null, gl_buf_usage::stream_draw);
+	glBindBuffer(gl_buf_target::array, dc->vbos[1]);
+	glBufferData(gl_buf_target::array, m->texCoords.size * sizeof(v3), m->texCoords.size ? m->texCoords.memory : null, gl_buf_usage::stream_draw);
+	glBindBuffer(gl_buf_target::array, dc->vbos[2]);
+	glBufferData(gl_buf_target::array, m->colors.size * sizeof(v4), m->colors.size ? m->colors.memory : null, gl_buf_usage::stream_draw);
+	glBindBuffer(gl_buf_target::element_array, dc->vbos[3]);
+	glBufferData(gl_buf_target::element_array, m->elements.size * sizeof(uv3), m->elements.size ? m->elements.memory : null, gl_buf_usage::stream_draw);
 }
 
 CALLBACK void ogl_uniforms_gui(shader_program* prog, render_command* rc, render_command_list* rcl) { PROF
@@ -458,7 +458,7 @@ CALLBACK void ogl_uniforms_gui(shader_program* prog, render_command* rc, render_
 
 	m4 transform = rcl->proj * rcl->view * rc->model;
 
-	glUniformMatrix4fv(loc, 1, GL_FALSE, transform.v);
+	glUniformMatrix4fv(loc, 1, gl_bool::_false, transform.v);
 }
 
 void ogl_set_uniforms(shader_program* prog, render_command* rc, render_command_list* rcl) { PROF
@@ -468,8 +468,8 @@ void ogl_set_uniforms(shader_program* prog, render_command* rc, render_command_l
 
 void ogl_manager::execute_command_list(platform_window* win, render_command_list* rcl) { PROF
 
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(gl_capability::blend);
+	glBlendFunc(gl_blend_factor::one, gl_blend_factor::one_minus_src_alpha);
 
 	for(u32 i = 0; i < rcl->commands.size; i++) {
 
@@ -488,17 +488,17 @@ void ogl_manager::execute_command_list(platform_window* win, render_command_list
 			// TODO(max): we don't want to send every frame, do we?
 			send_mesh_2d(cmd->m2d, cmd->context);
 
-			glDisable(GL_DEPTH_TEST);
+			glDisable(gl_capability::depth_test);
 
-			glDrawElements(GL_TRIANGLES, cmd->elements * 3, GL_UNSIGNED_INT, 0);
+			glDrawElements(gl_draw_mode::triangles, cmd->elements * 3, gl_index_type::unsigned_int, 0);
 
 		} else if (cmd->cmd == render_command_type::mesh_3d) {
 
 			send_mesh_3d(cmd->m3d, cmd->context);
 
-			glEnable(GL_DEPTH_TEST);
+			glEnable(gl_capability::depth_test);
 
-			glDrawArrays(GL_TRIANGLES, 0, cmd->m3d->verticies.size);
+			glDrawArrays(gl_draw_mode::triangles, 0, cmd->m3d->verticies.size);
 		}
 	}
 }
@@ -520,12 +520,12 @@ void ogl_manager::dbg_render_texture_fullscreen(platform_window* win, texture_id
 	glGenVertexArrays(1, &VAO);
 	glGenBuffers(1, &VBO);
 	glBindVertexArray(VAO);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBindBuffer(gl_buf_target::array, VBO);
 
-	glBufferData(GL_ARRAY_BUFFER, sizeof(data), data, GL_STATIC_DRAW);
+	glBufferData(gl_buf_target::array, sizeof(data), data, gl_buf_usage::static_draw);
 
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), (void*)0);	
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), (void*)(2 * sizeof(GLfloat)));
+	glVertexAttribPointer(0, 2, gl_vert_attrib_type::_float, gl_bool::_false, 4 * sizeof(GLfloat), (void*)0);	
+	glVertexAttribPointer(1, 2, gl_vert_attrib_type::_float, gl_bool::_false, 4 * sizeof(GLfloat), (void*)(2 * sizeof(GLfloat)));
 
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);
@@ -534,84 +534,84 @@ void ogl_manager::dbg_render_texture_fullscreen(platform_window* win, texture_id
 	select_texture(id);
 
 	glViewport(0, 0, win->w, win->h);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(gl_capability::blend);
+	glBlendFunc(gl_blend_factor::one, gl_blend_factor::one_minus_src_alpha);
 
-	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glDrawArrays(gl_draw_mode::triangles, 0, 6);
 	
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindBuffer(gl_buf_target::array, 0);
 	glBindVertexArray(0);
 	glDeleteBuffers(1, &VBO);
 	glDeleteVertexArrays(1, &VAO);
 }
 
-void debug_proc(GLenum glsource, GLenum gltype, GLuint id, GLenum severity, GLsizei length, const GLchar* glmessage, const void* up) { PROF
+void debug_proc(gl_debug_source glsource, gl_debug_type gltype, GLuint id, gl_debug_severity severity, GLsizei length, const GLchar* glmessage, const void* up) { PROF
 
 	string message = string::from_c_str((char*)glmessage);
 	string source, type;
 
 	switch(glsource) {
-	case GL_DEBUG_SOURCE_API:
+	case gl_debug_source::api:
 		source = string::literal("OpenGL API");
 		break;
-	case GL_DEBUG_SOURCE_WINDOW_SYSTEM:
+	case gl_debug_source::window_system:
 		source = string::literal("Window System");
 		break;
-	case GL_DEBUG_SOURCE_SHADER_COMPILER:
+	case gl_debug_source::shader_compiler:
 		source = string::literal("Shader Compiler");
 		break;
-	case GL_DEBUG_SOURCE_THIRD_PARTY:
+	case gl_debug_source::third_party:
 		source = string::literal("Third Party");
 		break;
-	case GL_DEBUG_SOURCE_APPLICATION:
+	case gl_debug_source::application:
 		source = string::literal("Application");
 		break;
-	case GL_DEBUG_SOURCE_OTHER:
+	case gl_debug_source::other:
 		source = string::literal("Other");
 		break;
 	}
 
 	switch(gltype) {
-	case GL_DEBUG_TYPE_ERROR:
+	case gl_debug_type::error:
 		type = string::literal("Error");
 		break;
-	case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR:
+	case gl_debug_type::deprecated_behavior:
 		type = string::literal("Deprecated");
 		break;
-	case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:
+	case gl_debug_type::undefined_behavior:
 		type = string::literal("Undefined Behavior");
 		break;
-	case GL_DEBUG_TYPE_PORTABILITY:
+	case gl_debug_type::portability:
 		type = string::literal("Portability");
 		break;
-	case GL_DEBUG_TYPE_PERFORMANCE:
+	case gl_debug_type::performance:
 		type = string::literal("Performance");
 		break;
-	case GL_DEBUG_TYPE_MARKER:
+	case gl_debug_type::marker:
 		type = string::literal("Marker");
 		break;
-	case GL_DEBUG_TYPE_PUSH_GROUP:
+	case gl_debug_type::push_group:
 		type = string::literal("Push Group");
 		break;
-	case GL_DEBUG_TYPE_POP_GROUP:
+	case gl_debug_type::pop_group:
 		type = string::literal("Pop Group");
 		break;
-	case GL_DEBUG_TYPE_OTHER:
+	case gl_debug_type::other:
 		type = string::literal("Other");
 		break;
 	}
 
 	switch(severity) {
-	case GL_DEBUG_SEVERITY_HIGH:
+	case gl_debug_severity::high:
 		LOG_ERR_F("HIGH OpenGL: % SOURCE: % TYPE: %", message, source, type);
 		break;
-	case GL_DEBUG_SEVERITY_MEDIUM:
+	case gl_debug_severity::medium:
 		LOG_WARN_F("MED OpenGL: % SOURCE: % TYPE: %", message, source, type);
 		break;
-	case GL_DEBUG_SEVERITY_LOW:
+	case gl_debug_severity::low:
 		LOG_WARN_F("LOW OpenGL: % SOURCE: % TYPE: %", message, source, type);
 		break;
-	case GL_DEBUG_SEVERITY_NOTIFICATION:
+	case gl_debug_severity::notification:
 		// TODO(max): maybe re-enable when we stop updating the buffers every frame
 		// LOG_OGL_F("NOTF OpenGL: % SOURCE: % TYPE: %", message, source, type);
 		break;
@@ -620,8 +620,8 @@ void debug_proc(GLenum glsource, GLenum gltype, GLuint id, GLenum severity, GLsi
 
 void ogl_load_global_funcs() { PROF
 
-	glEnable(GL_DEBUG_OUTPUT);
-	glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+	glEnable(gl_capability::debug_output);
+	glEnable(gl_capability::debug_output_synchronous);
 
 	glDebugMessageCallback 	= (glDebugMessageCallback_t) global_api->platform_get_glproc(string::literal("glDebugMessageCallback"));
 	glDebugMessageInsert 	= (glDebugMessageInsert_t) 	 global_api->platform_get_glproc(string::literal("glDebugMessageInsert"));
@@ -658,5 +658,5 @@ void ogl_load_global_funcs() { PROF
 	glEnableVertexAttribArray = (glEnableVertexAttribArray_t) global_api->platform_get_glproc(string::literal("glEnableVertexAttribArray"));
 
 	glDebugMessageCallback(debug_proc, null);
-	glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, null, GL_TRUE);
+	glDebugMessageControl(gl_debug_source::dont_care, gl_debug_type::dont_care, gl_debug_severity::dont_care, 0, null, gl_bool::_true);
 }

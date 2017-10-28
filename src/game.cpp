@@ -108,7 +108,7 @@ EXPORT bool main_loop(game_state* state) {
 
 	glUseProgram(0); // why tho?? https://twitter.com/fohx/status/619887799462985729?lang=en
 	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glClear(gl_clear((GLbitfield)gl_clear::color_buffer_bit | (GLbitfield)gl_clear::depth_buffer_bit));
 
 	PUSH_ALLOC(&state->transient_arena) {
 
