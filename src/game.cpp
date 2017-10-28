@@ -79,7 +79,7 @@ EXPORT game_state* start_up(platform_api* api) {
 
 	LOG_INFO("Setting up GUI...");
 	state->gui_a = MAKE_PLATFORM_ALLOCATOR("gui");
-	state->gui = gui_manager::make(&state->ogl, &state->gui_a);
+	state->gui = gui_manager::make(&state->ogl, &state->gui_a, &state->window);
 	state->gui.add_font(&state->ogl, string::literal("gui14"), &state->default_store);
 	state->gui.add_font(&state->ogl, string::literal("gui24"), &state->default_store);
 	state->gui.add_font(&state->ogl, string::literal("gui40"), &state->default_store);
@@ -118,7 +118,7 @@ EXPORT bool main_loop(game_state* state) {
 
 		state->dbg.UI();
 
-		state->gui.end_frame(&state->window, &state->ogl);
+		state->gui.end_frame(&state->ogl);
 
 	} POP_ALLOC();
 	RESET_ARENA(&state->transient_arena);

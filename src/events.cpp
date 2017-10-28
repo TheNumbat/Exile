@@ -44,6 +44,12 @@ gui_input_state run_events(game_state* state) { PROF
 		if(evt.type == platform_event_type::key && evt.key.code == platform_keycode::escape) {
 			state->running = false;
 		}
+		if(evt.type == platform_event_type::key && evt.key.flags & (u16)platform_keyflag::release && evt.key.code == platform_keycode::plus) {
+			ggui->style.gscale *= 1.5f;
+		}
+		if(evt.type == platform_event_type::key && evt.key.flags & (u16)platform_keyflag::release && evt.key.code == platform_keycode::minus) {
+			ggui->style.gscale /= 1.5f;
+		}		
 
 		// Window Resize
 		if(evt.type == platform_event_type::window && evt.window.op == platform_windowop::resized) {

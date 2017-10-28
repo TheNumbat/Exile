@@ -150,12 +150,6 @@ inline v4 color_to_f(color c) {
 	return V4(c.x / 255.0f, c.y / 255.0f, c.z / 255.0f, c.w / 255.0f);
 }
 
-const color WHITE = V4b(255, 255, 255, 255);
-const color BLACK = V4b(0, 0, 0, 255);
-const color RED   = V4b(255, 0, 0, 255);
-const color GREEN = V4b(0, 255, 0, 255);
-const color BLUE  = V4b(0, 0, 255, 255);
-
 template<typename T> inline T clamp(T V, T min, T max) { PROF
 	if(V < min) return min;
 	if(V > max) return max;

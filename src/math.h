@@ -277,3 +277,9 @@ m4 translate(v3 trans);
 m4 rotate(f32 angle, v3 axis);
 m4 scale(v3 scale);
 m4 lookAt(v3 eye, v3 center, v3 up);
+
+const color WHITE = V4b(255, 255, 255, 255);
+const color BLACK = V4b(0, 0, 0, 255);
+const color RED   = V4b(255, 0, 0, 255);
+const color GREEN = V4b(0, 255, 0, 255);
+const color BLUE  = V4b(0, 0, 255, 255);

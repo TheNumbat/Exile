@@ -40,12 +40,12 @@ void dbg_manager::destroy() { PROF
 
 void dbg_manager::UI() { PROF
 
-#if 0
 	v2  dim = gui_window_dim();
-	f32 height = 300.0f;
+	f32 height = 300.0f, width = 250.0f;
 
-	gui_begin(string::literal("Debug"), R2(0.0f, dim.y - height, dim.x, height), (u16)window_flags::nowininput | (u16)window_flags::nohead | (u16)window_flags::ignorescale, true);
+	gui_begin(string::literal("Debug"), R2(20.0f, 20.0f, width, height));
 
+	gui_begin_list(string::literal("Log"));
 	for(u32 i = 0; i < log_cache.len(); i++) {
 		
 		log_message* it = log_cache.get(i);
@@ -56,16 +56,16 @@ void dbg_manager::UI() { PROF
 			string level = it->fmt_level();
 
 			fmt = string::makef(string::literal("[%-5] %+*\r\n"), level, 3 * it->call_stack.capacity + it->msg.len - 1, it->msg);
-			gui_text(fmt, WHITE);
+			gui_text(fmt, BLUE);
 
 			fmt.destroy();
 
 		} POP_ALLOC();
 		RESET_ARENA(&scratch);
 	}
-#else
-	gui_begin(string::literal("Debug"));
-#endif
+	gui_end_list();
+
+	gui_end();
 }
 
 void dbg_manager::shutdown_log(log_manager* log) { PROF

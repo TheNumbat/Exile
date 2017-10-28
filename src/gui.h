@@ -94,24 +94,27 @@ struct gui_window_state {
 	
 	bool active = true;
 	bool resizing = false;
+	bool override_active = false;
 
 	gui_offset_mode offset_mode = gui_offset_mode::y;
 	vector<v2> offset_stack;
 	stack<u32> id_hash_stack;
 
-	bool mono = false;
+	v2 current_offset();
+
 	gui_font* font = null;
+	f32 default_point = 14.0f;
 	mesh_2d mesh;
 };
 
 struct _gui_style {
 	f32 gscale 			= 1.0f;	// global scale 
 	f32 font 			= 0.0f;	// default font size - may use different actual font based on gscale * font
-	f32 title_padding 	= 5.0f;
+	f32 title_padding 	= 3.0f;
 	f32 line_padding 	= 3.0f;
 	u32 log_win_lines 	= 15;
 	f32 resize_tab		= 0.075f;
-	v4 win_margin 		= V4(15.0f, 15.0f, 10.0f, 15.0f); // l r t b
+	v4 win_margin 		= V4(5.0f, 0.0f, 5.0f, 10.0f); // l t r b
 	v2 carrot_padding	= V2(10.0f, 5.0f);
 	v2 box_sel_padding	= V2(6.0f, 6.0f);
 
@@ -158,11 +161,12 @@ struct gui_manager {
 
 	vector<gui_font> fonts;
 
+	platform_window* window = null;
 	allocator* alloc = null;
 
 ///////////////////////////////////////////////////////////////////////////////
 
-	static gui_manager make(ogl_manager* ogl, allocator* alloc);
+	static gui_manager make(ogl_manager* ogl, allocator* alloc, platform_window* win);
 	void destroy();
 
 	void add_font(ogl_manager* ogl, string asset_name, asset_store* store, bool mono = false); // the first font you add is the default size
@@ -172,7 +176,7 @@ struct gui_manager {
 	gui_state_data* add_state_data(guiid id, gui_state_data data);
 
 	void begin_frame(gui_input_state new_input);
-	void end_frame(platform_window* win, ogl_manager* ogl);
+	void end_frame(ogl_manager* ogl);
 };
 
 static gui_manager* ggui; // set at gui_begin_frame, used as context for gui functions
@@ -183,20 +187,28 @@ gui_font* gui_select_best_font_scale();
 
 // These functions you can call from anywhere between starting and ending a frame
 
-void gui_push_offset(v2 offset);
+void gui_push_offset(v2 offset, gui_offset_mode mode = gui_offset_mode::y);
 void gui_pop_offset();
-void gui_set_offset_mode(gui_offset_mode mode = gui_offset_mode::y);
+void gui_set_offset(v2 offset);
+v2 	 gui_window_dim();
 
 bool gui_occluded();
-bool gui_begin(string name, r2 first_size = R2f(40,40,0,0), f32 first_alpha = 0, gui_window_flags flags = 0, bool mono = false);
-bool gui_carrot_toggle(string name, bool initial = false, v2 pos = V2f(0,0), bool* toggleme = null);
+
+bool gui_begin(string name, r2 first_size = R2f(40,40,0,0), gui_window_flags flags = 0, f32 first_alpha = 0);
+void gui_end();
+
+void gui_begin_list(string name);
+void gui_end();
+
+void gui_text(string text, color c = WHITE, f32 point = 0.0f);
+
+bool gui_carrot_toggle(string name, bool initial = false, bool* toggleme = null);
 void gui_box_select(i32* selected, i32 num, v2 pos, ...);
 
 // these take into account only gscale & win_ignorescale - window + offset transforms occur in gui_ functions
-void push_windowhead(gui_window_state* win);
-void push_windowbody(gui_window_state* win);
-void push_text(gui_window_state* win, v2 pos, string text, f32 point, color c);
-void push_carrot(gui_window_state* win, v2 pos, bool active);
+void render_windowhead(gui_window_state* win);
+void render_windowbody(gui_window_state* win);
+void render_carrot(gui_window_state* win, v2 pos, bool active);
 
 bool operator==(guiid l, guiid r);
 
