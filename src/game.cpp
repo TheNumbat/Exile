@@ -29,6 +29,7 @@ EXPORT game_state* start_up(platform_api* api) {
 	state->log_a = MAKE_PLATFORM_ALLOCATOR("log");
 	state->log_a.suppress_messages = true;
 	state->log = log_manager::make(&state->log_a);
+	state->dbg.setup_log(&state->log);
 
 	platform_file stdout_file, log_all_file;
 	CHECKED(platform_get_stdout_as_file, &stdout_file);
@@ -83,7 +84,6 @@ EXPORT game_state* start_up(platform_api* api) {
 	state->gui.add_font(&state->ogl, string::literal("gui24"), &state->default_store);
 	state->gui.add_font(&state->ogl, string::literal("gui40"), &state->default_store);
 	state->gui.add_font(&state->ogl, string::literal("guimono"), &state->default_store, true);
-	state->gui.setup_log(&state->log);
 
 	LOG_INFO("Starting logger...");
 	state->log.start();
@@ -160,6 +160,7 @@ EXPORT void shut_down(game_state* state) {
 	state->evt.destroy();
 
 	LOG_DEBUG("Destroying debug system");
+	state->dbg.shutdown_log(&state->log);	
 	state->dbg.destroy();
 
 	LOG_DEBUG("Destroying transient store");

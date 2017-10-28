@@ -6,6 +6,7 @@ log_manager log_manager::make(allocator* a) { PROF
 	ret.out = vector<log_out>::make(4, a);
 	ret.message_queue = con_queue<log_message>::make(32, a);
 	CHECKED(platform_create_semaphore, &ret.logging_semaphore, 0, INT32_MAX);
+	global_api->platform_create_mutex(&ret.output_mut, false);
 
 	ret.alloc = a;
 	ret.scratch = MAKE_ARENA(string::literal("log scratch"), MEGABYTES(1), a, true);
@@ -21,6 +22,7 @@ void log_manager::start() { PROF
 	thread_param.running 			= true;
 	thread_param.alloc 				= alloc;
 	thread_param.scratch			= &scratch;
+	thread_param.output_mut 		= &output_mut;
 
 	CHECKED(platform_create_thread, &logging_thread, &log_proc, &thread_param, false);
 }
@@ -38,6 +40,7 @@ void log_manager::stop() { PROF
 	thread_param.logging_semaphore 	= null;
 	thread_param.alloc 				= null;
 	thread_param.scratch			= null;
+	thread_param.output_mut 		= null;
 }
 
 void log_manager::destroy() { PROF
@@ -56,6 +59,7 @@ void log_manager::destroy() { PROF
 	out.destroy();
 	message_queue.destroy();
 	CHECKED(platform_destroy_semaphore, &logging_semaphore);
+	global_api->platform_destroy_mutex(&output_mut);
 	DESTROY_ARENA(&scratch);
 	alloc = null;
 }
@@ -86,13 +90,22 @@ void log_manager::add_file(platform_file file, log_level level, log_out_type typ
 	out.push(lfile);
 }
 
-void log_manager::add_output(log_out output) { PROF
+void log_manager::add_custom_output(log_out output) { PROF
 
 	if(output.type != log_out_type::custom) {
 		print_header(&output);
 	}
 
+	global_api->platform_aquire_mutex(&output_mut);
 	out.push(output);
+	global_api->platform_release_mutex(&output_mut);
+}
+
+void log_manager::rem_custom_output(log_out output) { PROF
+
+	global_api->platform_aquire_mutex(&output_mut);
+	out.erase(output);
+	global_api->platform_release_mutex(&output_mut);
 }
 
 void log_manager::print_header(log_out* output) { PROF
@@ -295,6 +308,11 @@ string fmt_msg(log_message* msg, log_out_type type) { PROF
 	return output;	
 }
 
+bool operator==(log_out l, log_out r) {
+
+	return l.level == r.level && r.type == r.type && l.flush_on_message == r.flush_on_message && r.param == l.param;
+}
+
 i32 log_proc(void* data_) {
 
 	log_thread_param* data = (log_thread_param*)data_;	
@@ -310,6 +328,7 @@ i32 log_proc(void* data_) {
 				
 				PUSH_ALLOC(data->scratch) {
 					
+					global_api->platform_aquire_mutex(data->output_mut);
 					FORVEC(it, *data->out) {
 
 						if(it->level <= msg.level) {
@@ -324,6 +343,7 @@ i32 log_proc(void* data_) {
 							}
 						}
 					}
+					global_api->platform_release_mutex(data->output_mut);
 
 				} POP_ALLOC();
 				RESET_ARENA(data->scratch);

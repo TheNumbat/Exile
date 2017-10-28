@@ -22,7 +22,6 @@ gui_manager gui_manager::make(ogl_manager* ogl, allocator* alloc) { PROF
 	ret.window_state_data = map<guiid, gui_window_state>::make(32, alloc, FPTR(guiid_hash));
 	ret.state_data = map<guiid, gui_state_data>::make(128, alloc, FPTR(guiid_hash));
 	ret.fonts = vector<gui_font>::make(4, alloc);
-	ret.log_cache = queue<log_message>::make(1024, alloc);
 
 	return ret;
 }
@@ -43,22 +42,7 @@ void gui_manager::destroy() { PROF
 	state_data.destroy();
 	fonts.destroy();
 
-	FORQ_BEGIN(it, log_cache) {
-		DESTROY_ARENA(&it->arena);
-	} FORQ_END(it, log_cache);
-
-	log_cache.destroy();
-
 	DESTROY_ARENA(&scratch);
-}
-
-void gui_manager::setup_log(log_manager* log) { PROF
-	log_out dbg_log;
-	dbg_log.level = log_level::info;
-	dbg_log.type = log_out_type::custom;
-	dbg_log.write.set(FPTR(gui_add_log));
-	dbg_log.param = this;
-	log->add_output(dbg_log);
 }
 
 void gui_manager::reload_fonts(ogl_manager* ogl) { PROF
@@ -351,30 +335,13 @@ bool gui_begin(string name, r2 first_size, f32 first_alpha, gui_window_flags fla
 	return window->active;
 }
 
-CALLBACK void gui_add_log(log_message* msg, void* param) { PROF
-
-	gui_manager* gui = (gui_manager*)param;
-
-	if(gui->log_cache.len() == gui->log_cache.capacity) {
-
-		log_message* m = gui->log_cache.front();
-		DESTROY_ARENA(&m->arena);
-		gui->log_cache.pop();
-	}
-
-	log_message* m = gui->log_cache.push(*msg);
-	m->arena       = MAKE_ARENA(string::literal("cmsg"), msg->arena.size, gui->alloc, msg->arena.suppress_messages);
-	m->call_stack  = array<code_context>::make_copy(&msg->call_stack, &m->arena);
-	m->thread_name = string::make_copy(msg->thread_name, &m->arena);
-	m->msg         = string::make_copy(msg->msg, &m->arena);
-}
-
 void gui_debug_ui(platform_window* win) { PROF
 
 	gui_begin(string::literal("Debug"));
-	gui_log_wnd(win, string::literal("Log"));
+	// gui_log_wnd(win, string::literal("Log"));
 }
 
+/*
 void gui_log_wnd(platform_window* win, string name) { PROF
 
 	f32 height = ggui->style.log_win_lines * ggui->style.font + 2 * ggui->style.font + ggui->style.title_padding + ggui->style.win_margin.x + ggui->style.win_margin.w + 7.0f;
@@ -459,7 +426,7 @@ void gui_log_wnd(platform_window* win, string name) { PROF
 			break;
 		}
 	}
-}
+}*/
 
 void gui_box_select(i32* selected, i32 num, v2 pos, ...) { PROF
 

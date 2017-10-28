@@ -161,15 +161,11 @@ struct gui_manager {
 	arena_allocator scratch; // reset whenever (on whatever thread) (currently on formatting log messages)
 	allocator* alloc = null;
 
-	queue<log_message> log_cache;
-	log_level lvl = log_level::info;
-
 ///////////////////////////////////////////////////////////////////////////////
 
 	static gui_manager make(ogl_manager* ogl, allocator* alloc);
 	void destroy();
 
-	void setup_log(log_manager* log);
 	void add_font(ogl_manager* ogl, string asset_name, asset_store* store, bool mono = false); // the first font you add is the default size
 	void reload_fonts(ogl_manager* ogl);
 
@@ -208,4 +204,3 @@ void push_carrot(gui_window_state* win, v2 pos, bool active);
 
 bool operator==(guiid l, guiid r);
 
-CALLBACK void gui_add_log(log_message* msg, void*);

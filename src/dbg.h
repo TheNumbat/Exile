@@ -124,13 +124,19 @@ struct dbg_manager {
 	platform_mutex cache_mut;
 	map<platform_thread_id, thread_profile> dbg_cache;
 
+	queue<log_message> log_cache;
+	log_level lvl = log_level::info;
+
 ///////////////////////////////////////////////////////////////////////////////
 
 	static dbg_manager make(allocator* alloc);
 	void destroy();
 
+	void shutdown_log(log_manager* log);
+	void setup_log(log_manager* log);
 	void register_thread(u32 frames, u32 frame_size);
 
 	void collate();
 };
 
+CALLBACK void dbg_add_log(log_message* msg, void*);

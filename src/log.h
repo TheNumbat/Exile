@@ -58,11 +58,14 @@ struct log_out {
 	log_out() : file() {};
 };
 
+bool operator==(log_out l, log_out r);
+
 struct log_thread_param {
 	bool running 							= false;
 	vector<log_out>* 	out					= null;
 	con_queue<log_message>*	message_queue	= null;
 	platform_semaphore*	logging_semaphore 	= null;
+	platform_mutex* output_mut				= null;
 	allocator* alloc 						= null;
 	arena_allocator* scratch				= null;
 };
@@ -72,6 +75,7 @@ struct log_manager {
 	con_queue<log_message> 	message_queue;
 	platform_semaphore		logging_semaphore;
 	platform_thread			logging_thread;
+	platform_mutex 			output_mut;
 	log_thread_param 		thread_param;
 	allocator* 				alloc = null;
 	arena_allocator 		scratch; // reset whenever (on the logging thread) (currently every message)
@@ -90,7 +94,8 @@ struct log_manager {
 	void add_file(platform_file file, log_level level, log_out_type type = log_out_type::plaintext, bool flush = false); // call from one thread before starting
 	void print_header(log_out* out);
 	void print_footer(log_out* out);
-	void add_output(log_out out);
+	void add_custom_output(log_out out);
+	void rem_custom_output(log_out out);
 
 	template<typename... Targs>
 	void msgf(string fmt, log_level level, code_context context, Targs... args);
@@ -146,3 +151,4 @@ struct log_manager {
 #endif
 
 i32 log_proc(void* data_);
+

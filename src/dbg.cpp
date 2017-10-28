@@ -4,6 +4,8 @@ dbg_manager dbg_manager::make(allocator* alloc) { PROF
 	dbg_manager ret;
 
 	ret.dbg_cache = map<platform_thread_id,thread_profile>::make(global_api->platform_get_num_cpus(), alloc);
+	ret.log_cache = queue<log_message>::make(1024, alloc);
+
 	ret.alloc = alloc;
 
 	global_api->platform_create_mutex(&ret.cache_mut, false);
@@ -21,9 +23,34 @@ void dbg_manager::destroy() { PROF
 
 		it->value.frames.destroy();
 	}
+
+	FORQ_BEGIN(it, log_cache) {
+		DESTROY_ARENA(&it->arena);
+	} FORQ_END(it, log_cache);
+
+	log_cache.destroy();
+
 	global_api->platform_destroy_mutex(&cache_mut);
 
 	dbg_cache.destroy();
+}
+
+void dbg_manager::shutdown_log(log_manager* log) { PROF
+	log_out dbg_log;
+	dbg_log.level = log_level::info;
+	dbg_log.type = log_out_type::custom;
+	dbg_log.write.set(FPTR(dbg_add_log));
+	dbg_log.param = this;
+	log->rem_custom_output(dbg_log);
+}
+
+void dbg_manager::setup_log(log_manager* log) { PROF
+	log_out dbg_log;
+	dbg_log.level = log_level::info;
+	dbg_log.type = log_out_type::custom;
+	dbg_log.write.set(FPTR(dbg_add_log));
+	dbg_log.param = this;
+	log->add_custom_output(dbg_log);
 }
 
 void dbg_manager::register_thread(u32 frames, u32 frame_size) { PROF
@@ -133,4 +160,22 @@ void dbg_manager::collate() {
 		this_thread_data.dbg_msgs.clear();
 
 	} POP_PROFILE();
+}
+
+CALLBACK void dbg_add_log(log_message* msg, void* param) { PROF
+
+	dbg_manager* gui = (dbg_manager*)param;
+
+	if(gui->log_cache.len() == gui->log_cache.capacity) {
+
+		log_message* m = gui->log_cache.front();
+		DESTROY_ARENA(&m->arena);
+		gui->log_cache.pop();
+	}
+
+	log_message* m = gui->log_cache.push(*msg);
+	m->arena       = MAKE_ARENA(string::literal("cmsg"), msg->arena.size, gui->alloc, msg->arena.suppress_messages);
+	m->call_stack  = array<code_context>::make_copy(&msg->call_stack, &m->arena);
+	m->thread_name = string::make_copy(msg->thread_name, &m->arena);
+	m->msg         = string::make_copy(msg->msg, &m->arena);
 }

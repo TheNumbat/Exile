@@ -28,7 +28,7 @@ void vector<T>::erase(T val) { PROF
 
 	FORVEC(it, *this) {
 		if(*it == val) {
-			erase(__i);
+			erase(__it);
 			it--;
 		}
 	}
