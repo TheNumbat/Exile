@@ -7,6 +7,7 @@ dbg_manager dbg_manager::make(allocator* alloc) { PROF
 	ret.log_cache = queue<log_message>::make(1024, alloc);
 
 	ret.alloc = alloc;
+	ret.scratch = MAKE_ARENA(string::literal("dbg scratch"), MEGABYTES(1), alloc, false);
 
 	global_api->platform_create_mutex(&ret.cache_mut, false);
 
@@ -33,6 +34,38 @@ void dbg_manager::destroy() { PROF
 	global_api->platform_destroy_mutex(&cache_mut);
 
 	dbg_cache.destroy();
+
+	DESTROY_ARENA(&scratch);
+}
+
+void dbg_manager::UI() { PROF
+
+#if 0
+	v2  dim = gui_window_dim();
+	f32 height = 300.0f;
+
+	gui_begin(string::literal("Debug"), R2(0.0f, dim.y - height, dim.x, height), (u16)window_flags::nowininput | (u16)window_flags::nohead | (u16)window_flags::ignorescale, true);
+
+	for(u32 i = 0; i < log_cache.len(); i++) {
+		
+		log_message* it = log_cache.get(i);
+
+		string fmt;
+		PUSH_ALLOC(&scratch) {
+			
+			string level = it->fmt_level();
+
+			fmt = string::makef(string::literal("[%-5] %+*\r\n"), level, 3 * it->call_stack.capacity + it->msg.len - 1, it->msg);
+			gui_text(fmt, WHITE);
+
+			fmt.destroy();
+
+		} POP_ALLOC();
+		RESET_ARENA(&scratch);
+	}
+#else
+	gui_begin(string::literal("Debug"));
+#endif
 }
 
 void dbg_manager::shutdown_log(log_manager* log) { PROF

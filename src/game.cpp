@@ -116,7 +116,7 @@ EXPORT bool main_loop(game_state* state) {
 		
 		state->gui.begin_frame(input);
 
-		gui_debug_ui(&state->window);
+		state->dbg.UI();
 
 		state->gui.end_frame(&state->window, &state->ogl);
 

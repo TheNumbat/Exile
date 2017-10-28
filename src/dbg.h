@@ -127,10 +127,14 @@ struct dbg_manager {
 	queue<log_message> log_cache;
 	log_level lvl = log_level::info;
 
+	arena_allocator scratch;
+
 ///////////////////////////////////////////////////////////////////////////////
 
 	static dbg_manager make(allocator* alloc);
 	void destroy();
+
+	void UI();
 
 	void shutdown_log(log_manager* log);
 	void setup_log(log_manager* log);

@@ -14,8 +14,7 @@ gui_manager gui_manager::make(ogl_manager* ogl, allocator* alloc) { PROF
 	gui_manager ret;
 
 	ret.alloc = alloc;
-	ret.scratch = MAKE_ARENA(string::literal("gui_scratch"), KILOBYTES(512), alloc, false);
-
+	
 	ret.ogl_ctx.context = ogl->add_draw_context(&ogl_mesh_2d_attribs);
 	ret.ogl_ctx.shader 	= ogl->add_program(string::literal("shaders/gui.v"), string::literal("shaders/gui.f"), FPTR(ogl_uniforms_gui));
 
@@ -41,8 +40,6 @@ void gui_manager::destroy() { PROF
 	window_state_data.destroy();
 	state_data.destroy();
 	fonts.destroy();
-
-	DESTROY_ARENA(&scratch);
 }
 
 void gui_manager::reload_fonts(ogl_manager* ogl) { PROF
@@ -147,8 +144,6 @@ void gui_manager::end_frame(platform_window* win, ogl_manager* ogl) { PROF
 		st->value.id_hash_stack.clear();
 		st->value.mesh.clear();
 	}
-
-	RESET_ARENA(&ggui->scratch);
 }
 
 void gui_push_offset(v2 offset) { PROF
@@ -334,99 +329,6 @@ bool gui_begin(string name, r2 first_size, f32 first_alpha, gui_window_flags fla
 
 	return window->active;
 }
-
-void gui_debug_ui(platform_window* win) { PROF
-
-	gui_begin(string::literal("Debug"));
-	// gui_log_wnd(win, string::literal("Log"));
-}
-
-/*
-void gui_log_wnd(platform_window* win, string name) { PROF
-
-	f32 height = ggui->style.log_win_lines * ggui->style.font + 2 * ggui->style.font + ggui->style.title_padding + ggui->style.win_margin.x + ggui->style.win_margin.w + 7.0f;
-	gui_begin(name, R2(0.0f, win->h - height, (f32)win->w, height), 0.5f, (u16)window_flags::nowininput | (u16)window_flags::nohead | (u16)window_flags::ignorescale, true);
-	gui_pop_offset();
-
-	gui_window_state* current = ggui->current;
-	current->rect = R2(0.0f, win->h - height, (f32)win->w, height);
-
-	guiid id;
-	id.base = *current->id_hash_stack.top();
-	id.name = string::literal("#LOG");
-
-	gui_state_data* data = ggui->state_data.try_get(id);
-
-	if(!data) {
-
-		gui_state_data nd;
-
-		nd.u32_1 = 0; // scroll position
-
-		data = ggui->add_state_data(id, nd);
-	}
-
-	// we don't need real_rect, as this will always ignore global scale
-	if(!gui_occluded() && inside(current->rect, ggui->input.mousepos)) {
-		if(ggui->input.scroll + (i32)data->u32_1 < 0) {
-			data->u32_1 = 0;
-		} else {
-			data->u32_1 += ggui->input.scroll;
-		}
-		if(ggui->log_cache.len() - data->u32_1 < ggui->style.log_win_lines) {
-			data->u32_1 = ggui->log_cache.len() - ggui->style.log_win_lines;
-		}
-		if(ggui->log_cache.len() < ggui->style.log_win_lines) {
-			data->u32_1 = 0;
-		}
-	}
-	
-	r2 scroll_back = R2(add(current->rect.xy, V2(current->rect.w - ggui->style.win_scroll_w, ggui->style.font + ggui->style.title_padding)), V2(ggui->style.win_scroll_w, current->rect.h));
-
-	current->mesh.push_rect(scroll_back, V4b(ggui->style.win_scroll_back, current->opacity * 255.0f));
-
-	f32 scroll_y = lerpf(current->rect.y + current->rect.h, current->rect.y, (f32)data->u32_1 / (f32)(ggui->log_cache.len() - ggui->style.log_win_lines));
-	if(scroll_y < current->rect.y + ggui->style.font + ggui->style.title_padding) {
-		scroll_y = current->rect.y + ggui->style.font + ggui->style.title_padding;
-	}
-	if(scroll_y > current->rect.y + current->rect.h - ggui->style.win_scroll_bar_h) {
-		scroll_y = current->rect.y + current->rect.h - ggui->style.win_scroll_bar_h;
-	}
-	r2 scroll_bar = R2(scroll_back.x + ggui->style.win_scroll_margin, scroll_y, ggui->style.win_scroll_w - ggui->style.win_scroll_margin * 2.0f, ggui->style.win_scroll_bar_h);
-
-	current->mesh.push_rect(scroll_bar, V4b(ggui->style.win_scroll_bar, 255));
-
-	v2 pos = V2(ggui->style.win_margin.x, height - ggui->style.win_margin.w - ggui->style.font);
-
-	i32 ignore;
-	gui_box_select(&ignore, 3, pos, string::literal("DEBUG"), string::literal("INFO"), string::literal("WARN/ERR"));
-
-	pos = add(current->rect.xy, pos);
-	pos.y -= ggui->style.font + 7.0f;
-
-	for(i32 i = ggui->log_cache.len() - data->u32_1; i > 0; i--) {
-		log_message* it = ggui->log_cache.get(i - 1);
-
-		string fmt;
-		PUSH_ALLOC(&ggui->scratch) {
-			
-			string level = it->fmt_level();
-
-			fmt = string::makef(string::literal("[context] [file:line] [%-5] %+*\r\n"), level, 3 * it->call_stack.capacity + it->msg.len - 1, it->msg);
-			push_text(current, pos, fmt, ggui->style.font, WHITE);
-
-			fmt.destroy();
-
-		} POP_ALLOC();
-		RESET_ARENA(&ggui->scratch);
-
-		pos.y -= ggui->style.font;
-
-		if(pos.y < current->rect.y + ggui->style.font + ggui->style.title_padding + ggui->style.win_margin.z) {
-			break;
-		}
-	}
-}*/
 
 void gui_box_select(i32* selected, i32 num, v2 pos, ...) { PROF
 
