@@ -1,45 +1,47 @@
 
-mesh_2d mesh_2d::make(u32 verts, allocator* alloc) { PROF
+mesh_2d_col mesh_2d_col::make(u32 verts, allocator* alloc) { PROF
 
 	if(alloc == null) {
 		alloc = CURRENT_ALLOC();
 	}
 
-	mesh_2d ret;
+	mesh_2d_col ret;
 
 	ret.alloc = alloc;
 
-	ret.verticies = vector<v2>::make(verts, alloc);
-	ret.texCoords = vector<v3>::make(verts, alloc);
-	ret.colors 	  =	vector<v4>::make(verts, alloc);
+	ret.vertices = vector<v2>::make(verts, alloc);
+	ret.colors 	  =	vector<colorf>::make(verts, alloc);
 	ret.elements  = vector<uv3>::make(verts, alloc); 
 
 	return ret;
 }
 
-void mesh_2d::destroy() { PROF
+void mesh_2d_col::destroy() { PROF
 
-	verticies.destroy();
-	texCoords.destroy();
+	vertices.destroy();
 	colors.destroy();
 	elements.destroy();
 	alloc = null;
 }
 
-void mesh_2d::push_cutrect(r2 r, f32 round, color c) { PROF
+void mesh_2d_col::clear() { PROF
+	vertices.clear();
+	colors.clear();
+	elements.clear();
+}
 
-	u32 idx = verticies.size;
+void mesh_2d_col::push_cutrect(r2 r, f32 round, color c) { PROF
 
-	verticies.push(V2(r.x, r.y + round));
-	verticies.push(V2(r.x, r.y + r.h - round));
-	verticies.push(V2(r.x + round, r.y + r.h));
-	verticies.push(V2(r.x + r.w - round, r.y + r.h));
-	verticies.push(V2(r.x + r.w, r.y + r.h - round));
-	verticies.push(V2(r.x + r.w, r.y + round));
-	verticies.push(V2(r.x + r.w - round, r.y));
-	verticies.push(V2(r.x + round, r.y));
+	u32 idx = vertices.size;
 
-	DO(8) texCoords.push(V3(0.0f, 0.0f, 0.0f));
+	vertices.push(V2(r.x, r.y + round));
+	vertices.push(V2(r.x, r.y + r.h - round));
+	vertices.push(V2(r.x + round, r.y + r.h));
+	vertices.push(V2(r.x + r.w - round, r.y + r.h));
+	vertices.push(V2(r.x + r.w, r.y + r.h - round));
+	vertices.push(V2(r.x + r.w, r.y + round));
+	vertices.push(V2(r.x + r.w - round, r.y));
+	vertices.push(V2(r.x + round, r.y));
 
 	colorf cf = color_to_f(c);
 	DO(8) colors.push(cf);
@@ -52,16 +54,14 @@ void mesh_2d::push_cutrect(r2 r, f32 round, color c) { PROF
 	elements.push(V3u(idx + 3, idx + 5, idx + 6));
 }
 
-void mesh_2d::push_rect(r2 r, color c) { PROF
+void mesh_2d_col::push_rect(r2 r, color c) { PROF
 
-	u32 idx = verticies.size;
+	u32 idx = vertices.size;
 
-	verticies.push(V2(r.x, r.y + r.h));	// BLC
-	verticies.push(r.xy);				// TLC
-	verticies.push(add(r.xy, r.wh));		// BRC
-	verticies.push(V2(r.x + r.w, r.y));	// TRC
-
-	DO(4) texCoords.push(V3(0.0f, 0.0f, 0.0f));
+	vertices.push(V2(r.x, r.y + r.h));	// BLC
+	vertices.push(r.xy);				// TLC
+	vertices.push(add(r.xy, r.wh));		// BRC
+	vertices.push(V2(r.x + r.w, r.y));	// TRC
 
 	colorf cf = color_to_f(c);
 	DO(4) colors.push(cf);
@@ -70,93 +70,102 @@ void mesh_2d::push_rect(r2 r, color c) { PROF
 	elements.push(V3u(idx + 1, idx + 2, idx + 3));
 }
 
-v2 size_text(asset* font, string text_utf8, f32 point) { PROF
 
-	v2 ret;
-
-	f32 scale = point / font->font.point;
-	if(point == 0.0f) {
-		scale = 1.0f;
-	}
-
-	u32 index = 0;
-	while(u32 codepoint = text_utf8.get_next_codepoint(&index)) {
-
-		glyph_data glyph = font->font.get_glyph(codepoint);
-		ret.x += scale * glyph.advance;
-	}
-
-	ret.y = scale * font->font.linedist;
-	return ret;
-}
-
-f32 mesh_2d::push_text_line(asset* font, string text_utf8, v2 pos, f32 point, color c) { PROF
-
-	colorf cf = color_to_f(c);
-	f32 x = pos.x;
-	f32 y = pos.y;
-	f32 scale = point / font->font.point;
-	if(point == 0.0f) {
-		scale = 1.0f;
-	}
-	y += scale * font->font.linedist;
-
-	u32 index = 0;
-	while(u32 codepoint = text_utf8.get_next_codepoint(&index)) {
-
-		u32 idx = verticies.size;
-		glyph_data glyph = font->font.get_glyph(codepoint);
-
-		f32 w = (f32)font->font.width;
-		f32 h = (f32)font->font.height;
-		v3 tlc = V3(glyph.x1/w, 1.0f - glyph.y1/h, 1.0f);
-		v3 brc = V3(glyph.x2/w, 1.0f - glyph.y2/h, 1.0f);
-		v3 trc = V3(glyph.x2/w, 1.0f - glyph.y1/h, 1.0f);
-		v3 blc = V3(glyph.x1/w, 1.0f - glyph.y2/h, 1.0f);
-
-		verticies.push(V2(x + scale*glyph.xoff1, y + scale*glyph.yoff2)); 	// BLC
- 		verticies.push(V2(x + scale*glyph.xoff1, y + scale*glyph.yoff1));	// TLC
- 		verticies.push(V2(x + scale*glyph.xoff2, y + scale*glyph.yoff2));	// BRC
- 		verticies.push(V2(x + scale*glyph.xoff2, y + scale*glyph.yoff1));	// TRC
-
-		texCoords.push(blc);
-		texCoords.push(tlc);
-		texCoords.push(brc);
-		texCoords.push(trc);
-
-		DO(4) colors.push(cf);
-
-		elements.push(V3u(idx, idx + 1, idx + 2));
-		elements.push(V3u(idx + 1, idx + 2, idx + 3));
-
-		x += scale * glyph.advance;
-	}
-
-	return scale * font->font.linedist;
-}
-
-mesh_3d mesh_3d::make(u32 verts, allocator* alloc) { PROF
+mesh_2d_tex mesh_2d_tex::make(u32 verts, allocator* alloc) { PROF
 
 	if(alloc == null) {
 		alloc = CURRENT_ALLOC();
 	}
 
-	mesh_3d ret;
+	mesh_2d_tex ret;
 
 	ret.alloc = alloc;
 
-	ret.verticies = vector<v3>::make(verts, alloc);
-	ret.texCoords = vector<v2>::make(verts, alloc);
+	ret.vertices = vector<v2>::make(verts, alloc);
+	ret.texCoords =	vector<v2>::make(verts, alloc);
+	ret.elements  = vector<uv3>::make(verts, alloc); 
+
+	return ret;
+
+}
+
+void mesh_2d_tex::destroy() { PROF
+
+	vertices.destroy();
+	texCoords.destroy();
+	elements.destroy();
+	alloc = null;
+}
+
+void mesh_2d_tex::clear() { PROF
+	vertices.clear();
+	texCoords.clear();
+	elements.clear();
+}
+
+mesh_2d_tex_col mesh_2d_tex_col::make(u32 verts, allocator* alloc) { PROF
+
+	if(alloc == null) {
+		alloc = CURRENT_ALLOC();
+	}
+
+	mesh_2d_tex_col ret;
+
+	ret.alloc = alloc;
+
+	ret.vertices = vector<v2>::make(verts, alloc);
+	ret.texCoords =	vector<v2>::make(verts, alloc);
+	ret.colors 	  = vector<colorf>::make(verts, alloc);
+	ret.elements  = vector<uv3>::make(verts, alloc); 
 
 	return ret;
 }
 
-void mesh_3d::destroy() { PROF
+void mesh_2d_tex_col::destroy() { PROF
 
-	verticies.destroy();
+	vertices.destroy();
 	texCoords.destroy();
+	colors.destroy();
+	elements.destroy();
+	alloc = null;
+}
 
+void mesh_2d_tex_col::clear() { PROF
+	vertices.clear();
+	texCoords.clear();
+	elements.clear();
+	colors.clear();
+}
+
+mesh_3d_tex mesh_3d_tex::make(u32 verts, allocator* alloc) { PROF
+
+	if(alloc == null) {
+		alloc = CURRENT_ALLOC();
+	}
+
+	mesh_3d_tex ret;
+
+	ret.alloc = alloc;
+
+	ret.vertices = vector<v3>::make(verts, alloc);
+	ret.texCoords = vector<v2>::make(verts, alloc);
+	ret.elements  = vector<uv3>::make(verts, alloc);
+
+	return ret;
+}
+
+void mesh_3d_tex::destroy() { PROF
+
+	vertices.destroy();
+	texCoords.destroy();
+	elements.destroy();
 	alloc = null;	
+}
+
+void mesh_3d_tex::clear() { PROF
+	vertices.clear();
+	texCoords.clear();
+	elements.clear();
 }
 
 render_command render_command::make(render_command_type type, void* data, u32 key) { PROF
@@ -166,11 +175,6 @@ render_command render_command::make(render_command_type type, void* data, u32 ke
 	ret.cmd = type;
 	ret.data = data;
 	ret.sort_key = key;
-
-	if(type == render_command_type::mesh_2d) {
-		mesh_2d* m = (mesh_2d*)data;
-		ret.elements = m->elements.size * 3;
-	}
 
 	return ret;
 }
@@ -210,14 +214,67 @@ void render_command_list::sort() { PROF
 	commands.qsort();
 }
 
-void mesh_2d::clear() { PROF
-	verticies.clear();
-	colors.clear();
-	texCoords.clear();
-	elements.clear();
+f32 mesh_2d_tex_col::push_text_line(asset* font, string text_utf8, v2 pos, f32 point, color c) { PROF
+
+	colorf cf = color_to_f(c);
+	f32 x = pos.x;
+	f32 y = pos.y;
+	f32 scale = point / font->font.point;
+	if(point == 0.0f) {
+		scale = 1.0f;
+	}
+	y += scale * font->font.linedist;
+
+	u32 index = 0;
+	while(u32 codepoint = text_utf8.get_next_codepoint(&index)) {
+
+		u32 idx = vertices.size;
+		glyph_data glyph = font->font.get_glyph(codepoint);
+
+		f32 w = (f32)font->font.width;
+		f32 h = (f32)font->font.height;
+		v2 tlc = V2(glyph.x1/w, 1.0f - glyph.y1/h);
+		v2 brc = V2(glyph.x2/w, 1.0f - glyph.y2/h);
+		v2 trc = V2(glyph.x2/w, 1.0f - glyph.y1/h);
+		v2 blc = V2(glyph.x1/w, 1.0f - glyph.y2/h);
+
+		vertices.push(V2(x + scale*glyph.xoff1, y + scale*glyph.yoff2)); 	// BLC
+ 		vertices.push(V2(x + scale*glyph.xoff1, y + scale*glyph.yoff1));	// TLC
+ 		vertices.push(V2(x + scale*glyph.xoff2, y + scale*glyph.yoff2));	// BRC
+ 		vertices.push(V2(x + scale*glyph.xoff2, y + scale*glyph.yoff1));	// TRC
+
+		texCoords.push(blc);
+		texCoords.push(tlc);
+		texCoords.push(brc);
+		texCoords.push(trc);
+
+		DO(4) colors.push(cf);
+
+		elements.push(V3u(idx, idx + 1, idx + 2));
+		elements.push(V3u(idx + 1, idx + 2, idx + 3));
+
+		x += scale * glyph.advance;
+	}
+
+	return scale * font->font.linedist;
 }
 
-void mesh_3d::clear() { PROF
-	verticies.clear();
-	texCoords.clear();
+v2 size_text(asset* font, string text_utf8, f32 point) { PROF
+
+	v2 ret;
+
+	f32 scale = point / font->font.point;
+	if(point == 0.0f) {
+		scale = 1.0f;
+	}
+
+	u32 index = 0;
+	while(u32 codepoint = text_utf8.get_next_codepoint(&index)) {
+
+		glyph_data glyph = font->font.get_glyph(codepoint);
+		ret.x += scale * glyph.advance;
+	}
+
+	ret.y = scale * font->font.linedist;
+	return ret;
 }

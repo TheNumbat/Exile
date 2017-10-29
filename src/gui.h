@@ -20,12 +20,6 @@ enum class window_flags : gui_window_flags {
 	ignorescale = 1<<6,
 };
 
-struct gui_opengl {
-	context_id			context = 0;
-	shader_program_id 	shader 	= 0;
-	texture_id			font 	= 0;
-};
-
 struct gui_input_state {
 	v2 mousepos;
 	i16 scroll = 0;
@@ -104,7 +98,7 @@ struct gui_window_state {
 
 	gui_font* font = null;
 	f32 default_point = 14.0f;
-	mesh_2d mesh;
+	mesh_2d_col mesh;
 };
 
 struct _gui_style {
@@ -150,7 +144,6 @@ struct gui_manager {
 	_gui_style style;
 
 	gui_input_state input;
-	gui_opengl 		ogl_ctx;
 
 	gui_window_state* current = null;	// we take a pointer into a map but it's OK because we know nothing will be added while this is in use
 	u32 last_z = 0;						// this only counts up on window layer changes so we don't have

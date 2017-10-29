@@ -110,6 +110,7 @@ static dbg_manager*  global_dbg = null; // not used yet -- global to provide pro
 #endif
 
 #include <meta_types.cpp>
+#include "render_opengl.h"
 
 #include "util/fptr.cpp"
 #include "util/context.cpp"

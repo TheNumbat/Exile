@@ -16,9 +16,6 @@ gui_manager gui_manager::make(ogl_manager* ogl, allocator* alloc, platform_windo
 	ret.alloc = alloc;
 	ret.window = win;
 
-	ret.ogl_ctx.context = ogl->add_draw_context(&ogl_mesh_2d_attribs);
-	ret.ogl_ctx.shader 	= ogl->add_program(string::literal("shaders/gui.v"), string::literal("shaders/gui.f"), FPTR(ogl_uniforms_gui));
-
 	ret.window_state_data = map<guiid, gui_window_state>::make(32, alloc, FPTR(guiid_hash));
 	ret.state_data = map<guiid, gui_state_data>::make(128, alloc, FPTR(guiid_hash));
 	ret.fonts = vector<gui_font>::make(4, alloc);
@@ -127,10 +124,8 @@ void gui_manager::end_frame(ogl_manager* ogl) { PROF
 	render_command_list rcl = render_command_list::make();
 	FORMAP(it, window_state_data) {
 
-		render_command cmd = render_command::make(render_command_type::mesh_2d, &it->value.mesh, it->value.z);
-		cmd.shader  = ggui->ogl_ctx.shader;
-		cmd.texture = it->value.font->texture;
-		cmd.context = ggui->ogl_ctx.context;
+		render_command cmd = render_command::make(render_command_type::mesh_2d_col, &it->value.mesh, it->value.z);
+		cmd.texture = -1;
 		rcl.add_command(cmd);
 	}
 
@@ -221,7 +216,7 @@ bool gui_begin(string name, r2 first_size, gui_window_flags flags, f32 first_alp
 			ns.opacity = first_alpha;
 		}
 
-		ns.mesh = mesh_2d::make(1024, ggui->alloc);
+		ns.mesh = mesh_2d_col::make(1024, ggui->alloc);
 		ns.id_hash_stack = stack<u32>::make(16, ggui->alloc);
 		ns.offset_stack = vector<v2>::make(16, ggui->alloc);
 		ns.flags = flags;
@@ -389,7 +384,7 @@ void gui_box_select(i32* selected, i32 num, v2 pos, ...) { PROF
 		r2 box = R2(pos, wh);
 
 		current->mesh.push_rect(box, V4b(ggui->style.wid_back, current->opacity * 255.0f));
-		current->mesh.push_text_line(current->font->font, option, txy, ggui->style.font * gscale);
+		// current->mesh.push_text_line(current->font->font, option, txy, ggui->style.font * gscale);
 
 		pos.x += wh.x + 5.0f;
 	}
@@ -450,23 +445,21 @@ void render_carrot(gui_window_state* win, v2 pos, bool active) { PROF
 		gscale = ggui->style.gscale;
 	}
 
-	u32 idx = win->mesh.verticies.size;
+	u32 idx = win->mesh.vertices.size;
 	f32 size = ggui->style.default_carrot_size.x * gscale;
 
 	if(active) {
-		win->mesh.verticies.push(V2(pos.x 		 		, pos.y));
-		win->mesh.verticies.push(V2(pos.x + size 		, pos.y));
-		win->mesh.verticies.push(V2(pos.x + size / 2.0f, pos.y + size));
+		win->mesh.vertices.push(V2(pos.x 		 		, pos.y));
+		win->mesh.vertices.push(V2(pos.x + size 		, pos.y));
+		win->mesh.vertices.push(V2(pos.x + size / 2.0f, pos.y + size));
 	} else {
-		win->mesh.verticies.push(V2(pos.x 		 , pos.y));
-		win->mesh.verticies.push(V2(pos.x 		 , pos.y + size));
-		win->mesh.verticies.push(V2(pos.x + size, pos.y + size / 2.0f));
+		win->mesh.vertices.push(V2(pos.x 		 , pos.y));
+		win->mesh.vertices.push(V2(pos.x 		 , pos.y + size));
+		win->mesh.vertices.push(V2(pos.x + size, pos.y + size / 2.0f));
 	}
 
 	colorf cf = color_to_f(V4b(ggui->style.wid_back, 255));
 	DO(3) win->mesh.colors.push(cf);
-
-	DO(3) win->mesh.texCoords.push(V3(0.0f, 0.0f, 0.0f));
 
 	win->mesh.elements.push(V3(idx, idx + 1, idx + 2));
 }
@@ -484,7 +477,7 @@ void gui_text(string text, color c, f32 point) { PROF
 	v2 pos = win->current_offset();
 
 	if(!point) point = win->default_point;
-	win->mesh.push_text_line(win->font->font, text, pos, point * gscale, c);
+	// win->mesh.push_text_line(win->font->font, text, pos, point * gscale, c);
 
 	gui_push_offset(V2(0.0f, point));
 }
@@ -496,17 +489,15 @@ void render_windowhead(gui_window_state* win) { PROF
 		gscale = ggui->style.gscale;
 	}
 
-	u32 idx = win->mesh.verticies.size;
+	u32 idx = win->mesh.vertices.size;
 	r2 r = mult(win->rect, gscale);
 	f32 pt = ggui->style.font + ggui->style.title_padding;
 	pt *= gscale;
 
-	win->mesh.verticies.push(V2(r.x + r.w - 10.0f, r.y));
-	win->mesh.verticies.push(V2(r.x + 10.0f, r.y));
-	win->mesh.verticies.push(V2(r.x, r.y + pt));
-	win->mesh.verticies.push(V2(r.x + r.w, r.y + pt));
-
-	DO(4) win->mesh.texCoords.push(V3f(0,0,0));
+	win->mesh.vertices.push(V2(r.x + r.w - 10.0f, r.y));
+	win->mesh.vertices.push(V2(r.x + 10.0f, r.y));
+	win->mesh.vertices.push(V2(r.x, r.y + pt));
+	win->mesh.vertices.push(V2(r.x + r.w, r.y + pt));
 
 	colorf topf = color_to_f(V4b(ggui->style.win_top, 255));
 	DO(4) win->mesh.colors.push(topf);
@@ -522,19 +513,17 @@ void render_windowbody(gui_window_state* win) { PROF
 		gscale = ggui->style.gscale;
 	}
 
-	u32 idx = win->mesh.verticies.size;
+	u32 idx = win->mesh.vertices.size;
 	r2 r = mult(win->rect, gscale);
 	f32 pt = ggui->style.font + ggui->style.title_padding;
 	pt *= gscale;
 
 	if((win->flags & (u16)window_flags::noresize) == (u16)window_flags::noresize) {
 
-		win->mesh.verticies.push(V2(r.x, r.y + pt));
-		win->mesh.verticies.push(V2(r.x, r.y + r.h));
-		win->mesh.verticies.push(V2(r.x + r.w, r.y + r.h));
-		win->mesh.verticies.push(V2(r.x + r.w, r.y + pt));
-
-		DO(4) win->mesh.texCoords.push(V3f(0,0,0));
+		win->mesh.vertices.push(V2(r.x, r.y + pt));
+		win->mesh.vertices.push(V2(r.x, r.y + r.h));
+		win->mesh.vertices.push(V2(r.x + r.w, r.y + r.h));
+		win->mesh.vertices.push(V2(r.x + r.w, r.y + pt));
 
 		colorf cf = color_to_f(V4b(ggui->style.win_back, win->opacity * 255.0f));
 
@@ -547,13 +536,11 @@ void render_windowbody(gui_window_state* win) { PROF
 
 		v2 resize_tab = clamp(mult(r.wh, ggui->style.resize_tab), 5.0f, 25.0f);
 
-		win->mesh.verticies.push(V2(r.x, r.y + pt));
-		win->mesh.verticies.push(V2(r.x, r.y + r.h));
-		win->mesh.verticies.push(V2(r.x + r.w - resize_tab.x, r.y + r.h));
-		win->mesh.verticies.push(V2(r.x + r.w, r.y + r.h - resize_tab.y));
-		win->mesh.verticies.push(V2(r.x + r.w, r.y + pt));
-
-		DO(5) win->mesh.texCoords.push(V3f(0,0,0));
+		win->mesh.vertices.push(V2(r.x, r.y + pt));
+		win->mesh.vertices.push(V2(r.x, r.y + r.h));
+		win->mesh.vertices.push(V2(r.x + r.w - resize_tab.x, r.y + r.h));
+		win->mesh.vertices.push(V2(r.x + r.w, r.y + r.h - resize_tab.y));
+		win->mesh.vertices.push(V2(r.x + r.w, r.y + pt));
 
 		colorf cf = color_to_f(V4b(ggui->style.win_back, win->opacity * 255.0f));
 

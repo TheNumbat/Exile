@@ -101,10 +101,10 @@ EXPORT game_state* start_up(platform_api* api) {
 
 EXPORT bool main_loop(game_state* state) {
 
-	dbg_msg m;
-	m.type = dbg_msg_type::begin_frame;
-	m.context = CONTEXT;
-	POST_MSG(m);
+	dbg_msg msg;
+	msg.type = dbg_msg_type::begin_frame;
+	msg.context = CONTEXT;
+	POST_MSG(msg);
 
 	glUseProgram(0); // why tho?? https://twitter.com/fohx/status/619887799462985729?lang=en
 	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
@@ -112,13 +112,22 @@ EXPORT bool main_loop(game_state* state) {
 
 	PUSH_ALLOC(&state->transient_arena) {
 
+		mesh_2d_col m = mesh_2d_col::make();
+		m.push_rect(R2(50.0f, 50.0f, 200.0f, 200.0f), GREEN);
+		render_command rc = render_command::make(render_command_type::mesh_2d_col, &m);
+		render_command_list rcl = render_command_list::make();
+		rcl.add_command(rc);
+		rcl.proj = ortho(0, (f32)state->window.w, (f32)state->window.h, 0, -1, 1);
+		state->ogl.execute_command_list(&state->window, &rcl);
+
+
 		gui_input_state input = run_events(state); 
 		
-		state->gui.begin_frame(input);
+		// state->gui.begin_frame(input);
 
-		state->dbg.UI();
+		// state->dbg.UI();
 
-		state->gui.end_frame(&state->ogl);
+		// state->gui.end_frame(&state->ogl);
 
 	} POP_ALLOC();
 	RESET_ARENA(&state->transient_arena);
@@ -132,8 +141,8 @@ EXPORT bool main_loop(game_state* state) {
 	}
 #endif
 
-	m.type = dbg_msg_type::end_frame;
-	POST_MSG(m);
+	msg.type = dbg_msg_type::end_frame;
+	POST_MSG(msg);
 	state->dbg.collate();
 
 	return state->running;

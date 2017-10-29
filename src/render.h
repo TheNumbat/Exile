@@ -1,44 +1,72 @@
 
 #pragma once
 
-typedef u32 shader_program_id;
-typedef u32 texture_id;
-typedef u32 context_id;
+typedef i32 texture_id;
 
-enum class render_command_type : u8 {
+enum class render_command_type : u32 {
 	none,
-	mesh_2d,
-	mesh_3d,
+	mesh_2d_col,
+	mesh_2d_tex,
+	mesh_2d_tex_col,
+	mesh_3d_tex
 };
 
-struct mesh_2d {
-	vector<v2>		verticies;	// x y 
-	vector<v3>		texCoords;	// u v
-	vector<colorf>	colors;		// r g b a (clamp f)
+struct mesh_2d_col {
+	vector<v2>		vertices;	// x y 
+	vector<colorf>	colors;		// r g b a
 	vector<uv3> 	elements;
 	allocator* alloc = null;
 
 ///////////////////////////////////////////////////////////////////////////////
 
-	static mesh_2d make(u32 verts = 32, allocator* alloc = null);
+	static mesh_2d_col make(u32 verts = 32, allocator* alloc = null);
 	void destroy();
-	
 	void clear();
 
-	f32 push_text_line(asset* font, string text_utf8, v2 pos, f32 point = 0.0f, color c = V4b(255, 255, 255, 255)); 
 	void push_rect(r2 rect, color c);
 	void push_cutrect(r2 r, f32 round, color c);
 };
 
-struct mesh_3d {
-	vector<v3>  verticies;	// x y z
-	vector<v2>  texCoords; 	// u v (layer)
-	// TODO(max): indices
+struct mesh_2d_tex {
+	vector<v2>		vertices;	// x y 
+	vector<v2>		texCoords;	// u v
+	vector<uv3> 	elements;
 	allocator* alloc = null;
 
 ///////////////////////////////////////////////////////////////////////////////
 
-	static mesh_3d make(u32 verts = 32, allocator* alloc = null);
+	static mesh_2d_tex make(u32 verts = 32, allocator* alloc = null);
+	void destroy();
+	void clear();
+};
+
+struct mesh_2d_tex_col {
+	vector<v2>		vertices;	// x y 
+	vector<v2>		texCoords;	// u v
+	vector<colorf> 	colors;
+	vector<uv3> 	elements;
+	allocator* alloc = null;
+
+///////////////////////////////////////////////////////////////////////////////
+
+	static mesh_2d_tex_col make(u32 verts = 32, allocator* alloc = null);
+	void destroy();
+	void clear();
+
+	void push_rect(r2 rect, color c);
+	void push_cutrect(r2 r, f32 round, color c);
+	f32 push_text_line(asset* font, string text_utf8, v2 pos, f32 point = 0.0f, color c = V4b(255, 255, 255, 255)); 
+};
+
+struct mesh_3d_tex {
+	vector<v3>  vertices;	// x y z
+	vector<v2>  texCoords; 	// u v
+	vector<uv3> elements;
+	allocator* alloc = null;
+
+///////////////////////////////////////////////////////////////////////////////
+
+	static mesh_3d_tex make(u32 verts = 32, allocator* alloc = null);
 	void destroy();
 	
 	void clear();
@@ -46,16 +74,15 @@ struct mesh_3d {
 
 struct render_command {
 	render_command_type cmd 	= render_command_type::none;
-	shader_program_id 	shader 	= 0;
-	texture_id 			texture = 0;
-	context_id 			context = 0;
+	texture_id 			texture = -1;
 	m4 model;
-	u32 elements = 0;
 	u32 sort_key = 0;
 	union {
 		void* data = null;
-		mesh_3d*	m3d;
-		mesh_2d* 	m2d;
+		mesh_3d_tex* 	 m3dt;
+		mesh_2d_col*	 m2dc;
+		mesh_2d_tex* 	 m2dt;
+		mesh_2d_tex_col* m2dtc;
 	};
 
 ///////////////////////////////////////////////////////////////////////////////

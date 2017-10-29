@@ -25,7 +25,10 @@ all includes:
 	#include <typeinfo>
 
 working:
-	Profiler statistics
+	Fixing OpenGL system
+	Move geometry rendering into meshes (out of GUI)
+	GUI window layout - scroll, clip, multiple meshes, text layout
+
 	Profiler rendering
 	SDL platform layer
 

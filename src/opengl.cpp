@@ -124,22 +124,31 @@ void ogl_manager::try_reload_programs() { PROF
 			LOG_INFO_F("Reloaded program % with files %, %", it->key, it->value.vertex.path, it->value.fragment.path);
 		}
 	}
+	dbg_shader.refresh();
 }
+
+#define REGISTER_COMMAND(cmd) ret.add_program(render_command_type::cmd, string::literal("shaders/" #cmd ".v"), string::literal("shaders/" #cmd ".f"), FPTR(uniforms_##cmd)); \
+							  ret.add_draw_context(render_command_type::cmd, FPTR(attribs_##cmd), FPTR(buffers_##cmd), FPTR(run_##cmd));
 
 ogl_manager ogl_manager::make(allocator* a) { PROF
 
 	ogl_manager ret;
 
 	ret.alloc = a;
-	ret.programs = map<shader_program_id, shader_program>::make(8, a);
+	ret.programs = map<render_command_type, shader_program>::make(8, a);
 	ret.textures = map<texture_id, texture>::make(32, a);
-	ret.contexts = map<context_id, ogl_draw_context>::make(32, a);
+	ret.contexts = map<render_command_type, draw_context>::make(32, a);
 
 	ret.version 	= string::from_c_str((char*)glGetString(gl_info::version));
 	ret.renderer 	= string::from_c_str((char*)glGetString(gl_info::renderer));
 	ret.vendor  	= string::from_c_str((char*)glGetString(gl_info::vendor));
 
-	ret.dbg_shader = ret.add_program(string::literal("shaders/dbg.v"), string::literal("shaders/dbg.f"), FPTR(ogl_uniforms_dbg));
+	REGISTER_COMMAND(mesh_2d_col);
+	// REGISTER_COMMAND(mesh_2d_tex);
+	// REGISTER_COMMAND(mesh_2d_tex_col);
+	REGISTER_COMMAND(mesh_3d_tex);
+
+	ret.dbg_shader = shader_program::make(string::literal("shaders/dbg.v"),string::literal("shaders/dbg.f"),FPTR(uniforms_dbg),a);
 
 	LOG_INFO_F("GL version : %", ret.version);
 	LOG_INFO_F("GL renderer: %", ret.renderer);
@@ -161,25 +170,23 @@ void ogl_manager::destroy() { PROF
 		glDeleteBuffers(8, it->value.vbos);
 	}
 
+	dbg_shader.destroy();
+
 	programs.destroy();
 	textures.destroy();
 	contexts.destroy();
-}
+} 
 
-shader_program_id ogl_manager::add_program(string v_path, string f_path, _FPTR* uniforms) { PROF
+void ogl_manager::add_program(render_command_type type, string v_path, string f_path, _FPTR* uniforms) { PROF
 
 	shader_program p = shader_program::make(v_path, f_path, uniforms, alloc);
-	p.id = next_shader_id;
 
-	programs.insert(next_shader_id, p);
+	programs.insert(type, p);
 
 	LOG_DEBUG_F("Loaded shader from % and %", v_path, f_path);
-
-	next_shader_id++;
-	return next_shader_id - 1;
 }
 
-shader_program* ogl_manager::select_program(shader_program_id id) { PROF
+shader_program* ogl_manager::select_program(render_command_type id) { PROF
 
 	shader_program* p = programs.try_get(id);
 
@@ -253,6 +260,8 @@ void ogl_manager::destroy_texture(texture_id id) { PROF
 }
 
 texture* ogl_manager::select_texture(texture_id id) { PROF
+
+	if(id == -1) return null;
 
 	texture* t = textures.try_get(id);
 
@@ -362,26 +371,25 @@ void texture::destroy() { PROF
 	glDeleteTextures(1, &handle);
 }
 
-context_id ogl_manager::add_draw_context(void (*set_atribs)(ogl_draw_context* dc)) { PROF
+void ogl_manager::add_draw_context(render_command_type type, _FPTR* attribs, _FPTR* buffers, _FPTR* run) { PROF
 
-	ogl_draw_context d;
+	draw_context d;
 	glGenVertexArrays(1, &d.vao);
 	glBindVertexArray(d.vao);
 	glGenBuffers(8, d.vbos);
-	d.id = next_context_id;
 
-	set_atribs(&d);
+	d.set_attribs.set(attribs);
+	d.set_buffers.set(buffers);
+	d.run.set(run);
 
-	contexts.insert(next_context_id, d);
+	d.set_attribs(&d);
 
-	next_context_id++;
-
-	return next_context_id - 1;
+	contexts.insert(type, d);
 }
 
-ogl_draw_context* ogl_manager::select_draw_context(context_id id) { PROF
+draw_context* ogl_manager::select_draw_context(render_command_type id) { PROF
 
-	ogl_draw_context* d = contexts.try_get(id);
+	draw_context* d = contexts.try_get(id);
 
 	if(!d) {
 		LOG_ERR_F("Failed to retrieve context %", id);
@@ -393,114 +401,29 @@ ogl_draw_context* ogl_manager::select_draw_context(context_id id) { PROF
 	return d;
 }
 
-void ogl_mesh_3d_attribs(ogl_draw_context* dc) { PROF
-
-	glBindBuffer(gl_buf_target::array, dc->vbos[0]);
-	glVertexAttribPointer(0, 3, gl_vert_attrib_type::_float, gl_bool::_false, 3 * sizeof(f32), (void*)0);
-	glBindBuffer(gl_buf_target::array, dc->vbos[1]);
-	glVertexAttribPointer(1, 2, gl_vert_attrib_type::_float, gl_bool::_false, 2 * sizeof(f32), (void*)0);
-
-	glEnableVertexAttribArray(0);
-	glEnableVertexAttribArray(1);
-}
-
-void ogl_manager::send_mesh_3d(mesh_3d* m, context_id id) { PROF
-
-	ogl_draw_context* dc = select_draw_context(id);
-
-	glBindBuffer(gl_buf_target::array, dc->vbos[0]);
-	glBufferData(gl_buf_target::array, m->verticies.size * sizeof(v3), m->verticies.size ? m->verticies.memory : null, gl_buf_usage::stream_draw);
-	glBindBuffer(gl_buf_target::array, dc->vbos[1]);
-	glBufferData(gl_buf_target::array, m->texCoords.size * sizeof(v2), m->texCoords.size ? m->texCoords.memory : null, gl_buf_usage::stream_draw);
-}
-
-CALLBACK void ogl_uniforms_3dtex(shader_program* prog, render_command* rc, render_command_list* rcl) { PROF
-
-	GLint loc = glGetUniformLocation(prog->handle, "transform");
-
-	m4 transform = rcl->proj * rcl->view * rc->model;
-
-	glUniformMatrix4fv(loc, 1, gl_bool::_false, transform.v);
-}
-
-void ogl_mesh_2d_attribs(ogl_draw_context* dc) { PROF
-
-	glBindBuffer(gl_buf_target::array, dc->vbos[0]);
-	glVertexAttribPointer(0, 2, gl_vert_attrib_type::_float, gl_bool::_false, 2 * sizeof(f32), (void*)0);
-	glBindBuffer(gl_buf_target::array, dc->vbos[1]);
-	glVertexAttribPointer(1, 3, gl_vert_attrib_type::_float, gl_bool::_false, 3 * sizeof(f32), (void*)0);
-	glBindBuffer(gl_buf_target::array, dc->vbos[2]);
-	glVertexAttribPointer(2, 4, gl_vert_attrib_type::_float, gl_bool::_false, 4 * sizeof(f32), (void*)0);
-	glBindBuffer(gl_buf_target::element_array, dc->vbos[3]);
-
-	glEnableVertexAttribArray(0);
-	glEnableVertexAttribArray(1);
-	glEnableVertexAttribArray(2);
-}
-
-void ogl_manager::send_mesh_2d(mesh_2d* m, context_id id) { PROF
-
-	ogl_draw_context* dc = select_draw_context(id);
-
-	glBindBuffer(gl_buf_target::array, dc->vbos[0]);
-	glBufferData(gl_buf_target::array, m->verticies.size * sizeof(v2), m->verticies.size ? m->verticies.memory : null, gl_buf_usage::stream_draw);
-	glBindBuffer(gl_buf_target::array, dc->vbos[1]);
-	glBufferData(gl_buf_target::array, m->texCoords.size * sizeof(v3), m->texCoords.size ? m->texCoords.memory : null, gl_buf_usage::stream_draw);
-	glBindBuffer(gl_buf_target::array, dc->vbos[2]);
-	glBufferData(gl_buf_target::array, m->colors.size * sizeof(v4), m->colors.size ? m->colors.memory : null, gl_buf_usage::stream_draw);
-	glBindBuffer(gl_buf_target::element_array, dc->vbos[3]);
-	glBufferData(gl_buf_target::element_array, m->elements.size * sizeof(uv3), m->elements.size ? m->elements.memory : null, gl_buf_usage::stream_draw);
-}
-
-CALLBACK void ogl_uniforms_gui(shader_program* prog, render_command* rc, render_command_list* rcl) { PROF
-
-	GLint loc = glGetUniformLocation(prog->handle, "transform");
-
-	m4 transform = rcl->proj * rcl->view * rc->model;
-
-	glUniformMatrix4fv(loc, 1, gl_bool::_false, transform.v);
-}
-
-void ogl_set_uniforms(shader_program* prog, render_command* rc, render_command_list* rcl) { PROF
-
-	prog->set_uniforms(prog, rc, rcl);
-}
-
 void ogl_manager::execute_command_list(platform_window* win, render_command_list* rcl) { PROF
 
 	glEnable(gl_capability::blend);
 	glBlendFunc(gl_blend_factor::one, gl_blend_factor::one_minus_src_alpha);
 
-	for(u32 i = 0; i < rcl->commands.size; i++) {
-
-		render_command* cmd = rcl->commands.get(i);
-
-		select_draw_context(cmd->context);
-		select_texture(cmd->texture);
-		shader_program* prog = select_program(cmd->shader);
-
-		ogl_set_uniforms(prog, cmd, rcl);
+	FORVEC(cmd, rcl->commands) {
 
 		glViewport(0, 0, win->w, win->h);
 
-		if(cmd->cmd == render_command_type::mesh_2d) {
+		cmd_set_settings(cmd);
 
-			// TODO(max): we don't want to send every frame, do we?
-			send_mesh_2d(cmd->m2d, cmd->context);
+		draw_context* d = select_draw_context(cmd->cmd);
+		/*texture* t =*/ select_texture(cmd->texture);
+		shader_program* s = select_program(cmd->cmd);
 
-			glDisable(gl_capability::depth_test);
-
-			glDrawElements(gl_draw_mode::triangles, cmd->elements * 3, gl_index_type::unsigned_int, 0);
-
-		} else if (cmd->cmd == render_command_type::mesh_3d) {
-
-			send_mesh_3d(cmd->m3d, cmd->context);
-
-			glEnable(gl_capability::depth_test);
-
-			glDrawArrays(gl_draw_mode::triangles, 0, cmd->m3d->verticies.size);
-		}
+		d->set_buffers(d, cmd);
+		s->set_uniforms(s, cmd, rcl);
+		d->run(cmd);
 	}
+}
+
+void ogl_manager::cmd_set_settings(render_command* cmd) {
+
 }
 
 // temporary and inefficient texture render
@@ -530,7 +453,7 @@ void ogl_manager::dbg_render_texture_fullscreen(platform_window* win, texture_id
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);
 
-	select_program(dbg_shader);
+	glUseProgram(dbg_shader.handle);
 	select_texture(id);
 
 	glViewport(0, 0, win->w, win->h);
@@ -545,7 +468,7 @@ void ogl_manager::dbg_render_texture_fullscreen(platform_window* win, texture_id
 	glDeleteVertexArrays(1, &VAO);
 }
 
-void debug_proc(gl_debug_source glsource, gl_debug_type gltype, GLuint id, gl_debug_severity severity, GLsizei length, const GLchar* glmessage, const void* up) { PROF
+void debug_proc(gl_debug_source glsource, gl_debug_type gltype, GLuint id, gl_debug_severity severity, GLsizei length, const GLchar* glmessage, const void* up) {
 
 	string message = string::from_c_str((char*)glmessage);
 	string source, type;

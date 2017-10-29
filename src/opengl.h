@@ -35,9 +35,7 @@ glBufferData_t				glBufferData;
 glVertexAttribPointer_t		glVertexAttribPointer;
 glEnableVertexAttribArray_t glEnableVertexAttribArray;
 
-typedef u32 shader_program_id;
-typedef u32 texture_id;
-typedef u32 context_id; // VAO
+typedef i32 texture_id;
 
 struct shader_source {
 	string path;
@@ -54,7 +52,6 @@ struct shader_source {
 };
 
 struct shader_program {
-	shader_program_id id = 0;
 	GLuint handle = 0;
 	shader_source vertex;
 	shader_source fragment;
@@ -92,23 +89,23 @@ struct texture {
 	void load_bitmap_from_font(asset* font);
 };
 
-struct ogl_draw_context {
-	context_id id  = 0;
+struct draw_context {
 	GLuint vao     = 0;
 	GLuint vbos[8] = {};
+	func_ptr<void, draw_context*, render_command*> set_buffers;
+	func_ptr<void, render_command*> run;
+	func_ptr<void, draw_context*> set_attribs;
 };
 
 struct ogl_manager {
-	map<shader_program_id, shader_program> programs; // TODO(max): Slot maps?
-	map<texture_id, texture> 			   textures;
-	map<context_id, ogl_draw_context> 	   contexts;
-	
-	shader_program_id 	dbg_shader = 0;
+	map<texture_id, texture> 			   		textures;
+	map<render_command_type, shader_program> 	programs;
+	map<render_command_type, draw_context> 		contexts;
 
-	shader_program_id 	next_shader_id = 1;
 	texture_id 			next_texture_id = 1;
-	context_id 			next_context_id = 1;
 	
+	shader_program dbg_shader;
+
 	allocator* alloc = null;
 	string version;
 	string renderer;
@@ -119,9 +116,12 @@ struct ogl_manager {
 	static ogl_manager make(allocator* a);
 	void destroy();
 
-	shader_program_id add_program(string v_path, string f_path, _FPTR* uniforms);
-	shader_program* select_program(shader_program_id id);
+	void add_program(render_command_type type, string v, string f, _FPTR* uniforms);
+	shader_program* select_program(render_command_type type);
 	void try_reload_programs();
+
+	void add_draw_context(render_command_type type, _FPTR* attribs, _FPTR* buffers, _FPTR* run);
+	draw_context* select_draw_context(render_command_type type);
 
 	texture_id add_texture(asset_store* as, string name, texture_wrap wrap = texture_wrap::repeat, bool pixelated = false);
 	texture* select_texture(texture_id id);
@@ -129,24 +129,13 @@ struct ogl_manager {
 	texture_id add_texture_from_font(asset* font, texture_wrap wrap = texture_wrap::repeat, bool pixelated = false);
 	void destroy_texture(texture_id id);
 
-	context_id add_draw_context(void (*set_atribs)(ogl_draw_context* dc));
-	ogl_draw_context* select_draw_context(context_id id);
-
 	void dbg_render_texture_fullscreen(platform_window* win, texture_id id);
 	void execute_command_list(platform_window* win, render_command_list* rcl);
 
-	void send_mesh_3d(mesh_3d* m, context_id id);
-	void send_mesh_2d(mesh_2d* m, context_id id);
+	void cmd_set_settings(render_command* cmd);
 };
 
 void ogl_load_global_funcs();
-void ogl_set_uniforms(shader_program* prog, render_command* rc, render_command_list* rcl);
 
 void debug_proc(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userPointer);
-
-void ogl_mesh_2d_attribs(ogl_draw_context* dc);
-void ogl_mesh_3d_attribs(ogl_draw_context* dc);
-
-CALLBACK void ogl_uniforms_gui(shader_program* prog, render_command* rc, render_command_list* rcl);
-CALLBACK void ogl_uniforms_dbg(shader_program* prog, render_command* rc, render_command_list* rcl) {};
-CALLBACK void ogl_uniforms_3dtex(shader_program* prog, render_command* rc, render_command_list* rcl);
+CALLBACK void uniforms_dbg(shader_program* prog, render_command* rc, render_command_list* rcl) {};
