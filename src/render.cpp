@@ -259,6 +259,41 @@ f32 mesh_2d_tex_col::push_text_line(asset* font, string text_utf8, v2 pos, f32 p
 	return scale * font->font.linedist;
 }
 
+void mesh_3d_tex::push_cube(v3 pos, f32 len) {
+
+	f32 len2 = len / 2.0f;
+	vertices.push(pos + V3( len2,  len2,  len2));
+	vertices.push(pos + V3(-len2,  len2,  len2));
+	vertices.push(pos + V3( len2, -len2,  len2));
+	vertices.push(pos + V3( len2,  len2, -len2));
+	vertices.push(pos + V3(-len2, -len2,  len2));
+	vertices.push(pos + V3( len2, -len2, -len2));
+	vertices.push(pos + V3(-len2,  len2, -len2));
+	vertices.push(pos + V3(-len2, -len2, -len2));
+
+	texCoords.push(V2(0.0f, 0.0f));
+	texCoords.push(V2(1.0f, 0.0f));
+	texCoords.push(V2(0.0f, 1.0f));
+	texCoords.push(V2(1.0f, 0.0f));
+	texCoords.push(V2(1.0f, 1.0f));
+	texCoords.push(V2(0.0f, 1.0f));
+	texCoords.push(V2(1.0f, 0.0f));
+	texCoords.push(V2(0.0f, 0.0f));	
+
+	elements.push(V3u(0,2,5));
+	elements.push(V3u(0,3,5));
+	elements.push(V3u(0,3,6));
+	elements.push(V3u(0,1,6));
+	elements.push(V3u(1,4,7));
+	elements.push(V3u(1,6,7));
+	elements.push(V3u(4,2,5));
+	elements.push(V3u(4,7,5));
+	elements.push(V3u(7,5,3));
+	elements.push(V3u(7,6,3));
+	elements.push(V3u(0,2,4));
+	elements.push(V3u(0,1,4));
+}
+
 v2 size_text(asset* font, string text_utf8, f32 point) { PROF
 
 	v2 ret;

@@ -68,8 +68,9 @@ struct mesh_3d_tex {
 
 	static mesh_3d_tex make(u32 verts = 32, allocator* alloc = null);
 	void destroy();
-	
 	void clear();
+
+	void push_cube(v3 pos, f32 len);
 };
 
 struct render_command {

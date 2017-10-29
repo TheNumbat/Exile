@@ -30,3 +30,7 @@ font {
 	file : mono.ttf,
 	range : 32, 126,
 }
+image {
+	name : numbat,
+	file : numbat.png,
+}

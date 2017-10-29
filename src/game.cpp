@@ -95,6 +95,8 @@ EXPORT game_state* start_up(platform_api* api) {
 	POST_MSG(m);
 	state->dbg.collate();
 
+	state->numbat_tex = state->ogl.add_texture(&state->default_store, string::literal("numbat"));
+
 	state->running = true;
 	return state;
 }
@@ -106,28 +108,31 @@ EXPORT bool main_loop(game_state* state) {
 	msg.context = CONTEXT;
 	POST_MSG(msg);
 
-	glUseProgram(0); // why tho?? https://twitter.com/fohx/status/619887799462985729?lang=en
 	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 	glClear(gl_clear((GLbitfield)gl_clear::color_buffer_bit | (GLbitfield)gl_clear::depth_buffer_bit));
 
 	PUSH_ALLOC(&state->transient_arena) {
 
-		mesh_2d_col m = mesh_2d_col::make();
-		m.push_rect(R2(50.0f, 50.0f, 200.0f, 200.0f), GREEN);
-		render_command rc = render_command::make(render_command_type::mesh_2d_col, &m);
+		mesh_3d_tex m = mesh_3d_tex::make();
+		m.push_cube(V3f(0,0,0), 1.0f);
+
+		render_command rc = render_command::make(render_command_type::mesh_3d_tex, &m);
+		rc.texture = state->numbat_tex;
 		render_command_list rcl = render_command_list::make();
 		rcl.add_command(rc);
-		rcl.proj = ortho(0, (f32)state->window.w, (f32)state->window.h, 0, -1, 1);
-		state->ogl.execute_command_list(&state->window, &rcl);
+		// rcl.proj = proj(60.0f, (f32)state->window.w/(f32)state->window.h, 0.1f, 10.0f);
+		rcl.proj = ortho(-2,2,-2,2,-2,2);
 
+		// rcl.view = translate(V3(-2.0f, -2.0f, 0.0f));
+		state->ogl.execute_command_list(&state->window, &rcl);
 
 		gui_input_state input = run_events(state); 
 		
-		// state->gui.begin_frame(input);
+		state->gui.begin_frame(input);
 
-		// state->dbg.UI();
+		state->dbg.UI();
 
-		// state->gui.end_frame(&state->ogl);
+		state->gui.end_frame(&state->ogl);
 
 	} POP_ALLOC();
 	RESET_ARENA(&state->transient_arena);

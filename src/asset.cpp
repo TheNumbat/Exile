@@ -186,7 +186,7 @@ void asset_store::load(string file) { PROF
 				break;
 			}
 
-			LOG_DEBUG_F("Loaded asset % of type % from store %", a.name, a.type, file);
+			LOG_INFO_F("Loaded asset % of type % from store %", a.name, a.type, file);
 		}
 
 	} POP_ALLOC();

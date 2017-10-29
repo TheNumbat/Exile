@@ -51,7 +51,7 @@ bool shader_source::refresh() { PROF
 	
 	if(global_api->platform_test_file_written(&last_attrib, &new_attrib)) {
 
-		destroy();
+		source.destroy(alloc);
 		load();
 
 		return true;
@@ -359,7 +359,7 @@ void texture::load_bitmap(asset_store* as, string name) { PROF
 
 	glBindTextureUnit(0, handle);
 
-	glTexImage2D(gl_tex_target::_2D, 0, gl_tex_format::rgba8, a->bitmap.width, a->bitmap.height, 0, gl_pixel_data_format::red, gl_pixel_data_type::unsigned_byte, a->mem);
+	glTexImage2D(gl_tex_target::_2D, 0, gl_tex_format::rgba8, a->bitmap.width, a->bitmap.height, 0, gl_pixel_data_format::rgba, gl_pixel_data_type::unsigned_byte, a->mem);
 	
 	glGenerateMipmap(gl_tex_target::_2D);
 
@@ -413,11 +413,12 @@ void ogl_manager::execute_command_list(platform_window* win, render_command_list
 		cmd_set_settings(cmd);
 
 		draw_context* d = select_draw_context(cmd->cmd);
-		/*texture* t =*/ select_texture(cmd->texture);
 		shader_program* s = select_program(cmd->cmd);
 
 		d->set_buffers(d, cmd);
 		s->set_uniforms(s, cmd, rcl);
+
+		select_texture(cmd->texture);
 		d->run(cmd);
 	}
 }
@@ -429,7 +430,7 @@ void ogl_manager::cmd_set_settings(render_command* cmd) {
 // temporary and inefficient texture render
 void ogl_manager::dbg_render_texture_fullscreen(platform_window* win, texture_id id) { PROF
 
-	GLfloat data[] = {
+	f32 data[] = {
 		-1.0f, -1.0f,	0.0f, 0.0f,
 		-1.0f,  1.0f, 	0.0f, 1.0f,
 		 1.0f, -1.0f,	1.0f, 0.0f,
@@ -447,8 +448,8 @@ void ogl_manager::dbg_render_texture_fullscreen(platform_window* win, texture_id
 
 	glBufferData(gl_buf_target::array, sizeof(data), data, gl_buf_usage::static_draw);
 
-	glVertexAttribPointer(0, 2, gl_vert_attrib_type::_float, gl_bool::_false, 4 * sizeof(GLfloat), (void*)0);	
-	glVertexAttribPointer(1, 2, gl_vert_attrib_type::_float, gl_bool::_false, 4 * sizeof(GLfloat), (void*)(2 * sizeof(GLfloat)));
+	glVertexAttribPointer(0, 2, gl_vert_attrib_type::_float, gl_bool::_false, 4 * sizeof(f32), (void*)0);	
+	glVertexAttribPointer(1, 2, gl_vert_attrib_type::_float, gl_bool::_false, 4 * sizeof(f32), (void*)(2 * sizeof(f32)));
 
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);

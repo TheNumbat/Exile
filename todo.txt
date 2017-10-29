@@ -27,6 +27,7 @@ all includes:
 working:
 	Fixing OpenGL system
 	Move geometry rendering into meshes (out of GUI)
+		Move font stuff into new file - sizing, etc.
 	GUI window layout - scroll, clip, multiple meshes, text layout
 
 	Profiler rendering

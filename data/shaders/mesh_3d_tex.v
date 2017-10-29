@@ -9,7 +9,6 @@ uniform mat4 transform;
 out vec2 uv_f;
 
 void main() {
-
 	uv_f = uv_v;
-	gl_Position = transform * vec4(pos.x, pos.y, pos.z, 1.0);
+	gl_Position = transform * vec4(pos, 1.0);
 }

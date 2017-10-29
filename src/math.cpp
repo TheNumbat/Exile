@@ -446,21 +446,20 @@ m4 ortho(f32 left, f32 right, f32 bot, f32 top, f32 _near, f32 _far) { PROF
     ret.f[0][0] = 2.0f / (right - left);
     ret.f[1][1] = 2.0f / (top - bot);
     ret.f[2][2] = 2.0f / (_near - _far);
-    ret.f[3][3] = 1.0f;
     ret.f[3][0] = (-left - right) / (right - left);
     ret.f[3][1] = (-bot - top)  / (top - bot);
     ret.f[3][2] = - _near / (_far - _near);
     return ret;
 }
 
-m4 proj(f32 fov, f32 ar, f32 _near, f32 _far) { PROF
-    m4 ret = M4D(1.0f);
+m4 proj(f32 fov, f32 ar, f32 near, f32 far) { PROF
+    m4 ret;
     f32 tan_over_2 = tanf(RADIANS(fov) / 2.0f);
-    ret.f[1][1] = 1.0f / tan_over_2;
-    ret.f[0][0] = ret.f[1][1] / ar;
-    ret.f[2][2] = -_far / (_far - _near);
-    ret.f[2][3] = -1.0f;
-    ret.f[3][2] = 2.0f * (-_far * _near) / (_far - _near);
+    ret.f[0][0] = 1.0f / tan_over_2;
+    ret.f[1][1] = ar / tan_over_2;
+    ret.f[2][3] = -1.0f;    
+    ret.f[2][2] = (near + far) / (near - far);
+    ret.f[3][2] = (2.0f * far * near) / (near - far);
     ret.f[3][3] = 0.0f;
     return ret;
 }
