@@ -379,7 +379,7 @@ m4 sub(m4 l, m4 r) { PROF
 	return ret;
 }
 
-m4 mult(m4 l, m4 r) { PROF
+m4 mult(m4 r, m4 l) { PROF
     m4 ret;
     __m128 row1 = _mm_load_ps(&r.v[0]);
     __m128 row2 = _mm_load_ps(&r.v[4]);
@@ -441,22 +441,22 @@ m4 transpose(m4 m) { PROF
 	return ret;
 }
 
-m4 ortho(f32 left, f32 right, f32 bot, f32 top, f32 _near, f32 _far) { PROF
+m4 ortho(f32 left, f32 right, f32 bot, f32 top, f32 near, f32 far) { PROF
     m4 ret;
     ret.f[0][0] = 2.0f / (right - left);
     ret.f[1][1] = 2.0f / (top - bot);
-    ret.f[2][2] = 2.0f / (_near - _far);
+    ret.f[2][2] = 2.0f / (near - far);
     ret.f[3][0] = (-left - right) / (right - left);
     ret.f[3][1] = (-bot - top)  / (top - bot);
-    ret.f[3][2] = - _near / (_far - _near);
+    ret.f[3][2] = - near / (far - near);
     return ret;
 }
 
 m4 proj(f32 fov, f32 ar, f32 near, f32 far) { PROF
     m4 ret;
     f32 tan_over_2 = tanf(RADIANS(fov) / 2.0f);
-    ret.f[0][0] = 1.0f / tan_over_2;
-    ret.f[1][1] = ar / tan_over_2;
+    ret.f[0][0] = 1.0f / (tan_over_2 * ar);
+    ret.f[1][1] = 1.0f / tan_over_2;
     ret.f[2][3] = -1.0f;    
     ret.f[2][2] = (near + far) / (near - far);
     ret.f[3][2] = (2.0f * far * near) / (near - far);

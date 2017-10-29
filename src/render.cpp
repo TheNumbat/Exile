@@ -274,11 +274,11 @@ void mesh_3d_tex::push_cube(v3 pos, f32 len) {
 	texCoords.push(V2(0.0f, 0.0f));
 	texCoords.push(V2(1.0f, 0.0f));
 	texCoords.push(V2(0.0f, 1.0f));
+	texCoords.push(V2(0.0f, 0.0f));
 	texCoords.push(V2(1.0f, 0.0f));
-	texCoords.push(V2(1.0f, 1.0f));
 	texCoords.push(V2(0.0f, 1.0f));
 	texCoords.push(V2(1.0f, 0.0f));
-	texCoords.push(V2(0.0f, 0.0f));	
+	texCoords.push(V2(1.0f, 1.0f));	
 
 	elements.push(V3u(0,2,5));
 	elements.push(V3u(0,3,5));

@@ -405,10 +405,9 @@ void ogl_manager::execute_command_list(platform_window* win, render_command_list
 
 	glEnable(gl_capability::blend);
 	glBlendFunc(gl_blend_factor::one, gl_blend_factor::one_minus_src_alpha);
+	glViewport(0, 0, win->w, win->h);
 
 	FORVEC(cmd, rcl->commands) {
-
-		glViewport(0, 0, win->w, win->h);
 
 		cmd_set_settings(cmd);
 

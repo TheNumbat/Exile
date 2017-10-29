@@ -108,7 +108,7 @@ EXPORT bool main_loop(game_state* state) {
 	msg.context = CONTEXT;
 	POST_MSG(msg);
 
-	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+	glClearColor(0.8f, 0.8f, 0.8f, 1.0f);
 	glClear(gl_clear((GLbitfield)gl_clear::color_buffer_bit | (GLbitfield)gl_clear::depth_buffer_bit));
 
 	PUSH_ALLOC(&state->transient_arena) {
@@ -120,10 +120,8 @@ EXPORT bool main_loop(game_state* state) {
 		rc.texture = state->numbat_tex;
 		render_command_list rcl = render_command_list::make();
 		rcl.add_command(rc);
-		// rcl.proj = proj(60.0f, (f32)state->window.w/(f32)state->window.h, 0.1f, 10.0f);
-		rcl.proj = ortho(-2,2,-2,2,-2,2);
-
-		// rcl.view = translate(V3(-2.0f, -2.0f, 0.0f));
+		rcl.proj = proj(90.0f, (f32)state->window.w/(f32)state->window.h, 0.1f, 100.0f);
+		rcl.view = lookAt(V3(1.0f, 2.0f, -1.0f), V3(0.0f, 0.0f, 0.0f), V3(0.0f, 1.0f, 0.0f));
 		state->ogl.execute_command_list(&state->window, &rcl);
 
 		gui_input_state input = run_events(state); 
