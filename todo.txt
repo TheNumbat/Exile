@@ -30,7 +30,8 @@ working:
 		Move font stuff into new file - sizing, etc.
 	GUI window layout - scroll, clip, multiple meshes, text layout
 
-	Profiler rendering
+	Time profile rendering
+	Allocation / sync profiling
 	SDL platform layer
 
 to do:
@@ -47,7 +48,7 @@ to do:
 			vector
 			map
 
-	allocation stuff
+	allocators
 		free list (one-size pool re-using arenas)
 
 	async
@@ -114,15 +115,18 @@ to do:
 	asset
 		Can we just define mods as asset packs?
 			Yes if we include logic 
-		add shaders as assets
-		asset texture atlases
 		call asset.exe to re/build (do path stuff, platform_exec_cmd)
 		auto-reload asset stores
 		asset manager (general allocator?)
 		more types of assets: 
-			Modding: Lua scripts/DLLs
+			Mod Definitions
+			Lua scripts
+			DLLs
 			Config Files
-			3D Models
+			Shaders
+			Texture Atlases/Arrays
+			3D Models & Animations
+			Sounds
 
 	modding system
 		API considerations
