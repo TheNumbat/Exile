@@ -416,6 +416,8 @@ DLL_IMPORT void glViewport(GLint x, GLint y, GLsizei width, GLsizei height);
 DLL_IMPORT void glDrawArrays(gl_draw_mode mode, GLint first, GLsizei count);
 DLL_IMPORT void glDrawElements(gl_draw_mode mode, GLsizei count, gl_index_type type, const GLvoid *indices);
 
+DLL_IMPORT void glScissor(GLint x, GLint y, GLsizei width, GLsizei height);
+
 typedef void (*glDebugProc_t)(gl_debug_source source, gl_debug_type type, GLuint id, gl_debug_severity severity, GLsizei length, const GLchar *message, const void *userParam);
 typedef void (*glDebugMessageCallback_t)(glDebugProc_t callback, const void *userParam);
 typedef void (*glDebugMessageInsert_t)(gl_debug_source source, gl_debug_type type, GLuint id, gl_debug_severity severity, GLsizei length, const char *message);
@@ -454,4 +456,3 @@ typedef void (*glVertexAttribPointer_t)(GLuint index, GLint size, gl_vert_attrib
 typedef void (*glEnableVertexAttribArray_t)(GLuint index);
 
 typedef void (*glTexParameteriv_t)(gl_tex_target target, gl_tex_param pname, const GLint *params);
-

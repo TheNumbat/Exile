@@ -50,13 +50,12 @@ void dbg_manager::UI() { PROF
 		
 		log_message* it = log_cache.get(i);
 
-		string fmt;
 		PUSH_ALLOC(&scratch) {
 			
 			string level = it->fmt_level();
 
-			fmt = string::makef(string::literal("[%-5] %+*\r\n"), level, 3 * it->call_stack.capacity + it->msg.len - 1, it->msg);
-			gui_text(fmt, BLUE);
+			string fmt = string::makef(string::literal("[%] %"), level, it->msg);
+			gui_text(fmt);
 
 			fmt.destroy();
 

@@ -318,6 +318,9 @@ template r2 R2(f32, f32, f32, f32);
 r2 R2f(i32 x, i32 y, i32 w, i32 h) { PROF
 	return R2((f32)x, (f32)y, (f32)w, (f32)h);
 }
+ur2 roundR2(r2 r) { PROF
+	return R2((u32)roundf(r.x),(u32)roundf(r.y),(u32)roundf(r.w),(u32)roundf(r.h));
+}
 template<typename T> inline r2_t<T> R2(v2_t<T> xy, v2_t<T> wh) { PROF
 	return R2(xy.x, xy.y, wh.x, wh.y);
 }

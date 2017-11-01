@@ -111,7 +111,7 @@ void gui_manager::begin_frame(gui_input_state new_input) { PROF
 	}
 }
 
-void gui_manager::end_frame(ogl_manager* ogl) { PROF
+void gui_manager::end_frame(platform_window* win, ogl_manager* ogl) { PROF
 
 	if(!input.lclick && !input.rclick && !input.mclick && !input.ldbl) {
 		if(active != gui_active_state::captured) {
@@ -127,20 +127,22 @@ void gui_manager::end_frame(ogl_manager* ogl) { PROF
 
 		render_command cmd = render_command::make(render_command_type::mesh_2d_col, &it->value.shape_mesh, it->value.z);
 		cmd.texture = -1;
+		cmd.scissor = it->value.rect;
 		rcl.add_command(cmd);
 
 		cmd = render_command::make(render_command_type::mesh_2d_tex_col, &it->value.text_mesh, it->value.z);
 		cmd.texture = it->value.font->texture;
+		cmd.scissor = R2(it->value.rect.xy, it->value.rect.wh - style.win_margin.xy - style.win_margin.yz);
 		rcl.add_command(cmd);
 	}
  
 	rcl.proj = ortho(0, (f32)window->w, (f32)window->h, 0, -1, 1);
 	rcl.sort();
 
-	ogl->execute_command_list(window, &rcl);
+	ogl->execute_command_list(win, &rcl);
 	rcl.destroy();
 
-	FORMAP(it, ggui->window_state_data) {
+	FORMAP(it, window_state_data) {
 		it->value.offset_stack.clear();
 		it->value.id_hash_stack.clear();
 		it->value.shape_mesh.clear();
@@ -272,7 +274,7 @@ bool gui_begin(string name, r2 first_size, gui_window_flags flags, f32 first_alp
 	if((window->flags & (u16)window_flags::nohead) != (u16)window_flags::nohead) {
 		render_windowhead(window);
 
-		v2 title_pos = V2(15.0f, 0.0f);
+		v2 title_pos = V2(3.0f, 0.0f);
 		gui_set_offset(title_pos);
 		window->override_active = true;
 		gui_text(name, V4b(ggui->style.win_title, 255));
@@ -502,7 +504,7 @@ void render_windowhead(gui_window_state* win) { PROF
 	pt *= gscale;
 
 	win->shape_mesh.vertices.push(V2(r.x + r.w - 10.0f, r.y));
-	win->shape_mesh.vertices.push(V2(r.x + 10.0f, r.y));
+	win->shape_mesh.vertices.push(V2(r.x, r.y));
 	win->shape_mesh.vertices.push(V2(r.x, r.y + pt));
 	win->shape_mesh.vertices.push(V2(r.x + r.w, r.y + pt));
 
@@ -541,20 +543,27 @@ void render_windowbody(gui_window_state* win) { PROF
 
 	} else {
 
-		v2 resize_tab = clamp(mult(r.wh, ggui->style.resize_tab), 5.0f, 25.0f);
+		v2 resize_tab = ggui->style.resize_tab;
 
 		win->shape_mesh.vertices.push(V2(r.x, r.y + pt));
 		win->shape_mesh.vertices.push(V2(r.x, r.y + r.h));
 		win->shape_mesh.vertices.push(V2(r.x + r.w - resize_tab.x, r.y + r.h));
 		win->shape_mesh.vertices.push(V2(r.x + r.w, r.y + r.h - resize_tab.y));
 		win->shape_mesh.vertices.push(V2(r.x + r.w, r.y + pt));
+		
+		win->shape_mesh.vertices.push(V2(r.x + r.w - resize_tab.x, r.y + r.h));
+		win->shape_mesh.vertices.push(V2(r.x + r.w, r.y + r.h - resize_tab.y));
+		win->shape_mesh.vertices.push(V2(r.x + r.w, r.y + r.h));
 
 		colorf cf = color_to_f(V4b(ggui->style.win_back, win->opacity * 255.0f));
+		colorf tf = color_to_f(V4b(ggui->style.tab_color, win->opacity * 255.0f));
 
 		DO(5) win->shape_mesh.colors.push(cf);
+		DO(3) win->shape_mesh.colors.push(tf);
 
 		win->shape_mesh.elements.push(V3u(idx, idx + 1, idx + 2));
 		win->shape_mesh.elements.push(V3u(idx, idx + 2, idx + 3));
 		win->shape_mesh.elements.push(V3u(idx, idx + 3, idx + 4));
+		win->shape_mesh.elements.push(V3u(idx + 5, idx + 6, idx + 7));
 	}
 }

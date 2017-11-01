@@ -117,7 +117,7 @@ EXPORT bool main_loop(game_state* state) {
 
 		state->dbg.UI();
 
-		state->gui.end_frame(&state->ogl);
+		state->gui.end_frame(&state->window, &state->ogl);
 
 	} POP_ALLOC();
 	RESET_ARENA(&state->transient_arena);

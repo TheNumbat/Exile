@@ -99,7 +99,8 @@ struct gui_window_state {
 	gui_font* font = null;
 	f32 default_point = 14.0f;
 	
-	mesh_2d_col shape_mesh;
+	// TODO(max): arbitrary # of meshes for images, different fonts
+	mesh_2d_col 	shape_mesh;
 	mesh_2d_tex_col text_mesh;
 };
 
@@ -109,7 +110,7 @@ struct _gui_style {
 	f32 title_padding 	= 3.0f;
 	f32 line_padding 	= 3.0f;
 	u32 log_win_lines 	= 15;
-	f32 resize_tab		= 0.075f;
+	v2 resize_tab		= V2(20.0f, 20.0f);
 	v4 win_margin 		= V4(5.0f, 0.0f, 5.0f, 10.0f); // l t r b
 	v2 carrot_padding	= V2(10.0f, 5.0f);
 	v2 box_sel_padding	= V2(6.0f, 6.0f);
@@ -124,6 +125,7 @@ struct _gui_style {
 	color3 win_top		= V3b(74, 79, 137);
 	color3 win_title 	= V3b(255, 255, 255);
 	color3 wid_back		= V3b(102, 105, 185);
+	color3 tab_color	= V3b(100, 106, 109);
 
 	f32 win_scroll_w 		= 15.0f;
 	f32 win_scroll_margin	= 2.0f;
@@ -171,7 +173,7 @@ struct gui_manager {
 	gui_state_data* add_state_data(guiid id, gui_state_data data);
 
 	void begin_frame(gui_input_state new_input);
-	void end_frame(ogl_manager* ogl);
+	void end_frame(platform_window* win, ogl_manager* ogl);
 };
 
 static gui_manager* ggui; // set at gui_begin_frame, used as context for gui functions

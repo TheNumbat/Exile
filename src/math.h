@@ -247,6 +247,7 @@ template<typename T> inline v3_t<T> operator/(v3_t<T> l, T r);
 template<typename T> inline v4_t<T> operator/(v4_t<T> l, T r);
 template<typename T> inline r2_t<T> R2(T x, T y, T w, T h);
 r2 R2f(i32 x, i32 y, i32 w, i32 h);
+ur2 roundR2(r2 r);
 template<typename T> inline r2_t<T> R2(v2_t<T> xy, v2_t<T> wh);
 template<typename T> inline r2_t<T> add(r2_t<T> l, r2_t<T> r);
 template<typename T> inline r2_t<T> operator+(r2_t<T> l, r2_t<T> r);

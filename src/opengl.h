@@ -135,7 +135,7 @@ struct ogl_manager {
 	void dbg_render_texture_fullscreen(platform_window* win, texture_id id);
 	void execute_command_list(platform_window* win, render_command_list* rcl);
 
-	void cmd_set_settings(render_command* cmd);
+	void cmd_set_settings(platform_window* win, render_command* cmd);
 };
 
 void ogl_load_global_funcs();

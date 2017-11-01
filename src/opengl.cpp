@@ -428,12 +428,12 @@ draw_context* ogl_manager::select_draw_context(render_command_type id) { PROF
 void ogl_manager::execute_command_list(platform_window* win, render_command_list* rcl) { PROF
 
 	glEnable(gl_capability::blend);
+	glEnable(gl_capability::scissor_test);
 	glBlendFunc(gl_blend_factor::one, gl_blend_factor::one_minus_src_alpha);
-	glViewport(0, 0, win->w, win->h);
 
 	FORVEC(cmd, rcl->commands) {
 
-		cmd_set_settings(cmd);
+		cmd_set_settings(win, cmd);
 
 		draw_context* d = select_draw_context(cmd->cmd);
 		shader_program* s = select_program(cmd->cmd);
@@ -444,10 +444,23 @@ void ogl_manager::execute_command_list(platform_window* win, render_command_list
 		select_texture(cmd->texture);
 		d->run(cmd);
 	}
+
+	glDisable(gl_capability::scissor_test);
 }
 
-void ogl_manager::cmd_set_settings(render_command* cmd) {
+void ogl_manager::cmd_set_settings(platform_window* win, render_command* cmd) {
 
+	ur2 viewport = roundR2(cmd->viewport), scissor = roundR2(cmd->scissor);
+
+	if(viewport.x && viewport.y)
+		glViewport(viewport.x, viewport.y, viewport.w, viewport.h);
+	else
+		glViewport(0, 0, win->w, win->h);
+
+	if(scissor.x && scissor.y)
+		glScissor(scissor.x, win->h - scissor.y - scissor.h, scissor.w, scissor.h);
+	else
+		glScissor(0, 0, win->w, win->h);
 }
 
 // temporary and inefficient texture render

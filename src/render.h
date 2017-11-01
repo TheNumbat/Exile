@@ -76,8 +76,14 @@ struct mesh_3d_tex {
 struct render_command {
 	render_command_type cmd 	= render_command_type::none;
 	texture_id 			texture = -1;
+	
 	m4 model;
 	u32 sort_key = 0;
+	
+	// zero for entire window
+	r2 viewport;
+	r2 scissor;
+
 	union {
 		void* data = null;
 		mesh_3d_tex* 	 m3dt;
