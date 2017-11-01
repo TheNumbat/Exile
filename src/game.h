@@ -22,5 +22,4 @@ struct game_state {
 	// testing
 	asset_store default_store;
 	platform_allocator default_store_a;
-	texture_id numbat_tex;
 };

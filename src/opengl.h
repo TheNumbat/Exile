@@ -16,6 +16,8 @@ glShaderSource_t  			glShaderSource;
 glUseProgram_t    			glUseProgram;
 glGetUniformLocation_t 		glGetUniformLocation;
 glUniformMatrix4fv_t   		glUniformMatrix4fv;
+glGetShaderiv_t 			glGetShaderiv;
+glGetShaderInfoLog_t		glGetShaderInfoLog;
 
 glGenerateMipmap_t			glGenerateMipmap;
 glActiveTexture_t			glActiveTexture;
@@ -64,6 +66,7 @@ struct shader_program {
 	void compile();
 	bool refresh();
 	void destroy();
+	bool check_compile(string name, GLuint shader);
 };
 
 enum class texture_wrap : u8 {

@@ -28,7 +28,8 @@ void gui_manager::destroy() { PROF
 	FORMAP(win, window_state_data) {
 		win->value.id_hash_stack.destroy();
 		win->value.offset_stack.destroy();
-		win->value.mesh.destroy();
+		win->value.shape_mesh.destroy();
+		win->value.text_mesh.destroy();
 		win->key.name.destroy(alloc);
 	}
 	FORMAP(st, state_data) {
@@ -124,11 +125,15 @@ void gui_manager::end_frame(ogl_manager* ogl) { PROF
 	render_command_list rcl = render_command_list::make();
 	FORMAP(it, window_state_data) {
 
-		render_command cmd = render_command::make(render_command_type::mesh_2d_col, &it->value.mesh, it->value.z);
+		render_command cmd = render_command::make(render_command_type::mesh_2d_col, &it->value.shape_mesh, it->value.z);
 		cmd.texture = -1;
 		rcl.add_command(cmd);
-	}
 
+		cmd = render_command::make(render_command_type::mesh_2d_tex_col, &it->value.text_mesh, it->value.z);
+		cmd.texture = it->value.font->texture;
+		rcl.add_command(cmd);
+	}
+ 
 	rcl.proj = ortho(0, (f32)window->w, (f32)window->h, 0, -1, 1);
 	rcl.sort();
 
@@ -138,7 +143,8 @@ void gui_manager::end_frame(ogl_manager* ogl) { PROF
 	FORMAP(it, ggui->window_state_data) {
 		it->value.offset_stack.clear();
 		it->value.id_hash_stack.clear();
-		it->value.mesh.clear();
+		it->value.shape_mesh.clear();
+		it->value.text_mesh.clear();
 	}
 }
 
@@ -216,7 +222,8 @@ bool gui_begin(string name, r2 first_size, gui_window_flags flags, f32 first_alp
 			ns.opacity = first_alpha;
 		}
 
-		ns.mesh = mesh_2d_col::make(1024, ggui->alloc);
+		ns.shape_mesh = mesh_2d_col::make(128, ggui->alloc);
+		ns.text_mesh = mesh_2d_tex_col::make(1024, ggui->alloc);
 		ns.id_hash_stack = stack<u32>::make(16, ggui->alloc);
 		ns.offset_stack = vector<v2>::make(16, ggui->alloc);
 		ns.flags = flags;
@@ -383,8 +390,8 @@ void gui_box_select(i32* selected, i32 num, v2 pos, ...) { PROF
 		v2 txy = add(pos, V2(ggui->style.box_sel_padding.x / 2.0f, -ggui->style.box_sel_padding.y / 2.0f + 4.0f));
 		r2 box = R2(pos, wh);
 
-		current->mesh.push_rect(box, V4b(ggui->style.wid_back, current->opacity * 255.0f));
-		// current->mesh.push_text_line(current->font->font, option, txy, ggui->style.font * gscale);
+		current->shape_mesh.push_rect(box, V4b(ggui->style.wid_back, current->opacity * 255.0f));
+		current->text_mesh.push_text_line(current->font->font, option, txy, ggui->style.font * gscale);
 
 		pos.x += wh.x + 5.0f;
 	}
@@ -445,23 +452,23 @@ void render_carrot(gui_window_state* win, v2 pos, bool active) { PROF
 		gscale = ggui->style.gscale;
 	}
 
-	u32 idx = win->mesh.vertices.size;
+	u32 idx = win->shape_mesh.vertices.size;
 	f32 size = ggui->style.default_carrot_size.x * gscale;
 
 	if(active) {
-		win->mesh.vertices.push(V2(pos.x 		 		, pos.y));
-		win->mesh.vertices.push(V2(pos.x + size 		, pos.y));
-		win->mesh.vertices.push(V2(pos.x + size / 2.0f, pos.y + size));
+		win->shape_mesh.vertices.push(V2(pos.x 		 		, pos.y));
+		win->shape_mesh.vertices.push(V2(pos.x + size 		, pos.y));
+		win->shape_mesh.vertices.push(V2(pos.x + size / 2.0f, pos.y + size));
 	} else {
-		win->mesh.vertices.push(V2(pos.x 		 , pos.y));
-		win->mesh.vertices.push(V2(pos.x 		 , pos.y + size));
-		win->mesh.vertices.push(V2(pos.x + size, pos.y + size / 2.0f));
+		win->shape_mesh.vertices.push(V2(pos.x 		 , pos.y));
+		win->shape_mesh.vertices.push(V2(pos.x 		 , pos.y + size));
+		win->shape_mesh.vertices.push(V2(pos.x + size, pos.y + size / 2.0f));
 	}
 
 	colorf cf = color_to_f(V4b(ggui->style.wid_back, 255));
-	DO(3) win->mesh.colors.push(cf);
+	DO(3) win->shape_mesh.colors.push(cf);
 
-	win->mesh.elements.push(V3(idx, idx + 1, idx + 2));
+	win->shape_mesh.elements.push(V3(idx, idx + 1, idx + 2));
 }
 
 void gui_text(string text, color c, f32 point) { PROF
@@ -477,7 +484,7 @@ void gui_text(string text, color c, f32 point) { PROF
 	v2 pos = win->current_offset();
 
 	if(!point) point = win->default_point;
-	// win->mesh.push_text_line(win->font->font, text, pos, point * gscale, c);
+	win->text_mesh.push_text_line(win->font->font, text, pos, point * gscale, c);
 
 	gui_push_offset(V2(0.0f, point));
 }
@@ -489,21 +496,21 @@ void render_windowhead(gui_window_state* win) { PROF
 		gscale = ggui->style.gscale;
 	}
 
-	u32 idx = win->mesh.vertices.size;
+	u32 idx = win->shape_mesh.vertices.size;
 	r2 r = mult(win->rect, gscale);
 	f32 pt = ggui->style.font + ggui->style.title_padding;
 	pt *= gscale;
 
-	win->mesh.vertices.push(V2(r.x + r.w - 10.0f, r.y));
-	win->mesh.vertices.push(V2(r.x + 10.0f, r.y));
-	win->mesh.vertices.push(V2(r.x, r.y + pt));
-	win->mesh.vertices.push(V2(r.x + r.w, r.y + pt));
+	win->shape_mesh.vertices.push(V2(r.x + r.w - 10.0f, r.y));
+	win->shape_mesh.vertices.push(V2(r.x + 10.0f, r.y));
+	win->shape_mesh.vertices.push(V2(r.x, r.y + pt));
+	win->shape_mesh.vertices.push(V2(r.x + r.w, r.y + pt));
 
 	colorf topf = color_to_f(V4b(ggui->style.win_top, 255));
-	DO(4) win->mesh.colors.push(topf);
+	DO(4) win->shape_mesh.colors.push(topf);
 
-	win->mesh.elements.push(V3u(idx + 2, idx, idx + 1));
-	win->mesh.elements.push(V3u(idx + 3, idx, idx + 2));
+	win->shape_mesh.elements.push(V3u(idx + 2, idx, idx + 1));
+	win->shape_mesh.elements.push(V3u(idx + 3, idx, idx + 2));
 }
 
 void render_windowbody(gui_window_state* win) { PROF
@@ -513,41 +520,41 @@ void render_windowbody(gui_window_state* win) { PROF
 		gscale = ggui->style.gscale;
 	}
 
-	u32 idx = win->mesh.vertices.size;
+	u32 idx = win->shape_mesh.vertices.size;
 	r2 r = mult(win->rect, gscale);
 	f32 pt = ggui->style.font + ggui->style.title_padding;
 	pt *= gscale;
 
 	if((win->flags & (u16)window_flags::noresize) == (u16)window_flags::noresize) {
 
-		win->mesh.vertices.push(V2(r.x, r.y + pt));
-		win->mesh.vertices.push(V2(r.x, r.y + r.h));
-		win->mesh.vertices.push(V2(r.x + r.w, r.y + r.h));
-		win->mesh.vertices.push(V2(r.x + r.w, r.y + pt));
+		win->shape_mesh.vertices.push(V2(r.x, r.y + pt));
+		win->shape_mesh.vertices.push(V2(r.x, r.y + r.h));
+		win->shape_mesh.vertices.push(V2(r.x + r.w, r.y + r.h));
+		win->shape_mesh.vertices.push(V2(r.x + r.w, r.y + pt));
 
 		colorf cf = color_to_f(V4b(ggui->style.win_back, win->opacity * 255.0f));
 
-		DO(4) win->mesh.colors.push(cf);
+		DO(4) win->shape_mesh.colors.push(cf);
 
-		win->mesh.elements.push(V3u(idx, idx + 1, idx + 2));
-		win->mesh.elements.push(V3u(idx, idx + 2, idx + 3));
+		win->shape_mesh.elements.push(V3u(idx, idx + 1, idx + 2));
+		win->shape_mesh.elements.push(V3u(idx, idx + 2, idx + 3));
 
 	} else {
 
 		v2 resize_tab = clamp(mult(r.wh, ggui->style.resize_tab), 5.0f, 25.0f);
 
-		win->mesh.vertices.push(V2(r.x, r.y + pt));
-		win->mesh.vertices.push(V2(r.x, r.y + r.h));
-		win->mesh.vertices.push(V2(r.x + r.w - resize_tab.x, r.y + r.h));
-		win->mesh.vertices.push(V2(r.x + r.w, r.y + r.h - resize_tab.y));
-		win->mesh.vertices.push(V2(r.x + r.w, r.y + pt));
+		win->shape_mesh.vertices.push(V2(r.x, r.y + pt));
+		win->shape_mesh.vertices.push(V2(r.x, r.y + r.h));
+		win->shape_mesh.vertices.push(V2(r.x + r.w - resize_tab.x, r.y + r.h));
+		win->shape_mesh.vertices.push(V2(r.x + r.w, r.y + r.h - resize_tab.y));
+		win->shape_mesh.vertices.push(V2(r.x + r.w, r.y + pt));
 
 		colorf cf = color_to_f(V4b(ggui->style.win_back, win->opacity * 255.0f));
 
-		DO(5) win->mesh.colors.push(cf);
+		DO(5) win->shape_mesh.colors.push(cf);
 
-		win->mesh.elements.push(V3u(idx, idx + 1, idx + 2));
-		win->mesh.elements.push(V3u(idx, idx + 2, idx + 3));
-		win->mesh.elements.push(V3u(idx, idx + 3, idx + 4));
+		win->shape_mesh.elements.push(V3u(idx, idx + 1, idx + 2));
+		win->shape_mesh.elements.push(V3u(idx, idx + 2, idx + 3));
+		win->shape_mesh.elements.push(V3u(idx, idx + 3, idx + 4));
 	}
 }

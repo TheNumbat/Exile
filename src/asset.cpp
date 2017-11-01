@@ -96,7 +96,7 @@ bool asset_store::try_reload() { PROF
 
 		load(path);
 
-		LOG_INFO_F("Reloaded asset store from %", path);
+		LOG_DEBUG_F("Reloaded asset store from %", path);
 
 		return true;
 	}
@@ -186,7 +186,7 @@ void asset_store::load(string file) { PROF
 				break;
 			}
 
-			LOG_INFO_F("Loaded asset % of type % from store %", a.name, a.type, file);
+			LOG_DEBUG_F("Loaded asset % of type % from store %", a.name, a.type, file);
 		}
 
 	} POP_ALLOC();

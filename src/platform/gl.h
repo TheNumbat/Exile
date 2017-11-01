@@ -380,6 +380,14 @@ enum class gl_tex_wrap : GLint {
 	mirror_clamp_to_edge      	= 0x8743
 };
 
+enum class gl_shader_param : GLenum {
+	delete_status           	= 0x8B80,
+	compile_status          	= 0x8B81,
+	info_log_length         	= 0x8B84,
+	shader_source_length    	= 0x8B88,
+	shader_type             	= 0x8B4F
+};
+
 enum class wgl_context : int {
 	major_version_arb     		= 0x2091,
 	minor_version_arb     		= 0x2092,
@@ -422,6 +430,9 @@ typedef void (*glDeleteShader_t)(GLuint shader);
 typedef void (*glLinkProgram_t)(GLuint program);
 typedef void (*glShaderSource_t)(GLuint shader, GLsizei count, const GLchar* const* str, const GLint* length);
 typedef void (*glUseProgram_t)(GLuint program);
+typedef void (*glGetShaderiv_t)(GLuint shader, gl_shader_param pname, GLint *params);
+typedef void (*glGetShaderInfoLog_t)(GLuint shader, GLsizei maxLength, GLsizei *length, GLchar *infoLog);
+
 typedef GLint (*glGetUniformLocation_t)(GLuint program, const GLchar *name);
 typedef void (*glUniformMatrix4fv_t)(GLint location, GLsizei count, gl_bool transpose, const GLfloat *value);
 
@@ -443,3 +454,4 @@ typedef void (*glVertexAttribPointer_t)(GLuint index, GLint size, gl_vert_attrib
 typedef void (*glEnableVertexAttribArray_t)(GLuint index);
 
 typedef void (*glTexParameteriv_t)(gl_tex_target target, gl_tex_param pname, const GLint *params);
+

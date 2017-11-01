@@ -95,8 +95,6 @@ EXPORT game_state* start_up(platform_api* api) {
 	POST_MSG(m);
 	state->dbg.collate();
 
-	state->numbat_tex = state->ogl.add_texture(&state->default_store, string::literal("numbat"));
-
 	state->running = true;
 	return state;
 }
@@ -113,16 +111,7 @@ EXPORT bool main_loop(game_state* state) {
 
 	PUSH_ALLOC(&state->transient_arena) {
 
-		mesh_3d_tex m = mesh_3d_tex::make();
-		m.push_cube(V3f(0,0,0), 1.0f);
-
-		render_command rc = render_command::make(render_command_type::mesh_3d_tex, &m);
-		rc.texture = state->numbat_tex;
-		render_command_list rcl = render_command_list::make();
-		rcl.add_command(rc);
-		rcl.proj = proj(90.0f, (f32)state->window.w/(f32)state->window.h, 0.1f, 100.0f);
-		rcl.view = lookAt(V3(1.0f, 2.0f, -1.0f), V3(0.0f, 0.0f, 0.0f), V3(0.0f, 1.0f, 0.0f));
-		state->ogl.execute_command_list(&state->window, &rcl);
+		state->ogl.dbg_render_texture_fullscreen(&state->window, 1);
 
 		gui_input_state input = run_events(state); 
 		

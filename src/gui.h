@@ -98,7 +98,9 @@ struct gui_window_state {
 
 	gui_font* font = null;
 	f32 default_point = 14.0f;
-	mesh_2d_col mesh;
+	
+	mesh_2d_col shape_mesh;
+	mesh_2d_tex_col text_mesh;
 };
 
 struct _gui_style {

@@ -85,7 +85,10 @@ void shader_program::compile() { PROF
 	glShaderSource(h_fragment, 1, &fragment.source.c_str, null);
 
 	glCompileShader(h_vertex);
+	check_compile(vertex.path, h_vertex);
+
 	glCompileShader(h_fragment);
+	check_compile(fragment.path, h_fragment);
 
 	glAttachShader(handle, h_vertex);
 	glAttachShader(handle, h_fragment);
@@ -93,6 +96,27 @@ void shader_program::compile() { PROF
 
 	glDeleteShader(h_vertex);
 	glDeleteShader(h_fragment);
+}
+
+bool shader_program::check_compile(string name, GLuint shader) { PROF
+
+	GLint isCompiled = 0;
+	glGetShaderiv(shader, gl_shader_param::compile_status, &isCompiled);
+	if(isCompiled == (GLint)gl_bool::_false) {
+		
+		GLint len = 0;
+		glGetShaderiv(shader, gl_shader_param::info_log_length, &len);
+
+		char* msg = (char*)malloc(len);
+		glGetShaderInfoLog(shader, len, &len, msg);
+
+		LOG_WARN_F("Shader % failed to compile: %", name, string::from_c_str(msg));
+		free(msg);
+
+		return false;
+	}
+
+	return true;
 }
 
 bool shader_program::refresh() { PROF
@@ -121,7 +145,7 @@ void shader_program::destroy() { PROF
 void ogl_manager::try_reload_programs() { PROF
 	FORMAP(it, programs) {
 		if(it->value.refresh()) {
-			LOG_INFO_F("Reloaded program % with files %, %", it->key, it->value.vertex.path, it->value.fragment.path);
+			LOG_DEBUG_F("Reloaded program % with files %, %", it->key, it->value.vertex.path, it->value.fragment.path);
 		}
 	}
 	dbg_shader.refresh();
@@ -144,15 +168,15 @@ ogl_manager ogl_manager::make(allocator* a) { PROF
 	ret.vendor  	= string::from_c_str((char*)glGetString(gl_info::vendor));
 
 	REGISTER_COMMAND(mesh_2d_col);
-	// REGISTER_COMMAND(mesh_2d_tex);
-	// REGISTER_COMMAND(mesh_2d_tex_col);
+	REGISTER_COMMAND(mesh_2d_tex);
+	REGISTER_COMMAND(mesh_2d_tex_col);
 	REGISTER_COMMAND(mesh_3d_tex);
 
 	ret.dbg_shader = shader_program::make(string::literal("shaders/dbg.v"),string::literal("shaders/dbg.f"),FPTR(uniforms_dbg),a);
 
-	LOG_INFO_F("GL version : %", ret.version);
-	LOG_INFO_F("GL renderer: %", ret.renderer);
-	LOG_INFO_F("GL vendor  : %", ret.vendor);
+	LOG_DEBUG_F("GL version : %", ret.version);
+	LOG_DEBUG_F("GL renderer: %", ret.renderer);
+	LOG_DEBUG_F("GL vendor  : %", ret.vendor);
 
 	return ret;
 }
@@ -326,8 +350,8 @@ void texture::load_bitmap_from_font(asset* font) { PROF
 	glBindTextureUnit(0, handle);
 
 	glTexImage2D(gl_tex_target::_2D, 0, gl_tex_format::rgba8, font->font.width, font->font.height, 0, gl_pixel_data_format::red, gl_pixel_data_type::unsigned_byte, font->mem);
-	GLint swizzleMask[] = {(GLint)gl_tex_swizzle::red, (GLint)gl_tex_swizzle::red, (GLint)gl_tex_swizzle::red, (GLint)gl_tex_swizzle::red};
-	glTexParameteriv(gl_tex_target::_2D, gl_tex_param::swizzle_rgba, swizzleMask);
+	GLint swizzle[] = {(GLint)gl_tex_swizzle::red, (GLint)gl_tex_swizzle::red, (GLint)gl_tex_swizzle::red, (GLint)gl_tex_swizzle::red};
+	glTexParameteriv(gl_tex_target::_2D, gl_tex_param::swizzle_rgba, swizzle);
 
 	glGenerateMipmap(gl_tex_target::_2D);
 
@@ -343,8 +367,8 @@ void texture::load_bitmap_from_font(asset_store* as, string name) { PROF
 	glBindTextureUnit(0, handle);
 
 	glTexImage2D(gl_tex_target::_2D, 0, gl_tex_format::rgba8, a->font.width, a->font.height, 0, gl_pixel_data_format::red, gl_pixel_data_type::unsigned_byte, a->mem);
-	GLint swizzleMask[] = {(GLint)gl_tex_swizzle::red, (GLint)gl_tex_swizzle::red, (GLint)gl_tex_swizzle::red, (GLint)gl_tex_swizzle::red};
-	glTexParameteriv(gl_tex_target::_2D, gl_tex_param::swizzle_rgba, swizzleMask);
+	GLint swizzle[] = {(GLint)gl_tex_swizzle::red, (GLint)gl_tex_swizzle::red, (GLint)gl_tex_swizzle::red, (GLint)gl_tex_swizzle::red};
+	glTexParameteriv(gl_tex_target::_2D, gl_tex_param::swizzle_rgba, swizzle);
 
 	glGenerateMipmap(gl_tex_target::_2D);
 
@@ -561,6 +585,8 @@ void ogl_load_global_funcs() { PROF
 	glUseProgram         = (glUseProgram_t)    global_api->platform_get_glproc(string::literal("glUseProgram"));
 	glGetUniformLocation = (glGetUniformLocation_t) global_api->platform_get_glproc(string::literal("glGetUniformLocation"));
 	glUniformMatrix4fv   = (glUniformMatrix4fv_t)   global_api->platform_get_glproc(string::literal("glUniformMatrix4fv"));
+	glGetShaderiv		 = (glGetShaderiv_t)   global_api->platform_get_glproc(string::literal("glGetShaderiv"));
+	glGetShaderInfoLog	 = (glGetShaderInfoLog_t) 	global_api->platform_get_glproc(string::literal("glGetShaderInfoLog"));
 
 	glGenerateMipmap  = (glGenerateMipmap_t)  global_api->platform_get_glproc(string::literal("glGenerateMipmap"));
 	glActiveTexture   = (glActiveTexture_t)   global_api->platform_get_glproc(string::literal("glActiveTexture"));

@@ -294,7 +294,7 @@ string fmt_msg(log_message* msg, log_out_type type) { PROF
 
 	if(type == log_out_type::plaintext) {
 
-		output = string::makef(string::literal("%-8 [%-36] [%-20] [%-5] %+*\n"), time, cstack, file_line, clevel, 3 * msg->call_stack.capacity + msg->msg.len - 1, msg->msg);
+		output = string::makef(string::literal("%-8 [%-36] [%-20] [%-5] %\n"), time, cstack, file_line, clevel, msg->msg);
 
 	} else if(type == log_out_type::html) {
 
