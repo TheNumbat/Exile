@@ -47,6 +47,9 @@ to do:
 			dequeue for work-stealing
 			vector
 			map
+		Config file format, loading/writing
+			GUI style
+			Assets
 
 	allocators
 		free list (one-size pool re-using arenas)
