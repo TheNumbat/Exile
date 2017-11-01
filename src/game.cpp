@@ -111,8 +111,6 @@ EXPORT bool main_loop(game_state* state) {
 
 	PUSH_ALLOC(&state->transient_arena) {
 
-		state->ogl.dbg_render_texture_fullscreen(&state->window, 1);
-
 		gui_input_state input = run_events(state); 
 		
 		state->gui.begin_frame(input);

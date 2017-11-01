@@ -29,7 +29,7 @@ CALLBACK void attribs_mesh_2d_tex_col(draw_context* dc) { PROF
 	glVertexAttribPointer(0, 2, gl_vert_attrib_type::_float, gl_bool::_false, sizeof(v2), (void*)0);
 	glBindBuffer(gl_buf_target::array, dc->vbos[1]);
 	glVertexAttribPointer(1, 2, gl_vert_attrib_type::_float, gl_bool::_false, sizeof(v2), (void*)0);
-	glBindBuffer(gl_buf_target::element_array, dc->vbos[2]);
+	glBindBuffer(gl_buf_target::array, dc->vbos[2]);
 	glVertexAttribPointer(2, 4, gl_vert_attrib_type::_float, gl_bool::_false, sizeof(v4), (void*)0);
 	glBindBuffer(gl_buf_target::element_array, dc->vbos[3]);
 
@@ -120,7 +120,7 @@ CALLBACK void buffers_mesh_2d_tex_col(draw_context* dc, render_command* cmd) { P
 	glBufferData(gl_buf_target::array, m->vertices.size * sizeof(v2), m->vertices.size ? m->vertices.memory : null, gl_buf_usage::stream_draw);
 	glBindBuffer(gl_buf_target::array, dc->vbos[1]);
 	glBufferData(gl_buf_target::array, m->texCoords.size * sizeof(v2), m->texCoords.size ? m->texCoords.memory : null, gl_buf_usage::stream_draw);
-	glBindBuffer(gl_buf_target::element_array, dc->vbos[2]);
+	glBindBuffer(gl_buf_target::array, dc->vbos[2]);
 	glBufferData(gl_buf_target::array, m->colors.size * sizeof(v4), m->colors.size ? m->colors.memory : null, gl_buf_usage::stream_draw);
 	glBindBuffer(gl_buf_target::element_array, dc->vbos[3]);
 	glBufferData(gl_buf_target::element_array, m->elements.size * sizeof(uv3), m->elements.size ? m->elements.memory : null, gl_buf_usage::stream_draw);
