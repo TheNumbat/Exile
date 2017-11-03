@@ -17,7 +17,6 @@ enum class window_flags : gui_window_flags {
 	nowininput	= noresize | nomove | nohide,
 	nohead		= 1<<4 | nohide | nomove,
 	noback		= 1<<5 | noresize,
-	ignorescale = 1<<6,
 	horzscroll	= 1<<7,
 	autosize	= 1<<8,
 };
@@ -117,7 +116,6 @@ struct gui_window_state {
 };
 
 struct _gui_style {
-	f32 gscale 			= 1.0f;	// global scale 
 	f32 font 			= 0.0f;	// default font size - may use different actual font based on gscale * font
 	f32 title_padding 	= 3.0f;
 	f32 line_padding 	= 3.0f;

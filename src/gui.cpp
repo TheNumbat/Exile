@@ -73,7 +73,7 @@ gui_font* gui_select_best_font_scale(gui_window_state* win) { PROF
 
 	gui_font* f = null;
 
-	f32 defl = ggui->style.font * ggui->style.gscale;
+	f32 defl = ggui->style.font;
 	f32 min_off = FLT_MAX;
 	FORVEC(it, ggui->fonts) {
 		f32 off = absf(defl - it->font->font.point);
@@ -148,7 +148,7 @@ void gui_manager::end_frame(platform_window* win, ogl_manager* ogl) { PROF
 	rcl.destroy();
 
 	FORMAP(it, window_state_data) {
-		it->value.previous_content_size = it->value.current_offset() - it->value.scroll_pos;
+		it->value.previous_content_size = it->value.current_offset() - it->value.scroll_pos - it->value.rect.xy;
 		it->value.offset_stack.clear();
 		it->value.id_hash_stack.clear();
 		it->value.shape_mesh.clear();
@@ -159,7 +159,7 @@ void gui_manager::end_frame(platform_window* win, ogl_manager* ogl) { PROF
 v2 gui_window_state::current_offset() {
 	v2 pos = rect.xy;
 	FORVEC(it, offset_stack) {
-		pos = pos + *it * ggui->style.gscale;
+		pos = pos + *it;
 	}
 	return pos;
 }
@@ -172,48 +172,33 @@ r2 gui_window_state::get_real_content() {
 
 r2 gui_window_state::get_real_top() {
 
-	f32 gscale = 1.0f;
-	if((flags & (u16)window_flags::ignorescale) != (u16)window_flags::ignorescale) {
-		gscale = ggui->style.gscale;
-	}
-
 	f32 carrot_x_diff = ggui->style.default_carrot_size.x + ggui->style.carrot_padding.x;
 	r2 real_rect = get_real();
 
-	return R2(real_rect.xy, V2(real_rect.w - carrot_x_diff, gscale * ggui->style.font + ggui->style.title_padding));
+	return R2(real_rect.xy, V2(real_rect.w - carrot_x_diff, ggui->style.font + ggui->style.title_padding));
 }
 
 r2 gui_window_state::get_real_body() {
 
-	f32 gscale = 1.0f;
-	if((flags & (u16)window_flags::ignorescale) != (u16)window_flags::ignorescale) {
-		gscale = ggui->style.gscale;
-	}
-
 	r2 real_rect = get_real();
-	return R2(real_rect.x, real_rect.y + gscale * ggui->style.font + ggui->style.title_padding, real_rect.w, real_rect.h - gscale * ggui->style.font + ggui->style.title_padding);
+	return R2(real_rect.x, real_rect.y + ggui->style.font + ggui->style.title_padding, real_rect.w, real_rect.h - ggui->style.font + ggui->style.title_padding);
 }
 
 void gui_window_state::update_rect() {
 	
-	f32 gscale = 1.0f;
-	if((flags & (u16)window_flags::ignorescale) != (u16)window_flags::ignorescale) {
-		gscale = ggui->style.gscale;
-	}
-
 	r2 real_rect = get_real();
 	if(resizing) {
 		v2 wh = sub(ggui->input.mousepos, real_rect.xy);
-		if(wh.x < ggui->style.min_win_size.x * gscale) {
-			wh.x = ggui->style.min_win_size.x * gscale;
+		if(wh.x < ggui->style.min_win_size.x) {
+			wh.x = ggui->style.min_win_size.x;
 		}
-		if(wh.x < ggui->style.min_win_size.x * gscale) {
-			wh.x = ggui->style.min_win_size.x * gscale;
+		if(wh.x < ggui->style.min_win_size.x) {
+			wh.x = ggui->style.min_win_size.x;
 		}
-		if(wh.y < ggui->style.min_win_size.y * gscale) {
-			wh.y = ggui->style.min_win_size.y * gscale;
+		if(wh.y < ggui->style.min_win_size.y) {
+			wh.y = ggui->style.min_win_size.y;
 		}
-		rect = R2(real_rect.xy, div(wh, gscale));
+		rect = R2(real_rect.xy, wh);
 
 	} else {
 
@@ -227,11 +212,8 @@ bool gui_window_state::seen(r2 r) {
 }
 
 r2 gui_window_state::get_real() {
-	f32 gscale = 1.0f;
-	if((flags & (u16)window_flags::ignorescale) != (u16)window_flags::ignorescale) {
-		gscale = ggui->style.gscale;
-	}
-	return mult(rect, gscale);
+	
+	return rect;
 }
 
 v2 gui_window_dim() {
@@ -264,11 +246,11 @@ void gui_pop_offset() { PROF
 bool gui_occluded() { PROF
 	FORMAP(it, ggui->window_state_data) {
 		if(&it->value != ggui->current && it->value.z > ggui->current->z) {
-			if(it->value.active && inside(mult(it->value.rect, ggui->style.gscale), ggui->input.mousepos)) {
+			if(it->value.active && inside(it->value.rect, ggui->input.mousepos)) {
 				return true;
 			} else {
-				r2 title_rect = R2(it->value.rect.xy, V2(it->value.rect.w, ggui->style.gscale * ggui->style.font + ggui->style.title_padding));
-				title_rect = mult(title_rect, ggui->style.gscale);
+				r2 title_rect = R2(it->value.rect.xy, V2(it->value.rect.w, ggui->style.font + ggui->style.title_padding));
+				title_rect = title_rect;
 				if(inside(title_rect, ggui->input.mousepos)) {
 					return true;
 				}
@@ -320,10 +302,6 @@ bool gui_begin(string name, r2 first_size, gui_window_flags flags, f32 first_alp
 		window->update_rect();
 	}
 
-	f32 gscale = 1.0f;
-	if((flags & (u16)window_flags::ignorescale) != (u16)window_flags::ignorescale) {
-		gscale = ggui->style.gscale;
-	}
 	r2 real_rect = window->get_real();
 
 	v2 header_offset;
@@ -392,7 +370,7 @@ bool gui_begin(string name, r2 first_size, gui_window_flags flags, f32 first_alp
 	}
 	if((window->flags & (u16)window_flags::noresize) != (u16)window_flags::noresize) {
 
-		v2 resize_tab = ggui->style.resize_tab * gscale;
+		v2 resize_tab = ggui->style.resize_tab;
 
 		r2 resize_rect = R2(sub(add(real_rect.xy, real_rect.wh), resize_tab), resize_tab);
 		if(!occluded && inside(resize_rect, ggui->input.mousepos)) {
@@ -419,8 +397,9 @@ bool gui_begin(string name, r2 first_size, gui_window_flags flags, f32 first_alp
 		if(!occluded && inside(real_body, ggui->input.mousepos)) {
 			window->scroll_pos.y += ggui->input.scroll * ggui->style.win_scroll_speed;
 
+			f32 content_offset = -ggui->style.win_margin.y - ggui->style.win_margin.w + real_top.h + real_rect.h;
+			if(window->scroll_pos.y < -window->previous_content_size.y + content_offset) window->scroll_pos.y = -window->previous_content_size.y + content_offset;
 			if(window->scroll_pos.y > 0.0f) window->scroll_pos.y = 0.0f;
-			if(window->scroll_pos.y < -window->previous_content_size.y + real_top.h - ggui->style.win_margin.y - ggui->style.win_margin.z + real_rect.h) window->scroll_pos.y = -window->previous_content_size.y + real_top.h - ggui->style.win_margin.y - ggui->style.win_margin.z + real_rect.h;
 		}
 	}
 
@@ -458,7 +437,7 @@ bool gui_carrot_toggle(string name, bool initial, bool* toggleme) { PROF
 	}
 
 	v2 pos = win->current_offset();
-	v2 size = ggui->style.default_carrot_size * ggui->style.gscale;
+	v2 size = ggui->style.default_carrot_size;
 	gui_push_offset(size);
 
 	if(!win->seen(R2(pos, size))) {
@@ -486,13 +465,8 @@ bool gui_carrot_toggle(string name, bool initial, bool* toggleme) { PROF
 
 void render_carrot(gui_window_state* win, v2 pos, bool active) { PROF
 
-	f32 gscale = 1.0f;
-	if((win->flags & (u16)window_flags::ignorescale) != (u16)window_flags::ignorescale) {
-		gscale = ggui->style.gscale;
-	}
-
 	u32 idx = win->shape_mesh.vertices.size;
-	f32 size = ggui->style.default_carrot_size.x * gscale;
+	f32 size = ggui->style.default_carrot_size.x;
 
 	if(active) {
 		win->shape_mesh.vertices.push(V2(pos.x 		 		, pos.y));
@@ -515,35 +489,24 @@ void gui_text(string text, color c, f32 point) { PROF
 	gui_window_state* win = ggui->current;
 	if(!win->active && !win->override_active) return;
 
-	f32 gscale = 1.0f;
-	if((win->flags & (u16)window_flags::ignorescale) != (u16)window_flags::ignorescale) {
-		gscale = ggui->style.gscale;
-	}
-
 	if(!point) point = win->default_point;
 
 	v2 pos = win->current_offset();
-	v2 size = size_text(win->font->font, text, point * gscale);
+	v2 size = size_text(win->font->font, text, point);
 	gui_push_offset(V2(0.0f, point));
 
 	if(!win->seen(R2(pos, size))) {
 		return;
 	}
 
-	win->text_mesh.push_text_line(win->font->font, text, pos, point * gscale, c);
+	win->text_mesh.push_text_line(win->font->font, text, pos, point, c);
 }
 
 void render_windowhead(gui_window_state* win) { PROF
 	
-	f32 gscale = 1.0f;
-	if((win->flags & (u16)window_flags::ignorescale) != (u16)window_flags::ignorescale) {
-		gscale = ggui->style.gscale;
-	}
-
 	u32 idx = win->shape_mesh.vertices.size;
-	r2 r = mult(win->rect, gscale);
+	r2 r = win->get_real();
 	f32 pt = ggui->style.font + ggui->style.title_padding;
-	pt *= gscale;
 
 	win->shape_mesh.vertices.push(V2(r.x + r.w - 10.0f, r.y));
 	win->shape_mesh.vertices.push(V2(r.x, r.y));
@@ -559,15 +522,9 @@ void render_windowhead(gui_window_state* win) { PROF
 
 void render_windowbody(gui_window_state* win) { PROF
 
-	f32 gscale = 1.0f;
-	if((win->flags & (u16)window_flags::ignorescale) != (u16)window_flags::ignorescale) {
-		gscale = ggui->style.gscale;
-	}
-
 	u32 idx = win->shape_mesh.vertices.size;
-	r2 r = mult(win->rect, gscale);
+	r2 r = win->get_real();
 	f32 pt = ggui->style.font + ggui->style.title_padding;
-	pt *= gscale;
 
 	if((win->flags & (u16)window_flags::noresize) == (u16)window_flags::noresize) {
 
@@ -585,7 +542,7 @@ void render_windowbody(gui_window_state* win) { PROF
 
 	} else {
 
-		v2 resize_tab = ggui->style.resize_tab * gscale;
+		v2 resize_tab = ggui->style.resize_tab;
 
 		win->shape_mesh.vertices.push(V2(r.x, r.y + pt));
 		win->shape_mesh.vertices.push(V2(r.x, r.y + r.h));
