@@ -132,6 +132,11 @@ void gui_manager::end_frame(platform_window* win, ogl_manager* ogl) { PROF
 
 		cmd = render_command::make(render_command_type::mesh_2d_tex_col, &it->value.text_mesh, it->value.z);
 		cmd.texture = it->value.font->texture;
+		cmd.num_tris = it->value.title_tris;
+		rcl.add_command(cmd);
+
+		cmd = render_command::make(render_command_type::mesh_2d_tex_col, &it->value.text_mesh, it->value.z);
+		cmd.texture = it->value.font->texture;
 		cmd.scissor = it->value.get_real_content();
 		rcl.add_command(cmd);
 	}
@@ -161,7 +166,7 @@ v2 gui_window_state::current_offset() {
 r2 gui_window_state::get_real_content() {
 
 	r2 r = get_real_body();
-	return R2(r.xy, r.wh - ggui->style.win_margin.xy - ggui->style.win_margin.zw);
+	return R2(r.xy + ggui->style.win_margin.xy, r.wh - ggui->style.win_margin.xy - ggui->style.win_margin.zw);
 }
 
 r2 gui_window_state::get_real_top() {
@@ -217,7 +222,7 @@ void gui_window_state::update_rect() {
 
 bool gui_window_state::seen(r2 r) {
 	if(override_seen) return true;
-	return intersect(get_real_body(), r);
+	return intersect(get_real_content(), r);
 }
 
 r2 gui_window_state::get_real() {
@@ -320,11 +325,12 @@ bool gui_begin(string name, r2 first_size, gui_window_flags flags, f32 first_alp
 	if((window->flags & (u16)window_flags::nohead) != (u16)window_flags::nohead) {
 		render_windowhead(window);
 
-		v2 title_pos = V2(3.0f, 0.0f);
+		v2 title_pos = V2(3.0f, -1.0f);
 		gui_set_offset(title_pos);
 		window->override_active = true;
 		window->override_seen = true;
 		gui_text(name, V4b(ggui->style.win_title, 255));
+		window->title_tris = window->text_mesh.elements.size;
 		window->override_active = false;
 		window->override_seen = false;
 

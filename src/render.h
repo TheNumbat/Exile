@@ -79,7 +79,10 @@ struct render_command {
 	
 	m4 model;
 	u32 sort_key = 0;
-	
+
+	// triangle index, gets * 3 to compute element index
+	u32 start_tri = 0, num_tris = 0;
+
 	// zero for entire window
 	r2 viewport;
 	r2 scissor;

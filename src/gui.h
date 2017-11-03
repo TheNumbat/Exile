@@ -87,8 +87,8 @@ struct gui_window_state {
 	f32 opacity = 1.0f;
 	v2 scroll_pos, previous_content_size;
 	u16 flags 	= 0;
-	u32 z 		= 0; 
-	
+	u32 z 		= 0, title_tris = 0; 
+
 	bool active = true;
 	bool resizing = false;
 

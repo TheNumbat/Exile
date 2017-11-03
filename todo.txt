@@ -90,29 +90,27 @@ to do:
 		keep & output statistics
 
 	UI
-		Split textured mesh2D and colored mesh2D
-		Use multiple render commands per window - shapes vs. each font vs. user textures
+		arbitrary render commands per window - different fonts, user textures
 		fonts
 			just pack the TTF and use stb_tt to asynchronously cache correctly sized fonts
-			when they're needed. 
+			when they're needed.
+			Don't store font info in window - have text meshes hold font name/size/style
 		widgets
-			clipping/wrapping/auto-layout
+			lists
+			clipping/text wrapping/auto-size
+			vertical/horizontal smooth scrolling
+				stick scroll (e.g. twitch)
 			dividers
 			text input
-			multiple fonts
-			image widgets - do we need this?
-			texture arrays? would be useful for multiple fonts as well
-			text wrapping
+			image widgets
+			texture arrays
 			lots of other input types (float, text, check-box, key, etc.)
-		general window scroll
-			click/drag/hold scroll bar
-			sticky scroll (like twitch chat)
-		logger UI window
+		Debug UI window
 			swap between levels
 			tooltip call stack / file:line
-			console + commands (expose Lua API?)
-		profiler
-			telemetry-style
+			console + commands (Lua API?)
+			time, memory profiles
+				frames, threads/time views	
 		Subl_remote_open for profiler & logging
 
 	asset
