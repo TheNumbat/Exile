@@ -148,6 +148,7 @@ void gui_manager::end_frame(platform_window* win, ogl_manager* ogl) { PROF
 	rcl.destroy();
 
 	FORMAP(it, window_state_data) {
+		it->value.previous_content_size = it->value.current_offset() - it->value.scroll_pos;
 		it->value.offset_stack.clear();
 		it->value.id_hash_stack.clear();
 		it->value.shape_mesh.clear();
@@ -319,6 +320,10 @@ bool gui_begin(string name, r2 first_size, gui_window_flags flags, f32 first_alp
 		window->update_rect();
 	}
 
+	f32 gscale = 1.0f;
+	if((flags & (u16)window_flags::ignorescale) != (u16)window_flags::ignorescale) {
+		gscale = ggui->style.gscale;
+	}
 	r2 real_rect = window->get_real();
 
 	v2 header_offset;
@@ -345,6 +350,7 @@ bool gui_begin(string name, r2 first_size, gui_window_flags flags, f32 first_alp
 	
 	r2 real_top = window->get_real_top(); 
 	r2 real_body = window->get_real_body();
+	r2 real_content = window->get_real_content();
 
 	bool occluded = gui_occluded();
 	if((window->flags & (u16)window_flags::nohide) != (u16)window_flags::nohide) {
@@ -386,7 +392,7 @@ bool gui_begin(string name, r2 first_size, gui_window_flags flags, f32 first_alp
 	}
 	if((window->flags & (u16)window_flags::noresize) != (u16)window_flags::noresize) {
 
-		v2 resize_tab = clamp(mult(real_rect.wh, ggui->style.resize_tab), 5.0f, 25.0f);
+		v2 resize_tab = ggui->style.resize_tab * gscale;
 
 		r2 resize_rect = R2(sub(add(real_rect.xy, real_rect.wh), resize_tab), resize_tab);
 		if(!occluded && inside(resize_rect, ggui->input.mousepos)) {
@@ -414,6 +420,7 @@ bool gui_begin(string name, r2 first_size, gui_window_flags flags, f32 first_alp
 			window->scroll_pos.y += ggui->input.scroll * ggui->style.win_scroll_speed;
 
 			if(window->scroll_pos.y > 0.0f) window->scroll_pos.y = 0.0f;
+			if(window->scroll_pos.y < -window->previous_content_size.y + real_top.h - ggui->style.win_margin.y - ggui->style.win_margin.z + real_rect.h) window->scroll_pos.y = -window->previous_content_size.y + real_top.h - ggui->style.win_margin.y - ggui->style.win_margin.z + real_rect.h;
 		}
 	}
 
@@ -578,7 +585,7 @@ void render_windowbody(gui_window_state* win) { PROF
 
 	} else {
 
-		v2 resize_tab = ggui->style.resize_tab;
+		v2 resize_tab = ggui->style.resize_tab * gscale;
 
 		win->shape_mesh.vertices.push(V2(r.x, r.y + pt));
 		win->shape_mesh.vertices.push(V2(r.x, r.y + r.h));
