@@ -193,7 +193,8 @@ EXPORT void on_reload(platform_api* api, game_state* state) {
 	global_log = &state->log;
 	global_dbg = &state->dbg;
 	global_func = &state->func_state;
-	
+	state->gui.style = _gui_style();
+
 	state->func_state.reload_all();
 
 	begin_thread(string::literal("main"), &state->suppressed_platform_allocator, 600, 32768);

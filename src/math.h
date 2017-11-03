@@ -250,11 +250,16 @@ r2 R2f(i32 x, i32 y, i32 w, i32 h);
 ur2 roundR2(r2 r);
 template<typename T> inline r2_t<T> R2(v2_t<T> xy, v2_t<T> wh);
 template<typename T> inline r2_t<T> add(r2_t<T> l, r2_t<T> r);
+template<typename T> inline r2_t<T> add(r2_t<T> l, v2_t<T> r);
 template<typename T> inline r2_t<T> operator+(r2_t<T> l, r2_t<T> r);
+template<typename T> inline r2_t<T> operator+(r2_t<T> l, v2_t<T> r);
 template<typename T> inline r2_t<T> sub(r2_t<T> l, r2_t<T> r);
+template<typename T> inline r2_t<T> sub(r2_t<T> l, v2_t<T> r);
 template<typename T> inline r2_t<T> operator-(r2_t<T> l, r2_t<T> r);
+template<typename T> inline r2_t<T> operator-(r2_t<T> l, v2_t<T> r);
 template<typename T> inline r2_t<T> mult(r2_t<T> r, T f);
 template<typename T> inline r2_t<T> operator*(r2_t<T> r, T f);
+template<typename T> inline bool intersect(r2_t<T> r, r2_t<T> l);
 template<typename T> inline bool inside(r2_t<T> r, T x, T y);
 template<typename T> inline bool inside(r2_t<T> r, v2_t<T> v);
 

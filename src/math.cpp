@@ -330,16 +330,26 @@ template<typename T> inline r2_t<T> add(r2_t<T> l, r2_t<T> r) { PROF
 	return R2(l.x + r.x, l.y + r.y, l.w + r.w, l.h + r.h);	
 }
 template r2 add(r2, r2);
+template<typename T> inline r2_t<T> add(r2_t<T> l, v2_t<T> r) { PROF
+	return R2(l.x + r.x, l.y + r.y, l.w, l.h);	
+}
+template r2 add(r2, v2);
 template<typename T> inline r2_t<T> sub(r2_t<T> l, r2_t<T> r) { PROF
 	return R2(l.x - r.x, l.y - r.y, l.w - r.w, l.h - r.h);	
 }
 template r2 sub(r2, r2);
-
+template<typename T> inline r2_t<T> sub(r2_t<T> l, v2_t<T> r) { PROF
+	return R2(l.x - r.x, l.y - r.y, l.w, l.h);	
+}
+template r2 sub(r2, v2);
 template<typename T> inline r2_t<T> mult(r2_t<T> r, T f) { PROF
 	return R2(r.x, r.y, r.w * f, r.h * f);
 }
 template r2 mult(r2, f32);
-
+template<typename T> inline bool intersect(r2_t<T> r, r2_t<T> l) { PROF
+	return r.x <= l.x + l.w && r.x + r.w >= l.x && r.y <= l.y + l.h && r.y + r.h >= l.y;
+}
+template bool intersect(r2, r2);
 template<typename T> inline bool inside(r2_t<T> r, T x, T y) { PROF
 	return (x >= r.x) &&
 		   (x <= r.x + r.w) &&
@@ -597,7 +607,15 @@ template<typename T> inline r2_t<T> operator+(r2_t<T> l, r2_t<T> r) {
 	return add(l,r);
 }
 
+template<typename T> inline r2_t<T> operator+(r2_t<T> l, v2_t<T> r) {
+	return add(l,r);
+}
+
 template<typename T> inline r2_t<T> operator-(r2_t<T> l, r2_t<T> r) {
+	return sub(l,r);
+}
+
+template<typename T> inline r2_t<T> operator-(r2_t<T> l, v2_t<T> r) {
 	return sub(l,r);
 }
 

@@ -45,7 +45,7 @@ void dbg_manager::UI() { PROF
 
 	gui_begin(string::literal("Debug"), R2(20.0f, 20.0f, width, height));
 
-	gui_begin_list(string::literal("Log"));
+	// gui_begin_list(string::literal("Log"));
 	for(u32 i = 0; i < log_cache.len(); i++) {
 		
 		log_message* it = log_cache.get(i);
@@ -62,7 +62,7 @@ void dbg_manager::UI() { PROF
 		} POP_ALLOC();
 		RESET_ARENA(&scratch);
 	}
-	gui_end_list();
+	// gui_end_list();
 
 	gui_end();
 }

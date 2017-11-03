@@ -18,6 +18,8 @@ enum class window_flags : gui_window_flags {
 	nohead		= 1<<4 | nohide | nomove,
 	noback		= 1<<5 | noresize,
 	ignorescale = 1<<6,
+	horzscroll	= 1<<7,
+	autosize	= 1<<8,
 };
 
 struct gui_input_state {
@@ -83,19 +85,29 @@ struct gui_window_state {
 	v2 move_click_offset;
 
 	f32 opacity = 1.0f;
+	v2 scroll_pos, previous_content_size;
 	u16 flags 	= 0;
 	u32 z 		= 0; 
 	
 	bool active = true;
 	bool resizing = false;
+
+	// TODO(max): these should be style stack parameters
 	bool override_active = false;
+	bool override_seen = false;
 
 	gui_offset_mode offset_mode = gui_offset_mode::y;
 	vector<v2> offset_stack;
 	stack<u32> id_hash_stack;
 
 	v2 current_offset();
-
+	r2 get_real_content();
+	r2 get_real_body();
+	r2 get_real_top();
+	r2 get_real();
+	void update_rect();
+	bool seen(r2 rect);
+	
 	gui_font* font = null;
 	f32 default_point = 14.0f;
 	
@@ -130,6 +142,7 @@ struct _gui_style {
 	f32 win_scroll_w 		= 15.0f;
 	f32 win_scroll_margin	= 2.0f;
 	f32 win_scroll_bar_h	= 25.0f;
+	f32 win_scroll_speed	= 15.0f;
 	color3 win_scroll_back 	= V3b(102, 105, 185);
 	color3 win_scroll_bar 	= V3b(132, 135, 215);
 };
@@ -194,13 +207,8 @@ bool gui_occluded();
 bool gui_begin(string name, r2 first_size = R2f(40,40,0,0), gui_window_flags flags = 0, f32 first_alpha = 0);
 void gui_end();
 
-void gui_begin_list(string name);
-void gui_end();
-
 void gui_text(string text, color c = WHITE, f32 point = 0.0f);
-
 bool gui_carrot_toggle(string name, bool initial = false, bool* toggleme = null);
-void gui_box_select(i32* selected, i32 num, v2 pos, ...);
 
 // these take into account only gscale & win_ignorescale - window + offset transforms occur in gui_ functions
 void render_windowhead(gui_window_state* win);
