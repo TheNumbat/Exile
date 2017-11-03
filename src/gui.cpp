@@ -492,9 +492,16 @@ void gui_text(string text, color c, f32 point) { PROF
 	if(!point) point = win->default_point;
 
 	v2 pos = win->current_offset();
-	v2 size = size_text(win->font->font, text, point);
 	gui_push_offset(V2(0.0f, point));
 
+	// TODO(max): preliminary check bounds without doing size_text
+
+	// r2 content = win->get_real_content();
+	// if(!(pos.y + point >= content.y && pos.y <= content.y + content.h)) {
+	// 	return;
+	// }
+
+	v2 size = size_text(win->font->font, text, point);
 	if(!win->seen(R2(pos, size))) {
 		return;
 	}

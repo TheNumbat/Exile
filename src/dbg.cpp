@@ -118,7 +118,7 @@ void dbg_manager::collate() {
 				string name = string::makef(string::literal("frame %"), thread->num_frames);
 				frame->pool = MAKE_POOL(name, KILOBYTES(8), alloc, false);
 				frame->heads = vector<func_profile_node*>::make(2, &frame->pool);
-		
+				frame->start = msg->time;
 				thread->num_frames++;
 				name.destroy();
 			}
