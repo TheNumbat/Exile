@@ -17,7 +17,7 @@
 #define NO_CONCURRENT_JOBS		// makes queue_job just run the job and wait_job do nothing
 */
 
-#define REAL_RELEASE // turn off everything for a true release build
+// #define REAL_RELEASE // turn off everything for a true release build
 
 #ifdef _DEBUG
 	#define BOUNDS_CHECK

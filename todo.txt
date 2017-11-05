@@ -91,6 +91,7 @@ to do:
 
 	UI
 		arbitrary render commands per window - different fonts, user textures
+		check if meshes need to be updated on GPU
 		fonts
 			just pack the TTF and use stb_tt to asynchronously cache correctly sized fonts
 			when they're needed.
@@ -159,8 +160,15 @@ to do:
 	OpenGl
 		remove sending on every command
 			mark mesh as dirty to send
+			VAO per mesh
+			More flexible shader selection; need more than 1 per command type
+			glBufferSubData
+		Shaders
+			preprocessor / shader assets
+			tessellation / geometry shaders
 		AZDO (bindless?)
-		improve shader spec API
+			glNamed operations
+			glMapBuffer?
 		3D
 			texture arrays?
 			models & animation
