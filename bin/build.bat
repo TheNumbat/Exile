@@ -11,10 +11,10 @@ set Game_LinkerFlags=/NODEFAULTLIB:MSVCRT /SUBSYSTEM:windows opengl32.lib -PDB:g
 set Platform_CompilerFlags=-O2 -MTd -nologo -fp:fast -GR- -EHa- -W4 -FC -Femain.exe -wd4100
 set Platform_LinkerFlags=/NODEFAULTLIB:MSVCRT /SUBSYSTEM:console kernel32.lib user32.lib gdi32.lib opengl32.lib 
 
-set Asset_CompilerFlags=-O2 -MTd -nologo-Oi -W4 -Z7 -FC -Feasset.exe -wd4100 -Iw:\deps\
+set Asset_CompilerFlags=-O2 -MTd -nologo -EHsc -Oi -W4 -Z7 -FC -Feasset.exe -wd4100 -Iw:\deps\
 set Asset_LinkerFlags=/NODEFAULTLIB:MSVCRT /SUBSYSTEM:console
 
-set Meta_CompilerFlags=-O2 -MTd -nologo -Oi -W4 -Z7 -FC -Femeta.exe -wd4100 -Iw:\deps\
+set Meta_CompilerFlags=-O2 -MTd -nologo -EHsc -Oi -W4 -Z7 -FC -Femeta.exe -wd4100 -Iw:\deps\
 set Meta_LinkerFlags=/NODEFAULTLIB:MSVCRT /SUBSYSTEM:console /LIBPATH:w:\deps\clang-c libclang.lib
  
 if not exist w:\build\asset.exe (
