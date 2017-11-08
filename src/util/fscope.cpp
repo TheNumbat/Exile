@@ -1,5 +1,5 @@
 
-#ifdef DO_PROF
+#ifdef PROFILE
 func_scope::func_scope(code_context context) {
 	LOG_DEBUG_ASSERT(this_thread_data.call_stack_depth < MAX_CALL_STACK_DEPTH);
 

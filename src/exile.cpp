@@ -5,7 +5,7 @@
 	
 #define BLOCK_OR_EXIT_ON_ERROR	// __debugbreak in debugger or exit() on log_level::error | log_level::fatal always does this
 	
-#define DO_PROF					// do function enter/exit profiling
+#define PROFILE					// do function enter/exit profiling
 	
 #define MORE_PROF				// do profiling for functions that are called a _lot_
 								// (still excludes vec constructors)
@@ -24,9 +24,6 @@
 	#define BOUNDS_CHECK
 	#define BLOCK_OR_EXIT_ON_ERROR
 	#define ZERO_ARENA
-#endif
-#ifdef PROFILE
-	#define DO_PROF
 #endif
 #endif
 

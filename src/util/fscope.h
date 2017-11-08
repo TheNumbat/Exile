@@ -2,7 +2,7 @@
 #pragma once
 
 #ifndef __clang__
-#ifdef DO_PROF
+#ifdef PROFILE
 struct func_scope {
 	func_scope(code_context context);
 	~func_scope();

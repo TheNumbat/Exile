@@ -32,6 +32,7 @@ CALLBACK void* platform_allocate(u64 bytes, allocator* this_, code_context conte
 	}
 #endif
 
+#ifdef PROFILE
 	if(this_thread_data.profiling) {
 		dbg_msg m;
 		m.type = dbg_msg_type::allocate;
@@ -42,6 +43,7 @@ CALLBACK void* platform_allocate(u64 bytes, allocator* this_, code_context conte
 
 		POST_MSG(m);
 	}
+#endif 
 
 	return mem;
 }
@@ -60,6 +62,7 @@ CALLBACK void platform_free(void* mem, allocator* this_, code_context context) {
 
 	this__->platform_free(mem);
 
+#ifdef PROFILE
 	if(this_thread_data.profiling) {
 		dbg_msg m;
 		m.type = dbg_msg_type::free;
@@ -69,6 +72,7 @@ CALLBACK void platform_free(void* mem, allocator* this_, code_context context) {
 
 		POST_MSG(m);
 	}
+#endif 
 }
 
 CALLBACK void* platform_reallocate(void* mem, u64, u64 bytes, allocator* this_, code_context context) { PROF
@@ -87,6 +91,7 @@ CALLBACK void* platform_reallocate(void* mem, u64, u64 bytes, allocator* this_, 
 
 	LOG_DEBUG_ASSERT(ret != null);
 
+#ifdef PROFILE
 	if(this_thread_data.profiling) {
 		dbg_msg m;
 		m.type = dbg_msg_type::reallocate;
@@ -98,6 +103,7 @@ CALLBACK void* platform_reallocate(void* mem, u64, u64 bytes, allocator* this_, 
 
 		POST_MSG(m);
 	}
+#endif 
 
 	return ret;
 }
@@ -142,6 +148,7 @@ CALLBACK void* arena_allocate(u64 bytes, allocator* this_, code_context context)
 	}
 #endif
 
+#ifdef PROFILE
 	if(this_thread_data.profiling) {
 		dbg_msg m;
 		m.type = dbg_msg_type::allocate;
@@ -152,6 +159,7 @@ CALLBACK void* arena_allocate(u64 bytes, allocator* this_, code_context context)
 
 		POST_MSG(m);
 	}
+#endif 
 
 	return mem;
 }
@@ -247,6 +255,7 @@ CALLBACK void* pool_allocate(u64 bytes, allocator* this_, code_context context) 
 	mem = (void*)((u8*)page + sizeof(pool_page) + page->used);
 	page->used += bytes;
 
+#ifdef PROFILE
 	if(this_thread_data.profiling) {
 		dbg_msg m;
 		m.type = dbg_msg_type::allocate;
@@ -257,7 +266,8 @@ CALLBACK void* pool_allocate(u64 bytes, allocator* this_, code_context context) 
 
 		POST_MSG(m);
 	}
-
+#endif 
+	
 	return mem;
 }
 
