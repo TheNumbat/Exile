@@ -127,7 +127,7 @@ struct log_manager {
 #define LOG__ASSERT(cond)
 #endif
 
-#ifdef _DEBUG
+#ifndef RELEASE
 	#define LOG_DEBUG(m) 			global_log->msg(string::literal(m),  log_level::debug, CONTEXT); 
 	#define LOG_DEBUG_F(fmt, ...) 	global_log->msgf(string::literal(fmt), log_level::debug, CONTEXT, ##__VA_ARGS__) 
 	#define LOG_OGL_F(fmt, ...)		global_log->msgf(string::literal(fmt), log_level::ogl,   CONTEXT, ##__VA_ARGS__); 

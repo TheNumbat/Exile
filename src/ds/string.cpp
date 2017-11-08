@@ -53,6 +53,7 @@ string string::makef(u32 len, string fmt, Targs... args) { PROF
 	u32 used = _string_printf(ret, 0, fmt, false, args...);
 
 	LOG_DEBUG_ASSERT(used == len - 1);
+	(void)used;
 
 	return ret;
 }
@@ -69,6 +70,7 @@ string string::makef(string fmt, Targs... args) { PROF
 	u32 used = _string_printf(ret, 0, fmt, false, args...);
 
 	LOG_DEBUG_ASSERT(used == len - 1);
+	(void)used;
 
 	return ret;
 }

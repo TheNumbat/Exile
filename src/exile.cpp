@@ -17,7 +17,7 @@
 #define NO_CONCURRENT_JOBS		// makes queue_job just run the job and wait_job do nothing
 */
 
-// #define REAL_RELEASE // turn off everything for a true release build
+// #define RELEASE // turn off everything for a true release build
 
 #ifndef REAL_RELEASE
 #ifdef CHECKS
@@ -101,7 +101,7 @@ static dbg_manager*  global_dbg = null; // not used yet -- global to provide pro
 
 #define DO(num) for(i32 __i = 0; __i < num; __i++)
 
-#ifdef _DEBUG
+#ifndef RELEASE
 #define CHECKED(platform_func, ...) {platform_error err = global_api->platform_func(__VA_ARGS__); if(!err.good) LOG_ERR_F("Error % in %", err.error, #platform_func);}
 #else
 #define CHECKED(platform_func, ...) global_api->platform_func(__VA_ARGS__);

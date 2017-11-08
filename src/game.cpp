@@ -124,7 +124,7 @@ EXPORT bool main_loop(game_state* state) {
 
 	CHECKED(platform_swap_buffers, &state->window);
 
-#ifdef _DEBUG
+#ifndef RELEASE
 	state->ogl.try_reload_programs();
 	if(state->default_store.try_reload()) {
 		state->gui.reload_fonts(&state->ogl);
