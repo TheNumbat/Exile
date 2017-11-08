@@ -19,6 +19,7 @@
 
 // #define REAL_RELEASE // turn off everything for a true release build
 
+#ifndef REAL_RELEASE
 #ifdef CHECKS
 	#define BOUNDS_CHECK
 	#define BLOCK_OR_EXIT_ON_ERROR
@@ -26,6 +27,7 @@
 #endif
 #ifdef PROFILE
 	#define DO_PROF
+#endif
 #endif
 
 #ifdef __clang__

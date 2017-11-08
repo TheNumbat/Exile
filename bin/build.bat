@@ -39,7 +39,9 @@ meta.exe w:\src\exile.cpp
 echo compiling game lib...
 cl %Game_CompilerFlags% w:\src\exile.cpp /link %Game_LinkerFlags%
 
-echo compiling platform layer...
-cl %Platform_CompilerFlags% w:\src\platform\platform_main.cpp /link %Platform_LinkerFlags%
+if not exist w:\build\main.exe (
+	echo compiling platform layer...
+	cl %Platform_CompilerFlags% w:\src\platform\platform_main.cpp /link %Platform_LinkerFlags%
+)
 
 popd
