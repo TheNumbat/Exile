@@ -53,6 +53,8 @@ to do:
 
 	allocators
 		free list (one-size pool re-using arenas)
+		alignment - pool / arena is never aligned
+		overloading new to use overloaded malloc
 
 	async
 		better integration with event system https://www.youtube.com/watch?v=gFFqYLgPOWI
