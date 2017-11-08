@@ -19,13 +19,12 @@
 
 // #define REAL_RELEASE // turn off everything for a true release build
 
-#ifdef _DEBUG
+#ifdef CHECKS
 	#define BOUNDS_CHECK
 	#define BLOCK_OR_EXIT_ON_ERROR
-	#define DO_PROF
-#elif defined(REAL_RELEASE)
-#else
-	#define BLOCK_OR_EXIT_ON_ERROR
+	#define ZERO_ARENA
+#endif
+#ifdef PROFILE
 	#define DO_PROF
 #endif
 
