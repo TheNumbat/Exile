@@ -84,12 +84,11 @@ void queue<T>::grow() { PROF
 template<typename T>
 T* queue<T>::push(T value) { PROF
 
-	if(len() == capacity) {
-		grow();
-	}
-
-	if(len() == 0) {
+	u32 size = len();
+	if(size == 0) {
 		start = end = 0;
+	} else if(size == capacity) {
+		grow();
 	}
 
 	T* ret = memory + end;

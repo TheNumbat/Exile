@@ -5,7 +5,11 @@
 #define PUSH_PROFILE(enable) bool __prof = this_thread_data.profiling; this_thread_data.profiling = enable;
 #define POP_PROFILE() {this_thread_data.profiling = __prof;}
 
+#ifdef _MSC_VER
+#define POST_MSG(m) {PUSH_PROFILE(false) {(m).time = __rdtsc(); this_thread_data.dbg_msgs.push(m);} POP_PROFILE();}
+#else
 #define POST_MSG(m) {PUSH_PROFILE(false) {(m).time = global_api->platform_get_perfcount(); this_thread_data.dbg_msgs.push(m);} POP_PROFILE();}
+#endif
 
 typedef platform_perfcount timestamp;
 
