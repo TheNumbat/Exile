@@ -116,7 +116,7 @@ struct gui_window_state {
 };
 
 struct _gui_style {
-	f32 font 			= 0.0f;	// default font size - may use different actual font based on gscale * font
+	f32 font 			= 0.0f;	// default font size 
 	f32 title_padding 	= 3.0f;
 	f32 line_padding 	= 3.0f;
 	u32 log_win_lines 	= 15;
@@ -208,7 +208,6 @@ void gui_end();
 void gui_text(string text, color c = WHITE, f32 point = 0.0f);
 bool gui_carrot_toggle(string name, bool initial = false, bool* toggleme = null);
 
-// these take into account only gscale & win_ignorescale - window + offset transforms occur in gui_ functions
 void render_windowhead(gui_window_state* win);
 void render_windowbody(gui_window_state* win);
 void render_carrot(gui_window_state* win, v2 pos, bool active);
