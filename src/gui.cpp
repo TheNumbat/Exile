@@ -25,15 +25,15 @@ gui_manager gui_manager::make(ogl_manager* ogl, allocator* alloc, platform_windo
 
 void gui_manager::destroy() { PROF
 
-	FORMAP(win, window_state_data) {
-		win->value.id_hash_stack.destroy();
-		win->value.offset_stack.destroy();
-		win->value.shape_mesh.destroy();
-		win->value.text_mesh.destroy();
-		win->key.name.destroy(alloc);
+	FORMAP(it, window_state_data) {
+		it->value.id_hash_stack.destroy();
+		it->value.offset_stack.destroy();
+		it->value.shape_mesh.destroy();
+		it->value.text_mesh.destroy();
+		it->key.name.destroy(alloc);
 	}
-	FORMAP(st, state_data) {
-		st->key.name.destroy(alloc);
+	FORMAP(it, state_data) {
+		it->key.name.destroy(alloc);
 	}
 
 	window_state_data.destroy();
