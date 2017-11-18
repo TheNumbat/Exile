@@ -409,7 +409,7 @@ DLL_IMPORT void glBlendFunc(gl_blend_factor sfactor, gl_blend_factor dfactor);
 DLL_IMPORT void glEnable(gl_capability cap);
 DLL_IMPORT void glDisable(gl_capability cap);
 
-DLL_IMPORT void glClear(gl_clear mask);
+DLL_IMPORT void glClear(GLbitfield mask);
 DLL_IMPORT void glClearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha);
 DLL_IMPORT void glViewport(GLint x, GLint y, GLsizei width, GLsizei height);
 
@@ -455,4 +455,40 @@ typedef void (*glBufferData_t)(gl_buf_target target, GLsizeiptr size, const void
 typedef void (*glVertexAttribPointer_t)(GLuint index, GLint size, gl_vert_attrib_type type, gl_bool normalized, GLsizei stride, const void *pointer);
 typedef void (*glEnableVertexAttribArray_t)(GLuint index);
 
-typedef void (*glTexParameteriv_t)(gl_tex_target target, gl_tex_param pname, const GLint *params);
+typedef void (*glTexParameterIiv_t)(gl_tex_target target, gl_tex_param pname, const GLint *params);
+
+glDebugMessageCallback_t 	glDebugMessageCallback;
+glDebugMessageInsert_t		glDebugMessageInsert;
+glDebugMessageControl_t		glDebugMessageControl;
+
+glAttachShader_t  			glAttachShader;
+glCompileShader_t 			glCompileShader;
+glCreateProgram_t 			glCreateProgram;
+glCreateShader_t  			glCreateShader;
+glDeleteProgram_t 			glDeleteProgram;
+glDeleteShader_t  			glDeleteShader;
+glLinkProgram_t   			glLinkProgram;
+glShaderSource_t  			glShaderSource;
+glUseProgram_t    			glUseProgram;
+glGetUniformLocation_t 		glGetUniformLocation;
+glUniformMatrix4fv_t   		glUniformMatrix4fv;
+glGetShaderiv_t 			glGetShaderiv;
+glGetShaderInfoLog_t		glGetShaderInfoLog;
+
+glGenerateMipmap_t			glGenerateMipmap;
+glActiveTexture_t			glActiveTexture;
+glCreateTextures_t			glCreateTextures;
+glBindTextureUnit_t			glBindTextureUnit;
+glTexParameterIiv_t 		glTexParameterIiv;
+
+glBindVertexArray_t    		glBindVertexArray; 		
+glDeleteVertexArrays_t 		glDeleteVertexArrays;
+glGenVertexArrays_t    		glGenVertexArrays;
+
+glBindBuffer_t				glBindBuffer;
+glDeleteBuffers_t			glDeleteBuffers;
+glGenBuffers_t				glGenBuffers;
+glBufferData_t				glBufferData;
+
+glVertexAttribPointer_t		glVertexAttribPointer;
+glEnableVertexAttribArray_t glEnableVertexAttribArray;

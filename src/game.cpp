@@ -107,7 +107,7 @@ EXPORT bool main_loop(game_state* state) {
 	POST_MSG(msg);
 
 	glClearColor(0.8f, 0.8f, 0.8f, 1.0f);
-	glClear(gl_clear((GLbitfield)gl_clear::color_buffer_bit | (GLbitfield)gl_clear::depth_buffer_bit));
+	glClear((GLbitfield)gl_clear::color_buffer_bit | (GLbitfield)gl_clear::depth_buffer_bit);
 
 	PUSH_ALLOC(&state->transient_arena) {
 

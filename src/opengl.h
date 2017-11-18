@@ -1,41 +1,7 @@
 
 #pragma once
 
-glDebugMessageCallback_t 	glDebugMessageCallback;
-glDebugMessageInsert_t		glDebugMessageInsert;
-glDebugMessageControl_t		glDebugMessageControl;
-
-glAttachShader_t  			glAttachShader;
-glCompileShader_t 			glCompileShader;
-glCreateProgram_t 			glCreateProgram;
-glCreateShader_t  			glCreateShader;
-glDeleteProgram_t 			glDeleteProgram;
-glDeleteShader_t  			glDeleteShader;
-glLinkProgram_t   			glLinkProgram;
-glShaderSource_t  			glShaderSource;
-glUseProgram_t    			glUseProgram;
-glGetUniformLocation_t 		glGetUniformLocation;
-glUniformMatrix4fv_t   		glUniformMatrix4fv;
-glGetShaderiv_t 			glGetShaderiv;
-glGetShaderInfoLog_t		glGetShaderInfoLog;
-
-glGenerateMipmap_t			glGenerateMipmap;
-glActiveTexture_t			glActiveTexture;
-glCreateTextures_t			glCreateTextures;
-glBindTextureUnit_t			glBindTextureUnit;
-glTexParameteriv_t 			glTexParameteriv;
-
-glBindVertexArray_t    		glBindVertexArray; 		
-glDeleteVertexArrays_t 		glDeleteVertexArrays;
-glGenVertexArrays_t    		glGenVertexArrays;
-
-glBindBuffer_t				glBindBuffer;
-glDeleteBuffers_t			glDeleteBuffers;
-glGenBuffers_t				glGenBuffers;
-glBufferData_t				glBufferData;
-
-glVertexAttribPointer_t		glVertexAttribPointer;
-glEnableVertexAttribArray_t glEnableVertexAttribArray;
+void ogl_load_global_funcs();
 
 typedef i32 texture_id;
 
@@ -137,8 +103,6 @@ struct ogl_manager {
 
 	void cmd_set_settings(platform_window* win, render_command* cmd);
 };
-
-void ogl_load_global_funcs();
 
 void debug_proc(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userPointer);
 CALLBACK void uniforms_dbg(shader_program* prog, render_command* rc, render_command_list* rcl) {};

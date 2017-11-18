@@ -351,7 +351,7 @@ void texture::load_bitmap_from_font(asset* font) { PROF
 
 	glTexImage2D(gl_tex_target::_2D, 0, gl_tex_format::rgba8, font->font.width, font->font.height, 0, gl_pixel_data_format::red, gl_pixel_data_type::unsigned_byte, font->mem);
 	GLint swizzle[] = {(GLint)gl_tex_swizzle::red, (GLint)gl_tex_swizzle::red, (GLint)gl_tex_swizzle::red, (GLint)gl_tex_swizzle::red};
-	glTexParameteriv(gl_tex_target::_2D, gl_tex_param::swizzle_rgba, swizzle);
+	glTexParameterIiv(gl_tex_target::_2D, gl_tex_param::swizzle_rgba, swizzle);
 
 	glGenerateMipmap(gl_tex_target::_2D);
 
@@ -368,7 +368,7 @@ void texture::load_bitmap_from_font(asset_store* as, string name) { PROF
 
 	glTexImage2D(gl_tex_target::_2D, 0, gl_tex_format::rgba8, a->font.width, a->font.height, 0, gl_pixel_data_format::red, gl_pixel_data_type::unsigned_byte, a->mem);
 	GLint swizzle[] = {(GLint)gl_tex_swizzle::red, (GLint)gl_tex_swizzle::red, (GLint)gl_tex_swizzle::red, (GLint)gl_tex_swizzle::red};
-	glTexParameteriv(gl_tex_target::_2D, gl_tex_param::swizzle_rgba, swizzle);
+	glTexParameterIiv(gl_tex_target::_2D, gl_tex_param::swizzle_rgba, swizzle);
 
 	glGenerateMipmap(gl_tex_target::_2D);
 
@@ -578,47 +578,42 @@ void debug_proc(gl_debug_source glsource, gl_debug_type gltype, GLuint id, gl_de
 	}
 }
 
+#define GL_LOAD(name) name = (name##_t)global_api->platform_get_glproc(string::literal(#name));
 void ogl_load_global_funcs() { PROF
+
+	GL_LOAD(glDebugMessageCallback);
+	GL_LOAD(glDebugMessageInsert);
+	GL_LOAD(glDebugMessageControl);
+	GL_LOAD(glAttachShader);
+	GL_LOAD(glCompileShader);
+	GL_LOAD(glCreateProgram);
+	GL_LOAD(glCreateShader);
+	GL_LOAD(glDeleteProgram);
+	GL_LOAD(glDeleteShader);
+	GL_LOAD(glLinkProgram);
+	GL_LOAD(glShaderSource);
+	GL_LOAD(glUseProgram);
+	GL_LOAD(glGetUniformLocation);
+	GL_LOAD(glUniformMatrix4fv);
+	GL_LOAD(glGetShaderiv);
+	GL_LOAD(glGetShaderInfoLog);
+	GL_LOAD(glGenerateMipmap);
+	GL_LOAD(glActiveTexture);
+	GL_LOAD(glCreateTextures);
+	GL_LOAD(glBindTextureUnit);
+	GL_LOAD(glTexParameterIiv);
+	GL_LOAD(glBindVertexArray);
+	GL_LOAD(glDeleteVertexArrays);
+	GL_LOAD(glGenVertexArrays);
+	GL_LOAD(glBindBuffer);
+	GL_LOAD(glDeleteBuffers);
+	GL_LOAD(glGenBuffers);
+	GL_LOAD(glBufferData);
+	GL_LOAD(glVertexAttribPointer);
+	GL_LOAD(glEnableVertexAttribArray);
 
 	glEnable(gl_capability::debug_output);
 	glEnable(gl_capability::debug_output_synchronous);
-
-	glDebugMessageCallback 	= (glDebugMessageCallback_t) global_api->platform_get_glproc(string::literal("glDebugMessageCallback"));
-	glDebugMessageInsert 	= (glDebugMessageInsert_t) 	 global_api->platform_get_glproc(string::literal("glDebugMessageInsert"));
-	glDebugMessageControl 	= (glDebugMessageControl_t)  global_api->platform_get_glproc(string::literal("glDebugMessageControl"));
-
-	glAttachShader       = (glAttachShader_t)  global_api->platform_get_glproc(string::literal("glAttachShader"));
-	glCompileShader      = (glCompileShader_t) global_api->platform_get_glproc(string::literal("glCompileShader"));
-	glCreateProgram      = (glCreateProgram_t) global_api->platform_get_glproc(string::literal("glCreateProgram"));
-	glCreateShader       = (glCreateShader_t)  global_api->platform_get_glproc(string::literal("glCreateShader"));
-	glDeleteProgram      = (glDeleteProgram_t) global_api->platform_get_glproc(string::literal("glDeleteProgram"));
-	glDeleteShader       = (glDeleteShader_t)  global_api->platform_get_glproc(string::literal("glDeleteShader"));
-	glLinkProgram        = (glLinkProgram_t)   global_api->platform_get_glproc(string::literal("glLinkProgram"));
-	glShaderSource       = (glShaderSource_t)  global_api->platform_get_glproc(string::literal("glShaderSource"));
-	glUseProgram         = (glUseProgram_t)    global_api->platform_get_glproc(string::literal("glUseProgram"));
-	glGetUniformLocation = (glGetUniformLocation_t) global_api->platform_get_glproc(string::literal("glGetUniformLocation"));
-	glUniformMatrix4fv   = (glUniformMatrix4fv_t)   global_api->platform_get_glproc(string::literal("glUniformMatrix4fv"));
-	glGetShaderiv		 = (glGetShaderiv_t)   global_api->platform_get_glproc(string::literal("glGetShaderiv"));
-	glGetShaderInfoLog	 = (glGetShaderInfoLog_t) 	global_api->platform_get_glproc(string::literal("glGetShaderInfoLog"));
-
-	glGenerateMipmap  = (glGenerateMipmap_t)  global_api->platform_get_glproc(string::literal("glGenerateMipmap"));
-	glActiveTexture   = (glActiveTexture_t)   global_api->platform_get_glproc(string::literal("glActiveTexture"));
-	glCreateTextures  = (glCreateTextures_t)  global_api->platform_get_glproc(string::literal("glCreateTextures"));
-	glBindTextureUnit = (glBindTextureUnit_t) global_api->platform_get_glproc(string::literal("glBindTextureUnit"));
-	glTexParameteriv  = (glTexParameteriv_t)  global_api->platform_get_glproc(string::literal("glTexParameterIiv"));
-
-	glBindVertexArray    = (glBindVertexArray_t)    global_api->platform_get_glproc(string::literal("glBindVertexArray"));
-	glDeleteVertexArrays = (glDeleteVertexArrays_t) global_api->platform_get_glproc(string::literal("glDeleteVertexArrays"));
-	glGenVertexArrays    = (glGenVertexArrays_t)    global_api->platform_get_glproc(string::literal("glGenVertexArrays"));
-
-	glBindBuffer    = (glBindBuffer_t)    global_api->platform_get_glproc(string::literal("glBindBuffer"));
-	glDeleteBuffers = (glDeleteBuffers_t) global_api->platform_get_glproc(string::literal("glDeleteBuffers"));
-	glGenBuffers    = (glGenBuffers_t)    global_api->platform_get_glproc(string::literal("glGenBuffers"));
-	glBufferData	= (glBufferData_t)    global_api->platform_get_glproc(string::literal("glBufferData"));
-
-	glVertexAttribPointer 	  = (glVertexAttribPointer_t) 	  global_api->platform_get_glproc(string::literal("glVertexAttribPointer"));
-	glEnableVertexAttribArray = (glEnableVertexAttribArray_t) global_api->platform_get_glproc(string::literal("glEnableVertexAttribArray"));
-
 	glDebugMessageCallback(debug_proc, null);
 	glDebugMessageControl(gl_debug_source::dont_care, gl_debug_type::dont_care, gl_debug_severity::dont_care, 0, null, gl_bool::_true);
 }
