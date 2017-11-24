@@ -28,14 +28,14 @@ struct heap {
 };
 
 template<typename T>
-struct con_heap : public heap<T> {
+struct locking_heap : public heap<T> {
 
 	platform_mutex 		mut;
 	platform_semaphore 	sem;
 
 ///////////////////////////////////////////////////////////////////////////////
 
-	static con_heap<T> make(u32 capacity = 8, allocator* alloc = null);
+	static locking_heap<T> make(u32 capacity = 8, allocator* alloc = null);
 	void destroy();
 
 	void push(T value);

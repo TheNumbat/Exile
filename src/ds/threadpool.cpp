@@ -17,7 +17,7 @@ threadpool threadpool::make(allocator* a, i32 num_threads_) { PROF
 	ret.alloc   = a;
 	ret.running = map<job_id,platform_semaphore>::make(16, FPTR(hash_u64));
 	ret.threads = array<platform_thread>::make(ret.num_threads, a);
-	ret.jobs    = con_heap<job>::make(16, a);
+	ret.jobs    = locking_heap<job>::make(16, a);
 	ret.worker_data = array<worker_param>::make(ret.num_threads, a);
 	
 	global_api->platform_create_mutex(&ret.running_mutex, false);

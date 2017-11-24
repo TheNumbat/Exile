@@ -2,7 +2,7 @@
 #pragma once
 
 struct evt_manager {
-	con_queue<platform_event> event_queue;
+	locking_queue<platform_event> event_queue;
 
 ///////////////////////////////////////////////////////////////////////////////
 

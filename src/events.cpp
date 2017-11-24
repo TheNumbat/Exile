@@ -3,7 +3,7 @@ evt_manager evt_manager::make(allocator* a) { PROF
 	
 	evt_manager ret;
 
-	ret.event_queue = con_queue<platform_event>::make(256, a);
+	ret.event_queue = locking_queue<platform_event>::make(256, a);
 
 	return ret;
 }
@@ -100,6 +100,6 @@ gui_input_state run_events(game_state* state) { PROF
 
 void event_enqueue(void* data, platform_event evt) { PROF
 
-	con_queue<platform_event>* q = (con_queue<platform_event>*)data;
+	locking_queue<platform_event>* q = (locking_queue<platform_event>*)data;
 	q->push(evt);
 }

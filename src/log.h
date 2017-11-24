@@ -63,7 +63,7 @@ bool operator==(log_out l, log_out r);
 struct log_thread_param {
 	bool running 							= false;
 	vector<log_out>* 	out					= null;
-	con_queue<log_message>*	message_queue	= null;
+	locking_queue<log_message>*	message_queue	= null;
 	platform_semaphore*	logging_semaphore 	= null;
 	platform_mutex* output_mut				= null;
 	allocator* alloc 						= null;
@@ -72,7 +72,7 @@ struct log_thread_param {
 
 struct log_manager {
 	vector<log_out> 		out;
-	con_queue<log_message> 	message_queue;
+	locking_queue<log_message> 	message_queue;
 	platform_semaphore		logging_semaphore;
 	platform_thread			logging_thread;
 	platform_mutex 			output_mut;

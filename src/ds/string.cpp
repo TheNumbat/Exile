@@ -246,9 +246,9 @@ u32 string::write_type(u32 idx, void* val, _type_info* info, bool size) { PROF
 			idx = write_array(idx, val, info, size);
 		} else if(info->name == "map") {
 			idx = write_map(idx, val, info, size);
-		} else if(info->name == "queue" || info->name == "con_queue") {
+		} else if(info->name == "queue" || info->name == "locking_queue") {
 			idx = write_queue(idx, val, info, size);
-		} else if(info->name == "heap" || info->name == "con_heap") {
+		} else if(info->name == "heap" || info->name == "locking_heap") {
 			idx = write_heap(idx, val, info, size);
 		} else if(info->name == "_FPTR") {
 			idx = write(idx, ((_FPTR*)val)->name, size);

@@ -38,15 +38,15 @@ struct queue {
 
 // concurrent queue 
 template<typename T>
-struct con_queue : public queue<T> { 
+struct locking_queue : public queue<T> { 
 	
 	platform_mutex 		mut;
 	platform_semaphore 	sem;
 
 ///////////////////////////////////////////////////////////////////////////////
 
-	static con_queue<T> make(u32 capacity, allocator* a);
-	static con_queue<T> make(u32 capacity = 0);
+	static locking_queue<T> make(u32 capacity, allocator* a);
+	static locking_queue<T> make(u32 capacity = 0);
 	void destroy();
 
 	T* push(T value);

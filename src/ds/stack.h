@@ -24,15 +24,15 @@ struct stack {
 };
 
 template<typename T>
-struct con_stack : public stack<T> {
+struct locking_stack : public stack<T> {
 
 	platform_mutex mut;
 	platform_semaphore sem;
 
 ///////////////////////////////////////////////////////////////////////////////
 
-	static con_stack<T> make(u32 capacity, allocator* a);
-	static con_stack<T> make(u32 capacity = 0);
+	static locking_stack<T> make(u32 capacity, allocator* a);
+	static locking_stack<T> make(u32 capacity = 0);
 	void destroy();
 
 	T* push(T value);

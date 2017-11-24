@@ -4,7 +4,7 @@ log_manager log_manager::make(allocator* a) { PROF
 	log_manager ret;
 
 	ret.out = vector<log_out>::make(4, a);
-	ret.message_queue = con_queue<log_message>::make(32, a);
+	ret.message_queue = locking_queue<log_message>::make(32, a);
 	CHECKED(platform_create_semaphore, &ret.logging_semaphore, 0, INT32_MAX);
 	global_api->platform_create_mutex(&ret.output_mut, false);
 

@@ -140,9 +140,9 @@ void heap<T>::reheap_down(u32 root) { PROF
 }
 
 template<typename T>
-con_heap<T> con_heap<T>::make(u32 capacity, allocator* alloc) { PROF
+locking_heap<T> locking_heap<T>::make(u32 capacity, allocator* alloc) { PROF
 
-	con_heap<T> ret;
+	locking_heap<T> ret;
 	ret.capacity = capacity;
 	
 	if(!alloc) alloc = CURRENT_ALLOC();
@@ -159,7 +159,7 @@ con_heap<T> con_heap<T>::make(u32 capacity, allocator* alloc) { PROF
 }
 
 template<typename T>
-void con_heap<T>::destroy() { PROF
+void locking_heap<T>::destroy() { PROF
 
 	heap<T>::destroy();
 	global_api->platform_destroy_mutex(&mut);
@@ -167,7 +167,7 @@ void con_heap<T>::destroy() { PROF
 }
 
 template<typename T>
-void con_heap<T>::push(T value) { PROF
+void locking_heap<T>::push(T value) { PROF
 
 	global_api->platform_aquire_mutex(&mut);
 	heap<T>::push(value);
@@ -176,7 +176,7 @@ void con_heap<T>::push(T value) { PROF
 }
 
 template<typename T>
-T con_heap<T>::wait_pop() { PROF
+T locking_heap<T>::wait_pop() { PROF
 
 	global_api->platform_wait_semaphore(&sem, -1);
 	T ret;
@@ -185,7 +185,7 @@ T con_heap<T>::wait_pop() { PROF
 }
 
 template<typename T>
-bool con_heap<T>::try_pop(T* out) { PROF
+bool locking_heap<T>::try_pop(T* out) { PROF
 
 	global_api->platform_aquire_mutex(&mut);
 	bool ret = heap<T>::try_pop(out);

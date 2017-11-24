@@ -174,9 +174,9 @@ bool queue<T>::empty() { PROF
 }
 
 template<typename T>
-con_queue<T> con_queue<T>::make(u32 capacity, allocator* a) { PROF
+locking_queue<T> locking_queue<T>::make(u32 capacity, allocator* a) { PROF
 
-	con_queue<T> ret;
+	locking_queue<T> ret;
 
 	global_api->platform_create_semaphore(&ret.sem, 0, INT_MAX);
 	global_api->platform_create_mutex(&ret.mut, false);
@@ -193,9 +193,9 @@ con_queue<T> con_queue<T>::make(u32 capacity, allocator* a) { PROF
 }
 
 template<typename T>
-con_queue<T> con_queue<T>::make(u32 capacity) { PROF
+locking_queue<T> locking_queue<T>::make(u32 capacity) { PROF
 
-	return con_queue<T>::make(capacity, CURRENT_ALLOC());
+	return locking_queue<T>::make(capacity, CURRENT_ALLOC());
 }
 
 template<typename T>
@@ -220,7 +220,7 @@ T* queue<T>::get(u32 idx) {
 }
 
 template<typename T>
-void con_queue<T>::destroy() { PROF
+void locking_queue<T>::destroy() { PROF
 
 	queue<T>::destroy();
 	global_api->platform_destroy_mutex(&mut);
@@ -228,7 +228,7 @@ void con_queue<T>::destroy() { PROF
 }
 
 template<typename T>
-T* con_queue<T>::push(T value) { PROF
+T* locking_queue<T>::push(T value) { PROF
 	global_api->platform_aquire_mutex(&mut);
 	T* ret = queue<T>::push(value);
 	global_api->platform_release_mutex(&mut);
@@ -237,7 +237,7 @@ T* con_queue<T>::push(T value) { PROF
 }
 
 template<typename T>
-T con_queue<T>::wait_pop() { PROF
+T locking_queue<T>::wait_pop() { PROF
 	global_api->platform_wait_semaphore(&sem, -1);
 	T ret;
 	try_pop(&ret);
@@ -245,7 +245,7 @@ T con_queue<T>::wait_pop() { PROF
 }
 
 template<typename T>
-bool con_queue<T>::try_pop(T* out) { PROF
+bool locking_queue<T>::try_pop(T* out) { PROF
 	global_api->platform_aquire_mutex(&mut);
 	bool ret = queue<T>::try_pop(out);
 	global_api->platform_release_mutex(&mut);
