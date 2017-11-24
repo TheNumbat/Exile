@@ -19,6 +19,6 @@ struct thread_data {
 
 static thread_local thread_data this_thread_data;
 
-#define begin_thread(fmt, a, frames, frame_size, ...) _begin_thread(fmt, a, frames, frame_size, CONTEXT, ##__VA_ARGS__);
-template<typename... Targs> void _begin_thread(string fmt, allocator* alloc, u32 frames, u32 frame_size, code_context start, Targs... args);
+#define begin_thread(fmt, a, ...) _begin_thread(fmt, a, CONTEXT, ##__VA_ARGS__);
+template<typename... Targs> void _begin_thread(string fmt, allocator* alloc, code_context start, Targs... args);
 void end_thread();

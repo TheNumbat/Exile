@@ -31,15 +31,17 @@ array<T> array<T>::make(u32 capacity, allocator* a) { PROF
 
 	array<T> ret;
 
-	ret.alloc = a;
-	ret.capacity = capacity;
+	PUSH_ALLOC(a) {
 
-	if(capacity > 0) {
+		ret.alloc = a;
+		ret.capacity = capacity;
 
-		ret.memory = (T*)ret.alloc->allocate_(capacity * sizeof(T), ret.alloc, CONTEXT);
+		if(capacity > 0) {
 
-		new (ret.memory) T[capacity]();
-	}
+			ret.memory = NEWA(T, capacity);
+		}
+
+	} POP_ALLOC();
 	
 	return ret;
 }

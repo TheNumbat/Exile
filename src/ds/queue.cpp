@@ -28,9 +28,9 @@ queue<T> queue<T>::make(u32 capacity, allocator* a) { PROF
 	ret.alloc = a;
 	ret.capacity = capacity;
 	if(capacity) {
-		ret.memory = (T*)ret.alloc->allocate_(capacity * sizeof(T), ret.alloc, CONTEXT);
-
-		new (ret.memory) T[capacity]();
+		PUSH_ALLOC(a) {
+			ret.memory = NEWA(T, capacity);
+		} POP_ALLOC();
 	}
 	
 	return ret;
@@ -56,10 +56,12 @@ void queue<T>::grow() { PROF
 	u32 new_capacity = 2 * capacity;
 	if(!new_capacity) new_capacity = 8;
 
+	PUSH_ALLOC(alloc);
+
 	if(memory) {
 
 		u32 len = 0;
-		T* new_mem = (T*)alloc->allocate_(new_capacity * sizeof(T), alloc, CONTEXT);
+		T* new_mem = NEWA(T, new_capacity);
 		u32 i = start;
 		do {
 			new_mem[len++] = memory[i];
@@ -69,14 +71,11 @@ void queue<T>::grow() { PROF
 		end = len;
 		alloc->free_(memory, alloc, CONTEXT);
 		memory = new_mem;
-
-		new (memory + len) T[new_capacity - new_capacity]();
-
 	} else {
-		memory = (T*)alloc->allocate_(new_capacity * sizeof(T), alloc, CONTEXT);
-
-		new (memory) T[new_capacity]();
+		memory = NEWA(T, new_capacity);
 	}
+
+	POP_ALLOC();
 
 	capacity = new_capacity;
 }
@@ -185,9 +184,9 @@ con_queue<T> con_queue<T>::make(u32 capacity, allocator* a) { PROF
 	ret.alloc = a;
 	ret.capacity = capacity;
 	if(capacity) {
-		ret.memory = (T*)ret.alloc->allocate_(capacity * sizeof(T), ret.alloc, CONTEXT);
-
-		new (ret.memory) T[capacity]();
+		PUSH_ALLOC(a) {
+			ret.memory = NEWA(T, capacity);
+		} POP_ALLOC();
 	}
 	
 	return ret;

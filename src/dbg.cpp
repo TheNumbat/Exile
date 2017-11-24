@@ -123,8 +123,6 @@ void dbg_manager::collate() {
 				name.destroy();
 			}
 
-#define NEW_NODE (new ((func_profile_node*)malloc(sizeof(func_profile_node))) func_profile_node)
-
 			if(thread->num_frames && thread->frames.len() >= thread->num_frames % thread->frame_buf_size) {
 
 				frame_profile* frame = thread->frames.get((thread->num_frames - 1) % thread->frame_buf_size);
@@ -134,7 +132,7 @@ void dbg_manager::collate() {
 					case dbg_msg_type::enter_func: {
 
 						if(!frame->current) { 	
-							frame->current = *frame->heads.push(NEW_NODE);
+							frame->current = *frame->heads.push(NEW(func_profile_node));
 							frame->current->children = vector<func_profile_node*>::make(4);
 							frame->current->context = msg->context;
 							frame->current->current = msg->time;
@@ -150,7 +148,7 @@ void dbg_manager::collate() {
 							} 
 						}
 						if(here == frame->current) {
-							func_profile_node* new_node = *here->children.push(NEW_NODE);
+							func_profile_node* new_node = *here->children.push(NEW(func_profile_node));
 							new_node->children = vector<func_profile_node*>::make(4);
 							new_node->parent = here;
 							here = new_node;
@@ -186,8 +184,6 @@ void dbg_manager::collate() {
 				} POP_ALLOC();
 			}
 		} FORQ_END(msg, this_thread_data.dbg_msgs);
-
-#undef NEW_NODE
 
 		this_thread_data.dbg_msgs.clear();
 

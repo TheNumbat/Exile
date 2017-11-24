@@ -8,9 +8,11 @@ heap<T> heap<T>::make(u32 capacity, allocator* alloc) { PROF
 	if(!alloc) alloc = CURRENT_ALLOC();
 
 	ret.alloc = alloc;
-	ret.memory = (T*)alloc->allocate_(capacity * sizeof(T), alloc, CONTEXT);
 
-	new (ret.memory) T[capacity]();
+	PUSH_ALLOC(alloc) {
+		ret.memory = NEWA(T, capacity);
+	} POP_ALLOC();
+
 	return ret;
 }	
 
@@ -146,9 +148,9 @@ con_heap<T> con_heap<T>::make(u32 capacity, allocator* alloc) { PROF
 	if(!alloc) alloc = CURRENT_ALLOC();
 
 	ret.alloc = alloc;
-	ret.memory = (T*)alloc->allocate_(capacity * sizeof(T), alloc, CONTEXT);
-
-	new (ret.memory) T[capacity]();
+	PUSH_ALLOC(alloc) {
+		ret.memory = NEWA(T, capacity);
+	} POP_ALLOC();
 
 	global_api->platform_create_semaphore(&ret.sem, 0, INT_MAX);
 	global_api->platform_create_mutex(&ret.mut, false);

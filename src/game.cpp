@@ -15,11 +15,12 @@ EXPORT game_state* start_up(platform_api* api) {
 	state->suppressed_platform_allocator = MAKE_PLATFORM_ALLOCATOR("default/suppress");
 	state->suppressed_platform_allocator.suppress_messages = true;
 
+	begin_thread(string::literal("main"), &state->suppressed_platform_allocator);
+
 	state->dbg_a = MAKE_PLATFORM_ALLOCATOR("dbg");
 	state->dbg_a.suppress_messages = true;
 	state->dbg = dbg_manager::make(&state->dbg_a);
-
-	begin_thread(string::literal("main"), &state->suppressed_platform_allocator, 60, 32768);
+	state->dbg.register_thread(60, 32768);
 
 	dbg_msg m;
 	m.type = dbg_msg_type::begin_frame;

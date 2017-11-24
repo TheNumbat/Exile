@@ -95,3 +95,16 @@ pool_allocator make_pool_allocator(string name, u64 page_size, allocator* backin
 void _memcpy(void* source, void* dest, u64 size);
 #define memset(m,s,v) _memset(m,s,v)
 void _memset(void* mem, u64 size, u8 val);
+
+#define NEW(t)    _new<t>()
+#define NEWA(t,c) _new_array<t>(c)
+
+template<typename T>
+T* _new() {
+	return new ((T*)malloc(sizeof(T))) T;
+}
+
+template<typename T>
+T* _new_array(u64 c) {
+	return new ((T*)malloc(c * sizeof(T))) T[c];
+}
