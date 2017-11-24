@@ -36,15 +36,10 @@ struct queue {
 	bool empty();
 };
 
-// concurrent queue (reuses queue stuff)
+// concurrent queue 
 template<typename T>
-struct con_queue { // no inheritance LUL
+struct con_queue : public queue<T> { 
 	
-	T* memory 		 = null;
-	u32 start 		 = UINT32_MAX, end = 0;
-	u32 capacity 	 = 0;
-	allocator* alloc = null;
-
 	platform_mutex 		mut;
 	platform_semaphore 	sem;
 

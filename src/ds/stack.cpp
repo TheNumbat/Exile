@@ -133,7 +133,7 @@ con_stack<T> con_stack<T>::make(u32 capacity) { PROF
 template<typename T>
 void con_stack<T>::destroy() { PROF
 
-	destroy_vector(&contents);
+	stack<T>::destroy();
 	global_api->platform_destroy_mutex(&mut);
 	global_api->platform_destroy_semaphore(&sem);
 }
@@ -142,7 +142,7 @@ template<typename T>
 T* con_stack<T>::push(T value) { PROF
 
 	global_api->platform_aquire_mutex(&mut, -1);
-	T* ret = ((stack<T>*)this)->push(value);
+	T* ret = stack<T>::push(value);
 	global_api->platform_release_mutex(&mut);
 	global_api->platform_signal_semaphore(&sem, 1);
 	return ret;
@@ -161,7 +161,7 @@ template<typename T>
 bool con_stack<T>::try_pop(T* out) { PROF
 
 	global_api->platform_aquire_mutex(&mut, -1);
-	bool ret = ((stack<T>*)this)->try_pop(out);
+	bool ret = stack<T>::try_pop(out);
 	global_api->platform_release_mutex(&mut);
 	return ret;
 }

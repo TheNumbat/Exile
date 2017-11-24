@@ -161,7 +161,7 @@ con_heap<T> con_heap<T>::make(u32 capacity, allocator* alloc) { PROF
 template<typename T>
 void con_heap<T>::destroy() { PROF
 
-	((heap<T>*)this)->destroy(); // TODO(max): this is super kludgy
+	heap<T>::destroy();
 	global_api->platform_destroy_mutex(&mut);
 	global_api->platform_destroy_semaphore(&sem);
 }
@@ -170,7 +170,7 @@ template<typename T>
 void con_heap<T>::push(T value) { PROF
 
 	global_api->platform_aquire_mutex(&mut);
-	((heap<T>*)this)->push(value);
+	heap<T>::push(value);
 	global_api->platform_release_mutex(&mut);
 	global_api->platform_signal_semaphore(&sem, 1);
 }
@@ -188,7 +188,7 @@ template<typename T>
 bool con_heap<T>::try_pop(T* out) { PROF
 
 	global_api->platform_aquire_mutex(&mut);
-	bool ret = ((heap<T>*)this)->try_pop(out);
+	bool ret = heap<T>::try_pop(out);
 	global_api->platform_release_mutex(&mut);
 	return ret;
 }

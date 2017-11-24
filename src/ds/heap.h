@@ -28,12 +28,7 @@ struct heap {
 };
 
 template<typename T>
-struct con_heap {
-
-	T* memory = null;
-	u32 size = 0;
-	u32 capacity = 0;
-	allocator* alloc = null;
+struct con_heap : public heap<T> {
 
 	platform_mutex 		mut;
 	platform_semaphore 	sem;

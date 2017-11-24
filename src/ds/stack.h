@@ -24,8 +24,8 @@ struct stack {
 };
 
 template<typename T>
-struct con_stack {
-	vector<T> contents;
+struct con_stack : public stack<T> {
+
 	platform_mutex mut;
 	platform_semaphore sem;
 
