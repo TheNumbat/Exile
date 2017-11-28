@@ -25,7 +25,6 @@ all includes:
 	#include <typeinfo>
 
 working:
-	Fixing OpenGL system
 	Move geometry rendering into meshes (out of GUI)
 		Move font stuff into new file - sizing, etc.
 	GUI window layout - scroll, clip, multiple meshes, text layout
@@ -58,7 +57,8 @@ to do:
 
 	async
 		better integration with event system https://www.youtube.com/watch?v=gFFqYLgPOWI
-		job chaining
+		better job chaining
+		pause/resume job? ~closures~ how do we do this when job != thread?
 
 	uncategorized
 		SIMD & intrinsic math (vectorized functions, vector/mat math, noise & randomness)
@@ -66,11 +66,15 @@ to do:
 		ideal - no allocate/free per frame
 
 	meta
+		serialization/deserialization
+			deserialize to type vs deserialize to generic JSON like object [tagged/no tagged]
+			data versioning
+		config file format
 		printf
 			use string builder?
+			human readable {} printing (with newlines)
 			increase speed; recursive calls are quite slow (...might not be able to get rid of the recursion, though)
 		do we want to do a subtype dispatcher? https://youtu.be/lCtALewoFjc?t=1h20m16s
-		integration with UI
 		support loading/writing type table for release (i.e. don't build on startup)
 
 	debug
@@ -79,8 +83,8 @@ to do:
 		profiler
 			frame buffer
 			graphs
-			sections
 			functions
+			threads
 			display - hierarchal, per time, etc. See Code Modification Jai Demo
 		Interesting - https://github.com/Srekel/the-debuginator/
 		Do we want to use CaptureStackBackTrace instead of keeping the call stack ourself? Probably...
@@ -96,13 +100,14 @@ to do:
 		check if meshes need to be updated on GPU
 		fonts
 			just pack the TTF and use stb_tt to asynchronously cache correctly sized fonts
-			when they're needed.
+			when they're needed. 
+				font_cache
 			Don't store font info in window - have text meshes hold font name/size/style
 		widgets
 			lists
-			clipping/text wrapping/auto-size
-			vertical/horizontal smooth scrolling
-				stick scroll (e.g. twitch)
+			text wrapping/auto-size
+			horizontal scrolling
+			stick scroll (e.g. twitch)
 			dividers
 			text input
 			image widgets
@@ -112,8 +117,6 @@ to do:
 			swap between levels
 			tooltip call stack / file:line
 			console + commands (Lua API?)
-			time, memory profiles
-				frames, threads/time views	
 		Subl_remote_open for profiler & logging
 
 	asset
@@ -135,29 +138,32 @@ to do:
 	modding system
 		API considerations
 		API exposed to both C-DLL & Lua
-			embedding Lua 
-			debugging Lua
+			embedding LuaJIT 
+			debugging LuaJIT
 			dynamic reload
 
 	fonts
-		color/format specifications in string
-		extra kerning pairs
+		color/format specifications in string?
+		extra kerning pairs from stb_tt
 
 	platform
 		assure LPARAM/WPARAM size based on 32/64 bit
 		Keep window updating during resize/move
+			maybe not, this is a pain
 		async
 			File IO
-			Networking
+			Networking - cURL? WinSock? TCP
 		Experiment with allocation systems
-			HeapAlloc/VirtualAlloc
+			learn more about virtual memory
+				HeapAlloc/VirtualAlloc
 			TLSF (for arena-general allocations?)
 			dlmalloc, jemalloc, ptmalloc2, tcmalloc, nedmalloc
-			http://blog.reverberate.org/2009/02/one-malloc-to-rule-them-all.html
-			Definitely try je & tc
+				http://blog.reverberate.org/2009/02/one-malloc-to-rule-them-all.html
+				Definitely try je & tc
 		wgl extension testing/loading
-		file change watcher/callback system - maybe not?
+		file change watcher/callback system - maybe?
 		linux platform layer
+		SDL platform layer
 
 	OpenGl
 		remove sending on every command
@@ -168,9 +174,13 @@ to do:
 		Shaders
 			preprocessor / shader assets
 			tessellation / geometry shaders
+		post-processing effects
+			AO - SSAO/HBAO/SSDO - not a priority as voxel occlusion is simple
+		HDR
 		AZDO (bindless?)
 			glNamed operations
 			glMapBuffer?
+			command lists -> translate from mine
 		3D
 			texture arrays?
 			models & animation
@@ -179,10 +189,12 @@ to do:
 	chunks
 		chunk meshing, texturing
 		deferred mesh re/building
+			dual contouring? - don't want smooth
 		LOD
+			transvoxel?
 		storage representation (compression?)
-		paging
 		world storage (3D chunks?)
+			paging to disk - serialization, etc.
 
 Stuff from #high_level_systems
 
