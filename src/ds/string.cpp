@@ -381,7 +381,7 @@ u32 string::write_map(u32 idx, void* val, _type_info* info, bool size) { PROF
 	u32 number_actually_printed = 0;
 	idx = write(idx, '[', size);
 	for(u32 i = 0; i < vec_cap; i++) {
-		if(!*(bool*)(data + i * vec_of->size + vec_of->_struct.member_offsets[2])) continue;
+		if(! ((*(u32*)(data + i * vec_of->size + vec_of->_struct.member_offsets[2])) & ELEMENT_OCCUPIED_FLAG)) continue;
 
 		if(number_actually_printed != 0)
 			idx = write(idx, ", "_, size);
