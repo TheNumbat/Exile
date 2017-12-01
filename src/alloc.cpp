@@ -28,7 +28,7 @@ CALLBACK void* platform_allocate(u64 bytes, allocator* this_, code_context conte
 
 #ifdef LOG_ALLOCS
 	if(!this_->suppress_messages) {
-		global_log->msgf(string::literal("allocating % bytes to % with platform alloc \"%\""), log_level::alloc, context, bytes, mem, this_->name);
+		global_log->msgf("allocating % bytes to % with platform alloc \"%\""_, log_level::alloc, context, bytes, mem, this_->name);
 	}
 #endif
 
@@ -56,7 +56,7 @@ CALLBACK void platform_free(void* mem, allocator* this_, code_context context) {
 
 #ifdef LOG_ALLOCS
 	if(!this_->suppress_messages) {
-		global_log->msgf(string::literal("freeing % with platform alloc \"%\""), log_level::alloc, context, mem, this_->name);
+		global_log->msgf("freeing % with platform alloc \"%\""_, log_level::alloc, context, mem, this_->name);
 	}
 #endif
 
@@ -83,7 +83,7 @@ CALLBACK void* platform_reallocate(void* mem, u64, u64 bytes, allocator* this_, 
 
 #ifdef LOG_ALLOCS
 	if(!this_->suppress_messages) {
-		global_log->msgf(string::literal("reallocating % with to size % platform alloc \"%\""), log_level::alloc, context, mem, bytes, this_->name);
+		global_log->msgf("reallocating % with to size % platform alloc \"%\""_, log_level::alloc, context, mem, bytes, this_->name);
 	}
 #endif
 
@@ -144,7 +144,7 @@ CALLBACK void* arena_allocate(u64 bytes, allocator* this_, code_context context)
 
 #ifdef LOG_ALLOCS
 	if(!this__->suppress_messages) {
-		global_log->msgf(string::literal("allocating % bytes (used:%/%) to % with arena alloc \"%\""), log_level::alloc, context, bytes, this__->used, this__->size, mem, this__->name);
+		global_log->msgf("allocating % bytes (used:%/%) to % with arena alloc \"%\""_, log_level::alloc, context, bytes, this__->used, this__->size, mem, this__->name);
 	}
 #endif
 
@@ -177,7 +177,7 @@ void arena_reset(arena_allocator* a, code_context context) { PROF
 
 #ifdef LOG_ALLOCS
 	if(!a->suppress_messages) {
-		global_log->msgf(string::literal("reseting arena \"%\""), log_level::alloc, context, a->name);
+		global_log->msgf("reseting arena \"%\""_, log_level::alloc, context, a->name);
 	}
 #endif
 
@@ -192,7 +192,7 @@ inline void arena_destroy(arena_allocator* a, code_context context) { PROF
 
 #ifdef LOG_ALLOCS
 	if(!a->suppress_messages) {
-		global_log->msgf(string::literal("destroying arena \"%\""), log_level::alloc, context, a->name);
+		global_log->msgf("destroying arena \"%\""_, log_level::alloc, context, a->name);
 	}
 #endif
 
@@ -219,7 +219,7 @@ arena_allocator make_arena_allocator(string name, u64 size, allocator* backing, 
 
 #ifdef LOG_ALLOCS
 	if(!ret.suppress_messages) {
-		global_log->msgf(string::literal("creating arena \"%\" size %"), log_level::alloc, context, name, size);
+		global_log->msgf("creating arena \"%\" size %"_, log_level::alloc, context, name, size);
 	}
 #endif
 	
@@ -247,7 +247,7 @@ CALLBACK void* pool_allocate(u64 bytes, allocator* this_, code_context context) 
 
 #ifdef LOG_ALLOCS
 		if(!this__->suppress_messages) {
-			global_log->msgf(string::literal("adding page of size % to pool alloc \"%\""), log_level::alloc, context, this__->page_size, this__->name);
+			global_log->msgf("adding page of size % to pool alloc \"%\""_, log_level::alloc, context, this__->page_size, this__->name);
 		}
 #endif
 	}
@@ -284,7 +284,7 @@ void pool_destroy(pool_allocator* a, code_context context) {
 
 #ifdef LOG_ALLOCS
 	if(!a->suppress_messages) {
-		global_log->msgf(string::literal("destroying pool \"%\""), log_level::alloc, context, a->name);
+		global_log->msgf("destroying pool \"%\""_, log_level::alloc, context, a->name);
 	}
 #endif
 
@@ -316,7 +316,7 @@ pool_allocator make_pool_allocator(string name, u64 page_size, allocator* backin
 
 #ifdef LOG_ALLOCS
 	if(!ret.suppress_messages) {
-		global_log->msgf(string::literal("creating pool \"%\" size %"), log_level::alloc, context, name, page_size);
+		global_log->msgf("creating pool \"%\" size %"_, log_level::alloc, context, name, page_size);
 	}
 #endif
 	

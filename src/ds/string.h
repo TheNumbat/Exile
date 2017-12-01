@@ -61,6 +61,8 @@ struct NOREFLECT string { // no-reflect because hard-coded
 	u32 write_u64(u32 idx, u8 base, u64 val, bool size = false, u32 min_len = 0);
 };
 
+string operator "" _(const char* str, size_t s);
+
 CALLBACK u32 hash_strings(string one, string two);
 CALLBACK u32 hash_string(string str);
 bool operator==(string first, string second);
@@ -86,4 +88,4 @@ template<typename T, typename... Targs>
 u32 _string_printf(string out, u32 idx, string fmt, bool size, T& value, Targs... args);
 u32 _string_printf(string out, u32 idx, string fmt, bool size = false);
 
-static const string empty_string = string::literal("");
+static const string empty_string = ""_;

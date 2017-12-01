@@ -9,7 +9,7 @@ log_manager log_manager::make(allocator* a) { PROF
 	global_api->platform_create_mutex(&ret.output_mut, false);
 
 	ret.alloc = a;
-	ret.scratch = MAKE_ARENA(string::literal("log scratch"), MEGABYTES(1), a, true);
+	ret.scratch = MAKE_ARENA("log scratch"_, MEGABYTES(1), a, true);
 
 	return ret;
 }
@@ -114,7 +114,7 @@ void log_manager::print_header(log_out* output) { PROF
 		
 		if(output->type == log_out_type::plaintext) {
 			
-			string header = string::makef(string::literal("%-8 [%-36] [%-20] [%-5] %-2\n"), string::literal("time"), string::literal("thread/context"), string::literal("file:line"), string::literal("level"), string::literal("message"));
+			string header = string::makef("%-8 [%-36] [%-20] [%-5] %-2\n"_, "time"_, "thread/context"_, "file:line"_, "level"_, "message"_);
 
 			output->file.write((void*)header.c_str, header.len - 1);
 			output->file.flush();
@@ -150,7 +150,7 @@ void log_manager::msgf(string fmt, log_level level, code_context context, Targs.
 
 	u32 msg_len = size_stringf(fmt, args...);
 	u32 arena_size = msg_len + this_thread_data.name.len + this_thread_data.call_stack_depth * sizeof(code_context);
-	arena_allocator arena = MAKE_ARENA(string::literal("msg"), arena_size, alloc, true);
+	arena_allocator arena = MAKE_ARENA("msg"_, arena_size, alloc, true);
 
 	PUSH_ALLOC(&arena) {
 
@@ -192,7 +192,7 @@ void log_manager::msg(string msg, log_level level, code_context context) { PROF_
 	log_message lmsg;
 
 	u32 arena_size = msg.len + this_thread_data.name.len + this_thread_data.call_stack_depth * sizeof(code_context);
-	arena_allocator arena = MAKE_ARENA(string::literal("msg"), arena_size, alloc, true);
+	arena_allocator arena = MAKE_ARENA("msg"_, arena_size, alloc, true);
 
 	PUSH_ALLOC(&arena) {
 
@@ -231,16 +231,16 @@ void log_manager::msg(string msg, log_level level, code_context context) { PROF_
 string log_message::fmt_time() { PROF
 
 	string time = string::make(9);
-	global_api->platform_get_timef(string::literal("hh:mm:ss"), &time);
+	global_api->platform_get_timef("hh:mm:ss"_, &time);
 
 	return time;
 }
 
 string log_message::fmt_call_stack() { PROF
 
-	string cstack = string::make_cat(thread_name, string::literal("/"));
+	string cstack = string::make_cat(thread_name, "/"_);
 	for(u32 j = 0; j < call_stack.capacity; j++) {
-		string temp = string::make_cat_v(3, cstack, call_stack.get(j)->function, string::literal("/"));
+		string temp = string::make_cat_v(3, cstack, call_stack.get(j)->function, "/"_);
 		cstack.destroy();
 		cstack = temp;
 	}
@@ -250,7 +250,7 @@ string log_message::fmt_call_stack() { PROF
 
 string log_message::fmt_file_line() { PROF
 
-	return string::makef(string::literal("%:%"), publisher.file, publisher.line);
+	return string::makef("%:%"_, publisher.file, publisher.line);
 }
 
 string log_message::fmt_level() { PROF
@@ -258,25 +258,25 @@ string log_message::fmt_level() { PROF
 	string str;
 	switch(level) {
 	case log_level::debug:
-		str = string::literal("DEBUG");
+		str = "DEBUG"_;
 		break;
 	case log_level::info:
-		str = string::literal("INFO");
+		str = "INFO"_;
 		break;
 	case log_level::warn:
-		str = string::literal("WARN");
+		str = "WARN"_;
 		break;
 	case log_level::error:
-		str = string::literal("ERROR");
+		str = "ERROR"_;
 		break;
 	case log_level::fatal:
-		str = string::literal("FATAL");
+		str = "FATAL"_;
 		break;
 	case log_level::ogl:
-		str = string::literal("OGL");
+		str = "OGL"_;
 		break;
 	case log_level::alloc:
-		str = string::literal("ALLOC");
+		str = "ALLOC"_;
 		break;
 	}
 
@@ -294,7 +294,7 @@ string fmt_msg(log_message* msg, log_out_type type) { PROF
 
 	if(type == log_out_type::plaintext) {
 
-		output = string::makef(string::literal("%-8 [%-36] [%-20] [%-5] %\n"), time, cstack, file_line, clevel, msg->msg);
+		output = string::makef("%-8 [%-36] [%-20] [%-5] %\n"_, time, cstack, file_line, clevel, msg->msg);
 
 	} else if(type == log_out_type::html) {
 
@@ -317,7 +317,7 @@ i32 log_proc(void* data_) {
 
 	log_thread_param* data = (log_thread_param*)data_;	
 
-	begin_thread(string::literal("log"), data->alloc, 1, 256);
+	begin_thread("log"_, data->alloc, 1, 256);
 
 	while(data->running) {
 

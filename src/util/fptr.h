@@ -41,5 +41,5 @@ _FPTR* _fptr(void* func, string name);
 void setup_fptrs();
 void cleanup_fptrs();
 
-#define FPTR(name) _fptr(&name, string::literal(#name))
+#define FPTR(name) _fptr(&name, #name##_)
 

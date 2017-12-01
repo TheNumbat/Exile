@@ -1,7 +1,7 @@
 
 #pragma once
 
-const string log_html_header = string::literal(R"STR(
+const string log_html_header = R"STR(
 <doctype html>
 <html>
 <head>
@@ -65,12 +65,12 @@ td:hover {
 <body>
 <table>
 <tr class="header"><th class="time">TIME</th><th class="cstack">CONTEXT</th><th class="location">LOCATION</th><th class="leveL">LEVEL</th><th class="message">MESSAGE</th></tr>
-)STR");
+)STR"_;
 
-const string log_html_footer = string::literal(R"STR(
+const string log_html_footer = R"STR(
 </table>
 </body>
 </html>
-)STR");
+)STR"_;
 
-const string log_html_msg = string::literal(R"STR(<tr><td class="time">%</td><td class = "cstack">%</td><td class = "location">%</td><td class = "level">%</td><td class = "message">%</td></tr>)STR""\n");
+const string log_html_msg = R"STR(<tr><td class="time">%</td><td class = "cstack">%</td><td class = "location">%</td><td class = "level">%</td><td class = "message">%</td></tr>)STR""\n"_;

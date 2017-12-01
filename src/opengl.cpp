@@ -172,7 +172,7 @@ ogl_manager ogl_manager::make(allocator* a) { PROF
 	REGISTER_COMMAND(mesh_2d_tex_col);
 	REGISTER_COMMAND(mesh_3d_tex);
 
-	ret.dbg_shader = shader_program::make(string::literal("shaders/dbg.v"),string::literal("shaders/dbg.f"),FPTR(uniforms_dbg),a);
+	ret.dbg_shader = shader_program::make("shaders/dbg.v"_,"shaders/dbg.f"_,FPTR(uniforms_dbg),a);
 
 	LOG_DEBUG_F("GL version : %", ret.version);
 	LOG_DEBUG_F("GL renderer: %", ret.renderer);
@@ -512,52 +512,52 @@ void debug_proc(gl_debug_source glsource, gl_debug_type gltype, GLuint id, gl_de
 
 	switch(glsource) {
 	case gl_debug_source::api:
-		source = string::literal("OpenGL API");
+		source = "OpenGL API"_;
 		break;
 	case gl_debug_source::window_system:
-		source = string::literal("Window System");
+		source = "Window System"_;
 		break;
 	case gl_debug_source::shader_compiler:
-		source = string::literal("Shader Compiler");
+		source = "Shader Compiler"_;
 		break;
 	case gl_debug_source::third_party:
-		source = string::literal("Third Party");
+		source = "Third Party"_;
 		break;
 	case gl_debug_source::application:
-		source = string::literal("Application");
+		source = "Application"_;
 		break;
 	case gl_debug_source::other:
-		source = string::literal("Other");
+		source = "Other"_;
 		break;
 	}
 
 	switch(gltype) {
 	case gl_debug_type::error:
-		type = string::literal("Error");
+		type = "Error"_;
 		break;
 	case gl_debug_type::deprecated_behavior:
-		type = string::literal("Deprecated");
+		type = "Deprecated"_;
 		break;
 	case gl_debug_type::undefined_behavior:
-		type = string::literal("Undefined Behavior");
+		type = "Undefined Behavior"_;
 		break;
 	case gl_debug_type::portability:
-		type = string::literal("Portability");
+		type = "Portability"_;
 		break;
 	case gl_debug_type::performance:
-		type = string::literal("Performance");
+		type = "Performance"_;
 		break;
 	case gl_debug_type::marker:
-		type = string::literal("Marker");
+		type = "Marker"_;
 		break;
 	case gl_debug_type::push_group:
-		type = string::literal("Push Group");
+		type = "Push Group"_;
 		break;
 	case gl_debug_type::pop_group:
-		type = string::literal("Pop Group");
+		type = "Pop Group"_;
 		break;
 	case gl_debug_type::other:
-		type = string::literal("Other");
+		type = "Other"_;
 		break;
 	}
 
@@ -578,7 +578,7 @@ void debug_proc(gl_debug_source glsource, gl_debug_type gltype, GLuint id, gl_de
 	}
 }
 
-#define GL_LOAD(name) name = (name##_t)global_api->platform_get_glproc(string::literal(#name));
+#define GL_LOAD(name) name = (name##_t)global_api->platform_get_glproc(#name##_);
 void ogl_load_global_funcs() { PROF
 
 	GL_LOAD(glDebugMessageCallback);

@@ -1,4 +1,11 @@
 
+string operator "" _(const char* str, size_t s) {
+	string ret;
+	ret.c_str = (char*)str;
+	ret.len = ret.cap = (u32)s + 1;
+	return ret;
+}
+
 u32 string::parse_u32(u32 idx, u32* used) { PROF
 
 	u32 accum = 0;
@@ -159,7 +166,7 @@ u32 _string_printf(string out, u32 idx, string fmt, bool size, T& value, Targs..
 					}
 
 					while(sized < pad) {
-						idx = out.write(idx, string::literal(" "), size);
+						idx = out.write(idx, " "_, size);
 						sized++;
 					}
 					
@@ -207,12 +214,12 @@ u32 _string_printf(string out, u32 idx, string fmt, bool size) { PROF
 
 u32 string::write_type(u32 idx, void* val, _type_info* info, bool size) { PROF
 	if(info == null) {
-		idx = write(idx, string::literal("UNDEF"), size);
+		idx = write(idx, "UNDEF"_, size);
 		return idx;
 	}
 	switch(info->type_type) {
 	case Type::_void: {
-		idx = write(idx, string::literal("void"), size);
+		idx = write(idx, "void"_, size);
 	} break;
 
 	case Type::_int: {
@@ -224,7 +231,7 @@ u32 string::write_type(u32 idx, void* val, _type_info* info, bool size) { PROF
 	} break;
 
 	case Type::_bool: {
-		idx = write(idx, string::literal(*(bool*)val ? "true" : "false"), size);
+		idx = write(idx, *(bool*)val ? "true"_ : "false"_, size);
 	} break;
 
 	case Type::_ptr: {
@@ -252,10 +259,10 @@ u32 string::write_type(u32 idx, void* val, _type_info* info, bool size) { PROF
 			idx = write_heap(idx, val, info, size);
 		} else if(info->name == "_FPTR") {
 			idx = write(idx, ((_FPTR*)val)->name, size);
-			idx = write(idx, string::literal("()"), size);
+			idx = write(idx, "()"_, size);
 		} else if(info->name == "func_ptr") {
 			idx = write(idx, (*(_FPTR**)val)->name, size);
-			idx = write(idx, string::literal("()"), size);
+			idx = write(idx, "()"_, size);
 		} else {
 			idx = write_struct(idx, val, info, size);
 		}
@@ -292,7 +299,7 @@ u32 string::write_queue(u32 idx, void* val, _type_info* info, bool size) { PROF
 
 	_type_info* of = TYPEINFO_H(TYPEINFO_H(info->_struct.member_types[0])->_ptr.to);
 	if(!of) {
-		idx = write(idx, string::literal("[UNDEF]"), size);
+		idx = write(idx, "[UNDEF]"_, size);
 		return idx;
 	}
 
@@ -313,7 +320,7 @@ u32 string::write_queue(u32 idx, void* val, _type_info* info, bool size) { PROF
 				idx = write(idx, '\"', size);
 			}
 			if((i + 1) % capacity != end)
-				idx = write(idx, string::literal(", "), size);
+				idx = write(idx, ", "_, size);
 
 			++i %= capacity;
 		} while (i != end);
@@ -329,7 +336,7 @@ u32 string::write_vector(u32 idx, void* val, _type_info* info, bool size) { PROF
 
 	_type_info* of = TYPEINFO_H(TYPEINFO_H(info->_struct.member_types[0])->_ptr.to);
 	if(!of) {
-		idx = write(idx, string::literal("[UNDEF]"), size);
+		idx = write(idx, "[UNDEF]"_, size);
 		return idx;
 	}
 
@@ -348,7 +355,7 @@ u32 string::write_vector(u32 idx, void* val, _type_info* info, bool size) { PROF
 			idx = write(idx, '\"', size);
 		}
 		if(i != vec_len - 1)
-			idx = write(idx, string::literal(", "), size);
+			idx = write(idx, ", "_, size);
 	}
 	idx = write(idx, ']', size);
 
@@ -364,7 +371,7 @@ u32 string::write_map(u32 idx, void* val, _type_info* info, bool size) { PROF
 
 	_type_info* vec_of = TYPEINFO_H(TYPEINFO_H(vec_info->_struct.member_types[0])->_ptr.to);
 	if(!vec_of) {
-		idx = write(idx, string::literal("[UNDEF]"), size);
+		idx = write(idx, "[UNDEF]"_, size);
 		return idx;
 	}
 
@@ -377,7 +384,7 @@ u32 string::write_map(u32 idx, void* val, _type_info* info, bool size) { PROF
 		if(!*(bool*)(data + i * vec_of->size + vec_of->_struct.member_offsets[2])) continue;
 
 		if(number_actually_printed != 0)
-			idx = write(idx, string::literal(", "), size);
+			idx = write(idx, ", "_, size);
 		number_actually_printed++;
 		
 		idx = write(idx, '{', size);
@@ -391,7 +398,7 @@ u32 string::write_map(u32 idx, void* val, _type_info* info, bool size) { PROF
 				idx = write(idx, '\"', size);
 			}
 		}
-		idx = write(idx, string::literal(", "), size);
+		idx = write(idx, ", "_, size);
 		{
 			_type_info* value = TYPEINFO_H(vec_of->_struct.member_types[1]);
 			if(value->type_type == Type::_string) {
@@ -413,7 +420,7 @@ u32 string::write_static_array(u32 idx, void* val, _type_info* info, bool size) 
 	_type_info* of = TYPEINFO_H(info->_array.of);
 
 	if (!of) {
-		idx = write(idx, string::literal("UNDEF["), size);
+		idx = write(idx, "UNDEF["_, size);
 		idx = write_u64(idx, 10, info->_array.length, size);
 		idx = write(idx, ']', size);
 		return idx;
@@ -430,7 +437,7 @@ u32 string::write_static_array(u32 idx, void* val, _type_info* info, bool size) 
 			idx = write(idx, '\"', size);
 		}
 		if(i != info->_array.length - 1)
-			idx = write(idx, string::literal(", "), size);
+			idx = write(idx, ", "_, size);
 	}
 
 	idx = write(idx, ']', size);
@@ -439,12 +446,12 @@ u32 string::write_static_array(u32 idx, void* val, _type_info* info, bool size) 
 }
 
 u32 string::write_ptr(u32 idx, void* val, _type_info* info, bool size) { PROF 
-	idx = write(idx, string::literal("*{"), size);
+	idx = write(idx,"*{"_, size);
 	if (info->_ptr.to == 0) {
-		idx = write(idx, string::literal("UNDEF|"), size);
+		idx = write(idx, "UNDEF|"_, size);
 
 		if (*(u8**)val == null) {
-			idx = write(idx, string::literal("null"), size);
+			idx = write(idx, "null"_, size);
 		} else {
 			idx = write_u64(idx, 16, (u64)(*(u8**)val), size, sizeof(void*) == 8 ? 16 : 8);
 		}
@@ -452,7 +459,7 @@ u32 string::write_ptr(u32 idx, void* val, _type_info* info, bool size) { PROF
 		_type_info* to = TYPEINFO_H(info->_ptr.to);
 		if (*(u8**)val == null) {
 			idx = write(idx, to->name, size);
-			idx = write(idx, string::literal("|null"), size);
+			idx = write(idx, "|null"_, size);
 		} else {
 			if(to->type_type == Type::_string) {
 				idx = write(idx, '\"', size);
@@ -471,10 +478,10 @@ u32 string::write_ptr(u32 idx, void* val, _type_info* info, bool size) { PROF
 
 u32 string::write_struct(u32 idx, void* val, _type_info* info, bool size) { PROF 
 	idx = write(idx, info->name, size);
-	idx = write(idx, string::literal("{"), size);
+	idx = write(idx, "{"_, size);
 	for(u32 j = 0; j < info->_struct.member_count; j++) {
 		idx = write(idx, info->_struct.member_names[j], size);
-		idx = write(idx, string::literal(" : "), size);
+		idx = write(idx, " : "_, size);
 
 		_type_info* member = TYPEINFO_H(info->_struct.member_types[j]);
 		u8* place = (u8*)val + info->_struct.member_offsets[j];
@@ -488,11 +495,11 @@ u32 string::write_struct(u32 idx, void* val, _type_info* info, bool size) { PROF
 				idx = write(idx, '\"', size);
 			}
 		} else {
-			idx = write(idx, string::literal("UNDEF"), size);
+			idx = write(idx, "UNDEF"_, size);
 		}
 
 		if(j < info->_struct.member_count - 1) {
-			idx = write(idx, string::literal(", "), size);
+			idx = write(idx, ", "_, size);
 		}
 	}
 	idx = write(idx, '}', size);
@@ -664,7 +671,7 @@ u32 string::write_enum(u32 idx, void* val, _type_info* info, bool size) { PROF
 	}
 
 	idx = write(idx, info->name, size);
-	idx = write(idx, string::literal("::"), size);
+	idx = write(idx, "::"_, size);
 	idx = write(idx, name, size);
 
 	return idx;

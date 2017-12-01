@@ -15,7 +15,7 @@ EXPORT game_state* start_up(platform_api* api) {
 	state->suppressed_platform_allocator = MAKE_PLATFORM_ALLOCATOR("default/suppress");
 	state->suppressed_platform_allocator.suppress_messages = true;
 
-	begin_thread(string::literal("main"), &state->suppressed_platform_allocator);
+	begin_thread("main"_, &state->suppressed_platform_allocator);
 
 	state->dbg_a = MAKE_PLATFORM_ALLOCATOR("dbg");
 	state->dbg_a.suppress_messages = true;
@@ -34,7 +34,7 @@ EXPORT game_state* start_up(platform_api* api) {
 
 	platform_file stdout_file, log_all_file;
 	CHECKED(platform_get_stdout_as_file, &stdout_file);
-	CHECKED(platform_create_file, &log_all_file, string::literal("log_all.html"), platform_file_open_op::create);
+	CHECKED(platform_create_file, &log_all_file, "log_all.html"_, platform_file_open_op::create);
 	state->log.add_file(log_all_file, log_level::alloc, log_out_type::html);
 	state->log.add_file(stdout_file, log_level::info, log_out_type::plaintext, true);
 
@@ -53,19 +53,19 @@ EXPORT game_state* start_up(platform_api* api) {
 	state->thread_pool.start_all();
 
 	LOG_INFO("Allocating transient store...");
-	state->transient_arena = MAKE_ARENA(string::literal("transient"), MEGABYTES(8), &state->default_platform_allocator, false);
+	state->transient_arena = MAKE_ARENA("transient"_, MEGABYTES(8), &state->default_platform_allocator, false);
 
 	job_id assets = state->thread_pool.queue_job([](void* s) -> job_callback {
 		game_state* state = (game_state*)s;
 		LOG_INFO("Setting up asset system...");
 		state->default_store_a = MAKE_PLATFORM_ALLOCATOR("asset");
 		state->default_store = asset_store::make(&state->default_store_a);
-		state->default_store.load(string::literal("assets/assets.asset"));
+		state->default_store.load("assets/assets.asset"_);
 		return null;
 	}, state);
 
 	LOG_INFO("Creating window...");
-	platform_error err = api->platform_create_window(&state->window, string::literal("CaveGame"), 1280, 720);
+	platform_error err = api->platform_create_window(&state->window, "CaveGame"_, 1280, 720);
 
 	if (!err.good) {
 		LOG_FATAL_F("Failed to create window, error: %", err.error);
@@ -81,10 +81,10 @@ EXPORT game_state* start_up(platform_api* api) {
 	LOG_INFO("Setting up GUI...");
 	state->gui_a = MAKE_PLATFORM_ALLOCATOR("gui");
 	state->gui = gui_manager::make(&state->ogl, &state->gui_a, &state->window);
-	state->gui.add_font(&state->ogl, string::literal("gui14"), &state->default_store);
-	state->gui.add_font(&state->ogl, string::literal("gui24"), &state->default_store);
-	state->gui.add_font(&state->ogl, string::literal("gui40"), &state->default_store);
-	state->gui.add_font(&state->ogl, string::literal("guimono"), &state->default_store, true);
+	state->gui.add_font(&state->ogl, "gui14"_, &state->default_store);
+	state->gui.add_font(&state->ogl, "gui24"_, &state->default_store);
+	state->gui.add_font(&state->ogl, "gui40"_, &state->default_store);
+	state->gui.add_font(&state->ogl, "guimono"_, &state->default_store, true);
 
 	LOG_INFO("Starting logger...");
 	state->log.start();
@@ -198,7 +198,7 @@ EXPORT void on_reload(platform_api* api, game_state* state) {
 
 	state->func_state.reload_all();
 
-	begin_thread(string::literal("main"), &state->suppressed_platform_allocator, 600, 32768);
+	begin_thread("main"_, &state->suppressed_platform_allocator, 600, 32768);
 
 	ogl_load_global_funcs();
 

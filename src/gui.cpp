@@ -338,7 +338,7 @@ bool gui_begin(string name, r2 first_size, gui_window_flags flags, f32 first_alp
 		gui_set_offset(carrot_pos);
 		window->override_active = true;
 		window->override_seen = true;
-		gui_carrot_toggle(string::literal("#CLOSE"), window->active, &window->active);
+		gui_carrot_toggle("#CLOSE"_, window->active, &window->active);
 		window->override_active = false;
 		window->override_seen = false;
 

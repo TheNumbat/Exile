@@ -7,7 +7,7 @@ dbg_manager dbg_manager::make(allocator* alloc) { PROF
 	ret.log_cache = queue<log_message>::make(1024, alloc);
 
 	ret.alloc = alloc;
-	ret.scratch = MAKE_ARENA(string::literal("dbg scratch"), MEGABYTES(1), alloc, false);
+	ret.scratch = MAKE_ARENA("dbg scratch"_, MEGABYTES(1), alloc, false);
 
 	global_api->platform_create_mutex(&ret.cache_mut, false);
 
@@ -43,9 +43,9 @@ void dbg_manager::UI() { PROF
 	v2  dim = gui_window_dim();
 	f32 height = 300.0f, width = 250.0f;
 
-	gui_begin(string::literal("Debug"), R2(20.0f, 20.0f, width, height));
+	gui_begin("Debug"_, R2(20.0f, 20.0f, width, height));
 
-	// gui_begin_list(string::literal("Log"));
+	// gui_begin_list("Log"_);
 	for(u32 i = 0; i < log_cache.len(); i++) {
 		
 		log_message* it = log_cache.get(i);
@@ -54,7 +54,7 @@ void dbg_manager::UI() { PROF
 			
 			string level = it->fmt_level();
 
-			string fmt = string::makef(string::literal("[%] %"), level, it->msg);
+			string fmt = string::makef("[%] %"_, level, it->msg);
 			gui_text(fmt);
 
 			fmt.destroy();
@@ -115,7 +115,7 @@ void dbg_manager::collate() {
 				}
 				frame_profile* frame = thread->frames.push(frame_profile());
 
-				string name = string::makef(string::literal("frame %"), thread->num_frames);
+				string name = string::makef("frame %"_, thread->num_frames);
 				frame->pool = MAKE_POOL(name, KILOBYTES(8), alloc, false);
 				frame->heads = vector<func_profile_node*>::make(2, &frame->pool);
 				frame->start = msg->time;
@@ -202,7 +202,7 @@ CALLBACK void dbg_add_log(log_message* msg, void* param) { PROF
 	}
 
 	log_message* m = gui->log_cache.push(*msg);
-	m->arena       = MAKE_ARENA(string::literal("cmsg"), msg->arena.size, gui->alloc, msg->arena.suppress_messages);
+	m->arena       = MAKE_ARENA("cmsg"_, msg->arena.size, gui->alloc, msg->arena.suppress_messages);
 	m->call_stack  = array<code_context>::make_copy(&msg->call_stack, &m->arena);
 	m->thread_name = string::make_copy(msg->thread_name, &m->arena);
 	m->msg         = string::make_copy(msg->msg, &m->arena);

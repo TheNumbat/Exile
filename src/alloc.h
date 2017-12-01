@@ -36,7 +36,7 @@ CALLBACK void* platform_allocate(u64 bytes, allocator* this_, code_context conte
 CALLBACK void  platform_free(void* mem, allocator* this_, code_context context);
 CALLBACK void* platform_reallocate(void* mem, u64, u64 bytes, allocator* this_, code_context context);
 
-#define MAKE_PLATFORM_ALLOCATOR(n) make_platform_allocator(string::literal(n), CONTEXT)
+#define MAKE_PLATFORM_ALLOCATOR(n) make_platform_allocator(n##_, CONTEXT)
 inline platform_allocator make_platform_allocator(string name, code_context context);
 
 struct arena_allocator : public allocator {
