@@ -156,7 +156,7 @@ void gui_manager::end_frame(platform_window* win, ogl_manager* ogl) { PROF
 	}
 }
 
-v2 gui_window_state::current_offset() {
+v2 gui_window_state::current_offset() { PROF
 	v2 pos = rect.xy;
 	FORVEC(it, offset_stack) {
 		pos = pos + *it;
@@ -164,13 +164,13 @@ v2 gui_window_state::current_offset() {
 	return pos;
 }
 
-r2 gui_window_state::get_real_content() {
+r2 gui_window_state::get_real_content() { PROF
 
 	r2 r = get_real_body();
 	return R2(r.xy + ggui->style.win_margin.xy, r.wh - ggui->style.win_margin.xy - ggui->style.win_margin.zw);
 }
 
-r2 gui_window_state::get_real_top() {
+r2 gui_window_state::get_real_top() { PROF
 
 	f32 carrot_x_diff = ggui->style.default_carrot_size.x + ggui->style.carrot_padding.x;
 	r2 real_rect = get_real();
@@ -178,13 +178,13 @@ r2 gui_window_state::get_real_top() {
 	return R2(real_rect.xy, V2(real_rect.w - carrot_x_diff, ggui->style.font + ggui->style.title_padding));
 }
 
-r2 gui_window_state::get_real_body() {
+r2 gui_window_state::get_real_body() { PROF
 
 	r2 real_rect = get_real();
 	return R2(real_rect.x, real_rect.y + ggui->style.font + ggui->style.title_padding, real_rect.w, real_rect.h - ggui->style.font + ggui->style.title_padding);
 }
 
-void gui_window_state::update_rect() {
+void gui_window_state::update_rect() { PROF
 	
 	r2 real_rect = get_real();
 	if(resizing) {
@@ -206,21 +206,20 @@ void gui_window_state::update_rect() {
 	}
 }
 
-bool gui_window_state::seen(r2 r) {
+bool gui_window_state::seen(r2 r) { PROF
 	if(override_seen) return true;
 	return intersect(get_real_content(), r);
 }
 
-r2 gui_window_state::get_real() {
-	
+r2 gui_window_state::get_real() { PROF
 	return rect;
 }
 
-v2 gui_window_dim() {
+v2 gui_window_dim() { PROF
 	return V2f(ggui->window->w, ggui->window->h);
 }
 
-void gui_set_offset(v2 offset) {
+void gui_set_offset(v2 offset) { PROF
 	ggui->current->offset_stack.clear();
 	ggui->current->offset_stack.push(offset);
 }
@@ -228,7 +227,7 @@ void gui_set_offset(v2 offset) {
 void gui_push_offset(v2 offset, gui_offset_mode mode) { PROF
 	switch(mode) {
 	case gui_offset_mode::xy:
-		ggui->current->offset_stack.push(V2(offset.x, offset.y));
+		ggui->current->offset_stack.push(offset);
 		break;
 	case gui_offset_mode::x:
 		ggui->current->offset_stack.push(V2(offset.x, 0.0f));
@@ -397,7 +396,7 @@ bool gui_begin(string name, r2 first_size, gui_window_flags flags, f32 first_alp
 		if(!occluded && inside(real_body, ggui->input.mousepos)) {
 			window->scroll_pos.y += ggui->input.scroll * ggui->style.win_scroll_speed;
 
-			f32 content_offset = -ggui->style.win_margin.y - ggui->style.win_margin.w + real_top.h + real_rect.h;
+			f32 content_offset = -ggui->style.win_margin.y - ggui->style.win_margin.w + real_rect.h;
 			if(window->scroll_pos.y < -window->previous_content_size.y + content_offset) window->scroll_pos.y = -window->previous_content_size.y + content_offset;
 			if(window->scroll_pos.y > 0.0f) window->scroll_pos.y = 0.0f;
 		}
