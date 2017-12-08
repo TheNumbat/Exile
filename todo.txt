@@ -25,8 +25,7 @@ all includes:
 	#include <typeinfo>
 
 working:
-	Move geometry rendering into meshes (out of GUI)
-		Move font stuff into new file - sizing, etc.
+	Move font stuff into new file - sizing, etc.
 	GUI window layout - scroll, clip, multiple meshes, text layout
 
 	Time profile rendering

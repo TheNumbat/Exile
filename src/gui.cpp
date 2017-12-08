@@ -464,23 +464,13 @@ bool gui_carrot_toggle(string name, bool initial, bool* toggleme) { PROF
 
 void render_carrot(gui_window_state* win, v2 pos, bool active) { PROF
 
-	u32 idx = win->shape_mesh.vertices.size;
 	f32 size = ggui->style.default_carrot_size.x;
 
 	if(active) {
-		win->shape_mesh.vertices.push(V2(pos.x 		 		, pos.y));
-		win->shape_mesh.vertices.push(V2(pos.x + size 		, pos.y));
-		win->shape_mesh.vertices.push(V2(pos.x + size / 2.0f, pos.y + size));
+		win->shape_mesh.push_tri(V2(pos.x, pos.y), V2(pos.x + size, pos.y), V2(pos.x + size / 2.0f, pos.y + size), V4b(ggui->style.wid_back, 255));
 	} else {
-		win->shape_mesh.vertices.push(V2(pos.x 		 , pos.y));
-		win->shape_mesh.vertices.push(V2(pos.x 		 , pos.y + size));
-		win->shape_mesh.vertices.push(V2(pos.x + size, pos.y + size / 2.0f));
+		win->shape_mesh.push_tri(V2(pos.x, pos.y), V2(pos.x, pos.y + size), V2(pos.x + size, pos.y + size / 2.0f), V4b(ggui->style.wid_back, 255));
 	}
-
-	colorf cf = color_to_f(V4b(ggui->style.wid_back, 255));
-	DO(3) win->shape_mesh.colors.push(cf);
-
-	win->shape_mesh.elements.push(V3(idx, idx + 1, idx + 2));
 }
 
 void gui_text(string text, color c, f32 point) { PROF
@@ -510,65 +500,45 @@ void gui_text(string text, color c, f32 point) { PROF
 
 void render_windowhead(gui_window_state* win) { PROF
 	
-	u32 idx = win->shape_mesh.vertices.size;
 	r2 r = win->get_real();
 	f32 pt = ggui->style.font + ggui->style.title_padding;
 
-	win->shape_mesh.vertices.push(V2(r.x + r.w - 10.0f, r.y));
-	win->shape_mesh.vertices.push(V2(r.x, r.y));
-	win->shape_mesh.vertices.push(V2(r.x, r.y + pt));
-	win->shape_mesh.vertices.push(V2(r.x + r.w, r.y + pt));
+	r2 render = R2(r.x, r.y, r.w - 10.0f, pt);
+	v2 p1 = V2(r.x + r.w - 10.0f, r.y);
+	v2 p2 = V2(r.x + r.w - 10.0f, r.y + pt);
+	v2 p3 = V2(r.x + r.w, r.y + pt);
 
-	colorf topf = color_to_f(V4b(ggui->style.win_top, 255));
-	DO(4) win->shape_mesh.colors.push(topf);
-
-	win->shape_mesh.elements.push(V3u(idx + 2, idx, idx + 1));
-	win->shape_mesh.elements.push(V3u(idx + 3, idx, idx + 2));
+	win->shape_mesh.push_rect(render, V4b(ggui->style.win_top, 255));
+	win->shape_mesh.push_tri(p1, p2, p3, V4b(ggui->style.win_top, 255));
 }
 
 void render_windowbody(gui_window_state* win) { PROF
 
-	u32 idx = win->shape_mesh.vertices.size;
 	r2 r = win->get_real();
 	f32 pt = ggui->style.font + ggui->style.title_padding;
 
 	if((win->flags & (u16)window_flags::noresize) == (u16)window_flags::noresize) {
 
-		win->shape_mesh.vertices.push(V2(r.x, r.y + pt));
-		win->shape_mesh.vertices.push(V2(r.x, r.y + r.h));
-		win->shape_mesh.vertices.push(V2(r.x + r.w, r.y + r.h));
-		win->shape_mesh.vertices.push(V2(r.x + r.w, r.y + pt));
-
-		colorf cf = color_to_f(V4b(ggui->style.win_back, win->opacity * 255.0f));
-
-		DO(4) win->shape_mesh.colors.push(cf);
-
-		win->shape_mesh.elements.push(V3u(idx, idx + 1, idx + 2));
-		win->shape_mesh.elements.push(V3u(idx, idx + 2, idx + 3));
+		r2 render = R2(r.x, r.y + pt, r.w, r.h - pt);
+		win->shape_mesh.push_rect(render, V4b(ggui->style.win_back, win->opacity * 255.0f));
 
 	} else {
 
 		v2 resize_tab = ggui->style.resize_tab;
 
-		win->shape_mesh.vertices.push(V2(r.x, r.y + pt));
-		win->shape_mesh.vertices.push(V2(r.x, r.y + r.h));
-		win->shape_mesh.vertices.push(V2(r.x + r.w - resize_tab.x, r.y + r.h));
-		win->shape_mesh.vertices.push(V2(r.x + r.w, r.y + r.h - resize_tab.y));
-		win->shape_mesh.vertices.push(V2(r.x + r.w, r.y + pt));
-		
-		win->shape_mesh.vertices.push(V2(r.x + r.w - resize_tab.x, r.y + r.h));
-		win->shape_mesh.vertices.push(V2(r.x + r.w, r.y + r.h - resize_tab.y));
-		win->shape_mesh.vertices.push(V2(r.x + r.w, r.y + r.h));
+		v2 p1 = V2(r.x, r.y + pt);
+		v2 p2 = V2(r.x, r.y + r.h);
+		v2 p3 = V2(r.x + r.w - resize_tab.x, r.y + r.h);
+		v2 p4 = V2(r.x + r.w, r.y + r.h - resize_tab.y);
+		v2 p5 = V2(r.x + r.w, r.y + pt);
 
-		colorf cf = color_to_f(V4b(ggui->style.win_back, win->opacity * 255.0f));
-		colorf tf = color_to_f(V4b(ggui->style.tab_color, win->opacity * 255.0f));
+		v2 r_1 = V2(r.x + r.w - resize_tab.x, r.y + r.h);
+		v2 r_2 = V2(r.x + r.w, r.y + r.h - resize_tab.y);
+		v2 r_3 = V2(r.x + r.w, r.y + r.h);
 
-		DO(5) win->shape_mesh.colors.push(cf);
-		DO(3) win->shape_mesh.colors.push(tf);
-
-		win->shape_mesh.elements.push(V3u(idx, idx + 1, idx + 2));
-		win->shape_mesh.elements.push(V3u(idx, idx + 2, idx + 3));
-		win->shape_mesh.elements.push(V3u(idx, idx + 3, idx + 4));
-		win->shape_mesh.elements.push(V3u(idx + 5, idx + 6, idx + 7));
+		win->shape_mesh.push_tri(p1, p2, p3, V4b(ggui->style.win_back, win->opacity * 255.0f));
+		win->shape_mesh.push_tri(p1, p3, p4, V4b(ggui->style.win_back, win->opacity * 255.0f));
+		win->shape_mesh.push_tri(p1, p4, p5, V4b(ggui->style.win_back, win->opacity * 255.0f));
+		win->shape_mesh.push_tri(r_1, r_2, r_3, V4b(ggui->style.tab_color, win->opacity * 255.0f));
 	}
 }

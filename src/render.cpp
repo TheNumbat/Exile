@@ -30,6 +30,19 @@ void mesh_2d_col::clear() { PROF
 	elements.clear();
 }
 
+void mesh_2d_col::push_tri(v2 p1, v2 p2, v2 p3, color c) { PROF
+
+	u32 idx = vertices.size;
+	
+	vertices.push(p1);
+	vertices.push(p2);
+	vertices.push(p3);
+
+	DO(3) colors.push(color_to_f(c));
+
+	elements.push(V3u(idx, idx + 1, idx + 2));
+}
+
 void mesh_2d_col::push_cutrect(r2 r, f32 round, color c) { PROF
 
 	u32 idx = vertices.size;

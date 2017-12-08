@@ -23,6 +23,7 @@ struct mesh_2d_col {
 	void destroy();
 	void clear();
 
+	void push_tri(v2 p1, v2 p2, v2 p3, color c);
 	void push_rect(r2 rect, color c);
 	void push_cutrect(r2 r, f32 round, color c);
 };
