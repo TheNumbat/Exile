@@ -65,7 +65,7 @@ EXPORT game_state* start_up(platform_api* api) {
 	}, state);
 
 	LOG_INFO("Creating window...");
-	platform_error err = api->platform_create_window(&state->window, "CaveGame"_, 1280, 720);
+	platform_error err = api->platform_create_window(&state->window, "Exile"_, 1280, 720);
 
 	if (!err.good) {
 		LOG_FATAL_F("Failed to create window, error: %", err.error);

@@ -163,9 +163,9 @@ ogl_manager ogl_manager::make(allocator* a) { PROF
 	ret.textures = map<texture_id, texture>::make(32, a);
 	ret.contexts = map<render_command_type, draw_context>::make(32, a);
 
-	ret.version 	= string::from_c_str((char*)glGetString(gl_info::version));
-	ret.renderer 	= string::from_c_str((char*)glGetString(gl_info::renderer));
-	ret.vendor  	= string::from_c_str((char*)glGetString(gl_info::vendor));
+	ret.version  = string::from_c_str((char*)glGetString(gl_info::version));
+	ret.renderer = string::from_c_str((char*)glGetString(gl_info::renderer));
+	ret.vendor   = string::from_c_str((char*)glGetString(gl_info::vendor));
 
 	REGISTER_COMMAND(mesh_2d_col);
 	REGISTER_COMMAND(mesh_2d_tex);
