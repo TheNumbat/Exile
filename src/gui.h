@@ -164,8 +164,8 @@ struct gui_manager {
 	u32 last_z = 0;						// this only counts up on window layer changes so we don't have
 										// to iterate through the map to check z levels. You'll never 
 										// get to >4 billion changes, right?
-	map<guiid, gui_window_state> 	window_state_data;
-	map<guiid, gui_state_data> 		state_data;
+	map<guiid, gui_window_state> window_state_data;
+	map<guiid, gui_state_data> 	 state_data;
 
 	vector<gui_font> fonts;
 

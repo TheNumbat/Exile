@@ -45,13 +45,10 @@ void dbg_manager::UI() { PROF
 
 	gui_begin("Debug"_, R2(20.0f, 20.0f, width, height));
 
-	// gui_begin_list("Log"_);
-	for(u32 i = 0; i < log_cache.len(); i++) {
-		
-		log_message* it = log_cache.get(i);
+	FORQ_BEGIN(it, log_cache) {
 
 		PUSH_ALLOC(&scratch) {
-			
+
 			string level = it->fmt_level();
 
 			string fmt = string::makef("[%] %"_, level, it->msg);
@@ -61,8 +58,8 @@ void dbg_manager::UI() { PROF
 
 		} POP_ALLOC();
 		RESET_ARENA(&scratch);
-	}
-	// gui_end_list();
+	
+	} FORQ_END(it, log_cache);
 
 	gui_end();
 }
