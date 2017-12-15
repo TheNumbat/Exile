@@ -403,6 +403,7 @@ DLL_IMPORT void glDeleteTextures(GLsizei n, const GLuint *textures);
 DLL_IMPORT void glTexParameteri(gl_tex_target target, gl_tex_param pname, GLint param);
 DLL_IMPORT void glTexParameterfv(gl_tex_target target, gl_tex_param pname, const GLfloat *params);
 DLL_IMPORT void glTexImage2D(gl_tex_target target, GLint level, gl_tex_format internalformat, GLsizei width, GLsizei height, GLint border, gl_pixel_data_format format, gl_pixel_data_type type, const GLvoid *pixels);
+DLL_IMPORT void glTexParameteriv(gl_tex_target target, gl_tex_param pname, const GLint *params);
 
 DLL_IMPORT void glBlendFunc(gl_blend_factor sfactor, gl_blend_factor dfactor);
 

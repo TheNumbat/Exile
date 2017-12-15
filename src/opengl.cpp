@@ -350,8 +350,8 @@ void texture::load_bitmap_from_font(asset* font) { PROF
 	glBindTextureUnit(0, handle);
 
 	glTexImage2D(gl_tex_target::_2D, 0, gl_tex_format::rgba8, font->font.width, font->font.height, 0, gl_pixel_data_format::red, gl_pixel_data_type::unsigned_byte, font->mem);
-	GLint swizzle[] = {(GLint)gl_tex_swizzle::red, (GLint)gl_tex_swizzle::red, (GLint)gl_tex_swizzle::red, (GLint)gl_tex_swizzle::red};
-	glTexParameterIiv(gl_tex_target::_2D, gl_tex_param::swizzle_rgba, swizzle);
+	gl_tex_swizzle swizzle[] = {gl_tex_swizzle::red, gl_tex_swizzle::red, gl_tex_swizzle::red, gl_tex_swizzle::red};
+	glTexParameteriv(gl_tex_target::_2D, gl_tex_param::swizzle_rgba, (GLint*)swizzle);
 
 	glGenerateMipmap(gl_tex_target::_2D);
 
@@ -367,8 +367,8 @@ void texture::load_bitmap_from_font(asset_store* as, string name) { PROF
 	glBindTextureUnit(0, handle);
 
 	glTexImage2D(gl_tex_target::_2D, 0, gl_tex_format::rgba8, a->font.width, a->font.height, 0, gl_pixel_data_format::red, gl_pixel_data_type::unsigned_byte, a->mem);
-	GLint swizzle[] = {(GLint)gl_tex_swizzle::red, (GLint)gl_tex_swizzle::red, (GLint)gl_tex_swizzle::red, (GLint)gl_tex_swizzle::red};
-	glTexParameterIiv(gl_tex_target::_2D, gl_tex_param::swizzle_rgba, swizzle);
+	gl_tex_swizzle swizzle[] = {gl_tex_swizzle::red, gl_tex_swizzle::red, gl_tex_swizzle::red, gl_tex_swizzle::red};
+	glTexParameteriv(gl_tex_target::_2D, gl_tex_param::swizzle_rgba, (GLint*)swizzle);
 
 	glGenerateMipmap(gl_tex_target::_2D);
 
