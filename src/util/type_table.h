@@ -7,10 +7,10 @@ enum class Type : u8 {
 	_float,
 	_bool,
 	_ptr,		// generated on request (need to already have info of pointed-to type)
-	_func,		// unimplemented (function pointer)
-	_array,		// unimplemented (static array)
+	_func,		
+	_array,		
 	_struct,
-	_enum,		// only name implemented
+	_enum,		
 
 	_string,
 };

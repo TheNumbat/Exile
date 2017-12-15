@@ -29,6 +29,7 @@ void cleanup_fptrs() {
 	for(u32 i = 0; i < global_func->num_ptrs; i++) {
 		global_func->all_ptrs[i].name.destroy_plt();
 	}
+	global_api->platform_destroy_mutex(&global_func->mut);
 }
 
 void setup_fptrs() {
