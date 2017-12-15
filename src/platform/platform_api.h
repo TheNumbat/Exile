@@ -281,7 +281,6 @@ struct _platform_event_async {
 struct platform_event {
 	platform_event_type type = platform_event_type::none;
 	union { 
-		// no data for platform_event_quit
 		_platform_event_window		window;
 		_platform_event_key 		key;
 		_platform_event_mouse 		mouse;

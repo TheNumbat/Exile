@@ -98,6 +98,7 @@ typedef signed __int64 LONG_PTR;
 #else
 typedef unsigned long ULONG_PTR;
 typedef signed long LONG_PTR;
+#error "Windows x86 is probably broken"
 #endif
 typedef ULONG_PTR DWORD_PTR;
 
