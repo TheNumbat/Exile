@@ -167,7 +167,7 @@ ogl_manager ogl_manager::make(allocator* a) { PROF
 	ret.renderer = string::from_c_str((char*)glGetString(gl_info::renderer));
 	ret.vendor   = string::from_c_str((char*)glGetString(gl_info::vendor));
 
-	REGISTER_COMMAND(mesh_2d_col);
+	REGISTER_COMMAND(mesh_2d_col);	
 	REGISTER_COMMAND(mesh_2d_tex);
 	REGISTER_COMMAND(mesh_2d_tex_col);
 	REGISTER_COMMAND(mesh_3d_tex);
@@ -452,12 +452,12 @@ void ogl_manager::cmd_set_settings(platform_window* win, render_command* cmd) {
 
 	ur2 viewport = roundR2(cmd->viewport), scissor = roundR2(cmd->scissor);
 
-	if(viewport.x && viewport.y)
+	if(viewport.w && viewport.h)
 		glViewport(viewport.x, viewport.y, viewport.w, viewport.h);
 	else
 		glViewport(0, 0, win->w, win->h);
 
-	if(scissor.x && scissor.y)
+	if(scissor.w && scissor.h)
 		glScissor(scissor.x, win->h - scissor.y - scissor.h, scissor.w, scissor.h);
 	else
 		glScissor(0, 0, win->w, win->h);

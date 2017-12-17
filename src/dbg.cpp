@@ -100,7 +100,6 @@ void dbg_manager::collate() {
 	PUSH_PROFILE(false) {
 		global_api->platform_aquire_mutex(&cache_mut);
 		thread_profile* thread = dbg_cache.get(global_api->platform_this_thread_id());
-		global_api->platform_release_mutex(&cache_mut);
 
 		FORQ_BEGIN(msg, this_thread_data.dbg_msgs) {
 
@@ -182,6 +181,7 @@ void dbg_manager::collate() {
 			}
 		} FORQ_END(msg, this_thread_data.dbg_msgs);
 
+		global_api->platform_release_mutex(&cache_mut);
 		this_thread_data.dbg_msgs.clear();
 
 	} POP_PROFILE();
