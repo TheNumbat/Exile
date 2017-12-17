@@ -96,14 +96,6 @@ EXPORT game_state* start_up(platform_api* api) {
 	POST_MSG(m);
 	state->dbg.collate();
 
-	map<string,int> one = map<string,int>::make(4, FPTR(hash_string));
-	map<string,map<string,int>> ree = map<string,map<string,int>>::make(4, FPTR(hash_string));
-	one.insert("owo"_, 0);
-	one.insert("what's"_, 1);
-	one.insert("this"_, 2);
-	ree.insert("LUL"_, one);
-	LOG_INFO_F("%", ree);
-
 	state->running = true;
 	return state;
 }

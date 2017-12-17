@@ -124,7 +124,7 @@ struct log_manager {
 #elif defined(__GNUC__)
 #define LOG_ASSERT(cond) {if(!(cond)) LOG_FATAL_F("Assertion % failed!", #cond##_);}
 #else
-#define LOG__ASSERT(cond)
+#define LOG_ASSERT(cond)
 #endif
 
 #ifndef RELEASE
