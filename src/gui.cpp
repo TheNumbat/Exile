@@ -169,9 +169,7 @@ v2 gui_window_state::current_offset() { PROF
 r2 gui_window_state::get_real_content() { PROF
 
 	r2 r = get_real_body();
-	v2 s;
-	if(can_scroll) s.x = ggui->style.win_scroll_w;
-	return R2(r.xy + ggui->style.win_margin.xy, r.wh - ggui->style.win_margin.xy - ggui->style.win_margin.zw - s);
+	return R2(r.xy + ggui->style.win_margin.xy, r.wh - ggui->style.win_margin.xy - ggui->style.win_margin.zw);
 }
 
 r2 gui_window_state::get_real_top() { PROF
@@ -185,14 +183,19 @@ r2 gui_window_state::get_real_top() { PROF
 r2 gui_window_state::get_real_body() { PROF
 
 	r2 real_rect = get_real();
-	return R2(real_rect.x, real_rect.y + ggui->style.font + ggui->style.title_padding, real_rect.w, real_rect.h - ggui->style.font + ggui->style.title_padding);
+	r2 body = R2(real_rect.x, real_rect.y + ggui->style.font + ggui->style.title_padding, real_rect.w, real_rect.h - ggui->style.font + ggui->style.title_padding);
+	
+	if(can_scroll) {
+		body.w -= ggui->style.win_scroll_w;
+	}
+	return body;
 }
 
 void gui_window_state::update_rect() { PROF
 	
 	r2 real_rect = get_real();
 	if(resizing) {
-		v2 wh = sub(ggui->input.mousepos, real_rect.xy);
+		v2 wh = ggui->input.mousepos - real_rect.xy + move_click_offset;
 		if(wh.x < ggui->style.min_win_size.x) {
 			wh.x = ggui->style.min_win_size.x;
 		}
@@ -206,7 +209,7 @@ void gui_window_state::update_rect() { PROF
 
 	} else {
 
-		rect = R2(sub(ggui->input.mousepos, move_click_offset), rect.wh);
+		rect = R2(ggui->input.mousepos - move_click_offset, rect.wh);
 	}
 }
 
@@ -369,7 +372,7 @@ bool gui_begin(string name, r2 first_size, gui_window_flags flags, f32 first_alp
 				window->z = ggui->last_z++;
 				ggui->active_id = id;
 				ggui->active = gui_active_state::active;
-				window->move_click_offset = sub(ggui->input.mousepos, real_rect.xy);
+				window->move_click_offset = ggui->input.mousepos - real_rect.xy;
 				window->resizing = false;
 			}
 		}
@@ -377,8 +380,7 @@ bool gui_begin(string name, r2 first_size, gui_window_flags flags, f32 first_alp
 	if((window->flags & (u16)window_flags::noresize) != (u16)window_flags::noresize) {
 
 		v2 resize_tab = ggui->style.resize_tab;
-
-		r2 resize_rect = R2(sub(add(real_rect.xy, real_rect.wh), resize_tab), resize_tab);
+		r2 resize_rect = R2(real_rect.xy + real_rect.wh - resize_tab, resize_tab);
 		if(!occluded && inside(resize_rect, ggui->input.mousepos)) {
 
 			if(ggui->active == gui_active_state::none && ggui->input.lclick) {
@@ -386,6 +388,7 @@ bool gui_begin(string name, r2 first_size, gui_window_flags flags, f32 first_alp
 				window->z = ggui->last_z++;
 				ggui->active_id = id;
 				ggui->active = gui_active_state::active;
+				window->move_click_offset = real_rect.xy + real_rect.wh - ggui->input.mousepos;
 				window->resizing = true;
 			}
 		}
@@ -398,14 +401,25 @@ bool gui_begin(string name, r2 first_size, gui_window_flags flags, f32 first_alp
 			}
 		}
 	}
-	if((window->flags & (u16)window_flags::noscroll) != (u16)window_flags::noscroll && window->active) {
+	if((window->flags & (u16)window_flags::noscroll) != (u16)window_flags::noscroll && window->active && window->can_scroll) {
 		
-		if(window->can_scroll && !occluded && inside(real_body, ggui->input.mousepos)) {
+		r2 scroll_bar = R2(real_body.x + real_body.w, real_body.y, ggui->style.win_scroll_w, real_body.h);
+
+		if(!occluded && inside(real_body, ggui->input.mousepos) || inside(scroll_bar, ggui->input.mousepos)) {
 			window->scroll_pos.y += ggui->input.scroll * ggui->style.win_scroll_speed;
 
 			f32 content_offset = -ggui->style.win_margin.y - ggui->style.win_margin.w + real_rect.h;
 			if(window->scroll_pos.y < -window->previous_content_size.y + content_offset) window->scroll_pos.y = -window->previous_content_size.y + content_offset;
 			if(window->scroll_pos.y > 0.0f) window->scroll_pos.y = 0.0f;
+		}
+
+		if(!occluded && inside(scroll_bar, ggui->input.mousepos)) {
+			if(ggui->active == gui_active_state::none && ggui->input.lclick) {
+				
+				window->z = ggui->last_z++;
+				ggui->active_id = id;
+				ggui->active = gui_active_state::active;
+			} 
 		}
 	}
 
