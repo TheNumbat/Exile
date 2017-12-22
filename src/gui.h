@@ -93,7 +93,7 @@ struct gui_window_state {
 	f32 opacity = 1.0f;
 	v2 scroll_pos, previous_content_size;
 	u16 flags 	= 0;
-	u32 z 		= 0, title_tris = 0; 
+	u32 z 		= 1, title_tris = 0; 
 
 	bool active = true;
 	bool can_scroll = false;
@@ -112,7 +112,7 @@ struct gui_window_state {
 	r2 get_real_body();
 	r2 get_real_top();
 	r2 get_real();
-	void update_rect();
+	void update_input();
 	void clamp_scroll();
 	bool seen(r2 rect);
 	
@@ -169,7 +169,7 @@ struct gui_manager {
 	gui_input_state input;
 
 	gui_window_state* current = null;	// we take a pointer into a map but it's OK because we know nothing will be added while this is in use
-	u32 last_z = 0;						// this only counts up on window layer changes so we don't have
+	u32 last_z = 1;						// this only counts up on window layer changes so we don't have
 										// to iterate through the map to check z levels. You'll never 
 										// get to >4 billion changes, right?
 	map<guiid, gui_window_state> window_state_data;

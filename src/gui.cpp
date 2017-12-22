@@ -125,17 +125,16 @@ void gui_manager::end_frame(platform_window* win, ogl_manager* ogl) { PROF
 	render_command_list rcl = render_command_list::make();
 	FORMAP(it, window_state_data) {
 
-		render_command cmd = render_command::make(render_command_type::mesh_2d_col, &it->value.shape_mesh, it->value.z);
+		render_command cmd = render_command::make(render_command_type::mesh_2d_col, &it->value.shape_mesh, it->value.z * 2);
 		cmd.texture = -1;
-		cmd.scissor = it->value.get_real();
 		rcl.add_command(cmd);
 
-		cmd = render_command::make(render_command_type::mesh_2d_tex_col, &it->value.text_mesh, it->value.z);
+		cmd = render_command::make(render_command_type::mesh_2d_tex_col, &it->value.text_mesh, it->value.z * 2 + 1);
 		cmd.texture = it->value.font->texture;
 		cmd.num_tris = it->value.title_tris;
 		rcl.add_command(cmd);
 
-		cmd = render_command::make(render_command_type::mesh_2d_tex_col, &it->value.text_mesh, it->value.z);
+		cmd = render_command::make(render_command_type::mesh_2d_tex_col, &it->value.text_mesh, it->value.z * 2 + 1);
 		cmd.texture = it->value.font->texture;
 		cmd.scissor = it->value.get_real_content();
 		rcl.add_command(cmd);
@@ -199,7 +198,7 @@ r2 gui_window_state::get_real_body() { PROF
 	return body;
 }
 
-void gui_window_state::update_rect() { PROF
+void gui_window_state::update_input() { PROF
 	
 	r2 real_rect = get_real();
 	if(input == win_input_state::resizing) {
@@ -329,7 +328,7 @@ bool gui_begin(string name, r2 first_size, gui_window_flags flags, f32 first_alp
 	ggui->current = window;
 
 	if(ggui->active_id == id) {
-		window->update_rect();
+		window->update_input();
 	}
 
 	r2 real_rect = window->get_real();

@@ -40,10 +40,9 @@ void dbg_manager::destroy() { PROF
 
 void dbg_manager::UI() { PROF
 
-	v2  dim = gui_window_dim();
-	f32 height = 300.0f, width = 250.0f;
+	v2 dim = gui_window_dim();
 
-	gui_begin("Debug"_, R2(20.0f, 20.0f, width, height));
+	gui_begin("Console"_, R2(0.0f, dim.x * 0.75f, dim.y, dim.x / 4.0f), (u16)window_flags::nowininput);
 
 	FORQ_BEGIN(it, log_cache) {
 
@@ -60,6 +59,12 @@ void dbg_manager::UI() { PROF
 		RESET_ARENA(&scratch);
 	
 	} FORQ_END(it, log_cache);
+
+	gui_end();
+
+	gui_begin("Profile"_, R2(20.0f, 20.0f, dim.x / 1.5f, dim.y / 2.0f));
+
+	gui_text("Test"_);
 
 	gui_end();
 }
