@@ -510,17 +510,13 @@ void render_windowhead(gui_window_state* win) { PROF
 	r2 r = win->get_real();
 	f32 pt = ggui->style.font + ggui->style.title_padding;
 
-	r2 render = R2(r.x, r.y, r.w - 10.0f, pt);
-	v2 p1 = V2(r.x + r.w - 10.0f, r.y);
-	v2 p2 = V2(r.x + r.w - 10.0f, r.y + pt);
-	v2 p3 = V2(r.x + r.w, r.y + pt);
-
+	r2 render = R2(r.x, r.y, r.w, pt);
 	win->shape_mesh.push_rect(render, V4b(ggui->style.win_top, 255));
-	win->shape_mesh.push_tri(p1, p2, p3, V4b(ggui->style.win_top, 255));
 }
 
 void render_windowbody(gui_window_state* win) { PROF
 
+	r2 c = win->get_real_content();
 	r2 r = win->get_real();
 	f32 pt = ggui->style.font + ggui->style.title_padding;
 	v2 resize_tab = ggui->style.resize_tab;
@@ -558,11 +554,12 @@ void render_windowbody(gui_window_state* win) { PROF
 		win->shape_mesh.push_tri(p1, p2, p3, c_scroll);
 		win->shape_mesh.push_tri(p2, p3, p4, c_scroll);
 
-		f32 scroll_pos = r.h * -win->scroll_pos.y / win->previous_content_size.y;
-		f32 scroll_size = max(r.h / win->previous_content_size.y, 5.0f);
+		f32 scroll_ratio = clamp(-win->scroll_pos.y / (win->previous_content_size.y - r.h), 0.0f, 1.0f);
+		f32 scroll_size  = max(c.h * c.h / win->previous_content_size.y, 5.0f);
+		f32 scroll_pos   = lerpf(0.0f, r.h - pt - scroll_size, scroll_ratio);
 
-		v2 p5 = V2(p1.x, p1.y + scroll_pos);
-		v2 p6 = V2(p2.x, p1.y + scroll_pos);
+		v2 p5 = V2(p1.x + 2, p1.y + scroll_pos);
+		v2 p6 = V2(p2.x - 2, p1.y + scroll_pos);
 		v2 p7 = V2(p5.x, p1.y + scroll_pos + scroll_size);
 		v2 p8 = V2(p6.x, p1.y + scroll_pos + scroll_size);
 

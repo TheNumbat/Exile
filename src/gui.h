@@ -124,7 +124,7 @@ struct _gui_style {
 	u32 log_win_lines 	= 15;
 	v2 resize_tab		= V2(20.0f, 20.0f);
 	v4 win_margin 		= V4(5.0f, 0.0f, 5.0f, 10.0f); // l t r b
-	v2 carrot_padding	= V2(10.0f, 5.0f);
+	v2 carrot_padding	= V2(3.0f, 5.0f);
 	v2 box_sel_padding	= V2(6.0f, 6.0f);
 
 	f32 default_win_a 	= 0.75f;
