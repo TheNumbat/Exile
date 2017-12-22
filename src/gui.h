@@ -79,6 +79,13 @@ struct gui_font {
 	texture_id texture = 0;
 };
 
+enum class win_input_state {
+	none,
+	moving,
+	resizing,
+	scrolling
+};
+
 struct gui_window_state {
 	r2 rect;
 	v2 move_click_offset;
@@ -89,8 +96,8 @@ struct gui_window_state {
 	u32 z 		= 0, title_tris = 0; 
 
 	bool active = true;
-	bool resizing = false;
 	bool can_scroll = false;
+	win_input_state input = win_input_state::none;
 
 	// TODO(max): these should be style stack parameters
 	bool override_active = false;
@@ -106,6 +113,7 @@ struct gui_window_state {
 	r2 get_real_top();
 	r2 get_real();
 	void update_rect();
+	void clamp_scroll();
 	bool seen(r2 rect);
 	
 	// TODO(max): fix font system

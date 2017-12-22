@@ -158,6 +158,14 @@ void gui_manager::end_frame(platform_window* win, ogl_manager* ogl) { PROF
 	}
 }
 
+void gui_window_state::clamp_scroll() { PROF
+
+	r2 real_rect = get_real();
+	f32 content_offset = -ggui->style.win_margin.y - ggui->style.win_margin.w + real_rect.h;
+	if(scroll_pos.y < -previous_content_size.y + content_offset) scroll_pos.y = -previous_content_size.y + content_offset;
+	if(scroll_pos.y > 0.0f) scroll_pos.y = 0.0f;
+}
+
 v2 gui_window_state::current_offset() { PROF
 	v2 pos = rect.xy;
 	FORVEC(it, offset_stack) {
@@ -194,7 +202,7 @@ r2 gui_window_state::get_real_body() { PROF
 void gui_window_state::update_rect() { PROF
 	
 	r2 real_rect = get_real();
-	if(resizing) {
+	if(input == win_input_state::resizing) {
 		v2 wh = ggui->input.mousepos - real_rect.xy + move_click_offset;
 		if(wh.x < ggui->style.min_win_size.x) {
 			wh.x = ggui->style.min_win_size.x;
@@ -207,9 +215,25 @@ void gui_window_state::update_rect() { PROF
 		}
 		rect = R2(real_rect.xy, wh);
 
-	} else {
+	}
+	else if(input == win_input_state::moving) {
 
 		rect = R2(ggui->input.mousepos - move_click_offset, rect.wh);
+	}
+	else if(input == win_input_state::scrolling) {
+
+		r2 top = get_real_top();
+		r2 body = get_real_body();
+		r2 content = get_real_content();
+
+		f32 scroll_size = max(content.h * content.h / previous_content_size.y, 5.0f);
+
+		f32 rel_pos = ggui->input.mousepos.y - rect.y - top.h;
+		f32 bar_pos = rel_pos - scroll_size / 2.0f;
+		f32 ratio = bar_pos / (body.h - scroll_size);
+		
+		scroll_pos.y = lerpf(0.0f, -(previous_content_size.y - rect.h), ratio);
+		clamp_scroll();
 	}
 }
 
@@ -359,7 +383,6 @@ bool gui_begin(string name, r2 first_size, gui_window_flags flags, f32 first_alp
 				window->z = ggui->last_z++;
 				ggui->active_id = id;
 				ggui->active = gui_active_state::active;
-				window->resizing = false;
 			}
 		}
 	}
@@ -373,7 +396,7 @@ bool gui_begin(string name, r2 first_size, gui_window_flags flags, f32 first_alp
 				ggui->active_id = id;
 				ggui->active = gui_active_state::active;
 				window->move_click_offset = ggui->input.mousepos - real_rect.xy;
-				window->resizing = false;
+				window->input = win_input_state::moving;
 			}
 		}
 	}
@@ -389,7 +412,7 @@ bool gui_begin(string name, r2 first_size, gui_window_flags flags, f32 first_alp
 				ggui->active_id = id;
 				ggui->active = gui_active_state::active;
 				window->move_click_offset = real_rect.xy + real_rect.wh - ggui->input.mousepos;
-				window->resizing = true;
+				window->input = win_input_state::resizing;
 			}
 		}
 	}
@@ -406,11 +429,9 @@ bool gui_begin(string name, r2 first_size, gui_window_flags flags, f32 first_alp
 		r2 scroll_bar = R2(real_body.x + real_body.w, real_body.y, ggui->style.win_scroll_w, real_body.h);
 
 		if(!occluded && inside(real_body, ggui->input.mousepos) || inside(scroll_bar, ggui->input.mousepos)) {
+			
 			window->scroll_pos.y += ggui->input.scroll * ggui->style.win_scroll_speed;
-
-			f32 content_offset = -ggui->style.win_margin.y - ggui->style.win_margin.w + real_rect.h;
-			if(window->scroll_pos.y < -window->previous_content_size.y + content_offset) window->scroll_pos.y = -window->previous_content_size.y + content_offset;
-			if(window->scroll_pos.y > 0.0f) window->scroll_pos.y = 0.0f;
+			window->clamp_scroll();
 		}
 
 		if(!occluded && inside(scroll_bar, ggui->input.mousepos)) {
@@ -419,7 +440,8 @@ bool gui_begin(string name, r2 first_size, gui_window_flags flags, f32 first_alp
 				window->z = ggui->last_z++;
 				ggui->active_id = id;
 				ggui->active = gui_active_state::active;
-			} 
+				window->input = win_input_state::scrolling;
+			}
 		}
 	}
 
