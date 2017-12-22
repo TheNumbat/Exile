@@ -25,12 +25,12 @@ all includes:
 	#include <typeinfo>
 
 working:
-	Move font stuff into new file - sizing, etc.
 	GUI window layout - scroll, clip, multiple meshes, text layout
 
 	Time profile rendering
 	Allocation / sync profiling
 	SDL platform layer
+	Move font stuff into new file - sizing, etc.
 
 to do:
 

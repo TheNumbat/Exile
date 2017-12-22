@@ -24,6 +24,8 @@
 #define sinf(v) _sinf(v) 
 #define cosf(v) _cosf(v) 
 #define lerpf(i,m,d) _lerpf(i,m,d) 
+#define min(x,y) (x < y ? x : y)
+#define max(x,y) (x < y ? y : x)
 
 template<typename T>
 union v2_t {

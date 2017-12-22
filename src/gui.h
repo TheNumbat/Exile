@@ -90,6 +90,7 @@ struct gui_window_state {
 
 	bool active = true;
 	bool resizing = false;
+	bool can_scroll = false;
 
 	// TODO(max): these should be style stack parameters
 	bool override_active = false;
@@ -107,6 +108,7 @@ struct gui_window_state {
 	void update_rect();
 	bool seen(r2 rect);
 	
+	// TODO(max): fix font system
 	gui_font* font = null;
 	f32 default_point = 14.0f;
 	
@@ -137,9 +139,7 @@ struct _gui_style {
 	color3 wid_back		= V3b(102, 105, 185);
 	color3 tab_color	= V3b(100, 106, 109);
 
-	f32 win_scroll_w 		= 15.0f;
-	f32 win_scroll_margin	= 2.0f;
-	f32 win_scroll_bar_h	= 25.0f;
+	f32 win_scroll_w 		= 10.0f;
 	f32 win_scroll_speed	= 15.0f;
 	color3 win_scroll_back 	= V3b(102, 105, 185);
 	color3 win_scroll_bar 	= V3b(132, 135, 215);

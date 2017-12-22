@@ -149,6 +149,8 @@ void gui_manager::end_frame(platform_window* win, ogl_manager* ogl) { PROF
 
 	FORMAP(it, window_state_data) {
 		it->value.previous_content_size = it->value.current_offset() - it->value.scroll_pos - it->value.rect.xy;
+		if(it->value.previous_content_size.y > it->value.rect.h) it->value.can_scroll = true;
+		else it->value.can_scroll = false;
 		it->value.offset_stack.clear();
 		it->value.id_hash_stack.clear();
 		it->value.shape_mesh.clear();
@@ -167,7 +169,9 @@ v2 gui_window_state::current_offset() { PROF
 r2 gui_window_state::get_real_content() { PROF
 
 	r2 r = get_real_body();
-	return R2(r.xy + ggui->style.win_margin.xy, r.wh - ggui->style.win_margin.xy - ggui->style.win_margin.zw);
+	v2 s;
+	if(can_scroll) s.x = ggui->style.win_scroll_w;
+	return R2(r.xy + ggui->style.win_margin.xy, r.wh - ggui->style.win_margin.xy - ggui->style.win_margin.zw - s);
 }
 
 r2 gui_window_state::get_real_top() { PROF
@@ -302,27 +306,30 @@ bool gui_begin(string name, r2 first_size, gui_window_flags flags, f32 first_alp
 	}
 
 	r2 real_rect = window->get_real();
-
+		
 	v2 header_offset;
-	if((window->flags & (u16)window_flags::nohead) != (u16)window_flags::nohead) {
-		render_windowhead(window);
+	{//rendering
+		if((window->flags & (u16)window_flags::nohead) != (u16)window_flags::nohead) {
+			render_windowhead(window);
 
-		v2 title_pos = V2(3.0f, -1.0f);
-		gui_set_offset(title_pos);
-		window->override_active = true;
-		window->override_seen = true;
-		gui_text(name, V4b(ggui->style.win_title, 255));
-		window->title_tris = window->text_mesh.elements.size;
-		window->override_active = false;
-		window->override_seen = false;
+			v2 title_pos = V2(3.0f, -1.0f);
+			gui_set_offset(title_pos);
+			window->override_active = true;
+			window->override_seen = true;
+			gui_text(name, V4b(ggui->style.win_title, 255));
+			window->title_tris = window->text_mesh.elements.size;
+			window->override_active = false;
+			window->override_seen = false;
 
-		header_offset = V2(0.0f, window->default_point + ggui->style.title_padding);
+			header_offset = V2(0.0f, window->default_point + ggui->style.title_padding);
+		}
+
+		if((window->flags & (u16)window_flags::noback) != (u16)window_flags::noback && window->active) {
+			render_windowbody(window);
+		}
 	}
 
-	if((window->flags & (u16)window_flags::noback) != (u16)window_flags::noback && window->active) {
-		render_windowbody(window);
-	}
-
+	// input
 	f32 carrot_x_diff = ggui->style.default_carrot_size.x + ggui->style.carrot_padding.x;
 	
 	r2 real_top = window->get_real_top(); 
@@ -393,7 +400,7 @@ bool gui_begin(string name, r2 first_size, gui_window_flags flags, f32 first_alp
 	}
 	if((window->flags & (u16)window_flags::noscroll) != (u16)window_flags::noscroll && window->active) {
 		
-		if(!occluded && inside(real_body, ggui->input.mousepos)) {
+		if(window->can_scroll && !occluded && inside(real_body, ggui->input.mousepos)) {
 			window->scroll_pos.y += ggui->input.scroll * ggui->style.win_scroll_speed;
 
 			f32 content_offset = -ggui->style.win_margin.y - ggui->style.win_margin.w + real_rect.h;
@@ -516,15 +523,19 @@ void render_windowbody(gui_window_state* win) { PROF
 
 	r2 r = win->get_real();
 	f32 pt = ggui->style.font + ggui->style.title_padding;
+	v2 resize_tab = ggui->style.resize_tab;
+	
+	color c_back   		= V4b(ggui->style.win_back, win->opacity * 255.0f);
+	color c_scroll 		= V4b(ggui->style.win_scroll_back, win->opacity * 255.0f);
+	color c_scroll_bar 	= V4b(ggui->style.win_scroll_bar, win->opacity * 255.0f);
 
-	if((win->flags & (u16)window_flags::noresize) == (u16)window_flags::noresize) {
+	bool resizeable = (win->flags & (u16)window_flags::noresize) != (u16)window_flags::noresize;
+	if(!resizeable) {
 
 		r2 render = R2(r.x, r.y + pt, r.w, r.h - pt);
-		win->shape_mesh.push_rect(render, V4b(ggui->style.win_back, win->opacity * 255.0f));
+		win->shape_mesh.push_rect(render, c_back);
 
 	} else {
-
-		v2 resize_tab = ggui->style.resize_tab;
 
 		v2 p1 = V2(r.x, r.y + pt);
 		v2 p2 = V2(r.x, r.y + r.h);
@@ -532,13 +543,38 @@ void render_windowbody(gui_window_state* win) { PROF
 		v2 p4 = V2(r.x + r.w, r.y + r.h - resize_tab.y);
 		v2 p5 = V2(r.x + r.w, r.y + pt);
 
+		win->shape_mesh.push_tri(p1, p2, p3, c_back);
+		win->shape_mesh.push_tri(p1, p3, p4, c_back);
+		win->shape_mesh.push_tri(p1, p4, p5, c_back);
+	}
+
+	if(win->can_scroll) {
+
+		v2 p1 = V2(r.x + r.w - ggui->style.win_scroll_w, r.y + pt);
+		v2 p2 = V2(r.x + r.w, r.y + pt);
+		v2 p3 = V2(p1.x, p1.y + r.h);
+		v2 p4 = V2(p2.x, p1.y + r.h);
+
+		win->shape_mesh.push_tri(p1, p2, p3, c_scroll);
+		win->shape_mesh.push_tri(p2, p3, p4, c_scroll);
+
+		f32 scroll_pos = r.h * -win->scroll_pos.y / win->previous_content_size.y;
+		f32 scroll_size = max(r.h / win->previous_content_size.y, 5.0f);
+
+		v2 p5 = V2(p1.x, p1.y + scroll_pos);
+		v2 p6 = V2(p2.x, p1.y + scroll_pos);
+		v2 p7 = V2(p5.x, p1.y + scroll_pos + scroll_size);
+		v2 p8 = V2(p6.x, p1.y + scroll_pos + scroll_size);
+
+		win->shape_mesh.push_tri(p5, p6, p7, c_scroll_bar);
+		win->shape_mesh.push_tri(p6, p7, p8, c_scroll_bar);
+	}
+
+	if(resizeable) {
+
 		v2 r_1 = V2(r.x + r.w - resize_tab.x, r.y + r.h);
 		v2 r_2 = V2(r.x + r.w, r.y + r.h - resize_tab.y);
 		v2 r_3 = V2(r.x + r.w, r.y + r.h);
-
-		win->shape_mesh.push_tri(p1, p2, p3, V4b(ggui->style.win_back, win->opacity * 255.0f));
-		win->shape_mesh.push_tri(p1, p3, p4, V4b(ggui->style.win_back, win->opacity * 255.0f));
-		win->shape_mesh.push_tri(p1, p4, p5, V4b(ggui->style.win_back, win->opacity * 255.0f));
 		win->shape_mesh.push_tri(r_1, r_2, r_3, V4b(ggui->style.tab_color, win->opacity * 255.0f));
 	}
 }
