@@ -37,21 +37,24 @@ void vector<T>::erase(T val) { PROF
 template<typename T>
 u32 vector<T>::partition(u32 low, u32 high) { PROF
 
-	T pivot = memory[high];
-	u32 i = low;
+	u32 pivot = low;
+	for (u32 i = low + 1; i <= high; i++) {
 
-	for(u32 j = low; j < high; j++) {
-		if(pivot < memory[j]) {
-
-			i++;
-			if(i != j) {
-				T temp = memory[i];
-				memory[i] = memory[j];
-				memory[j] = temp;
-			}
+		if (memory[i] < memory[pivot]) {
+			T temp = memory[low];
+			memory[low] = memory[i];
+			memory[i] = temp;
+			pivot++;
+			low++;
+		} else if(memory[pivot] < memory[i]) {
+			T temp = memory[high];
+			memory[high] = memory[i];
+			memory[i] = temp;
+			high--;
+			i--;
 		}
 	}
-	return i;
+	return pivot;
 }
 
 template<typename T> 
