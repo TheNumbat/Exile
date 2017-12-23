@@ -124,7 +124,7 @@ struct dbg_manager {
 
 	u32 current_frame = 0;
 	bool overwrite_frames = false;
-	
+
 	allocator* alloc = null;
 
 	platform_mutex cache_mut;
@@ -141,6 +141,7 @@ struct dbg_manager {
 	void destroy();
 
 	void UI();
+	void profile_recurse(vector<func_profile_node*> list);
 
 	void shutdown_log(log_manager* log);
 	void setup_log(log_manager* log);

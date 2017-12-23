@@ -317,7 +317,7 @@ bool gui_begin(string name, r2 first_size, gui_window_flags flags, f32 first_alp
 		ns.offset_stack = vector<v2>::make(16, ggui->alloc);
 		ns.flags = flags;
 		ns.font = gui_select_best_font_scale(&ns);
-		ns.z = ggui->last_z;
+		ns.z = ggui->last_z++;
 
 		window = ggui->add_window_state_data(id, ns);
 	}
@@ -515,6 +515,50 @@ void render_carrot(gui_window_state* win, v2 pos, bool active) { PROF
 	}
 }
 
+bool gui_node(string text, color c, f32 point) { PROF 
+
+	gui_window_state* win = ggui->current;
+	if(!win->active && !win->override_active) return false;
+
+	guiid id;
+	id.base = *win->id_hash_stack.top();
+	id.name = text;
+
+	gui_state_data* data = ggui->state_data.try_get(id);
+
+	if(!data) {
+
+		gui_state_data nd;
+
+		nd.b = false;
+
+		data = ggui->add_state_data(id, nd);
+	}
+
+	if(!point) point = win->default_point;
+	v2 pos = win->current_offset();
+	v2 size = size_text(win->font->font, text, point);
+	gui_push_offset(V2(0.0f, point));
+
+	if(!win->seen(R2(pos, size))) {
+		return data->b;
+	}
+
+	if(!gui_occluded() && inside(R2(pos, size), ggui->input.mousepos)) {
+		
+		if(ggui->active == gui_active_state::none && (ggui->input.lclick || ggui->input.ldbl)) {
+
+			data->b = !data->b;
+			ggui->active_id = id;
+			ggui->active = gui_active_state::active;
+		}
+	}
+
+	win->text_mesh.push_text_line(win->font->font, text, pos, point, c);
+
+	return data->b;
+}
+
 void gui_text(string text, color c, f32 point) { PROF
 
 	gui_window_state* win = ggui->current;
@@ -527,10 +571,10 @@ void gui_text(string text, color c, f32 point) { PROF
 
 	// TODO(max): preliminary check bounds without doing size_text
 
-	// r2 content = win->get_real_content();
-	// if(!(pos.y + point >= content.y && pos.y <= content.y + content.h)) {
-	// 	return;
-	// }
+	r2 content = win->get_real_content();
+	if(!win->override_seen && pos.y + point < content.y || pos.y > content.y + content.h) {
+		return;
+	}
 
 	v2 size = size_text(win->font->font, text, point);
 	if(!win->seen(R2(pos, size))) {

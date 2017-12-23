@@ -214,6 +214,7 @@ bool gui_begin(string name, r2 first_size = R2f(40,40,0,0), gui_window_flags fla
 void gui_end();
 
 void gui_text(string text, color c = WHITE, f32 point = 0.0f);
+bool gui_node(string text, color c = WHITE, f32 point = 0.0f);
 bool gui_carrot_toggle(string name, bool initial = false, bool* toggleme = null);
 
 void render_windowhead(gui_window_state* win);

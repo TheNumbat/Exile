@@ -38,6 +38,15 @@ void dbg_manager::destroy() { PROF
 	DESTROY_ARENA(&scratch);
 }
 
+void dbg_manager::profile_recurse(vector<func_profile_node*> list) {
+
+	FORVEC(it, list) {
+		if(gui_node((*it)->context.function)) {
+			profile_recurse((*it)->children);
+		}
+	}
+}
+
 void dbg_manager::UI() { PROF
 
 	v2 dim = gui_window_dim();
@@ -68,9 +77,7 @@ void dbg_manager::UI() { PROF
 	thread_profile* thread = dbg_cache.get(global_api->platform_this_thread_id());
 	frame_profile* frame = thread->frames.get(0);
 
-	FORVEC(it, frame->heads) {
-		gui_text((*it)->context.function);
-	}
+	profile_recurse(frame->heads);
 
 	global_api->platform_release_mutex(&cache_mut);
 
