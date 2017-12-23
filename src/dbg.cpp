@@ -42,7 +42,7 @@ void dbg_manager::UI() { PROF
 
 	v2 dim = gui_window_dim();
 
-	gui_begin("Console"_, R2(0.0f, dim.x * 0.75f, dim.y, dim.x / 4.0f), (u16)window_flags::nowininput);
+	gui_begin("Console"_, R2(0.0f, dim.y * 0.75f, dim.x, dim.y / 4.0f), (u16)window_flags::nowininput);
 
 	FORQ_BEGIN(it, log_cache) {
 

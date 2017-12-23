@@ -427,7 +427,7 @@ bool gui_begin(string name, r2 first_size, gui_window_flags flags, f32 first_alp
 		
 		r2 scroll_bar = R2(real_body.x + real_body.w, real_body.y, ggui->style.win_scroll_w, real_body.h);
 
-		if(!occluded && inside(real_body, ggui->input.mousepos) || inside(scroll_bar, ggui->input.mousepos)) {
+		if(!occluded && (inside(real_body, ggui->input.mousepos) || inside(scroll_bar, ggui->input.mousepos))) {
 			
 			window->scroll_pos.y += ggui->input.scroll * ggui->style.win_scroll_speed;
 			window->clamp_scroll();
