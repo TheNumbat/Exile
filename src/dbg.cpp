@@ -38,12 +38,16 @@ void dbg_manager::destroy() { PROF
 	DESTROY_ARENA(&scratch);
 }
 
-void dbg_manager::profile_recurse(vector<func_profile_node*> list) {
+void dbg_manager::profile_recurse(vector<func_profile_node*> list) { PROF
 
 	FORVEC(it, list) {
+		gui_push_id(__it);
 		if(gui_node((*it)->context.function)) {
+			gui_indent();
 			profile_recurse((*it)->children);
+			gui_unindent();
 		}
+		gui_pop_id();
 	}
 }
 

@@ -17,7 +17,7 @@ gui_manager gui_manager::make(ogl_manager* ogl, allocator* alloc, platform_windo
 	ret.window = win;
 
 	ret.window_state_data = map<guiid, gui_window_state>::make(32, alloc, FPTR(guiid_hash));
-	ret.state_data = map<guiid, gui_state_data>::make(128, alloc, FPTR(guiid_hash));
+
 	ret.fonts = vector<gui_font>::make(4, alloc);
 
 	return ret;
@@ -31,13 +31,13 @@ void gui_manager::destroy() { PROF
 		it->value.shape_mesh.destroy();
 		it->value.text_mesh.destroy();
 		it->key.name.destroy(alloc);
-	}
-	FORMAP(it, state_data) {
-		it->key.name.destroy(alloc);
+		FORMAP(st, it->value.state_data) {
+			st->key.name.destroy(alloc);
+		}
+		it->value.state_data.destroy();
 	}
 
 	window_state_data.destroy();
-	state_data.destroy();
 	fonts.destroy();
 }
 
@@ -90,7 +90,7 @@ gui_state_data* gui_manager::add_state_data(guiid id, gui_state_data data) { PRO
 
 	guiid cp = id;
 	cp.name = string::make_copy(cp.name, alloc);
-	return state_data.insert(cp, data);	
+	return ggui->current->state_data.insert(cp, data);	
 }
 
 gui_window_state* gui_manager::add_window_state_data(guiid id, gui_window_state data) { PROF
@@ -272,6 +272,16 @@ void gui_pop_offset() { PROF
 	ggui->current->offset_stack.pop();
 }
 
+void gui_push_id(u32 id) {
+
+	ggui->current->id_hash_stack.push(id);
+}
+
+void gui_pop_id() {
+
+	ggui->current->id_hash_stack.pop();
+}
+
 bool gui_occluded() { PROF
 	FORMAP(it, ggui->window_state_data) {
 		if(&it->value != ggui->current && it->value.z > ggui->current->z) {
@@ -318,6 +328,7 @@ bool gui_begin(string name, r2 first_size, gui_window_flags flags, f32 first_alp
 		ns.flags = flags;
 		ns.font = gui_select_best_font_scale(&ns);
 		ns.z = ggui->last_z++;
+		ns.state_data = map<guiid, gui_state_data>::make(32, ggui->alloc, FPTR(guiid_hash));
 
 		window = ggui->add_window_state_data(id, ns);
 	}
@@ -453,6 +464,16 @@ void gui_end() {
 	ggui->current = null;
 }
 
+void gui_indent() {
+
+	gui_push_offset(V2(ggui->style.indent_size, 0.0f));
+}
+
+void gui_unindent() {
+
+	gui_push_offset(V2(-ggui->style.indent_size, 0.0f));
+}
+
 bool gui_carrot_toggle(string name, bool initial, bool* toggleme) { PROF
 
 	gui_window_state* win = ggui->current;
@@ -462,7 +483,7 @@ bool gui_carrot_toggle(string name, bool initial, bool* toggleme) { PROF
 	id.base = *win->id_hash_stack.top();
 	id.name = name;
 
-	gui_state_data* data = ggui->state_data.try_get(id);
+	gui_state_data* data = win->state_data.try_get(id);
 
 	if(!data) {
 
@@ -524,7 +545,7 @@ bool gui_node(string text, color c, f32 point) { PROF
 	id.base = *win->id_hash_stack.top();
 	id.name = text;
 
-	gui_state_data* data = ggui->state_data.try_get(id);
+	gui_state_data* data = win->state_data.try_get(id);
 
 	if(!data) {
 

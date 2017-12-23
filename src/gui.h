@@ -106,6 +106,7 @@ struct gui_window_state {
 	gui_offset_mode offset_mode = gui_offset_mode::y;
 	vector<v2> offset_stack;
 	stack<u32> id_hash_stack;
+	map<guiid, gui_state_data> 	 state_data;
 
 	v2 current_offset();
 	r2 get_real_content();
@@ -147,6 +148,7 @@ struct _gui_style {
 	color3 wid_back		= V3b(102, 105, 185);
 	color3 tab_color	= V3b(100, 106, 109);
 
+	f32 indent_size 		= 10.0f;
 	f32 win_scroll_w 		= 10.0f;
 	f32 win_scroll_speed	= 15.0f;
 	color3 win_scroll_back 	= V3b(102, 105, 185);
@@ -173,7 +175,6 @@ struct gui_manager {
 										// to iterate through the map to check z levels. You'll never 
 										// get to >4 billion changes, right?
 	map<guiid, gui_window_state> window_state_data;
-	map<guiid, gui_state_data> 	 state_data;
 
 	vector<gui_font> fonts;
 
@@ -203,10 +204,14 @@ gui_font* gui_select_best_font_scale();
 
 // These functions you can call from anywhere between starting and ending a frame
 
-void gui_push_offset(v2 offset, gui_offset_mode mode = gui_offset_mode::y);
+void gui_push_offset(v2 offset, gui_offset_mode mode = gui_offset_mode::xy);
 void gui_pop_offset();
 void gui_set_offset(v2 offset);
 v2 	 gui_window_dim();
+void gui_indent();
+void gui_unindent();
+void gui_push_id(u32 id);
+void gui_pop_id();
 
 bool gui_occluded();
 
