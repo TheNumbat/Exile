@@ -123,6 +123,8 @@ struct thread_profile {
 struct dbg_manager {
 
 	u32 current_frame = 0;
+	bool overwrite_frames = false;
+	
 	allocator* alloc = null;
 
 	platform_mutex cache_mut;

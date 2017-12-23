@@ -553,6 +553,7 @@ void render_windowbody(gui_window_state* win) { PROF
 
 	r2 c = win->get_real_content();
 	r2 r = win->get_real();
+	r2 b = win->get_real_body();
 	f32 pt = ggui->style.font + ggui->style.title_padding;
 	v2 resize_tab = ggui->style.resize_tab;
 	
@@ -581,10 +582,10 @@ void render_windowbody(gui_window_state* win) { PROF
 
 	if(win->can_scroll) {
 
-		v2 p1 = V2(r.x + r.w - ggui->style.win_scroll_w, r.y + pt);
-		v2 p2 = V2(r.x + r.w, r.y + pt);
-		v2 p3 = V2(p1.x, p1.y + r.h);
-		v2 p4 = V2(p2.x, p1.y + r.h);
+		v2 p1 = V2(b.x + b.w, r.y + pt);
+		v2 p2 = V2(b.x + b.w + ggui->style.win_scroll_w, r.y + pt);
+		v2 p3 = V2(p1.x, p1.y + r.h - pt);
+		v2 p4 = V2(p2.x, p1.y + r.h - pt);
 
 		win->shape_mesh.push_tri(p1, p2, p3, c_scroll);
 		win->shape_mesh.push_tri(p2, p3, p4, c_scroll);

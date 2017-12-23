@@ -19,7 +19,7 @@
 
 // #define RELEASE // turn off everything for a true release build
 
-#ifndef REAL_RELEASE
+#ifndef RELEASE
 #ifdef CHECKS
 	#define BOUNDS_CHECK
 	#define BLOCK_OR_EXIT_ON_ERROR

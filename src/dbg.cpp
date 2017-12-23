@@ -64,7 +64,15 @@ void dbg_manager::UI() { PROF
 
 	gui_begin("Profile"_, R2(20.0f, 20.0f, dim.x / 1.5f, dim.y / 2.0f));
 
-	gui_text("Test"_);
+	global_api->platform_aquire_mutex(&cache_mut);
+	thread_profile* thread = dbg_cache.get(global_api->platform_this_thread_id());
+	frame_profile* frame = thread->frames.get(0);
+
+	FORVEC(it, frame->heads) {
+		gui_text((*it)->context.function);
+	}
+
+	global_api->platform_release_mutex(&cache_mut);
 
 	gui_end();
 }
@@ -111,6 +119,9 @@ void dbg_manager::collate() {
 			if(msg->type == dbg_msg_type::begin_frame) {
 			
 				if(thread->frames.full()) {
+					if(!overwrite_frames) {
+						break;
+					}
 					frame_profile rem = thread->frames.pop();
 					DESTROY_POOL(&rem.pool);
 				}
