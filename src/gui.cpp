@@ -272,12 +272,12 @@ void gui_pop_offset() { PROF
 	ggui->current->offset_stack.pop();
 }
 
-void gui_push_id(u32 id) {
+void gui_push_id(u32 id) { PROF
 
 	ggui->current->id_hash_stack.push(id);
 }
 
-void gui_pop_id() {
+void gui_pop_id() { PROF
 
 	ggui->current->id_hash_stack.pop();
 }
@@ -460,18 +460,59 @@ bool gui_begin(string name, r2 first_size, gui_window_flags flags, f32 first_alp
 	return window->active;
 }
 
-void gui_end() {
+void gui_end() { PROF
 	ggui->current = null;
 }
 
-void gui_indent() {
+void gui_indent() { PROF
 
 	gui_push_offset(V2(ggui->style.indent_size, 0.0f));
 }
 
-void gui_unindent() {
+void gui_unindent() { PROF
 
 	gui_push_offset(V2(-ggui->style.indent_size, 0.0f));
+}
+
+void gui_slider(string name, i32* val, i32 low, i32 high) { PROF
+
+	gui_window_state* win = ggui->current;
+	if(!win->active && !win->override_active) return;
+
+	guiid id;
+	id.base = *win->id_hash_stack.top();
+	id.name = name;
+
+	gui_state_data* data = win->state_data.try_get(id);
+
+	if(!data) {
+
+		gui_state_data nd;
+
+		nd.i32_1 = *val;
+
+		data = ggui->add_state_data(id, nd);
+	}
+
+	f32 point = win->default_point;
+	color c = WHITE;
+
+	v2 pos = win->current_offset();
+	v2 size = size_text(win->font->font, name, point);
+	gui_push_offset(V2(0.0f, point));
+
+	if(!win->seen(R2(pos, size))) {
+		return;
+	}
+
+	if(!gui_occluded() && inside(R2(pos, size), ggui->input.mousepos)) {
+		
+		if(ggui->active == gui_active_state::none && (ggui->input.lclick || ggui->input.ldbl)) {
+
+		}
+	}
+
+	win->text_mesh.push_text_line(win->font->font, name, pos, point, c);
 }
 
 bool gui_carrot_toggle(string name, bool initial, bool* toggleme) { PROF

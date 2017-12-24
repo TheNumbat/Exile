@@ -79,7 +79,7 @@ struct gui_font {
 	texture_id texture = 0;
 };
 
-enum class win_input_state {
+enum class win_input_state : u8 {
 	none,
 	moving,
 	resizing,
@@ -106,7 +106,7 @@ struct gui_window_state {
 	gui_offset_mode offset_mode = gui_offset_mode::y;
 	vector<v2> offset_stack;
 	stack<u32> id_hash_stack;
-	map<guiid, gui_state_data> 	 state_data;
+	map<guiid, gui_state_data> state_data;
 
 	v2 current_offset();
 	r2 get_real_content();
@@ -171,9 +171,8 @@ struct gui_manager {
 	gui_input_state input;
 
 	gui_window_state* current = null;	// we take a pointer into a map but it's OK because we know nothing will be added while this is in use
-	u32 last_z = 1;						// this only counts up on window layer changes so we don't have
-										// to iterate through the map to check z levels. You'll never 
-										// get to >4 billion changes, right?
+	u32 last_z = 1;						// this only counts up on window layer changes so we don't have to iterate through
+										// the map to check z levels. You'll never get to >2 billion changes, right?
 	map<guiid, gui_window_state> window_state_data;
 
 	vector<gui_font> fonts;
@@ -186,7 +185,8 @@ struct gui_manager {
 	static gui_manager make(ogl_manager* ogl, allocator* alloc, platform_window* win);
 	void destroy();
 
-	void add_font(ogl_manager* ogl, string asset_name, asset_store* store, bool mono = false); // the first font you add is the default size
+	// the first font you add is the default size
+	void add_font(ogl_manager* ogl, string asset_name, asset_store* store, bool mono = false); 
 	void reload_fonts(ogl_manager* ogl);
 
 	gui_window_state* add_window_state_data(guiid id, gui_window_state data);
@@ -221,6 +221,7 @@ void gui_end();
 void gui_text(string text, color c = WHITE, f32 point = 0.0f);
 bool gui_node(string text, color c = WHITE, f32 point = 0.0f);
 bool gui_carrot_toggle(string name, bool initial = false, bool* toggleme = null);
+void gui_slider(string name, i32* val, i32 low, i32 high);
 
 void render_windowhead(gui_window_state* win);
 void render_windowbody(gui_window_state* win);

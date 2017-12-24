@@ -79,7 +79,9 @@ void dbg_manager::UI() { PROF
 
 	global_api->platform_aquire_mutex(&cache_mut);
 	thread_profile* thread = dbg_cache.get(global_api->platform_this_thread_id());
-	frame_profile* frame = thread->frames.get(0);
+
+	gui_slider("Frame"_, &selected_frame, 0, thread->frames.len());
+	frame_profile* frame = thread->frames.get(selected_frame);
 
 	profile_recurse(frame->heads);
 
