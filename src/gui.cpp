@@ -299,7 +299,7 @@ void gui_add_offset(v2 offset, gui_cursor_mode mode) { PROF
 void gui_push_id(u32 id) { PROF
 
 	u32 base = *ggui->current->id_hash_stack.top();
-	ggui->current->id_hash_stack.push(hash_u32(base) ^ hash_u32(id));
+	ggui->current->id_hash_stack.push(base ^ hash_u32(id));
 }
 
 void gui_pop_id() { PROF
