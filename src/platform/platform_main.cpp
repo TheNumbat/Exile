@@ -8,6 +8,8 @@
 #include "platform_strings.cpp"
 #include "platform_api.h"
 
+i32 global_num_allocs = 0;
+
 #ifdef PLATFORM_SDL
 
 #include "SDL/platform_SDL.cpp"
@@ -25,7 +27,6 @@
 #error "Unsupported platform."
 
 #endif
-
 
 // here we treat game_state* as void* so this doesn't have to know anything about the game
 typedef void* (*startup_type)(platform_api*);
@@ -103,6 +104,10 @@ int main() {
 	free_string(exe_folder, api.platform_heap_free);
 	free_string(dll_path, api.platform_heap_free);
 	free_string(temp_dll_path, api.platform_heap_free);
+
+	if(global_num_allocs) {
+	 	api.platform_debug_break();	
+	}
 
 	return 0;
 }

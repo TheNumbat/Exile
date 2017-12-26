@@ -45,6 +45,9 @@ void*	win32_heap_alloc(u64 bytes); // initializes memory to zero (important! the
 void*	win32_heap_realloc(void* mem, u64 bytes);
 void	win32_heap_free(void* mem);
 
+void*	win32_heap_alloc_net(u64 bytes);
+void	win32_heap_free_net(void* mem);
+
 // allocates a string
 platform_error win32_get_bin_path(string* path);
 

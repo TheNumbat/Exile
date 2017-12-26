@@ -32,9 +32,14 @@ platform_api platform_build_api() {
 	ret.platform_get_file_attributes 	= &win32_get_file_attributes;
 	ret.platform_test_file_written		= &win32_test_file_written;
 	ret.platform_copy_file				= &win32_copy_file;
+#ifdef TEST_NET_ZERO_ALLOCS
+	ret.platform_heap_alloc				= &win32_heap_alloc_net;
+	ret.platform_heap_free				= &win32_heap_free_net;
+#else
 	ret.platform_heap_alloc				= &win32_heap_alloc;
-	ret.platform_heap_realloc			= &win32_heap_realloc;
 	ret.platform_heap_free				= &win32_heap_free;
+#endif
+	ret.platform_heap_realloc			= &win32_heap_realloc;
 	ret.platform_get_bin_path			= &win32_get_bin_path;
 	ret.platform_create_thread			= &win32_create_thread;
 	ret.platform_this_thread_id			= &win32_this_thread_id;
@@ -182,7 +187,11 @@ string win32_make_timef(string fmt) {
 
 	i32 len = GetTimeFormatA(LOCALE_USER_DEFAULT, 0, null, fmt.c_str, null, 0);
 
+#ifdef TEST_NET_ZERO_ALLOCS
+	string ret = make_string(len, &win32_heap_alloc_net);
+#else
 	string ret = make_string(len, &win32_heap_alloc);
+#endif
 	ret.len = ret.cap;
 
 	GetTimeFormatA(LOCALE_USER_DEFAULT, 0, null, fmt.c_str, ret.c_str, len);	
@@ -475,8 +484,12 @@ platform_error win32_get_bin_path(string* path) {
 
 	platform_error ret;
 
+#ifdef TEST_NET_ZERO_ALLOCS
+	*path = make_string(MAX_PATH, &win32_heap_alloc_net);
+#else
 	*path = make_string(MAX_PATH, &win32_heap_alloc);
-
+#endif
+	
 	DWORD len = GetModuleFileNameA(null, (LPSTR)path->c_str, MAX_PATH);
 
 	if(len == 0) {
@@ -502,16 +515,28 @@ platform_error win32_get_bin_path(string* path) {
 	return ret;
 }
 
-// #include <iostream>
-// using std::cout;
-// using std::endl;
+void* win32_heap_alloc_net(u64 bytes) {
+
+	HANDLE heap = GetProcessHeap();
+	void* ret = HeapAlloc(heap, HEAP_ZERO_MEMORY | HEAP_GENERATE_EXCEPTIONS, (SIZE_T)bytes);
+
+	_InterlockedIncrement((LONG volatile*)&global_num_allocs);
+
+	return ret;
+}
+
+void win32_heap_free_net(void* mem) {
+
+	HANDLE heap = GetProcessHeap();
+	HeapFree(heap, 0, mem);
+
+	_InterlockedDecrement((LONG volatile*)&global_num_allocs);
+}
 
 void* win32_heap_alloc(u64 bytes) {
 
 	HANDLE heap = GetProcessHeap();
 	void* ret = HeapAlloc(heap, HEAP_ZERO_MEMORY | HEAP_GENERATE_EXCEPTIONS, (SIZE_T)bytes);
-
-	// cout << "AAAAAAAAAA " << ret << endl;
 
 	return ret;
 }
@@ -521,15 +546,10 @@ void* win32_heap_realloc(void* mem, u64 bytes) {
 	HANDLE heap = GetProcessHeap();
 	void* ret = HeapReAlloc(heap, HEAP_ZERO_MEMORY | HEAP_GENERATE_EXCEPTIONS, mem, (SIZE_T)bytes);
 
-	// cout << "RRRRRRRRRR " << ret << endl;
-
 	return ret;
 }
 
 void win32_heap_free(void* mem) {
-
-	// cout << "FFFFFFFFFF " << mem << endl;
-	// *(u8*)mem = 0;
 
 	HANDLE heap = GetProcessHeap();
 	HeapFree(heap, 0, mem);
