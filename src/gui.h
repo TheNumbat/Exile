@@ -89,6 +89,7 @@ enum class win_input_state : u8 {
 struct gui_window_state {
 	r2 rect;
 	v2 move_click_offset;
+	v2 cursor;
 
 	f32 opacity = 1.0f;
 	v2 scroll_pos, previous_content_size;
@@ -104,11 +105,9 @@ struct gui_window_state {
 	bool override_seen = false;
 
 	gui_offset_mode offset_mode = gui_offset_mode::y;
-	vector<v2> offset_stack;
 	stack<u32> id_hash_stack;
 	map<guiid, gui_state_data> state_data;
 
-	v2 current_offset();
 	r2 get_real_content();
 	r2 get_real_body();
 	r2 get_real_top();
@@ -204,8 +203,7 @@ gui_font* gui_select_best_font_scale();
 
 // These functions you can call from anywhere between starting and ending a frame
 
-void gui_push_offset(v2 offset, gui_offset_mode mode = gui_offset_mode::xy);
-void gui_pop_offset();
+void gui_add_offset(v2 offset, gui_offset_mode mode = gui_offset_mode::xy);
 void gui_set_offset(v2 offset);
 v2 	 gui_window_dim();
 void gui_indent();

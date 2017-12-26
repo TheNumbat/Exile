@@ -27,7 +27,6 @@ void gui_manager::destroy() { PROF
 
 	FORMAP(it, window_state_data) {
 		it->value.id_hash_stack.destroy();
-		it->value.offset_stack.destroy();
 		it->value.shape_mesh.destroy();
 		it->value.text_mesh.destroy();
 		it->key.name.destroy(alloc);
@@ -147,10 +146,10 @@ void gui_manager::end_frame(platform_window* win, ogl_manager* ogl) { PROF
 	rcl.destroy();
 
 	FORMAP(it, window_state_data) {
-		it->value.previous_content_size = it->value.current_offset() - it->value.scroll_pos - it->value.rect.xy;
+		it->value.previous_content_size = it->value.cursor - it->value.scroll_pos - it->value.rect.xy;
 		if(it->value.previous_content_size.y > it->value.rect.h) it->value.can_scroll = true;
 		else it->value.can_scroll = false;
-		it->value.offset_stack.clear();
+		it->value.cursor = it->value.rect.xy;
 		it->value.id_hash_stack.clear();
 		it->value.shape_mesh.clear();
 		it->value.text_mesh.clear();
@@ -163,14 +162,6 @@ void gui_window_state::clamp_scroll() { PROF
 	f32 content_offset = -ggui->style.win_margin.y - ggui->style.win_margin.w + real_rect.h;
 	if(scroll_pos.y < -previous_content_size.y + content_offset) scroll_pos.y = -previous_content_size.y + content_offset;
 	if(scroll_pos.y > 0.0f) scroll_pos.y = 0.0f;
-}
-
-v2 gui_window_state::current_offset() { PROF
-	v2 pos = rect.xy;
-	FORVEC(it, offset_stack) {
-		pos = pos + *it;
-	}
-	return pos;
 }
 
 r2 gui_window_state::get_real_content() { PROF
@@ -250,26 +241,21 @@ v2 gui_window_dim() { PROF
 }
 
 void gui_set_offset(v2 offset) { PROF
-	ggui->current->offset_stack.clear();
-	ggui->current->offset_stack.push(offset);
+	ggui->current->cursor = ggui->current->rect.xy + offset;
 }
 
-void gui_push_offset(v2 offset, gui_offset_mode mode) { PROF
+void gui_add_offset(v2 offset, gui_offset_mode mode) { PROF
 	switch(mode) {
 	case gui_offset_mode::xy:
-		ggui->current->offset_stack.push(offset);
+		ggui->current->cursor = ggui->current->cursor + offset;
 		break;
 	case gui_offset_mode::x:
-		ggui->current->offset_stack.push(V2(offset.x, 0.0f));
+		ggui->current->cursor = ggui->current->cursor + V2(offset.x, 0.0f);
 		break;
 	case gui_offset_mode::y:
-		ggui->current->offset_stack.push(V2(0.0f, offset.y));
+		ggui->current->cursor = ggui->current->cursor + V2(0.0f, offset.y);
 		break;
 	}
-}
-
-void gui_pop_offset() { PROF
-	ggui->current->offset_stack.pop();
 }
 
 void gui_push_id(u32 id) { PROF
@@ -324,7 +310,6 @@ bool gui_begin(string name, r2 first_size, gui_window_flags flags, f32 first_alp
 		ns.shape_mesh = mesh_2d_col::make(128, ggui->alloc);
 		ns.text_mesh = mesh_2d_tex_col::make(1024, ggui->alloc);
 		ns.id_hash_stack = stack<u32>::make(16, ggui->alloc);
-		ns.offset_stack = vector<v2>::make(16, ggui->alloc);
 		ns.flags = flags;
 		ns.font = gui_select_best_font_scale(&ns);
 		ns.z = ggui->last_z++;
@@ -466,12 +451,12 @@ void gui_end() { PROF
 
 void gui_indent() { PROF
 
-	gui_push_offset(V2(ggui->style.indent_size, 0.0f));
+	gui_add_offset(V2(ggui->style.indent_size, 0.0f));
 }
 
 void gui_unindent() { PROF
 
-	gui_push_offset(V2(-ggui->style.indent_size, 0.0f));
+	gui_add_offset(V2(-ggui->style.indent_size, 0.0f));
 }
 
 void gui_slider(string name, i32* val, i32 low, i32 high) { PROF
@@ -497,9 +482,9 @@ void gui_slider(string name, i32* val, i32 low, i32 high) { PROF
 	f32 point = win->default_point;
 	color c = WHITE;
 
-	v2 pos = win->current_offset();
+	v2 pos = win->cursor;
 	v2 size = size_text(win->font->font, name, point);
-	gui_push_offset(V2(0.0f, point));
+	gui_add_offset(V2(0.0f, point));
 
 	if(!win->seen(R2(pos, size))) {
 		return;
@@ -509,6 +494,7 @@ void gui_slider(string name, i32* val, i32 low, i32 high) { PROF
 		
 		if(ggui->active == gui_active_state::none && (ggui->input.lclick || ggui->input.ldbl)) {
 
+			
 		}
 	}
 
@@ -539,9 +525,9 @@ bool gui_carrot_toggle(string name, bool initial, bool* toggleme) { PROF
 		data->b = *toggleme;
 	}
 
-	v2 pos = win->current_offset();
+	v2 pos = win->cursor;
 	v2 size = ggui->style.default_carrot_size;
-	gui_push_offset(size);
+	gui_add_offset(size);
 
 	if(!win->seen(R2(pos, size))) {
 		return data->b;
@@ -598,9 +584,10 @@ bool gui_node(string text, color c, f32 point) { PROF
 	}
 
 	if(!point) point = win->default_point;
-	v2 pos = win->current_offset();
+
+	v2 pos = win->cursor;
 	v2 size = size_text(win->font->font, text, point);
-	gui_push_offset(V2(0.0f, point));
+	gui_add_offset(V2(0.0f, point));
 
 	if(!win->seen(R2(pos, size))) {
 		return data->b;
@@ -628,8 +615,8 @@ void gui_text(string text, color c, f32 point) { PROF
 
 	if(!point) point = win->default_point;
 
-	v2 pos = win->current_offset();
-	gui_push_offset(V2(0.0f, point));
+	v2 pos = win->cursor;
+	gui_add_offset(V2(0.0f, point));
 
 	// TODO(max): preliminary check bounds without doing size_text
 
