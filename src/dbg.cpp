@@ -157,9 +157,18 @@ void dbg_manager::collate() {
 					case dbg_msg_type::enter_func: {
 
 						if(!frame->current) { 	
-							frame->current = *frame->heads.push(NEW(func_profile_node));
-							frame->current->children = vector<func_profile_node*>::make(4);
-							frame->current->context = msg->context;
+							bool found_repeat_head = false;
+							FORVEC(head, frame->heads) {
+								if((*head)->context.function == msg->context.function) {
+									frame->current = *head;
+									found_repeat_head = true;
+								}
+							}
+							if(!found_repeat_head) {
+								frame->current = *frame->heads.push(NEW(func_profile_node));
+								frame->current->children = vector<func_profile_node*>::make(4);
+								frame->current->context = msg->context;
+							}
 							frame->current->current = msg->time;
 							frame->current->calls++;
 							break;

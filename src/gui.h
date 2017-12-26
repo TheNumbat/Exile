@@ -114,7 +114,7 @@ struct gui_window {
 	mesh_2d_col 	shape_mesh;
 	mesh_2d_tex_col text_mesh;
 
-	static gui_window make(r2 first_size, f32 first_alpha, u16 flags, allocator* alloc);
+	static gui_window make(r2 first, f32 first_alpha, u16 flags, allocator* alloc);
 	void destroy();
 	void reset();
 
@@ -216,7 +216,7 @@ void gui_pop_id();
 
 bool gui_occluded();
 
-bool gui_begin(string name, r2 first_size = R2f(40,40,0,0), gui_window_flags flags = 0, f32 first_alpha = 0);
+bool gui_begin(string name, r2 first = R2f(40,40,0,0), gui_window_flags flags = 0, f32 first_alpha = 0);
 void gui_end();
 
 void gui_text(string text, color c = WHITE, f32 point = 0.0f);

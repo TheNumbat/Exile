@@ -298,7 +298,8 @@ void gui_add_offset(v2 offset, gui_cursor_mode mode) { PROF
 
 void gui_push_id(u32 id) { PROF
 
-	ggui->current->id_hash_stack.push(id);
+	u32 base = *ggui->current->id_hash_stack.top();
+	ggui->current->id_hash_stack.push(hash_u32(base) ^ hash_u32(id));
 }
 
 void gui_pop_id() { PROF
@@ -323,7 +324,7 @@ bool gui_occluded() { PROF
 	return false;
 }
 
-bool gui_begin(string name, r2 first_size, gui_window_flags flags, f32 first_alpha) { PROF
+bool gui_begin(string name, r2 size, gui_window_flags flags, f32 first_alpha) { PROF
 
 	guiid id;
 	id.name = name;
@@ -331,13 +332,15 @@ bool gui_begin(string name, r2 first_size, gui_window_flags flags, f32 first_alp
 	gui_window* window = ggui->windows.try_get(id);
 
 	if(!window) {
+		window = ggui->add_window(id, gui_window::make(size, first_alpha, flags, ggui->alloc));
+	}
 
-		window = ggui->add_window(id, gui_window::make(first_size, first_alpha, flags, ggui->alloc));
+	window->flags = flags;
+	if((window->flags & (u16)window_flags::noresize) == (u16)window_flags::noresize) {
+		window->rect = size;
 	}
 
 	window->id_hash_stack.push(guiid_hash(id));
-	window->flags = flags;
-
 	ggui->current = window;
 
 	if(ggui->active_id == id) {
