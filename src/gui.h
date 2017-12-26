@@ -64,7 +64,7 @@ union gui_state_data {
 	void* data = null;
 };
 
-enum class gui_offset_mode : u8 {
+enum class gui_cursor_mode : u8 {
 	xy,
 	x,
 	y,
@@ -86,13 +86,12 @@ enum class win_input_state : u8 {
 	scrolling
 };
 
-struct gui_window_state {
+struct gui_window {
 	r2 rect;
-	v2 move_click_offset;
 	v2 cursor;
 
+	v2  click_offset, scroll_pos, previous_content_size;
 	f32 opacity = 1.0f;
-	v2 scroll_pos, previous_content_size;
 	u16 flags 	= 0;
 	u32 z 		= 1, title_tris = 0; 
 
@@ -104,9 +103,20 @@ struct gui_window_state {
 	bool override_active = false;
 	bool override_seen = false;
 
-	gui_offset_mode offset_mode = gui_offset_mode::y;
 	stack<u32> id_hash_stack;
 	map<guiid, gui_state_data> state_data;
+
+	// TODO(max): fix font system
+	gui_font* font = null;
+	allocator* alloc = null;
+
+	// TODO(max): arbitrary # of meshes for images, different fonts
+	mesh_2d_col 	shape_mesh;
+	mesh_2d_tex_col text_mesh;
+
+	static gui_window make(r2 first_size, f32 first_alpha, u16 flags, allocator* alloc);
+	void destroy();
+	void reset();
 
 	r2 get_real_content();
 	r2 get_real_body();
@@ -114,19 +124,12 @@ struct gui_window_state {
 	r2 get_real();
 	void update_input();
 	void clamp_scroll();
-	bool seen(r2 rect);
-	
-	// TODO(max): fix font system
-	gui_font* font = null;
-	f32 default_point = 14.0f;
-	
-	// TODO(max): arbitrary # of meshes for images, different fonts
-	mesh_2d_col 	shape_mesh;
-	mesh_2d_tex_col text_mesh;
+	bool visible(r2 rect);
+	gui_state_data* add_state(guiid id, gui_state_data state);
 };
 
 struct _gui_style {
-	f32 font 			= 0.0f;	// default font size 
+	f32 font_size		= 14.0f;	// default font size 
 	f32 title_padding 	= 3.0f;
 	f32 line_padding 	= 3.0f;
 	u32 log_win_lines 	= 15;
@@ -169,10 +172,10 @@ struct gui_manager {
 
 	gui_input_state input;
 
-	gui_window_state* current = null;	// we take a pointer into a map but it's OK because we know nothing will be added while this is in use
+	gui_window* current = null;	// we take a pointer into a map but it's OK because we know nothing will be added while this is in use
 	u32 last_z = 1;						// this only counts up on window layer changes so we don't have to iterate through
 										// the map to check z levels. You'll never get to >2 billion changes, right?
-	map<guiid, gui_window_state> window_state_data;
+	map<guiid, gui_window> windows;
 
 	vector<gui_font> fonts;
 
@@ -188,7 +191,7 @@ struct gui_manager {
 	void add_font(ogl_manager* ogl, string asset_name, asset_store* store, bool mono = false); 
 	void reload_fonts(ogl_manager* ogl);
 
-	gui_window_state* add_window_state_data(guiid id, gui_window_state data);
+	gui_window* add_window(guiid id, gui_window data);
 	gui_state_data* add_state_data(guiid id, gui_state_data data);
 
 	void begin_frame(gui_input_state new_input);
@@ -203,7 +206,7 @@ gui_font* gui_select_best_font_scale();
 
 // These functions you can call from anywhere between starting and ending a frame
 
-void gui_add_offset(v2 offset, gui_offset_mode mode = gui_offset_mode::xy);
+void gui_add_offset(v2 offset, gui_cursor_mode mode = gui_cursor_mode::xy);
 void gui_set_offset(v2 offset);
 v2 	 gui_window_dim();
 void gui_indent();
@@ -221,9 +224,9 @@ bool gui_node(string text, color c = WHITE, f32 point = 0.0f);
 bool gui_carrot_toggle(string name, bool initial = false, bool* toggleme = null);
 void gui_slider(string name, i32* val, i32 low, i32 high);
 
-void render_windowhead(gui_window_state* win);
-void render_windowbody(gui_window_state* win);
-void render_carrot(gui_window_state* win, v2 pos, bool active);
+void render_windowhead(gui_window* win);
+void render_windowbody(gui_window* win);
+void render_carrot(gui_window* win, v2 pos, bool active);
 
 bool operator==(guiid l, guiid r);
 

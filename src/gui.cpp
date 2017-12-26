@@ -9,6 +9,64 @@ bool operator==(guiid l, guiid r) { PROF
 	return l.base == r.base && l.name == r.name;
 }
 
+gui_window gui_window::make(r2 first_size, f32 first_alpha, u16 flags, allocator* alloc) { PROF
+
+	gui_window ret;
+
+	ret.alloc = alloc;
+	ret.rect = first_size;
+	if(first_size.w == 0.0f || first_size.h == 0.0f) {
+		ret.rect.wh = ggui->style.default_win_size;
+	}
+
+	if(first_alpha == 0.0f) {
+		ret.opacity = ggui->style.default_win_a;
+	} else {
+		ret.opacity = first_alpha;
+	}
+
+	ret.shape_mesh = mesh_2d_col::make(128, ret.alloc);
+	ret.text_mesh = mesh_2d_tex_col::make(1024, ret.alloc);
+	ret.id_hash_stack = stack<u32>::make(16, ret.alloc);
+	ret.flags = flags;
+	ret.font = gui_select_best_font_scale();
+	ret.z = ggui->last_z++;
+	ret.state_data = map<guiid, gui_state_data>::make(32, ret.alloc, FPTR(guiid_hash));
+
+	return ret;
+}
+
+void gui_window::reset() { PROF
+
+	previous_content_size = cursor - scroll_pos - rect.xy;
+	if(previous_content_size.y > rect.h) can_scroll = true;
+	else can_scroll = false;
+	cursor = rect.xy;
+
+	id_hash_stack.clear();
+	shape_mesh.clear();
+	text_mesh.clear();
+}
+
+void gui_window::destroy() { PROF
+
+	FORMAP(st, state_data) {
+		st->key.name.destroy(alloc);
+	}
+
+	id_hash_stack.destroy();
+	shape_mesh.destroy();
+	text_mesh.destroy();
+	state_data.destroy();
+}
+
+gui_state_data* gui_window::add_state(guiid id, gui_state_data state) { PROF
+
+	guiid cp = id;
+	cp.name = string::make_copy(cp.name, alloc);
+	return state_data.insert(cp, state);
+}
+
 gui_manager gui_manager::make(ogl_manager* ogl, allocator* alloc, platform_window* win) { PROF
 
 	gui_manager ret;
@@ -16,8 +74,7 @@ gui_manager gui_manager::make(ogl_manager* ogl, allocator* alloc, platform_windo
 	ret.alloc = alloc;
 	ret.window = win;
 
-	ret.window_state_data = map<guiid, gui_window_state>::make(32, alloc, FPTR(guiid_hash));
-
+	ret.windows = map<guiid, gui_window>::make(32, alloc, FPTR(guiid_hash));
 	ret.fonts = vector<gui_font>::make(4, alloc);
 
 	return ret;
@@ -25,18 +82,12 @@ gui_manager gui_manager::make(ogl_manager* ogl, allocator* alloc, platform_windo
 
 void gui_manager::destroy() { PROF
 
-	FORMAP(it, window_state_data) {
-		it->value.id_hash_stack.destroy();
-		it->value.shape_mesh.destroy();
-		it->value.text_mesh.destroy();
+	FORMAP(it, windows) {
 		it->key.name.destroy(alloc);
-		FORMAP(st, it->value.state_data) {
-			st->key.name.destroy(alloc);
-		}
-		it->value.state_data.destroy();
+		it->value.destroy();
 	}
 
-	window_state_data.destroy();
+	windows.destroy();
 	fonts.destroy();
 }
 
@@ -68,11 +119,11 @@ void gui_manager::add_font(ogl_manager* ogl, string asset_name, asset_store* sto
 	fonts.push(f);
 }
 
-gui_font* gui_select_best_font_scale(gui_window_state* win) { PROF
+gui_font* gui_select_best_font_scale() { PROF
 
 	gui_font* f = null;
 
-	f32 defl = ggui->style.font;
+	f32 defl = ggui->style.font_size;
 	f32 min_off = FLT_MAX;
 	FORVEC(it, ggui->fonts) {
 		f32 off = absf(defl - it->font->font.point);
@@ -85,28 +136,21 @@ gui_font* gui_select_best_font_scale(gui_window_state* win) { PROF
 	return f;
 }
 
-gui_state_data* gui_manager::add_state_data(guiid id, gui_state_data data) { PROF
+gui_window* gui_manager::add_window(guiid id, gui_window data) { PROF
 
 	guiid cp = id;
 	cp.name = string::make_copy(cp.name, alloc);
-	return ggui->current->state_data.insert(cp, data);	
-}
-
-gui_window_state* gui_manager::add_window_state_data(guiid id, gui_window_state data) { PROF
-
-	guiid cp = id;
-	cp.name = string::make_copy(cp.name, alloc);
-	return window_state_data.insert(cp, data);	
+	return windows.insert(cp, data);	
 }
 
 void gui_manager::begin_frame(gui_input_state new_input) { PROF
 
 	ggui = this;
 	input = new_input;
-	style.font = fonts.front()->font->font.point;
+	style.font_size = fonts.front()->font->font.point;
 
-	FORMAP(it, window_state_data) {
-		it->value.font = gui_select_best_font_scale(&it->value);
+	FORMAP(it, windows) {
+		it->value.font = gui_select_best_font_scale();
 	}
 }
 
@@ -122,7 +166,7 @@ void gui_manager::end_frame(platform_window* win, ogl_manager* ogl) { PROF
 	}
 
 	render_command_list rcl = render_command_list::make();
-	FORMAP(it, window_state_data) {
+	FORMAP(it, windows) {
 
 		render_command cmd = render_command::make(render_command_type::mesh_2d_col, &it->value.shape_mesh, it->value.z * 2);
 		cmd.texture = -1;
@@ -145,18 +189,12 @@ void gui_manager::end_frame(platform_window* win, ogl_manager* ogl) { PROF
 	ogl->execute_command_list(win, &rcl);
 	rcl.destroy();
 
-	FORMAP(it, window_state_data) {
-		it->value.previous_content_size = it->value.cursor - it->value.scroll_pos - it->value.rect.xy;
-		if(it->value.previous_content_size.y > it->value.rect.h) it->value.can_scroll = true;
-		else it->value.can_scroll = false;
-		it->value.cursor = it->value.rect.xy;
-		it->value.id_hash_stack.clear();
-		it->value.shape_mesh.clear();
-		it->value.text_mesh.clear();
+	FORMAP(it, windows) {
+		it->value.reset();
 	}
 }
 
-void gui_window_state::clamp_scroll() { PROF
+void gui_window::clamp_scroll() { PROF
 
 	r2 real_rect = get_real();
 	f32 content_offset = -ggui->style.win_margin.y - ggui->style.win_margin.w + real_rect.h;
@@ -164,24 +202,24 @@ void gui_window_state::clamp_scroll() { PROF
 	if(scroll_pos.y > 0.0f) scroll_pos.y = 0.0f;
 }
 
-r2 gui_window_state::get_real_content() { PROF
+r2 gui_window::get_real_content() { PROF
 
 	r2 r = get_real_body();
 	return R2(r.xy + ggui->style.win_margin.xy, r.wh - ggui->style.win_margin.xy - ggui->style.win_margin.zw);
 }
 
-r2 gui_window_state::get_real_top() { PROF
+r2 gui_window::get_real_top() { PROF
 
 	f32 carrot_x_diff = ggui->style.default_carrot_size.x + ggui->style.carrot_padding.x;
 	r2 real_rect = get_real();
 
-	return R2(real_rect.xy, V2(real_rect.w - carrot_x_diff, ggui->style.font + ggui->style.title_padding));
+	return R2(real_rect.xy, V2(real_rect.w - carrot_x_diff, ggui->style.font_size + ggui->style.title_padding));
 }
 
-r2 gui_window_state::get_real_body() { PROF
+r2 gui_window::get_real_body() { PROF
 
 	r2 real_rect = get_real();
-	r2 body = R2(real_rect.x, real_rect.y + ggui->style.font + ggui->style.title_padding, real_rect.w, real_rect.h - ggui->style.font + ggui->style.title_padding);
+	r2 body = R2(real_rect.x, real_rect.y + ggui->style.font_size + ggui->style.title_padding, real_rect.w, real_rect.h - ggui->style.font_size + ggui->style.title_padding);
 	
 	if(can_scroll) {
 		body.w -= ggui->style.win_scroll_w;
@@ -189,11 +227,11 @@ r2 gui_window_state::get_real_body() { PROF
 	return body;
 }
 
-void gui_window_state::update_input() { PROF
+void gui_window::update_input() { PROF
 	
 	r2 real_rect = get_real();
 	if(input == win_input_state::resizing) {
-		v2 wh = ggui->input.mousepos - real_rect.xy + move_click_offset;
+		v2 wh = ggui->input.mousepos - real_rect.xy + click_offset;
 		if(wh.x < ggui->style.min_win_size.x) {
 			wh.x = ggui->style.min_win_size.x;
 		}
@@ -208,7 +246,7 @@ void gui_window_state::update_input() { PROF
 	}
 	else if(input == win_input_state::moving) {
 
-		rect = R2(ggui->input.mousepos - move_click_offset, rect.wh);
+		rect = R2(ggui->input.mousepos - click_offset, rect.wh);
 	}
 	else if(input == win_input_state::scrolling) {
 
@@ -227,12 +265,12 @@ void gui_window_state::update_input() { PROF
 	}
 }
 
-bool gui_window_state::seen(r2 r) { PROF
+bool gui_window::visible(r2 r) { PROF
 	if(override_seen) return true;
 	return intersect(get_real_content(), r);
 }
 
-r2 gui_window_state::get_real() { PROF
+r2 gui_window::get_real() { PROF
 	return rect;
 }
 
@@ -244,15 +282,15 @@ void gui_set_offset(v2 offset) { PROF
 	ggui->current->cursor = ggui->current->rect.xy + offset;
 }
 
-void gui_add_offset(v2 offset, gui_offset_mode mode) { PROF
+void gui_add_offset(v2 offset, gui_cursor_mode mode) { PROF
 	switch(mode) {
-	case gui_offset_mode::xy:
+	case gui_cursor_mode::xy:
 		ggui->current->cursor = ggui->current->cursor + offset;
 		break;
-	case gui_offset_mode::x:
+	case gui_cursor_mode::x:
 		ggui->current->cursor = ggui->current->cursor + V2(offset.x, 0.0f);
 		break;
-	case gui_offset_mode::y:
+	case gui_cursor_mode::y:
 		ggui->current->cursor = ggui->current->cursor + V2(0.0f, offset.y);
 		break;
 	}
@@ -269,12 +307,12 @@ void gui_pop_id() { PROF
 }
 
 bool gui_occluded() { PROF
-	FORMAP(it, ggui->window_state_data) {
+	FORMAP(it, ggui->windows) {
 		if(&it->value != ggui->current && it->value.z > ggui->current->z) {
 			if(it->value.active && inside(it->value.rect, ggui->input.mousepos)) {
 				return true;
 			} else {
-				r2 title_rect = R2(it->value.rect.xy, V2(it->value.rect.w, ggui->style.font + ggui->style.title_padding));
+				r2 title_rect = R2(it->value.rect.xy, V2(it->value.rect.w, ggui->style.font_size + ggui->style.title_padding));
 				title_rect = title_rect;
 				if(inside(title_rect, ggui->input.mousepos)) {
 					return true;
@@ -290,32 +328,11 @@ bool gui_begin(string name, r2 first_size, gui_window_flags flags, f32 first_alp
 	guiid id;
 	id.name = name;
 
-	gui_window_state* window = ggui->window_state_data.try_get(id);
+	gui_window* window = ggui->windows.try_get(id);
 
 	if(!window) {
 
-		gui_window_state ns;
-
-		ns.rect = first_size;
-		if(first_size.w == 0.0f || first_size.h == 0.0f) {
-			ns.rect.wh = ggui->style.default_win_size;
-		}
-
-		if(first_alpha == 0.0f) {
-			ns.opacity = ggui->style.default_win_a;
-		} else {
-			ns.opacity = first_alpha;
-		}
-
-		ns.shape_mesh = mesh_2d_col::make(128, ggui->alloc);
-		ns.text_mesh = mesh_2d_tex_col::make(1024, ggui->alloc);
-		ns.id_hash_stack = stack<u32>::make(16, ggui->alloc);
-		ns.flags = flags;
-		ns.font = gui_select_best_font_scale(&ns);
-		ns.z = ggui->last_z++;
-		ns.state_data = map<guiid, gui_state_data>::make(32, ggui->alloc, FPTR(guiid_hash));
-
-		window = ggui->add_window_state_data(id, ns);
+		window = ggui->add_window(id, gui_window::make(first_size, first_alpha, flags, ggui->alloc));
 	}
 
 	window->id_hash_stack.push(guiid_hash(id));
@@ -343,7 +360,7 @@ bool gui_begin(string name, r2 first_size, gui_window_flags flags, f32 first_alp
 			window->override_active = false;
 			window->override_seen = false;
 
-			header_offset = V2(0.0f, window->default_point + ggui->style.title_padding);
+			header_offset = V2(0.0f, ggui->style.font_size + ggui->style.title_padding);
 		}
 
 		if((window->flags & (u16)window_flags::noback) != (u16)window_flags::noback && window->active) {
@@ -390,7 +407,7 @@ bool gui_begin(string name, r2 first_size, gui_window_flags flags, f32 first_alp
 				window->z = ggui->last_z++;
 				ggui->active_id = id;
 				ggui->active = gui_active_state::active;
-				window->move_click_offset = ggui->input.mousepos - real_rect.xy;
+				window->click_offset = ggui->input.mousepos - real_rect.xy;
 				window->input = win_input_state::moving;
 			}
 		}
@@ -406,7 +423,7 @@ bool gui_begin(string name, r2 first_size, gui_window_flags flags, f32 first_alp
 				window->z = ggui->last_z++;
 				ggui->active_id = id;
 				ggui->active = gui_active_state::active;
-				window->move_click_offset = real_rect.xy + real_rect.wh - ggui->input.mousepos;
+				window->click_offset = real_rect.xy + real_rect.wh - ggui->input.mousepos;
 				window->input = win_input_state::resizing;
 			}
 		}
@@ -461,7 +478,7 @@ void gui_unindent() { PROF
 
 void gui_slider(string name, i32* val, i32 low, i32 high) { PROF
 
-	gui_window_state* win = ggui->current;
+	gui_window* win = ggui->current;
 	if(!win->active && !win->override_active) return;
 
 	guiid id;
@@ -476,17 +493,17 @@ void gui_slider(string name, i32* val, i32 low, i32 high) { PROF
 
 		nd.i32_1 = *val;
 
-		data = ggui->add_state_data(id, nd);
+		data = win->add_state(id, nd);
 	}
 
-	f32 point = win->default_point;
+	f32 point = ggui->style.font_size;
 	color c = WHITE;
 
 	v2 pos = win->cursor;
 	v2 size = size_text(win->font->font, name, point);
 	gui_add_offset(V2(0.0f, point));
 
-	if(!win->seen(R2(pos, size))) {
+	if(!win->visible(R2(pos, size))) {
 		return;
 	}
 
@@ -503,7 +520,7 @@ void gui_slider(string name, i32* val, i32 low, i32 high) { PROF
 
 bool gui_carrot_toggle(string name, bool initial, bool* toggleme) { PROF
 
-	gui_window_state* win = ggui->current;
+	gui_window* win = ggui->current;
 	if(!win->active && !win->override_active) return initial;
 
 	guiid id;
@@ -518,7 +535,7 @@ bool gui_carrot_toggle(string name, bool initial, bool* toggleme) { PROF
 
 		nd.b = initial;
 
-		data = ggui->add_state_data(id, nd);
+		data = win->add_state(id, nd);
 	}
 
 	if(toggleme) {
@@ -529,7 +546,7 @@ bool gui_carrot_toggle(string name, bool initial, bool* toggleme) { PROF
 	v2 size = ggui->style.default_carrot_size;
 	gui_add_offset(size);
 
-	if(!win->seen(R2(pos, size))) {
+	if(!win->visible(R2(pos, size))) {
 		return data->b;
 	}
 
@@ -552,7 +569,7 @@ bool gui_carrot_toggle(string name, bool initial, bool* toggleme) { PROF
 	return data->b;
 }
 
-void render_carrot(gui_window_state* win, v2 pos, bool active) { PROF
+void render_carrot(gui_window* win, v2 pos, bool active) { PROF
 
 	f32 size = ggui->style.default_carrot_size.x;
 
@@ -565,7 +582,7 @@ void render_carrot(gui_window_state* win, v2 pos, bool active) { PROF
 
 bool gui_node(string text, color c, f32 point) { PROF 
 
-	gui_window_state* win = ggui->current;
+	gui_window* win = ggui->current;
 	if(!win->active && !win->override_active) return false;
 
 	guiid id;
@@ -580,16 +597,16 @@ bool gui_node(string text, color c, f32 point) { PROF
 
 		nd.b = false;
 
-		data = ggui->add_state_data(id, nd);
+		data = win->add_state(id, nd);
 	}
 
-	if(!point) point = win->default_point;
+	if(!point) point = ggui->style.font_size;
 
 	v2 pos = win->cursor;
 	v2 size = size_text(win->font->font, text, point);
 	gui_add_offset(V2(0.0f, point));
 
-	if(!win->seen(R2(pos, size))) {
+	if(!win->visible(R2(pos, size))) {
 		return data->b;
 	}
 
@@ -610,10 +627,10 @@ bool gui_node(string text, color c, f32 point) { PROF
 
 void gui_text(string text, color c, f32 point) { PROF
 
-	gui_window_state* win = ggui->current;
+	gui_window* win = ggui->current;
 	if(!win->active && !win->override_active) return;
 
-	if(!point) point = win->default_point;
+	if(!point) point = ggui->style.font_size;
 
 	v2 pos = win->cursor;
 	gui_add_offset(V2(0.0f, point));
@@ -626,28 +643,28 @@ void gui_text(string text, color c, f32 point) { PROF
 	}
 
 	v2 size = size_text(win->font->font, text, point);
-	if(!win->seen(R2(pos, size))) {
+	if(!win->visible(R2(pos, size))) {
 		return;
 	}
 
 	win->text_mesh.push_text_line(win->font->font, text, pos, point, c);
 }
 
-void render_windowhead(gui_window_state* win) { PROF
+void render_windowhead(gui_window* win) { PROF
 	
 	r2 r = win->get_real();
-	f32 pt = ggui->style.font + ggui->style.title_padding;
+	f32 pt = ggui->style.font_size + ggui->style.title_padding;
 
 	r2 render = R2(r.x, r.y, r.w, pt);
 	win->shape_mesh.push_rect(render, V4b(ggui->style.win_top, 255));
 }
 
-void render_windowbody(gui_window_state* win) { PROF
+void render_windowbody(gui_window* win) { PROF
 
 	r2 c = win->get_real_content();
 	r2 r = win->get_real();
 	r2 b = win->get_real_body();
-	f32 pt = ggui->style.font + ggui->style.title_padding;
+	f32 pt = ggui->style.font_size + ggui->style.title_padding;
 	v2 resize_tab = ggui->style.resize_tab;
 	
 	color c_back   		= V4b(ggui->style.win_back, win->opacity * 255.0f);

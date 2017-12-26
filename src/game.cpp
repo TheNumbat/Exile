@@ -65,11 +65,7 @@ EXPORT game_state* start_up(platform_api* api) {
 	}, state);
 
 	LOG_INFO("Creating window...");
-	platform_error err = api->platform_create_window(&state->window, "Exile"_, 1280, 720);
-
-	if (!err.good) {
-		LOG_FATAL_F("Failed to create window, error: %", err.error);
-	}
+	CHECKED(platform_create_window, &state->window, "Exile"_, 1280, 720);
 
 	LOG_INFO("Setting up OpenGL...");
 	ogl_load_global_funcs();
@@ -82,8 +78,6 @@ EXPORT game_state* start_up(platform_api* api) {
 	state->gui_a = MAKE_PLATFORM_ALLOCATOR("gui");
 	state->gui = gui_manager::make(&state->ogl, &state->gui_a, &state->window);
 	state->gui.add_font(&state->ogl, "gui14"_, &state->default_store);
-	state->gui.add_font(&state->ogl, "gui24"_, &state->default_store);
-	state->gui.add_font(&state->ogl, "gui40"_, &state->default_store);
 	state->gui.add_font(&state->ogl, "guimono"_, &state->default_store, true);
 
 	LOG_INFO("Starting logger...");

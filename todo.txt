@@ -33,6 +33,9 @@ working:
 
 to do:
 
+	new build system with clang
+		make metaprogram a real compilation step, get rid of PROF
+
 	data structures
 		list (same API as vector, but chunked & no-copy)
 		strings

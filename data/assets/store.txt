@@ -7,22 +7,6 @@ font {
 	range : 32, 126,
 }
 font {
-	name : gui24,
-	point : 24,
-	width : 256,
-	height : 256,
-	file : gui.ttf,
-	range : 32, 126,
-}
-font {
-	name : gui40,
-	point : 40,
-	width : 256,
-	height : 256,
-	file : gui.ttf,
-	range : 32, 126,
-}
-font {
 	name : guimono,
 	point : 14,
 	width : 128,
