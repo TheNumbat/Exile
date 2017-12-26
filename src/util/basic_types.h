@@ -17,3 +17,4 @@ typedef float  f32;
 typedef double f64;
 
 #define null nullptr
+#define DO(num) for(i32 __i = 0; __i < num; __i++)

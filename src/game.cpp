@@ -192,7 +192,7 @@ EXPORT void on_reload(platform_api* api, game_state* state) {
 
 	state->func_state.reload_all();
 
-	begin_thread("main"_, &state->suppressed_platform_allocator, 600, 32768);
+	begin_thread("main"_, &state->suppressed_platform_allocator);
 
 	ogl_load_global_funcs();
 

@@ -20,11 +20,14 @@
 // #define RELEASE // turn off everything for a true release build
 
 #ifndef RELEASE
-#ifdef CHECKS
-	#define BOUNDS_CHECK
-	#define BLOCK_OR_EXIT_ON_ERROR
-	#define ZERO_ARENA
-#endif
+	#ifdef CHECKS
+		#define BOUNDS_CHECK
+		#define BLOCK_OR_EXIT_ON_ERROR
+		#define ZERO_ARENA
+		#define CHECKED(platform_func, ...) {platform_error err = global_api->platform_func(__VA_ARGS__); if(!err.good) LOG_ERR_F("Error % in %", err.error, #platform_func);}
+	#else
+		#define CHECKED(platform_func, ...) global_api->platform_func(__VA_ARGS__);
+	#endif
 #endif
 
 #ifdef __clang__
@@ -56,7 +59,6 @@
 #ifdef _MSC_VER
 #include <intrin.h>
 #endif
-// 
 
 #include "util/basic_types.h"
 #include "math.h"
@@ -98,14 +100,6 @@
 static platform_api* global_api = null; // global because it just represents a bunch of what should be free functions
 static log_manager*  global_log = null; // global to provide printf() like functionality everywhere
 static dbg_manager*  global_dbg = null; // not used yet -- global to provide profiling functionality everywhere
-
-#define DO(num) for(i32 __i = 0; __i < num; __i++)
-
-#ifndef RELEASE
-#define CHECKED(platform_func, ...) {platform_error err = global_api->platform_func(__VA_ARGS__); if(!err.good) LOG_ERR_F("Error % in %", err.error, #platform_func);}
-#else
-#define CHECKED(platform_func, ...) global_api->platform_func(__VA_ARGS__);
-#endif
 
 #include <meta_types.cpp>
 #include "render_opengl.h"
