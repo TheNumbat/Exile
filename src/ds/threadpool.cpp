@@ -43,7 +43,15 @@ void threadpool::wait_job(job_id id) { PROF
 #ifdef NO_CONCURRENT_JOBS
 	return;
 #else
+	global_api->platform_aquire_mutex(&running_mutex);
 	platform_semaphore* sem = running.try_get(id);
+	global_api->platform_release_mutex(&running_mutex);
+
+	// TODO(max): evil - this might explode if you insert a new job and it moves the semaphore this is waiting on
+	// 			  We can't just keep the mutex until we're doing waiting because that could deadlock when acquiring
+	// 			  the mutex to signal and remove the job in a worker thread
+	// 			  This is fine if only one thread is ever adding or waiting on jobs...which isn't the case
+	// 			  **Should whoever adds the job have to provide a semaphore to wait on?**
 	if(sem) {
 		global_api->platform_wait_semaphore(sem, -1);
 	}
