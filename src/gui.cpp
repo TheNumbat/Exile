@@ -43,6 +43,8 @@ void gui_window::reset() { PROF
 	else can_scroll = false;
 	cursor = rect.xy;
 
+	clamp_scroll();
+
 	id_hash_stack.clear();
 	shape_mesh.clear();
 	text_mesh.clear();
