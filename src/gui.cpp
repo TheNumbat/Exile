@@ -474,11 +474,17 @@ void gui_end() { PROF
 void gui_indent() { PROF
 
 	gui_add_offset(V2(ggui->style.indent_size, 0.0f));
+	ggui->current->indent_level++;
 }
 
 void gui_unindent() { PROF
 
 	gui_add_offset(V2(-ggui->style.indent_size, 0.0f));
+	ggui->current->indent_level--;
+}
+
+u32 gui_indent_level() { PROF
+	return ggui->current->indent_level;
 }
 
 void gui_slider(string name, i32* val, i32 low, i32 high) { PROF

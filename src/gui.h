@@ -93,7 +93,7 @@ struct gui_window {
 	v2  click_offset, scroll_pos, previous_content_size;
 	f32 opacity = 1.0f;
 	u16 flags 	= 0;
-	u32 z 		= 1, title_tris = 0; 
+	u32 z 		= 1, title_tris = 0, indent_level = 0; 
 
 	bool active = true;
 	bool can_scroll = false;
@@ -209,8 +209,11 @@ gui_font* gui_select_best_font_scale();
 void gui_add_offset(v2 offset, gui_cursor_mode mode = gui_cursor_mode::xy);
 void gui_set_offset(v2 offset);
 v2 	 gui_window_dim();
+
 void gui_indent();
 void gui_unindent();
+u32  gui_indent_level();
+
 void gui_push_id(u32 id);
 void gui_pop_id();
 

@@ -101,6 +101,8 @@ inline u32 _string_printf_fwd(string out, u32 idx, string fmt, bool size) { PROF
 template<typename T, typename... Targs>
 u32 _string_printf(string out, u32 idx, string fmt, bool size, T& value, Targs... args) { PROF
 
+	// TODO(max): this function is a garbage fire
+
 	for(u32 i = 0; i < fmt.len - 1; i++) {
 		if(fmt.c_str[i] == '%') {
 			if(fmt.c_str[i + 1] == '%') {
@@ -109,12 +111,48 @@ u32 _string_printf(string out, u32 idx, string fmt, bool size, T& value, Targs..
 			} else {
 				if(fmt.c_str[i + 1] == '-') { // left justify
 					bool len_in_param = false;
+					
 					i++;
+					if(fmt.c_str[i + 1] == '-') { // cut off excess chars
+						i++;
+						
+						u32 pad = 0;
+						u32 consumed = 1;
+						string place;
+
+						if(fmt.c_str[i + 1] == '*') {	// total length passed as a parameter
+							pad = *(u32*)&value;			
+							i++;
+							len_in_param = true;
+							place = string::makef("%"_, get_pack_first(args...));
+						} else {	// total length passed in format string
+							i++;
+							pad = fmt.parse_u32(i, &consumed);
+							i += consumed;
+							place = string::makef("%"_, value);
+						}
+
+						if(place.len > pad) {
+							idx = out.write(idx, place.substring(0, pad - 1), size);
+						} else {
+							idx = out.write(idx, place, size);
+							u32 left = pad - place.len;
+							while(left--) {
+								idx = out.write(idx, ' ', size);
+							}
+						}
+						place.destroy();
+						if (len_in_param) {
+							return _string_printf_fwd(out, idx, string::from_c_str(fmt.c_str + i + 1), size, args...);
+						} else {
+							return _string_printf(out, idx, string::from_c_str(fmt.c_str + i), size, args...);
+						}
+					}
 
 					i32 pad = 0;
 					i32 sized = 0;
 
-					if(fmt.c_str[idx + 1] == '*') {	// total length passed as a parameter
+					if(fmt.c_str[i + 1] == '*') {	// total length passed as a parameter
 						pad = *(u32*)&value;			
 						i++;
 						len_in_param = true;

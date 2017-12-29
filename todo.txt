@@ -27,6 +27,9 @@ all includes:
 priority:
 	fix bugs
 	Time profile views
+		GUI COLLUMNS!!!!
+		sort based on stuff
+		graphs and stuff
 	voxel rendering methods
 	I dunno man, the to-do list is so long
 

@@ -44,7 +44,7 @@ void dbg_manager::profile_recurse(vector<func_profile_node*> list) { PROF
 		gui_push_id(__it);
 
 		func_profile_node* node = *it;
-		string str = string::makef("%-50 [%] [%] [%]"_, node->context.function, node->heir, node->self, node->calls);
+		string str = string::makef("%--*| %-8 | %-10 | %-2"_, 35 - gui_indent_level(), node->context.function, node->heir, node->self, node->calls);
 
 		if(gui_node(str)) {
 			gui_indent();
@@ -66,7 +66,7 @@ void dbg_manager::UI() { PROF
 
 			string level = it->fmt_level();
 
-			string fmt = string::makef("[%] %"_, level, it->msg);
+			string fmt = string::makef("[%-5] %"_, level, it->msg);
 			gui_text(fmt);
 
 			fmt.destroy();
