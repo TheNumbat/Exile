@@ -15,7 +15,7 @@ typedef platform_perfcount timestamp;
 
 struct func_profile_node {
 	code_context context;
-	timestamp self = 0, heir = 0, current = 0;
+	timestamp self = 0, heir = 0, begin = 0;
 	u32 calls = 0;
 
 	vector<func_profile_node*> children;

@@ -24,14 +24,26 @@ all includes:
 	#include <xmmintrin.h>
 	#include <typeinfo>
 
-working:
-	Time profile rendering
-	Allocation / sync profiling
-	SDL platform layer
-	GUI window layout - multiple meshes, text layout
-	Move font stuff into new file - sizing, etc.
+priority:
+	fix bugs
+	Time profile views
+	voxel rendering methods
+	I dunno man, the to-do list is so long
+
+bugs:
+	self-time is messed up in profiler tree
+	something is not freed in the optimized build (wtf?)
 
 to do:
+
+	structures for voxel rendering
+		Instancing - easy, slow, probably no
+		Meshing - relatively easy, can be fast, probably this
+			Lots of testing to do with chunk and mesh representation 
+			Tradeoff compactness vs. detail - how do we do LOD and special multifaceted blocks?
+		Geometry shader cube gen - more complicated, can be very fast, will experiment
+		3D texture ray-marching - should explore, probably doesn't make much sense for versatility
+			would represent chunks as octrees?
 
 	new build system with clang
 		make metaprogram a real compilation step, get rid of PROF
@@ -54,6 +66,7 @@ to do:
 	allocators
 		free list (one-size pool re-using arenas)
 		alignment - pool / arena is never aligned
+		ideal - no allocate/free per frame
 
 	async
 		better integration with event system https://www.youtube.com/watch?v=gFFqYLgPOWI
@@ -62,8 +75,8 @@ to do:
 
 	uncategorized
 		SIMD & intrinsic math (vectorized functions, vector/mat math, noise & randomness)
+			try to switch v3/v4/m4 to __m128 - how can we minimize transitions between __m128 / f32?
 		stack allocations (_malloca? can't easily platform-abstract this...) where possible
-		ideal - no allocate/free per frame
 
 	meta
 		serialization/deserialization
@@ -81,11 +94,9 @@ to do:
 		stats/options 
 			apply meta-types
 		profiler
-			frame buffer
 			graphs
-			functions
-			threads
-			display - hierarchal, per time, etc. See Code Modification Jai Demo
+			Allocation / sync profiling
+		display - hierarchal, per time, etc. See Code Modification Jai Demo
 		Interesting - https://github.com/Srekel/the-debuginator/
 		Do we want to use CaptureStackBackTrace instead of keeping the call stack ourself? Probably...
 
@@ -107,7 +118,6 @@ to do:
 			lists
 			text wrapping/auto-size
 			horizontal scrolling
-			stick scroll (e.g. twitch)
 			dividers
 			text input
 			image widgets
@@ -145,6 +155,7 @@ to do:
 	fonts
 		color/format specifications in string?
 		extra kerning pairs from stb_tt
+		Move font stuff into new file - sizing, etc.
 
 	platform
 		assure LPARAM/WPARAM size based on 32/64 bit

@@ -42,7 +42,11 @@ void dbg_manager::profile_recurse(vector<func_profile_node*> list) { PROF
 
 	FORVEC(it, list) {
 		gui_push_id(__it);
-		if(gui_node((*it)->context.function)) {
+
+		func_profile_node* node = *it;
+		string str = string::makef("%-50 [%] [%] [%]"_, node->context.function, node->heir, node->self, node->calls);
+
+		if(gui_node(str)) {
 			gui_indent();
 			profile_recurse((*it)->children);
 			gui_unindent();
@@ -57,9 +61,8 @@ void dbg_manager::UI() { PROF
 
 	gui_begin("Console"_, R2(0.0f, dim.y * 0.75f, dim.x, dim.y / 4.0f), (u16)window_flags::nowininput);
 
+	PUSH_ALLOC(&scratch);
 	FORQ_BEGIN(it, log_cache) {
-
-		PUSH_ALLOC(&scratch) {
 
 			string level = it->fmt_level();
 
@@ -67,9 +70,6 @@ void dbg_manager::UI() { PROF
 			gui_text(fmt);
 
 			fmt.destroy();
-
-		} POP_ALLOC();
-		RESET_ARENA(&scratch);
 	
 	} FORQ_END(it, log_cache);
 
@@ -86,6 +86,9 @@ void dbg_manager::UI() { PROF
 	profile_recurse(frame->heads);
 
 	global_api->platform_release_mutex(&cache_mut);
+
+	POP_ALLOC();
+	RESET_ARENA(&scratch);
 
 	gui_end();
 }
@@ -169,7 +172,7 @@ void dbg_manager::collate() {
 								frame->current->children = vector<func_profile_node*>::make(4);
 								frame->current->context = msg->context;
 							}
-							frame->current->current = msg->time;
+							frame->current->begin = msg->time;
 							frame->current->calls++;
 							break;
 						}
@@ -190,23 +193,24 @@ void dbg_manager::collate() {
 						
 						here->context = msg->context;
 						here->calls++;
-						here->current = msg->time;
+						here->begin = msg->time;
 						frame->current = here;
 
 					} break;
 
 					case dbg_msg_type::exit_func: {
 
-						frame->current->heir += msg->time - frame->current->current;
-						
-						frame->current->self += frame->current->heir;
+						u64 runtime = msg->time - frame->current->begin;
+						frame->current->heir += runtime;
+
+						frame->current->self += runtime;
 						timestamp children = 0;
 						FORVEC(it, frame->current->children) {
 							children += (*it)->heir;
 						}
 						frame->current->self -= children;
 
-						frame->current->current = 0;
+						frame->current->begin = 0;
 						frame->current = frame->current->parent;
 
 					} break;
