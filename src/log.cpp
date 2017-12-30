@@ -55,6 +55,10 @@ void log_manager::destroy() { PROF
 			it->file.destroy();
 		}
 	}
+	// NOTE(max): just to be absolutely sure nothing slipped through
+	FORQ_BEGIN(it, message_queue) {
+		DESTROY_ARENA(&it->arena);
+	} FORQ_END(it, message_queue);
 
 	out.destroy();
 	message_queue.destroy();
