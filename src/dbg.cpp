@@ -51,6 +51,8 @@ void dbg_manager::profile_recurse(vector<func_profile_node*> list) { PROF
 			profile_recurse((*it)->children);
 			gui_unindent();
 		}
+
+		str.destroy();
 		gui_pop_id();
 	}
 }
