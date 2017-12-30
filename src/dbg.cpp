@@ -40,19 +40,33 @@ void dbg_manager::destroy() { PROF
 
 void dbg_manager::profile_recurse(vector<func_profile_node*> list) { PROF
 
+	switch(prof_sort) {
+	case prof_sort_type::none: break;
+	case prof_sort_type::name: {
+		list.stable_sort(prof_sort_name);
+	} break;
+	case prof_sort_type::heir: {
+		list.stable_sort(prof_sort_heir);
+	} break;
+	case prof_sort_type::self: {
+		list.stable_sort(prof_sort_self);
+	} break;
+	case prof_sort_type::calls: {
+		list.stable_sort(prof_sort_calls);
+	} break;
+	}
+
 	FORVEC(it, list) {
 		gui_push_id(__it);
 
 		func_profile_node* node = *it;
-		string str = string::makef("%--*|%+8|%+10|%+2"_, 35 - gui_indent_level(), node->context.function, node->heir, node->self, node->calls);
 
-		if(gui_node(str, &node->enabled)) {
+		if(gui_node(string::makef("%--*|%+8|%+10|%+2"_, 35 - gui_indent_level(), node->context.function, node->heir, node->self, node->calls), &node->enabled)) {
 			gui_indent();
-			profile_recurse((*it)->children);
+			profile_recurse(node->children);
 			gui_unindent();
 		}
 
-		str.destroy();
 		gui_pop_id();
 	}
 }
@@ -61,17 +75,15 @@ void dbg_manager::UI() { PROF
 
 	v2 dim = gui_window_dim();
 
+	// NOTE(max): all the makef-ing here just comes from the scratch buffer
+
 	gui_begin("Console"_, R2(0.0f, dim.y * 0.75f, dim.x, dim.y / 4.0f), (u16)window_flags::nowininput);
 
 	PUSH_ALLOC(&scratch);
 	FORQ_BEGIN(it, log_cache) {
 
 			string level = it->fmt_level();
-
-			string fmt = string::makef("[%-5] %"_, level, it->msg);
-			gui_text(fmt);
-
-			fmt.destroy();
+			gui_text(string::makef("[%-5] %"_, level, it->msg));
 	
 	} FORQ_END(it, log_cache);
 
@@ -82,6 +94,8 @@ void dbg_manager::UI() { PROF
 	global_api->platform_aquire_mutex(&cache_mut);
 	thread_profile* thread = dbg_cache.get(global_api->platform_this_thread_id());
 	frame_profile* frame = thread->frames.back();
+
+	gui_text(string::makef("Frame %"_, frame->number));
 
 	profile_recurse(frame->heads);
 	gui_end();
@@ -146,6 +160,7 @@ void dbg_manager::collate() {
 				frame->pool = MAKE_POOL(name, KILOBYTES(8), alloc, false);
 				frame->heads = vector<func_profile_node*>::make(2, &frame->pool);
 				frame->start = msg->time;
+				frame->number = thread->num_frames;
 				thread->num_frames++;
 				name.destroy();
 			}
@@ -251,4 +266,24 @@ CALLBACK void dbg_add_log(log_message* msg, void* param) { PROF
 	m->call_stack  = array<code_context>::make_copy(&msg->call_stack, &m->arena);
 	m->thread_name = string::make_copy(msg->thread_name, &m->arena);
 	m->msg         = string::make_copy(msg->msg, &m->arena);
+}
+
+bool prof_sort_name(func_profile_node*& l, func_profile_node*& r) {
+
+	return l->context.function < r->context.function;
+}
+
+bool prof_sort_heir(func_profile_node*& l, func_profile_node*& r) {
+
+	return r->heir < l->heir;
+}
+
+bool prof_sort_self(func_profile_node*& l, func_profile_node*& r) {
+
+	return r->self < l->self;
+}
+
+bool prof_sort_calls(func_profile_node*& l, func_profile_node*& r) {
+
+	return r->calls < l->calls;
 }

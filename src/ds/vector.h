@@ -8,6 +8,10 @@
 #define FORVECCAP(it,v) 	u32 __##it = 0; for(auto it = (v).memory; it != (v).memory + (v).capacity; __##it++, it++)
 #define FORVEC_R(it,v)		u32 __##it = (v).size; for(auto it = (v).memory + (v).size; it != (v).memory; __##it--, it--)
 
+struct range {
+	u32 l = 0, r = 0;
+};
+
 template<typename T>
 struct vector {
 	T* memory 	 	 = null;
@@ -35,12 +39,22 @@ struct vector {
 	void erase(T val); // linear search, removes all found
 
 	T* get(u32 idx);
+	T& operator[](u32 idx);
 	T* front();
 	T* back();
 	T* find(T val); // linear search
 
-	void qsort(u32 low = 0, u32 high = 0, bool first = true); // quick sort
+	// quick sort
+	void sort(u32 low = 0, u32 high = 0, bool first = true); 
+	void sort(bool (*comp)(T&,T&), u32 low = 0, u32 high = 0, bool first = true); 
 	u32 partition(u32 low, u32 high);
+	u32 partition(bool (*comp)(T&,T&), u32 low, u32 high);
+
+	// merge sort
+	void stable_sort();
+	void stable_sort(bool (*comp)(T&,T&));
+	void mergesort(vector<T>& into, range r);
+	void merge(vector<T>& into, range l, range r);
 
 	bool empty();
 };

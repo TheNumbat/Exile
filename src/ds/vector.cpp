@@ -57,8 +57,31 @@ u32 vector<T>::partition(u32 low, u32 high) { PROF
 	return pivot;
 }
 
+template<typename T>
+u32 vector<T>::partition(bool (*comp)(T&,T&), u32 low, u32 high) { PROF
+
+	u32 pivot = low;
+	for (u32 i = low + 1; i <= high; i++) {
+
+		if (comp(memory[i],memory[pivot])) {
+			T temp = memory[low];
+			memory[low] = memory[i];
+			memory[i] = temp;
+			pivot++;
+			low++;
+		} else if(comp(memory[pivot],memory[i])) {
+			T temp = memory[high];
+			memory[high] = memory[i];
+			memory[i] = temp;
+			high--;
+			i--;
+		}
+	}
+	return pivot;
+}
+
 template<typename T> 
-void vector<T>::qsort(u32 low, u32 high, bool first) { PROF
+void vector<T>::sort(u32 low, u32 high, bool first) { PROF
 		
 	if (!size) return;
 
@@ -69,9 +92,82 @@ void vector<T>::qsort(u32 low, u32 high, bool first) { PROF
 	if(low < high) {
 
 		u32 part = partition(low, high);
-		qsort(low, part, false);
-		qsort(part + 1, high, false);
+		sort(low, part, false);
+		sort(part + 1, high, false);
 	}
+}
+
+template<typename T>
+void vector<T>::sort(bool (*comp)(T&,T&), u32 low, u32 high, bool first) { PROF
+
+	if (!size) return;
+
+	if(first) {
+		high = size - 1;
+	}
+
+	if(low < high) {
+
+		u32 part = partition(comp, low, high);
+		sort(comp, low, part, false);
+		sort(comp, part + 1, high, false);
+	}
+}
+
+template<typename T>
+void vector<T>::merge(vector<T>& into, range l, range r) { PROF
+
+	u32 i = l.l, j = r.l;
+	u32 out = into.size;
+	while(i < l.r && j < r.r) {
+		if(memory[i] < memory[j]) {
+			into[out++] = memory[j++];
+		} else {
+			into[out++] = memory[i++];
+		}
+	}
+	while(i < l.r) {
+		into[out++] = memory[i++];
+	}
+	while(j < l.r) {
+		into[out++] = memory[j++];
+	}
+}
+
+template<typename T> 
+void vector<T>::mergesort(vector<T>& into, range r) { PROF
+
+	if(r.l < r.r) {
+		range one, two;
+		one.l = r.l; 
+		one.r = (r.l + r.r) / 2;
+		two.l = one.r + 1;
+		two.r = r.r;
+
+		mergesort(into, one);
+		mergesort(into, two);
+
+		merge(into, one, two);
+	}
+}
+
+template<typename T>
+void vector<T>::stable_sort() { PROF
+
+	vector<T> ret = make_copy(*this);
+	
+	range r;
+	r.l = 0; r.r = size;
+	// mergesort(ret, r);
+
+	ret.size = size;
+	destroy();
+	*this = ret;
+}
+
+template<typename T>
+void vector<T>::stable_sort(bool (*comp)(T&,T&)) { PROF
+
 }
 
 template<typename T>
@@ -102,6 +198,12 @@ vector<T> vector<T>::make_copy_trim(vector<T> source, allocator* a) { PROF
 	ret.size = source.size;
 
 	return ret;	
+}
+
+template<typename T>
+T& vector<T>::operator[](u32 idx) {
+
+	return *get(idx);
 }
 
 template<typename T>

@@ -31,6 +31,8 @@ struct frame_profile {
 	// vector<func_profile_node*> self_time_view, heir_time_view, calls_view;
 	// vector<dbg_msg*> allocations;
 	pool_allocator pool;
+
+	u32 number = 0;
 };
 
 enum class dbg_msg_type : u8 {
@@ -121,11 +123,20 @@ struct thread_profile {
 	u32 frame_buf_size = 0, num_frames = 0, frame_size = 0;
 };
 
+enum class prof_sort_type : u8 {
+	none,
+	name,
+	heir,
+	self,
+	calls,
+};
+
 struct dbg_manager {
 
-	u32 current_frame = 0;
-	i32 selected_frame = 0;
+	// TODO(max): UI elements for these
 	bool overwrite_frames = true;
+	u32 selected_frame = 0;
+	prof_sort_type prof_sort = prof_sort_type::none;
 
 	allocator* alloc = null;
 
@@ -154,3 +165,8 @@ struct dbg_manager {
 };
 
 CALLBACK void dbg_add_log(log_message* msg, void*);
+
+bool prof_sort_name(func_profile_node*& l, func_profile_node*& r);
+bool prof_sort_heir(func_profile_node*& l, func_profile_node*& r);
+bool prof_sort_self(func_profile_node*& l, func_profile_node*& r);
+bool prof_sort_calls(func_profile_node*& l, func_profile_node*& r);

@@ -758,6 +758,19 @@ bool strcmp(string first, string second) { PROF
 	return first == second;
 }
 
+bool operator<(string first, string second) { PROF
+
+	for(u32 i = 0; i < first.len && i < second.len; i++) {
+		if(first.c_str[i] < second.c_str[i]) {
+			return true;
+		} else if(first.c_str[i] == second.c_str[i]) {
+			continue;
+		}
+		return false;
+	}
+	return true;
+}
+
 CALLBACK u32 hash_strings(string one, string two) { PROF
 
     u32 hash = 5381;

@@ -224,7 +224,7 @@ void render_command_list::add_command(render_command rc) { PROF
 
 void render_command_list::sort() { PROF
 
-	commands.qsort();
+	commands.stable_sort();
 }
 
 f32 mesh_2d_tex_col::push_text_line(asset* font, string text_utf8, v2 pos, f32 point, color c) { PROF

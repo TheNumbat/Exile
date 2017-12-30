@@ -34,7 +34,7 @@ priority:
 	I dunno man, the to-do list is so long
 
 bugs:
-	something is not freed in the optimized build (wtf?)
+	stable/merge sort
 
 to do:
 
