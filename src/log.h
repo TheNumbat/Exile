@@ -151,4 +151,4 @@ struct log_manager {
 #endif
 
 i32 log_proc(void* data_);
-
+void do_msg(log_thread_param* data, log_message msg);

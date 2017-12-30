@@ -321,47 +321,12 @@ i32 log_proc(void* data_) {
 
 	while(data->running) {
 
+		global_api->platform_wait_semaphore(data->logging_semaphore, -1);
+
 		log_message msg;
 		while(data->message_queue->try_pop(&msg)) {
-
-			if(msg.msg.c_str != null) {
-				
-				PUSH_ALLOC(data->scratch) {
-					
-					global_api->platform_aquire_mutex(data->output_mut);
-					FORVEC(it, *data->out) {
-
-						if(it->level <= msg.level) {
-							if(it->type == log_out_type::custom) {
-								it->write(&msg, it->param);
-							} else {
-								string output = fmt_msg(&msg, it->type);
-								it->file.write(output.c_str, output.len - 1);
-								if(it->flush_on_message)
-									it->file.flush();
-								output.destroy();
-							}
-						}
-					}
-					global_api->platform_release_mutex(data->output_mut);
-
-				} POP_ALLOC();
-				RESET_ARENA(data->scratch);
-
-#ifdef BLOCK_OR_EXIT_ON_ERROR
-				if(msg.level == log_level::error) {
-					exit(1);
-				}
-#endif
-				if(msg.level == log_level::fatal) {
-					exit(1);
-				}
-
-				DESTROY_ARENA(&msg.arena);
-			}
+			do_msg(data, msg);
 		}
-
-		global_api->platform_wait_semaphore(data->logging_semaphore, -1);
 	}
 
 	FORVEC(it, *data->out) {
@@ -372,4 +337,43 @@ i32 log_proc(void* data_) {
 	end_thread();
 
 	return 0;
+}
+
+void do_msg(log_thread_param* data, log_message msg) {
+
+	if(msg.msg.c_str != null) {
+		
+		PUSH_ALLOC(data->scratch) {
+			
+			global_api->platform_aquire_mutex(data->output_mut);
+			FORVEC(it, *data->out) {
+
+				if(it->level <= msg.level) {
+					if(it->type == log_out_type::custom) {
+						it->write(&msg, it->param);
+					} else {
+						string output = fmt_msg(&msg, it->type);
+						it->file.write(output.c_str, output.len - 1);
+						if(it->flush_on_message)
+							it->file.flush();
+						output.destroy();
+					}
+				}
+			}
+			global_api->platform_release_mutex(data->output_mut);
+
+		} POP_ALLOC();
+		RESET_ARENA(data->scratch);
+
+#ifdef BLOCK_OR_EXIT_ON_ERROR
+		if(msg.level == log_level::error) {
+			exit(1);
+		}
+#endif
+		if(msg.level == log_level::fatal) {
+			exit(1);
+		}
+
+		DESTROY_ARENA(&msg.arena);
+	}
 }

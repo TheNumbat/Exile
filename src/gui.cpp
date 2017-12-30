@@ -202,6 +202,8 @@ void gui_window::clamp_scroll() { PROF
 
 	r2 content = get_real_content();
 
+	scroll_pos.y = roundf(scroll_pos.y);
+
 	if(scroll_pos.y < -previous_content_size.y + content.h - ggui->style.scroll_slop) scroll_pos.y = -previous_content_size.y + content.h - ggui->style.scroll_slop;
 	if(scroll_pos.y > 0.0f) scroll_pos.y = 0.0f;
 }
@@ -281,6 +283,7 @@ r2 gui_window::get_real() { PROF
 v2 gui_window_dim() { PROF
 	return V2f(ggui->window->w, ggui->window->h);
 }
+
 
 void gui_set_offset(v2 offset) { PROF
 	ggui->current->cursor = ggui->current->rect.xy + offset;
