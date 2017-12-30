@@ -46,7 +46,7 @@ void dbg_manager::profile_recurse(vector<func_profile_node*> list) { PROF
 		func_profile_node* node = *it;
 		string str = string::makef("%--*|%+8|%+10|%+2"_, 35 - gui_indent_level(), node->context.function, node->heir, node->self, node->calls);
 
-		if(gui_node(str)) {
+		if(gui_node(str, &node->enabled)) {
 			gui_indent();
 			profile_recurse((*it)->children);
 			gui_unindent();
@@ -79,18 +79,15 @@ void dbg_manager::UI() { PROF
 
 	global_api->platform_aquire_mutex(&cache_mut);
 	thread_profile* thread = dbg_cache.get(global_api->platform_this_thread_id());
-
-	gui_slider("Frame"_, &selected_frame, 0, thread->frames.len());
-	frame_profile* frame = thread->frames.get(selected_frame);
+	frame_profile* frame = thread->frames.back();
 
 	profile_recurse(frame->heads);
+	gui_end();
 
 	global_api->platform_release_mutex(&cache_mut);
 
 	POP_ALLOC();
 	RESET_ARENA(&scratch);
-
-	gui_end();
 }
 
 void dbg_manager::shutdown_log(log_manager* log) { PROF
@@ -129,7 +126,6 @@ void dbg_manager::collate() {
 	PUSH_PROFILE(false) {
 		global_api->platform_aquire_mutex(&cache_mut);
 		thread_profile* thread = dbg_cache.get(global_api->platform_this_thread_id());
-		frame_profile* frame = null;
 
 		FORQ_BEGIN(msg, this_thread_data.dbg_msgs) {
 
@@ -142,7 +138,7 @@ void dbg_manager::collate() {
 					frame_profile rem = thread->frames.pop();
 					DESTROY_POOL(&rem.pool);
 				}
-				frame = thread->frames.push(frame_profile());
+				frame_profile* frame = thread->frames.push(frame_profile());
 
 				string name = string::makef("frame %"_, thread->num_frames);
 				frame->pool = MAKE_POOL(name, KILOBYTES(8), alloc, false);
@@ -152,9 +148,8 @@ void dbg_manager::collate() {
 				name.destroy();
 			}
 
-			if(thread->num_frames && thread->frames.len() >= thread->num_frames % thread->frame_buf_size) {
-
-				frame = thread->frames.get((thread->num_frames - 1) % thread->frame_buf_size);
+			frame_profile* frame = thread->frames.back();
+			if(frame) {
 
 				PUSH_ALLOC(&frame->pool) {
 					switch(msg->type) {
@@ -211,17 +206,15 @@ void dbg_manager::collate() {
 
 					case dbg_msg_type::end_frame: {
 						frame->end = msg->time;
+
+						FORVEC(it, frame->heads) {
+							fixdown_self_timings(*it);
+						}
 					} break;
 					}
 				} POP_ALLOC();
 			}
 		} FORQ_END(msg, this_thread_data.dbg_msgs);
-
-		if(frame) {
-			FORVEC(it, frame->heads) {
-				fixdown_self_timings(*it);
-			}
-		}
 
 		global_api->platform_release_mutex(&cache_mut);
 		this_thread_data.dbg_msgs.clear();

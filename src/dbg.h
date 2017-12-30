@@ -17,6 +17,7 @@ struct func_profile_node {
 	code_context context;
 	timestamp self = 0, heir = 0, begin = 0;
 	u32 calls = 0;
+	bool enabled = false;
 
 	vector<func_profile_node*> children;
 	CIRCULAR func_profile_node* parent = null; 
@@ -124,7 +125,7 @@ struct dbg_manager {
 
 	u32 current_frame = 0;
 	i32 selected_frame = 0;
-	bool overwrite_frames = false;
+	bool overwrite_frames = true;
 
 	allocator* alloc = null;
 

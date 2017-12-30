@@ -38,11 +38,13 @@ gui_window gui_window::make(r2 first_size, f32 first_alpha, u16 flags, allocator
 
 void gui_window::reset() { PROF
 
-	previous_content_size = cursor - scroll_pos - rect.xy;
-	if(previous_content_size.y > rect.h) can_scroll = true;
-	else can_scroll = false;
-	cursor = rect.xy;
+	r2 content = get_real_content();
 
+	previous_content_size = cursor - scroll_pos - content.xy;
+	if(previous_content_size.y > content.h - ggui->style.scroll_slop) can_scroll = true;
+	else can_scroll = false;
+
+	cursor = rect.xy;
 	clamp_scroll();
 
 	id_hash_stack.clear();
@@ -198,9 +200,9 @@ void gui_manager::end_frame(platform_window* win, ogl_manager* ogl) { PROF
 
 void gui_window::clamp_scroll() { PROF
 
-	r2 real_rect = get_real();
-	f32 content_offset = -ggui->style.win_margin.y - ggui->style.win_margin.w + real_rect.h;
-	if(scroll_pos.y < -previous_content_size.y + content_offset) scroll_pos.y = -previous_content_size.y + content_offset;
+	r2 content = get_real_content();
+
+	if(scroll_pos.y < -previous_content_size.y + content.h - ggui->style.scroll_slop) scroll_pos.y = -previous_content_size.y + content.h - ggui->style.scroll_slop;
 	if(scroll_pos.y > 0.0f) scroll_pos.y = 0.0f;
 }
 
@@ -591,7 +593,7 @@ void render_carrot(gui_window* win, v2 pos, bool active) { PROF
 	}
 }
 
-bool gui_node(string text, color c, f32 point) { PROF 
+bool gui_node(string text, bool* store, color c, f32 point) { PROF 
 
 	gui_window* win = ggui->current;
 	if(!win->active && !win->override_active) return false;
@@ -600,15 +602,25 @@ bool gui_node(string text, color c, f32 point) { PROF
 	id.base = *win->id_hash_stack.top();
 	id.name = text;
 
-	gui_state_data* data = win->state_data.try_get(id);
+	bool* data = null;
+	if(store)  {
+		
+		data = store;
 
-	if(!data) {
+	} else {
 
-		gui_state_data nd;
+		gui_state_data* state = win->state_data.try_get(id);
 
-		nd.b = false;
+		if(!state) {
 
-		data = win->add_state(id, nd);
+			gui_state_data nd;
+
+			nd.b = false;
+
+			state = win->add_state(id, nd);
+		}
+
+		data = &state->b;
 	}
 
 	if(!point) point = ggui->style.font_size;
@@ -618,14 +630,14 @@ bool gui_node(string text, color c, f32 point) { PROF
 	gui_add_offset(V2(0.0f, point));
 
 	if(!win->visible(R2(pos, size))) {
-		return data->b;
+		return *data;
 	}
 
 	if(!gui_occluded() && inside(R2(pos, size), ggui->input.mousepos)) {
 		
 		if(ggui->active == gui_active_state::none && (ggui->input.lclick || ggui->input.ldbl)) {
 
-			data->b = !data->b;
+			*data = !*data;
 			ggui->active_id = id;
 			ggui->active = gui_active_state::active;
 		}
@@ -633,7 +645,7 @@ bool gui_node(string text, color c, f32 point) { PROF
 
 	win->text_mesh.push_text_line(win->font->font, text, pos, point, c);
 
-	return data->b;
+	return *data;
 }
 
 void gui_text(string text, color c, f32 point) { PROF

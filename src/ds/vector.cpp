@@ -249,7 +249,8 @@ template<typename T>
 T* vector<T>::back() { PROF 
 
 	if(size) {
-		return memory + (size - 1);
+		
+		return memory + size - 1;
 	}
 
 	LOG_FATAL("Trying to get empty vector back!");

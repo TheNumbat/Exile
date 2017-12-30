@@ -153,6 +153,7 @@ struct _gui_style {
 	f32 indent_size 		= 10.0f;
 	f32 win_scroll_w 		= 10.0f;
 	f32 win_scroll_speed	= 15.0f;
+	f32 scroll_slop			= 3.0f;
 	color3 win_scroll_back 	= V3b(102, 105, 185);
 	color3 win_scroll_bar 	= V3b(132, 135, 215);
 };
@@ -223,7 +224,7 @@ bool gui_begin(string name, r2 first = R2f(40,40,0,0), gui_window_flags flags = 
 void gui_end();
 
 void gui_text(string text, color c = WHITE, f32 point = 0.0f);
-bool gui_node(string text, color c = WHITE, f32 point = 0.0f);
+bool gui_node(string text, bool* store = null, color c = WHITE, f32 point = 0.0f);
 bool gui_carrot_toggle(string name, bool initial = false, bool* toggleme = null);
 void gui_slider(string name, i32* val, i32 low, i32 high);
 

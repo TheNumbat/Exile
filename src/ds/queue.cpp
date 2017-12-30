@@ -149,10 +149,11 @@ T* queue<T>::back() { PROF
 
 	if(len() > 0) {
 
-		return &memory[end - 1];
+		i32 pos = end - 1;
+		if(pos < 0) pos += capacity;
+		return &memory[pos];
 	}
 
-	LOG_FATAL("Trying to get back of empty queue!");
 	return null;
 }
 
