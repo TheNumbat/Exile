@@ -143,6 +143,7 @@ struct dbg_manager {
 
 	void UI();
 	void profile_recurse(vector<func_profile_node*> list);
+	void fixdown_self_timings(func_profile_node* node);
 
 	void shutdown_log(log_manager* log);
 	void setup_log(log_manager* log);

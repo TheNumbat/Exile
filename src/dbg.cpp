@@ -44,7 +44,7 @@ void dbg_manager::profile_recurse(vector<func_profile_node*> list) { PROF
 		gui_push_id(__it);
 
 		func_profile_node* node = *it;
-		string str = string::makef("%--*| %-8 | %-10 | %-2"_, 35 - gui_indent_level(), node->context.function, node->heir, node->self, node->calls);
+		string str = string::makef("%--*|%+8|%+10|%+2"_, 35 - gui_indent_level(), node->context.function, node->heir, node->self, node->calls);
 
 		if(gui_node(str)) {
 			gui_indent();
@@ -129,6 +129,7 @@ void dbg_manager::collate() {
 	PUSH_PROFILE(false) {
 		global_api->platform_aquire_mutex(&cache_mut);
 		thread_profile* thread = dbg_cache.get(global_api->platform_this_thread_id());
+		frame_profile* frame = null;
 
 		FORQ_BEGIN(msg, this_thread_data.dbg_msgs) {
 
@@ -141,7 +142,7 @@ void dbg_manager::collate() {
 					frame_profile rem = thread->frames.pop();
 					DESTROY_POOL(&rem.pool);
 				}
-				frame_profile* frame = thread->frames.push(frame_profile());
+				frame = thread->frames.push(frame_profile());
 
 				string name = string::makef("frame %"_, thread->num_frames);
 				frame->pool = MAKE_POOL(name, KILOBYTES(8), alloc, false);
@@ -153,7 +154,7 @@ void dbg_manager::collate() {
 
 			if(thread->num_frames && thread->frames.len() >= thread->num_frames % thread->frame_buf_size) {
 
-				frame_profile* frame = thread->frames.get((thread->num_frames - 1) % thread->frame_buf_size);
+				frame = thread->frames.get((thread->num_frames - 1) % thread->frame_buf_size);
 
 				PUSH_ALLOC(&frame->pool) {
 					switch(msg->type) {
@@ -200,16 +201,9 @@ void dbg_manager::collate() {
 
 					case dbg_msg_type::exit_func: {
 
-						u64 runtime = msg->time - frame->current->begin;
+						timestamp runtime = msg->time - frame->current->begin;
+						
 						frame->current->heir += runtime;
-
-						frame->current->self += runtime;
-						timestamp children = 0;
-						FORVEC(it, frame->current->children) {
-							children += (*it)->heir;
-						}
-						frame->current->self -= children;
-
 						frame->current->begin = 0;
 						frame->current = frame->current->parent;
 
@@ -223,10 +217,27 @@ void dbg_manager::collate() {
 			}
 		} FORQ_END(msg, this_thread_data.dbg_msgs);
 
+		if(frame) {
+			FORVEC(it, frame->heads) {
+				fixdown_self_timings(*it);
+			}
+		}
+
 		global_api->platform_release_mutex(&cache_mut);
 		this_thread_data.dbg_msgs.clear();
 
 	} POP_PROFILE();
+}
+
+void dbg_manager::fixdown_self_timings(func_profile_node* node) {
+
+	timestamp children = 0;
+	FORVEC(it, node->children) {
+		fixdown_self_timings(*it);
+		children += (*it)->heir;
+	}
+
+	node->self = node->heir - children;
 }
 
 CALLBACK void dbg_add_log(log_message* msg, void* param) { PROF

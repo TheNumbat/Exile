@@ -34,7 +34,6 @@ priority:
 	I dunno man, the to-do list is so long
 
 bugs:
-	self-time is messed up in profiler tree
 	something is not freed in the optimized build (wtf?)
 
 to do:
