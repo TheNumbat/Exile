@@ -136,7 +136,7 @@ struct dbg_manager {
 	// TODO(max): UI elements for these
 	bool overwrite_frames = true;
 	u32 selected_frame = 0;
-	prof_sort_type prof_sort = prof_sort_type::none;
+	prof_sort_type prof_sort = prof_sort_type::name;
 
 	allocator* alloc = null;
 

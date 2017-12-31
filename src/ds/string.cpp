@@ -760,6 +760,8 @@ bool strcmp(string first, string second) { PROF
 
 bool operator<=(string first, string second) { PROF
 
+	if(first == second) return true;
+
 	for(u32 i = 0; i < first.len && i < second.len; i++) {
 		if(first.c_str[i] < second.c_str[i]) {
 			return true;

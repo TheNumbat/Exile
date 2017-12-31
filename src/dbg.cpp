@@ -56,8 +56,6 @@ void dbg_manager::profile_recurse(vector<func_profile_node*> list) { PROF
 	} break;
 	}
 
-	list.stable_sort(prof_sort_name);
-
 	FORVEC(it, list) {
 		gui_push_id(__it);
 
@@ -149,6 +147,8 @@ void dbg_manager::collate() {
 
 			if(msg->type == dbg_msg_type::begin_frame) {
 			
+				thread->num_frames++;
+
 				if(thread->frames.full()) {
 					if(!overwrite_frames) {
 						break;
@@ -163,7 +163,6 @@ void dbg_manager::collate() {
 				frame->heads = vector<func_profile_node*>::make(2, &frame->pool);
 				frame->start = msg->time;
 				frame->number = thread->num_frames;
-				thread->num_frames++;
 				name.destroy();
 			}
 
@@ -277,15 +276,15 @@ bool prof_sort_name(func_profile_node*& l, func_profile_node*& r) {
 
 bool prof_sort_heir(func_profile_node*& l, func_profile_node*& r) {
 
-	return r->heir <= l->heir;
+	return l->heir <= r->heir;
 }
 
 bool prof_sort_self(func_profile_node*& l, func_profile_node*& r) {
 
-	return r->self <= l->self;
+	return l->self <= r->self;
 }
 
 bool prof_sort_calls(func_profile_node*& l, func_profile_node*& r) {
 
-	return r->calls <= l->calls;
+	return l->calls <= r->calls;
 }

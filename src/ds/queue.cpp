@@ -171,7 +171,7 @@ T* queue<T>::front() { PROF
 
 template<typename T>
 bool queue<T>::empty() { PROF
-	return start == end;
+	return len() == 0;
 }
 
 template<typename T>

@@ -25,9 +25,16 @@
 		#define BLOCK_OR_EXIT_ON_ERROR
 		#define ZERO_ARENA
 		#define CHECKED(platform_func, ...) {platform_error err = global_api->platform_func(__VA_ARGS__); if(!err.good) LOG_ERR_F("Error % in %", err.error, #platform_func);}
-	#else
-		#define CHECKED(platform_func, ...) global_api->platform_func(__VA_ARGS__);
 	#endif
+#endif
+#ifdef RELEASE
+#ifdef PROFILE
+	#undef PROFILE
+#endif
+#endif
+
+#ifndef CHECKED
+#define CHECKED(platform_func, ...) global_api->platform_func(__VA_ARGS__);
 #endif
 
 #ifdef __clang__

@@ -117,24 +117,24 @@ void vector<T>::sort(bool (*less)(T&,T&), u32 low, u32 high, bool first) { PROF
 template<typename T>
 void vector<T>::merge(u32 min, u32 mid, u32 max) { PROF
 
-	u32 i = min, j = mid, k = 0;
-	vector<T> temp = make(max - min, alloc);
+	u32 i = min, j = mid + 1, k = 0;
+	vector<T> temp = make(max - min + 1, alloc);
 
-	while(i < mid && j < max) {
+	while(i <= mid && j <= max) {
 		if(memory[i] <= memory[j]) {
 			temp[k++] = memory[i++];
 		} else {
 			temp[k++] = memory[j++];
 		}
 	}
-	while(i < mid) {
+	while(i <= mid) {
 		temp[k++] = memory[i++];
 	}
-	while(j < max) {
+	while(j <= max) {
 		temp[k++] = memory[j++];
 	}
 
-	for (i = min; i < max; i++) {
+	for (i = min; i <= max; i++) {
 		memory[i] = temp[i - min];
 	}	
 
@@ -157,30 +157,30 @@ void vector<T>::mergesort(u32 min, u32 max) { PROF
 template<typename T>
 void vector<T>::stable_sort() { PROF
 
-	mergesort(0, size);
+	mergesort(0, size - 1);
 }
 
 template<typename T>
 void vector<T>::merge(bool (*leq)(T&,T&), u32 min, u32 mid, u32 max) { PROF
 
-	u32 i = min, j = mid, k = 0;
-	vector<T> temp = make(max - min, alloc);
+	u32 i = min, j = mid + 1, k = 0;
+	vector<T> temp = make(max - min + 1, alloc);
 
-	while(i < mid && j < max) {
+	while(i <= mid && j <= max) {
 		if(leq(memory[i],memory[j])) {
 			temp[k++] = memory[i++];
 		} else {
 			temp[k++] = memory[j++];
 		}
 	}
-	while(i < mid) {
+	while(i <= mid) {
 		temp[k++] = memory[i++];
 	}
-	while(j < max) {
+	while(j <= max) {
 		temp[k++] = memory[j++];
 	}
 
-	for (i = min; i < max; i++) {
+	for (i = min; i <= max; i++) {
 		memory[i] = temp[i - min];
 	}	
 
@@ -203,7 +203,7 @@ void vector<T>::mergesort(bool (*leq)(T&,T&), u32 min, u32 max) { PROF
 template<typename T>
 void vector<T>::stable_sort(bool (*leq)(T&,T&)) { PROF
 
-	mergesort(leq, 0, size);
+	mergesort(leq, 0, size - 1);
 }
 
 template<typename T>
