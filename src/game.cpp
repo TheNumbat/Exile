@@ -89,18 +89,6 @@ EXPORT game_state* start_up(platform_api* api) {
 	POST_MSG(m);
 	state->dbg.collate();
 
-	vector<u32> t = vector<u32>::make();
-	t.push(5);
-	t.push(2);
-	t.push(8);
-	t.push(4);
-	t.push(4);
-	t.push(6);
-	LOG_INFO_F("%", t);
-	t.stable_sort();
-	LOG_INFO_F("%", t);
-	t.destroy();
-
 	state->running = true;
 	return state;
 }

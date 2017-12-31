@@ -758,7 +758,7 @@ bool strcmp(string first, string second) { PROF
 	return first == second;
 }
 
-bool operator<(string first, string second) { PROF
+bool operator<=(string first, string second) { PROF
 
 	for(u32 i = 0; i < first.len && i < second.len; i++) {
 		if(first.c_str[i] < second.c_str[i]) {

@@ -122,5 +122,5 @@ struct render_command_list {
 
 v2 size_text(asset* font, string text_utf8, f32 point);
 
-bool operator<(render_command first, render_command second);
+bool operator<=(render_command& first, render_command& second);
 

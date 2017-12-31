@@ -8,10 +8,6 @@
 #define FORVECCAP(it,v) 	u32 __##it = 0; for(auto it = (v).memory; it != (v).memory + (v).capacity; __##it++, it++)
 #define FORVEC_R(it,v)		u32 __##it = (v).size; for(auto it = (v).memory + (v).size; it != (v).memory; __##it--, it--)
 
-struct range {
-	u32 l = 0, r = 0;
-};
-
 template<typename T>
 struct vector {
 	T* memory 	 	 = null;
@@ -53,8 +49,10 @@ struct vector {
 	// merge sort
 	void stable_sort();
 	void stable_sort(bool (*comp)(T&,T&));
-	void mergesort(vector<T>& into, range r);
-	void merge(vector<T>& into, range l, range r);
+	void mergesort(u32 min, u32 max);
+	void mergesort(bool (*comp)(T&,T&), u32 min, u32 max);
+	void merge(u32 min, u32 mid, u32 max);
+	void merge(bool (*comp)(T&,T&), u32 min, u32 mid, u32 max);
 
 	bool empty();
 };

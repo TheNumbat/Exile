@@ -69,7 +69,7 @@ bool operator==(string first, string second);
 inline bool operator==(string first, const char* second);
 inline bool operator==(const char* first, string second);
 bool strcmp(string first, string second);
-bool operator<(string first, string second);
+bool operator<=(string first, string second);
 
 // printf implementation
 

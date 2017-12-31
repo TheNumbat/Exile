@@ -56,6 +56,8 @@ void dbg_manager::profile_recurse(vector<func_profile_node*> list) { PROF
 	} break;
 	}
 
+	list.stable_sort(prof_sort_name);
+
 	FORVEC(it, list) {
 		gui_push_id(__it);
 
@@ -270,20 +272,20 @@ CALLBACK void dbg_add_log(log_message* msg, void* param) { PROF
 
 bool prof_sort_name(func_profile_node*& l, func_profile_node*& r) {
 
-	return l->context.function < r->context.function;
+	return l->context.function <= r->context.function;
 }
 
 bool prof_sort_heir(func_profile_node*& l, func_profile_node*& r) {
 
-	return r->heir < l->heir;
+	return r->heir <= l->heir;
 }
 
 bool prof_sort_self(func_profile_node*& l, func_profile_node*& r) {
 
-	return r->self < l->self;
+	return r->self <= l->self;
 }
 
 bool prof_sort_calls(func_profile_node*& l, func_profile_node*& r) {
 
-	return r->calls < l->calls;
+	return r->calls <= l->calls;
 }

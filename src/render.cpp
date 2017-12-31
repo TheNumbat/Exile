@@ -192,8 +192,8 @@ render_command render_command::make(render_command_type type, void* data, u32 ke
 	return ret;
 }
 
-bool operator<(render_command first, render_command second) { PROF
-	return first.sort_key < second.sort_key;
+bool operator<=(render_command& first, render_command& second) { PROF
+	return first.sort_key <= second.sort_key;
 }
 
 render_command_list render_command_list::make(allocator* alloc, u32 cmds) { PROF
