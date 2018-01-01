@@ -39,6 +39,7 @@ CALLBACK void uniforms_mesh_3d_tex(shader_program* prog, render_command* cmd, re
 CALLBACK void buffers_mesh_2d_col(render_command* cmd) { PROF
 
 	mesh_2d_col* m = cmd->m2dc;
+	if(!m->dirty) return;
 
 	glBindVertexArray(m->vao);
 
@@ -52,11 +53,13 @@ CALLBACK void buffers_mesh_2d_col(render_command* cmd) { PROF
 	glBufferData(gl_buf_target::element_array, m->elements.size * sizeof(uv3), m->elements.size ? m->elements.memory : null, gl_buf_usage::dynamic_draw);
 
 	glBindVertexArray(0);
+	m->dirty = false;
 }
 
 CALLBACK void buffers_mesh_2d_tex(render_command* cmd) { PROF
 
 	mesh_2d_tex* m = cmd->m2dt;
+	if(!m->dirty) return;
 
 	glBindVertexArray(m->vao);
 
@@ -70,11 +73,13 @@ CALLBACK void buffers_mesh_2d_tex(render_command* cmd) { PROF
 	glBufferData(gl_buf_target::element_array, m->elements.size * sizeof(uv3), m->elements.size ? m->elements.memory : null, gl_buf_usage::dynamic_draw);
 
 	glBindVertexArray(0);
+	m->dirty = false;
 }
 
 CALLBACK void buffers_mesh_2d_tex_col(render_command* cmd) { PROF
 
 	mesh_2d_tex_col* m = cmd->m2dtc;
+	if(!m->dirty) return;
 
 	glBindVertexArray(m->vao);
 
@@ -91,11 +96,13 @@ CALLBACK void buffers_mesh_2d_tex_col(render_command* cmd) { PROF
 	glBufferData(gl_buf_target::element_array, m->elements.size * sizeof(uv3), m->elements.size ? m->elements.memory : null, gl_buf_usage::dynamic_draw);
 
 	glBindVertexArray(0);
+	m->dirty = false;
 }
 
 CALLBACK void buffers_mesh_3d_tex(render_command* cmd) { PROF
 
 	mesh_3d_tex* m = cmd->m3dt;
+	if(!m->dirty) return;
 
 	glBindVertexArray(m->vao);
 
@@ -109,6 +116,7 @@ CALLBACK void buffers_mesh_3d_tex(render_command* cmd) { PROF
 	glBufferData(gl_buf_target::element_array, m->elements.size * sizeof(uv3), m->elements.size ? m->elements.memory : null, gl_buf_usage::dynamic_draw);
 
 	glBindVertexArray(0);
+	m->dirty = false;
 }
 
 

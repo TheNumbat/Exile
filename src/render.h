@@ -23,6 +23,7 @@ struct mesh_2d_col {
 
 	GLuint vao;
 	GLuint vbos[3];
+	bool dirty = false;
 
 	static mesh_2d_col make(u32 verts = 32, allocator* alloc = null);
 	void destroy();
@@ -41,6 +42,7 @@ struct mesh_2d_tex {
 
 	GLuint vao;
 	GLuint vbos[3];
+	bool dirty = false;
 
 	static mesh_2d_tex make(u32 verts = 32, allocator* alloc = null);
 	void destroy();
@@ -56,6 +58,7 @@ struct mesh_2d_tex_col {
 
 	GLuint vao;
 	GLuint vbos[4];
+	bool dirty = false;
 
 	static mesh_2d_tex_col make(u32 verts = 32, allocator* alloc = null);
 	void destroy();
@@ -74,6 +77,7 @@ struct mesh_3d_tex {
 
 	GLuint vao;
 	GLuint vbos[3];
+	bool dirty = false;
 
 	static mesh_3d_tex make(u32 verts = 32, allocator* alloc = null);
 	void destroy();

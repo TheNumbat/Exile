@@ -48,6 +48,7 @@ void mesh_2d_col::clear() { PROF
 	vertices.clear();
 	colors.clear();
 	elements.clear();
+	dirty = true;
 }
 
 void mesh_2d_col::push_tri(v2 p1, v2 p2, v2 p3, color c) { PROF
@@ -61,6 +62,8 @@ void mesh_2d_col::push_tri(v2 p1, v2 p2, v2 p3, color c) { PROF
 	DO(3) colors.push(color_to_f(c));
 
 	elements.push(V3u(idx, idx + 1, idx + 2));
+
+	dirty = true;
 }
 
 void mesh_2d_col::push_cutrect(r2 r, f32 round, color c) { PROF
@@ -85,6 +88,8 @@ void mesh_2d_col::push_cutrect(r2 r, f32 round, color c) { PROF
 	elements.push(V3u(idx + 7, idx + 6, idx + 3));
 	elements.push(V3u(idx + 3, idx + 4, idx + 5));
 	elements.push(V3u(idx + 3, idx + 5, idx + 6));
+
+	dirty = true;
 }
 
 void mesh_2d_col::push_rect(r2 r, color c) { PROF
@@ -101,6 +106,8 @@ void mesh_2d_col::push_rect(r2 r, color c) { PROF
 
 	elements.push(V3u(idx, idx + 1, idx + 2));
 	elements.push(V3u(idx + 1, idx + 2, idx + 3));
+
+	dirty = true;
 }
 
 
@@ -154,6 +161,8 @@ void mesh_2d_tex::clear() { PROF
 	vertices.clear();
 	texCoords.clear();
 	elements.clear();
+
+	dirty = true;
 }
 
 mesh_2d_tex_col mesh_2d_tex_col::make(u32 verts, allocator* alloc) { PROF
@@ -353,6 +362,7 @@ f32 mesh_2d_tex_col::push_text_line(asset* font, string text_utf8, v2 pos, f32 p
 		x += scale * glyph.advance;
 	}
 
+	dirty = true;
 	return scale * font->font.linedist;
 }
 
@@ -389,6 +399,8 @@ void mesh_3d_tex::push_cube(v3 pos, f32 len) {
 	elements.push(V3u(7,6,3));
 	elements.push(V3u(0,2,4));
 	elements.push(V3u(0,1,4));
+
+	dirty = true;
 }
 
 v2 size_text(asset* font, string text_utf8, f32 point) { PROF
