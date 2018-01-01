@@ -556,25 +556,23 @@ void shader_program::destroy() { PROF
 }
 
 void ogl_manager::try_reload_programs() { PROF
-	FORMAP(it, programs) {
-		if(it->value.refresh()) {
-			LOG_DEBUG_F("Reloaded program % with files %, %", it->key, it->value.vertex.path, it->value.fragment.path);
+	FORMAP(it, commands) {
+		if(it->value.shader.refresh()) {
+			LOG_DEBUG_F("Reloaded program % with files %, %", it->key, it->value.shader.vertex.path, it->value.shader.fragment.path);
 		}
 	}
 	dbg_shader.refresh();
 }
 
-#define REGISTER_COMMAND(cmd) ret.add_program(render_command_type::cmd, string::literal("shaders/" #cmd ".v"), string::literal("shaders/" #cmd ".f"), FPTR(uniforms_##cmd)); \
-							  ret.add_draw_context(render_command_type::cmd, FPTR(buffers_##cmd), FPTR(run_##cmd));
+#define REGISTER_COMMAND(cmd) ret.add_command_ctx(render_command_type::cmd, FPTR(buffers_##cmd), FPTR(run_##cmd), string::literal("shaders/" #cmd ".v"), string::literal("shaders/" #cmd ".f"), FPTR(uniforms_##cmd));
 
 ogl_manager ogl_manager::make(allocator* a) { PROF
 
 	ogl_manager ret;
 
 	ret.alloc = a;
-	ret.programs = map<render_command_type, shader_program>::make(8, a);
 	ret.textures = map<texture_id, texture>::make(32, a);
-	ret.contexts = map<render_command_type, draw_context>::make(32, a);
+	ret.commands = map<render_command_type, draw_context>::make(32, a);
 
 	ret.version  = string::from_c_str((char*)glGetString(gl_info::version));
 	ret.renderer = string::from_c_str((char*)glGetString(gl_info::renderer));
@@ -596,8 +594,8 @@ ogl_manager ogl_manager::make(allocator* a) { PROF
 
 void ogl_manager::destroy() { PROF
 
-	FORMAP(it, programs) {
-		it->value.destroy();
+	FORMAP(it, commands) {
+		it->value.shader.destroy();
 	}
 	FORMAP(it, textures) {
 		it->value.destroy();
@@ -605,33 +603,9 @@ void ogl_manager::destroy() { PROF
 
 	dbg_shader.destroy();
 
-	programs.destroy();
 	textures.destroy();
-	contexts.destroy();
+	commands.destroy();
 } 
-
-void ogl_manager::add_program(render_command_type type, string v_path, string f_path, _FPTR* uniforms) { PROF
-
-	shader_program p = shader_program::make(v_path, f_path, uniforms, alloc);
-
-	programs.insert(type, p);
-
-	LOG_DEBUG_F("Loaded shader from % and %", v_path, f_path);
-}
-
-shader_program* ogl_manager::select_program(render_command_type id) { PROF
-
-	shader_program* p = programs.try_get(id);
-
-	if(!p) {
-		LOG_ERR_F("Failed to retrieve program %", id);
-		return null;
-	}
-	
-	glUseProgram(p->handle);
-
-	return p;
-}
 
 texture_id ogl_manager::add_texture_from_font(asset* font, texture_wrap wrap, bool pixelated) { PROF
 
@@ -804,24 +778,28 @@ void texture::destroy() { PROF
 	glDeleteTextures(1, &handle);
 }
 
-void ogl_manager::add_draw_context(render_command_type type, _FPTR* buffers, _FPTR* run) { PROF
+void ogl_manager::add_command_ctx(render_command_type type, _FPTR* buffers, _FPTR* run, string v, string f, _FPTR* uniforms) { PROF
 
 	draw_context d;
 
 	d.send_buffers.set(buffers);
 	d.run.set(run);
+	d.shader = shader_program::make(v, f, uniforms, alloc);
+	LOG_DEBUG_F("Loaded shader from % and %", v, f);
 
-	contexts.insert(type, d);
+	commands.insert(type, d);
 }
 
-draw_context* ogl_manager::select_draw_context(render_command_type id) { PROF
+draw_context* ogl_manager::get_command_ctx(render_command_type id) { PROF
 
-	draw_context* d = contexts.try_get(id);
+	draw_context* d = commands.try_get(id);
 
 	if(!d) {
 		LOG_ERR_F("Failed to retrieve context %", id);
 		return null;
 	}
+
+	glUseProgram(d->shader.handle);
 	
 	return d;
 }
@@ -836,11 +814,10 @@ void ogl_manager::execute_command_list(platform_window* win, render_command_list
 
 		cmd_set_settings(win, cmd);
 
-		draw_context* d = select_draw_context(cmd->cmd);
-		shader_program* s = select_program(cmd->cmd);
+		draw_context* d = get_command_ctx(cmd->cmd);
 
 		d->send_buffers(cmd);
-		s->send_uniforms(s, cmd, rcl);
+		d->shader.send_uniforms(&d->shader, cmd, rcl);
 
 		select_texture(cmd->texture);
 		d->run(cmd);

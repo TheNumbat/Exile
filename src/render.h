@@ -169,12 +169,12 @@ struct texture {
 struct draw_context {
 	func_ptr<void, render_command*> send_buffers;
 	func_ptr<void, render_command*> run;
+	shader_program shader;
 };
 
 struct ogl_manager {
 	map<texture_id, texture> 			   		textures;
-	map<render_command_type, shader_program> 	programs;
-	map<render_command_type, draw_context> 		contexts;
+	map<render_command_type, draw_context> 		commands;
 
 	texture_id 			next_texture_id = 1;
 	
@@ -188,12 +188,10 @@ struct ogl_manager {
 	static ogl_manager make(allocator* a);
 	void destroy();
 
-	void add_program(render_command_type type, string v, string f, _FPTR* uniforms);
-	shader_program* select_program(render_command_type type);
 	void try_reload_programs();
 
-	void add_draw_context(render_command_type type, _FPTR* buffers, _FPTR* run);
-	draw_context* select_draw_context(render_command_type type);
+	void add_command_ctx(render_command_type type, _FPTR* buffers, _FPTR* run, string v, string f, _FPTR* uniforms);
+	draw_context* get_command_ctx(render_command_type type);
 
 	texture_id add_texture(asset_store* as, string name, texture_wrap wrap = texture_wrap::repeat, bool pixelated = false);
 	texture* select_texture(texture_id id);
