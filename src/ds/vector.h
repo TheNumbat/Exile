@@ -42,17 +42,17 @@ struct vector {
 
 	// quick sort
 	void sort(u32 low = 0, u32 high = 0, bool first = true); 
-	void sort(bool (*comp)(T&,T&), u32 low = 0, u32 high = 0, bool first = true); 
+	void sort(bool (*comp)(T,T), u32 low = 0, u32 high = 0, bool first = true); 
 	u32 partition(u32 low, u32 high);
-	u32 partition(bool (*comp)(T&,T&), u32 low, u32 high);
+	u32 partition(bool (*comp)(T,T), u32 low, u32 high);
 
 	// merge sort
 	void stable_sort();
-	void stable_sort(bool (*comp)(T&,T&));
+	void stable_sort(bool (*comp)(T,T));
 	void mergesort(u32 min, u32 max);
-	void mergesort(bool (*comp)(T&,T&), u32 min, u32 max);
+	void mergesort(bool (*comp)(T,T), u32 min, u32 max);
 	void merge(u32 min, u32 mid, u32 max);
-	void merge(bool (*comp)(T&,T&), u32 min, u32 mid, u32 max);
+	void merge(bool (*comp)(T,T), u32 min, u32 mid, u32 max);
 
 	bool empty();
 };

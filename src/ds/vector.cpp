@@ -58,7 +58,7 @@ u32 vector<T>::partition(u32 low, u32 high) { PROF
 }
 
 template<typename T>
-u32 vector<T>::partition(bool (*less)(T&,T&), u32 low, u32 high) { PROF
+u32 vector<T>::partition(bool (*less)(T,T), u32 low, u32 high) { PROF
 
 	u32 pivot = low;
 	for (u32 i = low + 1; i <= high; i++) {
@@ -98,7 +98,7 @@ void vector<T>::sort(u32 low, u32 high, bool first) { PROF
 }
 
 template<typename T>
-void vector<T>::sort(bool (*less)(T&,T&), u32 low, u32 high, bool first) { PROF
+void vector<T>::sort(bool (*less)(T,T), u32 low, u32 high, bool first) { PROF
 
 	if (!size) return;
 
@@ -157,11 +157,12 @@ void vector<T>::mergesort(u32 min, u32 max) { PROF
 template<typename T>
 void vector<T>::stable_sort() { PROF
 
+	if(size == 0) return;
 	mergesort(0, size - 1);
 }
 
 template<typename T>
-void vector<T>::merge(bool (*leq)(T&,T&), u32 min, u32 mid, u32 max) { PROF
+void vector<T>::merge(bool (*leq)(T,T), u32 min, u32 mid, u32 max) { PROF
 
 	u32 i = min, j = mid + 1, k = 0;
 	vector<T> temp = make(max - min + 1, alloc);
@@ -188,7 +189,7 @@ void vector<T>::merge(bool (*leq)(T&,T&), u32 min, u32 mid, u32 max) { PROF
 }
 
 template<typename T> 
-void vector<T>::mergesort(bool (*leq)(T&,T&), u32 min, u32 max) { PROF
+void vector<T>::mergesort(bool (*leq)(T,T), u32 min, u32 max) { PROF
 
 	if(min < max) {
 		u32 mid = (min + max) / 2;
@@ -201,8 +202,9 @@ void vector<T>::mergesort(bool (*leq)(T&,T&), u32 min, u32 max) { PROF
 }
 
 template<typename T>
-void vector<T>::stable_sort(bool (*leq)(T&,T&)) { PROF
+void vector<T>::stable_sort(bool (*leq)(T,T)) { PROF
 
+	if(size == 0) return;
 	mergesort(leq, 0, size - 1);
 }
 

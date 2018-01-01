@@ -166,7 +166,7 @@ struct dbg_manager {
 
 CALLBACK void dbg_add_log(log_message* msg, void*);
 
-bool prof_sort_name(func_profile_node*& l, func_profile_node*& r);
-bool prof_sort_heir(func_profile_node*& l, func_profile_node*& r);
-bool prof_sort_self(func_profile_node*& l, func_profile_node*& r);
-bool prof_sort_calls(func_profile_node*& l, func_profile_node*& r);
+bool prof_sort_name(func_profile_node* l, func_profile_node* r);
+bool prof_sort_heir(func_profile_node* l, func_profile_node* r);
+bool prof_sort_self(func_profile_node* l, func_profile_node* r);
+bool prof_sort_calls(func_profile_node* l, func_profile_node* r);

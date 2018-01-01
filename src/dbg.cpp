@@ -91,6 +91,8 @@ void dbg_manager::UI() { PROF
 
 	gui_begin("Profile"_, R2(20.0f, 20.0f, dim.x / 1.5f, dim.y / 2.0f));
 
+	gui_enum_buttons("Sort By:"_, &prof_sort);
+
 	global_api->platform_aquire_mutex(&cache_mut);
 	thread_profile* thread = dbg_cache.get(global_api->platform_this_thread_id());
 	frame_profile* frame = thread->frames.back();
@@ -269,22 +271,22 @@ CALLBACK void dbg_add_log(log_message* msg, void* param) { PROF
 	m->msg         = string::make_copy(msg->msg, &m->arena);
 }
 
-bool prof_sort_name(func_profile_node*& l, func_profile_node*& r) {
+bool prof_sort_name(func_profile_node* l, func_profile_node* r) {
 
 	return l->context.function <= r->context.function;
 }
 
-bool prof_sort_heir(func_profile_node*& l, func_profile_node*& r) {
+bool prof_sort_heir(func_profile_node* l, func_profile_node* r) {
 
-	return l->heir <= r->heir;
+	return r->heir <= l->heir;
 }
 
-bool prof_sort_self(func_profile_node*& l, func_profile_node*& r) {
+bool prof_sort_self(func_profile_node* l, func_profile_node* r) {
 
-	return l->self <= r->self;
+	return r->self <= l->self;
 }
 
-bool prof_sort_calls(func_profile_node*& l, func_profile_node*& r) {
+bool prof_sort_calls(func_profile_node* l, func_profile_node* r) {
 
-	return l->calls <= r->calls;
+	return r->calls <= l->calls;
 }

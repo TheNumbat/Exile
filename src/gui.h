@@ -65,6 +65,7 @@ union gui_state_data {
 };
 
 enum class gui_cursor_mode : u8 {
+	none,
 	xy,
 	x,
 	y,
@@ -98,6 +99,7 @@ struct gui_window {
 	bool active = true;
 	bool can_scroll = false;
 	win_input_state input = win_input_state::none;
+	gui_cursor_mode cursor_mode = gui_cursor_mode::y;
 
 	// TODO(max): these should be style stack parameters
 	bool override_active = false;
@@ -146,7 +148,6 @@ struct _gui_style {
 
 	color3 win_back		= V3b(34, 43, 47);
 	color3 win_top		= V3b(74, 79, 137);
-	color3 win_title 	= V3b(255, 255, 255);
 	color3 wid_back		= V3b(102, 105, 185);
 	color3 tab_color	= V3b(100, 106, 109);
 
@@ -207,7 +208,7 @@ gui_font* gui_select_best_font_scale();
 
 // These functions you can call from anywhere between starting and ending a frame
 
-void gui_add_offset(v2 offset, gui_cursor_mode mode = gui_cursor_mode::xy);
+void gui_add_offset(v2 offset, gui_cursor_mode override_mode = gui_cursor_mode::none);
 void gui_set_offset(v2 offset);
 v2 	 gui_window_dim();
 
@@ -223,10 +224,14 @@ bool gui_occluded();
 bool gui_begin(string name, r2 first = R2f(40,40,0,0), gui_window_flags flags = 0, f32 first_alpha = 0);
 void gui_end();
 
-void gui_text(string text, color c = WHITE, f32 point = 0.0f);
-bool gui_node(string text, bool* store = null, color c = WHITE, f32 point = 0.0f);
+void gui_text(string text);
+bool gui_node(string text, bool* store = null);
 bool gui_carrot_toggle(string name, bool initial = false, bool* toggleme = null);
 void gui_slider(string name, i32* val, i32 low, i32 high);
+bool gui_button(string text);
+
+template<typename enumer>
+void gui_enum_buttons(string name, enumer* val);
 
 void render_windowhead(gui_window* win);
 void render_windowbody(gui_window* win);

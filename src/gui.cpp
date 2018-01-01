@@ -289,7 +289,10 @@ void gui_set_offset(v2 offset) { PROF
 	ggui->current->cursor = ggui->current->rect.xy + offset;
 }
 
-void gui_add_offset(v2 offset, gui_cursor_mode mode) { PROF
+void gui_add_offset(v2 offset, gui_cursor_mode override_mode) { PROF
+	
+	gui_cursor_mode mode = override_mode == gui_cursor_mode::none ? ggui->current->cursor_mode : override_mode;
+
 	switch(mode) {
 	case gui_cursor_mode::xy:
 		ggui->current->cursor = ggui->current->cursor + offset;
@@ -365,7 +368,7 @@ bool gui_begin(string name, r2 size, gui_window_flags flags, f32 first_alpha) { 
 			gui_set_offset(title_pos);
 			window->override_active = true;
 			window->override_seen = true;
-			gui_text(name, V4b(ggui->style.win_title, 255));
+			gui_text(name);
 			window->title_tris = window->text_mesh.elements.size;
 			window->override_active = false;
 			window->override_seen = false;
@@ -478,13 +481,13 @@ void gui_end() { PROF
 
 void gui_indent() { PROF
 
-	gui_add_offset(V2(ggui->style.indent_size, 0.0f));
+	gui_add_offset(V2(ggui->style.indent_size, 0.0f), gui_cursor_mode::x);
 	ggui->current->indent_level++;
 }
 
 void gui_unindent() { PROF
 
-	gui_add_offset(V2(-ggui->style.indent_size, 0.0f));
+	gui_add_offset(V2(-ggui->style.indent_size, 0.0f), gui_cursor_mode::x);
 	ggui->current->indent_level--;
 }
 
@@ -517,7 +520,7 @@ void gui_slider(string name, i32* val, i32 low, i32 high) { PROF
 
 	v2 pos = win->cursor;
 	v2 size = size_text(win->font->font, name, point);
-	gui_add_offset(V2(0.0f, point));
+	gui_add_offset(size);
 
 	if(!win->visible(R2(pos, size))) {
 		return;
@@ -596,7 +599,87 @@ void render_carrot(gui_window* win, v2 pos, bool active) { PROF
 	}
 }
 
-bool gui_node(string text, bool* store, color c, f32 point) { PROF 
+template<typename enumer>
+void gui_enum_buttons(string name, enumer* val) { PROF
+
+	gui_window* win = ggui->current;
+	if(!win->active && !win->override_active) return;
+
+	guiid id;
+	id.base = *win->id_hash_stack.top();
+	id.name = name;
+
+	f32 point = ggui->style.font_size;
+	v2 pos = win->cursor;
+	v2 size = size_text(win->font->font, name, point);
+	v2 old_cursor = win->cursor;
+	
+	gui_add_offset(size);
+	v2 cursor = win->cursor;
+	gui_add_offset(V2(size.x + 3.0f, -size.y), gui_cursor_mode::xy);
+
+	if(!win->visible(R2(pos, size))) {
+		win->cursor = cursor;
+		return;
+	}
+	win->text_mesh.push_text_line(win->font->font, name, pos, point, WHITE);
+
+	v2 divider_size = size_text(win->font->font, " | "_, point);
+
+	_type_info* info = TYPEINFO(enumer);
+	for(u32 i = 0; i < info->_enum.member_count; i++) {
+		
+		if(gui_button(info->_enum.member_names[i])) {
+			*val = (enumer)info->_enum.member_values[i];
+		}
+
+		v2 member_size = size_text(win->font->font, info->_enum.member_names[i], point);
+		gui_add_offset(V2(member_size.x, -member_size.y), gui_cursor_mode::xy);
+		
+		if(i != info->_enum.member_count - 1) {
+			gui_text(" | "_);
+		}
+		gui_add_offset(V2(divider_size.x, -divider_size.y), gui_cursor_mode::xy);
+	}
+
+	win->cursor = cursor;
+}
+
+bool gui_button(string text) { PROF
+
+	gui_window* win = ggui->current;
+	if(!win->active && !win->override_active) return false;
+
+	guiid id;
+	id.base = *win->id_hash_stack.top();
+	id.name = text;
+
+	f32 point = ggui->style.font_size;
+	v2 pos = win->cursor;
+	v2 size = size_text(win->font->font, text, point);
+	bool ret = false;
+	gui_add_offset(size);
+
+	if(!win->visible(R2(pos, size))) {
+		return ret;
+	}
+
+	if(!gui_occluded() && inside(R2(pos, size), ggui->input.mousepos)) {
+		
+		if(ggui->active == gui_active_state::none && (ggui->input.lclick || ggui->input.ldbl)) {
+
+			ret = true;
+			ggui->active_id = id;
+			ggui->active = gui_active_state::active;
+		}
+	}
+
+	win->text_mesh.push_text_line(win->font->font, text, pos, point, WHITE);
+
+	return ret;
+}
+
+bool gui_node(string text, bool* store) { PROF 
 
 	gui_window* win = ggui->current;
 	if(!win->active && !win->override_active) return false;
@@ -626,11 +709,10 @@ bool gui_node(string text, bool* store, color c, f32 point) { PROF
 		data = &state->b;
 	}
 
-	if(!point) point = ggui->style.font_size;
-
+	f32 point = ggui->style.font_size;
 	v2 pos = win->cursor;
 	v2 size = size_text(win->font->font, text, point);
-	gui_add_offset(V2(0.0f, point));
+	gui_add_offset(size);
 
 	if(!win->visible(R2(pos, size))) {
 		return *data;
@@ -646,20 +728,22 @@ bool gui_node(string text, bool* store, color c, f32 point) { PROF
 		}
 	}
 
-	win->text_mesh.push_text_line(win->font->font, text, pos, point, c);
+	win->text_mesh.push_text_line(win->font->font, text, pos, point, WHITE);
 
 	return *data;
 }
 
-void gui_text(string text, color c, f32 point) { PROF
+void gui_text(string text) { PROF
 
 	gui_window* win = ggui->current;
 	if(!win->active && !win->override_active) return;
 
-	if(!point) point = ggui->style.font_size;
+	f32 point = ggui->style.font_size;
+	color c = WHITE;
 
 	v2 pos = win->cursor;
-	gui_add_offset(V2(0.0f, point));
+	v2 size = size_text(win->font->font, text, point);
+	gui_add_offset(size);
 
 	// TODO(max): preliminary check bounds without doing size_text
 
@@ -668,7 +752,6 @@ void gui_text(string text, color c, f32 point) { PROF
 		return;
 	}
 
-	v2 size = size_text(win->font->font, text, point);
 	if(!win->visible(R2(pos, size))) {
 		return;
 	}

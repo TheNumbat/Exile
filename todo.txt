@@ -26,8 +26,6 @@ all includes:
 
 priority:
 	voxel rendering methods
-	improve render command/openGL stuff
-		mark meshes dirty and such
 	Time profile views
 		GUI COLLUMNS!!!!
 		graphs and stuff
