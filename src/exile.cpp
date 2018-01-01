@@ -93,7 +93,6 @@
 
 #include "asset.h"
 #include "render.h"
-#include "opengl.h"
 #include "gui.h"
 #include "events.h"
 
@@ -109,7 +108,6 @@ static log_manager*  global_log = null; // global to provide printf() like funct
 static dbg_manager*  global_dbg = null; // not used yet -- global to provide profiling functionality everywhere
 
 #include <meta_types.cpp>
-#include "render_opengl.h"
 
 #include "util/fptr.cpp"
 #include "util/context.cpp"
@@ -122,7 +120,7 @@ static dbg_manager*  global_dbg = null; // not used yet -- global to provide pro
 #include "alloc.cpp"
 #include "log.cpp"
 #include "events.cpp"
-#include "opengl.cpp"
+#include "render_commands.cpp"
 #include "render.cpp"
 #include "gui.cpp"
 #include "dbg.cpp"
