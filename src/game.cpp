@@ -136,21 +136,12 @@ EXPORT void shut_down(game_state* state) {
 
 	LOG_INFO("Beginning shutdown...");
 
-	LOG_DEBUG("Destroying OpenGL")
-	state->ogl.destroy();
-
 	LOG_DEBUG("Destroying asset system");
 	state->default_store.destroy();
 
 	LOG_DEBUG("Destroying thread pool");
 	state->thread_pool.stop_all();
 	state->thread_pool.destroy();
-
-	LOG_DEBUG("Destroying window");
-	CHECKED(platform_destroy_window, &state->window);
-
-	LOG_DEBUG("Destroying events");
-	state->evt.destroy();
 
 	LOG_DEBUG("Destroying debug system");
 	state->dbg.shutdown_log(&state->log);	
@@ -159,11 +150,22 @@ EXPORT void shut_down(game_state* state) {
 	LOG_DEBUG("Destroying transient store");
 	DESTROY_ARENA(&state->transient_arena);
 
+	LOG_DEBUG("Destroying GUI");
+	state->gui.destroy();
+	
+	LOG_DEBUG("Destroying OpenGL");
+	state->ogl.destroy();
+
+	LOG_DEBUG("Destroying window");
+	CHECKED(platform_destroy_window, &state->window);
+
+	LOG_DEBUG("Destroying events");
+	state->evt.destroy();
+
 	LOG_DEBUG("Done with shutdown!");
 
 	state->log.stop();
 	state->log.destroy();
-	state->gui.destroy();
 
 	end_thread();
 	cleanup_fptrs();

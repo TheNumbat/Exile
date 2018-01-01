@@ -536,6 +536,7 @@ bool shader_program::refresh() { PROF
 
 	if(vertex.refresh() || fragment.refresh()) {
 
+		glUseProgram(0);
 		glDeleteProgram(handle);
 		handle = glCreateProgram();
 
@@ -552,6 +553,7 @@ void shader_program::destroy() { PROF
 	vertex.destroy();
 	fragment.destroy();
 
+	glUseProgram(0);
 	glDeleteProgram(handle);
 }
 
@@ -602,9 +604,10 @@ void ogl_manager::destroy() { PROF
 	}
 
 	dbg_shader.destroy();
-
 	textures.destroy();
 	commands.destroy();
+
+	check_ogl_leaked_handles();
 } 
 
 texture_id ogl_manager::add_texture_from_font(asset* font, texture_wrap wrap, bool pixelated) { PROF
@@ -956,8 +959,20 @@ void debug_proc(gl_debug_source glsource, gl_debug_type gltype, GLuint id, gl_de
 	}
 }
 
-#define GL_LOAD(name) name = (name##_t)global_api->platform_get_glproc(#name##_);
 void ogl_load_global_funcs() { PROF
+
+	#define GL_IS_LOAD(name) name = (glIs_t)global_api->platform_get_glproc(#name##_);
+	#define GL_LOAD(name) name = (name##_t)global_api->platform_get_glproc(#name##_);
+
+	GL_IS_LOAD(glIsTexture);
+	GL_IS_LOAD(glIsBuffer);
+	GL_IS_LOAD(glIsFramebuffer);
+	GL_IS_LOAD(glIsRenderbuffer);
+	GL_IS_LOAD(glIsVertexArray);
+	GL_IS_LOAD(glIsShader);
+	GL_IS_LOAD(glIsProgram);
+	GL_IS_LOAD(glIsProgramPipeline);
+	GL_IS_LOAD(glIsQuery);
 
 	GL_LOAD(glDebugMessageCallback);
 	GL_LOAD(glDebugMessageInsert);
@@ -989,6 +1004,10 @@ void ogl_load_global_funcs() { PROF
 	GL_LOAD(glBufferData);
 	GL_LOAD(glVertexAttribPointer);
 	GL_LOAD(glEnableVertexAttribArray);
+	GL_LOAD(glGetShaderSource);
+
+	#undef GL_LOAD
+	#undef GL_IS_LOAD
 
 	glEnable(gl_capability::debug_output);
 	glEnable(gl_capability::debug_output_synchronous);
@@ -996,3 +1015,41 @@ void ogl_load_global_funcs() { PROF
 	glDebugMessageControl(gl_debug_source::dont_care, gl_debug_type::dont_care, gl_debug_severity::dont_care, 0, null, gl_bool::_true);
 }
 
+void check_ogl_leaked_handles() {
+
+	#define GL_CHECK(type) if(glIs##type(i) == gl_bool::_true) { LOG_WARN_F("Leaked OpenGL handle % of type %", i, #type##_); leaked = true;}
+
+	bool leaked = false;
+	for(GLuint i = 0; i < 10000; i++) {
+		GL_CHECK(Texture);
+		GL_CHECK(Buffer);
+		GL_CHECK(Framebuffer);
+		GL_CHECK(Renderbuffer);
+		GL_CHECK(VertexArray);
+		GL_CHECK(Program);
+		GL_CHECK(ProgramPipeline);
+		GL_CHECK(Query);
+
+		if(glIsShader(i) == gl_bool::_true) {
+
+			leaked = true;
+			GLint shader_len = 0;
+			glGetShaderiv(i, gl_shader_param::shader_source_length, &shader_len);
+
+			GLchar* shader = (GLchar*)malloc(shader_len);
+			glGetShaderSource(i, shader_len, null, shader);
+
+			string shader_str = string::from_c_str(shader);
+			
+			LOG_WARN_F("Leaked OpenGL shader %, source %", i, shader_str); 
+
+			free(shader);
+		}
+	}
+
+	if(!leaked) {
+		LOG_INFO("No OpenGL Objects Leaked!");
+	}
+
+	#undef GL_CHECK
+}

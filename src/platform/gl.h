@@ -419,6 +419,8 @@ DLL_IMPORT void glDrawElements(gl_draw_mode mode, GLsizei count, gl_index_type t
 
 DLL_IMPORT void glScissor(GLint x, GLint y, GLsizei width, GLsizei height);
 
+typedef gl_bool (*glIs_t)(GLuint handle);
+
 typedef void (*glDebugProc_t)(gl_debug_source source, gl_debug_type type, GLuint id, gl_debug_severity severity, GLsizei length, const GLchar *message, const void *userParam);
 typedef void (*glDebugMessageCallback_t)(glDebugProc_t callback, const void *userParam);
 typedef void (*glDebugMessageInsert_t)(gl_debug_source source, gl_debug_type type, GLuint id, gl_debug_severity severity, GLsizei length, const char *message);
@@ -435,6 +437,7 @@ typedef void (*glShaderSource_t)(GLuint shader, GLsizei count, const GLchar* con
 typedef void (*glUseProgram_t)(GLuint program);
 typedef void (*glGetShaderiv_t)(GLuint shader, gl_shader_param pname, GLint *params);
 typedef void (*glGetShaderInfoLog_t)(GLuint shader, GLsizei maxLength, GLsizei *length, GLchar *infoLog);
+typedef void (*glGetShaderSource_t)(GLuint shader, GLsizei buffer, GLsizei* length, GLchar* source);
 
 typedef GLint (*glGetUniformLocation_t)(GLuint program, const GLchar *name);
 typedef void (*glUniformMatrix4fv_t)(GLint location, GLsizei count, gl_bool transpose, const GLfloat *value);
@@ -458,6 +461,16 @@ typedef void (*glEnableVertexAttribArray_t)(GLuint index);
 
 typedef void (*glTexParameterIiv_t)(gl_tex_target target, gl_tex_param pname, const GLint *params);
 
+glIs_t glIsTexture;
+glIs_t glIsBuffer;
+glIs_t glIsFramebuffer;
+glIs_t glIsRenderbuffer;
+glIs_t glIsVertexArray;
+glIs_t glIsShader;
+glIs_t glIsProgram;
+glIs_t glIsProgramPipeline;
+glIs_t glIsQuery;
+
 glDebugMessageCallback_t 	glDebugMessageCallback;
 glDebugMessageInsert_t		glDebugMessageInsert;
 glDebugMessageControl_t		glDebugMessageControl;
@@ -475,6 +488,7 @@ glGetUniformLocation_t 		glGetUniformLocation;
 glUniformMatrix4fv_t   		glUniformMatrix4fv;
 glGetShaderiv_t 			glGetShaderiv;
 glGetShaderInfoLog_t		glGetShaderInfoLog;
+glGetShaderSource_t 		glGetShaderSource;
 
 glGenerateMipmap_t			glGenerateMipmap;
 glActiveTexture_t			glActiveTexture;

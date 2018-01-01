@@ -2,6 +2,7 @@
 #pragma once
 
 void ogl_load_global_funcs();
+void check_ogl_leaked_handles();
 v2 size_text(asset* font, string text_utf8, f32 point);
 
 typedef i32 texture_id;
