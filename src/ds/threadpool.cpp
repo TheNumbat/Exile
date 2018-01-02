@@ -137,7 +137,7 @@ i32 worker(void* data_) {
 	worker_param* data = (worker_param*)data_;
 
 	begin_thread("worker %"_, data->alloc, (u32)global_api->platform_this_thread_id().id);
-	global_dbg->register_thread(1, 8192);
+	global_dbg->register_thread("worker"_, 1, 8192);
 	
 	LOG_DEBUG("Starting worker thread");
 

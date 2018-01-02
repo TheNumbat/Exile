@@ -119,6 +119,7 @@ struct dbg_msg {
 };
 
 struct thread_profile {
+	string name;
 	queue<frame_profile> frames;
 	u32 frame_buf_size = 0, num_frames = 0, frame_size = 0;
 };
@@ -159,7 +160,7 @@ struct dbg_manager {
 
 	void shutdown_log(log_manager* log);
 	void setup_log(log_manager* log);
-	void register_thread(u32 frames, u32 frame_size);
+	void register_thread(string name, u32 frames, u32 frame_size);
 
 	void collate();
 };
