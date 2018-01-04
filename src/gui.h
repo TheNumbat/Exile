@@ -89,7 +89,7 @@ enum class win_input_state : u8 {
 
 struct gui_window {
 	r2 rect;
-	v2 cursor;
+	v2 cursor, last_offset, header_size;
 
 	v2  click_offset, scroll_pos, previous_content_size;
 	f32 opacity = 1.0f;
@@ -113,7 +113,7 @@ struct gui_window {
 	allocator* alloc = null;
 
 	// TODO(max): arbitrary # of meshes for images, different fonts
-	mesh_2d_col 	shape_mesh;
+	mesh_2d_col 	background_mesh, shape_mesh;
 	mesh_2d_tex_col text_mesh;
 
 	static gui_window make(r2 first, f32 first_alpha, u16 flags, allocator* alloc);
@@ -144,7 +144,7 @@ struct _gui_style {
 	v2 default_win_size = V2f(250, 400);
 	v2 min_win_size		= V2f(75, 50);
 
-	v2 default_carrot_size = V2f(10, 10);
+	v2 carrot_size 	 	= V2f(10, 10);
 
 	color3 win_back		= V3b(34, 43, 47);
 	color3 win_top		= V3b(74, 79, 137);
@@ -215,6 +215,8 @@ v2 	 gui_window_dim();
 void gui_indent();
 void gui_unindent();
 u32  gui_indent_level();
+void gui_same_line();
+void gui_left_cursor();
 
 void gui_push_id(u32 id);
 void gui_pop_id();
@@ -227,8 +229,13 @@ void gui_end();
 void gui_text(string text);
 bool gui_node(string text, bool* store = null);
 bool gui_carrot_toggle(string name, bool initial = false, bool* toggleme = null);
-void gui_slider(string name, i32* val, i32 low, i32 high);
 bool gui_button(string text);
+
+bool gui_checkbox(string name, bool* data);
+void gui_int_slider(string text, i32* data, i32 low, i32 high);
+
+template<typename V>
+void gui_combo(string name, map<string,V> options, V* data);
 
 template<typename enumer>
 void gui_enum_buttons(string name, enumer* val);
@@ -236,6 +243,9 @@ void gui_enum_buttons(string name, enumer* val);
 void render_windowhead(gui_window* win);
 void render_windowbody(gui_window* win);
 void render_carrot(gui_window* win, v2 pos, bool active);
+void render_checkbox(gui_window* win, r2 pos, bool active);
+
+void _carrot_toggle_background(bool* data);
 
 bool operator==(guiid l, guiid r);
 

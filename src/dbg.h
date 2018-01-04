@@ -134,8 +134,8 @@ enum class prof_sort_type : u8 {
 struct dbg_manager {
 
 	// TODO(max): UI elements for these
-	bool overwrite_frames = false;
-	u32 selected_frame = 0;
+	bool frame_pause = true;
+	i32 selected_frame = 0;
 	platform_thread_id selected_thread;
 
 	prof_sort_type prof_sort = prof_sort_type::name;

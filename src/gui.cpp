@@ -25,6 +25,7 @@ gui_window gui_window::make(r2 first_size, f32 first_alpha, u16 flags, allocator
 		ret.opacity = first_alpha;
 	}
 
+	ret.background_mesh = mesh_2d_col::make(32, ret.alloc);
 	ret.shape_mesh = mesh_2d_col::make(128, ret.alloc);
 	ret.text_mesh = mesh_2d_tex_col::make(1024, ret.alloc);
 	ret.id_hash_stack = stack<u32>::make(16, ret.alloc);
@@ -48,6 +49,7 @@ void gui_window::reset() { PROF
 	clamp_scroll();
 
 	id_hash_stack.clear();
+	background_mesh.clear();
 	shape_mesh.clear();
 	text_mesh.clear();
 }
@@ -58,6 +60,7 @@ void gui_window::destroy() { PROF
 		st->key.name.destroy(alloc);
 	}
 
+	background_mesh.destroy();
 	id_hash_stack.destroy();
 	shape_mesh.destroy();
 	text_mesh.destroy();
@@ -171,20 +174,28 @@ void gui_manager::end_frame(platform_window* win, ogl_manager* ogl) { PROF
 
 	render_command_list rcl = render_command_list::make();
 	FORMAP(it, windows) {
-
-		render_command cmd = render_command::make(render_command_type::mesh_2d_col, &it->value.shape_mesh, it->value.z * 2);
-		cmd.texture = -1;
-		rcl.add_command(cmd);
-
-		cmd = render_command::make(render_command_type::mesh_2d_tex_col, &it->value.text_mesh, it->value.z * 2 + 1);
-		cmd.texture = it->value.font->texture;
-		cmd.num_tris = it->value.title_tris;
-		rcl.add_command(cmd);
-
-		cmd = render_command::make(render_command_type::mesh_2d_tex_col, &it->value.text_mesh, it->value.z * 2 + 1);
-		cmd.texture = it->value.font->texture;
-		cmd.scissor = it->value.get_real_content();
-		rcl.add_command(cmd);
+		
+		{
+			render_command cmd = render_command::make(render_command_type::mesh_2d_col, &it->value.background_mesh, it->value.z);
+			rcl.add_command(cmd);
+		}
+		{
+			render_command cmd = render_command::make(render_command_type::mesh_2d_col, &it->value.shape_mesh, it->value.z);
+			cmd.scissor = it->value.get_real_content();
+			rcl.add_command(cmd);
+		}
+		{
+			render_command cmd = render_command::make(render_command_type::mesh_2d_tex_col, &it->value.text_mesh, it->value.z);
+			cmd.texture = it->value.font->texture;
+			cmd.num_tris = it->value.title_tris;
+			rcl.add_command(cmd);
+		}
+		{
+			render_command cmd = render_command::make(render_command_type::mesh_2d_tex_col, &it->value.text_mesh, it->value.z);
+			cmd.texture = it->value.font->texture;
+			cmd.scissor = it->value.get_real_content();
+			rcl.add_command(cmd);
+		}
 	}
  
 	rcl.proj = ortho(0, (f32)window->w, (f32)window->h, 0, -1, 1);
@@ -216,7 +227,7 @@ r2 gui_window::get_real_content() { PROF
 
 r2 gui_window::get_real_top() { PROF
 
-	f32 carrot_x_diff = ggui->style.default_carrot_size.x + ggui->style.carrot_padding.x;
+	f32 carrot_x_diff = ggui->style.carrot_size.x + ggui->style.carrot_padding.x;
 	r2 real_rect = get_real();
 
 	return R2(real_rect.xy, V2(real_rect.w - carrot_x_diff, ggui->style.font_size + ggui->style.title_padding));
@@ -292,6 +303,7 @@ void gui_set_offset(v2 offset) { PROF
 void gui_add_offset(v2 offset, gui_cursor_mode override_mode) { PROF
 	
 	gui_cursor_mode mode = override_mode == gui_cursor_mode::none ? ggui->current->cursor_mode : override_mode;
+	v2 old = ggui->current->cursor;
 
 	switch(mode) {
 	case gui_cursor_mode::xy:
@@ -304,6 +316,8 @@ void gui_add_offset(v2 offset, gui_cursor_mode override_mode) { PROF
 		ggui->current->cursor = ggui->current->cursor + V2(0.0f, offset.y);
 		break;
 	}
+
+	ggui->current->last_offset = offset;
 }
 
 void gui_push_id(u32 id) { PROF
@@ -358,8 +372,8 @@ bool gui_begin(string name, r2 size, gui_window_flags flags, f32 first_alpha) { 
 	}
 
 	r2 real_rect = window->get_real();
-		
-	v2 header_offset;
+	
+	window->header_size = V2(0.0f, 0.0f);
 	{//rendering
 		if((window->flags & (u16)window_flags::nohead) != (u16)window_flags::nohead) {
 			render_windowhead(window);
@@ -373,7 +387,7 @@ bool gui_begin(string name, r2 size, gui_window_flags flags, f32 first_alpha) { 
 			window->override_active = false;
 			window->override_seen = false;
 
-			header_offset = V2(0.0f, ggui->style.font_size + ggui->style.title_padding);
+			window->header_size = V2(0.0f, ggui->style.font_size + ggui->style.title_padding);
 		}
 
 		if((window->flags & (u16)window_flags::noback) != (u16)window_flags::noback && window->active) {
@@ -382,7 +396,7 @@ bool gui_begin(string name, r2 size, gui_window_flags flags, f32 first_alpha) { 
 	}
 
 	// input
-	f32 carrot_x_diff = ggui->style.default_carrot_size.x + ggui->style.carrot_padding.x;
+	f32 carrot_x_diff = ggui->style.carrot_size.x + ggui->style.carrot_padding.x;
 	
 	r2 real_top = window->get_real_top(); 
 	r2 real_body = window->get_real_body();
@@ -391,14 +405,10 @@ bool gui_begin(string name, r2 size, gui_window_flags flags, f32 first_alpha) { 
 	bool occluded = gui_occluded();
 	if((window->flags & (u16)window_flags::nohide) != (u16)window_flags::nohide) {
 
-		v2 carrot_pos = V2(window->rect.w - carrot_x_diff, ggui->style.default_carrot_size.y / 2.0f);
+		v2 carrot_pos = V2(window->rect.w - carrot_x_diff, ggui->style.carrot_size.y / 2.0f);
 		
 		gui_set_offset(carrot_pos);
-		window->override_active = true;
-		window->override_seen = true;
-		gui_carrot_toggle("#CLOSE"_, window->active, &window->active);
-		window->override_active = false;
-		window->override_seen = false;
+		_carrot_toggle_background(&window->active);
 
 		if(!occluded && inside(real_top, ggui->input.mousepos)) {
 
@@ -470,7 +480,7 @@ bool gui_begin(string name, r2 size, gui_window_flags flags, f32 first_alpha) { 
 		}
 	}
 
-	gui_set_offset(header_offset + ggui->style.win_margin.xy + window->scroll_pos);
+	gui_set_offset(window->header_size + ggui->style.win_margin.xy + window->scroll_pos);
 
 	return window->active;
 }
@@ -495,46 +505,65 @@ u32 gui_indent_level() { PROF
 	return ggui->current->indent_level;
 }
 
-void gui_slider(string name, i32* val, i32 low, i32 high) { PROF
+void gui_same_line() { PROF
+
+	ggui->current->cursor.y -= ggui->current->last_offset.y;
+	ggui->current->cursor.x += ggui->current->last_offset.x;
+	ggui->current->last_offset = V2(0.0f, 0.0f);
+}
+
+void gui_left_cursor() { PROF
 
 	gui_window* win = ggui->current;
-	if(!win->active && !win->override_active) return;
+
+	v2 old = win->cursor;
+	gui_set_offset(win->header_size + ggui->style.win_margin.xy + win->scroll_pos);
+	win->cursor.y = old.y;
+}
+
+bool gui_checkbox(string name, bool* data) { PROF
+
+	gui_window* win = ggui->current;
+	if(!win->active && !win->override_active) return *data;
 
 	guiid id;
 	id.base = *win->id_hash_stack.top();
 	id.name = name;
 
-	gui_state_data* data = win->state_data.try_get(id);
+	gui_text(name);
+	gui_same_line();
 
-	if(!data) {
-
-		gui_state_data nd;
-
-		nd.i32_1 = *val;
-
-		data = win->add_state(id, nd);
-	}
-
-	f32 point = ggui->style.font_size;
-	color c = WHITE;
-
-	v2 pos = win->cursor;
-	v2 size = size_text(win->font->font, name, point);
+	v2 pos = win->cursor + V2(0.0f, 2.0f);
+	v2 size = V2(ggui->style.font_size, ggui->style.font_size);
 	gui_add_offset(size);
 
 	if(!win->visible(R2(pos, size))) {
-		return;
+		gui_left_cursor();
+		return *data;
 	}
 
 	if(!gui_occluded() && inside(R2(pos, size), ggui->input.mousepos)) {
-		
+
 		if(ggui->active == gui_active_state::none && (ggui->input.lclick || ggui->input.ldbl)) {
 
-			
+			*data = !*data;
+			ggui->active_id = id;
+			ggui->active = gui_active_state::active;
 		}
 	}
 
-	win->text_mesh.push_text_line(win->font->font, name, pos, point, c);
+	render_checkbox(ggui->current, R2(pos, size), *data);
+	gui_left_cursor();
+	return *data;
+}
+
+void gui_int_slider(string text, i32* data, i32 low, i32 high) { PROF
+
+}
+
+template<typename V>
+void gui_combo(string name, map<string,V> options, V* data) { PROF
+
 }
 
 bool gui_carrot_toggle(string name, bool initial, bool* toggleme) { PROF
@@ -562,7 +591,7 @@ bool gui_carrot_toggle(string name, bool initial, bool* toggleme) { PROF
 	}
 
 	v2 pos = win->cursor;
-	v2 size = ggui->style.default_carrot_size;
+	v2 size = ggui->style.carrot_size;
 	gui_add_offset(size);
 
 	if(!win->visible(R2(pos, size))) {
@@ -584,18 +613,61 @@ bool gui_carrot_toggle(string name, bool initial, bool* toggleme) { PROF
 	}
 
 	render_carrot(ggui->current, pos, data->b);
-
 	return data->b;
+}
+
+void _carrot_toggle_background(bool* data) { PROF
+
+	gui_window* win = ggui->current;
+	if(!win->active && !win->override_active) return;
+
+	guiid id;
+	id.base = *win->id_hash_stack.top();
+	id.name = string::literal("#CLOSE");
+
+	v2 pos = win->cursor;
+	v2 size = ggui->style.carrot_size;
+
+	if(!gui_occluded() && inside(R2(pos, size), ggui->input.mousepos)) {
+
+		if(ggui->active == gui_active_state::none && (ggui->input.lclick || ggui->input.ldbl)) {
+
+			*data = !*data;
+			ggui->active_id = id;
+			ggui->active = gui_active_state::active;
+		}
+	}
+
+	if(*data) {
+		win->background_mesh.push_tri(V2(pos.x, pos.y), V2(pos.x + size.x, pos.y), V2(pos.x + size.x / 2.0f, pos.y + size.x), V4b(ggui->style.wid_back, 255));
+	} else {
+		win->background_mesh.push_tri(V2(pos.x, pos.y), V2(pos.x, pos.y + size.x), V2(pos.x + size.x, pos.y + size.x / 2.0f), V4b(ggui->style.wid_back, 255));
+	}
 }
 
 void render_carrot(gui_window* win, v2 pos, bool active) { PROF
 
-	f32 size = ggui->style.default_carrot_size.x;
+	f32 size = ggui->style.carrot_size.x;
 
 	if(active) {
 		win->shape_mesh.push_tri(V2(pos.x, pos.y), V2(pos.x + size, pos.y), V2(pos.x + size / 2.0f, pos.y + size), V4b(ggui->style.wid_back, 255));
 	} else {
 		win->shape_mesh.push_tri(V2(pos.x, pos.y), V2(pos.x, pos.y + size), V2(pos.x + size, pos.y + size / 2.0f), V4b(ggui->style.wid_back, 255));
+	}
+}
+
+void render_checkbox(gui_window* win, r2 pos, bool active) { PROF
+
+	color out = V4b(ggui->style.win_scroll_back, win->opacity);
+	color in  = V4b(ggui->style.win_scroll_bar, win->opacity);
+
+	win->shape_mesh.push_rect(pos, out);
+
+	if(active) {
+
+		r2 select = R2(pos.xy + V2(2.0f, 2.0f), pos.wh - V2(4.0f, 4.0f));
+		
+		win->shape_mesh.push_rect(select, in);
 	}
 }
 
@@ -609,40 +681,27 @@ void gui_enum_buttons(string name, enumer* val) { PROF
 	id.base = *win->id_hash_stack.top();
 	id.name = name;
 
-	f32 point = ggui->style.font_size;
 	v2 pos = win->cursor;
-	v2 size = size_text(win->font->font, name, point);
-	v2 old_cursor = win->cursor;
 	
-	gui_add_offset(size);
-	v2 cursor = win->cursor;
-	gui_add_offset(V2(size.x + 3.0f, -size.y), gui_cursor_mode::xy);
-
-	if(!win->visible(R2(pos, size))) {
-		win->cursor = cursor;
-		return;
-	}
-	win->text_mesh.push_text_line(win->font->font, name, pos, point, WHITE);
-
-	v2 divider_size = size_text(win->font->font, " | "_, point);
+	gui_text(name);
+	gui_same_line();
 
 	_type_info* info = TYPEINFO(enumer);
 	for(u32 i = 0; i < info->_enum.member_count; i++) {
 		
+		gui_same_line();
 		if(gui_button(info->_enum.member_names[i])) {
 			*val = (enumer)info->_enum.member_values[i];
 		}
 
-		v2 member_size = size_text(win->font->font, info->_enum.member_names[i], point);
-		gui_add_offset(V2(member_size.x, -member_size.y), gui_cursor_mode::xy);
-		
 		if(i != info->_enum.member_count - 1) {
+			gui_same_line();
 			gui_text(" | "_);
 		}
-		gui_add_offset(V2(divider_size.x, -divider_size.y), gui_cursor_mode::xy);
 	}
 
-	win->cursor = cursor;
+	win->last_offset = win->cursor - pos;
+	gui_left_cursor();
 }
 
 bool gui_button(string text) { PROF
@@ -675,7 +734,6 @@ bool gui_button(string text) { PROF
 	}
 
 	win->text_mesh.push_text_line(win->font->font, text, pos, point, WHITE);
-
 	return ret;
 }
 
@@ -729,7 +787,6 @@ bool gui_node(string text, bool* store) { PROF
 	}
 
 	win->text_mesh.push_text_line(win->font->font, text, pos, point, WHITE);
-
 	return *data;
 }
 
@@ -745,13 +802,10 @@ void gui_text(string text) { PROF
 	v2 size = size_text(win->font->font, text, point);
 	gui_add_offset(size);
 
-	// TODO(max): preliminary check bounds without doing size_text
-
 	r2 content = win->get_real_content();
 	if(!win->override_seen && pos.y + point < content.y || pos.y > content.y + content.h) {
 		return;
 	}
-
 	if(!win->visible(R2(pos, size))) {
 		return;
 	}
@@ -765,7 +819,7 @@ void render_windowhead(gui_window* win) { PROF
 	f32 pt = ggui->style.font_size + ggui->style.title_padding;
 
 	r2 render = R2(r.x, r.y, r.w, pt);
-	win->shape_mesh.push_rect(render, V4b(ggui->style.win_top, 255));
+	win->background_mesh.push_rect(render, V4b(ggui->style.win_top, 255));
 }
 
 void render_windowbody(gui_window* win) { PROF
@@ -784,7 +838,7 @@ void render_windowbody(gui_window* win) { PROF
 	if(!resizeable) {
 
 		r2 render = R2(r.x, r.y + pt, r.w, r.h - pt);
-		win->shape_mesh.push_rect(render, c_back);
+		win->background_mesh.push_rect(render, c_back);
 
 	} else {
 
@@ -794,9 +848,9 @@ void render_windowbody(gui_window* win) { PROF
 		v2 p4 = V2(r.x + r.w, r.y + r.h - resize_tab.y);
 		v2 p5 = V2(r.x + r.w, r.y + pt);
 
-		win->shape_mesh.push_tri(p1, p2, p3, c_back);
-		win->shape_mesh.push_tri(p1, p3, p4, c_back);
-		win->shape_mesh.push_tri(p1, p4, p5, c_back);
+		win->background_mesh.push_tri(p1, p2, p3, c_back);
+		win->background_mesh.push_tri(p1, p3, p4, c_back);
+		win->background_mesh.push_tri(p1, p4, p5, c_back);
 	}
 
 	if(win->can_scroll) {
@@ -806,8 +860,8 @@ void render_windowbody(gui_window* win) { PROF
 		v2 p3 = V2(p1.x, p1.y + r.h - pt);
 		v2 p4 = V2(p2.x, p1.y + r.h - pt);
 
-		win->shape_mesh.push_tri(p1, p2, p3, c_scroll);
-		win->shape_mesh.push_tri(p2, p3, p4, c_scroll);
+		win->background_mesh.push_tri(p1, p2, p3, c_scroll);
+		win->background_mesh.push_tri(p2, p3, p4, c_scroll);
 
 		f32 scroll_ratio = clamp(-win->scroll_pos.y / (win->previous_content_size.y - r.h), 0.0f, 1.0f);
 		f32 scroll_size  = max(c.h * c.h / win->previous_content_size.y, 5.0f);
@@ -818,8 +872,8 @@ void render_windowbody(gui_window* win) { PROF
 		v2 p7 = V2(p5.x, p1.y + scroll_pos + scroll_size);
 		v2 p8 = V2(p6.x, p1.y + scroll_pos + scroll_size);
 
-		win->shape_mesh.push_tri(p5, p6, p7, c_scroll_bar);
-		win->shape_mesh.push_tri(p6, p7, p8, c_scroll_bar);
+		win->background_mesh.push_tri(p5, p6, p7, c_scroll_bar);
+		win->background_mesh.push_tri(p6, p7, p8, c_scroll_bar);
 	}
 
 	if(resizeable) {
@@ -827,6 +881,6 @@ void render_windowbody(gui_window* win) { PROF
 		v2 r_1 = V2(r.x + r.w - resize_tab.x, r.y + r.h);
 		v2 r_2 = V2(r.x + r.w, r.y + r.h - resize_tab.y);
 		v2 r_3 = V2(r.x + r.w, r.y + r.h);
-		win->shape_mesh.push_tri(r_1, r_2, r_3, V4b(ggui->style.tab_color, win->opacity * 255.0f));
+		win->background_mesh.push_tri(r_1, r_2, r_3, V4b(ggui->style.tab_color, win->opacity * 255.0f));
 	}
 }

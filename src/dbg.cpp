@@ -92,20 +92,20 @@ void dbg_manager::UI() { PROF
 
 	gui_begin("Profile"_, R2(20.0f, 20.0f, dim.x / 1.5f, dim.y / 2.0f));
 	
-	// gui_check("Pause:"_, &overwrite_frames);
+	gui_checkbox("Pause: "_, &frame_pause);
 
 	map<string, platform_thread_id> threads = map<string, platform_thread_id>::make(global_api->platform_get_num_cpus(), CURRENT_ALLOC(), FPTR(hash_string));
 	FORMAP(it, dbg_cache) {
 		threads.insert(it->value.name, it->key);
 	}
-	// gui_combo("Thread:"_, threads, &selected_thread);
+	gui_combo("Thread:"_, threads, &selected_thread);
 	threads.destroy();
 
 	global_api->platform_aquire_mutex(&cache_mut);
 	thread_profile* thread = dbg_cache.get(selected_thread);
 	
-	// gui_int_slider("Frame:"_, &selected_frame, 0, thread->frame_buf_size);
-	gui_enum_buttons("Sort By:"_, &prof_sort);
+	gui_int_slider("Frame:"_, &selected_frame, 0, thread->frame_buf_size);
+	gui_enum_buttons("Sort By: "_, &prof_sort);
 
 	if(thread->frames.len()) {
 		
@@ -168,7 +168,7 @@ void dbg_manager::collate() {
 				thread->num_frames++;
 
 				if(thread->frames.full()) {
-					if(!overwrite_frames) {
+					if(frame_pause) {
 						break;
 					}
 					frame_profile rem = thread->frames.pop();
