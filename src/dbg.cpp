@@ -8,6 +8,7 @@ dbg_manager dbg_manager::make(allocator* alloc) { PROF
 
 	ret.alloc = alloc;
 	ret.scratch = MAKE_ARENA("dbg scratch"_, MEGABYTES(1), alloc, false);
+	ret.selected_thread = global_api->platform_this_thread_id();
 
 	global_api->platform_create_mutex(&ret.cache_mut, false);
 
@@ -90,16 +91,30 @@ void dbg_manager::UI() { PROF
 	gui_end();
 
 	gui_begin("Profile"_, R2(20.0f, 20.0f, dim.x / 1.5f, dim.y / 2.0f));
+	
+	// gui_check("Pause:"_, &overwrite_frames);
 
-	gui_enum_buttons("Sort By:"_, &prof_sort);
+	map<string, platform_thread_id> threads = map<string, platform_thread_id>::make(global_api->platform_get_num_cpus(), CURRENT_ALLOC(), FPTR(hash_string));
+	FORMAP(it, dbg_cache) {
+		threads.insert(it->value.name, it->key);
+	}
+	// gui_combo("Thread:"_, threads, &selected_thread);
+	threads.destroy();
 
 	global_api->platform_aquire_mutex(&cache_mut);
-	thread_profile* thread = dbg_cache.get(global_api->platform_this_thread_id());
-	frame_profile* frame = thread->frames.back();
+	thread_profile* thread = dbg_cache.get(selected_thread);
+	
+	// gui_int_slider("Frame:"_, &selected_frame, 0, thread->frame_buf_size);
+	gui_enum_buttons("Sort By:"_, &prof_sort);
 
-	gui_text(string::makef("Frame %"_, frame->number));
+	if(thread->frames.len()) {
+		
+		frame_profile* frame = thread->frames.get(selected_frame);
+		gui_text(string::makef("Frame %"_, frame->number));
 
-	profile_recurse(frame->heads);
+		profile_recurse(frame->heads);
+	}
+
 	gui_end();
 
 	global_api->platform_release_mutex(&cache_mut);

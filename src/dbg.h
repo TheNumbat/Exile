@@ -28,7 +28,6 @@ struct frame_profile {
 	timestamp start = 0, end = 0;
 	vector<func_profile_node*> heads;
 	func_profile_node* current = null;
-	// vector<func_profile_node*> self_time_view, heir_time_view, calls_view;
 	// vector<dbg_msg*> allocations;
 	pool_allocator pool;
 
@@ -135,8 +134,10 @@ enum class prof_sort_type : u8 {
 struct dbg_manager {
 
 	// TODO(max): UI elements for these
-	bool overwrite_frames = true;
+	bool overwrite_frames = false;
 	u32 selected_frame = 0;
+	platform_thread_id selected_thread;
+
 	prof_sort_type prof_sort = prof_sort_type::name;
 
 	allocator* alloc = null;
