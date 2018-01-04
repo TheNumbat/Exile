@@ -1274,14 +1274,6 @@ platform_error win32_create_window(platform_window* window, string title, u32 wi
 		return ret;		
 	}
 
-	i32 attribs[9] = {
-		(i32)wgl_context::major_version_arb, 	4,
-    	(i32)wgl_context::minor_version_arb, 	5,
-    	(i32)wgl_context::flags_arb, 			(i32)wgl_context::forward_compatible_bit_arb,
-    	(i32)wgl_context::profile_mask_arb, 	(i32)wgl_context::core_profile_bit_arb,
-    	0
-	};
-
 	wglCreateContextAttribsARB = (wglCreateContextAttribsARB_t)wglGetProcAddress("wglCreateContextAttribsARB");
 
 	if(wglCreateContextAttribsARB == null) {
@@ -1296,7 +1288,30 @@ platform_error win32_create_window(platform_window* window, string title, u32 wi
 		return ret;	
 	}
 
-	window->gl_context = wglCreateContextAttribsARB(window->device_context, 0, &attribs[0]);
+	i32 attribs[9] = {
+		(i32)wgl_context::major_version_arb, 	4,
+    	(i32)wgl_context::minor_version_arb, 	6,
+    	(i32)wgl_context::flags_arb, 			(i32)wgl_context::forward_compatible_bit_arb,
+    	(i32)wgl_context::profile_mask_arb, 	(i32)wgl_context::core_profile_bit_arb,
+    	0
+	};
+
+#define TRY_VERSION(MAJOR, MINOR) attribs[1] = MAJOR; attribs[3] = MINOR; \
+								  if(window->gl_context == null) window->gl_context = wglCreateContextAttribsARB(window->device_context, 0, attribs);
+
+	TRY_VERSION(4, 6);
+	TRY_VERSION(4, 5);
+	TRY_VERSION(4, 4);
+	TRY_VERSION(4, 3);
+	TRY_VERSION(4, 2);
+	TRY_VERSION(4, 1);
+	TRY_VERSION(4, 0);
+	TRY_VERSION(3, 3);
+	TRY_VERSION(3, 2);
+	TRY_VERSION(3, 1);
+	TRY_VERSION(3, 0);
+	TRY_VERSION(2, 1);
+	TRY_VERSION(2, 0);
 
 	if(window->gl_context == null) {
 		ret.good = false;

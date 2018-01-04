@@ -588,9 +588,9 @@ ogl_manager ogl_manager::make(allocator* a) { PROF
 	ret.textures = map<texture_id, texture>::make(32, a);
 	ret.commands = map<render_command_type, draw_context>::make(32, a);
 
-	ret.version  = string::from_c_str((char*)glGetString(gl_info::version));
-	ret.renderer = string::from_c_str((char*)glGetString(gl_info::renderer));
-	ret.vendor   = string::from_c_str((char*)glGetString(gl_info::vendor));
+	ret.load_global_funcs();
+	ret.info = ogl_info::make(ret.alloc);
+	ret.check_version_and_extensions();
 
 	REGISTER_COMMAND(mesh_2d_col);	
 	REGISTER_COMMAND(mesh_2d_tex);
@@ -599,9 +599,7 @@ ogl_manager ogl_manager::make(allocator* a) { PROF
 
 	ret.dbg_shader = shader_program::make("shaders/dbg.v"_,"shaders/dbg.f"_,FPTR(uniforms_dbg),a);
 
-	LOG_DEBUG_F("GL version : %", ret.version);
-	LOG_DEBUG_F("GL renderer: %", ret.renderer);
-	LOG_DEBUG_F("GL vendor  : %", ret.vendor);
+	LOG_DEBUG_F("GL: %", ret.info);
 
 	return ret;
 }
@@ -618,8 +616,9 @@ void ogl_manager::destroy() { PROF
 	dbg_shader.destroy();
 	textures.destroy();
 	commands.destroy();
+	info.destroy();
 
-	check_ogl_leaked_handles();
+	check_leaked_handles();
 } 
 
 texture_id ogl_manager::add_texture_from_font(asset* font, texture_wrap wrap, bool pixelated) { PROF
@@ -971,10 +970,59 @@ void debug_proc(gl_debug_source glsource, gl_debug_type gltype, GLuint id, gl_de
 	}
 }
 
-void ogl_load_global_funcs() { PROF
+ogl_info ogl_info::make(allocator* a) { PROF
 
-	#define GL_IS_LOAD(name) name = (glIs_t)global_api->platform_get_glproc(#name##_);
-	#define GL_LOAD(name) name = (name##_t)global_api->platform_get_glproc(#name##_);
+	ogl_info ret;
+
+	ret.version  = string::from_c_str((char*)glGetString(gl_info::version));
+	ret.renderer = string::from_c_str((char*)glGetString(gl_info::renderer));
+	ret.vendor   = string::from_c_str((char*)glGetString(gl_info::vendor));
+	
+	ret.shader_version = string::from_c_str((char*)glGetString(gl_info::shading_language_version));
+	
+	ret.extensions = vector<string>::make(128, a);
+
+	i32 num_extensions = 0;
+	glGetIntegerv(gl_get::num_extensions, &num_extensions);
+
+	for(i32 i = 0; i < num_extensions; i++) {
+
+		string ext = string::from_c_str((char*)glGetStringi(gl_info::extensions, i));
+		ret.extensions.push(ext);
+	}
+
+	glGetIntegerv(gl_get::major_version, &ret.major);
+	glGetIntegerv(gl_get::minor_version, &ret.minor);
+	glGetIntegerv(gl_get::max_texture_size, &ret.max_texture_size);
+	glGetIntegerv(gl_get::max_array_texture_layers, &ret.max_texture_layers);	
+
+	return ret;
+}
+
+void ogl_manager::check_version_and_extensions() {
+
+	bool good = true;
+
+	good = good && info.major >= 3 && info.minor >= 3;
+
+	if(good) {
+		LOG_INFO("OpenGL features supported!");
+	} else {
+		LOG_FATAL_F("Unsupported OpenGL features - info: %", info);
+	}
+}
+
+void ogl_info::destroy() { PROF
+
+	extensions.destroy();
+}
+
+void ogl_manager::load_global_funcs() { PROF
+
+	#define GL_IS_LOAD(name) name = (glIs_t)global_api->platform_get_glproc(#name##_); \
+							 if(!name) LOG_WARN_F("Failed to load GL function %", #name##_);
+	#define GL_LOAD(name) name = (name##_t)global_api->platform_get_glproc(#name##_); \
+						  if(!name) LOG_WARN_F("Failed to load GL function %", #name##_);
 
 	GL_IS_LOAD(glIsTexture);
 	GL_IS_LOAD(glIsBuffer);
@@ -1017,6 +1065,14 @@ void ogl_load_global_funcs() { PROF
 	GL_LOAD(glVertexAttribPointer);
 	GL_LOAD(glEnableVertexAttribArray);
 	GL_LOAD(glGetShaderSource);
+	
+	GL_LOAD(glGetStringi);
+	GL_LOAD(glGetInteger64v);
+	GL_LOAD(glGetBooleani_v);
+	GL_LOAD(glGetDoublei_v);
+	GL_LOAD(glGetFloati_v);
+	GL_LOAD(glGetIntegeri_v);
+	GL_LOAD(glGetInteger64i_v);
 
 	#undef GL_LOAD
 	#undef GL_IS_LOAD
@@ -1027,7 +1083,7 @@ void ogl_load_global_funcs() { PROF
 	glDebugMessageControl(gl_debug_source::dont_care, gl_debug_type::dont_care, gl_debug_severity::dont_care, 0, null, gl_bool::_true);
 }
 
-void check_ogl_leaked_handles() {
+void ogl_manager::check_leaked_handles() {
 
 	#define GL_CHECK(type) if(glIs##type(i) == gl_bool::_true) { LOG_WARN_F("Leaked OpenGL handle % of type %", i, #type##_); leaked = true;}
 

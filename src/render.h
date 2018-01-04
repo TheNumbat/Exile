@@ -1,8 +1,6 @@
 
 #pragma once
 
-void ogl_load_global_funcs();
-void check_ogl_leaked_handles();
 v2 size_text(asset* font, string text_utf8, f32 point);
 
 typedef i32 texture_id;
@@ -177,23 +175,36 @@ struct draw_context {
 	shader_program shader;
 };
 
+struct ogl_info {
+	i32 major = 1, minor = 1;
+	string vendor, renderer, version, shader_version;
+	vector<string> extensions;
+
+	// some convenience
+	i32 max_texture_size = 0, max_texture_layers = 0;
+
+	static ogl_info make(allocator* a);
+	void destroy();
+};
+
 struct ogl_manager {
 	map<texture_id, texture> 			   		textures;
 	map<render_command_type, draw_context> 		commands;
 
+	shader_program dbg_shader;
+	ogl_info info;
+
 	texture_id 			next_texture_id = 1;
 	
-	shader_program dbg_shader;
-
 	allocator* alloc = null;
-	string version;
-	string renderer;
-	string vendor;
 
 	static ogl_manager make(allocator* a);
 	void destroy();
 
 	void try_reload_programs();
+	void check_version_and_extensions();
+	void load_global_funcs();
+	void check_leaked_handles();
 
 	void add_command_ctx(render_command_type type, _FPTR* buffers, _FPTR* run, string v, string f, _FPTR* uniforms);
 	draw_context* get_command_ctx(render_command_type type);

@@ -29,7 +29,7 @@ struct Type_ptr_info {
 struct Type_func_info {
 	string 		signature;
 	type_id 	return_type			= 0;
-	type_id 	param_types[32] 	= {};
+	type_id 	param_types[16] 	= {};
 	u32 		param_count 		= 0;
 };
 struct Type_array_info {
@@ -45,14 +45,13 @@ struct Type_struct_info {
 };
 struct Type_enum_info {
 	type_id 	base_type			= 0;
-	string 		member_names[128];
-	i64			member_values[128] 	= {};
+	string 		member_names[256];				// NOTE(max): monkaS this is wayyy to big
+	i64			member_values[256] 	= {};
 	u32 		member_count		= 0;
 };
 struct Type_string_info {};
 
 // TODO(max): reduce memory footprint; Type_enum_info takes up way too much space
-// 			  currently 3128 bytes / _type_info, type_table size is at least 3MB
 
 struct _type_info {
 	Type type_type 	= Type::_unkown;

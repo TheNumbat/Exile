@@ -418,7 +418,7 @@ void output_enum(ofstream& fout, const enum_def& e) {
 	auto& name = e.name;
 	auto type = str(clang_getTypeSpelling(e.underlying));
 
-	if(e.members.size() > 128) {
+	if(e.members.size() > 256) {
 		cout << "enum " << name << " has too many members!" << endl;
 		return;
 	}

@@ -68,7 +68,6 @@ EXPORT game_state* start_up(platform_api* api) {
 	CHECKED(platform_create_window, &state->window, "Exile"_, 1280, 720);
 
 	LOG_INFO("Setting up OpenGL...");
-	ogl_load_global_funcs();
 	state->ogl_a = MAKE_PLATFORM_ALLOCATOR("ogl");
 	state->ogl = ogl_manager::make(&state->ogl_a);
 
@@ -195,7 +194,7 @@ EXPORT void on_reload(platform_api* api, game_state* state) {
 
 	begin_thread("main"_, &state->suppressed_platform_allocator);
 
-	ogl_load_global_funcs();
+	state->ogl.load_global_funcs();
 
 	state->evt.start(); // NOTE(max): needed to reset platform function pointer pointing into the game DLL
 	state->log.start();
