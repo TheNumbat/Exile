@@ -1313,6 +1313,8 @@ platform_error win32_create_window(platform_window* window, string title, u32 wi
 	TRY_VERSION(2, 1);
 	TRY_VERSION(2, 0);
 
+#undef TRY_VERSION
+
 	if(window->gl_context == null) {
 		ret.good = false;
 		ret.error = GetLastError();
