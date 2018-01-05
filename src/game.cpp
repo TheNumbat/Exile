@@ -94,10 +94,7 @@ EXPORT game_state* start_up(platform_api* api) {
 
 EXPORT bool main_loop(game_state* state) {
 
-	dbg_msg msg;
-	msg.type = dbg_msg_type::begin_frame;
-	msg.context = CONTEXT;
-	POST_MSG(msg);
+	BEGIN_FRAME();
 
 	glClearColor(0.8f, 0.8f, 0.8f, 1.0f);
 	glClear((GLbitfield)gl_clear::color_buffer_bit | (GLbitfield)gl_clear::depth_buffer_bit);
@@ -124,8 +121,7 @@ EXPORT bool main_loop(game_state* state) {
 	}
 #endif
 
-	msg.type = dbg_msg_type::end_frame;
-	POST_MSG(msg);
+	END_FRAME();
 	state->dbg.collate();
 
 	return state->running;

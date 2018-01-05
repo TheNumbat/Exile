@@ -11,6 +11,20 @@
 #define POST_MSG(m) {PUSH_PROFILE(false) {(m).time = global_api->platform_get_perfcount(); this_thread_data.dbg_msgs.push(m);} POP_PROFILE();}
 #endif
 
+#define PROF_SEC(n) _prof_sec(n, CONTEXT);
+#define PROF_SEC_END() _prof_sec_end();
+
+#define BEGIN_FRAME() { \
+	dbg_msg msg; \
+	msg.type = dbg_msg_type::begin_frame; \
+	POST_MSG(msg); \
+}
+#define END_FRAME() { \
+	dbg_msg msg; \
+	msg.type = dbg_msg_type::end_frame; \
+	POST_MSG(msg); \
+}
+
 typedef platform_perfcount timestamp;
 
 struct func_profile_node {
@@ -88,31 +102,24 @@ struct dbg_msg_sem_wait {
 	platform_semaphore* sem = null;
 };
 
-struct dbg_msg_section_begin {
-	string sec;
-};
-
-struct dbg_msg_section_end {
-
-};
+struct dbg_msg_section_begin {};
+struct dbg_msg_section_end {};
 
 struct dbg_msg {
 	dbg_msg_type type = dbg_msg_type::none;
 	timestamp time = 0;
 	code_context context;
 	union {
-		dbg_msg_begin_frame   begin_frame;
-		dbg_msg_end_frame 	  end_frame;
+		dbg_msg_begin_frame   begin_frame;	// done
+		dbg_msg_end_frame 	  end_frame;	// done
 		dbg_msg_allocate      allocate;
 		dbg_msg_reallocate    reallocate;
 		dbg_msg_free          free;
-		dbg_msg_enter_func    enter_func;
-		dbg_msg_exit_func     exit_func;
+		dbg_msg_enter_func    enter_func;	// done
+		dbg_msg_exit_func     exit_func;	// done
 		dbg_msg_mut_lock      mut_lock;
 		dbg_msg_mut_unlock    mut_unlock;
 		dbg_msg_sem_wait      sem_wait;
-		dbg_msg_section_begin section_begin;
-		dbg_msg_section_end   section_end;
 	};
 	dbg_msg() {};
 };
@@ -133,7 +140,6 @@ enum class prof_sort_type : u8 {
 
 struct dbg_manager {
 
-	// TODO(max): UI elements for these
 	bool frame_pause = true;
 	i32 selected_frame = 0;
 	platform_thread_id selected_thread;
@@ -165,6 +171,9 @@ struct dbg_manager {
 
 	void collate();
 };
+
+void _prof_sec(string name, code_context context);
+void _prof_sec_end();
 
 CALLBACK void dbg_add_log(log_message* msg, void*);
 

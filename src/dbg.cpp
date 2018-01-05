@@ -306,3 +306,22 @@ bool prof_sort_calls(func_profile_node* l, func_profile_node* r) {
 
 	return r->calls <= l->calls;
 }
+
+void _prof_sec(string name, code_context context) { 
+	if(this_thread_data.profiling) {
+		dbg_msg m;
+		m.type = dbg_msg_type::enter_func;
+		m.context = context;
+		m.context.function = name;
+	
+		POST_MSG(m);
+	}
+}
+
+void _prof_sec_end() { 
+	if(this_thread_data.profiling) {
+		dbg_msg m;
+		m.type = dbg_msg_type::exit_func;
+		POST_MSG(m);
+	}
+}

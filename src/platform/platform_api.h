@@ -231,7 +231,6 @@ enum class cursors : u8 {
 	hourglass
 };
 
-// TODO(max): cursors
 enum class platform_windowop : u8 {
 	none,
 	resized,	// WM_SIZE
