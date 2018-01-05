@@ -25,12 +25,10 @@ all includes:
 	#include <typeinfo>
 
 priority:
-	GUI
+	gui_int_slider
+	allocation/threading profiling
+	profiler graphs/actually good layout-ing?
 		Columns
-		Actually good UI rendering 
-		Prof
-			graphs for everything
-			allocations, threading/waiting
 	voxel rendering methods
 	update features/readme
 
