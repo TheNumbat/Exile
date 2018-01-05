@@ -564,6 +564,22 @@ void gui_int_slider(string text, i32* data, i32 low, i32 high) { PROF
 template<typename V>
 void gui_combo(string name, map<string,V> options, V* data) { PROF
 
+	if(gui_node(name)) {
+
+		gui_indent();
+		FORMAP(it, options) {
+			if(gui_button(it->key)) {
+				
+				guiid id;
+				id.base = *ggui->current->id_hash_stack.top();
+				id.name = name;
+				ggui->current->state_data.get(id)->b = false;
+
+				*data = it->value;
+			}
+		}
+		gui_unindent();
+	}
 }
 
 bool gui_carrot_toggle(string name, bool initial, bool* toggleme) { PROF

@@ -98,7 +98,7 @@ void dbg_manager::UI() { PROF
 	FORMAP(it, dbg_cache) {
 		threads.insert(it->value.name, it->key);
 	}
-	gui_combo("Thread:"_, threads, &selected_thread);
+	gui_combo("Select Thread"_, threads, &selected_thread);
 	threads.destroy();
 
 	global_api->platform_aquire_mutex(&cache_mut);
