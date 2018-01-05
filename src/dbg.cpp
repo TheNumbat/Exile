@@ -141,7 +141,7 @@ void dbg_manager::setup_log(log_manager* log) { PROF
 	log->add_custom_output(dbg_log);
 }
 
-void dbg_manager::register_thread(string name, u32 frames, u32 frame_size) { PROF
+void dbg_manager::register_thread(u32 frames, u32 frame_size) { PROF
 
 	global_api->platform_aquire_mutex(&cache_mut);
 	
@@ -149,7 +149,7 @@ void dbg_manager::register_thread(string name, u32 frames, u32 frame_size) { PRO
 	thread.frame_buf_size = frames;
 	thread.frame_size = frame_size;
 	thread.frames = queue<frame_profile>::make(frames, alloc);
-	thread.name = name;
+	thread.name = this_thread_data.name;
 
 	global_dbg->dbg_cache.insert(global_api->platform_this_thread_id(), thread);
 	global_api->platform_release_mutex(&cache_mut);

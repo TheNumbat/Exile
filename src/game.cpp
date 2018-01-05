@@ -20,7 +20,7 @@ EXPORT game_state* start_up(platform_api* api) {
 	state->dbg_a = MAKE_PLATFORM_ALLOCATOR("dbg");
 	state->dbg_a.suppress_messages = true;
 	state->dbg = dbg_manager::make(&state->dbg_a);
-	state->dbg.register_thread("main"_, 60, 32768);
+	state->dbg.register_thread(60, 32768);
 
 	dbg_msg m;
 	m.type = dbg_msg_type::begin_frame;

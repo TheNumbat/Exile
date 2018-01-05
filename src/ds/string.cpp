@@ -82,6 +82,23 @@ string string::makef(string fmt, Targs... args) { PROF
 	return ret;
 }
 
+template<typename... Targs>
+string string::makef(string fmt, allocator* a, Targs... args) { PROF
+
+	string ret;
+	u32 len = size_stringf(fmt, args...);
+	ret 	= string::make(len, a);
+	ret.len = len;
+	ret.c_str[len - 1] = 0;
+
+	u32 used = _string_printf(ret, 0, fmt, false, args...);
+
+	LOG_DEBUG_ASSERT(used == len - 1);
+	(void)used;
+
+	return ret;
+}
+
 template<typename T, typename... Targs> 
 inline T& get_pack_first(T& val, Targs... args) { PROF
 	return val;

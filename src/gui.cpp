@@ -559,6 +559,7 @@ bool gui_checkbox(string name, bool* data) { PROF
 
 void gui_int_slider(string text, i32* data, i32 low, i32 high) { PROF
 
+
 }
 
 template<typename V>
@@ -674,8 +675,8 @@ void render_carrot(gui_window* win, v2 pos, bool active) { PROF
 
 void render_checkbox(gui_window* win, r2 pos, bool active) { PROF
 
-	color out = V4b(ggui->style.win_scroll_back, win->opacity);
-	color in  = V4b(ggui->style.win_scroll_bar, win->opacity);
+	color out = V4b(ggui->style.win_scroll_back, 255);
+	color in  = V4b(ggui->style.win_scroll_bar, 255);
 
 	win->shape_mesh.push_rect(pos, out);
 

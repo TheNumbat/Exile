@@ -30,6 +30,7 @@ struct NOREFLECT string { // no-reflect because hard-coded
 
 	template<typename... Targs> static string makef(string fmt, Targs... args);
 	template<typename... Targs> static string makef(u32 len, string fmt, Targs... args);
+	template<typename... Targs> static string makef(string fmt, allocator* a, Targs... args);
 
 	void destroy(allocator* a);
 	void destroy_plt();

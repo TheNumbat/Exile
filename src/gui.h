@@ -17,8 +17,8 @@ enum class window_flags : gui_window_flags {
 	nowininput	= noresize | nomove | nohide,
 	nohead		= 1<<4 | nohide | nomove,
 	noback		= 1<<5 | noresize,
-	horzscroll	= 1<<7,
-	autosize	= 1<<8,
+	horzscroll	= 1<<7,										// TODO(max)
+	autosize	= 1<<8,										// TODO(max)
 };
 
 struct gui_input_state {
