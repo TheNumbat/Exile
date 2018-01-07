@@ -104,12 +104,12 @@ void dbg_manager::UI() { PROF
 	global_api->platform_aquire_mutex(&cache_mut);
 	thread_profile* thread = dbg_cache.get(selected_thread);
 	
-	gui_int_slider("Frame:"_, &selected_frame, 0, thread->frame_buf_size);
+	gui_int_slider("Frame: "_, &selected_frame, 1, thread->frame_buf_size);
 	gui_enum_buttons("Sort By: "_, &prof_sort);
 
 	if(thread->frames.len()) {
 		
-		frame_profile* frame = thread->frames.get(selected_frame);
+		frame_profile* frame = thread->frames.get(selected_frame - 1);
 		gui_text(string::makef("Frame %"_, frame->number));
 
 		profile_recurse(frame->heads);

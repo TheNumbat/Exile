@@ -94,16 +94,13 @@ struct gui_window {
 	v2  click_offset, scroll_pos, previous_content_size;
 	f32 opacity = 1.0f;
 	u16 flags 	= 0;
-	u32 z 		= 1, title_tris = 0, indent_level = 0; 
+	u32 z 		= 1, indent_level = 0;
+	u32 title_verts = 0, title_elements = 0; 
 
 	bool active = true;
 	bool can_scroll = false;
 	win_input_state input = win_input_state::none;
 	gui_cursor_mode cursor_mode = gui_cursor_mode::y;
-
-	// TODO(max): these should be style stack parameters
-	bool override_active = false;
-	bool override_seen = false;
 
 	stack<u32> id_hash_stack;
 	map<guiid, gui_state_data> state_data;
@@ -124,6 +121,7 @@ struct gui_window {
 	r2 get_real_body();
 	r2 get_real_top();
 	r2 get_real();
+	r2 get_title();
 	void update_input();
 	void clamp_scroll();
 	bool visible(r2 rect);
@@ -145,6 +143,7 @@ struct _gui_style {
 	v2 min_win_size		= V2f(75, 50);
 
 	v2 carrot_size 	 	= V2f(10, 10);
+	f32 slider_w 		= 150.0f;
 
 	color3 win_back		= V3b(34, 43, 47);
 	color3 win_top		= V3b(74, 79, 137);
@@ -217,11 +216,10 @@ void gui_unindent();
 u32  gui_indent_level();
 void gui_same_line();
 void gui_left_cursor();
+bool gui_in_win();
 
 void gui_push_id(u32 id);
 void gui_pop_id();
-
-bool gui_occluded();
 
 bool gui_begin(string name, r2 first = R2f(40,40,0,0), gui_window_flags flags = 0, f32 first_alpha = 0);
 void gui_end();
@@ -232,7 +230,7 @@ bool gui_carrot_toggle(string name, bool initial = false, bool* toggleme = null)
 bool gui_button(string text);
 
 bool gui_checkbox(string name, bool* data);
-void gui_int_slider(string text, i32* data, i32 low, i32 high);
+i32  gui_int_slider(string text, i32* data, i32 low, i32 high);
 
 template<typename V>
 void gui_combo(string name, map<string,V> options, V* data);
@@ -240,10 +238,12 @@ void gui_combo(string name, map<string,V> options, V* data);
 template<typename enumer>
 void gui_enum_buttons(string name, enumer* val);
 
+void render_title(gui_window* win, v2 pos, string title);
 void render_windowhead(gui_window* win);
 void render_windowbody(gui_window* win);
 void render_carrot(gui_window* win, v2 pos, bool active);
 void render_checkbox(gui_window* win, r2 pos, bool active);
+void render_slider(gui_window* win, r2 rect, i32 rel, i32 max);
 
 void _carrot_toggle_background(bool* data);
 

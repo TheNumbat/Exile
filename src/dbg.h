@@ -141,7 +141,7 @@ enum class prof_sort_type : u8 {
 struct dbg_manager {
 
 	bool frame_pause = true;
-	i32 selected_frame = 0;
+	i32 selected_frame = 1;
 	platform_thread_id selected_thread;
 
 	prof_sort_type prof_sort = prof_sort_type::name;

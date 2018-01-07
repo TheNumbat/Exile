@@ -1,4 +1,5 @@
 
+
 CALLBACK void uniforms_mesh_2d_col(shader_program* prog, render_command* cmd, render_command_list* rcl) { PROF
 
 	GLint loc = glGetUniformLocation(prog->handle, "transform");
@@ -127,8 +128,10 @@ CALLBACK void run_mesh_2d_col(render_command* cmd) { PROF
 	glBindVertexArray(m->vao);
 
 	glDisable(gl_capability::depth_test);
-	glDrawElements(gl_draw_mode::triangles, cmd->num_tris ? cmd->num_tris * 3 : m->elements.size * 3, gl_index_type::unsigned_int, (void*)(u64)(cmd->start_tri * 3));
 
+	u32 num_tris = ((cmd->num_tris ? cmd->num_tris : m->elements.size) - cmd->start_tri) * 3;
+	glDrawElementsBaseVertex(gl_draw_mode::triangles, num_tris, gl_index_type::unsigned_int, (void*)(u64)(0), cmd->offset);
+	
 	glBindVertexArray(0);
 }
 
@@ -139,7 +142,9 @@ CALLBACK void run_mesh_2d_tex(render_command* cmd) { PROF
 	glBindVertexArray(m->vao);
 
 	glDisable(gl_capability::depth_test);
-	glDrawElements(gl_draw_mode::triangles, cmd->num_tris ? cmd->num_tris * 3 : m->elements.size * 3, gl_index_type::unsigned_int, (void*)(u64)(cmd->start_tri * 3));
+
+	u32 num_tris = ((cmd->num_tris ? cmd->num_tris : m->elements.size) - cmd->start_tri) * 3;
+	glDrawElementsBaseVertex(gl_draw_mode::triangles, num_tris, gl_index_type::unsigned_int, (void*)(u64)(0), cmd->offset);
 
 	glBindVertexArray(0);
 }
@@ -151,7 +156,9 @@ CALLBACK void run_mesh_2d_tex_col(render_command* cmd) { PROF
 	glBindVertexArray(m->vao);
 
 	glDisable(gl_capability::depth_test);
-	glDrawElements(gl_draw_mode::triangles, cmd->num_tris ? cmd->num_tris * 3 : m->elements.size * 3, gl_index_type::unsigned_int, (void*)(u64)(cmd->start_tri * 3));
+
+	u32 num_tris = ((cmd->num_tris ? cmd->num_tris : m->elements.size) - cmd->start_tri) * 3;
+	glDrawElementsBaseVertex(gl_draw_mode::triangles, num_tris, gl_index_type::unsigned_int, (void*)(u64)(0), cmd->offset);
 
 	glBindVertexArray(0);
 }
@@ -163,7 +170,9 @@ CALLBACK void run_mesh_3d_tex(render_command* cmd) { PROF
 	glBindVertexArray(m->vao);
 
 	glEnable(gl_capability::depth_test);
-	glDrawElements(gl_draw_mode::triangles, cmd->num_tris ? cmd->num_tris * 3 : m->elements.size * 3, gl_index_type::unsigned_int, (void*)(u64)(cmd->start_tri * 3));
+
+	u32 num_tris = ((cmd->num_tris ? cmd->num_tris : m->elements.size) - cmd->start_tri) * 3;
+	glDrawElementsBaseVertex(gl_draw_mode::triangles, num_tris, gl_index_type::unsigned_int, (void*)(u64)(0), cmd->offset);
 
 	glBindVertexArray(0);
 }

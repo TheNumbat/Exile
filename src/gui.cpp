@@ -184,14 +184,16 @@ void gui_manager::end_frame(platform_window* win, ogl_manager* ogl) { PROF
 			cmd.scissor = it->value.get_real_content();
 			rcl.add_command(cmd);
 		}
-		{
+		if(it->value.title_verts) {
 			render_command cmd = render_command::make(render_command_type::mesh_2d_tex_col, &it->value.text_mesh, it->value.z);
+			cmd.num_tris = it->value.title_elements;
 			cmd.texture = it->value.font->texture;
-			cmd.num_tris = it->value.title_tris;
 			rcl.add_command(cmd);
 		}
 		{
 			render_command cmd = render_command::make(render_command_type::mesh_2d_tex_col, &it->value.text_mesh, it->value.z);
+			cmd.offset = it->value.title_verts;
+			cmd.start_tri = it->value.title_elements;
 			cmd.texture = it->value.font->texture;
 			cmd.scissor = it->value.get_real_content();
 			rcl.add_command(cmd);
@@ -283,7 +285,6 @@ void gui_window::update_input() { PROF
 }
 
 bool gui_window::visible(r2 r) { PROF
-	if(override_seen) return true;
 	return intersect(get_real_content(), r);
 }
 
@@ -295,6 +296,9 @@ v2 gui_window_dim() { PROF
 	return V2f(ggui->window->w, ggui->window->h);
 }
 
+r2 gui_window::get_title() {
+	return R2(rect.xy, V2(rect.w, ggui->style.font_size + ggui->style.title_padding));
+}
 
 void gui_set_offset(v2 offset) { PROF
 	ggui->current->cursor = ggui->current->rect.xy + offset;
@@ -331,21 +335,22 @@ void gui_pop_id() { PROF
 	ggui->current->id_hash_stack.pop();
 }
 
-bool gui_occluded() { PROF
+bool gui_in_win() { PROF
 	FORMAP(it, ggui->windows) {
 		if(&it->value != ggui->current && it->value.z > ggui->current->z) {
 			if(it->value.active && inside(it->value.rect, ggui->input.mousepos)) {
-				return true;
+				return false;
 			} else {
-				r2 title_rect = R2(it->value.rect.xy, V2(it->value.rect.w, ggui->style.font_size + ggui->style.title_padding));
-				title_rect = title_rect;
+				r2 title_rect = it->value.get_title();
 				if(inside(title_rect, ggui->input.mousepos)) {
-					return true;
+					return false;
 				}
 			}
 		}
 	}
-	return false;
+
+	r2 rect = ggui->current->active ? ggui->current->rect : ggui->current->get_title();
+	return inside(rect, ggui->input.mousepos);
 }
 
 bool gui_begin(string name, r2 size, gui_window_flags flags, f32 first_alpha) { PROF
@@ -378,14 +383,7 @@ bool gui_begin(string name, r2 size, gui_window_flags flags, f32 first_alpha) { 
 		if((window->flags & (u16)window_flags::nohead) != (u16)window_flags::nohead) {
 			render_windowhead(window);
 
-			v2 title_pos = V2(3.0f, -1.0f);
-			gui_set_offset(title_pos);
-			window->override_active = true;
-			window->override_seen = true;
-			gui_text(name);
-			window->title_tris = window->text_mesh.elements.size;
-			window->override_active = false;
-			window->override_seen = false;
+			render_title(window, V2(3.0f, -1.0f), name);
 
 			window->header_size = V2(0.0f, ggui->style.font_size + ggui->style.title_padding);
 		}
@@ -402,7 +400,7 @@ bool gui_begin(string name, r2 size, gui_window_flags flags, f32 first_alpha) { 
 	r2 real_body = window->get_real_body();
 	r2 real_content = window->get_real_content();
 
-	bool occluded = gui_occluded();
+	bool in_win = gui_in_win();
 	if((window->flags & (u16)window_flags::nohide) != (u16)window_flags::nohide) {
 
 		v2 carrot_pos = V2(window->rect.w - carrot_x_diff, ggui->style.carrot_size.y / 2.0f);
@@ -410,7 +408,7 @@ bool gui_begin(string name, r2 size, gui_window_flags flags, f32 first_alpha) { 
 		gui_set_offset(carrot_pos);
 		_carrot_toggle_background(&window->active);
 
-		if(!occluded && inside(real_top, ggui->input.mousepos)) {
+		if(in_win && inside(real_top, ggui->input.mousepos)) {
 
 			if(ggui->active == gui_active_state::none && ggui->input.ldbl) {
 				
@@ -423,7 +421,7 @@ bool gui_begin(string name, r2 size, gui_window_flags flags, f32 first_alpha) { 
 	}
 	if((window->flags & (u16)window_flags::nomove) != (u16)window_flags::nomove) {
 
-		if(!occluded && inside(real_top, ggui->input.mousepos)) {
+		if(in_win && inside(real_top, ggui->input.mousepos)) {
 
 			if(ggui->active == gui_active_state::none && ggui->input.lclick) {
 
@@ -439,7 +437,7 @@ bool gui_begin(string name, r2 size, gui_window_flags flags, f32 first_alpha) { 
 
 		v2 resize_tab = ggui->style.resize_tab;
 		r2 resize_rect = R2(real_rect.xy + real_rect.wh - resize_tab, resize_tab);
-		if(!occluded && inside(resize_rect, ggui->input.mousepos)) {
+		if(in_win && inside(resize_rect, ggui->input.mousepos)) {
 
 			if(ggui->active == gui_active_state::none && ggui->input.lclick) {
 
@@ -453,7 +451,7 @@ bool gui_begin(string name, r2 size, gui_window_flags flags, f32 first_alpha) { 
 	}
 	if((window->flags & (u16)window_flags::noback) != (u16)window_flags::noback && window->active) {
 		
-		if(!occluded && inside(real_body, ggui->input.mousepos)) {
+		if(in_win && inside(real_body, ggui->input.mousepos)) {
 			if(ggui->active == gui_active_state::none && ggui->input.lclick) {
 				window->z = ggui->last_z++;
 			}
@@ -463,13 +461,13 @@ bool gui_begin(string name, r2 size, gui_window_flags flags, f32 first_alpha) { 
 		
 		r2 scroll_bar = R2(real_body.x + real_body.w, real_body.y, ggui->style.win_scroll_w, real_body.h);
 
-		if(!occluded && ggui->input.scroll && (inside(real_body, ggui->input.mousepos) || inside(scroll_bar, ggui->input.mousepos))) {
+		if(in_win && ggui->input.scroll && (inside(real_body, ggui->input.mousepos) || inside(scroll_bar, ggui->input.mousepos))) {
 			
 			window->scroll_pos.y += ggui->input.scroll * ggui->style.win_scroll_speed;
 			window->clamp_scroll();
 		}
 
-		if(!occluded && inside(scroll_bar, ggui->input.mousepos)) {
+		if(in_win && inside(scroll_bar, ggui->input.mousepos)) {
 			if(ggui->active == gui_active_state::none && ggui->input.lclick) {
 				
 				window->z = ggui->last_z++;
@@ -524,7 +522,7 @@ void gui_left_cursor() { PROF
 bool gui_checkbox(string name, bool* data) { PROF
 
 	gui_window* win = ggui->current;
-	if(!win->active && !win->override_active) return *data;
+	if(!win->active) return *data;
 
 	guiid id;
 	id.base = *win->id_hash_stack.top();
@@ -542,7 +540,7 @@ bool gui_checkbox(string name, bool* data) { PROF
 		return *data;
 	}
 
-	if(!gui_occluded() && inside(R2(pos, size), ggui->input.mousepos)) {
+	if(gui_in_win() && inside(R2(pos, size), ggui->input.mousepos)) {
 
 		if(ggui->active == gui_active_state::none && (ggui->input.lclick || ggui->input.ldbl)) {
 
@@ -557,9 +555,62 @@ bool gui_checkbox(string name, bool* data) { PROF
 	return *data;
 }
 
-void gui_int_slider(string text, i32* data, i32 low, i32 high) { PROF
+i32 gui_int_slider(string text, i32* data, i32 low, i32 high) { PROF
 
+	gui_window* win = ggui->current;
+	if(!win->active) return false;
 
+	guiid id;
+	id.base = *win->id_hash_stack.top();
+	id.name = text;
+
+	string l = string::makef("%"_, low);
+	string h = string::makef("%"_, high);
+
+	v2 og_pos = win->cursor;
+
+	gui_text(text);
+	gui_same_line();
+	gui_text(l);
+	gui_same_line();
+
+	f32 point = ggui->style.font_size;
+	v2 pos = win->cursor + V2(2.0f, 2.0f);
+	v2 size = V2(ggui->style.slider_w, point);
+	r2 rect = R2(pos, size);
+	
+	gui_add_offset(size);
+
+	if(!win->visible(rect)) {
+		win->last_offset = win->cursor - og_pos;
+		gui_left_cursor();
+		return *data;
+	}
+
+	if(gui_in_win() && inside(rect, ggui->input.mousepos)) {
+		
+		if(ggui->active == gui_active_state::none && (ggui->input.lclick || ggui->input.ldbl)) {
+
+			// OWO
+			ggui->active_id = id;
+			ggui->active = gui_active_state::active;
+		}
+	}
+
+	gui_same_line();
+	gui_add_offset(V2(3.0f, 0.0f));
+
+	render_slider(ggui->current, rect, *data - low, high - low);
+
+	gui_same_line();
+	gui_text(h);
+
+	win->last_offset = win->cursor - og_pos;
+	gui_left_cursor();
+
+	l.destroy();
+	h.destroy();
+	return *data;
 }
 
 template<typename V>
@@ -586,7 +637,7 @@ void gui_combo(string name, map<string,V> options, V* data) { PROF
 bool gui_carrot_toggle(string name, bool initial, bool* toggleme) { PROF
 
 	gui_window* win = ggui->current;
-	if(!win->active && !win->override_active) return initial;
+	if(!win->active) return initial;
 
 	guiid id;
 	id.base = *win->id_hash_stack.top();
@@ -615,7 +666,7 @@ bool gui_carrot_toggle(string name, bool initial, bool* toggleme) { PROF
 		return data->b;
 	}
 
-	if(!gui_occluded() && inside(R2(pos, size), ggui->input.mousepos)) {
+	if(gui_in_win() && inside(R2(pos, size), ggui->input.mousepos)) {
 
 		if(ggui->active == gui_active_state::none && (ggui->input.lclick || ggui->input.ldbl)) {
 
@@ -636,7 +687,6 @@ bool gui_carrot_toggle(string name, bool initial, bool* toggleme) { PROF
 void _carrot_toggle_background(bool* data) { PROF
 
 	gui_window* win = ggui->current;
-	if(!win->active && !win->override_active) return;
 
 	guiid id;
 	id.base = *win->id_hash_stack.top();
@@ -645,7 +695,7 @@ void _carrot_toggle_background(bool* data) { PROF
 	v2 pos = win->cursor;
 	v2 size = ggui->style.carrot_size;
 
-	if(!gui_occluded() && inside(R2(pos, size), ggui->input.mousepos)) {
+	if(gui_in_win() && inside(R2(pos, size), ggui->input.mousepos)) {
 
 		if(ggui->active == gui_active_state::none && (ggui->input.lclick || ggui->input.ldbl)) {
 
@@ -673,6 +723,14 @@ void render_carrot(gui_window* win, v2 pos, bool active) { PROF
 	}
 }
 
+void render_slider(gui_window* win, r2 rect, i32 rel, i32 max) { PROF
+
+	color out = V4b(ggui->style.win_scroll_back, 255);
+	color in  = V4b(ggui->style.win_scroll_bar, 255);
+
+	win->shape_mesh.push_rect(rect, out);
+}
+
 void render_checkbox(gui_window* win, r2 pos, bool active) { PROF
 
 	color out = V4b(ggui->style.win_scroll_back, 255);
@@ -692,7 +750,7 @@ template<typename enumer>
 void gui_enum_buttons(string name, enumer* val) { PROF
 
 	gui_window* win = ggui->current;
-	if(!win->active && !win->override_active) return;
+	if(!win->active) return;
 
 	guiid id;
 	id.base = *win->id_hash_stack.top();
@@ -724,7 +782,7 @@ void gui_enum_buttons(string name, enumer* val) { PROF
 bool gui_button(string text) { PROF
 
 	gui_window* win = ggui->current;
-	if(!win->active && !win->override_active) return false;
+	if(!win->active) return false;
 
 	guiid id;
 	id.base = *win->id_hash_stack.top();
@@ -740,7 +798,7 @@ bool gui_button(string text) { PROF
 		return ret;
 	}
 
-	if(!gui_occluded() && inside(R2(pos, size), ggui->input.mousepos)) {
+	if(gui_in_win() && inside(R2(pos, size), ggui->input.mousepos)) {
 		
 		if(ggui->active == gui_active_state::none && (ggui->input.lclick || ggui->input.ldbl)) {
 
@@ -757,7 +815,7 @@ bool gui_button(string text) { PROF
 bool gui_node(string text, bool* store) { PROF 
 
 	gui_window* win = ggui->current;
-	if(!win->active && !win->override_active) return false;
+	if(!win->active) return false;
 
 	guiid id;
 	id.base = *win->id_hash_stack.top();
@@ -793,7 +851,7 @@ bool gui_node(string text, bool* store) { PROF
 		return *data;
 	}
 
-	if(!gui_occluded() && inside(R2(pos, size), ggui->input.mousepos)) {
+	if(gui_in_win() && inside(R2(pos, size), ggui->input.mousepos)) {
 		
 		if(ggui->active == gui_active_state::none && (ggui->input.lclick || ggui->input.ldbl)) {
 
@@ -810,7 +868,7 @@ bool gui_node(string text, bool* store) { PROF
 void gui_text(string text) { PROF
 
 	gui_window* win = ggui->current;
-	if(!win->active && !win->override_active) return;
+	if(!win->active) return;
 
 	f32 point = ggui->style.font_size;
 	color c = WHITE;
@@ -819,10 +877,6 @@ void gui_text(string text) { PROF
 	v2 size = size_text(win->font->font, text, point);
 	gui_add_offset(size);
 
-	r2 content = win->get_real_content();
-	if(!win->override_seen && pos.y + point < content.y || pos.y > content.y + content.h) {
-		return;
-	}
 	if(!win->visible(R2(pos, size))) {
 		return;
 	}
@@ -837,6 +891,17 @@ void render_windowhead(gui_window* win) { PROF
 
 	r2 render = R2(r.x, r.y, r.w, pt);
 	win->background_mesh.push_rect(render, V4b(ggui->style.win_top, 255));
+}
+
+void render_title(gui_window* win, v2 pos, string title) { PROF
+
+	u32 vidx = win->text_mesh.vertices.size;
+	u32 eidx = win->text_mesh.elements.size;
+
+	win->text_mesh.push_text_line(win->font->font, title, win->rect.xy + pos, ggui->style.font_size, WHITE);
+	
+	win->title_verts = win->text_mesh.vertices.size - vidx;
+	win->title_elements = win->text_mesh.elements.size - eidx;
 }
 
 void render_windowbody(gui_window* win) { PROF

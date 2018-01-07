@@ -1065,6 +1065,7 @@ void ogl_manager::load_global_funcs() { PROF
 	GL_LOAD(glVertexAttribPointer);
 	GL_LOAD(glEnableVertexAttribArray);
 	GL_LOAD(glGetShaderSource);
+	GL_LOAD(glDrawElementsBaseVertex);
 	
 	GL_LOAD(glGetStringi);
 	GL_LOAD(glGetInteger64v);
