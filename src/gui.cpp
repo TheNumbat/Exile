@@ -592,7 +592,7 @@ i32 gui_int_slider(string text, i32* data, i32 low, i32 high) { PROF
 		if((ggui->active == gui_active_state::none && (ggui->input.lclick || ggui->input.ldbl)) ||
 		   (ggui->active == gui_active_state::active && ggui->active_id == id)) {
 
-			f32 bar_w = ggui->style.slider_ratio * rect.w;
+			f32 bar_w = max(1.0f / (high - low), ggui->style.min_slider_w);
 			f32 rel_pos = ggui->input.mousepos.x - rect.x;
 			
 			f32 bar_pos = clamp(rel_pos - bar_w / 2.0f, 0.0f, rect.w - bar_w);
@@ -733,12 +733,15 @@ void render_carrot(gui_window* win, v2 pos, bool active) { PROF
 
 void render_slider(gui_window* win, r2 rect, i32 rel, i32 max) { PROF
 
+
 	color out = V4b(ggui->style.win_scroll_back, 255);
 	color in  = V4b(ggui->style.win_scroll_bar, 255);
 
 	win->shape_mesh.push_rect(rect, out);
 
-	f32 bar_w = ggui->style.slider_ratio * rect.w;
+	if(!max) return;
+
+	f32 bar_w = max(1.0f / max, ggui->style.min_slider_w);
 	f32 bar_x = lerpf(rect.x, rect.x + rect.w - bar_w, (f32)rel / max);
 
 	r2 bar = R2(bar_x, rect.y + 2.0f, bar_w, rect.h - 4.0f);

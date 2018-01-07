@@ -144,7 +144,7 @@ struct _gui_style {
 
 	v2 carrot_size 	 	= V2f(10, 10);
 	f32 slider_w 		= 150.0f;
-	f32 slider_ratio	= 0.075f;
+	f32 min_slider_w	= 5.0f;
 
 	color3 win_back		= V3b(34, 43, 47);
 	color3 win_top		= V3b(74, 79, 137);
