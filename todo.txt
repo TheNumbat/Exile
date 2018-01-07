@@ -25,7 +25,6 @@ all includes:
 	#include <typeinfo>
 
 priority:
-	gui_int_slider
 	allocation/threading profiling
 	profiler graphs/actually good layout-ing?
 		Columns
