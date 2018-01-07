@@ -104,7 +104,7 @@ void dbg_manager::UI() { PROF
 	global_api->platform_aquire_mutex(&cache_mut);
 	thread_profile* thread = dbg_cache.get(selected_thread);
 	
-	gui_int_slider("Frame: "_, &selected_frame, 1, thread->frame_buf_size);
+	gui_int_slider("Buffer Position: "_, &selected_frame, 1, thread->frame_buf_size);
 	gui_enum_buttons("Sort By: "_, &prof_sort);
 
 	if(thread->frames.len()) {

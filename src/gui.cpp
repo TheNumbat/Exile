@@ -589,9 +589,17 @@ i32 gui_int_slider(string text, i32* data, i32 low, i32 high) { PROF
 
 	if(gui_in_win() && inside(rect, ggui->input.mousepos)) {
 		
-		if(ggui->active == gui_active_state::none && (ggui->input.lclick || ggui->input.ldbl)) {
+		if((ggui->active == gui_active_state::none && (ggui->input.lclick || ggui->input.ldbl)) ||
+		   (ggui->active == gui_active_state::active && ggui->active_id == id)) {
 
-			// OWO
+			f32 bar_w = ggui->style.slider_ratio * rect.w;
+			f32 rel_pos = ggui->input.mousepos.x - rect.x;
+			
+			f32 bar_pos = clamp(rel_pos - bar_w / 2.0f, 0.0f, rect.w - bar_w);
+			f32 ratio = bar_pos / (rect.w - bar_w);
+			
+			*data = (i32)lerpf((f32)low, (f32)high, ratio);
+		
 			ggui->active_id = id;
 			ggui->active = gui_active_state::active;
 		}
@@ -729,6 +737,13 @@ void render_slider(gui_window* win, r2 rect, i32 rel, i32 max) { PROF
 	color in  = V4b(ggui->style.win_scroll_bar, 255);
 
 	win->shape_mesh.push_rect(rect, out);
+
+	f32 bar_w = ggui->style.slider_ratio * rect.w;
+	f32 bar_x = lerpf(rect.x, rect.x + rect.w - bar_w, (f32)rel / max);
+
+	r2 bar = R2(bar_x, rect.y + 2.0f, bar_w, rect.h - 4.0f);
+
+	win->shape_mesh.push_rect(bar, in);
 }
 
 void render_checkbox(gui_window* win, r2 pos, bool active) { PROF
