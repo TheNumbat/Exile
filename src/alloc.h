@@ -13,6 +13,9 @@ struct allocator {
 	string name;
 };
 
+CALLBACK u32 hash_alloc(allocator a);
+bool operator==(allocator l, allocator r);
+
 #define PUSH_ALLOC(a)	_push_alloc(a);
 #define POP_ALLOC() 	_pop_alloc();
 #define CURRENT_ALLOC()	_current_alloc()
@@ -26,11 +29,7 @@ inline void _pop_alloc();
 inline void _push_alloc(allocator* a);
 inline allocator* _current_alloc();
 
-struct platform_allocator : public allocator {
-	void* (*platform_allocate)(u64 bytes) 				= null;
-	void  (*platform_free)(void* mem)	  				= null;
-	void* (*platform_reallocate)(void* mem, u64 bytes)	= null;
-};
+struct platform_allocator : public allocator {};
 
 CALLBACK void* platform_allocate(u64 bytes, allocator* this_, code_context context);
 CALLBACK void  platform_free(void* mem, allocator* this_, code_context context);

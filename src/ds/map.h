@@ -9,6 +9,7 @@ const f32 MAP_MAX_LOAD_FACTOR = 0.9f;
 // from Thomas Wang, http://burtleburtle.net/bob/hash/integer.html
 CALLBACK u32 hash_u32(u32 key);
 CALLBACK u32 hash_u64(u64 key);
+CALLBACK u32 hash_ptr(void* key);
 
 // map foreach
 #define FORMAP(it,m) for(auto it = (m).contents.memory; it != (m).contents.memory + (m).contents.capacity; it++) if(ELEMENT_OCCUPIED(*it))

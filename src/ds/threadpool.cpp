@@ -137,7 +137,8 @@ i32 worker(void* data_) {
 	worker_param* data = (worker_param*)data_;
 
 	begin_thread("worker %"_, data->alloc, global_api->platform_this_thread_id().id);
-	global_dbg->register_thread(1, 8192);
+	this_thread_data.profiling = false;
+	global_dbg->register_thread(10, 8192);
 	
 	LOG_DEBUG("Starting worker thread");
 
@@ -149,10 +150,14 @@ i32 worker(void* data_) {
 
 			if(current_job.work) {
 
+				BEGIN_FRAME();
+
 				job_callback callback;
 				PUSH_PROFILE(true) {
 					callback = (*current_job.work)(current_job.data);
 				} POP_PROFILE();
+
+				END_FRAME();
 
 				platform_event a;
 				a.type 			 = platform_event_type::async;

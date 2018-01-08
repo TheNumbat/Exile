@@ -258,8 +258,8 @@ void make_type_table(allocator* alloc) { PROF
 	make_meta_info();
 
 	// dirty hack
-	TYPEINFO(func_profile_node*)->name = "func_profile_node"_;
-	TYPEINFO(func_profile_node*)->_ptr.to = TYPEINFO(func_profile_node)->hash;
+	TYPEINFO(profile_node*)->name = "profile_node"_;
+	TYPEINFO(profile_node*)->_ptr.to = TYPEINFO(profile_node)->hash;
 }
 
 i64 int_as_i64(void* val, _type_info* info);

@@ -20,6 +20,11 @@ CALLBACK u32 hash_u64(u64 key) { PROF
 	return key >> 32;
 }
 
+CALLBACK u32 hash_ptr(void* key) { PROF
+
+	return hash_u64((u64)key);
+}
+
 template<typename K, typename V>
 map<K,V> map<K,V>::make(u32 capacity, _FPTR* hash) { PROF
 	

@@ -27,31 +27,6 @@
 
 typedef platform_perfcount timestamp;
 
-struct func_profile_node {
-	code_context context;
-	timestamp self = 0, heir = 0, begin = 0;
-	u32 calls = 0;
-	bool enabled = false;
-
-	vector<func_profile_node*> children;
-	CIRCULAR func_profile_node* parent = null; 
-};
-
-struct frame_profile {
-
-	timestamp start = 0, end = 0;
-	vector<func_profile_node*> heads;
-	func_profile_node* current = null;
-	pool_allocator pool;
-
-	u32 number = 0;
-};
-
-struct alloc_profile {
-	u64 size = 0, allocated = 0, freed = 0;
-	u64 num_allocs = 0, num_frees = 0, num_reallocs = 0;
-};
-
 enum class dbg_msg_type : u8 {
 	none,
 	begin_frame,
@@ -128,6 +103,33 @@ struct dbg_msg {
 	dbg_msg() {};
 };
 
+struct profile_node {
+	code_context context;
+	timestamp self = 0, heir = 0, begin = 0;
+	u32 calls = 0;
+	bool enabled = false;
+
+	vector<profile_node*> children;
+	CIRCULAR profile_node* parent = null; 
+};
+
+struct frame_profile {
+
+	timestamp start = 0, end = 0;
+	vector<profile_node*> heads;
+	profile_node* current = null;
+
+	map<allocator*, vector<dbg_msg>> allocations;
+
+	pool_allocator pool;
+	u32 number = 0;
+};
+
+struct alloc_profile {
+	u64 size = 0, allocated = 0, freed = 0;
+	u64 num_allocs = 0, num_frees = 0, num_reallocs = 0;
+};
+
 struct thread_profile {
 	string name;
 	queue<frame_profile> frames;
@@ -169,8 +171,8 @@ struct dbg_manager {
 	void destroy();
 
 	void UI();
-	void profile_recurse(vector<func_profile_node*> list);
-	void fixdown_self_timings(func_profile_node* node);
+	void profile_recurse(vector<profile_node*> list);
+	void fixdown_self_timings(profile_node* node);
 
 	void shutdown_log(log_manager* log);
 	void setup_log(log_manager* log);
@@ -184,7 +186,7 @@ void _prof_sec_end();
 
 CALLBACK void dbg_add_log(log_message* msg, void*);
 
-bool prof_sort_name(func_profile_node* l, func_profile_node* r);
-bool prof_sort_heir(func_profile_node* l, func_profile_node* r);
-bool prof_sort_self(func_profile_node* l, func_profile_node* r);
-bool prof_sort_calls(func_profile_node* l, func_profile_node* r);
+bool prof_sort_name(profile_node* l, profile_node* r);
+bool prof_sort_heir(profile_node* l, profile_node* r);
+bool prof_sort_self(profile_node* l, profile_node* r);
+bool prof_sort_calls(profile_node* l, profile_node* r);

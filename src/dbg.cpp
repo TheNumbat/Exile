@@ -22,6 +22,10 @@ void dbg_manager::destroy() { PROF
 
 		FORQ_BEGIN(f, it->value.frames) {
 			DESTROY_POOL(&f->pool);
+			FORMAP(a, f->allocations) {
+				a->value.destroy();
+			}
+			f->allocations.destroy();
 		} FORQ_END(f, it->value.frames);
 
 		it->value.frames.destroy();
@@ -41,7 +45,7 @@ void dbg_manager::destroy() { PROF
 	DESTROY_ARENA(&scratch);
 }
 
-void dbg_manager::profile_recurse(vector<func_profile_node*> list) { PROF
+void dbg_manager::profile_recurse(vector<profile_node*> list) { PROF
 
 	switch(prof_sort) {
 	case prof_sort_type::none: break;
@@ -62,7 +66,7 @@ void dbg_manager::profile_recurse(vector<func_profile_node*> list) { PROF
 	FORVEC(it, list) {
 		gui_push_id(__it);
 
-		func_profile_node* node = *it;
+		profile_node* node = *it;
 
 		if(gui_node(string::makef("%--*|%+8|%+10|%+2"_, 35 - gui_indent_level(), node->context.function, node->heir, node->self, node->calls), &node->enabled)) {
 			gui_indent();
@@ -115,6 +119,27 @@ void dbg_manager::UI() { PROF
 		gui_text(string::makef("Frame %"_, frame->number));
 
 		profile_recurse(frame->heads);
+		
+		gui_text(" "_);
+		FORMAP(it, frame->allocations) {
+			if(gui_node(it->key->name)) {
+				gui_indent();
+				FORVEC(msg, it->value) {
+					switch(msg->type) {
+					case dbg_msg_type::allocate: {
+						gui_text(string::makef("alloc %"_, msg->allocate.to));
+					} break;
+					case dbg_msg_type::reallocate: {
+						gui_text(string::makef("realloc % %"_, msg->reallocate.to, msg->reallocate.from));
+					} break;
+					case dbg_msg_type::free: {
+						gui_text(string::makef("free %"_, msg->free.from));
+					} break;
+					}
+				}
+				gui_unindent();
+			}
+		}
 	}
 
 	gui_end();
@@ -175,12 +200,17 @@ void dbg_manager::collate() {
 					}
 					frame_profile rem = thread->frames.pop();
 					DESTROY_POOL(&rem.pool);
+					FORMAP(it, rem.allocations) {
+						it->value.destroy();
+					}
+					rem.allocations.destroy();
 				}
 				frame_profile* frame = thread->frames.push(frame_profile());
 
 				string name = string::makef("frame %"_, thread->num_frames);
 				frame->pool = MAKE_POOL(name, KILOBYTES(8), alloc, false);
-				frame->heads = vector<func_profile_node*>::make(2, &frame->pool);
+				frame->heads = vector<profile_node*>::make(2, &frame->pool);
+				frame->allocations = map<allocator*, vector<dbg_msg>>::make(8, alloc, FPTR(hash_ptr));
 				frame->start = msg->time;
 				frame->number = thread->num_frames;
 				name.destroy();
@@ -202,8 +232,8 @@ void dbg_manager::collate() {
 								}
 							}
 							if(!found_repeat_head) {
-								frame->current = *frame->heads.push(NEW(func_profile_node));
-								frame->current->children = vector<func_profile_node*>::make(4);
+								frame->current = *frame->heads.push(NEW(profile_node));
+								frame->current->children = vector<profile_node*>::make(4);
 								frame->current->context = msg->context;
 							}
 							frame->current->begin = msg->time;
@@ -211,7 +241,7 @@ void dbg_manager::collate() {
 							break;
 						}
 
-						func_profile_node* here = frame->current;
+						profile_node* here = frame->current;
 						FORVEC(node, here->children) {
 							if((*node)->context.function == msg->context.function) {
 								here = *node;
@@ -219,8 +249,8 @@ void dbg_manager::collate() {
 							} 
 						}
 						if(here == frame->current) {
-							func_profile_node* new_node = *here->children.push(NEW(func_profile_node));
-							new_node->children = vector<func_profile_node*>::make(4);
+							profile_node* new_node = *here->children.push(NEW(profile_node));
+							new_node->children = vector<profile_node*>::make(4);
 							new_node->parent = here;
 							here = new_node;
 						}
@@ -249,6 +279,39 @@ void dbg_manager::collate() {
 							fixdown_self_timings(*it);
 						}
 					} break;
+
+					case dbg_msg_type::allocate: {
+
+						vector<dbg_msg>* allocs = frame->allocations.try_get(msg->allocate.alloc);
+						if(!allocs) {
+
+							allocs = frame->allocations.insert(msg->allocate.alloc, vector<dbg_msg>::make(8, alloc));
+						}
+						allocs->push(*msg);
+
+					} break;
+
+					case dbg_msg_type::reallocate: {
+
+						vector<dbg_msg>* allocs = frame->allocations.try_get(msg->reallocate.alloc);
+						if(!allocs) {
+
+							allocs = frame->allocations.insert(msg->reallocate.alloc, vector<dbg_msg>::make(8, alloc));
+						}
+						allocs->push(*msg);
+						
+					} break;
+
+					case dbg_msg_type::free: {
+
+						vector<dbg_msg>* allocs = frame->allocations.try_get(msg->free.alloc);
+						if(!allocs) {
+
+							allocs = frame->allocations.insert(msg->free.alloc, vector<dbg_msg>::make(8, alloc));
+						}
+						allocs->push(*msg);
+						
+					} break;
 					}
 				} POP_ALLOC();
 			}
@@ -260,7 +323,7 @@ void dbg_manager::collate() {
 	} POP_PROFILE();
 }
 
-void dbg_manager::fixdown_self_timings(func_profile_node* node) {
+void dbg_manager::fixdown_self_timings(profile_node* node) {
 
 	timestamp children = 0;
 	FORVEC(it, node->children) {
@@ -289,22 +352,22 @@ CALLBACK void dbg_add_log(log_message* msg, void* param) { PROF
 	m->msg         = string::make_copy(msg->msg, &m->arena);
 }
 
-bool prof_sort_name(func_profile_node* l, func_profile_node* r) {
+bool prof_sort_name(profile_node* l, profile_node* r) {
 
 	return l->context.function <= r->context.function;
 }
 
-bool prof_sort_heir(func_profile_node* l, func_profile_node* r) {
+bool prof_sort_heir(profile_node* l, profile_node* r) {
 
 	return r->heir <= l->heir;
 }
 
-bool prof_sort_self(func_profile_node* l, func_profile_node* r) {
+bool prof_sort_self(profile_node* l, profile_node* r) {
 
 	return r->self <= l->self;
 }
 
-bool prof_sort_calls(func_profile_node* l, func_profile_node* r) {
+bool prof_sort_calls(profile_node* l, profile_node* r) {
 
 	return r->calls <= l->calls;
 }

@@ -1,4 +1,14 @@
 
+CALLBACK u32 hash_alloc(allocator a) { PROF
+
+	return hash_context(a.context);
+}
+
+bool operator==(allocator l, allocator r) { PROF
+
+	return l.context == r.context;
+}
+
 void allocator::destroy() { PROF
 	if(name.c_str) {
 		free_(name.c_str, this, CONTEXT);
@@ -20,9 +30,7 @@ inline allocator* _current_alloc() { PROF
 
 CALLBACK void* platform_allocate(u64 bytes, allocator* this_, code_context context) { PROF
 
-	platform_allocator* this__ = (platform_allocator*)this_;
-
-	void* mem = this__->platform_allocate(bytes);
+	void* mem = global_api->platform_heap_alloc(bytes);
 
 	LOG_DEBUG_ASSERT(mem != null);
 
@@ -50,8 +58,6 @@ CALLBACK void* platform_allocate(u64 bytes, allocator* this_, code_context conte
 
 CALLBACK void platform_free(void* mem, allocator* this_, code_context context) { PROF
 
-	platform_allocator* this__ = (platform_allocator*)this_;
-
 	LOG_DEBUG_ASSERT(mem != null);
 
 #ifdef LOG_ALLOCS
@@ -60,7 +66,7 @@ CALLBACK void platform_free(void* mem, allocator* this_, code_context context) {
 	}
 #endif
 
-	this__->platform_free(mem);
+	global_api->platform_heap_free(mem);
 
 #ifdef PROFILE
 	if(this_thread_data.profiling) {
@@ -77,8 +83,6 @@ CALLBACK void platform_free(void* mem, allocator* this_, code_context context) {
 
 CALLBACK void* platform_reallocate(void* mem, u64, u64 bytes, allocator* this_, code_context context) { PROF
 
-	platform_allocator* this__ = (platform_allocator*)this_;
-
 	LOG_DEBUG_ASSERT(mem != null);
 
 #ifdef LOG_ALLOCS
@@ -87,7 +91,7 @@ CALLBACK void* platform_reallocate(void* mem, u64, u64 bytes, allocator* this_, 
 	}
 #endif
 
-	void* ret = this__->platform_reallocate(mem, bytes);
+	void* ret = global_api->platform_heap_realloc(mem, bytes);
 
 	LOG_DEBUG_ASSERT(ret != null);
 
@@ -112,9 +116,6 @@ inline platform_allocator make_platform_allocator(string name, code_context cont
 
 	platform_allocator ret;
 	
-	ret.platform_allocate 	= global_api->platform_heap_alloc;
-	ret.platform_free 		= global_api->platform_heap_free;
-	ret.platform_reallocate = global_api->platform_heap_realloc;
 	ret.context  			= context;
 	
 	ret.allocate_.set(FPTR(platform_allocate));
@@ -147,19 +148,6 @@ CALLBACK void* arena_allocate(u64 bytes, allocator* this_, code_context context)
 		global_log->msgf("allocating % bytes (used:%/%) to % with arena alloc \"%\""_, log_level::alloc, context, bytes, this__->used, this__->size, mem, this__->name);
 	}
 #endif
-
-#ifdef PROFILE
-	if(this_thread_data.profiling) {
-		dbg_msg m;
-		m.type = dbg_msg_type::allocate;
-		m.context = context;
-		m.allocate.to = mem;
-		m.allocate.bytes = bytes;
-		m.allocate.alloc = this_;
-
-		POST_MSG(m);
-	}
-#endif 
 
 	return mem;
 }
@@ -255,19 +243,6 @@ CALLBACK void* pool_allocate(u64 bytes, allocator* this_, code_context context) 
 	mem = (void*)((u8*)page + sizeof(pool_page) + page->used);
 	page->used += bytes;
 
-#ifdef PROFILE
-	if(this_thread_data.profiling) {
-		dbg_msg m;
-		m.type = dbg_msg_type::allocate;
-		m.context = context;
-		m.allocate.to = mem;
-		m.allocate.bytes = bytes;
-		m.allocate.alloc = this_;
-
-		POST_MSG(m);
-	}
-#endif 
-	
 	return mem;
 }
 
@@ -278,7 +253,7 @@ CALLBACK void* pool_reallocate(void* mem, u64 sz, u64 bytes, allocator* this_, c
 	return ret;
 }
 
-CALLBACK void  pool_free(void*, allocator*, code_context) {}
+CALLBACK void pool_free(void*, allocator*, code_context) {}
 
 void pool_destroy(pool_allocator* a, code_context context) {
 

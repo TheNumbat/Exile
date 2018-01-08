@@ -282,7 +282,7 @@ u32 string::write_type(u32 idx, void* val, _type_info* info, bool size) { PROF
 	} break;
 
 	case Type::_float: {
-		idx = write_float(idx, 6, val, info, size);		// need bit size flags
+		idx = write_float(idx, 6, val, info, size);
 	} break;
 
 	case Type::_bool: {
@@ -986,6 +986,7 @@ void string::destroy() { PROF
 	cap = 0;
 	len = 0;
 }
+
 
 string string::make(u32 _cap, allocator* a) { PROF
 

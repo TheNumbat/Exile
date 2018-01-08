@@ -22,10 +22,7 @@ EXPORT game_state* start_up(platform_api* api) {
 	state->dbg = dbg_manager::make(&state->dbg_a);
 	state->dbg.register_thread(60, 32768);
 
-	dbg_msg m;
-	m.type = dbg_msg_type::begin_frame;
-	m.context = CONTEXT;
-	POST_MSG(m);
+	BEGIN_FRAME();
 
 	state->log_a = MAKE_PLATFORM_ALLOCATOR("log");
 	state->log_a.suppress_messages = true;
@@ -84,8 +81,7 @@ EXPORT game_state* start_up(platform_api* api) {
 	LOG_INFO("Done with startup!");
 	LOG_POP_CONTEXT();
 
-	m.type = dbg_msg_type::end_frame;
-	POST_MSG(m);
+	END_FRAME();
 	state->dbg.collate();
 
 	state->running = true;
