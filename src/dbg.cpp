@@ -11,6 +11,7 @@ dbg_manager dbg_manager::make(allocator* alloc) { PROF
 	ret.selected_thread = global_api->platform_this_thread_id();
 
 	global_api->platform_create_mutex(&ret.cache_mut, false);
+	global_api->platform_create_mutex(&ret.alloc_mut, false);
 
 	return ret;
 }
@@ -33,6 +34,7 @@ void dbg_manager::destroy() { PROF
 	log_cache.destroy();
 
 	global_api->platform_destroy_mutex(&cache_mut);
+	global_api->platform_destroy_mutex(&alloc_mut);
 
 	dbg_cache.destroy();
 

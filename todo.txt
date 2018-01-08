@@ -26,6 +26,7 @@ all includes:
 
 priority:
 	allocation/threading profiling
+	float slider/struct UI options
 	profiler graphs/actually good layout-ing?
 		Columns
 	voxel rendering methods

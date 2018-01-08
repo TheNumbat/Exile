@@ -42,10 +42,14 @@ struct frame_profile {
 	timestamp start = 0, end = 0;
 	vector<func_profile_node*> heads;
 	func_profile_node* current = null;
-	// vector<dbg_msg*> allocations;
 	pool_allocator pool;
 
 	u32 number = 0;
+};
+
+struct alloc_profile {
+	u64 size = 0, allocated = 0, freed = 0;
+	u64 num_allocs = 0, num_frees = 0, num_reallocs = 0;
 };
 
 enum class dbg_msg_type : u8 {
@@ -150,6 +154,9 @@ struct dbg_manager {
 
 	platform_mutex cache_mut;
 	map<platform_thread_id, thread_profile> dbg_cache;
+
+	platform_mutex alloc_mut;
+	map<allocator*, alloc_profile> alloc_stats;
 
 	queue<log_message> log_cache;
 	log_level lvl = log_level::info;
