@@ -45,21 +45,21 @@ void thread_profile::destroy() { PROF
 void dbg_manager::destroy() { PROF
 
 	FORMAP(it, thread_stats) {
-		
 		it->value.destroy();
 	}
+	thread_stats.destroy();
+
+	FORMAP(it, alloc_stats) {
+		it->value.destroy();
+	}
+	alloc_stats.destroy();
 
 	FORQ_BEGIN(it, log_cache) {
 		DESTROY_ARENA(&it->arena);
 	} FORQ_END(it, log_cache);
-
 	log_cache.destroy();
 
 	global_api->platform_destroy_mutex(&stats_mut);
-
-	thread_stats.destroy();
-	alloc_stats.destroy();
-
 	DESTROY_ARENA(&scratch);
 }
 
@@ -218,7 +218,7 @@ void dbg_manager::register_thread(u32 frames, u32 frame_size) { PROF
 	global_api->platform_release_mutex(&stats_mut);
 }
 
-void frame_profile::setup(string name, allocator* alloc, timestamp time, u32 num) {
+void frame_profile::setup(string name, allocator* alloc, timestamp time, u32 num) { PROF
 
 	pool = MAKE_POOL(name, KILOBYTES(8), alloc, false);
 	heads = vector<profile_node*>::make(2, &pool);
@@ -227,7 +227,7 @@ void frame_profile::setup(string name, allocator* alloc, timestamp time, u32 num
 	number = num;
 }
 
-alloc_frame_profile alloc_frame_profile::make(allocator* alloc) {
+alloc_frame_profile alloc_frame_profile::make(allocator* alloc) { PROF
 
 	alloc_frame_profile ret;
 	
@@ -326,37 +326,12 @@ void dbg_manager::collate() {
 						}
 					} break;
 
-					case dbg_msg_type::allocate: {
-
-						alloc_frame_profile* allocs = frame->allocations.try_get(msg->allocate.alloc);
-						if(!allocs) {
-
-							allocs = frame->allocations.insert(msg->allocate.alloc, alloc_frame_profile::make(alloc));
-						}
-						allocs->allocs.push(*msg);
-
-					} break;
-
-					case dbg_msg_type::reallocate: {
-
-						alloc_frame_profile* allocs = frame->allocations.try_get(msg->reallocate.alloc);
-						if(!allocs) {
-
-							allocs = frame->allocations.insert(msg->reallocate.alloc, alloc_frame_profile::make(alloc));
-						}
-						allocs->allocs.push(*msg);
-						
-					} break;
-
+					case dbg_msg_type::allocate: 
+					case dbg_msg_type::reallocate:
 					case dbg_msg_type::free: {
 
-						alloc_frame_profile* allocs = frame->allocations.try_get(msg->free.alloc);
-						if(!allocs) {
+						process_alloc_msg(frame, msg);
 
-							allocs = frame->allocations.insert(msg->free.alloc, alloc_frame_profile::make(alloc));
-						}
-						allocs->allocs.push(*msg);
-						
 					} break;
 					}
 				} POP_ALLOC();
@@ -369,7 +344,88 @@ void dbg_manager::collate() {
 	} POP_PROFILE();
 }
 
-void dbg_manager::fixdown_self_timings(profile_node* node) {
+alloc_profile alloc_profile::make(allocator* alloc) { PROF
+
+	alloc_profile ret;
+
+	ret.current_set = map<void*, single_alloc>::make(64, alloc, FPTR(hash_ptr));
+
+	return ret;
+}
+
+void alloc_profile::destroy() { PROF
+
+	current_set.destroy();
+}
+
+void dbg_manager::process_alloc_msg(frame_profile* frame, dbg_msg* msg) { PROF
+
+	allocator* a = null;
+	switch(msg->type) {
+	case dbg_msg_type::allocate: 	a = msg->allocate.alloc; break;
+	case dbg_msg_type::reallocate: 	a = msg->reallocate.alloc; break;
+	case dbg_msg_type::free: 		a = msg->free.alloc; break;
+	}
+
+	alloc_frame_profile* fprofile = frame->allocations.try_get(a);
+	if(!fprofile) {
+
+		fprofile = frame->allocations.insert(a, alloc_frame_profile::make(alloc));
+	}
+	fprofile->allocs.push(*msg);
+
+	alloc_profile* profile = alloc_stats.try_get(a);
+	if(!profile) {
+
+		profile = alloc_stats.insert(a, alloc_profile::make(alloc));
+	}
+
+	switch(msg->type) {
+	case dbg_msg_type::allocate: {
+
+		single_alloc stat;
+		stat.origin = msg->context;
+		stat.size = msg->allocate.bytes;
+		profile->current_set.insert(msg->allocate.to, stat);
+
+		profile->size += stat.size;
+		profile->allocated += stat.size;
+		profile->num_allocs++;
+
+	} break;
+	case dbg_msg_type::reallocate: {
+
+		single_alloc* freed = profile->current_set.get(msg->reallocate.from);
+		profile->size -= freed->size;
+		profile->freed += freed->size;
+		profile->current_set.erase(msg->reallocate.from);
+
+		single_alloc stat;
+		stat.origin = msg->context;
+		stat.size = msg->reallocate.bytes;
+
+		profile->current_set.insert(msg->reallocate.to, stat);
+		profile->size += stat.size;
+		profile->allocated += stat.size;
+
+		profile->num_reallocs++;
+
+	} break;
+	case dbg_msg_type::free: {
+
+		single_alloc* freed = profile->current_set.get(msg->free.from);
+
+		profile->size -= freed->size;
+		profile->freed += freed->size;
+		profile->num_frees++;
+
+		profile->current_set.erase(msg->free.from);
+
+	} break;
+	}
+}
+
+void dbg_manager::fixdown_self_timings(profile_node* node) { PROF
 
 	timestamp children = 0;
 	FORVEC(it, node->children) {

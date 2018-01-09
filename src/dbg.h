@@ -138,9 +138,20 @@ struct frame_profile {
 	void destroy();
 };
 
+struct single_alloc {
+	code_context origin;
+	u64 size = 0;
+};
+
 struct alloc_profile {
+
+	map<void*, single_alloc> current_set; 
+
 	u64 size = 0, allocated = 0, freed = 0;
 	u64 num_allocs = 0, num_frees = 0, num_reallocs = 0;
+
+	static alloc_profile make(allocator* alloc);
+	void destroy();
 };
 
 struct thread_profile {
@@ -188,6 +199,7 @@ struct dbg_manager {
 	void UI();
 	void profile_recurse(vector<profile_node*> list);
 	void fixdown_self_timings(profile_node* node);
+	void process_alloc_msg(frame_profile* frame, dbg_msg* msg);
 
 	void shutdown_log(log_manager* log);
 	void setup_log(log_manager* log);
