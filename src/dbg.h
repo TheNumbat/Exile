@@ -113,16 +113,29 @@ struct profile_node {
 	CIRCULAR profile_node* parent = null; 
 };
 
+struct alloc_frame_profile {
+	bool show = false;
+	vector<dbg_msg> allocs;
+
+	static alloc_frame_profile make(allocator* alloc);
+	void destroy();
+};
+
 struct frame_profile {
 
 	timestamp start = 0, end = 0;
 	vector<profile_node*> heads;
 	profile_node* current = null;
 
-	map<allocator*, vector<dbg_msg>> allocations;
+	map<allocator*, alloc_frame_profile> allocations;
 
 	pool_allocator pool;
 	u32 number = 0;
+
+	bool show_prof = false, show_allocs = false;
+
+	void setup(string name, allocator* alloc, timestamp time, u32 num);
+	void destroy();
 };
 
 struct alloc_profile {
@@ -133,7 +146,12 @@ struct alloc_profile {
 struct thread_profile {
 	string name;
 	queue<frame_profile> frames;
+	
 	u32 frame_buf_size = 0, num_frames = 0, frame_size = 0;
+	i32 selected_frame = 1;
+
+	static thread_profile make();
+	void destroy();
 };
 
 enum class prof_sort_type : u8 {
@@ -147,7 +165,6 @@ enum class prof_sort_type : u8 {
 struct dbg_manager {
 
 	bool frame_pause = true;
-	i32 selected_frame = 1;
 	platform_thread_id selected_thread;
 
 	prof_sort_type prof_sort = prof_sort_type::name;

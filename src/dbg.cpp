@@ -16,19 +16,36 @@ dbg_manager dbg_manager::make(allocator* alloc) { PROF
 	return ret;
 }
 
+void alloc_frame_profile::destroy() { PROF
+
+	allocs.destroy();
+}
+
+void frame_profile::destroy() { PROF
+	
+	DESTROY_POOL(&pool);
+	FORMAP(a, allocations) {
+		a->value.destroy();
+	}
+	allocations.destroy();
+}
+
+void thread_profile::destroy() { PROF
+
+	FORQ_BEGIN(f, frames) {
+		
+		f->destroy();
+
+	} FORQ_END(f, frames);
+
+	frames.destroy();
+}
+
 void dbg_manager::destroy() { PROF
 
 	FORMAP(it, dbg_cache) {
-
-		FORQ_BEGIN(f, it->value.frames) {
-			DESTROY_POOL(&f->pool);
-			FORMAP(a, f->allocations) {
-				a->value.destroy();
-			}
-			f->allocations.destroy();
-		} FORQ_END(f, it->value.frames);
-
-		it->value.frames.destroy();
+		
+		it->value.destroy();
 	}
 
 	FORQ_BEGIN(it, log_cache) {
@@ -96,7 +113,7 @@ void dbg_manager::UI() { PROF
 
 	gui_end();
 
-	gui_begin("Profile"_, R2(20.0f, 20.0f, dim.x / 1.5f, dim.y / 2.0f));
+	gui_begin("Debug"_, R2(20.0f, 20.0f, dim.x / 1.5f, dim.y / 2.0f));
 	
 	gui_checkbox("Pause: "_, &frame_pause);
 
@@ -110,38 +127,56 @@ void dbg_manager::UI() { PROF
 	global_api->platform_aquire_mutex(&cache_mut);
 	thread_profile* thread = dbg_cache.get(selected_thread);
 	
-	gui_int_slider("Buffer Position: "_, &selected_frame, 1, thread->frame_buf_size);
-	gui_enum_buttons("Sort By: "_, &prof_sort);
+	gui_push_id(thread->name);
+	gui_int_slider("Buffer Position: "_, &thread->selected_frame, 1, thread->frame_buf_size);
 
 	if(thread->frames.len()) {
 		
-		frame_profile* frame = thread->frames.get(selected_frame - 1);
+		frame_profile* frame = thread->frames.get(thread->selected_frame - 1);
 		gui_text(string::makef("Frame %"_, frame->number));
-
-		profile_recurse(frame->heads);
+		gui_push_id(frame->number);
 		
-		gui_text(" "_);
-		FORMAP(it, frame->allocations) {
-			if(gui_node(it->key->name)) {
-				gui_indent();
-				FORVEC(msg, it->value) {
-					switch(msg->type) {
-					case dbg_msg_type::allocate: {
-						gui_text(string::makef("alloc %"_, msg->allocate.to));
-					} break;
-					case dbg_msg_type::reallocate: {
-						gui_text(string::makef("realloc % %"_, msg->reallocate.to, msg->reallocate.from));
-					} break;
-					case dbg_msg_type::free: {
-						gui_text(string::makef("free %"_, msg->free.from));
-					} break;
-					}
-				}
-				gui_unindent();
-			}
+		if(gui_node("Profile"_, &frame->show_prof)) {
+			gui_indent();
+
+			gui_enum_buttons("Sort By: "_, &prof_sort);
+
+			profile_recurse(frame->heads);
+
+			gui_unindent();
 		}
+
+		if(gui_node("Allocations"_, &frame->show_allocs)) {
+
+			gui_indent();
+
+			FORMAP(it, frame->allocations) {
+				if(gui_node(it->key->name, &it->value.show)) {
+					gui_indent();
+					FORVEC(msg, it->value.allocs) {
+						switch(msg->type) {
+						case dbg_msg_type::allocate: {
+							gui_text(string::makef("alloc % bytes"_, msg->allocate.bytes));
+						} break;
+						case dbg_msg_type::reallocate: {
+							gui_text(string::makef("realloc to % bytes "_, msg->reallocate.bytes));
+						} break;
+						case dbg_msg_type::free: {
+							gui_text("free"_);
+						} break;
+						}
+					}
+					gui_unindent();
+				}
+			}
+
+			gui_unindent();
+		}
+
+		gui_pop_id();
 	}
 
+	gui_pop_id();
 	gui_end();
 
 	global_api->platform_release_mutex(&cache_mut);
@@ -182,6 +217,24 @@ void dbg_manager::register_thread(u32 frames, u32 frame_size) { PROF
 	global_api->platform_release_mutex(&cache_mut);
 }
 
+void frame_profile::setup(string name, allocator* alloc, timestamp time, u32 num) {
+
+	pool = MAKE_POOL(name, KILOBYTES(8), alloc, false);
+	heads = vector<profile_node*>::make(2, &pool);
+	allocations = map<allocator*, alloc_frame_profile>::make(8, alloc, FPTR(hash_ptr));
+	start = time;
+	number = num;
+}
+
+alloc_frame_profile alloc_frame_profile::make(allocator* alloc) {
+
+	alloc_frame_profile ret;
+	
+	ret.allocs = vector<dbg_msg>::make(8, alloc);
+
+	return ret;
+}
+
 void dbg_manager::collate() {
 
 	PUSH_PROFILE(false) {
@@ -198,21 +251,13 @@ void dbg_manager::collate() {
 					if(frame_pause) {
 						break;
 					}
-					frame_profile rem = thread->frames.pop();
-					DESTROY_POOL(&rem.pool);
-					FORMAP(it, rem.allocations) {
-						it->value.destroy();
-					}
-					rem.allocations.destroy();
+					thread->frames.pop().destroy();
 				}
-				frame_profile* frame = thread->frames.push(frame_profile());
 
+				frame_profile* frame = thread->frames.push(frame_profile());
+				
 				string name = string::makef("frame %"_, thread->num_frames);
-				frame->pool = MAKE_POOL(name, KILOBYTES(8), alloc, false);
-				frame->heads = vector<profile_node*>::make(2, &frame->pool);
-				frame->allocations = map<allocator*, vector<dbg_msg>>::make(8, alloc, FPTR(hash_ptr));
-				frame->start = msg->time;
-				frame->number = thread->num_frames;
+				frame->setup(name, alloc, msg->time, thread->num_frames);
 				name.destroy();
 			}
 
@@ -282,34 +327,34 @@ void dbg_manager::collate() {
 
 					case dbg_msg_type::allocate: {
 
-						vector<dbg_msg>* allocs = frame->allocations.try_get(msg->allocate.alloc);
+						alloc_frame_profile* allocs = frame->allocations.try_get(msg->allocate.alloc);
 						if(!allocs) {
 
-							allocs = frame->allocations.insert(msg->allocate.alloc, vector<dbg_msg>::make(8, alloc));
+							allocs = frame->allocations.insert(msg->allocate.alloc, alloc_frame_profile::make(alloc));
 						}
-						allocs->push(*msg);
+						allocs->allocs.push(*msg);
 
 					} break;
 
 					case dbg_msg_type::reallocate: {
 
-						vector<dbg_msg>* allocs = frame->allocations.try_get(msg->reallocate.alloc);
+						alloc_frame_profile* allocs = frame->allocations.try_get(msg->reallocate.alloc);
 						if(!allocs) {
 
-							allocs = frame->allocations.insert(msg->reallocate.alloc, vector<dbg_msg>::make(8, alloc));
+							allocs = frame->allocations.insert(msg->reallocate.alloc, alloc_frame_profile::make(alloc));
 						}
-						allocs->push(*msg);
+						allocs->allocs.push(*msg);
 						
 					} break;
 
 					case dbg_msg_type::free: {
 
-						vector<dbg_msg>* allocs = frame->allocations.try_get(msg->free.alloc);
+						alloc_frame_profile* allocs = frame->allocations.try_get(msg->free.alloc);
 						if(!allocs) {
 
-							allocs = frame->allocations.insert(msg->free.alloc, vector<dbg_msg>::make(8, alloc));
+							allocs = frame->allocations.insert(msg->free.alloc, alloc_frame_profile::make(alloc));
 						}
-						allocs->push(*msg);
+						allocs->allocs.push(*msg);
 						
 					} break;
 					}

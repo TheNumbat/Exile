@@ -483,6 +483,11 @@ bool gui_begin(string name, r2 size, gui_window_flags flags, f32 first_alpha) { 
 	return window->active;
 }
 
+void gui_push_id(string id) { PROF
+
+	gui_push_id(hash_string(id));
+}
+
 void gui_end() { PROF
 	ggui->current = null;
 }
@@ -517,6 +522,7 @@ void gui_left_cursor() { PROF
 	v2 old = win->cursor;
 	gui_set_offset(win->header_size + ggui->style.win_margin.xy + win->scroll_pos);
 	win->cursor.y = old.y;
+	win->cursor.x += ggui->current->indent_level * ggui->style.indent_size;
 }
 
 bool gui_checkbox(string name, bool* data) { PROF
@@ -624,7 +630,7 @@ i32 gui_int_slider(string text, i32* data, i32 low, i32 high) { PROF
 template<typename V>
 void gui_combo(string name, map<string,V> options, V* data) { PROF
 
-	if(gui_node(name)) {
+	if(gui_node(name, null)) {
 
 		gui_indent();
 		FORMAP(it, options) {
