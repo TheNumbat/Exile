@@ -988,22 +988,22 @@ void string::destroy() { PROF
 }
 
 
-string string::make(u32 _cap, allocator* a) { PROF
+string string::make(u32 cap, allocator* a) { PROF
 
 	string ret;
 
-	ret.c_str = (char*)a->allocate_((u64)_cap, a, CONTEXT);
-	ret.cap = _cap;
+	ret.c_str = (char*)a->allocate_((u64)cap, a, CONTEXT);
+	ret.cap = cap;
 
 	return ret;
 }
 
-string string::make(u32 _cap) { PROF
+string string::make(u32 cap) { PROF
 
 	string ret;
 
-	ret.c_str = (char*)malloc(_cap);
-	ret.cap = _cap;
+	ret.c_str = (char*)malloc(cap);
+	ret.cap = cap;
 
 	return ret;
 }

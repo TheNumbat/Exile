@@ -11,8 +11,8 @@
 #define POST_MSG(m) {PUSH_PROFILE(false) {(m).time = global_api->platform_get_perfcount(); this_thread_data.dbg_msgs.push(m);} POP_PROFILE();}
 #endif
 
-#define PROF_SEC(n) _prof_sec(n, CONTEXT);
-#define PROF_SEC_END() _prof_sec_end();
+#define PROF_SEC(n) 	_prof_sec(n, CONTEXT);
+#define PROF_SEC_END() 	_prof_sec_end();
 
 #define BEGIN_FRAME() { \
 	dbg_msg msg; \

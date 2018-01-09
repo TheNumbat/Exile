@@ -15,19 +15,6 @@ void allocator::destroy() { PROF
 	}
 }
 
-inline void _pop_alloc() { PROF
-	this_thread_data.alloc_stack.pop();
-}
-
-inline void _push_alloc(allocator* a) { PROF
-	this_thread_data.alloc_stack.push(a);
-}
-
-inline allocator* _current_alloc() { PROF
-	allocator* ret = *this_thread_data.alloc_stack.top();
-	return ret;
-}
-
 CALLBACK void* platform_allocate(u64 bytes, allocator* this_, code_context context) { PROF
 
 	void* mem = global_api->platform_heap_alloc(bytes);
