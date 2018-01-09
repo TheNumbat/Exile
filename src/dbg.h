@@ -171,13 +171,11 @@ struct dbg_manager {
 
 	allocator* alloc = null;
 
-	platform_mutex cache_mut;
-	map<platform_thread_id, thread_profile> dbg_cache;
-
-	platform_mutex alloc_mut;
+	platform_mutex stats_mut;
+	map<platform_thread_id, thread_profile> thread_stats;
 	map<allocator*, alloc_profile> alloc_stats;
 
-	queue<log_message> log_cache;
+	locking_queue<log_message> log_cache;
 	log_level lvl = log_level::info;
 
 	arena_allocator scratch;
