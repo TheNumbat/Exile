@@ -103,13 +103,16 @@ inline platform_allocator make_platform_allocator(string name, code_context cont
 
 	platform_allocator ret;
 	
-	ret.context  			= context;
+	ret.context = context;
 	
 	ret.allocate_.set(FPTR(platform_allocate));
 	ret.free_.set(FPTR(platform_free));
 	ret.reallocate_.set(FPTR(platform_reallocate));
 
-	ret.name = string::make_copy(name, &ret);
+	// TODO(max): fix
+	PUSH_PROFILE(false) {
+		ret.name = string::make_copy(name, &ret);
+	} POP_PROFILE();
 
 	return ret;
 }
