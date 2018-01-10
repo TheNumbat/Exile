@@ -55,6 +55,9 @@ gui_input_state run_events(game_state* state) { PROF
 			state->window.h = evt.window.y;
 		}
 
+		if(evt.type == platform_event_type::key && evt.key.code == platform_keycode::p && evt.key.flags & (u16)platform_keyflag::release) {
+		}
+
 		// GUI: mouse
 		if(evt.type == platform_event_type::mouse) {
 		

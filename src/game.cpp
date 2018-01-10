@@ -82,7 +82,6 @@ EXPORT game_state* start_up(platform_api* api) {
 	LOG_POP_CONTEXT();
 
 	END_FRAME();
-	state->dbg.collate();
 
 	state->running = true;
 	return state;
@@ -118,13 +117,13 @@ EXPORT bool main_loop(game_state* state) {
 #endif
 
 	END_FRAME();
-	state->dbg.collate();
 
 	return state->running;
 }
 
 EXPORT void shut_down(game_state* state) { 
 
+	BEGIN_FRAME();
 	LOG_INFO("Beginning shutdown...");
 
 	LOG_DEBUG("Destroying asset system");
@@ -133,10 +132,6 @@ EXPORT void shut_down(game_state* state) {
 	LOG_DEBUG("Destroying thread pool");
 	state->thread_pool.stop_all();
 	state->thread_pool.destroy();
-
-	LOG_DEBUG("Destroying debug system");
-	state->dbg.shutdown_log(&state->log);	
-	state->dbg.destroy();
 
 	LOG_DEBUG("Destroying transient store");
 	DESTROY_ARENA(&state->transient_arena);
@@ -155,23 +150,31 @@ EXPORT void shut_down(game_state* state) {
 
 	LOG_DEBUG("Done with shutdown!");
 
+	state->dbg.shutdown_log(&state->log);	
 	state->log.stop();
 	state->log.destroy();
 
-	end_thread();
 	cleanup_fptrs();
 
+	END_FRAME();
+	state->dbg.destroy();
+	end_thread();
+
+	state->dbg_a.destroy();
 	state->log_a.destroy();
 	state->ogl_a.destroy();
 	state->gui_a.destroy();
-	state->dbg_a.destroy();
 	state->evt_a.destroy();
 	state->thread_pool_a.destroy();
-	state->default_platform_allocator.destroy();
 	state->suppressed_platform_allocator.destroy();
 	state->default_store_a.destroy();
+	state->default_platform_allocator.destroy();
 
+	global_log = null;
+	global_dbg = null;
+	global_func = null;
 	global_api->platform_heap_free(state);
+	global_api = null;
 }
 
 EXPORT void on_reload(platform_api* api, game_state* state) { 
@@ -201,6 +204,7 @@ EXPORT void on_unload(game_state* state) {
 
 	state->thread_pool.stop_all();
 	state->log.stop();
-
+	global_dbg->collate();
+	
 	end_thread();
 }

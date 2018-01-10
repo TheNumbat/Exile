@@ -1,5 +1,5 @@
 
-dbg_manager dbg_manager::make(allocator* alloc) { PROF 
+dbg_manager dbg_manager::make(allocator* alloc) { PROF
 
 	dbg_manager ret;
 
@@ -43,6 +43,10 @@ void thread_profile::destroy() { PROF
 }
 
 void dbg_manager::destroy() { PROF
+
+	// TODO(max): how tf do we check if everything has been freed if the debug system is not even close
+	//			  to the last thing destroyed...the only way for this to _really_ work is the platform
+	//			  layer global_num_allocs, but that doesn't actually give us where the memory came from!
 
 	FORMAP(it, thread_stats) {
 		it->value.destroy();
@@ -96,6 +100,11 @@ void dbg_manager::profile_recurse(vector<profile_node*> list) { PROF
 	}
 }
 
+bool operator<=(single_alloc l, single_alloc r) { PROF 
+
+	return r.size <= l.size;
+}
+
 void dbg_manager::UI() { PROF
 
 	v2 dim = gui_window_dim();
@@ -118,6 +127,36 @@ void dbg_manager::UI() { PROF
 	
 	gui_checkbox("Pause: "_, &frame_pause);
 
+	global_api->platform_aquire_mutex(&stats_mut);
+
+	if(gui_node("Allocation Stats"_, &show_alloc_stats)) {
+
+		gui_indent();
+		gui_text(string::makef("Total size: %, total allocs: %, total frees: %"_, alloc_totals.current_size, alloc_totals.num_allocs, alloc_totals.num_frees));
+
+		FORMAP(it, alloc_stats) {
+			if(gui_node(string::makef("%: size: %, allocs: %, frees: %"_, it->key->name, it->value.current_size, it->value.num_allocs, it->value.num_frees), &it->value.shown)) {
+
+				vector<single_alloc> allocs = vector<single_alloc>::make(it->value.current_set.size);
+				FORMAP(a, it->value.current_set) {
+					allocs.push(a->value);
+				}
+				
+				allocs.stable_sort();
+				
+				gui_indent();
+				FORVEC(a, allocs) {
+					gui_text(string::makef("% bytes @ %:%"_, a->size, a->origin.file, a->origin.line));
+				}
+				gui_unindent();
+
+				allocs.destroy();
+			}
+		}
+
+		gui_unindent();
+	}
+
 	map<string, platform_thread_id> threads = map<string, platform_thread_id>::make(global_api->platform_get_num_cpus(), CURRENT_ALLOC(), FPTR(hash_string));
 	FORMAP(it, thread_stats) {
 		threads.insert(it->value.name, it->key);
@@ -125,7 +164,6 @@ void dbg_manager::UI() { PROF
 	gui_combo("Select Thread"_, threads, &selected_thread);
 	threads.destroy();
 
-	global_api->platform_aquire_mutex(&stats_mut);
 	thread_profile* thread = thread_stats.get(selected_thread);
 	
 	gui_push_id(thread->name);
@@ -157,13 +195,13 @@ void dbg_manager::UI() { PROF
 					FORVEC(msg, it->value.allocs) {
 						switch(msg->type) {
 						case dbg_msg_type::allocate: {
-							gui_text(string::makef("alloc % bytes"_, msg->allocate.bytes));
+							gui_text(string::makef("% bytes @ %:%"_, msg->allocate.bytes, msg->context.file, msg->context.line));
 						} break;
 						case dbg_msg_type::reallocate: {
-							gui_text(string::makef("realloc to % bytes "_, msg->reallocate.bytes));
+							gui_text(string::makef("% bytes re@ %:%"_, msg->reallocate.bytes, msg->context.file, msg->context.line));
 						} break;
 						case dbg_msg_type::free: {
-							gui_text("free"_);
+							gui_text(string::makef("free @ %:%"_, msg->context.file, msg->context.line));
 						} break;
 						}
 					}
@@ -244,26 +282,29 @@ void dbg_manager::collate() {
 
 		FORQ_BEGIN(msg, this_thread_data.dbg_msgs) {
 
+			bool got_a_frame = true;
 			if(msg->type == dbg_msg_type::begin_frame) {
 			
 				thread->num_frames++;
 
 				if(thread->frames.full()) {
-					if(frame_pause) {
-						break;
+					if(!frame_pause) {
+						thread->frames.pop().destroy();
+						got_a_frame = true;
 					}
-					thread->frames.pop().destroy();
+					got_a_frame = false;
 				}
 
-				frame_profile* frame = thread->frames.push(frame_profile());
-				
-				string name = string::makef("frame %"_, thread->num_frames);
-				frame->setup(name, alloc, msg->time, thread->num_frames);
-				name.destroy();
+				if(got_a_frame) {
+					frame_profile* frame = thread->frames.push(frame_profile());
+					string name = string::makef("frame %"_, thread->num_frames);
+					frame->setup(name, alloc, msg->time, thread->num_frames);
+					name.destroy();
+				}
 			}
 
 			frame_profile* frame = thread->frames.back();
-			if(frame) {
+			if(frame && got_a_frame) {
 
 				PUSH_ALLOC(&frame->pool) {
 					switch(msg->type) {
@@ -330,12 +371,17 @@ void dbg_manager::collate() {
 					case dbg_msg_type::reallocate:
 					case dbg_msg_type::free: {
 
-						process_alloc_msg(frame, msg);
+						process_frame_alloc_msg(frame, msg);
 
 					} break;
 					}
 				} POP_ALLOC();
 			}
+
+			if(msg->type == dbg_msg_type::allocate || msg->type == dbg_msg_type::reallocate || msg->type == dbg_msg_type::free) {
+				process_alloc_msg(msg);
+			}
+
 		} FORQ_END(msg, this_thread_data.dbg_msgs);
 
 		global_api->platform_release_mutex(&stats_mut);
@@ -358,7 +404,7 @@ void alloc_profile::destroy() { PROF
 	current_set.destroy();
 }
 
-void dbg_manager::process_alloc_msg(frame_profile* frame, dbg_msg* msg) { PROF
+void dbg_manager::process_frame_alloc_msg(frame_profile* frame, dbg_msg* msg) { PROF
 
 	allocator* a = null;
 	switch(msg->type) {
@@ -373,6 +419,16 @@ void dbg_manager::process_alloc_msg(frame_profile* frame, dbg_msg* msg) { PROF
 		fprofile = frame->allocations.insert(a, alloc_frame_profile::make(alloc));
 	}
 	fprofile->allocs.push(*msg);
+}
+
+void dbg_manager::process_alloc_msg(dbg_msg* msg) { PROF
+
+	allocator* a = null;
+	switch(msg->type) {
+	case dbg_msg_type::allocate: 	a = msg->allocate.alloc; break;
+	case dbg_msg_type::reallocate: 	a = msg->reallocate.alloc; break;
+	case dbg_msg_type::free: 		a = msg->free.alloc; break;
+	}
 
 	alloc_profile* profile = alloc_stats.try_get(a);
 	if(!profile) {
@@ -388,16 +444,22 @@ void dbg_manager::process_alloc_msg(frame_profile* frame, dbg_msg* msg) { PROF
 		stat.size = msg->allocate.bytes;
 		profile->current_set.insert(msg->allocate.to, stat);
 
-		profile->size += stat.size;
-		profile->allocated += stat.size;
+		profile->current_size += stat.size;
+		profile->total_allocated += stat.size;
 		profile->num_allocs++;
+
+		alloc_totals.current_size += stat.size;
+		alloc_totals.total_allocated += stat.size;
+		alloc_totals.num_allocs++;
 
 	} break;
 	case dbg_msg_type::reallocate: {
 
 		single_alloc* freed = profile->current_set.get(msg->reallocate.from);
-		profile->size -= freed->size;
-		profile->freed += freed->size;
+		profile->current_size -= freed->size;
+		profile->total_freed += freed->size;
+		alloc_totals.current_size -= freed->size;
+		alloc_totals.total_freed += freed->size;
 		profile->current_set.erase(msg->reallocate.from);
 
 		single_alloc stat;
@@ -405,19 +467,25 @@ void dbg_manager::process_alloc_msg(frame_profile* frame, dbg_msg* msg) { PROF
 		stat.size = msg->reallocate.bytes;
 
 		profile->current_set.insert(msg->reallocate.to, stat);
-		profile->size += stat.size;
-		profile->allocated += stat.size;
+		profile->current_size += stat.size;
+		profile->total_allocated += stat.size;
+		alloc_totals.current_size += stat.size;
+		alloc_totals.total_allocated += stat.size;
 
 		profile->num_reallocs++;
+		alloc_totals.num_reallocs++;
 
 	} break;
 	case dbg_msg_type::free: {
 
 		single_alloc* freed = profile->current_set.get(msg->free.from);
 
-		profile->size -= freed->size;
-		profile->freed += freed->size;
+		profile->current_size -= freed->size;
+		profile->total_freed += freed->size;
 		profile->num_frees++;
+		alloc_totals.current_size -= freed->size;
+		alloc_totals.total_freed += freed->size;
+		alloc_totals.num_frees++;
 
 		profile->current_set.erase(msg->free.from);
 
@@ -438,17 +506,17 @@ void dbg_manager::fixdown_self_timings(profile_node* node) { PROF
 
 CALLBACK void dbg_add_log(log_message* msg, void* param) { PROF
 
-	dbg_manager* gui = (dbg_manager*)param;
+	dbg_manager* dbg = (dbg_manager*)param;
 
-	if(gui->log_cache.len() == gui->log_cache.capacity) {
+	if(dbg->log_cache.len() == dbg->log_cache.capacity) {
 
-		log_message* m = gui->log_cache.front();
+		log_message* m = dbg->log_cache.front();
 		DESTROY_ARENA(&m->arena);
-		gui->log_cache.pop();
+		dbg->log_cache.pop();
 	}
 
-	log_message* m = gui->log_cache.push(*msg);
-	m->arena       = MAKE_ARENA("cmsg"_, msg->arena.size, gui->alloc, msg->arena.suppress_messages);
+	log_message* m = dbg->log_cache.push(*msg);
+	m->arena       = MAKE_ARENA("cmsg"_, msg->arena.size, dbg->alloc, msg->arena.suppress_messages);
 	m->call_stack  = array<code_context>::make_copy(&msg->call_stack, &m->arena);
 	m->thread_name = string::make_copy(msg->thread_name, &m->arena);
 	m->msg         = string::make_copy(msg->msg, &m->arena);

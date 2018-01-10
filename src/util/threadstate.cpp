@@ -15,7 +15,7 @@ void _begin_thread(string fmt, allocator* alloc, code_context start, Targs... ar
 
 void end_thread() { 
 	this_thread_data.profiling = false;
-
+	
 	this_thread_data.dbg_msgs.destroy();
 	this_thread_data.name.destroy();
 	POP_ALLOC();

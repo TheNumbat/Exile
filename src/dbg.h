@@ -23,6 +23,7 @@
 	dbg_msg msg; \
 	msg.type = dbg_msg_type::end_frame; \
 	POST_MSG(msg); \
+	global_dbg->collate(); \
 }
 
 typedef platform_perfcount timestamp;
@@ -91,9 +92,9 @@ struct dbg_msg {
 	union {
 		dbg_msg_begin_frame   begin_frame;	// done
 		dbg_msg_end_frame 	  end_frame;	// done
-		dbg_msg_allocate      allocate;
-		dbg_msg_reallocate    reallocate;
-		dbg_msg_free          free;
+		dbg_msg_allocate      allocate;		// done
+		dbg_msg_reallocate    reallocate;	// done
+		dbg_msg_free          free;			// done
 		dbg_msg_enter_func    enter_func;	// done
 		dbg_msg_exit_func     exit_func;	// done
 		dbg_msg_mut_lock      mut_lock;
@@ -147,8 +148,10 @@ struct alloc_profile {
 
 	map<void*, single_alloc> current_set; 
 
-	u64 size = 0, allocated = 0, freed = 0;
+	u64 current_size = 0, total_allocated = 0, total_freed = 0;
 	u64 num_allocs = 0, num_frees = 0, num_reallocs = 0;
+
+	bool shown = false;
 
 	static alloc_profile make(allocator* alloc);
 	void destroy();
@@ -175,7 +178,7 @@ enum class prof_sort_type : u8 {
 
 struct dbg_manager {
 
-	bool frame_pause = true;
+	bool frame_pause = true, show_alloc_stats = false;
 	platform_thread_id selected_thread;
 
 	prof_sort_type prof_sort = prof_sort_type::name;
@@ -185,6 +188,7 @@ struct dbg_manager {
 	platform_mutex stats_mut;
 	map<platform_thread_id, thread_profile> thread_stats;
 	map<allocator*, alloc_profile> alloc_stats;
+	alloc_profile alloc_totals;
 
 	locking_queue<log_message> log_cache;
 	log_level lvl = log_level::info;
@@ -199,7 +203,8 @@ struct dbg_manager {
 	void UI();
 	void profile_recurse(vector<profile_node*> list);
 	void fixdown_self_timings(profile_node* node);
-	void process_alloc_msg(frame_profile* frame, dbg_msg* msg);
+	void process_frame_alloc_msg(frame_profile* frame, dbg_msg* msg);
+	void process_alloc_msg(dbg_msg* msg);
 
 	void shutdown_log(log_manager* log);
 	void setup_log(log_manager* log);
@@ -217,3 +222,4 @@ bool prof_sort_name(profile_node* l, profile_node* r);
 bool prof_sort_heir(profile_node* l, profile_node* r);
 bool prof_sort_self(profile_node* l, profile_node* r);
 bool prof_sort_calls(profile_node* l, profile_node* r);
+bool operator<=(single_alloc l, single_alloc r);
