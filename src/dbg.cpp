@@ -173,6 +173,8 @@ void dbg_manager::UI() { PROF
 		
 		frame_profile* frame = thread->frames.get(thread->selected_frame - 1);
 		gui_text(string::makef("Frame %"_, frame->number));
+
+		gui_indent();
 		gui_push_id(frame->number);
 		
 		if(gui_node("Profile"_, &frame->show_prof)) {
@@ -212,6 +214,7 @@ void dbg_manager::UI() { PROF
 			gui_unindent();
 		}
 
+		gui_unindent();
 		gui_pop_id();
 	}
 
@@ -280,9 +283,9 @@ void dbg_manager::collate() {
 		global_api->platform_aquire_mutex(&stats_mut);
 		thread_profile* thread = thread_stats.get(global_api->platform_this_thread_id());
 
+		bool got_a_frame = false;
 		FORQ_BEGIN(msg, this_thread_data.dbg_msgs) {
 
-			bool got_a_frame = true;
 			if(msg->type == dbg_msg_type::begin_frame) {
 			
 				thread->num_frames++;
@@ -292,7 +295,8 @@ void dbg_manager::collate() {
 						thread->frames.pop().destroy();
 						got_a_frame = true;
 					}
-					got_a_frame = false;
+				} else {
+					got_a_frame = true;
 				}
 
 				if(got_a_frame) {
@@ -365,6 +369,8 @@ void dbg_manager::collate() {
 						FORVEC(it, frame->heads) {
 							fixdown_self_timings(*it);
 						}
+
+						got_a_frame = false;
 					} break;
 
 					case dbg_msg_type::allocate: 

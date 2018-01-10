@@ -133,7 +133,7 @@ struct frame_profile {
 	pool_allocator pool;
 	u32 number = 0;
 
-	bool show_prof = false, show_allocs = false;
+	bool show_prof = true, show_allocs = true;
 
 	void setup(string name, allocator* alloc, timestamp time, u32 num);
 	void destroy();
