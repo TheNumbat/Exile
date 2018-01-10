@@ -125,6 +125,7 @@ void dbg_manager::UI() { PROF
 
 	gui_begin("Debug"_, R2(20.0f, 20.0f, dim.x / 1.5f, dim.y / 2.0f));
 	
+	gui_text(string::makef("FPS: %"_, 1.0f / last_frame_time));
 	gui_checkbox("Pause: "_, &frame_pause);
 
 	global_api->platform_aquire_mutex(&stats_mut);
@@ -172,7 +173,9 @@ void dbg_manager::UI() { PROF
 	if(thread->frames.len()) {
 		
 		frame_profile* frame = thread->frames.get(thread->selected_frame - 1);
-		gui_text(string::makef("Frame %"_, frame->number));
+
+		f32 frame_time = (f32)(frame->perf_end - frame->perf_start) / (f32)global_api->platform_get_perfcount_freq() * 1000.0f;
+		gui_text(string::makef("Frame: %, Time: %ms"_, frame->number, frame_time));
 
 		gui_indent();
 		gui_push_id(frame->number);
@@ -259,12 +262,13 @@ void dbg_manager::register_thread(u32 frames, u32 frame_size) { PROF
 	global_api->platform_release_mutex(&stats_mut);
 }
 
-void frame_profile::setup(string name, allocator* alloc, timestamp time, u32 num) { PROF
+void frame_profile::setup(string name, allocator* alloc, clock time, platform_perfcount p, u32 num) { PROF
 
 	pool = MAKE_POOL(name, KILOBYTES(8), alloc, false);
 	heads = vector<profile_node*>::make(2, &pool);
 	allocations = map<allocator*, alloc_frame_profile>::make(8, alloc, FPTR(hash_ptr));
-	start = time;
+	clock_start = time;
+	perf_start = p;
 	number = num;
 }
 
@@ -284,10 +288,13 @@ void dbg_manager::collate() {
 		thread_profile* thread = thread_stats.get(global_api->platform_this_thread_id());
 
 		bool got_a_frame = false;
+		platform_perfcount frame_perf_start = 0;
+
 		FORQ_BEGIN(msg, this_thread_data.dbg_msgs) {
 
 			if(msg->type == dbg_msg_type::begin_frame) {
 			
+				frame_perf_start = msg->begin_frame.perf;
 				thread->num_frames++;
 
 				if(thread->frames.full()) {
@@ -302,7 +309,7 @@ void dbg_manager::collate() {
 				if(got_a_frame) {
 					frame_profile* frame = thread->frames.push(frame_profile());
 					string name = string::makef("frame %"_, thread->num_frames);
-					frame->setup(name, alloc, msg->time, thread->num_frames);
+					frame->setup(name, alloc, msg->time, msg->begin_frame.perf, thread->num_frames);
 					name.destroy();
 				}
 			}
@@ -355,7 +362,7 @@ void dbg_manager::collate() {
 
 					case dbg_msg_type::exit_func: {
 
-						timestamp runtime = msg->time - frame->current->begin;
+						clock runtime = msg->time - frame->current->begin;
 						
 						frame->current->heir += runtime;
 						frame->current->begin = 0;
@@ -364,7 +371,8 @@ void dbg_manager::collate() {
 					} break;
 
 					case dbg_msg_type::end_frame: {
-						frame->end = msg->time;
+						frame->clock_end = msg->time;
+						frame->perf_end = msg->end_frame.perf;
 
 						FORVEC(it, frame->heads) {
 							fixdown_self_timings(*it);
@@ -386,6 +394,9 @@ void dbg_manager::collate() {
 
 			if(msg->type == dbg_msg_type::allocate || msg->type == dbg_msg_type::reallocate || msg->type == dbg_msg_type::free) {
 				process_alloc_msg(msg);
+			}
+			if(msg->type == dbg_msg_type::end_frame) {
+				last_frame_time = (f32)(msg->end_frame.perf - frame_perf_start) / (f32)global_api->platform_get_perfcount_freq();
 			}
 
 		} FORQ_END(msg, this_thread_data.dbg_msgs);
@@ -501,7 +512,7 @@ void dbg_manager::process_alloc_msg(dbg_msg* msg) { PROF
 
 void dbg_manager::fixdown_self_timings(profile_node* node) { PROF
 
-	timestamp children = 0;
+	clock children = 0;
 	FORVEC(it, node->children) {
 		fixdown_self_timings(*it);
 		children += (*it)->heir;

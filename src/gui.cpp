@@ -897,14 +897,21 @@ void gui_text(string text) { PROF
 	f32 point = ggui->style.font_size;
 	color c = WHITE;
 
-	v2 pos = win->cursor;
-	v2 size = size_text(win->font->font, text, point);
-	gui_add_offset(size);
-
+	v2 pos = win->cursor, size = V2(0.0f, point);
+	
 	if(!win->visible(R2(pos, size))) {
+		gui_add_offset(size);
 		return;
 	}
 
+	size = size_text(win->font->font, text, point);
+
+	if(!win->visible(R2(pos, size))) {
+		gui_add_offset(size);
+		return;
+	}
+
+	gui_add_offset(size);
 	win->text_mesh.push_text_line(win->font->font, text, pos, point, c);
 }
 

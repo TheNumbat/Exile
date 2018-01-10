@@ -8,7 +8,7 @@
 #ifdef _MSC_VER
 #define POST_MSG(m) {PUSH_PROFILE(false) {(m).time = __rdtsc(); this_thread_data.dbg_msgs.push(m);} POP_PROFILE();}
 #else
-#define POST_MSG(m) {PUSH_PROFILE(false) {(m).time = global_api->platform_get_perfcount(); this_thread_data.dbg_msgs.push(m);} POP_PROFILE();}
+#error "Fix this"
 #endif
 
 #define PROF_SEC(n) 	_prof_sec(n, CONTEXT);
@@ -17,16 +17,18 @@
 #define BEGIN_FRAME() { \
 	dbg_msg msg; \
 	msg.type = dbg_msg_type::begin_frame; \
+	msg.begin_frame.perf = global_api->platform_get_perfcount(); \
 	POST_MSG(msg); \
 }
 #define END_FRAME() { \
 	dbg_msg msg; \
 	msg.type = dbg_msg_type::end_frame; \
+	msg.end_frame.perf = global_api->platform_get_perfcount(); \
 	POST_MSG(msg); \
 	global_dbg->collate(); \
 }
 
-typedef platform_perfcount timestamp;
+typedef u64 clock;
 
 enum class dbg_msg_type : u8 {
 	none,
@@ -44,9 +46,13 @@ enum class dbg_msg_type : u8 {
 	section_end,
 };
 
-struct dbg_msg_begin_frame {};
+struct dbg_msg_begin_frame {
+	platform_perfcount perf = 0;
+};
 
-struct dbg_msg_end_frame {};
+struct dbg_msg_end_frame {
+	platform_perfcount perf = 0;
+};
 
 struct dbg_msg_allocate {
 	void* to 		 = null;
@@ -82,12 +88,9 @@ struct dbg_msg_sem_wait {
 	platform_semaphore* sem = null;
 };
 
-struct dbg_msg_section_begin {};
-struct dbg_msg_section_end {};
-
 struct dbg_msg {
 	dbg_msg_type type = dbg_msg_type::none;
-	timestamp time = 0;
+	clock time = 0;
 	code_context context;
 	code_context call_stack[32];
 	union {
@@ -107,7 +110,7 @@ struct dbg_msg {
 
 struct profile_node {
 	code_context context;
-	timestamp self = 0, heir = 0, begin = 0;
+	clock self = 0, heir = 0, begin = 0;
 	u32 calls = 0;
 	bool enabled = false;
 
@@ -125,7 +128,8 @@ struct alloc_frame_profile {
 
 struct frame_profile {
 
-	timestamp start = 0, end = 0;
+	clock clock_start = 0, clock_end = 0;
+	platform_perfcount perf_start = 0, perf_end = 0;
 	vector<profile_node*> heads;
 	profile_node* current = null;
 
@@ -136,7 +140,7 @@ struct frame_profile {
 
 	bool show_prof = true, show_allocs = true;
 
-	void setup(string name, allocator* alloc, timestamp time, u32 num);
+	void setup(string name, allocator* alloc, clock time, platform_perfcount perf, u32 num);
 	void destroy();
 };
 
@@ -181,8 +185,9 @@ struct dbg_manager {
 
 	bool frame_pause = true, show_alloc_stats = false;
 	platform_thread_id selected_thread;
+	f32 last_frame_time = 0.0f;
 
-	prof_sort_type prof_sort = prof_sort_type::name;
+	prof_sort_type prof_sort = prof_sort_type::heir;
 
 	allocator* alloc = null;
 
