@@ -21,8 +21,8 @@ all includes:
 	#include <float.h>
 	#include <new>
 	#include <cmath>
-	#include <xmmintrin.h>
 	#include <typeinfo>
+	#include <xmmintrin.h>/<intrin.h>
 
 priority:
 	voxel rendering methods
