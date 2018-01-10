@@ -89,6 +89,7 @@ struct dbg_msg {
 	dbg_msg_type type = dbg_msg_type::none;
 	timestamp time = 0;
 	code_context context;
+	code_context call_stack[32];
 	union {
 		dbg_msg_begin_frame   begin_frame;	// done
 		dbg_msg_end_frame 	  end_frame;	// done

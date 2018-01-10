@@ -49,8 +49,11 @@ struct vector {
 	// merge sort
 	void stable_sort();
 	void stable_sort(bool (*comp)(T,T));
+	
 	void mergesort(u32 min, u32 max);
 	void mergesort(bool (*comp)(T,T), u32 min, u32 max);
+	
+	// NOTE(max): THESE ALLOCATE TEMP MEMORY FROM THE CURRENT ALLOC
 	void merge(u32 min, u32 mid, u32 max);
 	void merge(bool (*comp)(T,T), u32 min, u32 mid, u32 max);
 

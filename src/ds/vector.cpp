@@ -118,7 +118,7 @@ template<typename T>
 void vector<T>::merge(u32 min, u32 mid, u32 max) { PROF
 
 	u32 i = min, j = mid + 1, k = 0;
-	vector<T> temp = make(max - min + 1, alloc);
+	vector<T> temp = make(max - min + 1);
 
 	while(i <= mid && j <= max) {
 		if(memory[i] <= memory[j]) {
@@ -165,7 +165,7 @@ template<typename T>
 void vector<T>::merge(bool (*leq)(T,T), u32 min, u32 mid, u32 max) { PROF
 
 	u32 i = min, j = mid + 1, k = 0;
-	vector<T> temp = make(max - min + 1, alloc);
+	vector<T> temp = make(max - min + 1);
 
 	while(i <= mid && j <= max) {
 		if(leq(memory[i],memory[j])) {

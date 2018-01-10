@@ -32,6 +32,7 @@ CALLBACK void* platform_allocate(u64 bytes, allocator* this_, code_context conte
 		dbg_msg m;
 		m.type = dbg_msg_type::allocate;
 		m.context = context;
+		memcpy(this_thread_data.call_stack, m.call_stack, sizeof(code_context) * this_thread_data.call_stack_depth);
 		m.allocate.to = mem;
 		m.allocate.bytes = bytes;
 		m.allocate.alloc = this_;
