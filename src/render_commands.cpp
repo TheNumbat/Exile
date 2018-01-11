@@ -268,6 +268,7 @@ void mesh_3d_tex_instance_data::destroy() { PROF
 void mesh_3d_tex_instance_data::clear() { PROF
 
 	data.clear();
+	instances = 0;
 	dirty = true;
 }
 
@@ -694,4 +695,32 @@ void mesh_3d_tex::push_cube(v3 pos, f32 len) {
 	elements.push(V3u(0,1,4));
 
 	dirty = true;
+}
+
+void render_camera::update() {
+	front.x = cosf(RADIANS(pitch)) * cosf(RADIANS(yaw));
+	front.y = sinf(RADIANS(pitch));
+	front.z = sinf(RADIANS(yaw)) * cosf(RADIANS(pitch));
+	front = normalize(front);
+	right = normalize(cross(front, V3f(0, 1, 0)));
+	up = normalize(cross(right, front));
+}
+
+void render_camera::move(i32 dx, i32 dy, f32 sens) {
+	
+	yaw   += dx * sens;
+	pitch -= dy * sens;
+
+	if (yaw > 360.0f) yaw = 0.0f;
+	else if (yaw < 0.0f) yaw = 360.0f;
+
+	if (pitch > 89.0f) pitch = 89.0f;
+	else if (pitch < -89.0f) pitch = -89.0f;
+
+	update();
+}
+
+m4 render_camera::view() {
+
+	return lookAt(pos, pos + front, up);
 }

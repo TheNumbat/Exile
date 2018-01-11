@@ -167,3 +167,13 @@ struct render_command_list {
 	void add_command(render_command rc);
 	void sort();
 };
+
+struct render_camera {
+
+	v3 	  pos, front, up, right;
+	float pitch = 0.0f, yaw = 0.0f, speed = 5.0f, fov = 60.0f;
+
+	void update();
+	void move(i32 dx, i32 d, f32 sens);
+	m4 view();
+};

@@ -62,6 +62,11 @@ gui_input_state run_events(game_state* state) { PROF
 		if(evt.type == platform_event_type::mouse) {
 		
 			if(evt.mouse.flags & (u16)platform_mouseflag::move) {
+				
+				i32 dx = (i32)roundf(evt.mouse.x - ret.mousepos.x);
+				i32 dy = (i32)roundf(evt.mouse.y - ret.mousepos.y);
+				state->world.camera.move(dx, dy, 0.5f);
+				
 				ret.mousepos.x = evt.mouse.x;
 				ret.mousepos.y = evt.mouse.y;
 			}

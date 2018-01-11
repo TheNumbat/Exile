@@ -33,8 +33,7 @@ priority:
 	update features/readme
 
 bugs:
-	re-enable arena/pool messages?
-	find a way to check net allocations in debug manager?
+	debug collate on shutdown occasionally has forgotten about something allocated in gui (and crashes)
 
 to do:
 
@@ -93,6 +92,8 @@ to do:
 		support loading/writing type table for release (i.e. don't build on startup)
 
 	debug
+		re-enable arena/pool messages?
+		find a way to check net allocations in debug manager?	
 		stats/options 
 			apply meta-types
 		profiler

@@ -4,6 +4,7 @@ chunk chunk::make(mesh_3d_tex* cube, allocator* a) { PROF
 	chunk ret;
 
 	ret.cube_data = mesh_3d_tex_instance_data::make(cube, 16, a);
+	memset(ret.blocks, 16 * 16 * 256, 1);
 
 	return ret;
 }
@@ -16,9 +17,18 @@ void chunk::destroy() { PROF
 void chunk::build_data() { PROF
 
 	cube_data.clear();
-	cube_data.data.push(V3(0.0f, 0.0f, 0.0f));
-	cube_data.data.push(V3(0.0f, 2.0f, 0.0f));
-	cube_data.instances = 2;
+
+	for(u32 x = 0; x < 16; x++) {
+		for(u32 z = 0; z < 16; z++) {
+			for(u32 y = 0; y < 256; y++) {
+				if(blocks[x][z][y] != block_type::air) {
+
+					cube_data.data.push(V3f(x, y, z));
+					cube_data.instances++;
+				}
+			}
+		}
+	}
 }
 
 void world_manager::init(game_state* st, allocator* a) { PROF
@@ -46,11 +56,11 @@ void world_manager::render() { PROF
 	render_command cmd = render_command::make(render_command_type::mesh_3d_tex_instanced);
 
 	cmd.mesh_3d_tex_instanced.data = &the_chunk.cube_data;
-
+	cmd.model = scale(V3(0.1f, 0.1f, 0.1f));
 	cmd.texture = cube_tex;
 
+	rcl.view = camera.view();
 	rcl.proj = proj(60.0f, (f32)state->window.w / (f32)state->window.h, 0.1f, 100.0f);
-	rcl.view = lookAt(V3(5.0f, 3.0f, 5.0f), V3(0.0f, 0.0f, 0.0f), V3(0.0f, 1.0f, 0.0f));
 
 	rcl.add_command(cmd);
 	state->ogl.execute_command_list(&rcl);

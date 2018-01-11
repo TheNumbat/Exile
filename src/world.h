@@ -22,6 +22,8 @@ struct world_manager {
 
 	texture_id cube_tex;
 
+	render_camera camera;
+
 	game_state* state = null;
 	allocator*  alloc = null;
 
