@@ -176,22 +176,26 @@ void gui_manager::end_frame(platform_window* win, ogl_manager* ogl) { PROF
 	FORMAP(it, windows) {
 		
 		{
-			render_command cmd = render_command::make(render_command_type::mesh_2d_col, &it->value.background_mesh, it->value.z);
+			render_command cmd = render_command::make(render_command_type::mesh_2d_col, it->value.z);
+			cmd.mesh_2d_col.mesh = &it->value.background_mesh;
 			rcl.add_command(cmd);
 		}
 		{
-			render_command cmd = render_command::make(render_command_type::mesh_2d_col, &it->value.shape_mesh, it->value.z);
+			render_command cmd = render_command::make(render_command_type::mesh_2d_col, it->value.z);
+			cmd.mesh_2d_col.mesh = &it->value.shape_mesh;
 			cmd.scissor = it->value.get_real_content();
 			rcl.add_command(cmd);
 		}
 		if(it->value.title_verts) {
-			render_command cmd = render_command::make(render_command_type::mesh_2d_tex_col, &it->value.text_mesh, it->value.z);
+			render_command cmd = render_command::make(render_command_type::mesh_2d_tex_col, it->value.z);
+			cmd.mesh_2d_tex_col.mesh = &it->value.text_mesh;
 			cmd.num_tris = it->value.title_elements;
 			cmd.texture = it->value.font->texture;
 			rcl.add_command(cmd);
 		}
 		{
-			render_command cmd = render_command::make(render_command_type::mesh_2d_tex_col, &it->value.text_mesh, it->value.z);
+			render_command cmd = render_command::make(render_command_type::mesh_2d_tex_col, it->value.z);
+			cmd.mesh_2d_tex_col.mesh = &it->value.text_mesh;
 			cmd.offset = it->value.title_verts;
 			cmd.start_tri = it->value.title_elements;
 			cmd.texture = it->value.font->texture;
@@ -203,7 +207,7 @@ void gui_manager::end_frame(platform_window* win, ogl_manager* ogl) { PROF
 	rcl.proj = ortho(0, (f32)window->w, (f32)window->h, 0, -1, 1);
 	rcl.sort();
 
-	ogl->execute_command_list(win, &rcl);
+	ogl->execute_command_list(&rcl);
 	rcl.destroy();
 
 	FORMAP(it, windows) {

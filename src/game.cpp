@@ -38,6 +38,9 @@ EXPORT game_state* start_up(platform_api* api) {
 	LOG_INFO("Beginning startup...");
 	LOG_PUSH_CONTEXT_L("");
 
+	LOG_INFO("Starting logger...");
+	state->log.start();
+
 	LOG_INFO("Setting up events...");
 	state->evt_a = MAKE_PLATFORM_ALLOCATOR("event");
 	state->evt = evt_manager::make(&state->evt_a);
@@ -66,7 +69,7 @@ EXPORT game_state* start_up(platform_api* api) {
 
 	LOG_INFO("Setting up OpenGL...");
 	state->ogl_a = MAKE_PLATFORM_ALLOCATOR("ogl");
-	state->ogl = ogl_manager::make(&state->ogl_a);
+	state->ogl = ogl_manager::make(&state->window, &state->ogl_a);
 
 	state->thread_pool.wait_job(assets);
 
@@ -75,8 +78,9 @@ EXPORT game_state* start_up(platform_api* api) {
 	state->gui = gui_manager::make(&state->gui_a, &state->window);
 	state->gui.add_font(&state->ogl, "guimono"_, &state->default_store, true);
 
-	LOG_INFO("Starting logger...");
-	state->log.start();
+	LOG_INFO("Setting up world...");
+	state->world_a = MAKE_PLATFORM_ALLOCATOR("world");
+	state->world.init(state, &state->world_a);
 
 	LOG_INFO("Done with startup!");
 	LOG_POP_CONTEXT();
@@ -97,6 +101,8 @@ EXPORT bool main_loop(game_state* state) {
 	PUSH_ALLOC(&state->transient_arena) {
 
 		gui_input_state input = run_events(state); 
+		
+		state->world.render();
 		
 		state->gui.begin_frame(input);
 
@@ -125,6 +131,9 @@ EXPORT void shut_down(game_state* state) {
 
 	BEGIN_FRAME();
 	LOG_INFO("Beginning shutdown...");
+
+	LOG_DEBUG("Destroying world!");
+	state->world.destroy();
 
 	LOG_DEBUG("Destroying asset system");
 	state->default_store.destroy();
@@ -160,6 +169,7 @@ EXPORT void shut_down(game_state* state) {
 	state->dbg.destroy();
 	end_thread();
 
+	state->world_a.destroy();
 	state->dbg_a.destroy();
 	state->log_a.destroy();
 	state->ogl_a.destroy();

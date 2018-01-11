@@ -1,408 +1,4 @@
 
-mesh_2d_col mesh_2d_col::make(u32 verts, allocator* alloc) { PROF
-
-	if(alloc == null) {
-		alloc = CURRENT_ALLOC();
-	}
-
-	mesh_2d_col ret;
-
-	ret.alloc = alloc;
-
-	ret.vertices = vector<v2>::make(verts, alloc);
-	ret.colors 	  =	vector<colorf>::make(verts, alloc);
-	ret.elements  = vector<uv3>::make(verts, alloc); 
-
-	glGenVertexArrays(1, &ret.vao);
-	glGenBuffers(3, ret.vbos);
-
-	glBindVertexArray(ret.vao);
-
-	glBindBuffer(gl_buf_target::array, ret.vbos[0]);
-	glVertexAttribPointer(0, 2, gl_vert_attrib_type::_float, gl_bool::_false, sizeof(v2), (void*)0);
-	glEnableVertexAttribArray(0);
-	
-	glBindBuffer(gl_buf_target::array, ret.vbos[1]);
-	glVertexAttribPointer(1, 4, gl_vert_attrib_type::_float, gl_bool::_false, sizeof(v4), (void*)0);
-	glEnableVertexAttribArray(1);
-	
-	glBindBuffer(gl_buf_target::element_array, ret.vbos[2]);
-
-	glBindVertexArray(0);
-
-	return ret;
-}
-
-void mesh_2d_col::destroy() { PROF
-
-	glDeleteVertexArrays(1, &vao);
-	glDeleteBuffers(3, vbos);
-
-	vertices.destroy();
-	colors.destroy();
-	elements.destroy();
-	alloc = null;
-}
-
-void mesh_2d_col::clear() { PROF
-	vertices.clear();
-	colors.clear();
-	elements.clear();
-	dirty = true;
-}
-
-void mesh_2d_col::push_tri(v2 p1, v2 p2, v2 p3, color c) { PROF
-
-	u32 idx = vertices.size;
-	
-	vertices.push(p1);
-	vertices.push(p2);
-	vertices.push(p3);
-
-	DO(3) colors.push(color_to_f(c));
-
-	elements.push(V3u(idx, idx + 1, idx + 2));
-
-	dirty = true;
-}
-
-void mesh_2d_col::push_cutrect(r2 r, f32 round, color c) { PROF
-
-	u32 idx = vertices.size;
-
-	vertices.push(V2(r.x, r.y + round));
-	vertices.push(V2(r.x, r.y + r.h - round));
-	vertices.push(V2(r.x + round, r.y + r.h));
-	vertices.push(V2(r.x + r.w - round, r.y + r.h));
-	vertices.push(V2(r.x + r.w, r.y + r.h - round));
-	vertices.push(V2(r.x + r.w, r.y + round));
-	vertices.push(V2(r.x + r.w - round, r.y));
-	vertices.push(V2(r.x + round, r.y));
-
-	colorf cf = color_to_f(c);
-	DO(8) colors.push(cf);
-
-	elements.push(V3u(idx, idx + 1, idx + 2));
-	elements.push(V3u(idx, idx + 2, idx + 7));
-	elements.push(V3u(idx + 7, idx + 2, idx + 3));
-	elements.push(V3u(idx + 7, idx + 6, idx + 3));
-	elements.push(V3u(idx + 3, idx + 4, idx + 5));
-	elements.push(V3u(idx + 3, idx + 5, idx + 6));
-
-	dirty = true;
-}
-
-void mesh_2d_col::push_rect(r2 r, color c) { PROF
-
-	u32 idx = vertices.size;
-
-	vertices.push(V2(r.x, r.y + r.h));	// BLC
-	vertices.push(r.xy);				// TLC
-	vertices.push(add(r.xy, r.wh));		// BRC
-	vertices.push(V2(r.x + r.w, r.y));	// TRC
-
-	colorf cf = color_to_f(c);
-	DO(4) colors.push(cf);
-
-	elements.push(V3u(idx, idx + 1, idx + 2));
-	elements.push(V3u(idx + 1, idx + 2, idx + 3));
-
-	dirty = true;
-}
-
-
-mesh_2d_tex mesh_2d_tex::make(u32 verts, allocator* alloc) { PROF
-
-	if(alloc == null) {
-		alloc = CURRENT_ALLOC();
-	}
-
-	mesh_2d_tex ret;
-
-	ret.alloc = alloc;
-
-	ret.vertices = vector<v2>::make(verts, alloc);
-	ret.texCoords =	vector<v2>::make(verts, alloc);
-	ret.elements  = vector<uv3>::make(verts, alloc); 
-
-	glGenVertexArrays(1, &ret.vao);
-	glGenBuffers(3, ret.vbos);
-
-	glBindVertexArray(ret.vao);
-
-	glBindBuffer(gl_buf_target::array, ret.vbos[0]);
-	glVertexAttribPointer(0, 2, gl_vert_attrib_type::_float, gl_bool::_false, sizeof(v2), (void*)0);
-	glEnableVertexAttribArray(0);
-	
-	glBindBuffer(gl_buf_target::array, ret.vbos[1]);
-	glVertexAttribPointer(1, 2, gl_vert_attrib_type::_float, gl_bool::_false, sizeof(v2), (void*)0);
-	glEnableVertexAttribArray(1);
-	
-	glBindBuffer(gl_buf_target::element_array, ret.vbos[2]);
-
-	glBindVertexArray(0);
-
-	return ret;
-
-}
-
-void mesh_2d_tex::destroy() { PROF
-
-	glDeleteVertexArrays(1, &vao);
-	glDeleteBuffers(3, vbos);
-
-	vertices.destroy();
-	texCoords.destroy();
-	elements.destroy();
-	alloc = null;
-}
-
-void mesh_2d_tex::clear() { PROF
-	vertices.clear();
-	texCoords.clear();
-	elements.clear();
-
-	dirty = true;
-}
-
-mesh_2d_tex_col mesh_2d_tex_col::make(u32 verts, allocator* alloc) { PROF
-
-	if(alloc == null) {
-		alloc = CURRENT_ALLOC();
-	}
-
-	mesh_2d_tex_col ret;
-
-	ret.alloc = alloc;
-
-	ret.vertices = vector<v2>::make(verts, alloc);
-	ret.texCoords =	vector<v2>::make(verts, alloc);
-	ret.colors 	  = vector<colorf>::make(verts, alloc);
-	ret.elements  = vector<uv3>::make(verts, alloc); 
-
-	glGenVertexArrays(1, &ret.vao);
-	glGenBuffers(4, ret.vbos);
-
-	glBindVertexArray(ret.vao);
-
-	glBindBuffer(gl_buf_target::array, ret.vbos[0]);
-	glVertexAttribPointer(0, 2, gl_vert_attrib_type::_float, gl_bool::_false, sizeof(v2), (void*)0);
-	glEnableVertexAttribArray(0);
-	
-	glBindBuffer(gl_buf_target::array, ret.vbos[1]);
-	glVertexAttribPointer(1, 2, gl_vert_attrib_type::_float, gl_bool::_false, sizeof(v2), (void*)0);
-	glEnableVertexAttribArray(1);
-
-	glBindBuffer(gl_buf_target::array, ret.vbos[2]);
-	glVertexAttribPointer(2, 4, gl_vert_attrib_type::_float, gl_bool::_false, sizeof(v4), (void*)0);
-	glEnableVertexAttribArray(2);
-
-	glBindBuffer(gl_buf_target::element_array, ret.vbos[3]);
-
-	glBindVertexArray(0);
-
-	return ret;
-}
-
-void mesh_2d_tex_col::destroy() { PROF
-
-	glDeleteVertexArrays(1, &vao);
-	glDeleteBuffers(4, vbos);
-
-	vertices.destroy();
-	texCoords.destroy();
-	colors.destroy();
-	elements.destroy();
-	alloc = null;
-}
-
-void mesh_2d_tex_col::clear() { PROF
-	vertices.clear();
-	texCoords.clear();
-	elements.clear();
-	colors.clear();
-}
-
-mesh_3d_tex mesh_3d_tex::make(u32 verts, allocator* alloc) { PROF
-
-	if(alloc == null) {
-		alloc = CURRENT_ALLOC();
-	}
-
-	mesh_3d_tex ret;
-
-	ret.alloc = alloc;
-
-	ret.vertices = vector<v3>::make(verts, alloc);
-	ret.texCoords = vector<v2>::make(verts, alloc);
-	ret.elements  = vector<uv3>::make(verts, alloc);
-
-	glGenVertexArrays(1, &ret.vao);
-	glGenBuffers(3, ret.vbos);
-
-	glBindVertexArray(ret.vao);
-
-	glBindBuffer(gl_buf_target::array, ret.vbos[0]);
-	glVertexAttribPointer(0, 3, gl_vert_attrib_type::_float, gl_bool::_false, sizeof(v3), (void*)0);
-	glEnableVertexAttribArray(0);
-	
-	glBindBuffer(gl_buf_target::array, ret.vbos[1]);
-	glVertexAttribPointer(1, 2, gl_vert_attrib_type::_float, gl_bool::_false, sizeof(v2), (void*)0);
-	glEnableVertexAttribArray(1);
-
-	glBindBuffer(gl_buf_target::element_array, ret.vbos[2]);
-
-	glBindVertexArray(0);
-
-	return ret;
-}
-
-void mesh_3d_tex::destroy() { PROF
-
-	glDeleteVertexArrays(1, &vao);
-	glDeleteBuffers(3, vbos);
-
-	vertices.destroy();
-	texCoords.destroy();
-	elements.destroy();
-	alloc = null;	
-}
-
-void mesh_3d_tex::clear() { PROF
-	vertices.clear();
-	texCoords.clear();
-	elements.clear();
-}
-
-render_command render_command::make(render_command_type type, void* data, u32 key) { PROF
-
-	render_command ret;
-
-	ret.cmd = type;
-	ret.data = data;
-	ret.sort_key = key;
-
-	return ret;
-}
-
-bool operator<=(render_command& first, render_command& second) { PROF
-	return first.sort_key <= second.sort_key;
-}
-
-render_command_list render_command_list::make(allocator* alloc, u32 cmds) { PROF
-
-	if(alloc == null) {
-		alloc = CURRENT_ALLOC();
-	}
-
-	render_command_list ret;
-
-	ret.alloc = alloc;
-
-	ret.commands = vector<render_command>::make(cmds, alloc);
-
-	return ret;
-}
-
-void render_command_list::destroy() { PROF
-
-	commands.destroy();
-	alloc = null;
-}
-
-void render_command_list::add_command(render_command rc) { PROF
-
-	commands.push(rc);
-}
-
-void render_command_list::sort() { PROF
-
-	commands.stable_sort();
-}
-
-f32 mesh_2d_tex_col::push_text_line(asset* font, string text_utf8, v2 pos, f32 point, color c) { PROF
-
-	colorf cf = color_to_f(c);
-	f32 x = pos.x;
-	f32 y = pos.y;
-	f32 scale = point / font->font.point;
-	if(point == 0.0f) {
-		scale = 1.0f;
-	}
-	y += scale * font->font.linedist;
-
-	u32 index = 0;
-	while(u32 codepoint = text_utf8.get_next_codepoint(&index)) {
-
-		u32 idx = vertices.size;
-		glyph_data glyph = font->font.get_glyph(codepoint);
-
-		f32 w = (f32)font->font.width;
-		f32 h = (f32)font->font.height;
-		v2 tlc = V2(glyph.x1/w, 1.0f - glyph.y1/h);
-		v2 brc = V2(glyph.x2/w, 1.0f - glyph.y2/h);
-		v2 trc = V2(glyph.x2/w, 1.0f - glyph.y1/h);
-		v2 blc = V2(glyph.x1/w, 1.0f - glyph.y2/h);
-
-		vertices.push(V2(x + scale*glyph.xoff1, y + scale*glyph.yoff2)); 	// BLC
- 		vertices.push(V2(x + scale*glyph.xoff1, y + scale*glyph.yoff1));	// TLC
- 		vertices.push(V2(x + scale*glyph.xoff2, y + scale*glyph.yoff2));	// BRC
- 		vertices.push(V2(x + scale*glyph.xoff2, y + scale*glyph.yoff1));	// TRC
-
-		texCoords.push(blc);
-		texCoords.push(tlc);
-		texCoords.push(brc);
-		texCoords.push(trc);
-
-		DO(4) colors.push(cf);
-
-		elements.push(V3u(idx, idx + 1, idx + 2));
-		elements.push(V3u(idx + 1, idx + 2, idx + 3));
-
-		x += scale * glyph.advance;
-	}
-
-	dirty = true;
-	return scale * font->font.linedist;
-}
-
-void mesh_3d_tex::push_cube(v3 pos, f32 len) {
-
-	f32 len2 = len / 2.0f;
-	vertices.push(pos + V3( len2,  len2,  len2));
-	vertices.push(pos + V3(-len2,  len2,  len2));
-	vertices.push(pos + V3( len2, -len2,  len2));
-	vertices.push(pos + V3( len2,  len2, -len2));
-	vertices.push(pos + V3(-len2, -len2,  len2));
-	vertices.push(pos + V3( len2, -len2, -len2));
-	vertices.push(pos + V3(-len2,  len2, -len2));
-	vertices.push(pos + V3(-len2, -len2, -len2));
-
-	texCoords.push(V2(0.0f, 0.0f));
-	texCoords.push(V2(1.0f, 0.0f));
-	texCoords.push(V2(0.0f, 1.0f));
-	texCoords.push(V2(0.0f, 0.0f));
-	texCoords.push(V2(1.0f, 0.0f));
-	texCoords.push(V2(0.0f, 1.0f));
-	texCoords.push(V2(1.0f, 0.0f));
-	texCoords.push(V2(1.0f, 1.0f));	
-
-	elements.push(V3u(0,2,5));
-	elements.push(V3u(0,3,5));
-	elements.push(V3u(0,3,6));
-	elements.push(V3u(0,1,6));
-	elements.push(V3u(1,4,7));
-	elements.push(V3u(1,6,7));
-	elements.push(V3u(4,2,5));
-	elements.push(V3u(4,7,5));
-	elements.push(V3u(7,5,3));
-	elements.push(V3u(7,6,3));
-	elements.push(V3u(0,2,4));
-	elements.push(V3u(0,1,4));
-
-	dirty = true;
-}
-
 v2 size_text(asset* font, string text_utf8, f32 point) { PROF
 
 	v2 ret;
@@ -422,7 +18,6 @@ v2 size_text(asset* font, string text_utf8, f32 point) { PROF
 	ret.y = scale * font->font.linedist;
 	return ret;
 }
-
 
 shader_source shader_source::make(string path, allocator* a) { PROF
 
@@ -578,12 +173,11 @@ void ogl_manager::try_reload_programs() { PROF
 	dbg_shader.refresh();
 }
 
-#define REGISTER_COMMAND(cmd) ret.add_command_ctx(render_command_type::cmd, FPTR(buffers_##cmd), FPTR(run_##cmd), string::literal("shaders/" #cmd ".v"), string::literal("shaders/" #cmd ".f"), FPTR(uniforms_##cmd));
-
-ogl_manager ogl_manager::make(allocator* a) { PROF
+ogl_manager ogl_manager::make(platform_window* win, allocator* a) { PROF
 
 	ogl_manager ret;
 
+	ret.win = win;
 	ret.alloc = a;
 	ret.textures = map<texture_id, texture>::make(32, a);
 	ret.commands = map<render_command_type, draw_context>::make(32, a);
@@ -592,10 +186,28 @@ ogl_manager ogl_manager::make(allocator* a) { PROF
 	ret.info = ogl_info::make(ret.alloc);
 	ret.check_version_and_extensions();
 
-	REGISTER_COMMAND(mesh_2d_col);	
-	REGISTER_COMMAND(mesh_2d_tex);
-	REGISTER_COMMAND(mesh_2d_tex_col);
-	REGISTER_COMMAND(mesh_3d_tex);
+	_type_info* info = TYPEINFO(render_command_type);
+	PUSH_ALLOC(a) {
+		for(u32 i = 0; i < info->_enum.member_count; i++) {
+			
+			string member = info->_enum.member_names[i];
+			if(member == "none"_) continue;
+
+			string buffer_func = string::makef("buffers_%"_, member);
+			string run_func = string::makef("run_%"_, member);
+			string uniforms_func = string::makef("uniforms_%"_, member);
+			string vertex = string::makef("shaders/%.v"_, member);
+			string fragment = string::makef("shaders/%.f"_, member);
+
+			ret.add_command_ctx((render_command_type)info->_enum.member_values[i], FPTR_STR(buffer_func), FPTR_STR(run_func), vertex, fragment, FPTR_STR(uniforms_func));
+
+			buffer_func.destroy();
+			run_func.destroy();
+			uniforms_func.destroy();
+			vertex.destroy();
+			fragment.destroy();
+		}
+	} POP_ALLOC();
 
 	ret.dbg_shader = shader_program::make("shaders/dbg.v"_,"shaders/dbg.f"_,FPTR(uniforms_dbg),a);
 
@@ -818,7 +430,7 @@ draw_context* ogl_manager::get_command_ctx(render_command_type id) { PROF
 	return d;
 }
 
-void ogl_manager::execute_command_list(platform_window* win, render_command_list* rcl) { PROF
+void ogl_manager::execute_command_list(render_command_list* rcl) { PROF
 
 	glEnable(gl_capability::blend);
 	glEnable(gl_capability::scissor_test);
@@ -826,7 +438,7 @@ void ogl_manager::execute_command_list(platform_window* win, render_command_list
 
 	FORVEC(cmd, rcl->commands) {
 
-		cmd_set_settings(win, cmd);
+		cmd_set_settings(cmd);
 
 		draw_context* d = get_command_ctx(cmd->cmd);
 
@@ -840,7 +452,7 @@ void ogl_manager::execute_command_list(platform_window* win, render_command_list
 	glDisable(gl_capability::scissor_test);
 }
 
-void ogl_manager::cmd_set_settings(platform_window* win, render_command* cmd) {
+void ogl_manager::cmd_set_settings(render_command* cmd) {
 
 	ur2 viewport = roundR2(cmd->viewport), scissor = roundR2(cmd->scissor);
 
@@ -856,7 +468,7 @@ void ogl_manager::cmd_set_settings(platform_window* win, render_command* cmd) {
 }
 
 // temporary and inefficient texture render
-void ogl_manager::dbg_render_texture_fullscreen(platform_window* win, texture_id id) { PROF
+void ogl_manager::dbg_render_texture_fullscreen(texture_id id) { PROF
 
 	f32 data[] = {
 		-1.0f, -1.0f,	0.0f, 0.0f,
@@ -1066,7 +678,10 @@ void ogl_manager::load_global_funcs() { PROF
 	GL_LOAD(glEnableVertexAttribArray);
 	GL_LOAD(glGetShaderSource);
 	GL_LOAD(glDrawElementsBaseVertex);
-	
+	GL_LOAD(glDrawElementsInstanced);
+	GL_LOAD(glDrawElementsInstancedBaseVertex);
+	GL_LOAD(glVertexAttribDivisor);
+
 	GL_LOAD(glGetStringi);
 	GL_LOAD(glGetInteger64v);
 	GL_LOAD(glGetBooleani_v);

@@ -676,6 +676,10 @@ typedef void (*glGetInteger64i_v_t)(gl_get name, GLuint idx, GLint64* data);
 
 typedef const GLubyte* (*glGetStringi_t)(gl_info name, GLuint idx);
 
+typedef void (*glDrawElementsInstanced_t)(gl_draw_mode mode, GLsizei count,	gl_index_type type,	const void *indices, GLsizei primcount);
+typedef void (*glDrawElementsInstancedBaseVertex_t)(gl_draw_mode mode, GLsizei count, gl_index_type type, GLvoid *indices, GLsizei primcount, GLint basevertex);
+typedef void (*glVertexAttribDivisor_t)(GLuint index, GLuint divisor);
+
 typedef void (*glDebugProc_t)(gl_debug_source source, gl_debug_type type, GLuint id, gl_debug_severity severity, GLsizei length, const GLchar *message, const void *userParam);
 typedef void (*glDebugMessageCallback_t)(glDebugProc_t callback, const void *userParam);
 typedef void (*glDebugMessageInsert_t)(gl_debug_source source, gl_debug_type type, GLuint id, gl_debug_severity severity, GLsizei length, const char *message);
@@ -734,6 +738,10 @@ glGetDoublei_v_t    glGetDoublei_v;
 glGetFloati_v_t     glGetFloati_v;
 glGetIntegeri_v_t   glGetIntegeri_v;
 glGetInteger64i_v_t glGetInteger64i_v;
+
+glDrawElementsInstanced_t 			glDrawElementsInstanced;
+glDrawElementsInstancedBaseVertex_t glDrawElementsInstancedBaseVertex;
+glVertexAttribDivisor_t				glVertexAttribDivisor;
 
 glDebugMessageCallback_t 	glDebugMessageCallback;
 glDebugMessageInsert_t		glDebugMessageInsert;

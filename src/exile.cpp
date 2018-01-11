@@ -92,9 +92,11 @@
 #include "dbg.h"
 
 #include "asset.h"
+#include "render_commands.h"
 #include "render.h"
 #include "gui.h"
 #include "events.h"
+#include "world.h"
 
 #include "util/threadstate.h"
 #include "util/fscope.h"
@@ -126,6 +128,7 @@ static dbg_manager*  global_dbg = null; // global to provide profiling functiona
 #include "dbg.cpp"
 #include "asset.cpp"
 #include "game.cpp"
+#include "world.cpp"
 
 #include "ds/string.cpp"
 #include "ds/vector.cpp"

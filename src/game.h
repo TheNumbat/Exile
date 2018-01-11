@@ -14,10 +14,15 @@ struct game_state {
 	gui_manager gui;
 	dbg_manager dbg;
 	evt_manager evt;
-	threadpool  thread_pool;
-	platform_allocator log_a, ogl_a, gui_a, dbg_a, evt_a, thread_pool_a; // idk about this
+	threadpool  	thread_pool;
+
+	platform_allocator log_a, ogl_a, gui_a, dbg_a, evt_a, thread_pool_a, world_a; // idk about this
 
 	platform_window window;
+	
+	// this is the real game state, this struct is basically the engine.
+	// the engine state gets passed into this.
+	world_manager world;
 
 	// testing
 	asset_store default_store;

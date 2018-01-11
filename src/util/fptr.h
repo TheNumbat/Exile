@@ -37,6 +37,7 @@ struct func_ptr {
 };
 
 _FPTR* _fptr(void* func, string name);
+_FPTR* FPTR_STR(string name);
 
 void setup_fptrs();
 void cleanup_fptrs();
