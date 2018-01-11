@@ -215,6 +215,11 @@ void gui_manager::end_frame(platform_window* win, ogl_manager* ogl) { PROF
 	}
 }
 
+bool gui_manager::any_active() { PROF
+
+	return active == gui_active_state::active || active == gui_active_state::captured;
+}
+
 void gui_window::clamp_scroll() { PROF
 
 	r2 content = get_real_content();

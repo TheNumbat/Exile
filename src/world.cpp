@@ -60,7 +60,7 @@ void world_manager::render() { PROF
 	cmd.texture = cube_tex;
 
 	rcl.view = camera.view();
-	rcl.proj = proj(60.0f, (f32)state->window.w / (f32)state->window.h, 0.1f, 100.0f);
+	rcl.proj = proj(60.0f, (f32)state->window.w / (f32)state->window.h, 0.001f, 100.0f);
 
 	rcl.add_command(cmd);
 	state->ogl.execute_command_list(&rcl);

@@ -184,10 +184,10 @@ struct gui_manager {
 	platform_window* window = null;
 	allocator* alloc = null;
 
-///////////////////////////////////////////////////////////////////////////////
-
 	static gui_manager make(allocator* alloc, platform_window* win);
 	void destroy();
+
+	bool any_active();
 
 	// the first font you add is the default size
 	void add_font(ogl_manager* ogl, string asset_name, asset_store* store, bool mono = false); 
