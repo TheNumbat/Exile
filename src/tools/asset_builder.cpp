@@ -16,16 +16,16 @@ using namespace std;
 #pragma warning(disable : 4505)
 #pragma warning(disable : 4996)
 #define STB_IMAGE_IMPLEMENTATION
-#include <stb_image.h>
+#include <stb/stb_image.h>
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
-#include <stb_image_write.h>
+#include <stb/stb_image_write.h>
 
 #define STB_RECT_PACK_IMPLEMENTATION
-#include <stb_rect_pack.h>
+#include <stb/stb_rect_pack.h>
 
 #define STB_TRUETYPE_IMPLEMENTATION
-#include <stb_truetype.h>
+#include <stb/stb_truetype.h>
 #pragma warning(pop)
 
 #define BUILDER
