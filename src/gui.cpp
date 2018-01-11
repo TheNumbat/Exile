@@ -74,7 +74,7 @@ gui_state_data* gui_window::add_state(guiid id, gui_state_data state) { PROF
 	return state_data.insert(cp, state);
 }
 
-gui_manager gui_manager::make(ogl_manager* ogl, allocator* alloc, platform_window* win) { PROF
+gui_manager gui_manager::make(allocator* alloc, platform_window* win) { PROF
 
 	gui_manager ret;
 

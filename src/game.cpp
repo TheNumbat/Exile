@@ -72,7 +72,7 @@ EXPORT game_state* start_up(platform_api* api) {
 
 	LOG_INFO("Setting up GUI...");
 	state->gui_a = MAKE_PLATFORM_ALLOCATOR("gui");
-	state->gui = gui_manager::make(&state->ogl, &state->gui_a, &state->window);
+	state->gui = gui_manager::make(&state->gui_a, &state->window);
 	state->gui.add_font(&state->ogl, "guimono"_, &state->default_store, true);
 
 	LOG_INFO("Starting logger...");

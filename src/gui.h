@@ -186,7 +186,7 @@ struct gui_manager {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-	static gui_manager make(ogl_manager* ogl, allocator* alloc, platform_window* win);
+	static gui_manager make(allocator* alloc, platform_window* win);
 	void destroy();
 
 	// the first font you add is the default size
