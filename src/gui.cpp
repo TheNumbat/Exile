@@ -154,7 +154,7 @@ void gui_manager::begin_frame(gui_input_state new_input) { PROF
 
 	ggui = this;
 	input = new_input;
-	style.font_size = fonts.front()->font->font.point;
+	style.font_size = fonts.front()->font->font.point; // evil
 
 	FORMAP(it, windows) {
 		it->value.font = gui_select_best_font_scale();

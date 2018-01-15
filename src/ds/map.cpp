@@ -244,10 +244,10 @@ void map<K,V>::erase(K key) { PROF
 	u32 hash_bucket;
 
 	if(use_u32hash) {
-		hash_bucket = mod(hash_u32(*((u32*)&key)), contents.capacity);
+		hash_bucket = hash_u32(*((u32*)&key)) & (contents.capacity - 1);
 	} else {
-		hash_bucket = mod(hash(key), contents.capacity);
-	}
+		hash_bucket = hash(key) & (contents.capacity - 1);
+	}	
 
 	u32 index = hash_bucket;
 	u32 probe_length = 0;
@@ -256,6 +256,7 @@ void map<K,V>::erase(K key) { PROF
 		if(contents.get(index)->key == key) {
 			ELEMENT_CLEAR_OCCUPIED(*contents.get(index));
 			size--;
+			return;
 		}
 
 		probe_length++;

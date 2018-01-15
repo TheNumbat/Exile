@@ -160,13 +160,13 @@ EXPORT void shut_down(game_state* state) {
 	LOG_DEBUG("Done with shutdown!");
 
 	state->dbg.shutdown_log(&state->log);	
+	END_FRAME();
+	state->dbg.destroy();
+	
 	state->log.stop();
 	state->log.destroy();
 
 	cleanup_fptrs();
-
-	END_FRAME();
-	state->dbg.destroy();
 	end_thread();
 
 	state->world_a.destroy();

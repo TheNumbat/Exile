@@ -33,7 +33,7 @@ priority:
 	update features/readme
 
 bugs:
-	debug collate on shutdown occasionally has forgotten about something allocated in gui (and crashes)
+	debug collate on shutdown occasionally has forgotten about something allocated in gui
 
 to do:
 

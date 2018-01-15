@@ -48,6 +48,8 @@ void dbg_manager::destroy() { PROF
 	//			  to the last thing destroyed...the only way for this to _really_ work is the platform
 	//			  layer global_num_allocs, but that doesn't actually give us where the memory came from!
 
+	LOG_INFO_F("% allocations remaining at debug shutdown", alloc_totals.num_allocs - alloc_totals.num_frees);
+
 	FORMAP(it, thread_stats) {
 		it->value.destroy();
 	}
@@ -281,7 +283,7 @@ alloc_frame_profile alloc_frame_profile::make(allocator* alloc) { PROF
 	return ret;
 }
 
-void dbg_manager::collate() {
+void dbg_manager::collate() { PROF
 
 	PUSH_PROFILE(false) {
 		global_api->platform_aquire_mutex(&stats_mut);
@@ -456,6 +458,10 @@ void dbg_manager::process_alloc_msg(dbg_msg* msg) { PROF
 	switch(msg->type) {
 	case dbg_msg_type::allocate: {
 
+		if (single_alloc* sa = profile->current_set.try_get(msg->allocate.to)) {
+			LOG_WARN("we got two things allocated to the same address???");
+		}
+
 		single_alloc stat;
 		stat.origin = msg->context;
 		stat.size = msg->allocate.bytes;
@@ -472,12 +478,16 @@ void dbg_manager::process_alloc_msg(dbg_msg* msg) { PROF
 	} break;
 	case dbg_msg_type::reallocate: {
 
-		single_alloc* freed = profile->current_set.get(msg->reallocate.from);
-		profile->current_size -= freed->size;
-		profile->total_freed += freed->size;
-		alloc_totals.current_size -= freed->size;
-		alloc_totals.total_freed += freed->size;
-		profile->current_set.erase(msg->reallocate.from);
+		single_alloc* freed = profile->current_set.try_get(msg->reallocate.from);
+		if(freed) {
+			profile->current_size -= freed->size;
+			profile->total_freed += freed->size;
+			alloc_totals.current_size -= freed->size;
+			alloc_totals.total_freed += freed->size;
+			profile->current_set.erase(msg->reallocate.from);
+		} else {
+			LOG_WARN_F("Previous memory from %:% not in current set!", msg->context.file, msg->context.line);
+		}
 
 		single_alloc stat;
 		stat.origin = msg->context;
@@ -495,16 +505,18 @@ void dbg_manager::process_alloc_msg(dbg_msg* msg) { PROF
 	} break;
 	case dbg_msg_type::free: {
 
-		single_alloc* freed = profile->current_set.get(msg->free.from);
-
-		profile->current_size -= freed->size;
-		profile->total_freed += freed->size;
-		profile->num_frees++;
-		alloc_totals.current_size -= freed->size;
-		alloc_totals.total_freed += freed->size;
-		alloc_totals.num_frees++;
-
-		profile->current_set.erase(msg->free.from);
+		single_alloc* freed = profile->current_set.try_get(msg->free.from);
+		if(freed) {
+			profile->current_size -= freed->size;
+			profile->total_freed += freed->size;
+			profile->num_frees++;
+			alloc_totals.current_size -= freed->size;
+			alloc_totals.total_freed += freed->size;
+			alloc_totals.num_frees++;
+			profile->current_set.erase(msg->free.from);
+		} else {
+			LOG_WARN_F("Previous memory from %:% not in current set!", msg->context.file, msg->context.line);
+		}
 
 	} break;
 	}
