@@ -222,8 +222,9 @@ V* map<K,V>::try_get(K key) { PROF	// can return null
 	u32 probe_length = 0;
 	for(;;) {
 
-		if(contents.get(index)->key == key) {
-			return &(contents.get(index)->value);
+		map_element<K,V>* ele = contents.get(index);
+		if(ELEMENT_OCCUPIED(*ele) && ele->key == key) {
+			return &ele->value;
 		}
 
 		probe_length++;
@@ -253,7 +254,9 @@ bool map<K,V>::try_erase(K key) { PROF
 	u32 probe_length = 0;
 	for(;;) {
 
-		if(contents.get(index)->key == key) {
+		map_element<K,V>* ele = contents.get(index);
+
+		if(ELEMENT_OCCUPIED(*ele) && ele->key == key) {
 			ELEMENT_CLEAR_OCCUPIED(*contents.get(index));
 			size--;
 			return true;

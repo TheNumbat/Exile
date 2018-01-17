@@ -140,12 +140,6 @@ void arena_reset(arena_allocator* a, code_context context) { PROF
 
 inline void arena_destroy(arena_allocator* a, code_context context) { PROF
 
-#ifdef LOG_ALLOCS
-	if(!a->suppress_messages) {
-		global_log->msgf("destroying arena \"%\""_, log_level::alloc, context, a->name);
-	}
-#endif
-
 	LOG_DEBUG_ASSERT(a->memory != null);
 	if(a->memory) {
 		a->backing->free_(a->memory, a->backing, context);

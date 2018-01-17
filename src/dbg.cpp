@@ -458,9 +458,7 @@ void dbg_manager::process_alloc_msg(dbg_msg* msg) { PROF
 	switch(msg->type) {
 	case dbg_msg_type::allocate: {
 
-		if (single_alloc* sa = profile->current_set.try_get(msg->allocate.to)) {
-			LOG_WARN("we got two things allocated to the same address???");
-		}
+		LOG_DEBUG_ASSERT(!profile->current_set.try_get(msg->allocate.to));
 
 		single_alloc stat;
 		stat.origin = msg->context;
@@ -479,15 +477,13 @@ void dbg_manager::process_alloc_msg(dbg_msg* msg) { PROF
 	case dbg_msg_type::reallocate: {
 
 		single_alloc* freed = profile->current_set.try_get(msg->reallocate.from);
-		if(freed) {
-			profile->current_size -= freed->size;
-			profile->total_freed += freed->size;
-			alloc_totals.current_size -= freed->size;
-			alloc_totals.total_freed += freed->size;
-			profile->current_set.erase(msg->reallocate.from);
-		} else {
-			LOG_WARN_F("Previous memory from %:% not in current set!", msg->context.file, msg->context.line);
-		}
+		LOG_DEBUG_ASSERT(freed);
+
+		profile->current_size -= freed->size;
+		profile->total_freed += freed->size;
+		alloc_totals.current_size -= freed->size;
+		alloc_totals.total_freed += freed->size;
+		profile->current_set.erase(msg->reallocate.from);
 
 		single_alloc stat;
 		stat.origin = msg->context;
@@ -506,18 +502,16 @@ void dbg_manager::process_alloc_msg(dbg_msg* msg) { PROF
 	case dbg_msg_type::free: {
 
 		single_alloc* freed = profile->current_set.try_get(msg->free.from);
-		if(freed) {
-			profile->current_size -= freed->size;
-			profile->total_freed += freed->size;
-			profile->num_frees++;
-			alloc_totals.current_size -= freed->size;
-			alloc_totals.total_freed += freed->size;
-			alloc_totals.num_frees++;
-			profile->current_set.erase(msg->free.from);
-		} else {
-			LOG_WARN_F("Previous memory from %:% not in current set!", msg->context.file, msg->context.line);
-		}
+		LOG_DEBUG_ASSERT(freed);
 
+		profile->current_size -= freed->size;
+		profile->total_freed += freed->size;
+		profile->num_frees++;
+		alloc_totals.current_size -= freed->size;
+		alloc_totals.total_freed += freed->size;
+		alloc_totals.num_frees++;
+		profile->current_set.erase(msg->free.from);
+		
 	} break;
 	}
 }

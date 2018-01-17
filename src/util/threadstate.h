@@ -1,8 +1,7 @@
 
 #pragma once
 
-#define MAX_CALL_STACK_DEPTH 	512
-#define DEBUG_MSG_BUFFER		256
+#define MAX_CALL_STACK_DEPTH 	256
 
 struct thread_data {
 	stack<allocator*> alloc_stack;
