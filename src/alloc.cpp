@@ -239,19 +239,8 @@ pool_allocator make_pool_allocator(string name, u64 page_size, allocator* backin
 
 void _memcpy(void* source, void* dest, u64 size) { PROF
 
-#ifdef _MSC_VER
-	__movsb((u8*)dest, (u8*)source, size);
-#else
-
-	// TODO(max): LUL this is dumb
-	u8* csource = (u8*)source;
-	u8* cdest   = (u8*)dest;
-
-	for(u64 i = 0; i < size; i++) {
-		cdest[i] = csource[i];
-	}
-#endif
-}
+	_memcpy_ctx(source, dest, size);
+}	
 
 void _memcpy_ctx(void* source, void* dest, u64 size) {
 

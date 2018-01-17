@@ -25,7 +25,7 @@ all includes:
 	#include <xmmintrin.h>/<intrin.h>
 
 today:
-	fix camera/add movement
+	add movement
 	multiple chunks
 	start meshing
 
@@ -38,7 +38,6 @@ priority:
 	update features/readme
 
 bugs:
-	debug collate on shutdown occasionally has forgotten about something allocated in gui
 
 to do:
 
