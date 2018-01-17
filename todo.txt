@@ -24,6 +24,11 @@ all includes:
 	#include <typeinfo>
 	#include <xmmintrin.h>/<intrin.h>
 
+today:
+	fix camera/add movement
+	multiple chunks
+	start meshing
+
 priority:
 	voxel rendering methods
 	float slider/struct UI options

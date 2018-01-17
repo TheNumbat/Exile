@@ -92,8 +92,8 @@
 #include "asset.h"
 #include "render_commands.h"
 #include "render.h"
-#include "gui.h"
 #include "events.h"
+#include "gui.h"
 #include "world.h"
 
 #include "util/threadstate.h"

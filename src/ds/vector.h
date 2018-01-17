@@ -6,7 +6,7 @@
 // Vector foreach
 #define FORVEC(it,v)		u32 __##it = 0; for(auto it = (v).memory; it != (v).memory + (v).size; __##it++, it++)
 #define FORVECCAP(it,v) 	u32 __##it = 0; for(auto it = (v).memory; it != (v).memory + (v).capacity; __##it++, it++)
-#define FORVEC_R(it,v)		u32 __##it = (v).size; for(auto it = (v).memory + (v).size; it != (v).memory; __##it--, it--)
+#define FORVEC_R(it,v)		u32 __##it = (v).size - 1; for(auto it = (v).memory + (v).size - 1; it != (v).memory - 1; __##it--, it--)
 
 template<typename T>
 struct vector {

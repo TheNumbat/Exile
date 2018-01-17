@@ -9,6 +9,52 @@ bool operator==(guiid l, guiid r) { PROF
 	return l.base == r.base && l.name == r.name;
 }
 
+CALLBACK bool gui_evt_handle(void* param, platform_event evt) { PROF
+	
+	gui_input_state* input = (gui_input_state*)param;
+
+	if(evt.type == platform_event_type::mouse) {
+	
+		if(evt.mouse.flags & (u16)platform_mouseflag::move) {
+		
+			input->mousepos.x = evt.mouse.x;
+			input->mousepos.y = evt.mouse.y;
+		}
+
+		if(evt.mouse.flags & (u16)platform_mouseflag::wheel) {
+			
+			input->scroll = evt.mouse.w;
+		}
+		
+		if(evt.mouse.flags & (u16)platform_mouseflag::lclick) {
+			input->lclick = true;
+			if(evt.mouse.flags & (u16)platform_mouseflag::release) {
+				input->lclick = false;
+				input->ldbl = false;
+			}
+			if(evt.mouse.flags & (u16)platform_mouseflag::dbl) {
+				input->lclick = false;
+				input->ldbl = true;
+			}
+		}
+
+		if(evt.mouse.flags & (u16)platform_mouseflag::rclick) {
+			input->rclick = true;
+			if(evt.mouse.flags & (u16)platform_mouseflag::release) {
+				input->rclick = false;
+			}
+		}
+
+		if(evt.mouse.flags & (u16)platform_mouseflag::mclick) {
+			input->mclick = true;
+			if(evt.mouse.flags & (u16)platform_mouseflag::release) {
+				input->mclick = false;
+			}
+		}
+	}
+	return false;
+}
+
 gui_window gui_window::make(r2 first_size, f32 first_alpha, u16 flags, allocator* alloc) { PROF
 
 	gui_window ret;
@@ -65,6 +111,16 @@ void gui_window::destroy() { PROF
 	shape_mesh.destroy();
 	text_mesh.destroy();
 	state_data.destroy();
+}
+
+void gui_manager::register_events(evt_manager* evt) { PROF
+
+	evt->push_handler(FPTR(gui_evt_handle), &input);
+}
+
+void gui_manager::unregister_events(evt_manager* evt) { PROF
+
+	evt->pop_handler();
 }
 
 gui_state_data* gui_window::add_state(guiid id, gui_state_data state) { PROF
@@ -150,10 +206,9 @@ gui_window* gui_manager::add_window(guiid id, gui_window data) { PROF
 	return windows.insert(cp, data);	
 }
 
-void gui_manager::begin_frame(gui_input_state new_input) { PROF
+void gui_manager::begin_frame() { PROF
 
 	ggui = this;
-	input = new_input;
 	style.font_size = fonts.front()->font->font.point; // evil
 
 	FORMAP(it, windows) {
@@ -171,29 +226,30 @@ void gui_manager::end_frame(platform_window* win, ogl_manager* ogl) { PROF
 	} else if(active == gui_active_state::none) {
 		active = gui_active_state::invalid;
 	}
+	input.scroll = 0;
 
 	render_command_list rcl = render_command_list::make();
 	FORMAP(it, windows) {
 		
-		{
+		if(!it->value.background_mesh.empty()) {
 			render_command cmd = render_command::make(render_command_type::mesh_2d_col, it->value.z);
 			cmd.mesh_2d_col.mesh = &it->value.background_mesh;
 			rcl.add_command(cmd);
 		}
-		{
+		if(!it->value.shape_mesh.empty()) {
 			render_command cmd = render_command::make(render_command_type::mesh_2d_col, it->value.z);
 			cmd.mesh_2d_col.mesh = &it->value.shape_mesh;
 			cmd.scissor = it->value.get_real_content();
 			rcl.add_command(cmd);
 		}
-		if(it->value.title_verts) {
+		if(it->value.title_verts && !it->value.text_mesh.empty()) {
 			render_command cmd = render_command::make(render_command_type::mesh_2d_tex_col, it->value.z);
 			cmd.mesh_2d_tex_col.mesh = &it->value.text_mesh;
 			cmd.num_tris = it->value.title_elements;
 			cmd.texture = it->value.font->texture;
 			rcl.add_command(cmd);
 		}
-		{
+		if(!it->value.text_mesh.empty()) {
 			render_command cmd = render_command::make(render_command_type::mesh_2d_tex_col, it->value.z);
 			cmd.mesh_2d_tex_col.mesh = &it->value.text_mesh;
 			cmd.offset = it->value.title_verts;

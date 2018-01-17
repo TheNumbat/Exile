@@ -109,6 +109,8 @@ bool operator<=(single_alloc l, single_alloc r) { PROF
 
 void dbg_manager::UI() { PROF
 
+	if(!show_ui) return;
+
 	v2 dim = gui_window_dim();
 
 	// NOTE(max): all the makef-ing here just comes from the scratch buffer

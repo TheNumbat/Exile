@@ -22,6 +22,7 @@ struct mesh_2d_col {
 	static mesh_2d_col make(u32 verts = 32, allocator* alloc = null);
 	void destroy();
 	void clear();
+	bool empty();
 
 	void push_tri(v2 p1, v2 p2, v2 p3, color c);
 	void push_rect(r2 rect, color c);
@@ -40,6 +41,7 @@ struct mesh_2d_tex {
 	static mesh_2d_tex make(u32 verts = 32, allocator* alloc = null);
 	void destroy();
 	void clear();
+	bool empty();
 };
 
 struct mesh_2d_tex_col {
@@ -55,6 +57,7 @@ struct mesh_2d_tex_col {
 	static mesh_2d_tex_col make(u32 verts = 32, allocator* alloc = null);
 	void destroy();
 	void clear();
+	bool empty();
 
 	void push_rect(r2 rect, color c);
 	void push_cutrect(r2 r, f32 round, color c);
@@ -73,6 +76,7 @@ struct mesh_3d_tex {
 	static mesh_3d_tex make(u32 verts = 32, allocator* alloc = null);
 	void destroy();
 	void clear();
+	bool empty();
 
 	void push_cube(v3 pos, f32 len);
 };
@@ -90,6 +94,7 @@ struct mesh_3d_tex_instance_data {
 	static mesh_3d_tex_instance_data make(mesh_3d_tex* parent, u32 instances = 32, allocator* alloc = null);
 	void destroy();
 	void clear();
+	bool empty();
 };
 
 struct render_command_mesh_2d_col {
@@ -174,6 +179,7 @@ struct render_camera {
 	float pitch = 0.0f, yaw = 0.0f, speed = 5.0f, fov = 60.0f;
 
 	void update();
+	void reset();
 	void move(i32 dx, i32 d, f32 sens);
 	m4 view();
 };

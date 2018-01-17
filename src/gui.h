@@ -186,6 +186,9 @@ struct gui_manager {
 
 	static gui_manager make(allocator* alloc, platform_window* win);
 	void destroy();
+	
+	void register_events(evt_manager* evt);
+	void unregister_events(evt_manager* evt);
 
 	bool any_active();
 
@@ -196,9 +199,11 @@ struct gui_manager {
 	gui_window* add_window(guiid id, gui_window data);
 	gui_state_data* add_state_data(guiid id, gui_state_data data);
 
-	void begin_frame(gui_input_state new_input);
+	void begin_frame();
 	void end_frame(platform_window* win, ogl_manager* ogl);
 };
+
+CALLBACK bool gui_evt_handle(void* param, platform_event evt);
 
 static gui_manager* ggui; // set at gui_begin_frame, used as context for gui functions
 gui_font* gui_select_best_font_scale();

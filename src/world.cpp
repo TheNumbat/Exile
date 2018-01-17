@@ -36,6 +36,8 @@ void world_manager::init(game_state* st, allocator* a) { PROF
 	state = st;
 	alloc = a;
 
+	camera.reset();
+
 	cube = mesh_3d_tex::make(8, a);
 	cube.push_cube(V3(0.0f, 0.0f, 0.0f), 1.0f);
 
@@ -56,11 +58,10 @@ void world_manager::render() { PROF
 	render_command cmd = render_command::make(render_command_type::mesh_3d_tex_instanced);
 
 	cmd.mesh_3d_tex_instanced.data = &the_chunk.cube_data;
-	cmd.model = scale(V3(0.1f, 0.1f, 0.1f));
 	cmd.texture = cube_tex;
 
 	rcl.view = camera.view();
-	rcl.proj = proj(60.0f, (f32)state->window.w / (f32)state->window.h, 0.001f, 100.0f);
+	rcl.proj = proj(camera.fov, (f32)state->window.w / (f32)state->window.h, 0.001f, 1000.0f);
 
 	rcl.add_command(cmd);
 	state->ogl.execute_command_list(&rcl);

@@ -4,6 +4,7 @@ evt_manager evt_manager::make(allocator* a) { PROF
 	evt_manager ret;
 
 	ret.event_queue = locking_queue<platform_event>::make(256, a);
+	ret.handlers = vector<evt_handler>::make(16, a);
 
 	return ret;
 }
@@ -16,96 +17,65 @@ void evt_manager::start() { PROF
 void evt_manager::destroy() { PROF
 
 	event_queue.destroy();
+	handlers.destroy();
 	global_api->platform_set_queue_callback(null, null);
 }
 
-gui_input_state run_events(game_state* state) { PROF
+void evt_manager::run_events(game_state* state) { PROF
 
 	global_api->platform_pump_events(&state->window);
-	gui_input_state ret = state->gui.input;
-	ret.scroll = 0;
 
 	platform_event evt;
-	while(state->evt.event_queue.try_pop(&evt)) {
+	while(event_queue.try_pop(&evt)) {
 
-		if(evt.type == platform_event_type::async) {
-			if(evt.async.type == platform_async_type::user) {
-				LOG_INFO_F("Job ID % finished!", evt.async.user_id);
-			}
-			if(evt.async.callback) {
-				evt.async.callback();
-			}
-		}
-
-		// Exit
-		if(evt.type == platform_event_type::window && evt.window.op == platform_windowop::close) {
-			state->running = false;
-		}
-		if(evt.type == platform_event_type::key && evt.key.code == platform_keycode::escape) {
-			state->running = false;
-		}
-
-		// Window Resize
-		if(evt.type == platform_event_type::window && evt.window.op == platform_windowop::resized) {
-			state->window.w = evt.window.x;
-			state->window.h = evt.window.y;
-		}
-		if(evt.type == platform_event_type::window && evt.window.op == platform_windowop::maximized) {
-			state->window.w = evt.window.x;
-			state->window.h = evt.window.y;
-		}
-
-		if(evt.type == platform_event_type::key && evt.key.code == platform_keycode::p && evt.key.flags & (u16)platform_keyflag::release) {
-		}
-
-		// GUI: mouse
-		if(evt.type == platform_event_type::mouse) {
-		
-			if(evt.mouse.flags & (u16)platform_mouseflag::move) {
-
-				if(!state->gui.any_active()) {
-					i32 dx = (i32)roundf(evt.mouse.x - ret.mousepos.x);
-					i32 dy = (i32)roundf(evt.mouse.y - ret.mousepos.y);
-					state->world.camera.move(dx, dy, 0.5f);
+		// Built-in event handling
+		{
+			// async callback
+			if(evt.type == platform_event_type::async) {
+				if(evt.async.type == platform_async_type::user) {
+					LOG_INFO_F("Job ID % finished!", evt.async.user_id);
 				}
-				
-				ret.mousepos.x = evt.mouse.x;
-				ret.mousepos.y = evt.mouse.y;
-			}
-
-			if(evt.mouse.flags & (u16)platform_mouseflag::wheel) {
-				ret.scroll = evt.mouse.w;
-			}
-			
-			if(evt.mouse.flags & (u16)platform_mouseflag::lclick) {
-				ret.lclick = true;
-				if(evt.mouse.flags & (u16)platform_mouseflag::release) {
-					ret.lclick = false;
-					ret.ldbl = false;
-				}
-				if(evt.mouse.flags & (u16)platform_mouseflag::dbl) {
-					ret.lclick = false;
-					ret.ldbl = true;
+				if(evt.async.callback) {
+					evt.async.callback();
 				}
 			}
 
-			if(evt.mouse.flags & (u16)platform_mouseflag::rclick) {
-				ret.rclick = true;
-				if(evt.mouse.flags & (u16)platform_mouseflag::release) {
-					ret.rclick = false;
-				}
+			// Exit
+			else if(evt.type == platform_event_type::window && evt.window.op == platform_windowop::close) {
+				state->running = false;
 			}
 
-			if(evt.mouse.flags & (u16)platform_mouseflag::mclick) {
-				ret.mclick = true;
-				if(evt.mouse.flags & (u16)platform_mouseflag::release) {
-					ret.mclick = false;
-				}
+			// Window Resize
+			else if(evt.type == platform_event_type::window && evt.window.op == platform_windowop::resized) {
+				state->window.w = evt.window.x;
+				state->window.h = evt.window.y;
+			}
+			else if(evt.type == platform_event_type::window && evt.window.op == platform_windowop::maximized) {
+				state->window.w = evt.window.x;
+				state->window.h = evt.window.y;
+			}
+		}
+
+		FORVEC_R(it, handlers) {
+
+			if(it->handle(it->param, evt)) {
+				break;
 			}
 		}
 	}
+}
 
-	return ret;
+void evt_manager::push_handler(_FPTR* handler, void* param) { PROF
+
+	evt_handler h;
+	h.handle.set(handler);
+	h.param = param;
+	handlers.push(h);
+}
+
+void evt_manager::pop_handler() { PROF
+
+	handlers.pop();
 }
 
 void event_enqueue(void* data, platform_event evt) { PROF
@@ -113,3 +83,5 @@ void event_enqueue(void* data, platform_event evt) { PROF
 	locking_queue<platform_event>* q = (locking_queue<platform_event>*)data;
 	q->push(evt);
 }
+
+

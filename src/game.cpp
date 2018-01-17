@@ -77,6 +77,7 @@ EXPORT game_state* start_up(platform_api* api) {
 	state->gui_a = MAKE_PLATFORM_ALLOCATOR("gui");
 	state->gui = gui_manager::make(&state->gui_a, &state->window);
 	state->gui.add_font(&state->ogl, "guimono"_, &state->default_store, true);
+	state->gui.register_events(&state->evt);
 
 	LOG_INFO("Setting up world...");
 	state->world_a = MAKE_PLATFORM_ALLOCATOR("world");
@@ -100,11 +101,11 @@ EXPORT bool main_loop(game_state* state) {
 
 	PUSH_ALLOC(&state->transient_arena) {
 
-		gui_input_state input = run_events(state); 
+		state->evt.run_events(state); 
 		
 		state->world.render();
 		
-		state->gui.begin_frame(input);
+		state->gui.begin_frame();
 
 		state->dbg.UI();
 
@@ -146,6 +147,7 @@ EXPORT void shut_down(game_state* state) {
 	DESTROY_ARENA(&state->transient_arena);
 
 	LOG_DEBUG("Destroying GUI");
+	state->gui.unregister_events(&state->evt);
 	state->gui.destroy();
 	
 	LOG_DEBUG("Destroying OpenGL");

@@ -509,7 +509,7 @@ m4 rotate(f32 angle, v3 axis) { PROF
 }
 
 m4 scale(v3 scale) { PROF
-    m4 ret = M4D(1.0f);
+    m4 ret;
     ret.f[0][0] = scale.x;
     ret.f[1][1] = scale.y;
     ret.f[2][2] = scale.z;

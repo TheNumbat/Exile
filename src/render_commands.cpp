@@ -272,6 +272,11 @@ void mesh_3d_tex_instance_data::clear() { PROF
 	dirty = true;
 }
 
+bool mesh_3d_tex_instance_data::empty() { PROF
+
+	return !data.size;
+}
+
 mesh_2d_col mesh_2d_col::make(u32 verts, allocator* alloc) { PROF
 
 	if(alloc == null) {
@@ -319,6 +324,11 @@ void mesh_2d_col::clear() { PROF
 	colors.clear();
 	elements.clear();
 	dirty = true;
+}
+
+bool mesh_2d_col::empty() { PROF
+
+	return !vertices.size;
 }
 
 void mesh_2d_col::push_tri(v2 p1, v2 p2, v2 p3, color c) { PROF
@@ -432,6 +442,11 @@ void mesh_2d_tex::clear() { PROF
 	dirty = true;
 }
 
+bool mesh_2d_tex::empty() { PROF
+
+	return !vertices.size;
+}
+
 mesh_2d_tex_col mesh_2d_tex_col::make(u32 verts, allocator* alloc) { PROF
 
 	if(alloc == null) {
@@ -487,6 +502,11 @@ void mesh_2d_tex_col::clear() { PROF
 	colors.clear();
 }
 
+bool mesh_2d_tex_col::empty() { PROF
+
+	return !vertices.size;
+}
+
 mesh_3d_tex mesh_3d_tex::make(u32 verts, allocator* alloc) { PROF
 
 	if(alloc == null) {
@@ -533,6 +553,11 @@ void mesh_3d_tex::clear() { PROF
 	vertices.clear();
 	texCoords.clear();
 	elements.clear();
+}
+
+bool mesh_3d_tex::empty() { PROF
+
+	return !vertices.size;
 }
 
 render_command render_command::make(render_command_type type, u32 key) { PROF
@@ -723,4 +748,12 @@ void render_camera::move(i32 dx, i32 dy, f32 sens) {
 m4 render_camera::view() {
 
 	return lookAt(pos, pos + front, up);
+}
+
+void render_camera::reset() {
+
+	pos = V3(-5.0f, 0.0f, -5.0f);
+
+	pitch = 00.0f; yaw = 45.0f; speed = 5.0f; fov = 60.0f;
+	update();
 }
