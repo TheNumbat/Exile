@@ -70,7 +70,7 @@ void log_manager::destroy() { PROF
 
 void log_manager::push_context(string context, code_context fake) { PROF_NOCS
 
-	fake.function = context;
+	memcpy(context.c_str, fake.function, context.len);
 
 	LOG_DEBUG_ASSERT(this_thread_data.call_stack_depth < MAX_CALL_STACK_DEPTH);
 	this_thread_data.call_stack[this_thread_data.call_stack_depth++] = fake;
@@ -254,7 +254,7 @@ string log_message::fmt_call_stack() { PROF
 
 	string cstack = string::make_cat(thread_name, "/"_);
 	for(u32 j = 0; j < call_stack.capacity; j++) {
-		string temp = string::make_cat_v(3, cstack, call_stack.get(j)->function, "/"_);
+		string temp = string::make_cat_v(3, cstack, string::from_c_str(call_stack.get(j)->function), "/"_);
 		cstack.destroy();
 		cstack = temp;
 	}
@@ -264,7 +264,7 @@ string log_message::fmt_call_stack() { PROF
 
 string log_message::fmt_file_line() { PROF
 
-	return string::makef("%:%"_, publisher.file, publisher.line);
+	return string::makef("%:%"_, string::from_c_str(publisher.file), publisher.line);
 }
 
 string log_message::fmt_level() { PROF

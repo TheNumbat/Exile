@@ -90,6 +90,7 @@ CALLBACK void  pool_free(void*, allocator*, code_context); // does nothing
 
 void _memcpy(void* source, void* dest, u64 size);
 void _memset(void* mem, u64 size, u8 val);
+void _memcpy_ctx(void* source, void* dest, u64 size);
 
 CALLBACK u32 hash_alloc(allocator a);
 bool operator==(allocator l, allocator r);

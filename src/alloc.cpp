@@ -114,7 +114,7 @@ CALLBACK void* arena_allocate(u64 bytes, allocator* this_, code_context context)
 		this__->used += bytes;
 	} else {
 
-		LOG_ERR_F("Failed to allocate % bytes in allocator %:%", bytes, this__->context.file, this__->context.line);
+		LOG_ERR_F("Failed to allocate % bytes in allocator %:%", bytes, string::from_c_str(this__->context.file), this__->context.line);
 	}
 
 	return mem;
@@ -238,6 +238,22 @@ pool_allocator make_pool_allocator(string name, u64 page_size, allocator* backin
 }
 
 void _memcpy(void* source, void* dest, u64 size) { PROF
+
+#ifdef _MSC_VER
+	__movsb((u8*)dest, (u8*)source, size);
+#else
+
+	// TODO(max): LUL this is dumb
+	u8* csource = (u8*)source;
+	u8* cdest   = (u8*)dest;
+
+	for(u64 i = 0; i < size; i++) {
+		cdest[i] = csource[i];
+	}
+#endif
+}
+
+void _memcpy_ctx(void* source, void* dest, u64 size) {
 
 #ifdef _MSC_VER
 	__movsb((u8*)dest, (u8*)source, size);

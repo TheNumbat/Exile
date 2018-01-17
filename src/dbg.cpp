@@ -92,7 +92,7 @@ void dbg_manager::profile_recurse(vector<profile_node*> list) { PROF
 
 		profile_node* node = *it;
 
-		if(gui_node(string::makef("%--*|%+8|%+10|%+2"_, 35 - gui_indent_level(), node->context.function, node->heir, node->self, node->calls), &node->enabled)) {
+		if(gui_node(string::makef("%--*|%+8|%+10|%+2"_, 35 - gui_indent_level(), string::from_c_str(node->context.function), node->heir, node->self, node->calls), &node->enabled)) {
 			gui_indent();
 			profile_recurse(node->children);
 			gui_unindent();
@@ -151,7 +151,7 @@ void dbg_manager::UI() { PROF
 				
 				gui_indent();
 				FORVEC(a, allocs) {
-					gui_text(string::makef("% bytes @ %:%"_, a->size, a->origin.file, a->origin.line));
+					gui_text(string::makef("% bytes @ %:%"_, a->size, string::from_c_str(a->origin.file), a->origin.line));
 				}
 				gui_unindent();
 
@@ -204,13 +204,13 @@ void dbg_manager::UI() { PROF
 					FORVEC(msg, it->value.allocs) {
 						switch(msg->type) {
 						case dbg_msg_type::allocate: {
-							gui_text(string::makef("% bytes @ %:%"_, msg->allocate.bytes, msg->context.file, msg->context.line));
+							gui_text(string::makef("% bytes @ %:%"_, msg->allocate.bytes, string::from_c_str(msg->context.file), msg->context.line));
 						} break;
 						case dbg_msg_type::reallocate: {
-							gui_text(string::makef("% bytes re@ %:%"_, msg->reallocate.bytes, msg->context.file, msg->context.line));
+							gui_text(string::makef("% bytes re@ %:%"_, msg->reallocate.bytes, string::from_c_str(msg->context.file), msg->context.line));
 						} break;
 						case dbg_msg_type::free: {
-							gui_text(string::makef("free @ %:%"_, msg->context.file, msg->context.line));
+							gui_text(string::makef("free @ %:%"_, string::from_c_str(msg->context.file), msg->context.line));
 						} break;
 						}
 					}
@@ -328,7 +328,7 @@ void dbg_manager::collate() { PROF
 						if(!frame->current) { 	
 							bool found_repeat_head = false;
 							FORVEC(head, frame->heads) {
-								if((*head)->context.function == msg->context.function) {
+								if(string::from_c_str((*head)->context.function) == string::from_c_str(msg->context.function)) {
 									frame->current = *head;
 									found_repeat_head = true;
 								}
@@ -345,7 +345,7 @@ void dbg_manager::collate() { PROF
 
 						profile_node* here = frame->current;
 						FORVEC(node, here->children) {
-							if((*node)->context.function == msg->context.function) {
+							if(string::from_c_str((*node)->context.function) == string::from_c_str(msg->context.function)) {
 								here = *node;
 								break;
 							} 
@@ -549,7 +549,7 @@ CALLBACK void dbg_add_log(log_message* msg, void* param) { PROF
 
 bool prof_sort_name(profile_node* l, profile_node* r) {
 
-	return l->context.function <= r->context.function;
+	return string::from_c_str(l->context.function) <= string::from_c_str(r->context.function);
 }
 
 bool prof_sort_heir(profile_node* l, profile_node* r) {
@@ -572,7 +572,7 @@ void _prof_sec(string name, code_context context) {
 		dbg_msg m;
 		m.type = dbg_msg_type::enter_func;
 		m.context = context;
-		m.context.function = name;
+		memcpy(name.c_str, m.context.function, name.len);
 	
 		POST_MSG(m);
 	}
