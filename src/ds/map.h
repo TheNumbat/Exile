@@ -50,6 +50,7 @@ struct map {
 	
 	V* insert(K key, V value, bool grow_if_needed = true);
 	V* insert_if_unique(K key, V value, bool grow_if_needed = true);
+	bool try_erase(K key);
 	void erase(K key);
 	void clear();
 

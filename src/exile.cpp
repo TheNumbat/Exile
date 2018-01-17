@@ -12,8 +12,6 @@
 
 #define ZERO_ARENA				// memset arena allocator store to zero on reset
 
-#define LOG_ALLOCS				// enable logging for every allocation/free/reallocation (including arena - just don't use this it generates way too much)
-	
 #define NO_CONCURRENT_JOBS		// makes queue_job just run the job and wait_job do nothing
 */
 

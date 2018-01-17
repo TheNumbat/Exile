@@ -23,12 +23,6 @@ CALLBACK void* platform_allocate(u64 bytes, allocator* this_, code_context conte
 
 	LOG_DEBUG_ASSERT(mem != null);
 
-#ifdef LOG_ALLOCS
-	if(!this_->suppress_messages) {
-		global_log->msgf("allocating % bytes to % with platform alloc \"%\""_, log_level::alloc, context, bytes, mem, this_->name);
-	}
-#endif
-
 #ifdef PROFILE
 	if(this_thread_data.profiling) {
 		dbg_msg m;
@@ -49,12 +43,6 @@ CALLBACK void platform_free(void* mem, allocator* this_, code_context context) {
 
 	LOG_DEBUG_ASSERT(mem != null);
 
-#ifdef LOG_ALLOCS
-	if(!this_->suppress_messages) {
-		global_log->msgf("freeing % with platform alloc \"%\""_, log_level::alloc, context, mem, this_->name);
-	}
-#endif
-
 	global_api->platform_heap_free(mem);
 
 #ifdef PROFILE
@@ -73,12 +61,6 @@ CALLBACK void platform_free(void* mem, allocator* this_, code_context context) {
 CALLBACK void* platform_reallocate(void* mem, u64, u64 bytes, allocator* this_, code_context context) { PROF
 
 	LOG_DEBUG_ASSERT(mem != null);
-
-#ifdef LOG_ALLOCS
-	if(!this_->suppress_messages) {
-		global_log->msgf("reallocating % with to size % platform alloc \"%\""_, log_level::alloc, context, mem, bytes, this_->name);
-	}
-#endif
 
 	void* ret = global_api->platform_heap_realloc(mem, bytes);
 
@@ -135,12 +117,6 @@ CALLBACK void* arena_allocate(u64 bytes, allocator* this_, code_context context)
 		LOG_ERR_F("Failed to allocate % bytes in allocator %:%", bytes, this__->context.file, this__->context.line);
 	}
 
-#ifdef LOG_ALLOCS
-	if(!this__->suppress_messages) {
-		global_log->msgf("allocating % bytes (used:%/%) to % with arena alloc \"%\""_, log_level::alloc, context, bytes, this__->used, this__->size, mem, this__->name);
-	}
-#endif
-
 	return mem;
 }
 
@@ -154,12 +130,6 @@ CALLBACK void* arena_reallocate(void* mem, u64 sz, u64 bytes, allocator* this_, 
 }
 
 void arena_reset(arena_allocator* a, code_context context) { PROF
-
-#ifdef LOG_ALLOCS
-	if(!a->suppress_messages) {
-		global_log->msgf("reseting arena \"%\""_, log_level::alloc, context, a->name);
-	}
-#endif
 
 	a->used = 0;
 
@@ -197,12 +167,6 @@ arena_allocator make_arena_allocator(string name, u64 size, allocator* backing, 
 	ret.free_.set(FPTR(arena_free));
 	ret.reallocate_.set(FPTR(arena_reallocate));
 
-#ifdef LOG_ALLOCS
-	if(!ret.suppress_messages) {
-		global_log->msgf("creating arena \"%\" size %"_, log_level::alloc, context, name, size);
-	}
-#endif
-	
 	ret.memory = ret.backing->allocate_(size, ret.backing, context);
 	ret.name = string::make_copy(name, &ret);
 
@@ -224,12 +188,6 @@ CALLBACK void* pool_allocate(u64 bytes, allocator* this_, code_context context) 
 
 		page->next = (pool_page*)this__->backing->allocate_(sizeof(pool_page) + this__->page_size, this__->backing, context);
 		page = this__->current = page->next;
-
-#ifdef LOG_ALLOCS
-		if(!this__->suppress_messages) {
-			global_log->msgf("adding page of size % to pool alloc \"%\""_, log_level::alloc, context, this__->page_size, this__->name);
-		}
-#endif
 	}
 
 	mem = (void*)((u8*)page + sizeof(pool_page) + page->used);
@@ -248,12 +206,6 @@ CALLBACK void* pool_reallocate(void* mem, u64 sz, u64 bytes, allocator* this_, c
 CALLBACK void pool_free(void*, allocator*, code_context) {}
 
 void pool_destroy(pool_allocator* a, code_context context) {
-
-#ifdef LOG_ALLOCS
-	if(!a->suppress_messages) {
-		global_log->msgf("destroying pool \"%\""_, log_level::alloc, context, a->name);
-	}
-#endif
 
 	LOG_DEBUG_ASSERT(a->head != null);
 
@@ -280,12 +232,6 @@ pool_allocator make_pool_allocator(string name, u64 page_size, allocator* backin
 	ret.allocate_.set(FPTR(pool_allocate));
 	ret.free_.set(FPTR(pool_free));
 	ret.reallocate_.set(FPTR(pool_reallocate));
-
-#ifdef LOG_ALLOCS
-	if(!ret.suppress_messages) {
-		global_log->msgf("creating pool \"%\" size %"_, log_level::alloc, context, name, page_size);
-	}
-#endif
 	
 	ret.head = (pool_page*)ret.backing->allocate_(sizeof(pool_page) + page_size, ret.backing, context);
 	ret.current = ret.head;

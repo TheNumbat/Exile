@@ -239,7 +239,7 @@ V* map<K,V>::try_get(K key) { PROF	// can return null
 }
 
 template<typename K, typename V>
-void map<K,V>::erase(K key) { PROF
+bool map<K,V>::try_erase(K key) { PROF
 	
 	u32 hash_bucket;
 
@@ -256,12 +256,12 @@ void map<K,V>::erase(K key) { PROF
 		if(contents.get(index)->key == key) {
 			ELEMENT_CLEAR_OCCUPIED(*contents.get(index));
 			size--;
-			return;
+			return true;
 		}
 
 		probe_length++;
 		if(probe_length > max_probe) {
-			return;
+			return false;
 		}
 
 		index++;
@@ -269,4 +269,10 @@ void map<K,V>::erase(K key) { PROF
 			index = 0;
 		}
 	}
+}
+
+template<typename K, typename V>
+void map<K,V>::erase(K key) { PROF
+
+	LOG_ASSERT(try_erase(key));
 }
