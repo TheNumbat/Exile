@@ -23,10 +23,7 @@ struct player {
 	v3  velocity;
 	platform_perfcount last = 0;
 
-	void forward();
-	void left();
-	void right();
-	void back();
+	void init();
 	void update(platform_perfcount now);
 };
 

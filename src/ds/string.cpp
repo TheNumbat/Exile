@@ -302,25 +302,7 @@ u32 string::write_type(u32 idx, void* val, _type_info* info, bool size) { PROF
 	} break;
 
 	case Type::_struct: {
-		if(info->name == "vector") {
-			idx = write_vector(idx, val, info, size);
-		} else if(info->name == "array") {
-			idx = write_array(idx, val, info, size);
-		} else if(info->name == "map") {
-			idx = write_map(idx, val, info, size);
-		} else if(info->name == "queue") {
-			idx = write_queue(idx, val, info, size);
-		} else if(info->name == "heap") {
-			idx = write_heap(idx, val, info, size);
-		} else if(info->name == "_FPTR") {
-			idx = write(idx, ((_FPTR*)val)->name, size);
-			idx = write(idx, "()"_, size);
-		} else if(info->name == "func_ptr") {
-			idx = write(idx, (*(_FPTR**)val)->name, size);
-			idx = write(idx, "()"_, size);
-		} else {
-			idx = write_struct(idx, val, info, size);
-		}
+		idx = write_struct(idx, val, info, size);
 	} break;
 
 	case Type::_enum: {
@@ -531,7 +513,78 @@ u32 string::write_ptr(u32 idx, void* val, _type_info* info, bool size) { PROF
 	return idx;
 }
 
-u32 string::write_struct(u32 idx, void* val, _type_info* info, bool size) { PROF 
+constexpr u32 const_hash(const char* str) {
+
+    return *str ? (u32)(*str) + 33 * const_hash(str + 1) : 5381;
+}
+
+#pragma warning(push)
+#pragma warning(disable : 4307)
+u32 string::write_struct(u32 idx, void* val, _type_info* info, bool size) { PROF
+
+	u32 name = const_hash(info->name.c_str);
+
+	switch(name) {
+	case const_hash("v2_t"): {
+		idx = write(idx, '{', size);
+		idx = write_type(idx, (u8*)val + info->_struct.member_offsets[0], TYPEINFO_H(info->_struct.member_types[0]), size);
+		idx = write(idx, ',', size);
+		idx = write_type(idx, (u8*)val + info->_struct.member_offsets[1], TYPEINFO_H(info->_struct.member_types[1]), size);
+		idx = write(idx, '}', size);
+	} break;
+	case const_hash("v3_t"): {
+		idx = write(idx, '{', size);
+		idx = write_type(idx, (u8*)val + info->_struct.member_offsets[0], TYPEINFO_H(info->_struct.member_types[0]), size);
+		idx = write(idx, ',', size);
+		idx = write_type(idx, (u8*)val + info->_struct.member_offsets[1], TYPEINFO_H(info->_struct.member_types[1]), size);
+		idx = write(idx, ',', size);
+		idx = write_type(idx, (u8*)val + info->_struct.member_offsets[2], TYPEINFO_H(info->_struct.member_types[2]), size);
+		idx = write(idx, '}', size);		
+	} break;
+	case const_hash("v4_t"): {
+		idx = write(idx, '{', size);
+		idx = write_type(idx, (u8*)val + info->_struct.member_offsets[0], TYPEINFO_H(info->_struct.member_types[0]), size);
+		idx = write(idx, ',', size);
+		idx = write_type(idx, (u8*)val + info->_struct.member_offsets[1], TYPEINFO_H(info->_struct.member_types[1]), size);
+		idx = write(idx, ',', size);
+		idx = write_type(idx, (u8*)val + info->_struct.member_offsets[2], TYPEINFO_H(info->_struct.member_types[2]), size);
+		idx = write(idx, ',', size);
+		idx = write_type(idx, (u8*)val + info->_struct.member_offsets[3], TYPEINFO_H(info->_struct.member_types[3]), size);
+		idx = write(idx, '}', size);
+	} break;
+	case const_hash("vector"): {
+		idx = write_vector(idx, val, info, size);
+	} break;
+	case const_hash("array"): {
+		idx = write_array(idx, val, info, size);
+	} break;
+	case const_hash("map"): {	
+		idx = write_map(idx, val, info, size);
+	} break;
+	case const_hash("queue"): {
+		idx = write_queue(idx, val, info, size);
+	} break;
+	case const_hash("heap"): {
+		idx = write_heap(idx, val, info, size);
+	} break;
+	case const_hash("_FPTR"): {
+		idx = write(idx, ((_FPTR*)val)->name, size);
+		idx = write(idx, "()"_, size);
+	} break;
+	case const_hash("func_ptr"): {
+		idx = write(idx, (*(_FPTR**)val)->name, size);
+		idx = write(idx, "()"_, size);
+	} break;
+	default: {
+		idx = write_any_struct(idx, val, info, size);
+	} break;
+	}
+
+	return idx;
+}
+#pragma warning(pop)
+
+u32 string::write_any_struct(u32 idx, void* val, _type_info* info, bool size) { PROF 
 	idx = write(idx, info->name, size);
 	idx = write(idx, "{"_, size);
 	for(u32 j = 0; j < info->_struct.member_count; j++) {

@@ -182,7 +182,7 @@ enum class prof_sort_type : u8 {
 
 struct dbg_manager {
 
-	bool frame_pause = true, show_alloc_stats = false, show_ui = true;
+	bool frame_pause = true, show_alloc_stats = false, show_ui = false;
 	platform_thread_id selected_thread;
 	f32 last_frame_time = 0.0f;
 

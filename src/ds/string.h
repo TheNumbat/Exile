@@ -56,6 +56,7 @@ struct NOREFLECT string { // no-reflect because hard-coded
 	u32 write_map(u32 idx, void* val, _type_info* info, bool size = false);
 	u32 write_ptr(u32 idx, void* val, _type_info* info, bool size = false);
 	u32 write_struct(u32 idx, void* val, _type_info* info, bool size = false);
+	u32 write_any_struct(u32 idx, void* val, _type_info* info, bool size = false);
 	u32 write_enum(u32 idx, void* val, _type_info* info, bool size = false);
 	u32 write_int(u32 idx, u8 base, void* val, _type_info* info, bool size = false);
 	u32 write_float(u32 idx, u8 precision, void* val, _type_info* info, bool size = false);
@@ -66,6 +67,7 @@ string operator "" _(const char* str, size_t s);
 
 u32 hash(string one, string two);
 u32 hash(string str);
+constexpr u32 const_hash(const char* str);
 bool operator==(string first, string second);
 inline bool operator==(string first, const char* second);
 inline bool operator==(const char* first, string second);

@@ -36,7 +36,7 @@ void exile::init(engine* st) { PROF
 	state = st;
 	alloc = MAKE_PLATFORM_ALLOCATOR("world");
 
-	p.camera.reset();
+	p.init();
 
 	cube = mesh_3d_tex::make(8, &alloc);
 	cube.push_cube(V3(0.0f, 0.0f, 0.0f), 1.0f);
@@ -80,6 +80,13 @@ void exile::render() { PROF
 	rcl.destroy();
 }
 
+void player::init() { PROF
+
+	max_speed = 5.0f;
+	last = 0;
+	camera.reset();
+}
+
 void player::update(platform_perfcount now) { PROF
 
 	platform_perfcount pdt = now - last;
@@ -88,32 +95,18 @@ void player::update(platform_perfcount now) { PROF
 	camera.pos += velocity * dt;
 	camera.update();
 
+	gui_begin("Exile"_);
+	gui_text(string::makef("pos: %"_, camera.pos));
+	gui_text(string::makef("vel: %"_, velocity));
+	gui_end();
+
 	last = now;
-}
-
-void player::forward() { PROF
-
-	velocity = camera.front * max_speed;
-}
-
-void player::left() { PROF
-
-	velocity = camera.right * -max_speed;
-}
-
-void player::right() { PROF
-
-	velocity = camera.right * max_speed;
-}
-
-void player::back() { PROF
-
-	velocity = camera.front * -max_speed;
 }
 
 CALLBACK bool default_evt_handle(void* param, platform_event evt) { PROF
 
 	exile* game = (exile*)param;
+	player& p = game->p;
 
 	if(evt.type == platform_event_type::key) {
 
@@ -128,25 +121,25 @@ CALLBACK bool default_evt_handle(void* param, platform_event evt) { PROF
 
 			case platform_keycode::w: {
 
-				game->p.forward();
+				p.velocity += p.camera.front * p.max_speed;
 
 			} break;
 
 			case platform_keycode::a: {
 
-				game->p.left();
+				p.velocity += p.camera.right * -p.max_speed;
 
 			} break;
 
 			case platform_keycode::s: {
 
-				game->p.back();
+				p.velocity += p.camera.front * -p.max_speed;
 
 			} break;
 
 			case platform_keycode::d: {
 
-				game->p.right();
+				p.velocity += p.camera.right * p.max_speed;
 
 			} break;									
 
@@ -155,7 +148,36 @@ CALLBACK bool default_evt_handle(void* param, platform_event evt) { PROF
 				game->state->dbg.toggle_ui();
 
 			} break;
+			default: return false;
+			}
+		}
 
+		if(evt.key.flags & (u16)platform_keyflag::release) {
+
+			switch(evt.key.code) {
+			case platform_keycode::w: {
+
+				p.velocity -= p.camera.front * p.max_speed;
+
+			} break;
+
+			case platform_keycode::a: {
+
+				p.velocity -= p.camera.right * -p.max_speed;
+
+			} break;
+
+			case platform_keycode::s: {
+
+				p.velocity -= p.camera.front * -p.max_speed;
+
+			} break;
+
+			case platform_keycode::d: {
+
+				p.velocity -= p.camera.right * p.max_speed;
+
+			} break;										
 			default: return false;
 			}
 		}
