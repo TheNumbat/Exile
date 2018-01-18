@@ -987,6 +987,10 @@ LRESULT WINCALLBACK window_proc(HWND handle, UINT msg, WPARAM wParam, LPARAM lPa
 			if(wParam == VK_SHIFT) {
 				UINT scancode = (lParam & 0x00ff0000) >> 16;
 				wParam = MapVirtualKeyA(scancode, MAPVK_VSC_TO_VK_EX);
+			} else if(wParam == VK_CONTROL) {
+				wParam = (lParam & 0x01000000) != 0 ? VK_RCONTROL : VK_LCONTROL;
+			} else if(wParam == VK_MENU) {
+				wParam = (lParam & 0x01000000) != 0 ? VK_RMENU : VK_LMENU;
 			}
 			evt.key.code = translate_key_code(wParam);
 			if(lParam & 1<<30) {
@@ -1027,6 +1031,10 @@ LRESULT WINCALLBACK window_proc(HWND handle, UINT msg, WPARAM wParam, LPARAM lPa
 			if(wParam == VK_SHIFT) {
 				UINT scancode = (lParam & 0x00ff0000) >> 16;
 				wParam = MapVirtualKeyA(scancode, MAPVK_VSC_TO_VK_EX);
+			} else if(wParam == VK_CONTROL) {
+				wParam = (lParam & 0x01000000) != 0 ? VK_RCONTROL : VK_LCONTROL;
+			} else if(wParam == VK_MENU) {
+				wParam = (lParam & 0x01000000) != 0 ? VK_RMENU : VK_LMENU;
 			}
 			evt.key.code = translate_key_code(wParam);
 			if(GetKeyState(VK_LSHIFT) & 0x8000) 	evt.key.flags |= (u16)platform_keyflag::lshift;
