@@ -86,6 +86,7 @@ gui_window gui_window::make(r2 first_size, f32 first_alpha, u16 flags, allocator
 void gui_window::reset() { PROF
 
 	r2 content = get_real_content();
+	active = false;
 
 	previous_content_size = cursor - scroll_pos - content.xy;
 	if(previous_content_size.y > content.h - ggui->style.scroll_slop) can_scroll = true;
@@ -403,8 +404,8 @@ void gui_pop_id() { PROF
 
 bool gui_in_win() { PROF
 	FORMAP(it, ggui->windows) {
-		if(&it->value != ggui->current && it->value.z > ggui->current->z) {
-			if(it->value.active && inside(it->value.rect, ggui->input.mousepos)) {
+		if(it->value.active && &it->value != ggui->current && it->value.z > ggui->current->z) {
+			if(it->value.full_size && inside(it->value.rect, ggui->input.mousepos)) {
 				return false;
 			} else {
 				r2 title_rect = it->value.get_title();
@@ -415,7 +416,7 @@ bool gui_in_win() { PROF
 		}
 	}
 
-	r2 rect = ggui->current->active ? ggui->current->rect : ggui->current->get_title();
+	r2 rect = ggui->current->full_size ? ggui->current->rect : ggui->current->get_title();
 	return inside(rect, ggui->input.mousepos);
 }
 
@@ -436,6 +437,7 @@ bool gui_begin(string name, r2 size, gui_window_flags flags, f32 first_alpha) { 
 	}
 
 	window->id_hash_stack.push(hash(id));
+	window->active = true;
 	ggui->current = window;
 
 	if(ggui->active_id == id) {
@@ -454,7 +456,7 @@ bool gui_begin(string name, r2 size, gui_window_flags flags, f32 first_alpha) { 
 			window->header_size = V2(0.0f, ggui->style.font_size + ggui->style.title_padding);
 		}
 
-		if((window->flags & (u16)window_flags::noback) != (u16)window_flags::noback && window->active) {
+		if((window->flags & (u16)window_flags::noback) != (u16)window_flags::noback && window->full_size) {
 			render_windowbody(window);
 		}
 	}
@@ -472,13 +474,13 @@ bool gui_begin(string name, r2 size, gui_window_flags flags, f32 first_alpha) { 
 		v2 carrot_pos = V2(window->rect.w - carrot_x_diff, ggui->style.carrot_size.y / 2.0f);
 		
 		gui_set_offset(carrot_pos);
-		_carrot_toggle_background(&window->active);
+		_carrot_toggle_background(&window->full_size);
 
 		if(in_win && inside(real_top, ggui->input.mousepos)) {
 
 			if(ggui->active == gui_active_state::none && ggui->input.ldbl) {
 				
-				window->active = !window->active;
+				window->full_size = !window->full_size;
 				window->z = ggui->last_z++;
 				ggui->active_id = id;
 				ggui->active = gui_active_state::active;
@@ -515,7 +517,7 @@ bool gui_begin(string name, r2 size, gui_window_flags flags, f32 first_alpha) { 
 			}
 		}
 	}
-	if((window->flags & (u16)window_flags::noback) != (u16)window_flags::noback && window->active) {
+	if((window->flags & (u16)window_flags::noback) != (u16)window_flags::noback && window->full_size) {
 		
 		if(in_win && inside(real_body, ggui->input.mousepos)) {
 			if(ggui->active == gui_active_state::none && ggui->input.lclick) {
@@ -523,7 +525,7 @@ bool gui_begin(string name, r2 size, gui_window_flags flags, f32 first_alpha) { 
 			}
 		}
 	}
-	if((window->flags & (u16)window_flags::noscroll) != (u16)window_flags::noscroll && window->active && window->can_scroll) {
+	if((window->flags & (u16)window_flags::noscroll) != (u16)window_flags::noscroll && window->full_size && window->can_scroll) {
 		
 		r2 scroll_bar = R2(real_body.x + real_body.w, real_body.y, ggui->style.win_scroll_w, real_body.h);
 
@@ -546,7 +548,7 @@ bool gui_begin(string name, r2 size, gui_window_flags flags, f32 first_alpha) { 
 
 	gui_set_offset(window->header_size + ggui->style.win_margin.xy + window->scroll_pos);
 
-	return window->active;
+	return window->full_size;
 }
 
 void gui_push_id(string id) { PROF
@@ -594,7 +596,7 @@ void gui_left_cursor() { PROF
 bool gui_checkbox(string name, bool* data) { PROF
 
 	gui_window* win = ggui->current;
-	if(!win->active) return *data;
+	if(!win->full_size) return *data;
 
 	guiid id;
 	id.base = *win->id_hash_stack.top();
@@ -630,7 +632,7 @@ bool gui_checkbox(string name, bool* data) { PROF
 i32 gui_int_slider(string text, i32* data, i32 low, i32 high) { PROF
 
 	gui_window* win = ggui->current;
-	if(!win->active) return false;
+	if(!win->full_size) return false;
 
 	guiid id;
 	id.base = *win->id_hash_stack.top();
@@ -717,7 +719,7 @@ void gui_combo(string name, map<string,V> options, V* data) { PROF
 bool gui_carrot_toggle(string name, bool initial, bool* toggleme) { PROF
 
 	gui_window* win = ggui->current;
-	if(!win->active) return initial;
+	if(!win->full_size) return initial;
 
 	guiid id;
 	id.base = *win->id_hash_stack.top();
@@ -840,7 +842,7 @@ template<typename enumer>
 void gui_enum_buttons(string name, enumer* val) { PROF
 
 	gui_window* win = ggui->current;
-	if(!win->active) return;
+	if(!win->full_size) return;
 
 	guiid id;
 	id.base = *win->id_hash_stack.top();
@@ -872,7 +874,7 @@ void gui_enum_buttons(string name, enumer* val) { PROF
 bool gui_button(string text) { PROF
 
 	gui_window* win = ggui->current;
-	if(!win->active) return false;
+	if(!win->full_size) return false;
 
 	guiid id;
 	id.base = *win->id_hash_stack.top();
@@ -905,7 +907,7 @@ bool gui_button(string text) { PROF
 bool gui_node(string text, bool* store) { PROF 
 
 	gui_window* win = ggui->current;
-	if(!win->active) return false;
+	if(!win->full_size) return false;
 
 	guiid id;
 	id.base = *win->id_hash_stack.top();
@@ -958,7 +960,7 @@ bool gui_node(string text, bool* store) { PROF
 void gui_text(string text) { PROF
 
 	gui_window* win = ggui->current;
-	if(!win->active) return;
+	if(!win->full_size) return;
 
 	f32 point = ggui->style.font_size;
 	color c = WHITE;

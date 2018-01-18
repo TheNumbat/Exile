@@ -95,7 +95,7 @@ void player::update(platform_perfcount now) { PROF
 	camera.pos += velocity * dt;
 	camera.update();
 
-	gui_begin("Exile"_);
+	gui_begin("Exile"_, R2(50.0f, 50.0f, 350.0f, 100.0f));
 	gui_text(string::makef("pos: %"_, camera.pos));
 	gui_text(string::makef("vel: %"_, velocity));
 	gui_end();
@@ -141,7 +141,19 @@ CALLBACK bool default_evt_handle(void* param, platform_event evt) { PROF
 
 				p.velocity += p.camera.right * p.max_speed;
 
-			} break;									
+			} break;	
+
+			case platform_keycode::space: {
+
+				p.velocity += p.camera.up * p.max_speed;
+
+			} break;	
+
+			case platform_keycode::lshift: {
+
+				p.velocity += p.camera.up * -p.max_speed;
+
+			} break;	
 
 			case platform_keycode::grave: {
 
@@ -177,7 +189,20 @@ CALLBACK bool default_evt_handle(void* param, platform_event evt) { PROF
 
 				p.velocity -= p.camera.right * p.max_speed;
 
-			} break;										
+			} break;
+
+			case platform_keycode::space: {
+
+				p.velocity -= p.camera.up * p.max_speed;
+
+			} break;	
+
+			case platform_keycode::lshift: {
+
+				p.velocity -= p.camera.up * -p.max_speed;
+
+			} break;	
+
 			default: return false;
 			}
 		}
