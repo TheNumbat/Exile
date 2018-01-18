@@ -33,7 +33,7 @@ struct exile {
 	mesh_3d_tex cube;
 
 	texture_id cube_tex;
-	evt_handler_id handler = 0;
+	evt_handler_id default_evt = 0, camera_evt = 0;
 
 	player p;
 
@@ -48,3 +48,4 @@ struct exile {
 };
 
 CALLBACK bool default_evt_handle(void* param, platform_event evt);
+CALLBACK bool camera_evt_handle(void* param, platform_event evt);

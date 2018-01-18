@@ -45,7 +45,8 @@ void exile::init(engine* st) { PROF
 	the_chunk = chunk::make(&cube, &alloc);
 	the_chunk.build_data();
 
-	handler = state->evt.add_handler(FPTR(default_evt_handle), this);
+	default_evt = state->evt.add_handler(FPTR(default_evt_handle), &state->running);
+	camera_evt = state->evt.add_handler(FPTR(camera_evt_handle), this);
 }
 
 void exile::update() { PROF
@@ -57,7 +58,8 @@ void exile::update() { PROF
 
 void exile::destroy() { PROF
 
-	state->evt.rem_handler(handler);
+	state->evt.rem_handler(default_evt);
+	state->evt.rem_handler(camera_evt);
 
 	the_chunk.destroy();
 	cube.destroy();
@@ -104,6 +106,23 @@ void player::update(platform_perfcount now) { PROF
 }
 
 CALLBACK bool default_evt_handle(void* param, platform_event evt) { PROF
+
+	bool* running = (bool*)param;
+
+	if(evt.type == platform_event_type::key) {
+		if(evt.key.flags & (u16)platform_keyflag::press) {
+			if(evt.key.code == platform_keycode::escape) {
+
+				*running = false;
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
+CALLBACK bool camera_evt_handle(void* param, platform_event evt) { PROF
 
 	exile* game = (exile*)param;
 	player& p = game->p;
