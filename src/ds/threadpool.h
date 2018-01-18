@@ -20,7 +20,7 @@ struct job {
 };
 
 struct worker_param {
-	locking_heap<job>* job_queue 			   	= null;
+	locking_heap<job>* job_queue 			= null;
 	map<job_id,platform_semaphore>* running = null;
 	platform_mutex* running_mutex 	   		= null;
 	platform_semaphore* jobs_semaphore 		= null;
@@ -59,4 +59,3 @@ struct threadpool {
 
 bool operator>(const job& l, const job& r);
 i32 worker(void* data_);
-

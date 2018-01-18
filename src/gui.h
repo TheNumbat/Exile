@@ -8,6 +8,8 @@ struct guiid {
 	string name;
 };
 
+u32 hash(guiid id);
+
 enum class window_flags : gui_window_flags {
 	noresize 	= 1<<0,
 	nomove		= 1<<1,

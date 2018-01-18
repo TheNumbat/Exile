@@ -1,5 +1,5 @@
 
-bool operator>(const job& l, const job& r) {
+bool operator>(const job& l, const job& r) { PROF
 	return (u32)l.priority > (u32)r.priority;
 }
 
@@ -15,7 +15,7 @@ threadpool threadpool::make(allocator* a, i32 num_threads_) { PROF
 	ret.num_threads = num_threads_ == 0 ? global_api->platform_get_num_cpus() : num_threads_;
 
 	ret.alloc   = a;
-	ret.running = map<job_id,platform_semaphore>::make(16, FPTR(hash_u64));
+	ret.running = map<job_id,platform_semaphore>::make(16);
 	ret.threads = array<platform_thread>::make(ret.num_threads, a);
 	ret.jobs    = locking_heap<job>::make(16, a);
 	ret.worker_data = array<worker_param>::make(ret.num_threads, a);
@@ -136,7 +136,7 @@ i32 worker(void* data_) {
 
 	worker_param* data = (worker_param*)data_;
 
-	begin_thread("worker %"_, data->alloc, global_api->platform_this_thread_id().id);
+	begin_thread("worker %"_, data->alloc, global_api->platform_this_thread_id());
 	this_thread_data.profiling = false;
 	global_dbg->register_thread(10, 8192);
 	

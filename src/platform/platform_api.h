@@ -26,10 +26,7 @@ struct platform_semaphore;
 struct platform_mutex;
 struct platform_file;
 typedef u64 platform_perfcount;
-
-struct platform_thread_id {
-	u32 id = 0;
-};
+typedef u32 platform_thread_id;
 
 struct platform_error {
 	bool good = true;
@@ -70,7 +67,6 @@ struct platform_thread_join_state {
 
 extern u32 PLATFORM_SHARING_ERROR;
 
-bool operator==(platform_thread_id first, platform_thread_id second);
 bool operator==(platform_file first, platform_file second);
 
 // TODO(max): Is this really the best way to handle input? We're basically just translating the OS event system.
@@ -264,7 +260,7 @@ struct _platform_event_mouse {
 	i8 w = 0;
 };
 
-typedef u64 job_id;
+typedef u32 job_id;
 
 enum class platform_async_type : u8 {
 	none,

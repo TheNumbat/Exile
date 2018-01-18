@@ -1,7 +1,7 @@
 
 typedef i32 texture_id;
 
-enum class render_command_type : u32 {
+enum class render_command_type : u8 {
 	none,
 	mesh_2d_col,
 	mesh_2d_tex,
@@ -9,6 +9,8 @@ enum class render_command_type : u32 {
 	mesh_3d_tex,
 	mesh_3d_tex_instanced,
 };
+
+u32 hash(render_command_type key);
 
 struct mesh_2d_col {
 	vector<v2>		vertices;	// x y 

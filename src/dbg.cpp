@@ -4,7 +4,7 @@ dbg_manager dbg_manager::make(allocator* alloc) { PROF
 	dbg_manager ret;
 
 	ret.thread_stats = map<platform_thread_id, thread_profile>::make(global_api->platform_get_num_cpus(), alloc);
-	ret.alloc_stats  = map<allocator*, alloc_profile>::make(32, alloc, FPTR(hash_ptr));
+	ret.alloc_stats  = map<allocator*, alloc_profile>::make(32, alloc);
 
 	ret.log_cache = locking_queue<log_message>::make(1024, alloc);
 
@@ -162,7 +162,7 @@ void dbg_manager::UI() { PROF
 		gui_unindent();
 	}
 
-	map<string, platform_thread_id> threads = map<string, platform_thread_id>::make(global_api->platform_get_num_cpus(), CURRENT_ALLOC(), FPTR(hash_string));
+	map<string, platform_thread_id> threads = map<string, platform_thread_id>::make(global_api->platform_get_num_cpus());
 	FORMAP(it, thread_stats) {
 		threads.insert(it->value.name, it->key);
 	}
@@ -270,7 +270,7 @@ void frame_profile::setup(string name, allocator* alloc, clock time, platform_pe
 
 	pool = MAKE_POOL(name, KILOBYTES(8), alloc, false);
 	heads = vector<profile_node*>::make(2, &pool);
-	allocations = map<allocator*, alloc_frame_profile>::make(8, alloc, FPTR(hash_ptr));
+	allocations = map<allocator*, alloc_frame_profile>::make(8, alloc);
 	clock_start = time;
 	perf_start = p;
 	number = num;
@@ -415,7 +415,7 @@ alloc_profile alloc_profile::make(allocator* alloc) { PROF
 
 	alloc_profile ret;
 
-	ret.current_set = map<void*, single_alloc>::make(64, alloc, FPTR(hash_ptr));
+	ret.current_set = map<void*, single_alloc>::make(64, alloc);
 
 	return ret;
 }

@@ -790,7 +790,7 @@ bool operator<=(string first, string second) { PROF
 	return true;
 }
 
-CALLBACK u32 hash_strings(string one, string two) { PROF
+u32 hash(string one, string two) { PROF
 
     u32 hash = 5381;
 
@@ -804,7 +804,7 @@ CALLBACK u32 hash_strings(string one, string two) { PROF
 }
 
 // from http://www.cse.yorku.ca/~oz/hash.html
-CALLBACK u32 hash_string(string str) { PROF
+u32 hash(string str) { PROF
 
     u32 hash = 5381;
 

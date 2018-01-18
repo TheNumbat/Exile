@@ -1,8 +1,8 @@
 
-CALLBACK u32 guiid_hash(guiid id) { PROF
+u32 hash(guiid id) { PROF
 
-	u32 hash = hash_string(id.name);
-	return hash ^ id.base;
+	u32 h = hash(id.name);
+	return h ^ id.base;
 }
 
 bool operator==(guiid l, guiid r) { PROF
@@ -78,7 +78,7 @@ gui_window gui_window::make(r2 first_size, f32 first_alpha, u16 flags, allocator
 	ret.flags = flags;
 	ret.font = gui_select_best_font_scale();
 	ret.z = ggui->last_z++;
-	ret.state_data = map<guiid, gui_state_data>::make(32, ret.alloc, FPTR(guiid_hash));
+	ret.state_data = map<guiid, gui_state_data>::make(32, ret.alloc);
 
 	return ret;
 }
@@ -137,7 +137,7 @@ gui_manager gui_manager::make(allocator* alloc, platform_window* win) { PROF
 	ret.alloc = alloc;
 	ret.window = win;
 
-	ret.windows = map<guiid, gui_window>::make(32, alloc, FPTR(guiid_hash));
+	ret.windows = map<guiid, gui_window>::make(32, alloc);
 	ret.fonts = vector<gui_font>::make(4, alloc);
 
 	return ret;
@@ -392,7 +392,7 @@ void gui_add_offset(v2 offset, gui_cursor_mode override_mode) { PROF
 void gui_push_id(u32 id) { PROF
 
 	u32 base = *ggui->current->id_hash_stack.top();
-	ggui->current->id_hash_stack.push(base ^ hash_u32(id));
+	ggui->current->id_hash_stack.push(base ^ hash(id));
 }
 
 void gui_pop_id() { PROF
@@ -434,7 +434,7 @@ bool gui_begin(string name, r2 size, gui_window_flags flags, f32 first_alpha) { 
 		window->rect = size;
 	}
 
-	window->id_hash_stack.push(guiid_hash(id));
+	window->id_hash_stack.push(hash(id));
 	ggui->current = window;
 
 	if(ggui->active_id == id) {
@@ -550,7 +550,7 @@ bool gui_begin(string name, r2 size, gui_window_flags flags, f32 first_alpha) { 
 
 void gui_push_id(string id) { PROF
 
-	gui_push_id(hash_string(id));
+	gui_push_id(hash(id));
 }
 
 void gui_end() { PROF

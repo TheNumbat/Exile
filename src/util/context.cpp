@@ -1,7 +1,7 @@
 
-CALLBACK u32 hash_context(code_context c) { PROF
+u32 hash(code_context c) { PROF
 
-	return hash_string(string::from_c_str(c.function)) ^ hash_string(string::from_c_str(c.file)) ^ hash_u32(c.line);
+	return hash(string::from_c_str(c.function)) ^ hash(string::from_c_str(c.file)) ^ hash(c.line);
 }
 
 bool operator==(code_context l, code_context r) { PROF

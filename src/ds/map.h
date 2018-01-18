@@ -7,9 +7,11 @@
 const f32 MAP_MAX_LOAD_FACTOR = 0.9f;
 
 // from Thomas Wang, http://burtleburtle.net/bob/hash/integer.html
-CALLBACK u32 hash_u32(u32 key);
-CALLBACK u32 hash_u64(u64 key);
-CALLBACK u32 hash_ptr(void* key);
+u32 hash(u32 key);
+u32 hash(i32 key);
+u32 hash(u64 key);
+u32 hash(u8 key);
+u32 hash(void* key);
 
 // map foreach
 #define FORMAP(it,m) for(auto it = (m).contents.memory; it != (m).contents.memory + (m).contents.capacity; it++) if(ELEMENT_OCCUPIED(*it))
@@ -32,19 +34,17 @@ struct map_element {
 	u32 occupied_and_bucket = 0;
 };
 
-template<typename K, typename V>
+template<typename K, typename V, u32(hash_func)(K) = hash>
 struct map {
 	vector<map_element<K, V>> contents;
 	u32 size	 		= 0;				// always a power of two so mod is only a bit-and
-	allocator* alloc 	= null;
-	func_ptr<u32, K> hash;
-	bool use_u32hash 	= false;
 	u32 max_probe		= 0;
+	allocator* alloc 	= null;
 
 ///////////////////////////////////////////////////////////////////////////////
 
-	static map<K,V> make(u32 capacity = 16, _FPTR* hash = null);
-	static map<K,V> make(u32 capacity, allocator* a, _FPTR* hash = null);
+	static map<K,V,hash_func> make(u32 capacity = 16);
+	static map<K,V,hash_func> make(u32 capacity, allocator* a);
 	
 	void destroy();
 	

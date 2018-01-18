@@ -233,6 +233,12 @@ CALLBACK void run_mesh_3d_tex_instanced(render_command* cmd) { PROF
 	glBindVertexArray(0);
 }
 
+
+u32 hash(render_command_type key) { PROF
+
+	return hash(*(u8*)&key);
+}
+
 mesh_3d_tex_instance_data mesh_3d_tex_instance_data::make(mesh_3d_tex* parent, u32 instances, allocator* alloc) { PROF
 
 	if(alloc == null) {

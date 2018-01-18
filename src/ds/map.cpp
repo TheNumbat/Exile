@@ -1,5 +1,5 @@
 
-CALLBACK u32 hash_u32(u32 key) { PROF
+u32 hash(u32 key) { PROF
     key = (key ^ 61) ^ (key >> 16);
     key = key + (key << 3);
     key = key ^ (key >> 4);
@@ -9,7 +9,7 @@ CALLBACK u32 hash_u32(u32 key) { PROF
     return key;
 }
 
-CALLBACK u32 hash_u64(u64 key) { PROF
+u32 hash(u64 key) { PROF
 	key = (~key) + (key << 21); // key = (key << 21) - key - 1;
 	key = key ^ (key >> 24);
 	key = (key + (key << 3)) + (key << 8); // key * 265
@@ -20,37 +20,43 @@ CALLBACK u32 hash_u64(u64 key) { PROF
 	return key >> 32;
 }
 
-CALLBACK u32 hash_ptr(void* key) { PROF
+u32 hash(void* key) { PROF
 
-	return hash_u64((u64)key);
+	// NOTE(max): this better be compiled as 64 bit lol
+	return hash(*(u64*)&key);
 }
 
-template<typename K, typename V>
-map<K,V> map<K,V>::make(u32 capacity, _FPTR* hash) { PROF
+u32 hash(i32 key) { PROF
+
+	return hash(*(u32*)&key);
+}
+
+u32 hash(u8 key) { PROF
+
+	return hash((u32)key);
+}
+
+template<typename K, typename V, u32(*hash_func)(K) = hash>
+map<K,V,hash_func> map<K,V,hash_func>::make(u32 capacity) { PROF
 	
-	return map<K,V>::make(capacity, CURRENT_ALLOC(), hash);
+	return map<K,V,hash_func>::make(capacity, CURRENT_ALLOC());
 }
 
-template<typename K, typename V>
-map<K,V> map<K,V>::make(u32 capacity, allocator* a, _FPTR* hash) { PROF
-	map<K,V> ret;
+template<typename K, typename V, u32(*hash_func)(K) = hash>
+map<K,V,hash_func> map<K,V,hash_func>::make(u32 capacity, allocator* a) { PROF
+	
+	map<K,V,hash_func> ret;
 
 	capacity = last_pow_two(capacity) == capacity ? capacity : next_pow_two(capacity);
 
 	ret.alloc 	 = a;
 	ret.contents = vector<map_element<K,V>>::make(capacity, ret.alloc);
-	if(!hash) {
-		LOG_DEBUG_ASSERT(sizeof(K) == sizeof(u32));
-		ret.use_u32hash = true;
-	} else {
-		ret.hash.set(hash);
-	}
 
 	return ret;
 }
 
-template<typename K, typename V>
-void map<K,V>::destroy() { PROF
+template<typename K, typename V, u32(*hash_func)(K) = hash>
+void map<K,V,hash_func>::destroy() { PROF
 	
 	contents.destroy();
 
@@ -58,8 +64,8 @@ void map<K,V>::destroy() { PROF
 	alloc = null;
 }
 
-template<typename K, typename V>
-void map<K,V>::clear() { PROF
+template<typename K, typename V, u32(*hash_func)(K) = hash>
+void map<K,V,hash_func>::clear() { PROF
 	
 	FORVEC(it, contents) {
 		ELEMENT_CLEAR_OCCUPIED(*it);
@@ -70,8 +76,8 @@ void map<K,V>::clear() { PROF
 	max_probe = 0;
 }
 
-template<typename K, typename V>
-void map<K,V>::grow_rehash() { PROF	
+template<typename K, typename V, u32(*hash_func)(K) = hash>
+void map<K,V,hash_func>::grow_rehash() { PROF	
 	
 	vector<map_element<K,V>> temp = vector<map_element<K,V>>::make_copy(contents);
 
@@ -90,8 +96,8 @@ void map<K,V>::grow_rehash() { PROF
 	temp.destroy();
 }
 
-template<typename K, typename V> 
-void map<K,V>::trim_rehash() { PROF
+template<typename K, typename V, u32(*hash_func)(K) = hash> 
+void map<K,V,hash_func>::trim_rehash() { PROF
 
 	vector<map_element<K,V>> temp = make_vector_copy(contents);
 
@@ -109,8 +115,8 @@ void map<K,V>::trim_rehash() { PROF
 	destroy_vector(&temp);
 }
 
-template<typename K, typename V>
-V* map<K,V>::insert(K key, V value, bool grow_if_needed) { PROF
+template<typename K, typename V, u32(*hash_func)(K) = hash>
+V* map<K,V,hash_func>::insert(K key, V value, bool grow_if_needed) { PROF
 	
 	if(size >= contents.capacity * MAP_MAX_LOAD_FACTOR) {
 
@@ -124,11 +130,7 @@ V* map<K,V>::insert(K key, V value, bool grow_if_needed) { PROF
 
 	map_element<K,V> ele;
 
-	if(use_u32hash) {
-		ELEMENT_SET_HASH_BUCKET(ele, hash_u32(*((u32*)&key)) & (contents.capacity - 1));
-	} else {
-		ELEMENT_SET_HASH_BUCKET(ele, hash(key) & (contents.capacity - 1));
-	}
+	ELEMENT_SET_HASH_BUCKET(ele, hash_func(key) & (contents.capacity - 1));
 	ele.key 		= key;
 	ele.value 		= value;
 	ELEMENT_SET_OCCUPIED(ele);
@@ -181,8 +183,8 @@ V* map<K,V>::insert(K key, V value, bool grow_if_needed) { PROF
 	}
 }
 
-template<typename K, typename V>
-V* map<K,V>::insert_if_unique(K key, V value, bool grow_if_needed) { PROF
+template<typename K, typename V, u32(*hash_func)(K) = hash>
+V* map<K,V,hash_func>::insert_if_unique(K key, V value, bool grow_if_needed) { PROF
 	
 	V* result = try_get(key);
 	
@@ -194,8 +196,8 @@ V* map<K,V>::insert_if_unique(K key, V value, bool grow_if_needed) { PROF
 	return result;
 }
 
-template<typename K, typename V>
-V* map<K,V>::get(K key) { PROF
+template<typename K, typename V, u32(*hash_func)(K) = hash>
+V* map<K,V,hash_func>::get(K key) { PROF
 
 	V* result = try_get(key);
 	LOG_ASSERT(result != null);
@@ -203,8 +205,8 @@ V* map<K,V>::get(K key) { PROF
 	return result;
 }
 
-template<typename K, typename V>
-V* map<K,V>::try_get(K key) { PROF	// can return null
+template<typename K, typename V, u32(*hash_func)(K) = hash>
+V* map<K,V,hash_func>::try_get(K key) { PROF	// can return null
 
 	if (size == 0) {
 		return null;
@@ -212,11 +214,7 @@ V* map<K,V>::try_get(K key) { PROF	// can return null
 
 	u32 hash_bucket;
 
-	if(use_u32hash) {
-		hash_bucket = hash_u32(*((u32*)&key)) & (contents.capacity - 1);
-	} else {
-		hash_bucket = hash(key) & (contents.capacity - 1);
-	}	
+	hash_bucket = hash_func(key) & (contents.capacity - 1);
 
 	u32 index = hash_bucket;
 	u32 probe_length = 0;
@@ -239,16 +237,12 @@ V* map<K,V>::try_get(K key) { PROF	// can return null
 	}
 }
 
-template<typename K, typename V>
-bool map<K,V>::try_erase(K key) { PROF
+template<typename K, typename V, u32(*hash_func)(K) = hash>
+bool map<K,V,hash_func>::try_erase(K key) { PROF
 	
 	u32 hash_bucket;
 
-	if(use_u32hash) {
-		hash_bucket = hash_u32(*((u32*)&key)) & (contents.capacity - 1);
-	} else {
-		hash_bucket = hash(key) & (contents.capacity - 1);
-	}	
+	hash_bucket = hash_func(key) & (contents.capacity - 1);
 
 	u32 index = hash_bucket;
 	u32 probe_length = 0;
@@ -274,8 +268,8 @@ bool map<K,V>::try_erase(K key) { PROF
 	}
 }
 
-template<typename K, typename V>
-void map<K,V>::erase(K key) { PROF
+template<typename K, typename V, u32(*hash_func)(K) = hash>
+void map<K,V,hash_func>::erase(K key) { PROF
 
 	LOG_ASSERT(try_erase(key));
 }

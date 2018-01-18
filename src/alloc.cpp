@@ -1,7 +1,7 @@
 
-CALLBACK u32 hash_alloc(allocator a) { PROF
+u32 hash(allocator* a) { PROF
 
-	return hash_context(a.context);
+	return hash((void*)a);
 }
 
 bool operator==(allocator l, allocator r) { PROF
