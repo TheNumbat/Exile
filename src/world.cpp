@@ -54,7 +54,7 @@ void world_manager::destroy() { PROF
 
 void world_manager::render() { PROF
 
-	render_command_list rcl = render_command_list::make(alloc);
+	render_command_list rcl = render_command_list::make();
 	render_command cmd = render_command::make(render_command_type::mesh_3d_tex_instanced);
 
 	cmd.mesh_3d_tex_instanced.data = &the_chunk.cube_data;
