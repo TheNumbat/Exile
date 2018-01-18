@@ -38,7 +38,6 @@ priority:
 
 bugs:
 	gui_in_win broke - gets window behind current
-	we don't get a keydown/up message for shift
 
 to do:
 

@@ -984,6 +984,10 @@ LRESULT WINCALLBACK window_proc(HWND handle, UINT msg, WPARAM wParam, LPARAM lPa
 		case WM_SYSKEYDOWN: {
 			evt.type = platform_event_type::key;
 			evt.key.flags |= (u16)platform_keyflag::press;
+			if(wParam == VK_SHIFT) {
+				UINT scancode = (lParam & 0x00ff0000) >> 16;
+				wParam = MapVirtualKeyA(scancode, MAPVK_VSC_TO_VK_EX);
+			}
 			evt.key.code = translate_key_code(wParam);
 			if(lParam & 1<<30) {
 				evt.key.flags &= ~(u16)platform_keyflag::press;
@@ -1020,6 +1024,10 @@ LRESULT WINCALLBACK window_proc(HWND handle, UINT msg, WPARAM wParam, LPARAM lPa
 		case WM_SYSKEYUP: {
 			evt.type = platform_event_type::key;
 			evt.key.flags |= (u16)platform_keyflag::release;
+			if(wParam == VK_SHIFT) {
+				UINT scancode = (lParam & 0x00ff0000) >> 16;
+				wParam = MapVirtualKeyA(scancode, MAPVK_VSC_TO_VK_EX);
+			}
 			evt.key.code = translate_key_code(wParam);
 			if(GetKeyState(VK_LSHIFT) & 0x8000) 	evt.key.flags |= (u16)platform_keyflag::lshift;
 			if(GetKeyState(VK_RSHIFT) & 0x8000) 	evt.key.flags |= (u16)platform_keyflag::rshift;
