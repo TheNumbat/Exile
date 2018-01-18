@@ -175,6 +175,7 @@ struct gui_manager {
 	_gui_style style;
 
 	gui_input_state input;
+	evt_handler_id handler_id = 0;
 
 	gui_window* current = null;	// we take a pointer into a map but it's OK because we know nothing will be added while this is in use
 	u32 last_z = 1;						// this only counts up on window layer changes so we don't have to iterate through

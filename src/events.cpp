@@ -4,7 +4,7 @@ evt_manager evt_manager::make(allocator* a) { PROF
 	evt_manager ret;
 
 	ret.event_queue = locking_queue<platform_event>::make(256, a);
-	ret.handlers = vector<evt_handler>::make(16, a);
+	ret.handlers = map<evt_handler_id,evt_handler>::make(16, a);
 
 	return ret;
 }
@@ -21,7 +21,7 @@ void evt_manager::destroy() { PROF
 	global_api->platform_set_queue_callback(null, null);
 }
 
-void evt_manager::run_events(game_state* state) { PROF
+void evt_manager::run_events(engine* state) { PROF
 
 	global_api->platform_pump_events(&state->window);
 
@@ -56,26 +56,29 @@ void evt_manager::run_events(game_state* state) { PROF
 			}
 		}
 
-		FORVEC_R(it, handlers) {
+		FORMAP(it, handlers) {
 
-			if(it->handle(it->param, evt)) {
+			if(it->value.handle(it->value.param, evt)) {
 				break;
 			}
 		}
 	}
 }
 
-void evt_manager::push_handler(_FPTR* handler, void* param) { PROF
+evt_handler_id evt_manager::add_handler(_FPTR* handler, void* param) { PROF
 
 	evt_handler h;
 	h.handle.set(handler);
 	h.param = param;
-	handlers.push(h);
+	
+	handlers.insert(next_id++, h);
+
+	return next_id - 1;
 }
 
-void evt_manager::pop_handler() { PROF
+void evt_manager::rem_handler(evt_handler_id id) { PROF
 
-	handlers.pop();
+	handlers.erase(id);
 }
 
 void event_enqueue(void* data, platform_event evt) { PROF

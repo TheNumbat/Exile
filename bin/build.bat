@@ -34,10 +34,10 @@ if not exist w:\build\meta.exe (
 
 echo running metaprogram...
 xcopy w:\deps\clang-c\libclang.dll w:\build\ /C /Y > NUL 2> NUL
-meta.exe w:\src\exile.cpp
+meta.exe w:\src\all.cpp
 
 echo compiling game lib...
-cl %Game_CompilerFlags% w:\src\exile.cpp /link %Game_LinkerFlags%
+cl %Game_CompilerFlags% w:\src\all.cpp /link %Game_LinkerFlags%
 
 if not exist w:\build\main.exe (
 	echo compiling platform layer...

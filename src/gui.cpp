@@ -115,12 +115,13 @@ void gui_window::destroy() { PROF
 
 void gui_manager::register_events(evt_manager* evt) { PROF
 
-	evt->push_handler(FPTR(gui_evt_handle), &input);
+	handler_id = evt->add_handler(FPTR(gui_evt_handle), &input);
 }
 
 void gui_manager::unregister_events(evt_manager* evt) { PROF
 
-	evt->pop_handler();
+	evt->rem_handler(handler_id);
+	handler_id = 0;
 }
 
 gui_state_data* gui_window::add_state(guiid id, gui_state_data state) { PROF

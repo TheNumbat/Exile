@@ -1,140 +1,74 @@
 
-/* debug options
+chunk chunk::make(mesh_3d_tex* cube, allocator* a) { PROF
 
-#define BOUNDS_CHECK 			// check access on array_get/vector_get
-	
-#define BLOCK_OR_EXIT_ON_ERROR	// __debugbreak in debugger or exit() on log_level::error | log_level::fatal always does this
-	
-#define PROFILE					// do function enter/exit profiling
-	
-#define MORE_PROF				// do profiling for functions that are called a _lot_
-								// (still excludes vec constructors)
+	chunk ret;
 
-#define ZERO_ARENA				// memset arena allocator store to zero on reset
+	ret.cube_data = mesh_3d_tex_instance_data::make(cube, 16, a);
+	memset(ret.blocks, 16 * 16 * 256, 1);
 
-#define NO_CONCURRENT_JOBS		// makes queue_job just run the job and wait_job do nothing
-*/
+	return ret;
+}
 
-// #define RELEASE // turn off everything for a true release build
+void chunk::destroy() { PROF
 
-#ifndef RELEASE
-	#ifdef CHECKS
-		#define BOUNDS_CHECK
-		#define BLOCK_OR_EXIT_ON_ERROR
-		#define ZERO_ARENA
-		#define CHECKED(platform_func, ...) {platform_error err = global_api->platform_func(__VA_ARGS__); if(!err.good) LOG_ERR_F("Error % in %", err.error, #platform_func);}
-	#endif
-#endif
-#ifdef RELEASE
-#ifdef PROFILE
-	#undef PROFILE
-#endif
-#endif
+	cube_data.destroy();
+}
 
-#ifndef CHECKED
-#define CHECKED(platform_func, ...) global_api->platform_func(__VA_ARGS__);
-#endif
+void chunk::build_data() { PROF
 
-#ifdef __clang__
-#define NOREFLECT __attribute__((annotate("noreflect")))
-#define CIRCULAR __attribute__((annotate("circular")))
-#else
-#define NOREFLECT
-#define CIRCULAR
-#endif
+	cube_data.clear();
 
-#ifdef _MSC_VER
-#define __FUNCNAME__ __FUNCTION__
-#define EXPORT extern "C" __declspec(dllexport)
-#elif defined(__GNUC__)
-#define __FUNCNAME__ __PRETTY_FUNCTION__
-#define EXPORT extern "C" __attribute__((dllexport))
-#else
-#define __FUNCNAME__ __func__
-#endif
-#define CALLBACK EXPORT
+	for(u32 x = 0; x < 16; x++) {
+		for(u32 z = 0; z < 16; z++) {
+			for(u32 y = 0; y < 256; y++) {
+				if(blocks[x][z][y] != block_type::air) {
 
-// default headers
-#include <math.h> 			// TODO(max): remove
-#include <xmmintrin.h>
-#include <stddef.h>
-#include <stdarg.h>
-#include <typeinfo>
-#include <new>
-#ifdef _MSC_VER
-#include <intrin.h>
-#endif
+					cube_data.data.push(V3f(x, y, z));
+					cube_data.instances++;
+				}
+			}
+		}
+	}
+}
 
-#include "util/basic_types.h"
-#include "math.h"
+void exile::init(engine* st) { PROF
 
-#include "ds/string.h"
-#include "util/context.h"
+	state = st;
+	alloc = MAKE_PLATFORM_ALLOCATOR("world");
 
-#include "platform/platform_api.h"
-#include "util/fptr.h"
+	camera.reset();
 
-#include "alloc.h"
+	cube = mesh_3d_tex::make(8, &alloc);
+	cube.push_cube(V3(0.0f, 0.0f, 0.0f), 1.0f);
 
-#include "ds/vector.h"
-#include "ds/stack.h"
-#include "ds/array.h"
-#include "ds/queue.h"
-#include "ds/map.h"
-#include "ds/buffer.h"
-#include "ds/heap.h"
-#include "ds/threadpool.h"
+	cube_tex = state->ogl.add_texture(&state->default_store, "numbat"_);
+	the_chunk = chunk::make(&cube, &alloc);
+	the_chunk.build_data();
+}
 
-#include "log_html.h"
-#include "log.h"
-#include "dbg.h"
+void exile::update() { PROF
 
-#include "asset.h"
-#include "render_commands.h"
-#include "render.h"
-#include "events.h"
-#include "gui.h"
-#include "world.h"
+}
 
-#include "util/threadstate.h"
-#include "util/fscope.h"
+void exile::destroy() { PROF
 
-#include "game.h"
-#include "util/type_table.h"
+	the_chunk.destroy();
+	cube.destroy();
+	alloc.destroy();
+}
 
-// IMPLEMENTATIONS
-static platform_api* global_api = null; // global because it just represents a bunch of what should be free functions
-static log_manager*  global_log = null; // global to provide printf() like functionality everywhere
-static dbg_manager*  global_dbg = null; // global to provide profiling functionality everywhere
+void exile::render() { PROF
 
-#include <meta_types.cpp>
+	render_command_list rcl = render_command_list::make();
+	render_command cmd = render_command::make(render_command_type::mesh_3d_tex_instanced);
 
-#include "util/fptr.cpp"
-#include "util/context.cpp"
-#include "util/fscope.cpp"
-#include "util/threadstate.cpp"
-#include "util/type_table.cpp"
+	cmd.mesh_3d_tex_instanced.data = &the_chunk.cube_data;
+	cmd.texture = cube_tex;
 
-#include "math.cpp"
+	rcl.view = camera.view();
+	rcl.proj = proj(camera.fov, (f32)state->window.w / (f32)state->window.h, 0.001f, 1000.0f);
 
-#include "alloc.cpp"
-#include "log.cpp"
-#include "events.cpp"
-#include "render_commands.cpp"
-#include "render.cpp"
-#include "gui.cpp"
-#include "dbg.cpp"
-#include "asset.cpp"
-#include "game.cpp"
-#include "world.cpp"
-
-#include "ds/string.cpp"
-#include "ds/vector.cpp"
-#include "ds/stack.cpp"
-#include "ds/array.cpp"
-#include "ds/queue.cpp"
-#include "ds/map.cpp"
-#include "ds/threadpool.cpp"
-#include "ds/buffer.cpp"
-#include "ds/heap.cpp"
-// /IMPLEMENTATIONS
+	rcl.add_command(cmd);
+	state->ogl.execute_command_list(&rcl);
+	rcl.destroy();
+}

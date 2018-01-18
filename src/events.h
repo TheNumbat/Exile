@@ -1,9 +1,10 @@
 
 #pragma once
 
-struct game_state;
+struct engine;
 
-// window/key/mouse
+typedef u32 evt_handler_id;
+
 struct evt_handler {
 
 	func_ptr<bool, void*, platform_event> handle;
@@ -13,16 +14,19 @@ struct evt_handler {
 struct evt_manager {
 
 	locking_queue<platform_event> event_queue;
-	vector<evt_handler> handlers;
+	map<evt_handler_id, evt_handler> handlers;
 	
+	evt_handler_id next_id = 1;
+
 	static evt_manager make(allocator* a);
 	void destroy();
-	
-	void push_handler(_FPTR* handler, void* param = null);
-	void pop_handler();
+
+	// NOTE(max): not thread safe	
+	evt_handler_id add_handler(_FPTR* handler, void* param = null);
+	void rem_handler(evt_handler_id id);
 
 	void start();
-	void run_events(game_state* state);
+	void run_events(engine* state);
 };
 
 void filter_dupe_window_events(queue<platform_event>* queue);
