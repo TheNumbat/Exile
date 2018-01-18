@@ -18,9 +18,9 @@ void chunk::build_data() { PROF
 
 	cube_data.clear();
 
-	for(u32 x = 0; x < 16; x++) {
-		for(u32 z = 0; z < 16; z++) {
-			for(u32 y = 0; y < 256; y++) {
+	for(u32 x = 0; x < 16; x += 2) {
+		for(u32 z = 0; z < 16; z += 2) {
+			for(u32 y = 0; y < 256; y += 2) {
 				if(blocks[x][z][y] != block_type::air) {
 
 					cube_data.data.push(V3f(x, y, z));
@@ -82,7 +82,7 @@ void exile::render() { PROF
 
 void player::init() { PROF
 
-	max_speed = 5.0f;
+	speed = 5.0f;
 	last = 0;
 	camera.reset();
 }
@@ -121,37 +121,37 @@ CALLBACK bool default_evt_handle(void* param, platform_event evt) { PROF
 
 			case platform_keycode::w: {
 
-				p.velocity += p.camera.front * p.max_speed;
+				p.velocity += p.camera.front * p.speed;
 
 			} break;
 
 			case platform_keycode::a: {
 
-				p.velocity += p.camera.right * -p.max_speed;
+				p.velocity += p.camera.right * -p.speed;
 
 			} break;
 
 			case platform_keycode::s: {
 
-				p.velocity += p.camera.front * -p.max_speed;
+				p.velocity += p.camera.front * -p.speed;
 
 			} break;
 
 			case platform_keycode::d: {
 
-				p.velocity += p.camera.right * p.max_speed;
+				p.velocity += p.camera.right * p.speed;
 
 			} break;	
 
 			case platform_keycode::space: {
 
-				p.velocity += p.camera.up * p.max_speed;
+				p.velocity += p.camera.up * p.speed;
 
 			} break;	
 
 			case platform_keycode::lshift: {
 
-				p.velocity += p.camera.up * -p.max_speed;
+				p.velocity += p.camera.up * -p.speed;
 
 			} break;	
 
@@ -169,37 +169,37 @@ CALLBACK bool default_evt_handle(void* param, platform_event evt) { PROF
 			switch(evt.key.code) {
 			case platform_keycode::w: {
 
-				p.velocity -= p.camera.front * p.max_speed;
+				p.velocity -= p.camera.front * p.speed;
 
 			} break;
 
 			case platform_keycode::a: {
 
-				p.velocity -= p.camera.right * -p.max_speed;
+				p.velocity -= p.camera.right * -p.speed;
 
 			} break;
 
 			case platform_keycode::s: {
 
-				p.velocity -= p.camera.front * -p.max_speed;
+				p.velocity -= p.camera.front * -p.speed;
 
 			} break;
 
 			case platform_keycode::d: {
 
-				p.velocity -= p.camera.right * p.max_speed;
+				p.velocity -= p.camera.right * p.speed;
 
 			} break;
 
 			case platform_keycode::space: {
 
-				p.velocity -= p.camera.up * p.max_speed;
+				p.velocity -= p.camera.up * p.speed;
 
 			} break;	
 
 			case platform_keycode::lshift: {
 
-				p.velocity -= p.camera.up * -p.max_speed;
+				p.velocity -= p.camera.up * -p.speed;
 
 			} break;	
 

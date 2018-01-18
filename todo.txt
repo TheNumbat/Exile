@@ -24,22 +24,21 @@ all includes:
 	#include <typeinfo>
 	#include <xmmintrin.h>/<intrin.h>
 
-today:
-	add movement
+priority:
+	add looking around/mouse capture
+	fix texture duplication (search for already cached first)
 	multiple chunks
 	start meshing
-
-priority:
-	fix texture duplication (search for already cached first)
-
-	voxel rendering methods
 	float slider/struct UI options
+	gui text wrapping
 	profiler graphs/actually good layout-ing?
 		Columns
 	threading profiling
 	update features/readme
 
 bugs:
+	gui_in_win broke - gets window behind current
+	we don't get a keydown/up message for shift
 
 to do:
 

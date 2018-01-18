@@ -19,7 +19,7 @@ struct player {
 
 	render_camera camera;
 
-	f32 max_speed = 5.0f;
+	f32 speed = 5.0f;
 	v3  velocity;
 	platform_perfcount last = 0;
 
