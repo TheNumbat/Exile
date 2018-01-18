@@ -30,6 +30,8 @@ today:
 	start meshing
 
 priority:
+	fix texture duplication (search for already cached first)
+
 	voxel rendering methods
 	float slider/struct UI options
 	profiler graphs/actually good layout-ing?

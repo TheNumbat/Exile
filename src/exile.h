@@ -15,14 +15,30 @@ struct chunk {
 	void build_data();
 };
 
+struct player {
+
+	render_camera camera;
+
+	f32 max_speed = 5.0f;
+	v3  velocity;
+	platform_perfcount last = 0;
+
+	void forward();
+	void left();
+	void right();
+	void back();
+	void update(platform_perfcount now);
+};
+
 struct exile {
 
 	chunk the_chunk;
 	mesh_3d_tex cube;
 
 	texture_id cube_tex;
+	evt_handler_id handler = 0;
 
-	render_camera camera;
+	player p;
 
 	engine* state = null;
 	platform_allocator alloc;
@@ -33,3 +49,5 @@ struct exile {
 	void update();
 	void render();
 };
+
+CALLBACK bool default_evt_handle(void* param, platform_event evt);

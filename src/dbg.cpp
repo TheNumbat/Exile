@@ -17,6 +17,11 @@ dbg_manager dbg_manager::make(allocator* alloc) { PROF
 	return ret;
 }
 
+void dbg_manager::toggle_ui() { PROF
+
+	show_ui = !show_ui;
+}
+
 void alloc_frame_profile::destroy() { PROF
 
 	allocs.destroy();

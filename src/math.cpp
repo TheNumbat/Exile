@@ -235,7 +235,11 @@ template<typename T> inline v2_t<T> add(v2_t<T> l, v2_t<T> r) { PROF
 }
 template v2 add(v2, v2);
 template<typename T> inline v3_t<T> add(v3_t<T> l, v3_t<T> r) { PROF
-	return V3(l.x + r.x, l.y + r.y, l.z + r.z);
+	v3_t<T> ret;
+	ret.x = l.x + r.x;
+	ret.y = l.y + r.y;
+	ret.z = l.z + r.z;
+	return ret;
 }
 template v3 add(v3, v3);
 template<typename T> inline v4_t<T> add(v4_t<T> l, v4_t<T> r) { PROF
@@ -248,7 +252,11 @@ template<typename T> inline v2_t<T> sub(v2_t<T> l, v2_t<T> r) { PROF
 }
 template v2 sub(v2, v2);
 template<typename T> inline v3_t<T> sub(v3_t<T> l, v3_t<T> r) { PROF
-	return V3(l.x - r.x, l.y - r.y, l.z - r.z);
+	v3_t<T> ret;
+	ret.x = l.x - r.x;
+	ret.y = l.y - r.y;
+	ret.z = l.z - r.z;
+	return ret;
 }
 template v3 sub(v3, v3);
 template<typename T> inline v4_t<T> sub(v4_t<T> l, v4_t<T> r) { PROF
@@ -265,11 +273,19 @@ template<typename T> inline v2_t<T> mult(v2_t<T> l, T r) { PROF
 }
 template v2 mult(v2, f32);
 template<typename T> inline v3_t<T> mult(v3_t<T> l, v3_t<T> r) { PROF
-	return V3(l.x * r.x, l.y * r.y, l.z * r.z);
+	v3_t<T> ret;
+	ret.x = l.x * r.x;
+	ret.y = l.y * r.y;
+	ret.z = l.z * r.z;
+	return ret;
 }
 template v3 mult(v3, v3);
 template<typename T> inline v3_t<T> mult(v3_t<T> l, T r) { PROF
-	return V3(l.x * r, l.y * r, l.z * r);
+	v3_t<T> ret;
+	ret.x = l.x * r;
+	ret.y = l.y * r;
+	ret.z = l.z * r;
+	return ret;
 }
 template v3 mult(v3, f32);
 template<typename T> inline v4_t<T> mult(v4_t<T> l, v4_t<T> r) { PROF
@@ -290,11 +306,19 @@ template<typename T> inline v2_t<T> div(v2_t<T> l, T r) { PROF
 }
 template v2 div(v2, f32);
 template<typename T> inline v3_t<T> div(v3_t<T> l, v3_t<T> r) { PROF
-	return V3(l.x / r.x, l.y / r.y, l.z / r.z);
+	v3_t<T> ret;
+	ret.x = l.x / r.x;
+	ret.y = l.y / r.y;
+	ret.z = l.z / r.z;
+	return ret;
 }
 template v3 div(v3, v3);
 template<typename T> inline v3_t<T> div(v3_t<T> l, T r) { PROF
-	return V3(l.x / r, l.y / r, l.z / r);
+	v3_t<T> ret;
+	ret.x = l.x / r;
+	ret.y = l.y / r;
+	ret.z = l.z / r;
+	return ret;
 }
 template v3 div(v3, f32);
 template<typename T> inline v4_t<T> div(v4_t<T> l, v4_t<T> r) { PROF
@@ -541,6 +565,37 @@ m4 lookAt(v3 eye, v3 center, v3 up) { PROF
     ret.f[3][3] = 1.0f;
 
     return ret;
+}
+
+
+template<typename T>
+inline void v3_t<T>::operator+=(v3_t<T> v) { PROF
+	*this = add(*this,v);
+}
+
+template<typename T>
+inline void v3_t<T>::operator-=(v3_t<T> v) { PROF
+	*this = sub(*this,v);
+}
+
+template<typename T>
+inline void v3_t<T>::operator*=(v3_t<T> v) { PROF
+	*this = mult(*this,v);
+}
+
+template<typename T>
+inline void v3_t<T>::operator*=(T s) { PROF
+	*this = mult(*this,s);
+}
+
+template<typename T>
+inline void v3_t<T>::operator/=(v3_t<T> v) { PROF
+	*this = div(*this,v);
+}
+
+template<typename T>
+inline void v3_t<T>::operator/=(T s) { PROF
+	*this = div(*this,s);
 }
 
 template<typename T> inline T operator*(v2_t<T> l, v2_t<T> r) {

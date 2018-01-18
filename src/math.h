@@ -98,6 +98,13 @@ union v3_t {
 	};
 	T f[3] = {};
 	v3_t() {};
+
+	inline void operator+=(v3_t<T> v);
+	inline void operator-=(v3_t<T> v);
+	inline void operator*=(v3_t<T> v);
+	inline void operator*=(T s);
+	inline void operator/=(v3_t<T> v);
+	inline void operator/=(T s);
 };
 typedef v3_t<f32> v3;
 typedef v3_t<i32> iv3;

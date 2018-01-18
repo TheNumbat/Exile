@@ -760,6 +760,6 @@ void render_camera::reset() {
 
 	pos = V3(-5.0f, 0.0f, -5.0f);
 
-	pitch = 00.0f; yaw = 45.0f; speed = 5.0f; fov = 60.0f;
+	pitch = 00.0f; yaw = 45.0f; fov = 60.0f;
 	update();
 }

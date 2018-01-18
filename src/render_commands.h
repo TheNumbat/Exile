@@ -178,7 +178,7 @@ struct render_command_list {
 struct render_camera {
 
 	v3 	  pos, front, up, right;
-	float pitch = 0.0f, yaw = 0.0f, speed = 5.0f, fov = 60.0f;
+	float pitch = 0.0f, yaw = 0.0f, fov = 60.0f;
 
 	void update();
 	void reset();

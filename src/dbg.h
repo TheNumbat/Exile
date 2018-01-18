@@ -207,6 +207,8 @@ struct dbg_manager {
 
 	void UI();
 	void profile_recurse(vector<profile_node*> list);
+	void toggle_ui();
+
 	void fixdown_self_timings(profile_node* node);
 	void process_frame_alloc_msg(frame_profile* frame, dbg_msg* msg);
 	void process_alloc_msg(dbg_msg* msg);
