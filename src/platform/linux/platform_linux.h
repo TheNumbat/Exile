@@ -3,6 +3,10 @@
 
 platform_api   platform_build_api();
 
+void linux_capture_mouse(platform_window* win);
+void linux_release_mouse();
+platform_error linux_set_cursor_pos(platform_window* win, i32 x, i32 y);
+
 platform_perfcount linux_get_perfcount();
 platform_perfcount linux_get_perfcount_freq();
 

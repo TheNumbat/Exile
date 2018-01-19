@@ -3,6 +3,10 @@
 
 platform_api   platform_build_api();
 
+void win32_capture_mouse(platform_window* win);
+void win32_release_mouse();
+platform_error win32_set_cursor_pos(platform_window* win, i32 x, i32 y);
+
 platform_perfcount win32_get_perfcount();
 platform_perfcount win32_get_perfcount_freq();
 

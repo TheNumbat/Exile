@@ -286,6 +286,9 @@ struct platform_event {
 
 struct platform_api {
 	platform_dll* your_dll																										= null;
+	void 			(*platform_capture_mouse)(platform_window* win)																= null;
+	void 			(*platform_release_mouse)()																					= null;
+	platform_error 	(*platform_set_cursor_pos)(platform_window* win, i32 x, i32 y)												= null;
 	platform_perfcount (*platform_get_perfcount)()																				= null;
 	platform_perfcount (*platform_get_perfcount_freq)()																			= null;
 	bool 			(*platform_is_debugging)()																					= null;

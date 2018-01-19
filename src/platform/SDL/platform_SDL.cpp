@@ -59,8 +59,23 @@ platform_api platform_build_api() {
 	ret.platform_debug_break			= &sdl_debug_break;
 	ret.platform_set_cursor				= &sdl_set_cursor;
 	ret.platform_this_dll				= &sdl_this_dll;
+	ret.platform_capture_mouse			= &sdl_capture_mouse;
+	ret.platform_release_mouse			= &sdl_release_mouse;
+	ret.platform_set_cursor_pos			= &sdl_set_cursor_pos;
 
 	return ret;
+}
+
+platform_error sdl_set_cursor_pos(platform_window* win, i32 x, i32 y) {
+	
+}
+
+void sdl_capture_mouse(platform_window* win) {
+
+}
+
+void sdl_release_mouse() {
+
 }
 
 platform_perfcount sdl_get_perfcount() {

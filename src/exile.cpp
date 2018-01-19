@@ -45,8 +45,10 @@ void exile::init(engine* st) { PROF
 	the_chunk = chunk::make(&cube, &alloc);
 	the_chunk.build_data();
 
-	default_evt = state->evt.add_handler(FPTR(default_evt_handle), &state->running);
+	default_evt = state->evt.add_handler(FPTR(default_evt_handle), this);
 	camera_evt = state->evt.add_handler(FPTR(camera_evt_handle), this);
+
+	global_api->platform_capture_mouse(&state->window);
 }
 
 void exile::update() { PROF
@@ -54,6 +56,8 @@ void exile::update() { PROF
 	platform_perfcount now = global_api->platform_get_perfcount();
 
 	p.update(now);
+
+	// global_api->platform_set_cursor_pos(&state->window, state->window.w / 2, state->window.h / 2);
 }
 
 void exile::destroy() { PROF
@@ -107,14 +111,24 @@ void player::update(platform_perfcount now) { PROF
 
 CALLBACK bool default_evt_handle(void* param, platform_event evt) { PROF
 
-	bool* running = (bool*)param;
+	exile* game = (exile*)param;
 
 	if(evt.type == platform_event_type::key) {
 		if(evt.key.flags & (u16)platform_keyflag::press) {
 			if(evt.key.code == platform_keycode::escape) {
 
-				*running = false;
+				game->state->running = false;
 				return true;
+			}
+
+			else if(evt.key.code == platform_keycode::grave) {
+
+				game->state->dbg.toggle_ui();
+				if(game->state->dbg.show_ui) {
+					global_api->platform_release_mouse();
+				} else {
+					global_api->platform_capture_mouse(&game->state->window);
+				}
 			}
 		}
 	}
@@ -174,11 +188,6 @@ CALLBACK bool camera_evt_handle(void* param, platform_event evt) { PROF
 
 			} break;	
 
-			case platform_keycode::grave: {
-
-				game->state->dbg.toggle_ui();
-
-			} break;
 			default: return false;
 			}
 		}

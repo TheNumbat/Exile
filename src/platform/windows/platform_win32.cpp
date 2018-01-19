@@ -74,8 +74,41 @@ platform_api platform_build_api() {
 	ret.platform_debug_break			= &win32_debug_break;
 	ret.platform_set_cursor				= &win32_set_cursor;
 	ret.platform_this_dll				= &win32_this_dll;
+	ret.platform_capture_mouse			= &win32_capture_mouse;
+	ret.platform_release_mouse			= &win32_release_mouse;
+	ret.platform_set_cursor_pos			= &win32_set_cursor_pos;
 
 	return ret;
+}
+
+platform_error win32_set_cursor_pos(platform_window* win, i32 x, i32 y) {
+
+	platform_error ret;
+
+	POINT p = {x,y};
+	if(!ClientToScreen(win->handle, &p)) {
+		ret.good = false;
+		ret.error = GetLastError();
+	}
+
+	if(!SetCursorPos(p.x, p.y)) {
+		ret.good = false;
+		ret.error = GetLastError();
+	}
+
+	return ret;
+}
+
+void win32_capture_mouse(platform_window* win) {
+
+	ShowCursor(FALSE);
+	SetCapture(win->handle);
+}
+
+void win32_release_mouse() {
+
+	ReleaseCapture();
+	ShowCursor(TRUE);
 }
 
 platform_perfcount win32_get_perfcount() {

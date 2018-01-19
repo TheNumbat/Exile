@@ -62,8 +62,23 @@ platform_api platform_build_api() {
 	ret.platform_debug_break			= &linux_debug_break;
 	ret.platform_set_cursor				= &linux_set_cursor;
 	ret.platform_this_dll				= &linux_this_dll;
+	ret.platform_capture_mouse 			= &linux_capture_mouse;
+	ret.platform_release_mouse 			= &linux_release_mouse;
+	ret.platform_set_cursor_pos			= &linux_set_cursor_pos;
 
 	return ret;
+}
+
+platform_error linux_set_cursor_pos(platform_window* win, i32 x, i32 y) {
+	
+}
+
+void linux_capture_mouse(platform_window* win) {
+
+}
+
+void linux_release_mouse() {
+
 }
 
 platform_perfcount linux_get_perfcount() {

@@ -39,9 +39,9 @@ meta.exe w:\src\compile.cpp
 echo compiling game lib...
 cl %Game_CompilerFlags% w:\src\compile.cpp /link %Game_LinkerFlags%
 
-if not exist w:\build\main.exe (
+rem if not exist w:\build\main.exe (
 	echo compiling platform layer...
 	cl %Platform_CompilerFlags% w:\src\platform\platform_main.cpp /link %Platform_LinkerFlags%
-)
+rem )
 
 popd
