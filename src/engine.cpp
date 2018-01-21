@@ -119,7 +119,7 @@ EXPORT bool main_loop(engine* state) {
 #ifndef RELEASE
 	state->ogl.try_reload_programs();
 	if(state->default_store.try_reload()) {
-		state->gui.reload_fonts(&state->ogl);
+		// state->gui.reload_fonts(&state->ogl);
 	}
 #endif
 

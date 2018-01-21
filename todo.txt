@@ -25,7 +25,7 @@ all includes:
 	#include <xmmintrin.h>/<intrin.h>
 
 priority:
-	fix bug
+	fix bugs
 	add looking around/mouse capture
 	fix texture duplication (search for already cached first)
 	add check extensions on render command register
@@ -40,6 +40,8 @@ priority:
 	update features/readme
 
 bugs:
+	textures get recreated? on asset store reload (and not freed?)
+		actually the asset pack reload is kind of broken in general - RESTRUCTURE
 	gui_in_win broke - gets window behind current
 
 to do:
