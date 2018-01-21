@@ -205,7 +205,6 @@ gui_window* gui_manager::add_window(guiid id, gui_window data) { PROF
 
 	guiid cp = id;
 	cp.name = string::make_copy(cp.name, alloc);
-	data.z = last_z++;
 	return windows.insert(cp, data);	
 }
 

@@ -28,6 +28,7 @@ priority:
 	fix bug
 	add looking around/mouse capture
 	fix texture duplication (search for already cached first)
+	add check extensions on render command register
 	
 	multiple chunks
 	start meshing
