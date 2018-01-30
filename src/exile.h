@@ -7,9 +7,9 @@ enum class block_type : u8 {
 struct chunk {
 
 	block_type blocks[16][16][256] = {};
-	mesh_3d_tex_instance_data cube_data;
+	mesh_chunk mesh;
 
-	static chunk make(mesh_3d_tex* cube, allocator* a);
+	static chunk make(allocator* a);
 	void destroy();
 
 	void build_data();
@@ -30,7 +30,6 @@ struct player {
 struct exile {
 
 	chunk the_chunk;
-	mesh_3d_tex cube;
 
 	texture_id cube_tex;
 	evt_handler_id default_evt = 0, camera_evt = 0;

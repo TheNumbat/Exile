@@ -681,6 +681,7 @@ void ogl_manager::load_global_funcs() { PROF
 	GL_LOAD(glDrawElementsInstanced);
 	GL_LOAD(glDrawElementsInstancedBaseVertex);
 	GL_LOAD(glVertexAttribDivisor);
+	GL_LOAD(glVertexAttribIPointer);
 
 	GL_LOAD(glGetStringi);
 	GL_LOAD(glGetInteger64v);

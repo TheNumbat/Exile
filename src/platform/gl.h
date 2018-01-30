@@ -716,6 +716,7 @@ typedef void (*glGenBuffers_t)(GLsizei n, GLuint *buffers);
 typedef void (*glBufferData_t)(gl_buf_target target, GLsizeiptr size, const void *data, gl_buf_usage usage);
 
 typedef void (*glVertexAttribPointer_t)(GLuint index, GLint size, gl_vert_attrib_type type, gl_bool normalized, GLsizei stride, const void *pointer);
+typedef void (*glVertexAttribIPointer_t)(GLuint index, GLint size, gl_vert_attrib_type type, GLsizei stride, const void *pointer);
 typedef void (*glEnableVertexAttribArray_t)(GLuint index);
 typedef void (*glDrawElementsBaseVertex_t)(gl_draw_mode mode, GLsizei count, gl_index_type type, const GLvoid *indices, GLint base);
 
@@ -778,5 +779,6 @@ glGenBuffers_t				glGenBuffers;
 glBufferData_t				glBufferData;
 
 glVertexAttribPointer_t		glVertexAttribPointer;
+glVertexAttribIPointer_t	glVertexAttribIPointer;
 glEnableVertexAttribArray_t glEnableVertexAttribArray;
 glDrawElementsBaseVertex_t	glDrawElementsBaseVertex;

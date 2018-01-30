@@ -8,9 +8,37 @@ enum class render_command_type : u8 {
 	mesh_2d_tex_col,
 	mesh_3d_tex,
 	mesh_3d_tex_instanced,
+	mesh_chunk,
 };
 
 u32 hash(render_command_type key);
+
+struct chunk_vertex {
+	u8 x = 0, y = 0, z = 0;
+	u8 lighting = 0; // normal + AO ?
+	u16 tex = 0;
+	
+	// what else do we need
+	u16 pad = 0;
+
+	static chunk_vertex from_vec(v3 v);
+};
+
+struct mesh_chunk {
+
+	vector<chunk_vertex> 	vertices;
+	vector<uv3> 	elements;
+
+	GLuint vao = 0;
+	GLuint vbos[2] = {};
+	bool dirty = false;
+
+	static mesh_chunk make(u32 verts = 1024, allocator* alloc = null);
+	void destroy();
+	void clear();
+
+	void push_tri(v3 p1, v3 p2, v3 p3);
+};
 
 struct mesh_2d_col {
 	vector<v2>		vertices;	// x y 
@@ -99,41 +127,6 @@ struct mesh_3d_tex_instance_data {
 	bool empty();
 };
 
-struct render_command_mesh_2d_col {
-
-	mesh_2d_col* mesh = null;
-
-	static render_command_mesh_2d_col make(mesh_2d_col* m);
-};
-
-struct render_command_mesh_2d_tex {
-
-	mesh_2d_tex* mesh = null;
-
-	static render_command_mesh_2d_tex make(mesh_2d_tex* m);
-};
-
-struct render_command_mesh_2d_tex_col {
-
-	mesh_2d_tex_col* mesh = null;
-
-	static render_command_mesh_2d_tex_col make(mesh_2d_tex_col* m);
-};
-
-struct render_command_mesh_3d_tex {
-
-	mesh_3d_tex* mesh = null;
-
-	static render_command_mesh_3d_tex make(mesh_3d_tex* m);
-};
-
-struct render_command_mesh_3d_tex_instanced {
-
-	mesh_3d_tex_instance_data* 	data = null;
-
-	static render_command_mesh_3d_tex_instanced make(mesh_3d_tex* mesh, mesh_3d_tex_instance_data* data);
-};
-
 struct render_command {
 	render_command_type cmd 	= render_command_type::none;
 	
@@ -149,16 +142,11 @@ struct render_command {
 	r2 viewport;
 	r2 scissor;
 
-	union {
-		render_command_mesh_2d_col 		mesh_2d_col;
-		render_command_mesh_2d_tex 		mesh_2d_tex;
-		render_command_mesh_2d_tex_col 	mesh_2d_tex_col;
-		render_command_mesh_3d_tex 		mesh_3d_tex; 
-		render_command_mesh_3d_tex_instanced mesh_3d_tex_instanced;
-	};
+	void* mesh = null;
+
 	render_command() {}
 
-	static render_command make(render_command_type type, u32 key = 0);
+	static render_command make(render_command_type type, void* data = null, u32 key = 0);
 };
 
 bool operator<=(render_command& first, render_command& second);

@@ -30,8 +30,8 @@ priority:
 	fix texture duplication (search for already cached first)
 	add check extensions on render command register
 	
-	multiple chunks
 	start meshing
+	multiple chunks
 	float slider/struct UI options
 	gui text wrapping
 	profiler graphs/actually good layout-ing?
@@ -40,6 +40,7 @@ priority:
 	update features/readme
 
 bugs:
+	generates one wrong index?
 	textures get recreated? on asset store reload (and not freed?)
 		actually the asset pack reload is kind of broken in general - RESTRUCTURE
 	gui_in_win broke - gets window behind current
@@ -47,13 +48,37 @@ bugs:
 to do:
 
 	structures for voxel rendering
+		stb_voxel_render approach - this seems pretty g o o d
+			separate vertex/face data
+			vertex
+				1 byte x 1 byte y 1 byte z 1 byte lighting (2b AO)
+			face
+				2 byte texture 
+				1 byte normal/rotation
+				
+
 		Instancing - easy, slow, probably no
 		Meshing - relatively easy, can be fast, probably this
-			Lots of testing to do with chunk and mesh representation 
 			Tradeoff compactness vs. detail - how do we do LOD and special multifaceted blocks?
 		Geometry shader cube gen - more complicated, can be very fast, will experiment
+		Geometry shader gen from faces
+			why is this any better than the cube?
+			would this actually be good though? it would likely be similar to meshing but larger/less "vertices"
+			Calculate vertex stuff from uniform face data???
 		3D texture ray-marching - should explore, probably doesn't make much sense for versatility
 			would represent chunks as octrees?
+		do we want different vertex layouts for LOD????
+		vertex layout for meshing? - probably not? should use 4/8 bytes
+			1 byte X
+			1 byte Y
+			1 byte Z
+			2 byte tex/AO
+				14 bit texture
+					12 bit texture Z
+					2 bit texture XY
+				2 bit AO
+			1 byte normal
+
 
 	new build system with clang
 		make metaprogram a real compilation step, get rid of PROF
@@ -213,9 +238,7 @@ to do:
 	chunks
 		chunk meshing, texturing
 		deferred mesh re/building
-			dual contouring? - don't want smooth
 		LOD
-			transvoxel?
 		storage representation (compression?)
 		world storage (3D chunks?)
 			paging to disk - serialization, etc.

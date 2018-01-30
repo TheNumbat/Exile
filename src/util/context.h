@@ -1,11 +1,12 @@
 
 #pragma once
 
-#define CTX_MAX_STR 128
+#define CTX_FILE_LEN	32
+#define CTX_FUN_LEN		128
 
 struct code_context {
-	char file[CTX_MAX_STR];
-	char function[CTX_MAX_STR];
+	char file[CTX_FILE_LEN]		= {};
+	char function[CTX_FUN_LEN]	= {};
 	u32 line = 0;
 };
 

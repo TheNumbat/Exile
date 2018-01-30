@@ -1,9 +1,9 @@
 
-chunk chunk::make(mesh_3d_tex* cube, allocator* a) { PROF
+chunk chunk::make(allocator* a) { PROF
 
 	chunk ret;
 
-	ret.cube_data = mesh_3d_tex_instance_data::make(cube, 16, a);
+	ret.mesh = mesh_chunk::make(16, a);
 	memset(ret.blocks, 16 * 16 * 256, 1);
 
 	return ret;
@@ -11,20 +11,19 @@ chunk chunk::make(mesh_3d_tex* cube, allocator* a) { PROF
 
 void chunk::destroy() { PROF
 
-	cube_data.destroy();
+	mesh.destroy();
 }
 
 void chunk::build_data() { PROF
 
-	cube_data.clear();
+	mesh.clear();
 
 	for(u32 x = 0; x < 16; x += 2) {
 		for(u32 z = 0; z < 16; z += 2) {
 			for(u32 y = 0; y < 256; y += 2) {
 				if(blocks[x][z][y] != block_type::air) {
 
-					cube_data.data.push(V3f(x, y, z));
-					cube_data.instances++;
+					mesh.push_tri(V3f(x, y, z), V3f(x + 1, y, z), V3f(x, y, z + 1));
 				}
 			}
 		}
@@ -38,17 +37,14 @@ void exile::init(engine* st) { PROF
 
 	p.init();
 
-	cube = mesh_3d_tex::make(8, &alloc);
-	cube.push_cube(V3(0.0f, 0.0f, 0.0f), 1.0f);
-
 	cube_tex = state->ogl.add_texture(&state->default_store, "numbat"_);
-	the_chunk = chunk::make(&cube, &alloc);
+	the_chunk = chunk::make(&alloc);
 	the_chunk.build_data();
 
 	default_evt = state->evt.add_handler(FPTR(default_evt_handle), this);
 	camera_evt = state->evt.add_handler(FPTR(camera_evt_handle), this);
 
-	global_api->platform_capture_mouse(&state->window);
+	// global_api->platform_capture_mouse(&state->window);
 }
 
 void exile::update() { PROF
@@ -66,16 +62,14 @@ void exile::destroy() { PROF
 	state->evt.rem_handler(camera_evt);
 
 	the_chunk.destroy();
-	cube.destroy();
 	alloc.destroy();
 }
 
 void exile::render() { PROF
 
 	render_command_list rcl = render_command_list::make();
-	render_command cmd = render_command::make(render_command_type::mesh_3d_tex_instanced);
+	render_command cmd = render_command::make(render_command_type::mesh_chunk, &the_chunk.mesh);
 
-	cmd.mesh_3d_tex_instanced.data = &the_chunk.cube_data;
 	cmd.texture = cube_tex;
 
 	rcl.view = p.camera.view();
@@ -125,9 +119,9 @@ CALLBACK bool default_evt_handle(void* param, platform_event evt) { PROF
 
 				game->state->dbg.toggle_ui();
 				if(game->state->dbg.show_ui) {
-					global_api->platform_release_mouse();
+					// global_api->platform_release_mouse();
 				} else {
-					global_api->platform_capture_mouse(&game->state->window);
+					// global_api->platform_capture_mouse(&game->state->window);
 				}
 			}
 		}

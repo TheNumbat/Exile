@@ -45,10 +45,19 @@ CALLBACK void uniforms_mesh_3d_tex_instanced(shader_program* prog, render_comman
 	glUniformMatrix4fv(loc, 1, gl_bool::_false, transform.v);
 }
 
+CALLBACK void uniforms_mesh_chunk(shader_program* prog, render_command* cmd, render_command_list* rcl) { PROF
+
+	GLint loc = glGetUniformLocation(prog->handle, "transform");
+
+	m4 transform = rcl->proj * rcl->view * cmd->model;
+
+	glUniformMatrix4fv(loc, 1, gl_bool::_false, transform.v);
+}
+
 
 CALLBACK void buffers_mesh_2d_col(render_command* cmd) { PROF
 
-	mesh_2d_col* m = cmd->mesh_2d_col.mesh;
+	mesh_2d_col* m = (mesh_2d_col*)cmd->mesh;
 	if(!m->dirty) return;
 
 	glBindVertexArray(m->vao);
@@ -68,7 +77,7 @@ CALLBACK void buffers_mesh_2d_col(render_command* cmd) { PROF
 
 CALLBACK void buffers_mesh_2d_tex(render_command* cmd) { PROF
 
-	mesh_2d_tex* m = cmd->mesh_2d_tex.mesh;
+	mesh_2d_tex* m = (mesh_2d_tex*)cmd->mesh;
 	if(!m->dirty) return;
 
 	glBindVertexArray(m->vao);
@@ -88,7 +97,7 @@ CALLBACK void buffers_mesh_2d_tex(render_command* cmd) { PROF
 
 CALLBACK void buffers_mesh_2d_tex_col(render_command* cmd) { PROF
 
-	mesh_2d_tex_col* m = cmd->mesh_2d_tex_col.mesh;
+	mesh_2d_tex_col* m = (mesh_2d_tex_col*)cmd->mesh;
 	if(!m->dirty) return;
 
 	glBindVertexArray(m->vao);
@@ -111,7 +120,7 @@ CALLBACK void buffers_mesh_2d_tex_col(render_command* cmd) { PROF
 
 CALLBACK void buffers_mesh_3d_tex(render_command* cmd) { PROF
 
-	mesh_3d_tex* m = cmd->mesh_3d_tex.mesh;
+	mesh_3d_tex* m = (mesh_3d_tex*)cmd->mesh;
 	if(!m->dirty) return;
 
 	glBindVertexArray(m->vao);
@@ -131,7 +140,8 @@ CALLBACK void buffers_mesh_3d_tex(render_command* cmd) { PROF
 
 CALLBACK void buffers_mesh_3d_tex_instanced(render_command* cmd) { PROF
 
-	mesh_3d_tex* m = cmd->mesh_3d_tex_instanced.data->parent;
+	mesh_3d_tex_instance_data* data = (mesh_3d_tex_instance_data*)cmd->mesh;
+	mesh_3d_tex* m = data->parent;
 	
 	glBindVertexArray(m->vao);
 	
@@ -147,7 +157,6 @@ CALLBACK void buffers_mesh_3d_tex_instanced(render_command* cmd) { PROF
 		glBufferData(gl_buf_target::element_array, m->elements.size * sizeof(uv3), m->elements.size ? m->elements.memory : null, gl_buf_usage::dynamic_draw);
 	}
 
-	mesh_3d_tex_instance_data* data = cmd->mesh_3d_tex_instanced.data;
 	if(data->dirty) {
 
 		glBindBuffer(gl_buf_target::array, data->vbo);
@@ -159,11 +168,27 @@ CALLBACK void buffers_mesh_3d_tex_instanced(render_command* cmd) { PROF
 	data->dirty = false;
 }
 
+CALLBACK void buffers_mesh_chunk(render_command* cmd) { PROF
+
+	mesh_chunk* m = (mesh_chunk*)cmd->mesh;
+	if(!m->dirty) return;
+
+	glBindVertexArray(m->vao);
+
+	glBindBuffer(gl_buf_target::array, m->vbos[0]);
+	glBufferData(gl_buf_target::array, m->vertices.size * sizeof(chunk_vertex), m->vertices.size ? m->vertices.memory : null, gl_buf_usage::dynamic_draw);
+
+	glBindBuffer(gl_buf_target::element_array, m->vbos[1]);
+	glBufferData(gl_buf_target::element_array, m->elements.size * sizeof(uv3), m->elements.size ? m->elements.memory : null, gl_buf_usage::dynamic_draw);
+
+	glBindVertexArray(0);
+	m->dirty = false;
+}
 
 
 CALLBACK void run_mesh_2d_col(render_command* cmd) { PROF
 
-	mesh_2d_col* m = cmd->mesh_2d_col.mesh;
+	mesh_2d_col* m = (mesh_2d_col*)cmd->mesh;
 
 	glBindVertexArray(m->vao);
 
@@ -177,7 +202,7 @@ CALLBACK void run_mesh_2d_col(render_command* cmd) { PROF
 
 CALLBACK void run_mesh_2d_tex(render_command* cmd) { PROF
 
-	mesh_2d_tex* m = cmd->mesh_2d_tex.mesh;
+	mesh_2d_tex* m = (mesh_2d_tex*)cmd->mesh;
 
 	glBindVertexArray(m->vao);
 
@@ -191,7 +216,7 @@ CALLBACK void run_mesh_2d_tex(render_command* cmd) { PROF
 
 CALLBACK void run_mesh_2d_tex_col(render_command* cmd) { PROF
 
-	mesh_2d_tex_col* m = cmd->mesh_2d_tex_col.mesh;
+	mesh_2d_tex_col* m = (mesh_2d_tex_col*)cmd->mesh;
 
 	glBindVertexArray(m->vao);
 
@@ -205,7 +230,7 @@ CALLBACK void run_mesh_2d_tex_col(render_command* cmd) { PROF
 
 CALLBACK void run_mesh_3d_tex(render_command* cmd) { PROF
 
-	mesh_3d_tex* m = cmd->mesh_3d_tex.mesh;
+	mesh_3d_tex* m = (mesh_3d_tex*)cmd->mesh;
 
 	glBindVertexArray(m->vao);
 
@@ -219,8 +244,8 @@ CALLBACK void run_mesh_3d_tex(render_command* cmd) { PROF
 
 CALLBACK void run_mesh_3d_tex_instanced(render_command* cmd) { PROF
 
-	mesh_3d_tex* m = cmd->mesh_3d_tex_instanced.data->parent;
-	mesh_3d_tex_instance_data* data = cmd->mesh_3d_tex_instanced.data;
+	mesh_3d_tex_instance_data* data = (mesh_3d_tex_instance_data*)cmd->mesh;
+	mesh_3d_tex* m = data->parent;
 
 	glBindVertexArray(m->vao);
 
@@ -233,10 +258,90 @@ CALLBACK void run_mesh_3d_tex_instanced(render_command* cmd) { PROF
 	glBindVertexArray(0);
 }
 
+CALLBACK void run_mesh_chunk(render_command* cmd) { PROF
+
+	mesh_chunk* m = (mesh_chunk*)cmd->mesh;
+
+	glBindVertexArray(m->vao);
+
+	glEnable(gl_capability::depth_test);
+
+	u32 num_tris = ((cmd->num_tris ? cmd->num_tris : m->elements.size) - cmd->start_tri) * 3;
+	glDrawElementsBaseVertex(gl_draw_mode::triangles, num_tris, gl_index_type::unsigned_int, (void*)(u64)(0), cmd->offset);
+
+	glBindVertexArray(0);
+}
+
 
 u32 hash(render_command_type key) { PROF
 
 	return hash(*(u8*)&key);
+}
+
+chunk_vertex chunk_vertex::from_vec(v3 v) {
+
+	chunk_vertex ret;
+	ret.x = (u8)v.x;
+	ret.y = (u8)v.y;
+	ret.z = (u8)v.z;
+	return ret;
+}
+
+void mesh_chunk::push_tri(v3 p1, v3 p2, v3 p3) { PROF
+
+	u32 idx = vertices.size;
+
+	vertices.push(chunk_vertex::from_vec(p1));
+	vertices.push(chunk_vertex::from_vec(p2));
+	vertices.push(chunk_vertex::from_vec(p3));
+
+	elements.push(V3u(idx, idx + 1, idx + 2));
+
+	dirty = true;
+}
+
+mesh_chunk mesh_chunk::make(u32 verts, allocator* alloc) { PROF
+
+	if(alloc == null) {
+		alloc = CURRENT_ALLOC();
+	}
+
+	mesh_chunk ret;
+
+	ret.vertices = vector<chunk_vertex>::make(verts, alloc);
+	ret.elements = vector<uv3>::make(verts, alloc);
+
+	glGenVertexArrays(1, &ret.vao);
+	glGenBuffers(2, ret.vbos);
+
+	glBindVertexArray(ret.vao);
+
+	glBindBuffer(gl_buf_target::array, ret.vbos[0]);
+	glVertexAttribPointer(0, 3, gl_vert_attrib_type::_float, gl_bool::_false, sizeof(chunk_vertex), (void*)0);
+	glEnableVertexAttribArray(0);
+	
+	glBindBuffer(gl_buf_target::element_array, ret.vbos[1]);
+
+	glBindVertexArray(0);
+
+	return ret;
+}
+
+void mesh_chunk::destroy() { PROF
+
+	glDeleteBuffers(2, vbos);
+	glDeleteVertexArrays(1, &vao);
+
+	vertices.destroy();
+	elements.destroy();
+}
+
+void mesh_chunk::clear() { PROF
+
+	vertices.clear();
+	elements.clear();
+
+	dirty = true;
 }
 
 mesh_3d_tex_instance_data mesh_3d_tex_instance_data::make(mesh_3d_tex* parent, u32 instances, allocator* alloc) { PROF
@@ -566,53 +671,19 @@ bool mesh_3d_tex::empty() { PROF
 	return !vertices.size;
 }
 
-render_command render_command::make(render_command_type type, u32 key) { PROF
+render_command render_command::make(render_command_type type, void* data, u32 key) { PROF
 
 	render_command ret;
 
 	ret.cmd = type;
 	ret.sort_key = key;
+	ret.mesh = data;
 
 	return ret;
 }
 
 bool operator<=(render_command& first, render_command& second) { PROF
 	return first.sort_key <= second.sort_key;
-}
-
-render_command_mesh_2d_col render_command_mesh_2d_col::make(mesh_2d_col* m) { PROF
-
-	render_command_mesh_2d_col ret;
-	ret.mesh = m;
-	return ret;
-}
-
-render_command_mesh_2d_tex render_command_mesh_2d_tex::make(mesh_2d_tex* m) { PROF
-
-	render_command_mesh_2d_tex ret;
-	ret.mesh = m;
-	return ret;
-}
-
-render_command_mesh_2d_tex_col render_command_mesh_2d_tex_col::make(mesh_2d_tex_col* m) { PROF
-
-	render_command_mesh_2d_tex_col ret;
-	ret.mesh = m;
-	return ret;
-}
-
-render_command_mesh_3d_tex render_command_mesh_3d_tex::make(mesh_3d_tex* m) { PROF
-
-	render_command_mesh_3d_tex ret;
-	ret.mesh = m;
-	return ret;
-}
-
-render_command_mesh_3d_tex_instanced render_command_mesh_3d_tex_instanced::make(mesh_3d_tex* mesh, mesh_3d_tex_instance_data* data) { PROF
-
-	render_command_mesh_3d_tex_instanced ret;
-	ret.data = data;
-	return ret;
 }
 
 render_command_list render_command_list::make(allocator* alloc, u32 cmds) { PROF

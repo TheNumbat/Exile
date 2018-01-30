@@ -16,7 +16,7 @@ inline code_context _make_context(string file, string function, i32 line) {
 #ifdef PROFILE
 	file = file.substring(file.last_slash() + 1, file.len - 1);
 
-	LOG_DEBUG_ASSERT(file.len < CTX_MAX_STR && function.len < CTX_MAX_STR);
+	LOG_DEBUG_ASSERT(file.len < CTX_FILE_LEN && function.len < CTX_FUN_LEN);
 
 	_memcpy_ctx(file.c_str, ret.file, file.len);
 	_memcpy_ctx(function.c_str, ret.function, function.len);
