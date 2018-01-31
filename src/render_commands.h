@@ -13,15 +13,34 @@ enum class render_command_type : u8 {
 
 u32 hash(render_command_type key);
 
+enum face : u8 {
+	none,
+	up,
+	down,
+	east,
+	west,
+	north,
+	south
+};
+
+enum uv : u8 {
+	_00,
+	_10,
+	_01,
+	_11
+};
+
 struct chunk_vertex {
 	u8 x = 0, y = 0, z = 0;
-	u8 lighting = 0; // normal + AO ?
-	u16 tex = 0;
 	
-	// what else do we need
-	u16 pad = 0;
+	// these are not efficiently packed (more bits than needed for normal:3-8/ao:3/face:3)
+	// 		we can add more data if needed
+	u8 normal = 0;
+	u8 ao 	  = 0;
+	u8 pad 	  = 0;
+	u16 tex   = 0;
 
-	static chunk_vertex from_vec(v3 v);
+	static chunk_vertex from_vec(v3 v, uv f);
 };
 
 struct mesh_chunk {
@@ -37,7 +56,6 @@ struct mesh_chunk {
 	void destroy();
 	void clear();
 
-	void push_tri(v3 p1, v3 p2, v3 p3);
 	void push_cube(v3 pos, f32 len);
 };
 

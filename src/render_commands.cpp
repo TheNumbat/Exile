@@ -278,26 +278,17 @@ u32 hash(render_command_type key) { PROF
 	return hash(*(u8*)&key);
 }
 
-chunk_vertex chunk_vertex::from_vec(v3 v) {
+chunk_vertex chunk_vertex::from_vec(v3 v, uv f) {
 
 	chunk_vertex ret;
 	ret.x = (u8)v.x;
 	ret.y = (u8)v.y;
 	ret.z = (u8)v.z;
+
+	ret.tex &= ~(0xc000);
+	ret.tex |= (u16)f << 14;
+
 	return ret;
-}
-
-void mesh_chunk::push_tri(v3 p1, v3 p2, v3 p3) { PROF
-
-	u32 idx = vertices.size;
-
-	vertices.push(chunk_vertex::from_vec(p1));
-	vertices.push(chunk_vertex::from_vec(p2));
-	vertices.push(chunk_vertex::from_vec(p3));
-
-	elements.push(V3u(idx, idx + 1, idx + 2));
-
-	dirty = true;
 }
 
 mesh_chunk mesh_chunk::make(u32 verts, allocator* alloc) { PROF
@@ -770,15 +761,15 @@ void mesh_chunk::push_cube(v3 pos, f32 len) {
 
 	f32 len2 = len / 2.0f;
 	pos += V3(len2, len2, len2);
-	
-	vertices.push(chunk_vertex::from_vec(pos + V3( len2,  len2,  len2)));
-	vertices.push(chunk_vertex::from_vec(pos + V3(-len2,  len2,  len2)));
-	vertices.push(chunk_vertex::from_vec(pos + V3( len2, -len2,  len2)));
-	vertices.push(chunk_vertex::from_vec(pos + V3( len2,  len2, -len2)));
-	vertices.push(chunk_vertex::from_vec(pos + V3(-len2, -len2,  len2)));
-	vertices.push(chunk_vertex::from_vec(pos + V3( len2, -len2, -len2)));
-	vertices.push(chunk_vertex::from_vec(pos + V3(-len2,  len2, -len2)));
-	vertices.push(chunk_vertex::from_vec(pos + V3(-len2, -len2, -len2)));
+
+	vertices.push(chunk_vertex::from_vec(pos + V3( len2,  len2,  len2), uv::_00));
+	vertices.push(chunk_vertex::from_vec(pos + V3(-len2,  len2,  len2), uv::_10));
+	vertices.push(chunk_vertex::from_vec(pos + V3( len2, -len2,  len2), uv::_01));
+	vertices.push(chunk_vertex::from_vec(pos + V3( len2,  len2, -len2), uv::_00));
+	vertices.push(chunk_vertex::from_vec(pos + V3(-len2, -len2,  len2), uv::_10));
+	vertices.push(chunk_vertex::from_vec(pos + V3( len2, -len2, -len2), uv::_01));
+	vertices.push(chunk_vertex::from_vec(pos + V3(-len2,  len2, -len2), uv::_10));
+	vertices.push(chunk_vertex::from_vec(pos + V3(-len2, -len2, -len2), uv::_11));
 
 	elements.push(V3u(idx + 0, idx + 3, idx + 5));
 	elements.push(V3u(idx + 0, idx + 3, idx + 6));
