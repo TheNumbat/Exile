@@ -317,7 +317,9 @@ mesh_chunk mesh_chunk::make(u32 verts, allocator* alloc) { PROF
 	glBindVertexArray(ret.vao);
 
 	glBindBuffer(gl_buf_target::array, ret.vbos[0]);
-	glVertexAttribPointer(0, 3, gl_vert_attrib_type::_float, gl_bool::_false, sizeof(chunk_vertex), (void*)0);
+
+	static_assert(sizeof(chunk_vertex) == 8, "chunk_vertex size messed up");
+	glVertexAttribIPointer(0, 2, gl_vert_attrib_type::unsigned_int, sizeof(chunk_vertex), (void*)0);
 	glEnableVertexAttribArray(0);
 	
 	glBindBuffer(gl_buf_target::element_array, ret.vbos[1]);
@@ -762,7 +764,40 @@ f32 mesh_2d_tex_col::push_text_line(asset* font, string text_utf8, v2 pos, f32 p
 	return scale * font->font.linedist;
 }
 
+void mesh_chunk::push_cube(v3 pos, f32 len) {
+
+	u32 idx = vertices.size;
+
+	f32 len2 = len / 2.0f;
+	pos += V3(len2, len2, len2);
+	
+	vertices.push(chunk_vertex::from_vec(pos + V3( len2,  len2,  len2)));
+	vertices.push(chunk_vertex::from_vec(pos + V3(-len2,  len2,  len2)));
+	vertices.push(chunk_vertex::from_vec(pos + V3( len2, -len2,  len2)));
+	vertices.push(chunk_vertex::from_vec(pos + V3( len2,  len2, -len2)));
+	vertices.push(chunk_vertex::from_vec(pos + V3(-len2, -len2,  len2)));
+	vertices.push(chunk_vertex::from_vec(pos + V3( len2, -len2, -len2)));
+	vertices.push(chunk_vertex::from_vec(pos + V3(-len2,  len2, -len2)));
+	vertices.push(chunk_vertex::from_vec(pos + V3(-len2, -len2, -len2)));
+
+	elements.push(V3u(idx + 0, idx + 3, idx + 5));
+	elements.push(V3u(idx + 0, idx + 3, idx + 6));
+	elements.push(V3u(idx + 0, idx + 1, idx + 6));
+	elements.push(V3u(idx + 1, idx + 4, idx + 7));
+	elements.push(V3u(idx + 1, idx + 6, idx + 7));
+	elements.push(V3u(idx + 4, idx + 2, idx + 5));
+	elements.push(V3u(idx + 4, idx + 7, idx + 5));
+	elements.push(V3u(idx + 7, idx + 5, idx + 3));
+	elements.push(V3u(idx + 7, idx + 6, idx + 3));
+	elements.push(V3u(idx + 0, idx + 2, idx + 4));
+	elements.push(V3u(idx + 0, idx + 1, idx + 4));
+
+	dirty = true;
+}
+
 void mesh_3d_tex::push_cube(v3 pos, f32 len) {
+
+	u32 idx = vertices.size;
 
 	f32 len2 = len / 2.0f;
 	vertices.push(pos + V3( len2,  len2,  len2));
@@ -783,18 +818,17 @@ void mesh_3d_tex::push_cube(v3 pos, f32 len) {
 	texCoords.push(V2(1.0f, 0.0f));
 	texCoords.push(V2(1.0f, 1.0f));	
 
-	elements.push(V3u(0,2,5));
-	elements.push(V3u(0,3,5));
-	elements.push(V3u(0,3,6));
-	elements.push(V3u(0,1,6));
-	elements.push(V3u(1,4,7));
-	elements.push(V3u(1,6,7));
-	elements.push(V3u(4,2,5));
-	elements.push(V3u(4,7,5));
-	elements.push(V3u(7,5,3));
-	elements.push(V3u(7,6,3));
-	elements.push(V3u(0,2,4));
-	elements.push(V3u(0,1,4));
+	elements.push(V3u(idx + 0, idx + 3, idx + 5));
+	elements.push(V3u(idx + 0, idx + 3, idx + 6));
+	elements.push(V3u(idx + 0, idx + 1, idx + 6));
+	elements.push(V3u(idx + 1, idx + 4, idx + 7));
+	elements.push(V3u(idx + 1, idx + 6, idx + 7));
+	elements.push(V3u(idx + 4, idx + 2, idx + 5));
+	elements.push(V3u(idx + 4, idx + 7, idx + 5));
+	elements.push(V3u(idx + 7, idx + 5, idx + 3));
+	elements.push(V3u(idx + 7, idx + 6, idx + 3));
+	elements.push(V3u(idx + 0, idx + 2, idx + 4));
+	elements.push(V3u(idx + 0, idx + 1, idx + 4));
 
 	dirty = true;
 }

@@ -38,6 +38,7 @@ struct mesh_chunk {
 	void clear();
 
 	void push_tri(v3 p1, v3 p2, v3 p3);
+	void push_cube(v3 pos, f32 len);
 };
 
 struct mesh_2d_col {

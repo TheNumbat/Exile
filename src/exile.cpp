@@ -23,7 +23,7 @@ void chunk::build_data() { PROF
 			for(u32 y = 0; y < 256; y += 2) {
 				if(blocks[x][z][y] != block_type::air) {
 
-					mesh.push_tri(V3f(x, y, z), V3f(x + 1, y, z), V3f(x, y, z + 1));
+					mesh.push_cube(V3f(x, y, z), 1.0f);
 				}
 			}
 		}

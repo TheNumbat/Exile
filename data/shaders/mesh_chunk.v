@@ -12,7 +12,7 @@ const uint x_mask = 0x000000ff;
 
 void main() {
 
-	vec3 pos = vec3(vertex.x & x_mask, (vertex.x & y_mask) >> 8, (vertex.x & z_mask) >> 16);
+	vec3 pos = vec3((vertex.x & x_mask), (vertex.x & y_mask) >> 8, (vertex.x & z_mask) >> 16);
 	
 	gl_Position = transform * vec4(pos, 1.0);
 }
