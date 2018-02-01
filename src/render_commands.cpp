@@ -278,15 +278,21 @@ u32 hash(render_command_type key) { PROF
 	return hash(*(u8*)&key);
 }
 
-chunk_vertex chunk_vertex::from_vec(v3 v, uv f) {
+chunk_vertex chunk_vertex::from_vec(v3 v, v2 uv) {
+
+	LOG_DEBUG_ASSERT(v.x >= 0 && v.x < 256);
+	LOG_DEBUG_ASSERT(v.y >= 0 && v.y < 256);
+	LOG_DEBUG_ASSERT(v.z >= 0 && v.z < 4096);
+	LOG_DEBUG_ASSERT(uv.x >= 0 && uv.x < 256);
+	LOG_DEBUG_ASSERT(uv.y >= 0 && uv.y < 256);
 
 	chunk_vertex ret;
 	ret.x = (u8)v.x;
 	ret.y = (u8)v.y;
-	ret.z = (u8)v.z;
+	ret.z_norm |= (u16)v.z << 4;
 
-	ret.tex &= ~(0xc000);
-	ret.tex |= (u16)f << 14;
+	ret.u = (u8)uv.x;
+	ret.v = (u8)uv.y;
 
 	return ret;
 }
@@ -759,17 +765,18 @@ void mesh_chunk::push_cube(v3 pos, f32 len) {
 
 	u32 idx = vertices.size;
 
-	f32 len2 = len / 2.0f;
+	f32 len2 = len * 8.0f;
+	pos *= 16.0f;
 	pos += V3(len2, len2, len2);
 
-	vertices.push(chunk_vertex::from_vec(pos + V3( len2,  len2,  len2), uv::_00));
-	vertices.push(chunk_vertex::from_vec(pos + V3(-len2,  len2,  len2), uv::_10));
-	vertices.push(chunk_vertex::from_vec(pos + V3( len2, -len2,  len2), uv::_01));
-	vertices.push(chunk_vertex::from_vec(pos + V3( len2,  len2, -len2), uv::_00));
-	vertices.push(chunk_vertex::from_vec(pos + V3(-len2, -len2,  len2), uv::_10));
-	vertices.push(chunk_vertex::from_vec(pos + V3( len2, -len2, -len2), uv::_01));
-	vertices.push(chunk_vertex::from_vec(pos + V3(-len2,  len2, -len2), uv::_10));
-	vertices.push(chunk_vertex::from_vec(pos + V3(-len2, -len2, -len2), uv::_11));
+	vertices.push(chunk_vertex::from_vec(pos + V3( len2,  len2,  len2), V2f(0,0)));
+	vertices.push(chunk_vertex::from_vec(pos + V3(-len2,  len2,  len2), V2f(1,0)));
+	vertices.push(chunk_vertex::from_vec(pos + V3( len2, -len2,  len2), V2f(0,1)));
+	vertices.push(chunk_vertex::from_vec(pos + V3( len2,  len2, -len2), V2f(0,0)));
+	vertices.push(chunk_vertex::from_vec(pos + V3(-len2, -len2,  len2), V2f(1,0)));
+	vertices.push(chunk_vertex::from_vec(pos + V3( len2, -len2, -len2), V2f(0,1)));
+	vertices.push(chunk_vertex::from_vec(pos + V3(-len2,  len2, -len2), V2f(1,0)));
+	vertices.push(chunk_vertex::from_vec(pos + V3(-len2, -len2, -len2), V2f(1,1)));
 
 	elements.push(V3u(idx + 0, idx + 3, idx + 5));
 	elements.push(V3u(idx + 0, idx + 3, idx + 6));

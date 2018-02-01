@@ -23,24 +23,14 @@ enum face : u8 {
 	south
 };
 
-enum uv : u8 {
-	_00,
-	_10,
-	_01,
-	_11
-};
-
 struct chunk_vertex {
-	u8 x = 0, y = 0, z = 0;
-	
-	// these are not efficiently packed (more bits than needed for normal:3-8/ao:3/face:3)
-	// 		we can add more data if needed
-	u8 normal = 0;
-	u8 ao 	  = 0;
-	u8 pad 	  = 0;
-	u16 tex   = 0;
+	u8 x = 0, y = 0;
+	u16 z_norm = 0;	
 
-	static chunk_vertex from_vec(v3 v, uv f);
+	u16 t_ao = 0;
+	u8 u = 0, v = 0;
+
+	static chunk_vertex from_vec(v3 v, v2 uv);
 };
 
 struct mesh_chunk {

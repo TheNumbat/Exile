@@ -19,8 +19,8 @@ void chunk::build_data() { PROF
 	mesh.clear();
 
 	for(u32 x = 0; x < 16; x += 2) {
-		for(u32 z = 0; z < 16; z += 2) {
-			for(u32 y = 0; y < 256; y += 2) {
+		for(u32 y = 0; y < 16; y += 2) {
+			for(u32 z = 0; z < 256; z += 2) {
 				if(blocks[x][z][y] != block_type::air) {
 
 					mesh.push_cube(V3f(x, y, z), 1.0f);
