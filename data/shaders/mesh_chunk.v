@@ -15,15 +15,23 @@ const uint v_mask  = 0xff000000;
 
 uniform mat4 transform;
 
-flat out uint f_ao, f_t, f_norm;
+flat out uint f_t, f_norm;
+out float f_ao;
 out vec2 f_uv;
+
+float ao_values[4] = {
+	0.0f,
+	0.0f,
+	0.0f,
+	0.0f
+};
 
 void main() {
 
 	vec3 pos = vec3((vertex.x & x_mask), (vertex.x & y_mask) >> 20, (vertex.x & z_mask) >> 8) / 16.0f;
 	
+	f_ao = ao_values[(vertex.y & ao_mask) >> 12];
 	f_norm = (vertex.x & n_mask)  >> 16;
-	f_ao   = (vertex.y & ao_mask) >> 12;
 	
 	f_uv.x = (vertex.y & u_mask) >> 16;
 	f_uv.y = (vertex.y & v_mask) >> 24;
@@ -31,3 +39,4 @@ void main() {
 
 	gl_Position = transform * vec4(pos, 1.0);
 }
+

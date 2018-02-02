@@ -1,7 +1,7 @@
 
 enum class block_type : u8 {
 	air,
-	stone,
+	numbat,
 };
 
 struct chunk_pos {
@@ -18,15 +18,17 @@ u32 hash(chunk_pos key);
 
 struct chunk {
 
-	static const i32 xsz = 16, ysz = 256, zsz = 16;
+	static const i32 xsz = 15, ysz = 255, zsz = 15;
+
+	chunk_pos pos;
 
 	// NOTE(max): x z y
 	block_type blocks[xsz][zsz][ysz] = {};
 	mesh_chunk mesh;
 
-	static chunk make(allocator* a);
+	static chunk make(chunk_pos pos, allocator* a);
+	void gen();
 	void destroy();
-	void destroy_cpu_mesh();
 
 	void build_data();
 };
@@ -49,7 +51,7 @@ struct exile {
 	// 			  we need to support loaded/unloaded chunks
 	// 			  for simulation and paging to disk
 	map<chunk_pos, chunk> chunks;
-	i32 view_distance = 4;
+	i32 view_distance = 0;
 
 	texture_id cube_tex;
 	evt_handler_id default_evt = 0, camera_evt = 0;

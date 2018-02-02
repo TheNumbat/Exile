@@ -46,19 +46,18 @@ bugs:
 
 to do:
 
-	structures for voxel rendering
-		stb_voxel_render approach - this seems pretty g o o d
-			separate vertex/face data
-			vertex
-				1 byte x 1 byte y 1 byte z 1 byte lighting (2b AO)
-			face
-				2 byte texture 
-				1 byte normal/rotation
-				
+	chunk meshing
+		current vertex format [order in shader], struct is byte-order reversed on u32 boundary
+			0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000
+			yyyyyyyyyyyyyy norm zzzzzzzzz xxxxxxxxx vvvvvvvvv uuuuuuuuu aoao tttttttttttttt
+		Tradeoff compactness vs. detail - how do we do LOD and special multifaceted blocks?
+			do we want different vertex layouts for LOD????
 
-		Instancing - easy, slow, probably no
-		Meshing - relatively easy, can be fast, probably this
-			Tradeoff compactness vs. detail - how do we do LOD and special multifaceted blocks?
+	other voxel structures - SHOULD EXPLORE
+		stb_voxel_render approach
+			separate vertex/face data
+			vertex : 1 byte x 1 byte y 1 byte z 1 byte lighting (2b AO)
+			face : 2 byte texture, 1 byte normal/rotation
 		Geometry shader cube gen - more complicated, can be very fast, will experiment
 		Geometry shader gen from faces
 			why is this any better than the cube?
@@ -66,18 +65,6 @@ to do:
 			Calculate vertex stuff from uniform face data???
 		3D texture ray-marching - should explore, probably doesn't make much sense for versatility
 			would represent chunks as octrees?
-		do we want different vertex layouts for LOD????
-		vertex layout for meshing? - probably not? should use 4/8 bytes
-			1 byte X
-			1 byte Y
-			1 byte Z
-			2 byte tex/AO
-				14 bit texture
-					12 bit texture Z
-					2 bit texture XY
-				2 bit AO
-			1 byte normal
-
 
 	new build system with clang
 		make metaprogram a real compilation step, get rid of PROF

@@ -32,6 +32,7 @@ struct chunk_vertex {
 
 	static chunk_vertex from_vec(v3 v, v2 uv);
 };
+static_assert(sizeof(chunk_vertex) == 8, "chunk_vertex size != 8");
 
 struct mesh_chunk {
 

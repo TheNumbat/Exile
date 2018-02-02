@@ -62,8 +62,8 @@
 #endif
 #define CALLBACK EXPORT
 
-// default headers
-#include <math.h> 			// TODO(max): remove
+// external headers
+#include <math.h> 					// TODO(max): remove
 #include <xmmintrin.h>
 #include <stddef.h>
 #include <stdarg.h>
@@ -72,6 +72,8 @@
 #ifdef _MSC_VER
 #include <intrin.h>
 #endif
+#define STB_PERLIN_IMPLEMENTATION	// TODO(max): remove
+#include <stb/stb_perlin.h>
 
 #include "util/basic_types.h"
 #include "math.h"

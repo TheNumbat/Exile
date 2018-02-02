@@ -278,7 +278,7 @@ u32 hash(render_command_type key) { PROF
 	return hash(*(u8*)&key);
 }
 
-chunk_vertex chunk_vertex::from_vec(v3 v, v2 uv) {
+chunk_vertex chunk_vertex::from_vec(v3 v, v2 uv) { PROF
 
 	LOG_DEBUG_ASSERT(v.x >= 0 && v.x < 256);
 	LOG_DEBUG_ASSERT(v.y >= 0 && v.y < 4096);
@@ -315,7 +315,6 @@ mesh_chunk mesh_chunk::make(u32 verts, allocator* alloc) { PROF
 
 	glBindBuffer(gl_buf_target::array, ret.vbos[0]);
 
-	static_assert(sizeof(chunk_vertex) == 8, "chunk_vertex size messed up");
 	glVertexAttribIPointer(0, 2, gl_vert_attrib_type::unsigned_int, sizeof(chunk_vertex), (void*)0);
 	glEnableVertexAttribArray(0);
 	
@@ -771,8 +770,7 @@ void mesh_chunk::push_cube(v3 pos, f32 len) { PROF
 
 	u32 idx = vertices.size;
 
-	f32 len2 = len * 8.0f;
-	pos *= 16.0f;
+	f32 len2 = len / 2.0f;
 	pos += V3(len2, len2, len2);
 
 	vertices.push(chunk_vertex::from_vec(pos + V3( len2,  len2,  len2), V2f(0,0)));
@@ -867,7 +865,7 @@ m4 render_camera::view() {
 
 void render_camera::reset() {
 
-	pos = V3(-5.0f, 0.0f, -5.0f);
+	pos = V3(-5.0f, 128.0f, -5.0f);
 
 	pitch = 00.0f; yaw = 45.0f; fov = 60.0f;
 	update();

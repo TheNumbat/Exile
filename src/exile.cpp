@@ -38,12 +38,12 @@ chunk_pos chunk_pos::operator-(chunk_pos other) { PROF
 	return ret;
 }
 
-chunk chunk::make(allocator* a) { PROF
+chunk chunk::make(chunk_pos p, allocator* a) { PROF
 
 	chunk ret;
 
+	ret.pos = p;
 	ret.mesh = mesh_chunk::make(16, a);
-	memset(ret.blocks, 16 * 16 * 256, 1);
 
 	return ret;
 }
@@ -53,16 +53,34 @@ void chunk::destroy() { PROF
 	mesh.destroy();
 }
 
+void chunk::gen() { PROF
+
+	for(u32 x = 0; x < xsz; x++) {
+		for(u32 z = 0; z < zsz; z++) {
+
+			f32 fx = pos.x + x / (f32)xsz;
+			f32 fz = pos.z + z / (f32)zsz;
+
+			float val = stb_perlin_noise3(fx / 8.0f, 0, fz / 8.0f, 0, 0, 0);
+			u32 height = (u32)(val * ysz / 2.0f + ysz / 2.0f);
+			
+			for(u32 y = 0; y < height; y++) {
+				blocks[x][z][y] = block_type::numbat;
+			}
+		}
+	}
+}
+
 void chunk::build_data() { PROF
 
 	mesh.clear();
 
-	for(u32 x = 0; x < 16; x += 2) {
-		for(u32 z = 0; z < 16; z += 2) {
-			for(u32 y = 0; y < 256; y += 2) {
+	for(u32 x = 0; x < xsz; x++) {
+		for(u32 z = 0; z < zsz; z++) {
+			for(u32 y = 0; y < ysz; y++) {
 				if(blocks[x][z][y] != block_type::air) {
 
-					mesh.push_cube(V3f(x, y, z), 1.0f);
+					mesh.push_cube(V3f(x * 16, y * 16, z * 16), 16.0f);
 				}
 			}
 		}
@@ -90,7 +108,12 @@ void exile::update() { PROF
 
 	platform_perfcount now = global_api->platform_get_perfcount();
 
+	gui_begin("Exile"_, R2(50.0f, 50.0f, 350.0f, 100.0f));
+	gui_int_slider("view: "_, &view_distance, 0, 6);
+
 	p.update(now);
+
+	gui_end();
 
 	// global_api->platform_set_cursor_pos(&state->window, state->window.w / 2, state->window.h / 2);
 }
@@ -121,7 +144,8 @@ void exile::populate_local_area() { PROF
 				
 				LOG_INFO_F("building chunk %", current);
 				
-				chunk* c = chunks.insert(current, chunk::make(&alloc));
+				chunk* c = chunks.insert(current, chunk::make(current, &alloc));
+				c->gen();
 				c->build_data();
 			}
 		}
@@ -132,6 +156,7 @@ void exile::render() { PROF
 
 	render_command_list rcl = render_command_list::make();
 
+	// NOTE(max): we need to do this first so command meshes pointers don't get moved while adding more chunks
 	populate_local_area();
 
 	chunk_pos camera = chunk_pos::from_abs(p.camera.pos);
@@ -177,11 +202,9 @@ void player::update(platform_perfcount now) { PROF
 	camera.pos += velocity * dt;
 	camera.update();
 
-	gui_begin("Exile"_, R2(50.0f, 50.0f, 350.0f, 100.0f));
 	gui_text(string::makef("pos: %"_, camera.pos));
 	gui_text(string::makef("vel: %"_, velocity));
 	gui_text(string::makef("chunk: %"_, chunk_pos::from_abs(camera.pos)));
-	gui_end();
 
 	last = now;
 }
