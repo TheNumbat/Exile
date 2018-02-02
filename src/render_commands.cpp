@@ -335,6 +335,12 @@ void mesh_chunk::destroy() { PROF
 	elements.destroy();
 }
 
+void mesh_chunk::free_cpu() { PROF
+
+	vertices.resize(0);
+	elements.resize(0);
+}
+
 void mesh_chunk::clear() { PROF
 
 	vertices.clear();

@@ -44,6 +44,7 @@ struct mesh_chunk {
 
 	static mesh_chunk make(u32 verts = 8192, allocator* alloc = null);
 	void destroy();
+	void free_cpu();
 	void clear();
 
 	void push_cube(v3 pos, f32 len);

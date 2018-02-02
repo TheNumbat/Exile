@@ -26,6 +26,7 @@ struct chunk {
 
 	static chunk make(allocator* a);
 	void destroy();
+	void destroy_cpu_mesh();
 
 	void build_data();
 };

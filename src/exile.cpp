@@ -124,7 +124,7 @@ void exile::populate_local_area() { PROF
 				chunk* c = chunks.insert(current, chunk::make(&alloc));
 				c->build_data();
 			}
-		}	
+		}
 	}
 }
 
@@ -142,6 +142,9 @@ void exile::render() { PROF
 			current.y = 0;
 			
 			chunk* c = chunks.get(current);
+			if(!c->mesh.dirty) {
+				c->mesh.free_cpu(); 
+			}
 
 			render_command cmd = render_command::make(render_command_type::mesh_chunk, &c->mesh);
 					
