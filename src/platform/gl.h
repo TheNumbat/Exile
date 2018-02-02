@@ -639,6 +639,16 @@ enum class gl_get : GLenum {
 	max_element_index                         = 0x8D6B
 };	
 
+enum class gl_poly : GLenum {
+	front_and_back = 0x0408
+};
+
+enum class gl_poly_mode : GLenum {
+	point = 0x1B00,
+	line  = 0x1B01,
+	fill  = 0x1B02
+};
+
 DLL_IMPORT const GLubyte* glGetString(gl_info name);
 
 DLL_IMPORT void glDeleteTextures(GLsizei n, const GLuint *textures);
@@ -661,6 +671,8 @@ DLL_IMPORT void glDrawElements(gl_draw_mode mode, GLsizei count, gl_index_type t
 
 DLL_IMPORT void glScissor(GLint x, GLint y, GLsizei width, GLsizei height);
 
+DLL_IMPORT void glPolygonMode(gl_poly face, gl_poly_mode mode);
+
 typedef gl_bool (*glIs_t)(GLuint handle);
 
 DLL_IMPORT void glGetBooleanv(gl_get name, GLboolean* data);
@@ -673,7 +685,6 @@ typedef void (*glGetDoublei_v_t)(gl_get name, GLuint idx, GLdouble* data);
 typedef void (*glGetFloati_v_t)(gl_get name, GLuint idx, GLfloat* data);
 typedef void (*glGetIntegeri_v_t)(gl_get name, GLuint idx, GLint* data);
 typedef void (*glGetInteger64i_v_t)(gl_get name, GLuint idx, GLint64* data);
-
 typedef const GLubyte* (*glGetStringi_t)(gl_info name, GLuint idx);
 
 typedef void (*glDrawElementsInstanced_t)(gl_draw_mode mode, GLsizei count,	gl_index_type type,	const void *indices, GLsizei primcount);
