@@ -4,6 +4,9 @@
 // TODO(max): should this be an actual stack?
 #define PUSH_PROFILE(enable) bool __prof = this_thread_data.profiling; this_thread_data.profiling = enable;
 #define POP_PROFILE() {this_thread_data.profiling = __prof;}
+// TODO(max): this is a bit evil
+#define PUSH_PROFILE_PROF(enable) bool __pprof = this_thread_data.timing_override; this_thread_data.timing_override = enable;
+#define POP_PROFILE_PROF() {this_thread_data.timing_override = __pprof;}
 
 #ifdef _MSC_VER
 #define POST_MSG(m) {PUSH_PROFILE(false) {(m).time = __rdtsc(); this_thread_data.dbg_msgs.push(m);} POP_PROFILE();}

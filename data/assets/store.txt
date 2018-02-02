@@ -18,3 +18,7 @@ image {
 	name : numbat,
 	file : numbat.png,
 }
+image {
+	name : stone,
+	file : stone.png,
+}

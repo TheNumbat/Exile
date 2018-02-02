@@ -13,6 +13,7 @@ struct thread_data {
 	u32 call_stack_depth = 0;
 
 	bool profiling = false;
+	bool timing_override = true;
 	queue<dbg_msg> dbg_msgs;
 };
 

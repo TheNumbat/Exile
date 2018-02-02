@@ -5,7 +5,7 @@ func_scope::func_scope(code_context context) {
 
 	this_thread_data.call_stack[this_thread_data.call_stack_depth++] = context;
 
-	if(this_thread_data.profiling) {
+	if(this_thread_data.profiling && this_thread_data.timing_override) {
 		dbg_msg m;
 		m.type = dbg_msg_type::enter_func;
 		m.context = context;
@@ -17,7 +17,7 @@ func_scope::func_scope(code_context context) {
 func_scope::~func_scope() {
 	this_thread_data.call_stack_depth--;
 
-	if(this_thread_data.profiling) {
+	if(this_thread_data.profiling && this_thread_data.timing_override) {
 		dbg_msg m;
 		m.type = dbg_msg_type::exit_func;
 
@@ -27,7 +27,7 @@ func_scope::~func_scope() {
 
 func_scope_nocs::func_scope_nocs(code_context context) {
 
-	if(this_thread_data.profiling) {	
+	if(this_thread_data.profiling && this_thread_data.timing_override) {	
 		dbg_msg m;
 		m.type = dbg_msg_type::enter_func;
 		m.context = context;
@@ -38,7 +38,7 @@ func_scope_nocs::func_scope_nocs(code_context context) {
 
 func_scope_nocs::~func_scope_nocs() {
 	
-	if(this_thread_data.profiling) {
+	if(this_thread_data.profiling && this_thread_data.timing_override) {
 		dbg_msg m;
 		m.type = dbg_msg_type::exit_func;
 

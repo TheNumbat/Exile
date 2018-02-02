@@ -73,6 +73,7 @@ void chunk::gen() { PROF
 
 void chunk::build_data() { PROF
 
+	PUSH_PROFILE_PROF(false);
 	mesh.clear();
 
 	for(i32 x = 0; x < xsz; x++) {
@@ -110,6 +111,8 @@ void chunk::build_data() { PROF
 			}
 		}
 	}
+
+	POP_PROFILE_PROF();
 }
 
 void exile::init(engine* st) { PROF
@@ -119,7 +122,7 @@ void exile::init(engine* st) { PROF
 
 	p.init();
 
-	cube_tex = state->ogl.add_texture(&state->default_store, "numbat"_);
+	cube_tex = state->ogl.add_texture(&state->default_store, "stone"_, texture_wrap::repeat, true);
 
 	default_evt = state->evt.add_handler(FPTR(default_evt_handle), this);
 	camera_evt = state->evt.add_handler(FPTR(camera_evt_handle), this);
