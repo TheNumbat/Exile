@@ -28,11 +28,19 @@
 #ifdef RELEASE
 #ifdef PROFILE
 	#undef PROFILE
+	#undef MATH_PROF
 #endif
 #endif
 
 #ifndef CHECKED
 #define CHECKED(platform_func, ...) global_api->platform_func(__VA_ARGS__);
+#endif
+
+#ifdef MATH_PROF
+#undef MATH_PROF
+#define MATH_PROF PROF
+#else
+#define MATH_PROF
 #endif
 
 #ifdef __clang__

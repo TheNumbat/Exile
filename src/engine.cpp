@@ -1,7 +1,7 @@
 
 EXPORT engine* start_up(platform_api* api) { 
 
-	engine* state = (engine*)api->platform_heap_alloc(sizeof(engine));
+	engine* state = new(api->platform_heap_alloc(sizeof(engine))) engine;
 	state->func_state.this_dll = api->your_dll;
 
 	global_api  = api;
@@ -20,7 +20,7 @@ EXPORT engine* start_up(platform_api* api) {
 	state->dbg_a = MAKE_PLATFORM_ALLOCATOR("dbg");
 	state->dbg_a.suppress_messages = true;
 	state->dbg = dbg_manager::make(&state->dbg_a);
-	state->dbg.register_thread(60, 32768);
+	state->dbg.register_thread(180, 32768);
 
 	BEGIN_FRAME();
 

@@ -24,8 +24,8 @@ enum face : u8 {
 };
 
 struct chunk_vertex {
-	u8 x = 0, y = 0;
-	u16 z_norm = 0;	
+	u8 x = 0, z = 0;
+	u16 y_norm = 0;	
 
 	u16 t_ao = 0;
 	u8 u = 0, v = 0;
@@ -36,13 +36,13 @@ struct chunk_vertex {
 struct mesh_chunk {
 
 	vector<chunk_vertex> 	vertices;
-	vector<uv3> 	elements;
+	vector<uv3> 			elements;
 
 	GLuint vao = 0;
 	GLuint vbos[2] = {};
 	bool dirty = false;
 
-	static mesh_chunk make(u32 verts = 1024, allocator* alloc = null);
+	static mesh_chunk make(u32 verts = 8192, allocator* alloc = null);
 	void destroy();
 	void clear();
 

@@ -1,4 +1,43 @@
 
+u32 hash(chunk_pos key) { PROF
+
+	return hash(key.x) ^ hash(key.y) ^ hash(key.z);
+}
+
+chunk_pos::chunk_pos(i32 _x, i32 _y, i32 _z) {
+	x = _x; y = _y; z = _z;
+}
+
+bool operator==(chunk_pos l, chunk_pos r) { PROF
+
+	return l.x == r.x && l.y == r.y && l.z == r.z;
+}
+
+chunk_pos chunk_pos::from_abs(v3 pos) { PROF
+
+	chunk_pos ret;
+	ret.x = (i32)(pos.x / chunk::xsz) - (pos.x < 0 ? 1 : 0);
+	ret.y = (i32)(pos.y / chunk::ysz) - (pos.y < 0 ? 1 : 0);
+	ret.z = (i32)(pos.z / chunk::zsz) - (pos.z < 0 ? 1 : 0);
+	return ret;
+}
+
+chunk_pos chunk_pos::operator+(chunk_pos other) { PROF
+	chunk_pos ret;
+	ret.x = x + other.x;
+	ret.y = y + other.y;
+	ret.z = z + other.z;
+	return ret;
+}
+
+chunk_pos chunk_pos::operator-(chunk_pos other) { PROF
+	chunk_pos ret;
+	ret.x = x - other.x;
+	ret.y = y - other.y;
+	ret.z = z - other.z;
+	return ret;
+}
+
 chunk chunk::make(allocator* a) { PROF
 
 	chunk ret;
@@ -19,8 +58,8 @@ void chunk::build_data() { PROF
 	mesh.clear();
 
 	for(u32 x = 0; x < 16; x += 2) {
-		for(u32 y = 0; y < 16; y += 2) {
-			for(u32 z = 0; z < 256; z += 2) {
+		for(u32 z = 0; z < 16; z += 2) {
+			for(u32 y = 0; y < 256; y += 2) {
 				if(blocks[x][z][y] != block_type::air) {
 
 					mesh.push_cube(V3f(x, y, z), 1.0f);
@@ -38,11 +77,11 @@ void exile::init(engine* st) { PROF
 	p.init();
 
 	cube_tex = state->ogl.add_texture(&state->default_store, "numbat"_);
-	the_chunk = chunk::make(&alloc);
-	the_chunk.build_data();
 
 	default_evt = state->evt.add_handler(FPTR(default_evt_handle), this);
 	camera_evt = state->evt.add_handler(FPTR(camera_evt_handle), this);
+
+	chunks = map<chunk_pos, chunk>::make(256, &alloc);
 
 	// global_api->platform_capture_mouse(&state->window);
 }
@@ -61,21 +100,61 @@ void exile::destroy() { PROF
 	state->evt.rem_handler(default_evt);
 	state->evt.rem_handler(camera_evt);
 
-	the_chunk.destroy();
+	FORMAP(it, chunks) {
+		it->value.destroy();
+	}
+	chunks.destroy();
+
 	alloc.destroy();
+}
+
+void exile::populate_local_area() { PROF
+
+	chunk_pos camera = chunk_pos::from_abs(p.camera.pos);
+	for(i32 x = -view_distance; x <= view_distance; x++) {
+		for(i32 z = -view_distance; z <= view_distance; z++) {
+
+			chunk_pos current = camera + chunk_pos(x,0,z);
+			current.y = 0;
+			
+			if(!chunks.try_get(current)) {
+				
+				LOG_INFO_F("building chunk %", current);
+				
+				chunk* c = chunks.insert(current, chunk::make(&alloc));
+				c->build_data();
+			}
+		}	
+	}
 }
 
 void exile::render() { PROF
 
 	render_command_list rcl = render_command_list::make();
-	render_command cmd = render_command::make(render_command_type::mesh_chunk, &the_chunk.mesh);
 
-	cmd.texture = cube_tex;
+	populate_local_area();
+
+	chunk_pos camera = chunk_pos::from_abs(p.camera.pos);
+	for(i32 x = -view_distance; x <= view_distance; x++) {
+		for(i32 z = -view_distance; z <= view_distance; z++) {
+
+			chunk_pos current = camera + chunk_pos(x,0,z);
+			current.y = 0;
+			
+			chunk* c = chunks.get(current);
+
+			render_command cmd = render_command::make(render_command_type::mesh_chunk, &c->mesh);
+					
+			cmd.texture = cube_tex;
+			cmd.model = translate(V3f(current.x * chunk::xsz, current.y * chunk::ysz, current.z * chunk::zsz));
+
+			rcl.add_command(cmd);
+		}
+	}
 
 	rcl.view = p.camera.view();
 	rcl.proj = proj(p.camera.fov, (f32)state->window.w / (f32)state->window.h, 0.001f, 1000.0f);
 
-	rcl.add_command(cmd);
 	state->ogl.execute_command_list(&rcl);
 	rcl.destroy();
 }
@@ -98,6 +177,7 @@ void player::update(platform_perfcount now) { PROF
 	gui_begin("Exile"_, R2(50.0f, 50.0f, 350.0f, 100.0f));
 	gui_text(string::makef("pos: %"_, camera.pos));
 	gui_text(string::makef("vel: %"_, velocity));
+	gui_text(string::makef("chunk: %"_, chunk_pos::from_abs(camera.pos)));
 	gui_end();
 
 	last = now;

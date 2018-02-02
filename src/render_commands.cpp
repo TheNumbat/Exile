@@ -281,15 +281,15 @@ u32 hash(render_command_type key) { PROF
 chunk_vertex chunk_vertex::from_vec(v3 v, v2 uv) {
 
 	LOG_DEBUG_ASSERT(v.x >= 0 && v.x < 256);
-	LOG_DEBUG_ASSERT(v.y >= 0 && v.y < 256);
-	LOG_DEBUG_ASSERT(v.z >= 0 && v.z < 4096);
+	LOG_DEBUG_ASSERT(v.y >= 0 && v.y < 4096);
+	LOG_DEBUG_ASSERT(v.z >= 0 && v.z < 256);
 	LOG_DEBUG_ASSERT(uv.x >= 0 && uv.x < 256);
 	LOG_DEBUG_ASSERT(uv.y >= 0 && uv.y < 256);
 
 	chunk_vertex ret;
 	ret.x = (u8)v.x;
-	ret.y = (u8)v.y;
-	ret.z_norm |= (u16)v.z << 4;
+	ret.z = (u8)v.z;
+	ret.y_norm |= (u16)v.y << 4;
 
 	ret.u = (u8)uv.x;
 	ret.v = (u8)uv.y;
@@ -761,7 +761,7 @@ f32 mesh_2d_tex_col::push_text_line(asset* font, string text_utf8, v2 pos, f32 p
 	return scale * font->font.linedist;
 }
 
-void mesh_chunk::push_cube(v3 pos, f32 len) {
+void mesh_chunk::push_cube(v3 pos, f32 len) { PROF
 
 	u32 idx = vertices.size;
 

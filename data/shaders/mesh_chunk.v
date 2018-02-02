@@ -3,9 +3,9 @@
 
 layout (location = 0) in uvec2 vertex;
 
-const uint z_mask = 0xfff00000;
+const uint y_mask = 0xfff00000;
 const uint n_mask = 0x000f0000;
-const uint y_mask = 0x0000ff00;
+const uint z_mask = 0x0000ff00;
 const uint x_mask = 0x000000ff;
 
 const uint t_mask  = 0x00000fff;
@@ -20,7 +20,7 @@ out vec2 f_uv;
 
 void main() {
 
-	vec3 pos = vec3((vertex.x & x_mask), (vertex.x & z_mask) >> 20, (vertex.x & y_mask) >> 8) / 16.0f;
+	vec3 pos = vec3((vertex.x & x_mask), (vertex.x & y_mask) >> 20, (vertex.x & z_mask) >> 8) / 16.0f;
 	
 	f_norm = (vertex.x & n_mask)  >> 16;
 	f_ao   = (vertex.y & ao_mask) >> 12;
