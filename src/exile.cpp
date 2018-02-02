@@ -61,7 +61,7 @@ void chunk::gen() { PROF
 			f32 fx = pos.x + x / (f32)xsz;
 			f32 fz = pos.z + z / (f32)zsz;
 
-			float val = stb_perlin_noise3(fx / 8.0f, 0, fz / 8.0f, 0, 0, 0);
+			f32 val = stb_perlin_noise3(fx / 8.0f, 0, fz / 8.0f, 0, 0, 0);
 			u32 height = (u32)(val * ysz / 2.0f + ysz / 2.0f);
 			
 			for(u32 y = 0; y < height; y++) {
@@ -76,37 +76,128 @@ void chunk::build_data() { PROF
 	PUSH_PROFILE_PROF(false);
 	mesh.clear();
 
-	for(i32 x = 0; x < xsz; x++) {
-		for(i32 z = 0; z < zsz; z++) {
-			for(i32 y = 0; y < ysz; y++) {
-				
-				if(blocks[x][z][y] != block_type::air) {
+	block_type slice[xsz * ysz];
 
-					// TODO(max): real meshing
-					if(x - 1 < 0 || blocks[x-1][z][y] == block_type::air) {
+	i32 xyz[] = {0, 0, 0};
+	i32 max[] = {xsz, ysz, zsz};
 
-						mesh.quad16(V3f(x, y, z), V3f(x, y + 1, z), V3f(x, y, z + 1), V3f(x, y + 1, z + 1));
+	for (i32 i = 0; i < 6; i++) {
+
+		i32 d0 = (i + 0) % 3;
+		i32 d1 = (i + 1) % 3;
+		i32 d2 = (i + 2) % 3;
+		i32 backface = i / 3 * 2 - 1;
+
+		// Traverse the chunk
+		for (xyz[d0] = 0; xyz[d0] < max[d0]; xyz[d0]++) {
+
+			// Fill in slice
+			for (xyz[d1] = 0; xyz[d1] < max[d1]; xyz[d1]++) {
+				for (xyz[d2] = 0; xyz[d2] < max[d2]; xyz[d2]++) {
+					if(xyz[0] >= 0 && xyz[0] < xsz && xyz[1] >= 0 && xyz[1] < ysz && xyz[2] >=0 && xyz[2] < zsz) {
+						block_type b = blocks[xyz[0]][xyz[2]][xyz[1]];
+
+						// check for air
+						if (b != block_type::air) {
+							// Check neighbor
+							xyz[d0] += backface;
+							if(xyz[0] >= 0 && xyz[0] < xsz && xyz[1] >= 0 && xyz[1] < ysz && xyz[2] >=0 && xyz[2] < zsz) {
+								if (blocks[xyz[0]][xyz[2]][xyz[1]] != block_type::air) {
+									slice[xyz[d1] * max[d2] + xyz[d2]] = block_type::air;
+								} else {
+									slice[xyz[d1] * max[d2] + xyz[d2]] = b;
+								}
+							} else {
+								slice[xyz[d1] * max[d2] + xyz[d2]] = b;
+							}
+							xyz[d0] -= backface;
+						} else {
+							slice[xyz[d1] * max[d2] + xyz[d2]] = block_type::air;
+						}
 					}
-					if(y - 1 < 0 || blocks[x][z][y-1] == block_type::air) {
+				}
+			}
 
-						mesh.quad16(V3f(x, y, z), V3f(x + 1, y, z), V3f(x, y, z + 1), V3f(x + 1, y, z + 1));
-					}
-					if(z - 1 < 0 || blocks[x][z-1][y] == block_type::air) {
+			// Mesh the slice
+			for (xyz[d1] = 0; xyz[d1] < max[d1]; xyz[d1]++) {
+				for (xyz[d2] = 0; xyz[d2] < max[d2];) {
+					block_type type = slice[xyz[d1] * max[d2] + xyz[d2]];
 
-						mesh.quad16(V3f(x, y, z), V3f(x + 1, y, z), V3f(x, y + 1, z), V3f(x + 1, y + 1, z));
+					// check for air
+					if (type == block_type::air) {
+						xyz[d2]++;
+						continue;
 					}
-					if(x + 1 >= xsz || blocks[x+1][z][y] == block_type::air) {
 
-						mesh.quad16(V3f(x + 1, y, z), V3f(x + 1, y + 1, z), V3f(x + 1, y, z + 1), V3f(x + 1, y + 1, z + 1));
-					}
-					if(y + 1 >= ysz || blocks[x][z][y+1] == block_type::air) {
+					int width = 1;
 
-						mesh.quad16(V3f(x, y + 1, z), V3f(x + 1, y + 1, z), V3f(x, y + 1, z + 1), V3f(x + 1, y + 1, z + 1));
+					// Find the largest line
+					for (int d22 = xyz[d2] + 1; d22 < max[d2]; d22++) {
+						if (slice[xyz[d1] * max[d2] + d22] != type) break;
+						width++;
 					}
-					if(z + 1 >= zsz || blocks[x][z+1][y] == block_type::air) {
 
-						mesh.quad16(V3f(x, y, z + 1), V3f(x + 1, y, z + 1), V3f(x, y + 1, z + 1), V3f(x + 1, y + 1, z + 1));
+					int height = 1;
+
+					// Find the largest rectangle
+					bool done = false;
+					for (int d11 = xyz[d1] + 1; d11 < max[d1]; d11++) {
+						// Find lines of the same width
+						for (int d22 = xyz[d2]; d22 < xyz[d2] + width; d22++) {
+							if (slice[d11 * max[d2] + d22] != type) {
+								done = true;
+								break;
+							}
+						}
+						if (done) break;
+						height++;
 					}
+
+					f32 w[] = { 0, 0, 0 };
+					w[d2] = (f32) width;
+					f32 h[] = { 0, 0, 0 };
+					h[d1] = (f32) height;
+
+					v3 v = V3((f32) xyz[0], (f32) xyz[1], (f32) xyz[2]);
+
+					// shift front faces by one block
+					if (backface > 0) {
+						f32 f[] = { 0, 0, 0 };
+						f[d0] += 1.0f;
+						v += V3(f[0], f[1], f[2]);
+					}
+
+					// emit quad
+					switch (i) {
+					case 0: // -X
+						mesh.quad16(v, v + V3(w[0], w[1], w[2]), v + V3(h[0], h[1], h[2]), v + V3(w[0] + h[0], w[1] + h[1], w[2] + h[2]));
+						break;
+					case 1: // -Y
+						mesh.quad16(v, v + V3(w[0], w[1], w[2]), v + V3(h[0], h[1], h[2]), v + V3(w[0] + h[0], w[1] + h[1], w[2] + h[2]));
+						break;
+					case 2: // -Z
+						mesh.quad16(v + V3(h[0], h[1], h[2]), v, v + V3(w[0] + h[0], w[1] + h[1], w[2] + h[2]), v + V3(w[0], w[1], w[2]));
+						break;
+					case 3: // +X
+						mesh.quad16(v + V3(w[0], w[1], w[2]), v, v + V3(w[0] + h[0], w[1] + h[1], w[2] + h[2]), v + V3(h[0], h[1], h[2]));
+						break;
+					case 4: // +Y
+						mesh.quad16(v + V3(h[0], h[1], h[2]), v + V3(w[0] + h[0], w[1] + h[1], w[2] + h[2]), v, v + V3(w[0], w[1], w[2]));
+						break;
+					case 5: // +Z
+						mesh.quad16(v, v + V3(h[0], h[1], h[2]), v + V3(w[0], w[1], w[2]), v + V3(w[0] + h[0], w[1] + h[1], w[2] + h[2]));
+						break;
+					}
+
+					// Zero the quad in the slice
+					for (int d11 = xyz[d1]; d11 < xyz[d1] + height; d11++) {
+						for (int d22 = xyz[d2]; d22 < xyz[d2] + width; d22++) {
+							slice[d11 * max[d2] + d22] = block_type::air;
+						}
+					}
+
+					// Advance search position for next quad
+					xyz[d2] += width;
 				}
 			}
 		}
