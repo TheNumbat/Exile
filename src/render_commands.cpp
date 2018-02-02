@@ -766,14 +766,14 @@ f32 mesh_2d_tex_col::push_text_line(asset* font, string text_utf8, v2 pos, f32 p
 	return scale * font->font.linedist;
 }
 
-void mesh_chunk::quad(v3 p1, v3 p2, v3 p3, v3 p4) { PROF
+void mesh_chunk::quad(v3 p1, v3 p2, v3 p3, v3 p4, v2 uv_ext) { PROF
 
 	u32 idx = vertices.size;
 
-	vertices.push(chunk_vertex::from_vec(p1, V2f(0, 0)));
-	vertices.push(chunk_vertex::from_vec(p2, V2f(1, 0)));
-	vertices.push(chunk_vertex::from_vec(p3, V2f(0, 1)));
-	vertices.push(chunk_vertex::from_vec(p4, V2f(1, 1)));
+	vertices.push(chunk_vertex::from_vec(p1, V2(0.0f, 0.0f)));
+	vertices.push(chunk_vertex::from_vec(p2, V2(uv_ext.x, 0.0f)));
+	vertices.push(chunk_vertex::from_vec(p3, V2(0.0f, uv_ext.y)));
+	vertices.push(chunk_vertex::from_vec(p4, V2(uv_ext.x, uv_ext.y)));
 
 	elements.push(V3u(idx, idx + 1, idx + 2));
 	elements.push(V3u(idx + 1, idx + 2, idx + 3));
@@ -781,14 +781,14 @@ void mesh_chunk::quad(v3 p1, v3 p2, v3 p3, v3 p4) { PROF
 	dirty = true;
 }
 
-void mesh_chunk::quad16(v3 p1, v3 p2, v3 p3, v3 p4) { PROF
+void mesh_chunk::quad16(v3 p1, v3 p2, v3 p3, v3 p4, v2 uv_ext) { PROF
 
 	u32 idx = vertices.size;
 
-	vertices.push(chunk_vertex::from_vec(p1 * 16.0f, V2f(0, 0)));
-	vertices.push(chunk_vertex::from_vec(p2 * 16.0f, V2f(1, 0)));
-	vertices.push(chunk_vertex::from_vec(p3 * 16.0f, V2f(0, 1)));
-	vertices.push(chunk_vertex::from_vec(p4 * 16.0f, V2f(1, 1)));
+	vertices.push(chunk_vertex::from_vec(p1 * 16.0f, V2(0.0f, 0.0f)));
+	vertices.push(chunk_vertex::from_vec(p2 * 16.0f, V2(uv_ext.x, 0.0f)));
+	vertices.push(chunk_vertex::from_vec(p3 * 16.0f, V2(0.0f, uv_ext.y)));
+	vertices.push(chunk_vertex::from_vec(p4 * 16.0f, V2(uv_ext.x, uv_ext.y)));
 
 	elements.push(V3u(idx, idx + 1, idx + 2));
 	elements.push(V3u(idx + 1, idx + 2, idx + 3));

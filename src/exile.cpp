@@ -129,21 +129,21 @@ void chunk::build_data() { PROF
 						continue;
 					}
 
-					int width = 1;
+					i32 width = 1;
 
 					// Find the largest line
-					for (int d22 = xyz[d2] + 1; d22 < max[d2]; d22++) {
+					for (i32 d22 = xyz[d2] + 1; d22 < max[d2]; d22++) {
 						if (slice[xyz[d1] * max[d2] + d22] != type) break;
 						width++;
 					}
 
-					int height = 1;
+					i32 height = 1;
 
 					// Find the largest rectangle
 					bool done = false;
-					for (int d11 = xyz[d1] + 1; d11 < max[d1]; d11++) {
+					for (i32 d11 = xyz[d1] + 1; d11 < max[d1]; d11++) {
 						// Find lines of the same width
-						for (int d22 = xyz[d2]; d22 < xyz[d2] + width; d22++) {
+						for (i32 d22 = xyz[d2]; d22 < xyz[d2] + width; d22++) {
 							if (slice[d11 * max[d2] + d22] != type) {
 								done = true;
 								break;
@@ -170,28 +170,28 @@ void chunk::build_data() { PROF
 					// emit quad
 					switch (i) {
 					case 0: // -X
-						mesh.quad16(v, v + V3(w[0], w[1], w[2]), v + V3(h[0], h[1], h[2]), v + V3(w[0] + h[0], w[1] + h[1], w[2] + h[2]));
+						mesh.quad16(v, v + V3(w[0], w[1], w[2]), v + V3(h[0], h[1], h[2]), v + V3(w[0] + h[0], w[1] + h[1], w[2] + h[2]), V2f(width, height));
 						break;
 					case 1: // -Y
-						mesh.quad16(v, v + V3(w[0], w[1], w[2]), v + V3(h[0], h[1], h[2]), v + V3(w[0] + h[0], w[1] + h[1], w[2] + h[2]));
+						mesh.quad16(v, v + V3(w[0], w[1], w[2]), v + V3(h[0], h[1], h[2]), v + V3(w[0] + h[0], w[1] + h[1], w[2] + h[2]), V2f(width, height));
 						break;
 					case 2: // -Z
-						mesh.quad16(v + V3(h[0], h[1], h[2]), v, v + V3(w[0] + h[0], w[1] + h[1], w[2] + h[2]), v + V3(w[0], w[1], w[2]));
+						mesh.quad16(v + V3(h[0], h[1], h[2]), v, v + V3(w[0] + h[0], w[1] + h[1], w[2] + h[2]), v + V3(w[0], w[1], w[2]), V2f(height, width));
 						break;
 					case 3: // +X
-						mesh.quad16(v + V3(w[0], w[1], w[2]), v, v + V3(w[0] + h[0], w[1] + h[1], w[2] + h[2]), v + V3(h[0], h[1], h[2]));
+						mesh.quad16(v + V3(w[0], w[1], w[2]), v, v + V3(w[0] + h[0], w[1] + h[1], w[2] + h[2]), v + V3(h[0], h[1], h[2]), V2f(width, height));
 						break;
 					case 4: // +Y
-						mesh.quad16(v + V3(h[0], h[1], h[2]), v + V3(w[0] + h[0], w[1] + h[1], w[2] + h[2]), v, v + V3(w[0], w[1], w[2]));
+						mesh.quad16(v + V3(h[0], h[1], h[2]), v + V3(w[0] + h[0], w[1] + h[1], w[2] + h[2]), v, v + V3(w[0], w[1], w[2]), V2f(width, height));
 						break;
 					case 5: // +Z
-						mesh.quad16(v, v + V3(h[0], h[1], h[2]), v + V3(w[0], w[1], w[2]), v + V3(w[0] + h[0], w[1] + h[1], w[2] + h[2]));
+						mesh.quad16(v, v + V3(h[0], h[1], h[2]), v + V3(w[0], w[1], w[2]), v + V3(w[0] + h[0], w[1] + h[1], w[2] + h[2]), V2f(height, width));
 						break;
 					}
 
 					// Zero the quad in the slice
-					for (int d11 = xyz[d1]; d11 < xyz[d1] + height; d11++) {
-						for (int d22 = xyz[d2]; d22 < xyz[d2] + width; d22++) {
+					for (i32 d11 = xyz[d1]; d11 < xyz[d1] + height; d11++) {
+						for (i32 d22 = xyz[d2]; d22 < xyz[d2] + width; d22++) {
 							slice[d11 * max[d2] + d22] = block_type::air;
 						}
 					}
