@@ -49,7 +49,7 @@ to do:
 	chunk meshing
 		current vertex format [order in shader], struct is byte-order reversed on u32 boundary
 			0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000
-			yyyyyyyyyyyyyy norm zzzzzzzzz xxxxxxxxx vvvvvvvvv uuuuuuuuu aoao tttttttttttttt
+			yyyy yyyy yyyy norm zzzz zzzz xxxx xxxx vvvv vvvv uuuu uuuu aoao tttt tttt tttt
 		Tradeoff compactness vs. detail - how do we do LOD and special multifaceted blocks?
 			do we want different vertex layouts for LOD????
 

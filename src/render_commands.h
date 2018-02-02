@@ -48,7 +48,9 @@ struct mesh_chunk {
 	void free_cpu();
 	void clear();
 
-	void push_cube(v3 pos, f32 len);
+	void quad(v3 p1, v3 p2, v3 p3, v3 p4);
+	void quad16(v3 p1, v3 p2, v3 p3, v3 p4);
+	void cube(v3 pos, f32 len);
 };
 
 struct mesh_2d_col {

@@ -75,12 +75,37 @@ void chunk::build_data() { PROF
 
 	mesh.clear();
 
-	for(u32 x = 0; x < xsz; x++) {
-		for(u32 z = 0; z < zsz; z++) {
-			for(u32 y = 0; y < ysz; y++) {
+	for(i32 x = 0; x < xsz; x++) {
+		for(i32 z = 0; z < zsz; z++) {
+			for(i32 y = 0; y < ysz; y++) {
+				
 				if(blocks[x][z][y] != block_type::air) {
 
-					mesh.push_cube(V3f(x * 16, y * 16, z * 16), 16.0f);
+					// TODO(max): real meshing
+					if(x - 1 < 0 || blocks[x-1][z][y] == block_type::air) {
+
+						mesh.quad16(V3f(x, y, z), V3f(x, y + 1, z), V3f(x, y, z + 1), V3f(x, y + 1, z + 1));
+					}
+					if(y - 1 < 0 || blocks[x][z][y-1] == block_type::air) {
+
+						mesh.quad16(V3f(x, y, z), V3f(x + 1, y, z), V3f(x, y, z + 1), V3f(x + 1, y, z + 1));
+					}
+					if(z - 1 < 0 || blocks[x][z-1][y] == block_type::air) {
+
+						mesh.quad16(V3f(x, y, z), V3f(x + 1, y, z), V3f(x, y + 1, z), V3f(x + 1, y + 1, z));
+					}
+					if(x + 1 >= xsz || blocks[x+1][z][y] == block_type::air) {
+
+						mesh.quad16(V3f(x + 1, y, z), V3f(x + 1, y + 1, z), V3f(x + 1, y, z + 1), V3f(x + 1, y + 1, z + 1));
+					}
+					if(y + 1 >= ysz || blocks[x][z][y+1] == block_type::air) {
+
+						mesh.quad16(V3f(x, y + 1, z), V3f(x + 1, y + 1, z), V3f(x, y + 1, z + 1), V3f(x + 1, y + 1, z + 1));
+					}
+					if(z + 1 >= zsz || blocks[x][z+1][y] == block_type::air) {
+
+						mesh.quad16(V3f(x, y, z + 1), V3f(x + 1, y, z + 1), V3f(x, y + 1, z + 1), V3f(x + 1, y + 1, z + 1));
+					}
 				}
 			}
 		}
