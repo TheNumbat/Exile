@@ -73,7 +73,6 @@ void chunk::gen() { PROF
 
 void chunk::build_data() { PROF
 
-	PUSH_PROFILE_PROF(false);
 	mesh.clear();
 
 	block_type slice[xsz * ysz];
@@ -203,7 +202,6 @@ void chunk::build_data() { PROF
 		}
 	}
 
-	POP_PROFILE_PROF();
 }
 
 void exile::init(engine* st) { PROF
@@ -228,7 +226,7 @@ void exile::update() { PROF
 	platform_perfcount now = global_api->platform_get_perfcount();
 
 	gui_begin("Exile"_, R2(50.0f, 50.0f, 350.0f, 100.0f));
-	gui_int_slider("view: "_, &view_distance, 0, 16);
+	gui_int_slider("view: "_, &view_distance, 0, 32);
 
 	p.update(now);
 
@@ -261,7 +259,7 @@ void exile::populate_local_area() { PROF
 			
 			if(!chunks.try_get(current)) {
 				
-				LOG_INFO_F("building chunk %", current);
+				// LOG_INFO_F("building chunk %", current);
 				
 				chunk* c = chunks.insert(current, chunk::make(current, &alloc));
 				c->gen();

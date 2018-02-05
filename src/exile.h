@@ -51,7 +51,7 @@ struct exile {
 	// 			  we need to support loaded/unloaded chunks
 	// 			  for simulation and paging to disk
 	map<chunk_pos, chunk> chunks;
-	i32 view_distance = 16;
+	i32 view_distance = 8;
 
 	texture_id cube_tex;
 	evt_handler_id default_evt = 0, camera_evt = 0;
