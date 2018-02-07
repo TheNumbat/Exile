@@ -425,7 +425,9 @@ draw_context* ogl_manager::get_command_ctx(render_command_type id) { PROF
 		return null;
 	}
 
+	PROF_SEC("glUseProgram"_);
 	glUseProgram(d->shader.handle);
+	PROF_SEC_END();
 	
 	return d;
 }

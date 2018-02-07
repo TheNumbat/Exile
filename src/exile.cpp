@@ -226,7 +226,7 @@ void exile::update() { PROF
 	platform_perfcount now = global_api->platform_get_perfcount();
 
 	gui_begin("Exile"_, R2(50.0f, 50.0f, 350.0f, 100.0f));
-	gui_int_slider("view: "_, &view_distance, 0, 32);
+	gui_int_slider(string::makef("view: % "_, view_distance), &view_distance, 0, 32);
 
 	p.update(now);
 

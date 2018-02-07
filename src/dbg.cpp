@@ -577,7 +577,7 @@ void _prof_sec(string name, code_context context) {
 		dbg_msg m;
 		m.type = dbg_msg_type::enter_func;
 		m.context = context;
-		memcpy(name.c_str, m.context.function, name.len);
+		_memcpy_ctx(name.c_str, m.context.function, name.len);
 	
 		POST_MSG(m);
 	}
