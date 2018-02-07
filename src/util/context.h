@@ -10,7 +10,7 @@ struct code_context {
 	u32 line = 0;
 };
 
-u32 hash(code_context c);
+inline u32 hash(code_context c);
 bool operator==(code_context l, code_context r);
 
 #define CONTEXT _make_context(string::literal(__FILE__), string::literal(__FUNCNAME__), __LINE__)

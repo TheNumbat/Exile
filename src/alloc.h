@@ -93,4 +93,4 @@ void _memset(void* mem, u64 size, u8 val);
 void _memcpy_ctx(void* source, void* dest, u64 size);
 
 bool operator==(allocator l, allocator r);
-u32 hash(allocator* a);
+inline u32 hash(allocator* a);

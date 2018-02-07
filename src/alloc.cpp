@@ -1,5 +1,5 @@
 
-u32 hash(allocator* a) { PROF
+inline u32 hash(allocator* a) { PROF
 
 	return hash((void*)a);
 }

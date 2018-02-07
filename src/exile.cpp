@@ -1,5 +1,5 @@
 
-u32 hash(chunk_pos key) { PROF
+inline u32 hash(chunk_pos key) { PROF
 
 	return hash(key.x) ^ hash(key.y) ^ hash(key.z);
 }

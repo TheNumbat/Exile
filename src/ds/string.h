@@ -65,8 +65,8 @@ struct NOREFLECT string { // no-reflect because hard-coded
 
 string operator "" _(const char* str, size_t s);
 
-u32 hash(string one, string two);
-u32 hash(string str);
+inline u32 hash(string one, string two);
+inline u32 hash(string str);
 constexpr u32 const_hash(const char* str);
 bool operator==(string first, string second);
 inline bool operator==(string first, const char* second);

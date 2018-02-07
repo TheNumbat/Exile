@@ -1,5 +1,5 @@
 
-u32 hash(code_context c) { PROF
+inline u32 hash(code_context c) { PROF
 
 	return hash(string::from_c_str(c.function)) ^ hash(string::from_c_str(c.file)) ^ hash(c.line);
 }

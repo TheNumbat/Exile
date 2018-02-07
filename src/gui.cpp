@@ -1,5 +1,5 @@
 
-u32 hash(guiid id) { PROF
+inline u32 hash(guiid id) { PROF
 
 	u32 h = hash(id.name);
 	return h ^ id.base;
@@ -401,13 +401,8 @@ void gui_pop_id() { PROF
 bool gui_in_win() { PROF
 	FORMAP(it, ggui->windows) {
 		if(it->value.active && &it->value != ggui->current && it->value.z > ggui->current->z) {
-			if(it->value.full_size && inside(it->value.rect, ggui->input.mousepos)) {
+			if(inside(it->value.full_size ? it->value.rect : it->value.get_title(), ggui->input.mousepos)) {
 				return false;
-			} else {
-				r2 title_rect = it->value.get_title();
-				if(inside(title_rect, ggui->input.mousepos)) {
-					return false;
-				}
 			}
 		}
 	}
@@ -544,7 +539,7 @@ bool gui_begin(string name, r2 size, gui_window_flags flags, f32 first_alpha) { 
 
 	gui_set_offset(window->header_size + ggui->style.win_margin.xy + window->scroll_pos);
 
-	return window->full_size;
+	return window->active;
 }
 
 void gui_push_id(string id) { PROF
@@ -993,7 +988,9 @@ void render_title(gui_window* win, v2 pos, string title) { PROF
 	u32 vidx = win->text_mesh.vertices.size;
 	u32 eidx = win->text_mesh.elements.size;
 
-	win->text_mesh.push_text_line(win->font->font, title, win->rect.xy + pos, ggui->style.font_size, WHITE);
+	string tz = string::makef("% %"_, title, win->z);
+	win->text_mesh.push_text_line(win->font->font, tz, win->rect.xy + pos, ggui->style.font_size, WHITE);
+	tz.destroy();
 	
 	win->title_verts = win->text_mesh.vertices.size - vidx;
 	win->title_elements = win->text_mesh.elements.size - eidx;

@@ -14,7 +14,7 @@ struct chunk_pos {
 	chunk_pos operator-(chunk_pos other);
 };
 bool operator==(chunk_pos l, chunk_pos r);
-u32 hash(chunk_pos key);
+inline u32 hash(chunk_pos key);
 
 struct chunk {
 

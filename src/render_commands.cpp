@@ -273,7 +273,7 @@ CALLBACK void run_mesh_chunk(render_command* cmd) { PROF
 }
 
 
-u32 hash(render_command_type key) { PROF
+inline u32 hash(render_command_type key) { PROF
 
 	return hash(*(u8*)&key);
 }

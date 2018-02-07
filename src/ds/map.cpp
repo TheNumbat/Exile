@@ -1,5 +1,6 @@
 
-u32 hash(u32 key) { PROF
+inline u32 hash(u32 key) { PROF
+
     key = (key ^ 61) ^ (key >> 16);
     key = key + (key << 3);
     key = key ^ (key >> 4);
@@ -9,7 +10,10 @@ u32 hash(u32 key) { PROF
     return key;
 }
 
-u32 hash(u64 key) { PROF
+inline u32 hash(u64 key) { PROF
+
+	// return (u32)(key >> 32 ^ key);
+
 	key = (~key) + (key << 21); // key = (key << 21) - key - 1;
 	key = key ^ (key >> 24);
 	key = (key + (key << 3)) + (key << 8); // key * 265
@@ -20,18 +24,18 @@ u32 hash(u64 key) { PROF
 	return key >> 32;
 }
 
-u32 hash(void* key) { PROF
+inline u32 hash(void* key) { PROF
 
 	// NOTE(max): this better be compiled as 64 bit lol
 	return hash(*(u64*)&key);
 }
 
-u32 hash(i32 key) { PROF
+inline u32 hash(i32 key) { PROF
 
 	return hash(*(u32*)&key);
 }
 
-u32 hash(u8 key) { PROF
+inline u32 hash(u8 key) { PROF
 
 	return hash((u32)key);
 }

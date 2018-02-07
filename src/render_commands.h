@@ -11,7 +11,7 @@ enum class render_command_type : u8 {
 	mesh_chunk,
 };
 
-u32 hash(render_command_type key);
+inline u32 hash(render_command_type key);
 
 enum face : u8 {
 	none,
