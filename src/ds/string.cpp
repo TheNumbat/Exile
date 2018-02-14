@@ -867,9 +867,49 @@ inline u32 hash(string str) { PROF
     return hash;
 }
 
-// adapted from http://www.json.org/JSON_checker/utf8_decode.c
+#if 0
+// adapted from https://github.com/skeeto/branchless-utf8/blob/master/utf8.h
 u32 string::get_next_codepoint(u32* index) { 
 
+	static const char lengths[] = {
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 3, 3, 4, 0
+    };
+    static const i32 masks[]  = {0x00, 0x7f, 0x1f, 0x0f, 0x07};
+    static const u32 mins[] = {4194304, 0, 128, 2048, 65536};
+    static const i32 shiftc[] = {0, 18, 12, 6, 0};
+    static const i32 shifte[] = {0, 6, 4, 2, 0};
+
+    u8 *s = (u8*)c_str + *index;
+    i32 l = lengths[s[0] >> 3];
+
+    *index += l + !l;
+
+    u32 c = 0;
+    c  = (u32)(s[0] & masks[l]) << 18;
+    c |= (u32)(s[1] & 0x3f) << 12;
+    c |= (u32)(s[2] & 0x3f) <<  6;
+    c |= (u32)(s[3] & 0x3f) <<  0;
+    c >>= shiftc[l];
+
+#if 1
+    u32 e = 0;
+    e  = (c < mins[l]) << 6; // non-canonical encoding
+    e |= ((c >> 11) == 0x1b) << 7;  // surrogate half?
+    e |= (c > 0x10FFFF) << 8;  // out of range?
+    e |= (s[1] & 0xc0) >> 2;
+    e |= (s[2] & 0xc0) >> 4;
+    e |= (s[3]       ) >> 6;
+    e ^= 0x2a; // top two bits of each tail byte correct?
+    e >>= shifte[l];
+    LOG_ASSERT(!e);
+#endif
+
+    return c;
+}
+#else
+// adapted from http://www.json.org/JSON_checker/utf8_decode.c
+u32 string::get_next_codepoint(u32* index) { 
 #ifdef MORE_PROF
 	PROF
 #endif
@@ -935,6 +975,7 @@ u32 string::get_next_codepoint(u32* index) {
 	LOG_FATAL_F("Invalid codepoint index % in %", *index, *this);
 	return 0;
 }
+#endif
 
 string string::make_copy(string src, allocator* a) { PROF
 

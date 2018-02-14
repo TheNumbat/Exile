@@ -204,8 +204,6 @@ to do:
 
 	OpenGl
 		remove sending on every command
-			mark mesh as dirty to send
-			VAO per mesh
 			More flexible shader selection; need more than 1 per command type
 			glBufferSubData
 		Shaders
@@ -224,7 +222,6 @@ to do:
 		rename ogl stuff to "renderer" to facilitate different backends
 
 	chunks
-		chunk meshing, texturing
 		deferred mesh re/building
 		LOD
 		storage representation (compression?)
