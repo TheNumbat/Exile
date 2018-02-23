@@ -26,7 +26,7 @@ all includes:
 
 priority:
 	!!! fix bugs !!!
-	add looking around/mouse capture
+	add looking around
 	add check extensions on render command register
 
 	block textures

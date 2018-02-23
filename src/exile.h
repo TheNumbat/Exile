@@ -54,7 +54,7 @@ struct exile {
 	i32 view_distance = 8;
 
 	texture_id cube_tex;
-	evt_handler_id default_evt = 0, camera_evt = 0;
+	evt_handler_id default_evt = 0, camera_evt = 0, ui_evt = 0;
 
 	player p;
 
@@ -71,3 +71,4 @@ struct exile {
 
 CALLBACK bool default_evt_handle(void* param, platform_event evt);
 CALLBACK bool camera_evt_handle(void* param, platform_event evt);
+CALLBACK bool ui_evt_handle(void* param, platform_event evt);

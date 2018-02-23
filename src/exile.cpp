@@ -240,7 +240,11 @@ void exile::update() { PROF
 void exile::destroy() { PROF
 
 	state->evt.rem_handler(default_evt);
-	state->evt.rem_handler(camera_evt);
+
+	if(camera_evt)
+		state->evt.rem_handler(camera_evt);
+	if(ui_evt)
+		state->evt.rem_handler(ui_evt);
 
 	FORMAP(it, chunks) {
 		it->value.destroy();
@@ -318,6 +322,26 @@ void player::update(platform_perfcount now) { PROF
 	platform_perfcount pdt = now - last;
 	f32 dt = (f32)pdt / (f32)global_api->platform_get_perfcount_freq();
 
+	velocity = V3(0.0f, 0.0f, 0.0f);
+	if(global_api->platform_keydown(platform_keycode::w)) {
+		velocity += camera.front * speed;
+	}
+	if(global_api->platform_keydown(platform_keycode::a)) {
+		velocity += camera.right * -speed;
+	}
+	if(global_api->platform_keydown(platform_keycode::s)) {
+		velocity += camera.front * -speed;
+	}
+	if(global_api->platform_keydown(platform_keycode::d)) {
+		velocity += camera.right * speed;
+	}
+	if(global_api->platform_keydown(platform_keycode::space)) {
+		velocity += camera.up * speed;
+	}
+	if(global_api->platform_keydown(platform_keycode::lshift)) {
+		velocity += camera.up * -speed;
+	}
+
 	camera.pos += velocity * dt;
 	camera.update();
 
@@ -339,16 +363,6 @@ CALLBACK bool default_evt_handle(void* param, platform_event evt) { PROF
 				game->state->running = false;
 				return true;
 			}
-
-			else if(evt.key.code == platform_keycode::grave) {
-
-				game->state->dbg.toggle_ui();
-				if(game->state->dbg.show_ui) {
-					global_api->platform_release_mouse();
-				} else {
-					global_api->platform_capture_mouse(&game->state->window);
-				}
-			}
 		}
 	}
 
@@ -365,102 +379,64 @@ CALLBACK bool camera_evt_handle(void* param, platform_event evt) { PROF
 		if(evt.key.flags & (u16)platform_keyflag::press) {
 
 			switch(evt.key.code) {
-			case platform_keycode::escape: {
 
-				game->state->running = false;
+			case platform_keycode::grave: {
 
-			} break;
+				game->state->evt.rem_handler(game->camera_evt);
+				game->camera_evt = 0;
 
-			case platform_keycode::w: {
+				game->ui_evt = game->state->evt.add_handler(FPTR(ui_evt_handle), param);
+				game->state->dbg.show_ui = true;
 
-				p.velocity += p.camera.front * p.speed;
+				global_api->platform_release_mouse();
 
-			} break;
-
-			case platform_keycode::a: {
-
-				p.velocity += p.camera.right * -p.speed;
-
-			} break;
-
-			case platform_keycode::s: {
-
-				p.velocity += p.camera.front * -p.speed;
-
-			} break;
-
-			case platform_keycode::d: {
-
-				p.velocity += p.camera.right * p.speed;
-
-			} break;	
-
-			case platform_keycode::space: {
-
-				p.velocity += p.camera.up * p.speed;
-
-			} break;	
-
-			case platform_keycode::lshift: {
-
-				p.velocity += p.camera.up * -p.speed;
-
-			} break;	
+			} return true;
 
 			default: return false;
 			}
 		}
-
-		if(evt.key.flags & (u16)platform_keyflag::release) {
-
-			switch(evt.key.code) {
-			case platform_keycode::w: {
-
-				p.velocity -= p.camera.front * p.speed;
-
-			} break;
-
-			case platform_keycode::a: {
-
-				p.velocity -= p.camera.right * -p.speed;
-
-			} break;
-
-			case platform_keycode::s: {
-
-				p.velocity -= p.camera.front * -p.speed;
-
-			} break;
-
-			case platform_keycode::d: {
-
-				p.velocity -= p.camera.right * p.speed;
-
-			} break;
-
-			case platform_keycode::space: {
-
-				p.velocity -= p.camera.up * p.speed;
-
-			} break;	
-
-			case platform_keycode::lshift: {
-
-				p.velocity -= p.camera.up * -p.speed;
-
-			} break;	
-
-			default: return false;
-			}
-		}
-
-		return true;
 	}
 
 	else if(evt.type == platform_event_type::mouse) {
 	
 		if(evt.mouse.flags & (u16)platform_mouseflag::move) {
 		
+			i16 dx = evt.mouse.x - (i16)(game->state->window.w / 2);
+			i16 dy = evt.mouse.y - (i16)(game->state->window.h / 2);
+
+			p.camera.move(dx, dy, 0.1f);
+
+			return true;
+		}
+	}
+
+	return false;
+}
+
+CALLBACK bool ui_evt_handle(void* param, platform_event evt) { PROF
+
+	exile* game = (exile*)param;
+
+	if(evt.type == platform_event_type::key) {
+
+		if(evt.key.flags & (u16)platform_keyflag::press) {
+
+			switch(evt.key.code) {
+
+			case platform_keycode::grave: {
+
+				game->state->evt.rem_handler(game->ui_evt);
+				game->ui_evt = 0;
+
+				game->camera_evt = game->state->evt.add_handler(FPTR(camera_evt_handle), param);
+				game->state->dbg.show_ui = false;
+
+				global_api->platform_capture_mouse(&game->state->window);
+
+			} return true;
+
+			default: return false;
+			}
 		}
 	}
 
