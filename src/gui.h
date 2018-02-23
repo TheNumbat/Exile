@@ -99,7 +99,7 @@ struct gui_window {
 	u32 z 		= 1, indent_level = 0;
 	u32 title_verts = 0, title_elements = 0; 
 
-	bool active = false, full_size = true;
+	bool active_last_frame = false, full_size = true, active_this_frame = false;
 	bool can_scroll = false;
 	win_input_state input = win_input_state::none;
 	gui_cursor_mode cursor_mode = gui_cursor_mode::y;

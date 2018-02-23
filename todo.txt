@@ -41,7 +41,6 @@ priority:
 	update features/readme
 
 bugs:
-	gui_in_win broke - gets window behind current
 	textures get recreated? on asset store reload (and not freed?)
 		make sure textures are only created once
 		actually the asset pack reload is kind of broken in general - RESTRUCTURE

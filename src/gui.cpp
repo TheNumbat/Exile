@@ -86,7 +86,13 @@ gui_window gui_window::make(r2 first_size, f32 first_alpha, u16 flags, allocator
 void gui_window::reset() { PROF
 
 	r2 content = get_real_content();
-	active = false;
+
+	if(active_this_frame) {
+		active_this_frame = false;
+		active_last_frame = true;
+	} else {
+		active_last_frame = false;
+	}
 
 	previous_content_size = cursor - scroll_pos - content.xy;
 	if(previous_content_size.y > content.h - ggui->style.scroll_slop) can_scroll = true;
@@ -400,7 +406,7 @@ void gui_pop_id() { PROF
 
 bool gui_in_win() { PROF
 	FORMAP(it, ggui->windows) {
-		if(it->value.active && &it->value != ggui->current && it->value.z > ggui->current->z) {
+		if(it->value.active_last_frame && &it->value != ggui->current && it->value.z > ggui->current->z) {
 			if(inside(it->value.full_size ? it->value.rect : it->value.get_title(), ggui->input.mousepos)) {
 				return false;
 			}
@@ -428,7 +434,7 @@ bool gui_begin(string name, r2 size, gui_window_flags flags, f32 first_alpha) { 
 	}
 
 	window->id_hash_stack.push(hash(id));
-	window->active = true;
+	window->active_this_frame = true;
 	ggui->current = window;
 
 	if(ggui->active_id == id) {
@@ -452,8 +458,6 @@ bool gui_begin(string name, r2 size, gui_window_flags flags, f32 first_alpha) { 
 		}
 	}
 
-	// input
-	f32 carrot_x_diff = ggui->style.carrot_size.x + ggui->style.carrot_padding.x;
 	
 	r2 real_top = window->get_real_top(); 
 	r2 real_body = window->get_real_body();
@@ -462,6 +466,7 @@ bool gui_begin(string name, r2 size, gui_window_flags flags, f32 first_alpha) { 
 	bool in_win = gui_in_win();
 	if((window->flags & (u16)window_flags::nohide) != (u16)window_flags::nohide) {
 
+		f32 carrot_x_diff = ggui->style.carrot_size.x + ggui->style.carrot_padding.x;
 		v2 carrot_pos = V2(window->rect.w - carrot_x_diff, ggui->style.carrot_size.y / 2.0f);
 		
 		gui_set_offset(carrot_pos);
@@ -539,7 +544,7 @@ bool gui_begin(string name, r2 size, gui_window_flags flags, f32 first_alpha) { 
 
 	gui_set_offset(window->header_size + ggui->style.win_margin.xy + window->scroll_pos);
 
-	return window->active;
+	return window->active_this_frame;
 }
 
 void gui_push_id(string id) { PROF
@@ -988,9 +993,7 @@ void render_title(gui_window* win, v2 pos, string title) { PROF
 	u32 vidx = win->text_mesh.vertices.size;
 	u32 eidx = win->text_mesh.elements.size;
 
-	string tz = string::makef("% %"_, title, win->z);
-	win->text_mesh.push_text_line(win->font->font, tz, win->rect.xy + pos, ggui->style.font_size, WHITE);
-	tz.destroy();
+	win->text_mesh.push_text_line(win->font->font, title, win->rect.xy + pos, ggui->style.font_size, WHITE);
 	
 	win->title_verts = win->text_mesh.vertices.size - vidx;
 	win->title_elements = win->text_mesh.elements.size - eidx;
