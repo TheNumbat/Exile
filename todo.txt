@@ -26,7 +26,6 @@ all includes:
 
 priority:
 	!!! fix bugs !!!
-	add check extensions on render command register
 
 	block textures
 	job out meshing	
