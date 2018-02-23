@@ -66,6 +66,8 @@ struct ogl_info {
 
 	static ogl_info make(allocator* a);
 	void destroy();
+
+	bool check_version(i32 major, i32 minor);
 };
 
 struct ogl_manager {
@@ -84,11 +86,10 @@ struct ogl_manager {
 	void destroy();
 
 	void try_reload_programs();
-	void check_version_and_extensions();
 	void load_global_funcs();
 	void check_leaked_handles();
 
-	void add_command_ctx(render_command_type type, _FPTR* buffers, _FPTR* run, string v, string f, _FPTR* uniforms);
+	void add_command(render_command_type type, _FPTR* buffers, _FPTR* run, string v, string f, _FPTR* uniforms, _FPTR* compat);
 	draw_context* get_command_ctx(render_command_type type);
 
 	texture_id add_texture(asset_store* as, string name, texture_wrap wrap = texture_wrap::repeat, bool pixelated = false);

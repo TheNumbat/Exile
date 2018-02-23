@@ -184,7 +184,6 @@ ogl_manager ogl_manager::make(platform_window* win, allocator* a) { PROF
 
 	ret.load_global_funcs();
 	ret.info = ogl_info::make(ret.alloc);
-	ret.check_version_and_extensions();
 
 	_type_info* info = TYPEINFO(render_command_type);
 	PUSH_ALLOC(a) {
@@ -198,20 +197,22 @@ ogl_manager ogl_manager::make(platform_window* win, allocator* a) { PROF
 			string uniforms_func = string::makef("uniforms_%"_, member);
 			string vertex = string::makef("shaders/%.v"_, member);
 			string fragment = string::makef("shaders/%.f"_, member);
+			string compat_func = string::makef("compat_%"_, member);
 
-			ret.add_command_ctx((render_command_type)info->_enum.member_values[i], FPTR_STR(buffer_func), FPTR_STR(run_func), vertex, fragment, FPTR_STR(uniforms_func));
+			ret.add_command((render_command_type)info->_enum.member_values[i], FPTR_STR(buffer_func), FPTR_STR(run_func), vertex, fragment, FPTR_STR(uniforms_func), FPTR_STR(compat_func));
 
 			buffer_func.destroy();
 			run_func.destroy();
 			uniforms_func.destroy();
 			vertex.destroy();
 			fragment.destroy();
+			compat_func.destroy();
 		}
 	} POP_ALLOC();
 
 	ret.dbg_shader = shader_program::make("shaders/dbg.v"_,"shaders/dbg.f"_,FPTR(uniforms_dbg),a);
 
-	LOG_DEBUG_F("GL: %", ret.info);
+	LOG_DEBUG_F("GL %.% %", ret.info.major, ret.info.minor, ret.info.renderer);
 
 	return ret;
 }
@@ -404,9 +405,15 @@ void texture::destroy() { PROF
 	glDeleteTextures(1, &handle);
 }
 
-void ogl_manager::add_command_ctx(render_command_type type, _FPTR* buffers, _FPTR* run, string v, string f, _FPTR* uniforms) { PROF
+void ogl_manager::add_command(render_command_type type, _FPTR* buffers, _FPTR* run, string v, string f, _FPTR* uniforms, _FPTR* compat) { PROF
 
 	draw_context d;
+
+	if(!((bool(*)(ogl_info*))compat->func)(&info)) {
+		
+		LOG_WARN_F("Render command % failed compatibility check!!!", type);
+		return;
+	}
 
 	d.send_buffers.set(buffers);
 	d.run.set(run);
@@ -613,22 +620,16 @@ ogl_info ogl_info::make(allocator* a) { PROF
 	return ret;
 }
 
-void ogl_manager::check_version_and_extensions() {
-
-	bool good = true;
-
-	good = good && info.major >= 3 && info.minor >= 3;
-
-	if(good) {
-		LOG_INFO("OpenGL features supported!");
-	} else {
-		LOG_FATAL_F("Unsupported OpenGL features - info: %", info);
-	}
-}
-
 void ogl_info::destroy() { PROF
 
 	extensions.destroy();
+}
+
+bool ogl_info::check_version(i32 maj, i32 min) { PROF
+
+	if(major > maj) return true;
+	if(major == maj && minor >= min) return true;
+	return false; 
 }
 
 void ogl_manager::load_global_funcs() { PROF

@@ -272,6 +272,25 @@ CALLBACK void run_mesh_chunk(render_command* cmd) { PROF
 	glBindVertexArray(0);
 }
 
+CALLBACK bool compat_mesh_2d_col(ogl_info* info) { PROF
+	return info->check_version(3, 2);
+}
+CALLBACK bool compat_mesh_2d_tex(ogl_info* info) { PROF
+	return info->check_version(3, 2);
+}
+CALLBACK bool compat_mesh_2d_tex_col(ogl_info* info) { PROF
+	return info->check_version(3, 2);
+}
+CALLBACK bool compat_mesh_3d_tex(ogl_info* info) { PROF
+	return info->check_version(3, 2);
+}
+CALLBACK bool compat_mesh_3d_tex_instanced(ogl_info* info) { PROF
+	return info->check_version(3, 3);
+}
+CALLBACK bool compat_mesh_chunk(ogl_info* info) { PROF
+	return info->check_version(3, 2);
+}
+
 
 inline u32 hash(render_command_type key) { PROF
 
