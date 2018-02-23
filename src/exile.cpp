@@ -336,10 +336,10 @@ void player::update(platform_perfcount now) { PROF
 		velocity += camera.right * speed;
 	}
 	if(global_api->platform_keydown(platform_keycode::space)) {
-		velocity += camera.up * speed;
+		velocity.y += speed;
 	}
 	if(global_api->platform_keydown(platform_keycode::lshift)) {
-		velocity += camera.up * -speed;
+		velocity.y += -speed;
 	}
 
 	camera.pos += velocity * dt;
