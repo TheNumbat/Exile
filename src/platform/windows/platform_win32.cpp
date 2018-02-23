@@ -77,8 +77,14 @@ platform_api platform_build_api() {
 	ret.platform_capture_mouse			= &win32_capture_mouse;
 	ret.platform_release_mouse			= &win32_release_mouse;
 	ret.platform_set_cursor_pos			= &win32_set_cursor_pos;
+	ret.platform_window_focused			= &win32_window_focused;
 
 	return ret;
+}
+
+bool win32_window_focused(platform_window* win) {
+
+	return win->handle == GetFocus();
 }
 
 platform_error win32_set_cursor_pos(platform_window* win, i32 x, i32 y) {

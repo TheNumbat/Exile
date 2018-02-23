@@ -3,6 +3,7 @@
 
 platform_api   platform_build_api();
 
+bool sdl_window_focused(platform_window* win);
 void sdl_capture_mouse(platform_window* win);
 void sdl_release_mouse();
 platform_error sdl_set_cursor_pos(platform_window* win, i32 x, i32 y);

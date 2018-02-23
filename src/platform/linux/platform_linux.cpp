@@ -65,8 +65,14 @@ platform_api platform_build_api() {
 	ret.platform_capture_mouse 			= &linux_capture_mouse;
 	ret.platform_release_mouse 			= &linux_release_mouse;
 	ret.platform_set_cursor_pos			= &linux_set_cursor_pos;
+	ret.platform_window_focused			= &linux_window_focused;
 
 	return ret;
+}
+
+bool linux_window_focused(platform_window* win) {
+
+	return false;
 }
 
 platform_error linux_set_cursor_pos(platform_window* win, i32 x, i32 y) {

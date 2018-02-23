@@ -3,6 +3,7 @@
 
 platform_api   platform_build_api();
 
+bool win32_window_focused(platform_window* win);
 void win32_capture_mouse(platform_window* win);
 void win32_release_mouse();
 platform_error win32_set_cursor_pos(platform_window* win, i32 x, i32 y);

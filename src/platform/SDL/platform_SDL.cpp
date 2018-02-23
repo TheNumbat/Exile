@@ -62,8 +62,14 @@ platform_api platform_build_api() {
 	ret.platform_capture_mouse			= &sdl_capture_mouse;
 	ret.platform_release_mouse			= &sdl_release_mouse;
 	ret.platform_set_cursor_pos			= &sdl_set_cursor_pos;
+	ret.platform_window_focused 		= &sdl_window_focused;
 
 	return ret;
+}
+
+bool sdl_window_focused(platform_window* win) {
+
+	return false;
 }
 
 platform_error sdl_set_cursor_pos(platform_window* win, i32 x, i32 y) {

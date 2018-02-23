@@ -218,7 +218,7 @@ void exile::init(engine* st) { PROF
 
 	chunks = map<chunk_pos, chunk>::make(256, &alloc);
 
-	// global_api->platform_capture_mouse(&state->window);
+	global_api->platform_capture_mouse(&state->window);
 }
 
 void exile::update() { PROF
@@ -232,7 +232,9 @@ void exile::update() { PROF
 
 	gui_end();
 
-	// global_api->platform_set_cursor_pos(&state->window, state->window.w / 2, state->window.h / 2);
+	if(!state->dbg.show_ui && global_api->platform_window_focused(&state->window)) {
+		global_api->platform_set_cursor_pos(&state->window, state->window.w / 2, state->window.h / 2);
+	}
 }
 
 void exile::destroy() { PROF
@@ -342,9 +344,9 @@ CALLBACK bool default_evt_handle(void* param, platform_event evt) { PROF
 
 				game->state->dbg.toggle_ui();
 				if(game->state->dbg.show_ui) {
-					// global_api->platform_release_mouse();
+					global_api->platform_release_mouse();
 				} else {
-					// global_api->platform_capture_mouse(&game->state->window);
+					global_api->platform_capture_mouse(&game->state->window);
 				}
 			}
 		}
