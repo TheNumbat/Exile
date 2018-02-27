@@ -1,8 +1,11 @@
 
-enum class block_type : u8 {
-	air,
+enum class block_type : u16 {
+	air, 
+	stone,
 	numbat,
 };
+
+#define NUM_BLOCKS (TYPEINFO(block_type)->_enum.member_count)
 
 struct chunk_pos {
 	i32 x = 0, y = 0, z = 0;
@@ -53,7 +56,8 @@ struct exile {
 	map<chunk_pos, chunk> chunks;
 	i32 view_distance = 8;
 
-	texture_id cube_tex;
+	texture_id block_textures;
+
 	evt_handler_id default_evt = 0, camera_evt = 0, ui_evt = 0;
 
 	player p;

@@ -27,10 +27,10 @@ struct chunk_vertex {
 	u8 x = 0, z = 0;
 	u16 y_norm = 0;	
 
-	u16 t_ao = 0;
+	u16 ao_t = 0;
 	u8 u = 0, v = 0;
 
-	static chunk_vertex from_vec(v3 v, v2 uv);
+	static chunk_vertex from_vec(v3 v, v3 uv);
 };
 static_assert(sizeof(chunk_vertex) == 8, "chunk_vertex size != 8");
 
@@ -48,8 +48,8 @@ struct mesh_chunk {
 	void free_cpu();
 	void clear();
 
-	void quad(v3 p1, v3 p2, v3 p3, v3 p4, v2 uv_ext);
-	void quad16(v3 p1, v3 p2, v3 p3, v3 p4, v2 uv_ext);
+	void quad(v3 p1, v3 p2, v3 p3, v3 p4, v3 uv_ext);
+	void quad16(v3 p1, v3 p2, v3 p3, v3 p4, v3 uv_ext);
 	void cube(v3 pos, f32 len);
 };
 

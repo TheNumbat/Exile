@@ -130,6 +130,9 @@ template<typename T> inline uv3 V3u(T x, T y, T z) { MATH_PROF
 template<typename T> inline bv3 V3b(T x, T y, T z) { MATH_PROF
 	return V3((u8)x, (u8)y, (u8)z);
 }
+template<typename T> inline iv3 V3i(T x, T y, T z) { MATH_PROF
+	return V3((i32)x, (i32)y, (i32)z);
+}
 
 template<typename T> inline v4_t<T> V4(T x, T y, T z, T w) { MATH_PROF
 	v4_t<T> ret;

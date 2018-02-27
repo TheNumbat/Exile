@@ -36,18 +36,33 @@ enum class texture_wrap : u8 {
 	clamp_border,
 };
 
+struct texture_array_info {
+	iv3 dim;
+	i32 current_layer = 0;
+};
+
 struct texture {
 	texture_id id 		= 0;
 	GLuint handle 		= 0;
+	
+	gl_tex_target type 	= gl_tex_target::_2D;
 	texture_wrap wrap 	= texture_wrap::repeat;
 	bool pixelated 		= false;
+	
+	union {
+		texture_array_info array_info;
+	};
 
+	texture() : array_info() {};
 	static texture make(texture_wrap wrap, bool pixelated);
+	static texture make_array(iv3 dim, texture_wrap wrap, bool pixelated);
 	void destroy();
 
 	void load_bitmap(asset_store* as, string name);
 	void load_bitmap_from_font(asset_store* as, string name);
 	void load_bitmap_from_font(asset* font);
+
+	void set_params();
 };
 
 struct draw_context {
@@ -91,6 +106,9 @@ struct ogl_manager {
 
 	void add_command(render_command_type type, _FPTR* buffers, _FPTR* run, string v, string f, _FPTR* uniforms, _FPTR* compat);
 	draw_context* get_command_ctx(render_command_type type);
+
+	texture_id begin_tex_array(iv3 dim, texture_wrap wrap = texture_wrap::repeat, bool pixelated = false, u32 offset = 0);
+	void push_tex_array(texture_id tex, asset_store* as, string name);
 
 	texture_id add_texture(asset_store* as, string name, texture_wrap wrap = texture_wrap::repeat, bool pixelated = false);
 	texture* select_texture(texture_id id);

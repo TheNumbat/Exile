@@ -16,7 +16,7 @@ font {
 }
 image {
 	name : numbat,
-	file : numbat.png,
+	file : numbat32.png,
 }
 image {
 	name : stone,

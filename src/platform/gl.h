@@ -656,6 +656,8 @@ DLL_IMPORT void glTexParameteri(gl_tex_target target, gl_tex_param pname, GLint 
 DLL_IMPORT void glTexParameterfv(gl_tex_target target, gl_tex_param pname, const GLfloat *params);
 DLL_IMPORT void glTexImage2D(gl_tex_target target, GLint level, gl_tex_format internalformat, GLsizei width, GLsizei height, GLint border, gl_pixel_data_format format, gl_pixel_data_type type, const GLvoid *pixels);
 DLL_IMPORT void glTexParameteriv(gl_tex_target target, gl_tex_param pname, const GLint *params);
+DLL_IMPORT void glBindTexture(gl_tex_target target, GLuint handle);
+DLL_IMPORT void glGenTextures(GLsizei n, GLuint* textures);
 
 DLL_IMPORT void glBlendFunc(gl_blend_factor sfactor, gl_blend_factor dfactor);
 
@@ -716,6 +718,8 @@ typedef void (*glGenerateMipmap_t)(gl_tex_target target);
 typedef void (*glActiveTexture_t)(GLenum texture);
 typedef void (*glCreateTextures_t)(gl_tex_target target, GLsizei n, GLuint *textures);
 typedef void (*glBindTextureUnit_t)(GLuint unit, GLuint texture);
+typedef void (*glTexStorage3D_t)(gl_tex_target target, GLsizei levels, gl_tex_format format, GLsizei w, GLsizei h, GLsizei z);
+typedef void (*glTexSubImage3D_t)(gl_tex_target target, GLint level, GLint xoff, GLint yoff, GLint zoff, GLsizei w, GLsizei h, GLsizei z, gl_pixel_data_format format, gl_pixel_data_type type, void* data);
 
 typedef void (*glBindVertexArray_t)(GLuint array);
 typedef void (*glDeleteVertexArrays_t)(GLsizei n, const GLuint *arrays);
@@ -779,6 +783,8 @@ glActiveTexture_t			glActiveTexture;
 glCreateTextures_t			glCreateTextures;
 glBindTextureUnit_t			glBindTextureUnit;
 glTexParameterIiv_t 		glTexParameterIiv;
+glTexStorage3D_t 			glTexStorage3D;
+glTexSubImage3D_t			glTexSubImage3D;
 
 glBindVertexArray_t    		glBindVertexArray; 		
 glDeleteVertexArrays_t 		glDeleteVertexArrays;

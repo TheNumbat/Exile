@@ -279,6 +279,42 @@ texture_id ogl_manager::add_texture(asset_store* as, string name, texture_wrap w
 	return next_texture_id - 1;
 }
 
+texture_id ogl_manager::begin_tex_array(iv3 dim, texture_wrap wrap, bool pixelated, u32 offset) { PROF
+
+	texture t = texture::make_array(dim, wrap, pixelated);
+	t.id = next_texture_id;
+	t.array_info.current_layer = offset;
+
+	textures.insert(next_texture_id, t);
+
+	LOG_DEBUG_F("Created texture array %", next_texture_id);
+
+	next_texture_id++;
+	return next_texture_id - 1;
+}
+
+void ogl_manager::push_tex_array(texture_id tex, asset_store* as, string name) { PROF
+
+	texture* t = textures.try_get(tex);
+	asset* a = as->get(name);
+
+	LOG_DEBUG_ASSERT(t);
+	LOG_DEBUG_ASSERT(a);
+	LOG_DEBUG_ASSERT(a->type == asset_type::bitmap);
+	LOG_DEBUG_ASSERT(t->type == gl_tex_target::_2D_array);
+	LOG_DEBUG_ASSERT(t->array_info.dim.x == a->bitmap.width && t->array_info.dim.y == a->bitmap.height && t->array_info.dim.z != 0);
+	LOG_DEBUG_ASSERT(t->array_info.current_layer < t->array_info.dim.z);
+
+	glBindTexture(gl_tex_target::_2D_array, t->handle);
+
+	glTexSubImage3D(gl_tex_target::_2D_array, 0, 0, 0, t->array_info.current_layer, a->bitmap.width, a->bitmap.height, 1, gl_pixel_data_format::rgba, gl_pixel_data_type::unsigned_byte, a->mem);
+	t->array_info.current_layer++;
+
+	glBindTexture(gl_tex_target::_2D_array, 0);
+
+	return;
+}
+
 void ogl_manager::destroy_texture(texture_id id) { PROF
 
 	texture* t = textures.try_get(id);
@@ -304,7 +340,7 @@ texture* ogl_manager::select_texture(texture_id id) { PROF
 		return null;
 	}
 	
-	glBindTextureUnit(0, t->handle);
+	glBindTexture(t->type, t->handle);
 
 	return t;
 }
@@ -313,51 +349,79 @@ texture texture::make(texture_wrap wrap, bool pixelated) { PROF
 
 	texture ret;
 
+	ret.type = gl_tex_target::_2D;
 	ret.wrap = wrap;
 	ret.pixelated = pixelated;
-	glCreateTextures(gl_tex_target::_2D, 1, &ret.handle);
+	glGenTextures(1, &ret.handle);
 
-	glBindTextureUnit(0, ret.handle);
-	
-	switch(wrap) {
-	case texture_wrap::repeat:
-		glTexParameteri(gl_tex_target::_2D, gl_tex_param::wrap_s, (GLint)gl_tex_wrap::repeat);
-		glTexParameteri(gl_tex_target::_2D, gl_tex_param::wrap_t, (GLint)gl_tex_wrap::repeat);
-		break;
-	case texture_wrap::mirror:
-		glTexParameteri(gl_tex_target::_2D, gl_tex_param::wrap_s, (GLint)gl_tex_wrap::mirrored_repeat);
-		glTexParameteri(gl_tex_target::_2D, gl_tex_param::wrap_t, (GLint)gl_tex_wrap::mirrored_repeat);
-		break;
-	case texture_wrap::clamp:
-		glTexParameteri(gl_tex_target::_2D, gl_tex_param::wrap_s, (GLint)gl_tex_wrap::clamp_to_edge);
-		glTexParameteri(gl_tex_target::_2D, gl_tex_param::wrap_t, (GLint)gl_tex_wrap::clamp_to_edge);
-		break;
-	case texture_wrap::clamp_border:
-		glTexParameteri(gl_tex_target::_2D, gl_tex_param::wrap_s, (GLint)gl_tex_wrap::clamp_to_border);
-		glTexParameteri(gl_tex_target::_2D, gl_tex_param::wrap_t, (GLint)gl_tex_wrap::clamp_to_border);
-		f32 borderColor[] = { 0.0f, 0.0f, 0.0f, 1.0f };
-		glTexParameterfv(gl_tex_target::_2D, gl_tex_param::border_color, borderColor);  
-		break;
-	}
-
-	if(pixelated) {
-		glTexParameteri(gl_tex_target::_2D, gl_tex_param::min_filter, (GLint)gl_tex_filter::nearest);
-		glTexParameteri(gl_tex_target::_2D, gl_tex_param::mag_filter, (GLint)gl_tex_filter::nearest);
-	} else {
-		glTexParameteri(gl_tex_target::_2D, gl_tex_param::min_filter, (GLint)gl_tex_filter::linear_mipmap_linear);
-		glTexParameteri(gl_tex_target::_2D, gl_tex_param::mag_filter, (GLint)gl_tex_filter::linear);
-	}
-
-	glBindTextureUnit(0, 0);
+	ret.set_params();
 
 	return ret;
 }
 
+texture texture::make_array(iv3 dim, texture_wrap wrap, bool pixelated) { PROF
+
+	texture ret;
+
+	ret.type = gl_tex_target::_2D_array;
+	ret.wrap = wrap;
+	ret.pixelated = pixelated;
+	ret.array_info.dim = dim;
+
+	glGenTextures(1, &ret.handle);
+
+	glBindTexture(gl_tex_target::_2D_array, ret.handle);
+	glTexStorage3D(gl_tex_target::_2D_array, 1, gl_tex_format::rgba8, dim.x, dim.y, dim.z);
+	glBindTexture(gl_tex_target::_2D_array, 0);
+
+	ret.set_params();
+
+	return ret;
+}
+
+void texture::set_params() { PROF
+
+	glBindTexture(type, handle);
+
+	switch(wrap) {
+	case texture_wrap::repeat:
+		glTexParameteri(type, gl_tex_param::wrap_s, (GLint)gl_tex_wrap::repeat);
+		glTexParameteri(type, gl_tex_param::wrap_t, (GLint)gl_tex_wrap::repeat);
+		break;
+	case texture_wrap::mirror:
+		glTexParameteri(type, gl_tex_param::wrap_s, (GLint)gl_tex_wrap::mirrored_repeat);
+		glTexParameteri(type, gl_tex_param::wrap_t, (GLint)gl_tex_wrap::mirrored_repeat);
+		break;
+	case texture_wrap::clamp:
+		glTexParameteri(type, gl_tex_param::wrap_s, (GLint)gl_tex_wrap::clamp_to_edge);
+		glTexParameteri(type, gl_tex_param::wrap_t, (GLint)gl_tex_wrap::clamp_to_edge);
+		break;
+	case texture_wrap::clamp_border:
+		glTexParameteri(type, gl_tex_param::wrap_s, (GLint)gl_tex_wrap::clamp_to_border);
+		glTexParameteri(type, gl_tex_param::wrap_t, (GLint)gl_tex_wrap::clamp_to_border);
+		f32 borderColor[] = { 0.0f, 0.0f, 0.0f, 1.0f };
+		glTexParameterfv(type, gl_tex_param::border_color, borderColor);  
+		break;
+	}
+
+	if(pixelated) {
+		glTexParameteri(type, gl_tex_param::min_filter, (GLint)gl_tex_filter::nearest);
+		glTexParameteri(type, gl_tex_param::mag_filter, (GLint)gl_tex_filter::nearest);
+	} else {
+		glTexParameteri(type, gl_tex_param::min_filter, (GLint)gl_tex_filter::linear_mipmap_linear);
+		glTexParameteri(type, gl_tex_param::mag_filter, (GLint)gl_tex_filter::linear);
+	}
+
+	glBindTexture(type, 0);
+}
+
 void texture::load_bitmap_from_font(asset* font) { PROF
 
+	LOG_DEBUG_ASSERT(font);
 	LOG_DEBUG_ASSERT(font->type == asset_type::font);
+	LOG_DEBUG_ASSERT(type == gl_tex_target::_2D);
 
-	glBindTextureUnit(0, handle);
+	glBindTexture(type, handle);
 
 	glTexImage2D(gl_tex_target::_2D, 0, gl_tex_format::rgba8, font->font.width, font->font.height, 0, gl_pixel_data_format::red, gl_pixel_data_type::unsigned_byte, font->mem);
 	gl_tex_swizzle swizzle[] = {gl_tex_swizzle::red, gl_tex_swizzle::red, gl_tex_swizzle::red, gl_tex_swizzle::red};
@@ -365,16 +429,18 @@ void texture::load_bitmap_from_font(asset* font) { PROF
 
 	glGenerateMipmap(gl_tex_target::_2D);
 
-	glBindTextureUnit(0, 0);
+	glBindTexture(type, 0);
 }
 
 void texture::load_bitmap_from_font(asset_store* as, string name) { PROF
 
 	asset* a = as->get(name);
 
+	LOG_DEBUG_ASSERT(a);
 	LOG_DEBUG_ASSERT(a->type == asset_type::font);
+	LOG_DEBUG_ASSERT(type == gl_tex_target::_2D);
 
-	glBindTextureUnit(0, handle);
+	glBindTexture(type, handle);
 
 	glTexImage2D(gl_tex_target::_2D, 0, gl_tex_format::rgba8, a->font.width, a->font.height, 0, gl_pixel_data_format::red, gl_pixel_data_type::unsigned_byte, a->mem);
 	gl_tex_swizzle swizzle[] = {gl_tex_swizzle::red, gl_tex_swizzle::red, gl_tex_swizzle::red, gl_tex_swizzle::red};
@@ -382,22 +448,24 @@ void texture::load_bitmap_from_font(asset_store* as, string name) { PROF
 
 	glGenerateMipmap(gl_tex_target::_2D);
 
-	glBindTextureUnit(0, 0);
+	glBindTexture(type, 0);
 }
 
 void texture::load_bitmap(asset_store* as, string name) { PROF
 
 	asset* a = as->get(name);
 
+	LOG_DEBUG_ASSERT(a);
 	LOG_DEBUG_ASSERT(a->type == asset_type::bitmap);
+	LOG_DEBUG_ASSERT(type == gl_tex_target::_2D);
 
-	glBindTextureUnit(0, handle);
+	glBindTexture(type, handle);
 
 	glTexImage2D(gl_tex_target::_2D, 0, gl_tex_format::rgba8, a->bitmap.width, a->bitmap.height, 0, gl_pixel_data_format::rgba, gl_pixel_data_type::unsigned_byte, a->mem);
 	
 	glGenerateMipmap(gl_tex_target::_2D);
 
-	glBindTextureUnit(0, 0);
+	glBindTexture(type, 0);
 }
 
 void texture::destroy() { PROF
@@ -601,10 +669,11 @@ ogl_info ogl_info::make(allocator* a) { PROF
 	
 	ret.shader_version = string::from_c_str((char*)glGetString(gl_info::shading_language_version));
 	
-	ret.extensions = vector<string>::make(128, a);
 
 	i32 num_extensions = 0;
 	glGetIntegerv(gl_get::num_extensions, &num_extensions);
+
+	ret.extensions = vector<string>::make(num_extensions, a);
 
 	for(i32 i = 0; i < num_extensions; i++) {
 
@@ -685,6 +754,8 @@ void ogl_manager::load_global_funcs() { PROF
 	GL_LOAD(glDrawElementsInstancedBaseVertex);
 	GL_LOAD(glVertexAttribDivisor);
 	GL_LOAD(glVertexAttribIPointer);
+	GL_LOAD(glTexStorage3D);
+	GL_LOAD(glTexSubImage3D);
 
 	GL_LOAD(glGetStringi);
 	GL_LOAD(glGetInteger64v);

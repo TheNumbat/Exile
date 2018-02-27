@@ -199,6 +199,7 @@ template<typename T> inline uv2 V2u(T x, T y);
 template<typename T> inline v3_t<T> V3(T x, T y, T z);
 template<typename T> inline v3 V3f(T x, T y, T z);
 template<typename T> inline uv3 V3u(T x, T y, T z);
+template<typename T> inline iv3 V3i(T x, T y, T z);
 template<typename T> inline bv3 V3b(T x, T y, T z);
 template<typename T> inline v4_t<T> V4(T x, T y, T z, T w);
 template<typename T> inline bv4 V4b(T x, T y, T z, T w);

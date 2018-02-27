@@ -64,7 +64,10 @@ void chunk::gen() { PROF
 			f32 val = stb_perlin_noise3(fx / 8.0f, 0, fz / 8.0f, 0, 0, 0);
 			u32 height = (u32)(val * ysz / 2.0f + ysz / 2.0f);
 			
-			for(u32 y = 0; y < height; y++) {
+			for(u32 y = 0; y < height - 2; y++) {
+				blocks[x][z][y] = block_type::stone;
+			}
+			for(u32 y = height - 2; y < height; y++) {
 				blocks[x][z][y] = block_type::numbat;
 			}
 		}
@@ -169,22 +172,22 @@ void chunk::build_data() { PROF
 					// emit quad
 					switch (i) {
 					case 0: // -X
-						mesh.quad16(v, v + V3(w[0], w[1], w[2]), v + V3(h[0], h[1], h[2]), v + V3(w[0] + h[0], w[1] + h[1], w[2] + h[2]), V2f(width, height));
+						mesh.quad16(v, v + V3(w[0], w[1], w[2]), v + V3(h[0], h[1], h[2]), v + V3(w[0] + h[0], w[1] + h[1], w[2] + h[2]), V3f(width, height, (i32)type));
 						break;
 					case 1: // -Y
-						mesh.quad16(v, v + V3(w[0], w[1], w[2]), v + V3(h[0], h[1], h[2]), v + V3(w[0] + h[0], w[1] + h[1], w[2] + h[2]), V2f(width, height));
+						mesh.quad16(v, v + V3(w[0], w[1], w[2]), v + V3(h[0], h[1], h[2]), v + V3(w[0] + h[0], w[1] + h[1], w[2] + h[2]), V3f(width, height, (i32)type));
 						break;
 					case 2: // -Z
-						mesh.quad16(v + V3(h[0], h[1], h[2]), v, v + V3(w[0] + h[0], w[1] + h[1], w[2] + h[2]), v + V3(w[0], w[1], w[2]), V2f(height, width));
+						mesh.quad16(v + V3(h[0], h[1], h[2]), v, v + V3(w[0] + h[0], w[1] + h[1], w[2] + h[2]), v + V3(w[0], w[1], w[2]), V3f(height, width, (i32)type));
 						break;
 					case 3: // +X
-						mesh.quad16(v + V3(w[0], w[1], w[2]), v, v + V3(w[0] + h[0], w[1] + h[1], w[2] + h[2]), v + V3(h[0], h[1], h[2]), V2f(width, height));
+						mesh.quad16(v + V3(w[0], w[1], w[2]), v, v + V3(w[0] + h[0], w[1] + h[1], w[2] + h[2]), v + V3(h[0], h[1], h[2]), V3f(width, height, (i32)type));
 						break;
 					case 4: // +Y
-						mesh.quad16(v + V3(h[0], h[1], h[2]), v + V3(w[0] + h[0], w[1] + h[1], w[2] + h[2]), v, v + V3(w[0], w[1], w[2]), V2f(width, height));
+						mesh.quad16(v + V3(h[0], h[1], h[2]), v + V3(w[0] + h[0], w[1] + h[1], w[2] + h[2]), v, v + V3(w[0], w[1], w[2]), V3f(width, height, (i32)type));
 						break;
 					case 5: // +Z
-						mesh.quad16(v, v + V3(h[0], h[1], h[2]), v + V3(w[0], w[1], w[2]), v + V3(w[0] + h[0], w[1] + h[1], w[2] + h[2]), V2f(height, width));
+						mesh.quad16(v, v + V3(h[0], h[1], h[2]), v + V3(w[0], w[1], w[2]), v + V3(w[0] + h[0], w[1] + h[1], w[2] + h[2]), V3f(height, width, (i32)type));
 						break;
 					}
 
@@ -211,7 +214,9 @@ void exile::init(engine* st) { PROF
 
 	p.init();
 
-	cube_tex = state->ogl.add_texture(&state->default_store, "stone"_, texture_wrap::repeat, true);
+	block_textures = state->ogl.begin_tex_array(V3i(32, 32, (i32)NUM_BLOCKS), texture_wrap::repeat, true, 1);
+	state->ogl.push_tex_array(block_textures, &state->default_store, "stone"_);
+	state->ogl.push_tex_array(block_textures, &state->default_store, "numbat"_);
 
 	default_evt = state->evt.add_handler(FPTR(default_evt_handle), this);
 	camera_evt = state->evt.add_handler(FPTR(camera_evt_handle), this);
@@ -296,7 +301,7 @@ void exile::render() { PROF
 
 			render_command cmd = render_command::make(render_command_type::mesh_chunk, &c->mesh);
 					
-			cmd.texture = cube_tex;
+			cmd.texture = block_textures;
 			cmd.model = translate(V3f(current.x * chunk::xsz, current.y * chunk::ysz, current.z * chunk::zsz));
 
 			rcl.add_command(cmd);

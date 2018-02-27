@@ -7,9 +7,9 @@ in vec2 f_uv;
 
 out vec4 color;
 
-uniform sampler2D tex;
+uniform sampler2DArray tex;
 
 void main() {
 
-	color = texture(tex, f_uv);
+	color = texture(tex, vec3(f_uv, f_t));
 }
