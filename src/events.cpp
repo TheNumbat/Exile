@@ -136,6 +136,12 @@ void evt_state_machine::rem_state(evt_state_id id) { PROF
 	}
 
 	states.erase(id);
+
+	FORMAP(it, transitions) {
+		if(it->key.from == id || it->key.to == id) {
+			transitions.erase(it->key);
+		}
+	}
 }
 
 void evt_state_machine::set_state(evt_state_id id) { PROF

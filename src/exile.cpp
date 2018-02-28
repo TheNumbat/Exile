@@ -229,7 +229,7 @@ void exile::init(engine* st) { PROF
 	
 		controls.add_transition(camera_evt, ui_evt, FPTR(camera_to_ui), this);
 		controls.add_transition(ui_evt, camera_evt, FPTR(ui_to_camera), this);
-
+		
 		controls.set_state(camera_evt);
 		global_api->platform_capture_mouse(&state->window);
 	}
