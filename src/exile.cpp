@@ -214,16 +214,29 @@ void exile::init(engine* st) { PROF
 
 	p.init();
 
-	block_textures = state->ogl.begin_tex_array(V3i(32, 32, (i32)NUM_BLOCKS), texture_wrap::repeat, true, 1);
-	state->ogl.push_tex_array(block_textures, &state->default_store, "stone"_);
-	state->ogl.push_tex_array(block_textures, &state->default_store, "numbat"_);
+	{
+		block_textures = state->ogl.begin_tex_array(V3i(32, 32, (i32)NUM_BLOCKS), texture_wrap::repeat, true, 1);
+		state->ogl.push_tex_array(block_textures, &state->default_store, "stone"_);
+		state->ogl.push_tex_array(block_textures, &state->default_store, "numbat"_);
+	}
+	{
+		default_evt = state->evt.add_handler(FPTR(default_evt_handle), this);
+	
+		controls = evt_state_machine::make(&st->evt, &alloc);
+	
+		camera_evt = controls.add_state(FPTR(camera_evt_handle), this);
+		ui_evt = controls.add_state(FPTR(ui_evt_handle), this);
+	
+		controls.add_transition(camera_evt, ui_evt, FPTR(camera_to_ui), this);
+		controls.add_transition(ui_evt, camera_evt, FPTR(ui_to_camera), this);
 
-	default_evt = state->evt.add_handler(FPTR(default_evt_handle), this);
-	camera_evt = state->evt.add_handler(FPTR(camera_evt_handle), this);
+		controls.set_state(camera_evt);
+		global_api->platform_capture_mouse(&state->window);
+	}
 
-	chunks = map<chunk_pos, chunk>::make(256, &alloc);
-
-	global_api->platform_capture_mouse(&state->window);
+	{
+		chunks = map<chunk_pos, chunk>::make(256, &alloc);
+	}
 }
 
 void exile::update() { PROF
@@ -246,10 +259,7 @@ void exile::destroy() { PROF
 
 	state->evt.rem_handler(default_evt);
 
-	if(camera_evt)
-		state->evt.rem_handler(camera_evt);
-	if(ui_evt)
-		state->evt.rem_handler(ui_evt);
+	controls.destroy();
 
 	FORMAP(it, chunks) {
 		it->value.destroy();
@@ -377,6 +387,22 @@ CALLBACK bool default_evt_handle(void* param, platform_event evt) { PROF
 	return false;
 }
 
+CALLBACK void camera_to_ui(void* param) { PROF
+
+	exile* game = (exile*)param;
+
+	game->state->dbg.show_ui = true;
+	global_api->platform_release_mouse();
+}
+
+CALLBACK void ui_to_camera(void* param) { PROF
+
+	exile* game = (exile*)param;
+
+	game->state->dbg.show_ui = false;
+	global_api->platform_capture_mouse(&game->state->window);
+}
+
 CALLBACK bool camera_evt_handle(void* param, platform_event evt) { PROF
 
 	exile* game = (exile*)param;
@@ -390,14 +416,7 @@ CALLBACK bool camera_evt_handle(void* param, platform_event evt) { PROF
 
 			case platform_keycode::grave: {
 
-				// TODO(max): real event state machine 
-				game->state->evt.rem_handler(game->camera_evt);
-				game->camera_evt = 0;
-
-				game->ui_evt = game->state->evt.add_handler(FPTR(ui_evt_handle), param);
-				game->state->dbg.show_ui = true;
-
-				global_api->platform_release_mouse();
+				game->controls.transition(game->ui_evt);
 
 			} return true;
 
@@ -423,13 +442,7 @@ CALLBACK bool camera_evt_handle(void* param, platform_event evt) { PROF
 
 		if(evt.window.op == platform_windowop::unfocused) {
 
-			game->state->evt.rem_handler(game->camera_evt);
-			game->camera_evt = 0;
-
-			game->ui_evt = game->state->evt.add_handler(FPTR(ui_evt_handle), param);
-			game->state->dbg.show_ui = true;
-
-			global_api->platform_release_mouse();
+			game->controls.transition(game->ui_evt);
 		}
 	}
 
@@ -448,13 +461,7 @@ CALLBACK bool ui_evt_handle(void* param, platform_event evt) { PROF
 
 			case platform_keycode::grave: {
 
-				game->state->evt.rem_handler(game->ui_evt);
-				game->ui_evt = 0;
-
-				game->camera_evt = game->state->evt.add_handler(FPTR(camera_evt_handle), param);
-				game->state->dbg.show_ui = false;
-
-				global_api->platform_capture_mouse(&game->state->window);
+				game->controls.transition(game->camera_evt);
 
 			} return true;
 

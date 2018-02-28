@@ -76,6 +76,7 @@
 #include <stb/stb_perlin.h>
 
 #include "util/basic_types.h"
+#include "util/templ.h"
 #include "math.h"
 
 #include "ds/string.h"
