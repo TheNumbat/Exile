@@ -27,6 +27,7 @@ all includes:
 priority:
 	!!! fix bugs !!!
 
+	event state machine
 	job out meshing	
 	lighting/AO
 	

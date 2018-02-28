@@ -45,7 +45,7 @@ struct player {
 	platform_perfcount last = 0;
 
 	void init();
-	void update(platform_perfcount now);
+	void update(engine* state, platform_perfcount now);
 };
 
 struct exile {

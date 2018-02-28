@@ -233,7 +233,7 @@ void exile::update() { PROF
 	gui_begin("Exile"_, R2(50.0f, 50.0f, 350.0f, 100.0f));
 	gui_int_slider(string::makef("view: % "_, view_distance), &view_distance, 0, 32);
 
-	p.update(now);
+	p.update(state, now);
 
 	gui_end();
 
@@ -322,33 +322,36 @@ void player::init() { PROF
 	camera.reset();
 }
 
-void player::update(platform_perfcount now) { PROF
+void player::update(engine* state, platform_perfcount now) { PROF
 
 	platform_perfcount pdt = now - last;
 	f32 dt = (f32)pdt / (f32)global_api->platform_get_perfcount_freq();
 
-	velocity = V3(0.0f, 0.0f, 0.0f);
-	if(global_api->platform_keydown(platform_keycode::w)) {
-		velocity += camera.front * speed;
-	}
-	if(global_api->platform_keydown(platform_keycode::a)) {
-		velocity += camera.right * -speed;
-	}
-	if(global_api->platform_keydown(platform_keycode::s)) {
-		velocity += camera.front * -speed;
-	}
-	if(global_api->platform_keydown(platform_keycode::d)) {
-		velocity += camera.right * speed;
-	}
-	if(global_api->platform_keydown(platform_keycode::space)) {
-		velocity.y += speed;
-	}
-	if(global_api->platform_keydown(platform_keycode::lshift)) {
-		velocity.y += -speed;
-	}
+	if(global_api->platform_window_focused(&state->window)) {
 
-	camera.pos += velocity * dt;
-	camera.update();
+		velocity = V3(0.0f, 0.0f, 0.0f);
+		if(global_api->platform_keydown(platform_keycode::w)) {
+			velocity += camera.front * speed;
+		}
+		if(global_api->platform_keydown(platform_keycode::a)) {
+			velocity += camera.right * -speed;
+		}
+		if(global_api->platform_keydown(platform_keycode::s)) {
+			velocity += camera.front * -speed;
+		}
+		if(global_api->platform_keydown(platform_keycode::d)) {
+			velocity += camera.right * speed;
+		}
+		if(global_api->platform_keydown(platform_keycode::space)) {
+			velocity.y += speed;
+		}
+		if(global_api->platform_keydown(platform_keycode::lshift)) {
+			velocity.y += -speed;
+		}
+
+		camera.pos += velocity * dt;
+		camera.update();
+	}
 
 	gui_text(string::makef("pos: %"_, camera.pos));
 	gui_text(string::makef("vel: %"_, velocity));
@@ -387,6 +390,7 @@ CALLBACK bool camera_evt_handle(void* param, platform_event evt) { PROF
 
 			case platform_keycode::grave: {
 
+				// TODO(max): real event state machine 
 				game->state->evt.rem_handler(game->camera_evt);
 				game->camera_evt = 0;
 
@@ -412,6 +416,20 @@ CALLBACK bool camera_evt_handle(void* param, platform_event evt) { PROF
 			p.camera.move(dx, dy, 0.1f);
 
 			return true;
+		}
+	}
+
+	else if(evt.type == platform_event_type::window) {
+
+		if(evt.window.op == platform_windowop::unfocused) {
+
+			game->state->evt.rem_handler(game->camera_evt);
+			game->camera_evt = 0;
+
+			game->ui_evt = game->state->evt.add_handler(FPTR(ui_evt_handle), param);
+			game->state->dbg.show_ui = true;
+
+			global_api->platform_release_mouse();
 		}
 	}
 
