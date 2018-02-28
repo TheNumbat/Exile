@@ -30,8 +30,8 @@ using namespace std;
 
 #define BUILDER
 
-#include "../util/basic_types.h"
-#include "../asset.h"
+#include "../engine/util/basic_types.h"
+#include "../engine/asset.h"
 
 struct def_asset_image {
 	string name;

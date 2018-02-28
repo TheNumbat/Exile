@@ -22,9 +22,14 @@ if not exist w:\build\asset.exe (
 	cl %Asset_CompilerFlags% w:\src\tools\asset_builder.cpp /link %Asset_LinkerFlags%
 )
 
-if not exist w:\data\assets\assets.asset (
+if not exist w:\data\assets\game.asset (
 	echo running asset builder...
-	asset.exe w:\data\assets\store.txt w:\data\assets\assets.asset
+	asset.exe w:\data\assets\game.txt w:\data\assets\game.asset
+)
+
+if not exist w:\data\assets\engine.asset (
+	echo running asset builder...
+	asset.exe w:\data\assets\engine.txt w:\data\assets\engine.asset
 )
 
 if not exist w:\build\meta.exe (
@@ -41,7 +46,7 @@ cl %Game_CompilerFlags% w:\src\compile.cpp /link %Game_LinkerFlags%
 
 if not exist w:\build\main.exe (
 	echo compiling platform layer...
-	cl %Platform_CompilerFlags% w:\src\platform\platform_main.cpp /link %Platform_LinkerFlags%
+	cl %Platform_CompilerFlags% w:\src\engine\platform\platform_main.cpp /link %Platform_LinkerFlags%
 )
 
 popd

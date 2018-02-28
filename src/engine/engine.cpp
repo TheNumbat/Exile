@@ -3,6 +3,7 @@ EXPORT engine* start_up(platform_api* api) {
 
 	engine* state = new(api->platform_heap_alloc(sizeof(engine))) engine;
 	state->func_state.this_dll = api->your_dll;
+	state->platform = api;
 
 	global_api  = api;
 	global_log  = &state->log;
@@ -57,10 +58,9 @@ EXPORT engine* start_up(platform_api* api) {
 
 	job_id assets = state->thread_pool.queue_job([](void* s) -> job_callback {
 		engine* state = (engine*)s;
-		LOG_INFO("Setting up asset system...");
-		state->default_store_a = MAKE_PLATFORM_ALLOCATOR("asset");
-		state->default_store = asset_store::make(&state->default_store_a);
-		state->default_store.load("assets/assets.asset"_);
+		LOG_INFO("Setting up default assets...");
+		state->default_store = asset_store::make(&state->default_platform_allocator);
+		state->default_store.load("assets/engine.asset"_);
 		return null;
 	}, state);
 
@@ -80,7 +80,7 @@ EXPORT engine* start_up(platform_api* api) {
 	state->gui.register_events(&state->evt);
 
 	LOG_INFO("Setting up game...");
-	state->game.init(state);
+	state->game_state = start_up_game(state);
 
 	LOG_INFO("Done with startup!");
 	LOG_POP_CONTEXT();
@@ -104,8 +104,7 @@ EXPORT bool main_loop(engine* state) {
 		
 		state->gui.begin_frame();
 		
-		state->game.update();
-		state->game.render();
+		run_game(state->game_state);
 
 		state->dbg.UI();
 
@@ -119,7 +118,7 @@ EXPORT bool main_loop(engine* state) {
 #ifndef RELEASE
 	state->ogl.try_reload_programs();
 	if(state->default_store.try_reload()) {
-		// state->gui.reload_fonts(&state->ogl);
+		state->gui.reload_fonts(&state->ogl);
 	}
 #endif
 
@@ -134,7 +133,7 @@ EXPORT void shut_down(engine* state) {
 	LOG_INFO("Beginning shutdown...");
 
 	LOG_DEBUG("Destroying game...");
-	state->game.destroy();
+	shut_down_game(state->game_state);
 
 	LOG_DEBUG("Destroying asset system");
 	state->default_store.destroy();
@@ -178,7 +177,6 @@ EXPORT void shut_down(engine* state) {
 	state->evt_a.destroy();
 	state->thread_pool_a.destroy();
 	state->suppressed_platform_allocator.destroy();
-	state->default_store_a.destroy();
 	state->default_platform_allocator.destroy();
 
 	global_log = null;
@@ -207,6 +205,8 @@ EXPORT void on_reload(platform_api* api, engine* state) {
 	state->thread_pool.start_all();
 
 	LOG_INFO("End reloading game code");
+
+	reload_game(state, state->game_state);
 }
 
 EXPORT void on_unload(engine* state) {

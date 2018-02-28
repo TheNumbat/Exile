@@ -1,0 +1,8 @@
+image {
+	name : numbat,
+	file : numbat32.png,
+}
+image {
+	name : stone,
+	file : stone.png,
+}

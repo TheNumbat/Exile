@@ -14,11 +14,4 @@ font {
 	file : mono.ttf,
 	range : 32, 126,
 }
-image {
-	name : numbat,
-	file : numbat32.png,
-}
-image {
-	name : stone,
-	file : stone.png,
-}
+
