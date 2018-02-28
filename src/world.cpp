@@ -97,27 +97,27 @@ void player::init() { PROF
 void player::update(platform_perfcount now) { PROF
 
 	platform_perfcount pdt = now - last;
-	f32 dt = (f32)pdt / (f32)eng->platform->platform_get_perfcount_freq();
+	f32 dt = (f32)pdt / (f32)eng->platform->get_perfcount_freq();
 
-	if(eng->platform->platform_window_focused(&eng->window)) {
+	if(eng->platform->window_focused(&eng->window)) {
 
 		velocity = V3(0.0f, 0.0f, 0.0f);
-		if(eng->platform->platform_keydown(platform_keycode::w)) {
+		if(eng->platform->keydown(platform_keycode::w)) {
 			velocity += camera.front * speed;
 		}
-		if(eng->platform->platform_keydown(platform_keycode::a)) {
+		if(eng->platform->keydown(platform_keycode::a)) {
 			velocity += camera.right * -speed;
 		}
-		if(eng->platform->platform_keydown(platform_keycode::s)) {
+		if(eng->platform->keydown(platform_keycode::s)) {
 			velocity += camera.front * -speed;
 		}
-		if(eng->platform->platform_keydown(platform_keycode::d)) {
+		if(eng->platform->keydown(platform_keycode::d)) {
 			velocity += camera.right * speed;
 		}
-		if(eng->platform->platform_keydown(platform_keycode::space)) {
+		if(eng->platform->keydown(platform_keycode::space)) {
 			velocity.y += speed;
 		}
-		if(eng->platform->platform_keydown(platform_keycode::lshift)) {
+		if(eng->platform->keydown(platform_keycode::lshift)) {
 			velocity.y += -speed;
 		}
 

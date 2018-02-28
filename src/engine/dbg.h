@@ -20,13 +20,13 @@
 #define BEGIN_FRAME() { \
 	dbg_msg msg; \
 	msg.type = dbg_msg_type::begin_frame; \
-	msg.begin_frame.perf = global_api->platform_get_perfcount(); \
+	msg.begin_frame.perf = global_api->get_perfcount(); \
 	POST_MSG(msg); \
 }
 #define END_FRAME() { \
 	dbg_msg msg; \
 	msg.type = dbg_msg_type::end_frame; \
-	msg.end_frame.perf = global_api->platform_get_perfcount(); \
+	msg.end_frame.perf = global_api->get_perfcount(); \
 	POST_MSG(msg); \
 	global_dbg->collate(); \
 }

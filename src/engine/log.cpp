@@ -5,8 +5,8 @@ log_manager log_manager::make(allocator* a) { PROF
 
 	ret.out = vector<log_out>::make(4, a);
 	ret.message_queue = locking_queue<log_message>::make(32, a);
-	CHECKED(platform_create_semaphore, &ret.logging_semaphore, 0, INT32_MAX);
-	global_api->platform_create_mutex(&ret.output_mut, false);
+	CHECKED(create_semaphore, &ret.logging_semaphore, 0, INT32_MAX);
+	global_api->create_mutex(&ret.output_mut, false);
 
 	ret.alloc = a;
 	ret.scratch = MAKE_ARENA("log scratch"_, MEGABYTES(1), a, true);
@@ -24,16 +24,16 @@ void log_manager::start() { PROF
 	thread_param.scratch			= &scratch;
 	thread_param.output_mut 		= &output_mut;
 
-	CHECKED(platform_create_thread, &logging_thread, &log_proc, &thread_param, false);
+	CHECKED(create_thread, &logging_thread, &log_proc, &thread_param, false);
 }
 
 void log_manager::stop() { PROF
 
 	thread_param.running = false;
 
-	CHECKED(platform_signal_semaphore, &logging_semaphore, 1);
-	global_api->platform_join_thread(&logging_thread, -1);
-	CHECKED(platform_destroy_thread, &logging_thread);
+	CHECKED(signal_semaphore, &logging_semaphore, 1);
+	global_api->join_thread(&logging_thread, -1);
+	CHECKED(destroy_thread, &logging_thread);
 
 	thread_param.out 				= null;
 	thread_param.message_queue 		= null;
@@ -62,8 +62,8 @@ void log_manager::destroy() { PROF
 
 	out.destroy();
 	message_queue.destroy();
-	CHECKED(platform_destroy_semaphore, &logging_semaphore);
-	global_api->platform_destroy_mutex(&output_mut);
+	CHECKED(destroy_semaphore, &logging_semaphore);
+	global_api->destroy_mutex(&output_mut);
 	DESTROY_ARENA(&scratch);
 	alloc = null;
 }
@@ -100,16 +100,16 @@ void log_manager::add_custom_output(log_out output) { PROF
 		print_header(&output);
 	}
 
-	global_api->platform_aquire_mutex(&output_mut);
+	global_api->aquire_mutex(&output_mut);
 	out.push(output);
-	global_api->platform_release_mutex(&output_mut);
+	global_api->release_mutex(&output_mut);
 }
 
 void log_manager::rem_custom_output(log_out output) { PROF
 
-	global_api->platform_aquire_mutex(&output_mut);
+	global_api->aquire_mutex(&output_mut);
 	out.erase(output);
-	global_api->platform_release_mutex(&output_mut);
+	global_api->release_mutex(&output_mut);
 }
 
 void log_manager::print_header(log_out* output) { PROF
@@ -175,22 +175,22 @@ void log_manager::msgf(string fmt, log_level level, code_context context, Targs.
 		lmsg.arena = arena;
 		message_queue.push(lmsg);
 		
-		global_api->platform_signal_semaphore(&logging_semaphore, 1);
+		global_api->signal_semaphore(&logging_semaphore, 1);
 
 #ifdef BLOCK_OR_EXIT_ON_ERROR
 		if(level == log_level::error) {
 
-			if(global_api->platform_is_debugging()) {
-				global_api->platform_debug_break();
+			if(global_api->is_debugging()) {
+				global_api->debug_break();
 			}
-			global_api->platform_join_thread(&logging_thread, -1);
+			global_api->join_thread(&logging_thread, -1);
 		}
 #endif
 		if(level == log_level::fatal) {
-			if(global_api->platform_is_debugging()) {
-				global_api->platform_debug_break();
+			if(global_api->is_debugging()) {
+				global_api->debug_break();
 			}
-			global_api->platform_join_thread(&logging_thread, -1);
+			global_api->join_thread(&logging_thread, -1);
 		}
 
 	} POP_ALLOC();
@@ -221,22 +221,22 @@ void log_manager::msg(string msg, log_level level, code_context context) { PROF_
 		lmsg.arena = arena;
 		message_queue.push(lmsg);
 
-		CHECKED(platform_signal_semaphore, &logging_semaphore, 1);
+		CHECKED(signal_semaphore, &logging_semaphore, 1);
 
 #ifdef BLOCK_OR_EXIT_ON_ERROR
 		if(level == log_level::error) {
 
-			if(global_api->platform_is_debugging()) {
-				global_api->platform_debug_break();
+			if(global_api->is_debugging()) {
+				global_api->debug_break();
 			}
-			global_api->platform_join_thread(&logging_thread, -1);
+			global_api->join_thread(&logging_thread, -1);
 		}
 #endif
 		if(level == log_level::fatal) {
-			if(global_api->platform_is_debugging()) {
-				global_api->platform_debug_break();
+			if(global_api->is_debugging()) {
+				global_api->debug_break();
 			}
-			global_api->platform_join_thread(&logging_thread, -1);
+			global_api->join_thread(&logging_thread, -1);
 		}
 
 	} POP_ALLOC();
@@ -245,7 +245,7 @@ void log_manager::msg(string msg, log_level level, code_context context) { PROF_
 string log_message::fmt_time() { PROF
 
 	string time = string::make(9);
-	global_api->platform_get_timef("hh:mm:ss"_, &time);
+	global_api->get_timef("hh:mm:ss"_, &time);
 
 	return time;
 }
@@ -335,7 +335,7 @@ i32 log_proc(void* data_) {
 
 	while(data->running) {
 
-		global_api->platform_wait_semaphore(data->logging_semaphore, -1);
+		global_api->wait_semaphore(data->logging_semaphore, -1);
 
 		log_message msg;
 		while(data->message_queue->try_pop(&msg)) {
@@ -359,7 +359,7 @@ void do_msg(log_thread_param* data, log_message msg) {
 		
 		PUSH_ALLOC(data->scratch) {
 			
-			global_api->platform_aquire_mutex(data->output_mut);
+			global_api->aquire_mutex(data->output_mut);
 			FORVEC(it, *data->out) {
 
 				if(it->level <= msg.level) {
@@ -374,7 +374,7 @@ void do_msg(log_thread_param* data, log_message msg) {
 					}
 				}
 			}
-			global_api->platform_release_mutex(data->output_mut);
+			global_api->release_mutex(data->output_mut);
 
 		} POP_ALLOC();
 		RESET_ARENA(data->scratch);

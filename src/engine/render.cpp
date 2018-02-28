@@ -39,22 +39,22 @@ void shader_source::load() { PROF
 	u32 itr = 0;
 	do {
 		itr++;
-		error = global_api->platform_create_file(&source_file, path, platform_file_open_op::existing);
+		error = global_api->create_file(&source_file, path, platform_file_open_op::existing);
 	} while (error.error == PLATFORM_SHARING_ERROR && itr < 100000);
 
 	if(!error.good) {
 		LOG_ERR_F("Failed to load shader source %", path);
-		CHECKED(platform_close_file, &source_file);
+		CHECKED(close_file, &source_file);
 		return;
 	}
 
-	u32 len = global_api->platform_file_size(&source_file) + 1;
+	u32 len = global_api->file_size(&source_file) + 1;
 	source = string::make(len, alloc);
-	CHECKED(platform_read_file, &source_file, (void*)source.c_str, len);
+	CHECKED(read_file, &source_file, (void*)source.c_str, len);
 
-	CHECKED(platform_close_file, &source_file);
+	CHECKED(close_file, &source_file);
 
-	CHECKED(platform_get_file_attributes, &last_attrib, path);
+	CHECKED(get_file_attributes, &last_attrib, path);
 }
 
 void shader_source::destroy() { PROF
@@ -67,9 +67,9 @@ bool shader_source::refresh() { PROF
 
 	platform_file_attributes new_attrib;
 	
-	CHECKED(platform_get_file_attributes, &new_attrib, path);	
+	CHECKED(get_file_attributes, &new_attrib, path);	
 	
-	if(global_api->platform_test_file_written(&last_attrib, &new_attrib)) {
+	if(global_api->test_file_written(&last_attrib, &new_attrib)) {
 
 		source.destroy(alloc);
 		load();
@@ -703,9 +703,9 @@ bool ogl_info::check_version(i32 maj, i32 min) { PROF
 
 void ogl_manager::load_global_funcs() { PROF
 
-	#define GL_IS_LOAD(name) name = (glIs_t)global_api->platform_get_glproc(#name##_); \
+	#define GL_IS_LOAD(name) name = (glIs_t)global_api->get_glproc(#name##_); \
 							 if(!name) LOG_WARN_F("Failed to load GL function %", #name##_);
-	#define GL_LOAD(name) name = (name##_t)global_api->platform_get_glproc(#name##_); \
+	#define GL_LOAD(name) name = (name##_t)global_api->get_glproc(#name##_); \
 						  if(!name) LOG_WARN_F("Failed to load GL function %", #name##_);
 
 	GL_IS_LOAD(glIsTexture);

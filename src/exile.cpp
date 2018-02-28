@@ -20,18 +20,18 @@ void exile::init() { PROF
 		controls.add_transition(ui_evt, camera_evt, FPTR(ui_to_camera), this);
 		
 		controls.set_state(camera_evt);
-		eng->platform->platform_capture_mouse(&eng->window);
+		eng->platform->capture_mouse(&eng->window);
 	}
 }
 
 void exile::update() { PROF
 
-	platform_perfcount now = eng->platform->platform_get_perfcount();
+	platform_perfcount now = eng->platform->get_perfcount();
 
 	w.update(now);
 
-	if(!eng->dbg.show_ui && eng->platform->platform_window_focused(&eng->window)) {
-		eng->platform->platform_set_cursor_pos(&eng->window, eng->window.w / 2, eng->window.h / 2);
+	if(!eng->dbg.show_ui && eng->platform->window_focused(&eng->window)) {
+		eng->platform->set_cursor_pos(&eng->window, eng->window.w / 2, eng->window.h / 2);
 	}
 }
 
@@ -69,13 +69,13 @@ CALLBACK bool default_evt_handle(void* param, platform_event evt) { PROF
 CALLBACK void camera_to_ui(void* param) { PROF
 
 	eng->dbg.show_ui = true;
-	eng->platform->platform_release_mouse();
+	eng->platform->release_mouse();
 }
 
 CALLBACK void ui_to_camera(void* param) { PROF
 
 	eng->dbg.show_ui = false;
-	eng->platform->platform_capture_mouse(&eng->window);
+	eng->platform->capture_mouse(&eng->window);
 }
 
 CALLBACK bool camera_evt_handle(void* param, platform_event evt) { PROF

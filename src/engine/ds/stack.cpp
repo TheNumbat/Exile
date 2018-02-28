@@ -118,8 +118,8 @@ locking_stack<T> locking_stack<T>::make(u32 capacity, allocator* a) { PROF
 
 	locking_stack<T> ret;
 	ret.contents = vector<T>::make(capacity, a);
-	global_api->platform_create_mutex(&ret.mut, false);
-	global_api->platform_create_semaphore(&ret.sem, 0, INT_MAX);
+	global_api->create_mutex(&ret.mut, false);
+	global_api->create_semaphore(&ret.sem, 0, INT_MAX);
 
 	return ret;
 }
@@ -134,24 +134,24 @@ template<typename T>
 void locking_stack<T>::destroy() { PROF
 
 	stack<T>::destroy();
-	global_api->platform_destroy_mutex(&mut);
-	global_api->platform_destroy_semaphore(&sem);
+	global_api->destroy_mutex(&mut);
+	global_api->destroy_semaphore(&sem);
 }
 
 template<typename T>
 T* locking_stack<T>::push(T value) { PROF
 
-	global_api->platform_aquire_mutex(&mut, -1);
+	global_api->aquire_mutex(&mut, -1);
 	T* ret = stack<T>::push(value);
-	global_api->platform_release_mutex(&mut);
-	global_api->platform_signal_semaphore(&sem, 1);
+	global_api->release_mutex(&mut);
+	global_api->signal_semaphore(&sem, 1);
 	return ret;
 }
 
 template<typename T>
 T locking_stack<T>::wait_pop() { PROF
 
-	global_api->platform_wait_semaphore(&sem, -1);
+	global_api->wait_semaphore(&sem, -1);
 	T ret;
 	try_pop(&ret);
 	return ret;
@@ -160,8 +160,8 @@ T locking_stack<T>::wait_pop() { PROF
 template<typename T>
 bool locking_stack<T>::try_pop(T* out) { PROF
 
-	global_api->platform_aquire_mutex(&mut, -1);
+	global_api->aquire_mutex(&mut, -1);
 	bool ret = stack<T>::try_pop(out);
-	global_api->platform_release_mutex(&mut);
+	global_api->release_mutex(&mut);
 	return ret;
 }

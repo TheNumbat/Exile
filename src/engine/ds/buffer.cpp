@@ -42,5 +42,5 @@ void buffer<T,size>::flush() { PROF
 }
 
 CALLBACK void write_file_wrapper(platform_file file, void* mem, u32 len) { PROF
-	CHECKED(platform_write_file, &file, mem, len);
+	CHECKED(write_file, &file, mem, len);
 }

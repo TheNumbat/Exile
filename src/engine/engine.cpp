@@ -1,7 +1,7 @@
 
 EXPORT engine* start_up(platform_api* api) { 
 
-	engine* state = new(api->platform_heap_alloc(sizeof(engine))) engine;
+	engine* state = new(api->heap_alloc(sizeof(engine))) engine;
 	state->func_state.this_dll = api->your_dll;
 	state->platform = api;
 
@@ -31,8 +31,8 @@ EXPORT engine* start_up(platform_api* api) {
 	state->dbg.setup_log(&state->log);
 
 	platform_file stdout_file, log_all_file;
-	CHECKED(platform_get_stdout_as_file, &stdout_file);
-	CHECKED(platform_create_file, &log_all_file, "log_all.html"_, platform_file_open_op::create);
+	CHECKED(get_stdout_as_file, &stdout_file);
+	CHECKED(create_file, &log_all_file, "log_all.html"_, platform_file_open_op::create);
 	state->log.add_file(log_all_file, log_level::alloc, log_out_type::html);
 	state->log.add_file(stdout_file, log_level::info, log_out_type::plaintext, true);
 
@@ -65,7 +65,7 @@ EXPORT engine* start_up(platform_api* api) {
 	}, state);
 
 	LOG_INFO("Creating window...");
-	CHECKED(platform_create_window, &state->window, "Exile"_, 1280, 720);
+	CHECKED(create_window, &state->window, "Exile"_, 1280, 720);
 
 	LOG_INFO("Setting up OpenGL...");
 	state->ogl_a = MAKE_PLATFORM_ALLOCATOR("ogl");
@@ -113,7 +113,7 @@ EXPORT bool main_loop(engine* state) {
 	} POP_ALLOC();
 	RESET_ARENA(&state->transient_arena);
 
-	CHECKED(platform_swap_buffers, &state->window);
+	CHECKED(swap_buffers, &state->window);
 
 #ifndef RELEASE
 	state->ogl.try_reload_programs();
@@ -153,7 +153,7 @@ EXPORT void shut_down(engine* state) {
 	state->ogl.destroy();
 
 	LOG_DEBUG("Destroying window");
-	CHECKED(platform_destroy_window, &state->window);
+	CHECKED(destroy_window, &state->window);
 
 	LOG_DEBUG("Destroying events");
 	state->evt.destroy();
@@ -182,7 +182,7 @@ EXPORT void shut_down(engine* state) {
 	global_log = null;
 	global_dbg = null;
 	global_func = null;
-	global_api->platform_heap_free(state);
+	global_api->heap_free(state);
 	global_api = null;
 }
 

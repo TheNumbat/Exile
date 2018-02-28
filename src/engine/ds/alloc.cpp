@@ -19,7 +19,7 @@ void allocator::destroy() { PROF
 
 CALLBACK void* platform_allocate(u64 bytes, allocator* this_, code_context context) { PROF
 
-	void* mem = global_api->platform_heap_alloc(bytes);
+	void* mem = global_api->heap_alloc(bytes);
 
 	LOG_DEBUG_ASSERT(mem != null);
 
@@ -43,7 +43,7 @@ CALLBACK void platform_free(void* mem, allocator* this_, code_context context) {
 
 	LOG_DEBUG_ASSERT(mem != null);
 
-	global_api->platform_heap_free(mem);
+	global_api->heap_free(mem);
 
 #ifdef PROFILE
 	if(this_thread_data.profiling) {
@@ -62,7 +62,7 @@ CALLBACK void* platform_reallocate(void* mem, u64, u64 bytes, allocator* this_, 
 
 	LOG_DEBUG_ASSERT(mem != null);
 
-	void* ret = global_api->platform_heap_realloc(mem, bytes);
+	void* ret = global_api->heap_realloc(mem, bytes);
 
 	LOG_DEBUG_ASSERT(ret != null);
 

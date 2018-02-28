@@ -3,16 +3,16 @@ dbg_manager dbg_manager::make(allocator* alloc) { PROF
 
 	dbg_manager ret;
 
-	ret.thread_stats = map<platform_thread_id, thread_profile>::make(global_api->platform_get_num_cpus(), alloc);
+	ret.thread_stats = map<platform_thread_id, thread_profile>::make(global_api->get_num_cpus(), alloc);
 	ret.alloc_stats  = map<allocator*, alloc_profile>::make(32, alloc);
 
 	ret.log_cache = locking_queue<log_message>::make(1024, alloc);
 
 	ret.alloc = alloc;
 	ret.scratch = MAKE_ARENA("dbg scratch"_, MEGABYTES(1), alloc, false);
-	ret.selected_thread = global_api->platform_this_thread_id();
+	ret.selected_thread = global_api->this_thread_id();
 
-	global_api->platform_create_mutex(&ret.stats_mut, false);
+	global_api->create_mutex(&ret.stats_mut, false);
 
 	return ret;
 }
@@ -70,7 +70,7 @@ void dbg_manager::destroy() { PROF
 	} FORQ_END(it, log_cache);
 	log_cache.destroy();
 
-	global_api->platform_destroy_mutex(&stats_mut);
+	global_api->destroy_mutex(&stats_mut);
 	DESTROY_ARENA(&scratch);
 }
 
@@ -137,7 +137,7 @@ void dbg_manager::UI() { PROF
 	gui_text(string::makef("FPS: %"_, 1.0f / last_frame_time));
 	gui_checkbox("Pause: "_, &frame_pause);
 
-	global_api->platform_aquire_mutex(&stats_mut);
+	global_api->aquire_mutex(&stats_mut);
 
 	if(gui_node("Allocation Stats"_, &show_alloc_stats)) {
 
@@ -167,7 +167,7 @@ void dbg_manager::UI() { PROF
 		gui_unindent();
 	}
 
-	map<string, platform_thread_id> threads = map<string, platform_thread_id>::make(global_api->platform_get_num_cpus());
+	map<string, platform_thread_id> threads = map<string, platform_thread_id>::make(global_api->get_num_cpus());
 	FORMAP(it, thread_stats) {
 		threads.insert(it->value.name, it->key);
 	}
@@ -183,7 +183,7 @@ void dbg_manager::UI() { PROF
 		
 		frame_profile* frame = thread->frames.get(thread->selected_frame - 1);
 
-		f32 frame_time = (f32)(frame->perf_end - frame->perf_start) / (f32)global_api->platform_get_perfcount_freq() * 1000.0f;
+		f32 frame_time = (f32)(frame->perf_end - frame->perf_start) / (f32)global_api->get_perfcount_freq() * 1000.0f;
 		gui_text(string::makef("Frame: %, Time: %ms"_, frame->number, frame_time));
 
 		gui_indent();
@@ -233,7 +233,7 @@ void dbg_manager::UI() { PROF
 	gui_pop_id();
 	gui_end();
 
-	global_api->platform_release_mutex(&stats_mut);
+	global_api->release_mutex(&stats_mut);
 
 	POP_ALLOC();
 	RESET_ARENA(&scratch);
@@ -259,7 +259,7 @@ void dbg_manager::setup_log(log_manager* log) { PROF
 
 void dbg_manager::register_thread(u32 frames, u32 frame_size) { PROF
 
-	global_api->platform_aquire_mutex(&stats_mut);
+	global_api->aquire_mutex(&stats_mut);
 	
 	thread_profile thread;
 	thread.frame_buf_size = frames;
@@ -267,8 +267,8 @@ void dbg_manager::register_thread(u32 frames, u32 frame_size) { PROF
 	thread.frames = queue<frame_profile>::make(frames, alloc);
 	thread.name = this_thread_data.name;
 
-	global_dbg->thread_stats.insert(global_api->platform_this_thread_id(), thread);
-	global_api->platform_release_mutex(&stats_mut);
+	global_dbg->thread_stats.insert(global_api->this_thread_id(), thread);
+	global_api->release_mutex(&stats_mut);
 }
 
 void frame_profile::setup(string name, allocator* alloc, clock time, platform_perfcount p, u32 num) { PROF
@@ -293,8 +293,8 @@ alloc_frame_profile alloc_frame_profile::make(allocator* alloc) { PROF
 void dbg_manager::collate() { PROF
 
 	PUSH_PROFILE(false) {
-		global_api->platform_aquire_mutex(&stats_mut);
-		thread_profile* thread = thread_stats.get(global_api->platform_this_thread_id());
+		global_api->aquire_mutex(&stats_mut);
+		thread_profile* thread = thread_stats.get(global_api->this_thread_id());
 
 		bool got_a_frame = false;
 		platform_perfcount frame_perf_start = 0;
@@ -405,12 +405,12 @@ void dbg_manager::collate() { PROF
 				process_alloc_msg(msg);
 			}
 			if(msg->type == dbg_msg_type::end_frame) {
-				last_frame_time = (f32)(msg->end_frame.perf - frame_perf_start) / (f32)global_api->platform_get_perfcount_freq();
+				last_frame_time = (f32)(msg->end_frame.perf - frame_perf_start) / (f32)global_api->get_perfcount_freq();
 			}
 
 		} FORQ_END(msg, this_thread_data.dbg_msgs);
 
-		global_api->platform_release_mutex(&stats_mut);
+		global_api->release_mutex(&stats_mut);
 		this_thread_data.dbg_msgs.clear();
 
 	} POP_PROFILE();

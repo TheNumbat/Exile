@@ -11,19 +11,19 @@ evt_manager evt_manager::make(allocator* a) { PROF
 
 void evt_manager::start() { PROF
 
-	global_api->platform_set_queue_callback(&event_enqueue, &event_queue);
+	global_api->set_queue_callback(&event_enqueue, &event_queue);
 }
 
 void evt_manager::destroy() { PROF
 
 	event_queue.destroy();
 	handlers.destroy();
-	global_api->platform_set_queue_callback(null, null);
+	global_api->set_queue_callback(null, null);
 }
 
 void evt_manager::run_events(engine* state) { PROF
 
-	global_api->platform_pump_events(&state->window);
+	global_api->pump_events(&state->window);
 
 	platform_event evt;
 	while(event_queue.try_pop(&evt)) {

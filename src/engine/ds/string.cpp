@@ -995,7 +995,7 @@ string string::make_copy_plt(string src) { PROF
 	string ret; 
 	ret.len = src.len;
 	ret.cap = src.cap;
-	ret.c_str = (char*)global_api->platform_heap_alloc(ret.cap);
+	ret.c_str = (char*)global_api->heap_alloc(ret.cap);
 
 	for(u32 i = 0; i < ret.len; i++) { // will copy null terminator
 		ret.c_str[i] = src.c_str[i];
@@ -1198,7 +1198,7 @@ string string::make_from_c_str_plt(char* c_str) {
 	len++;
 
 	string ret;
-	ret.c_str = (char*)global_api->platform_heap_alloc(len);
+	ret.c_str = (char*)global_api->heap_alloc(len);
 	ret.cap = len;
 	ret.len = len;
 
@@ -1211,7 +1211,7 @@ string string::make_from_c_str_plt(char* c_str) {
 
 void string::destroy_plt() {
 
-	global_api->platform_heap_free(c_str);
+	global_api->heap_free(c_str);
 
 	c_str = null;
 	cap = 0;

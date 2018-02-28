@@ -12,7 +12,7 @@ threadpool threadpool::make(allocator* a, i32 num_threads_) { PROF
 
 	threadpool ret;
 
-	ret.num_threads = num_threads_ == 0 ? global_api->platform_get_num_cpus() : num_threads_;
+	ret.num_threads = num_threads_ == 0 ? global_api->get_num_cpus() : num_threads_;
 
 	ret.alloc   = a;
 	ret.running = map<job_id,platform_semaphore>::make(16);
@@ -20,8 +20,8 @@ threadpool threadpool::make(allocator* a, i32 num_threads_) { PROF
 	ret.jobs    = locking_heap<job>::make(16, a);
 	ret.worker_data = array<worker_param>::make(ret.num_threads, a);
 	
-	global_api->platform_create_mutex(&ret.running_mutex, false);
-	CHECKED(platform_create_semaphore, &ret.jobs_semaphore, 0, ret.num_threads);
+	global_api->create_mutex(&ret.running_mutex, false);
+	CHECKED(create_semaphore, &ret.jobs_semaphore, 0, ret.num_threads);
 
 	return ret;
 }
@@ -35,7 +35,7 @@ void threadpool::destroy() { PROF
 	worker_data.destroy();
 	jobs.destroy();
 
-	CHECKED(platform_destroy_semaphore, &jobs_semaphore);
+	CHECKED(destroy_semaphore, &jobs_semaphore);
 }
 
 void threadpool::wait_job(job_id id) { PROF
@@ -43,9 +43,9 @@ void threadpool::wait_job(job_id id) { PROF
 #ifdef NO_CONCURRENT_JOBS
 	return;
 #else
-	global_api->platform_aquire_mutex(&running_mutex);
+	global_api->aquire_mutex(&running_mutex);
 	platform_semaphore* sem = running.try_get(id);
-	global_api->platform_release_mutex(&running_mutex);
+	global_api->release_mutex(&running_mutex);
 
 	// TODO(max): evil - this might explode if you insert a new job and it moves the semaphore this is waiting on
 	// 			  We can't just keep the mutex until we're doing waiting because that could deadlock when acquiring
@@ -53,7 +53,7 @@ void threadpool::wait_job(job_id id) { PROF
 	// 			  This is fine if only one thread is ever adding or waiting on jobs...which isn't the case
 	// 			  **Should whoever adds the job have to provide a semaphore to wait on?**
 	if(sem) {
-		global_api->platform_wait_semaphore(sem, -1);
+		global_api->wait_semaphore(sem, -1);
 	}
 #endif
 }
@@ -78,14 +78,14 @@ job_id threadpool::queue_job(job j) { PROF
 	jobs.push(j);
 
 	platform_semaphore jid_sem;
-	CHECKED(platform_create_semaphore, &jid_sem, 0, INT_MAX);
+	CHECKED(create_semaphore, &jid_sem, 0, INT_MAX);
 
 	// is this a good way to structure this? doesn't look like it
-	global_api->platform_aquire_mutex(&running_mutex);
+	global_api->aquire_mutex(&running_mutex);
 	running.insert(j.id, jid_sem);
-	global_api->platform_release_mutex(&running_mutex);
+	global_api->release_mutex(&running_mutex);
 
-	CHECKED(platform_signal_semaphore, &jobs_semaphore, 1);
+	CHECKED(signal_semaphore, &jobs_semaphore, 1);
 
 	return j.id;
 #endif
@@ -100,12 +100,12 @@ void threadpool::stop_all() { PROF
 			worker_data.get(i)->online = false;
 		}
 
-		CHECKED(platform_signal_semaphore, &jobs_semaphore, num_threads);
+		CHECKED(signal_semaphore, &jobs_semaphore, num_threads);
 
 		for(i32 i = 0; i < num_threads; i++) {
 
-			global_api->platform_join_thread(threads.get(i), -1);
-			CHECKED(platform_destroy_thread, threads.get(i));
+			global_api->join_thread(threads.get(i), -1);
+			CHECKED(destroy_thread, threads.get(i));
 		}
 
 		online = false;
@@ -125,7 +125,7 @@ void threadpool::start_all() { PROF
 			it->running 		= &running;
 			it->running_mutex 	= &running_mutex;
 
-			CHECKED(platform_create_thread, threads.get(__it), &worker, it, false);
+			CHECKED(create_thread, threads.get(__it), &worker, it, false);
 		}
 
 		online = true;
@@ -136,7 +136,7 @@ i32 worker(void* data_) {
 
 	worker_param* data = (worker_param*)data_;
 
-	begin_thread("worker %"_, data->alloc, global_api->platform_this_thread_id());
+	begin_thread("worker %"_, data->alloc, global_api->this_thread_id());
 	this_thread_data.profiling = false;
 	global_dbg->register_thread(10, 8192);
 	
@@ -164,19 +164,19 @@ i32 worker(void* data_) {
 				a.async.type 	 = platform_async_type::user;
 				a.async.user_id  = current_job.id;
 				a.async.callback = callback;
-				global_api->platform_queue_event(a);
+				global_api->queue_event(a);
 
-				global_api->platform_aquire_mutex(data->running_mutex);
+				global_api->aquire_mutex(data->running_mutex);
 				platform_semaphore* sem = data->running->get(current_job.id);
-				CHECKED(platform_signal_semaphore, sem, INT_MAX);
-				CHECKED(platform_destroy_semaphore, sem);
+				CHECKED(signal_semaphore, sem, INT_MAX);
+				CHECKED(destroy_semaphore, sem);
 				data->running->erase(current_job.id);
-				global_api->platform_release_mutex(data->running_mutex);
+				global_api->release_mutex(data->running_mutex);
 			}
 		}
 
 		global_dbg->collate();
-		global_api->platform_wait_semaphore(data->jobs_semaphore, -1);
+		global_api->wait_semaphore(data->jobs_semaphore, -1);
 	}
 
 	LOG_DEBUG("Ending worker thread");
