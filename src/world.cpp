@@ -45,8 +45,23 @@ void world::populate_local_area() { PROF
 			if(!chunks.try_get(current)) {
 				
 				chunk* c = chunks.insert(current, chunk::make(current, alloc));
-				c->gen();
-				c->build_data();
+				
+				eng->thread_pool.queue_job([](void* p) -> job_callback {
+					chunk* c = (chunk*)p;
+
+					eng->platform->aquire_mutex(&c->mut);
+					c->state = chunk_build_state::generating;
+					eng->platform->release_mutex(&c->mut);
+
+					c->gen();
+					c->build_data();
+
+					eng->platform->aquire_mutex(&c->mut);
+					c->state = chunk_build_state::done;
+					eng->platform->release_mutex(&c->mut);
+
+					return null;
+				}, c);
 			}
 		}
 	}
@@ -67,6 +82,15 @@ void world::render() { PROF
 			current.y = 0;
 			
 			chunk* c = chunks.get(current);
+
+			eng->platform->aquire_mutex(&c->mut);
+			chunk_build_state state = c->state;
+			eng->platform->release_mutex(&c->mut);
+
+			if(state != chunk_build_state::done) {
+				continue;
+			}
+
 			if(!c->mesh.dirty) {
 				c->mesh.free_cpu(); 
 			}
@@ -177,6 +201,7 @@ chunk chunk::make(chunk_pos p, allocator* a) { PROF
 
 	ret.pos = p;
 	ret.mesh = mesh_chunk::make(16, a);
+	eng->platform->create_mutex(&ret.mut, false);
 
 	return ret;
 }
@@ -184,6 +209,7 @@ chunk chunk::make(chunk_pos p, allocator* a) { PROF
 void chunk::destroy() { PROF
 
 	mesh.destroy();
+	eng->platform->destroy_mutex(&mut);
 }
 
 void chunk::gen() { PROF

@@ -18,6 +18,12 @@ struct chunk_pos {
 bool operator==(chunk_pos l, chunk_pos r);
 inline u32 hash(chunk_pos key);
 
+enum class chunk_build_state : u8 {
+	none,
+	generating,
+	done
+};
+
 struct chunk {
 
 	static const i32 xsz = 15, ysz = 255, zsz = 15;
@@ -26,7 +32,14 @@ struct chunk {
 
 	// NOTE(max): x z y
 	block_type blocks[xsz][zsz][ysz] = {};
-	mesh_chunk mesh;
+	
+	platform_mutex mut;
+	struct {
+		chunk_build_state state = chunk_build_state::none;
+		mesh_chunk mesh;
+	};
+
+	allocator* alloc = null;
 
 	static chunk make(chunk_pos pos, allocator* a);
 	void gen();

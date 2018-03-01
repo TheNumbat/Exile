@@ -21,7 +21,7 @@ threadpool threadpool::make(allocator* a, i32 num_threads_) { PROF
 	ret.worker_data = array<worker_param>::make(ret.num_threads, a);
 	
 	global_api->create_mutex(&ret.running_mutex, false);
-	CHECKED(create_semaphore, &ret.jobs_semaphore, 0, ret.num_threads);
+	CHECKED(create_semaphore, &ret.jobs_semaphore, 0, INT_MAX);
 
 	return ret;
 }
