@@ -62,15 +62,12 @@ void			   linux_thread_sleep(i32 ms);
 i32  			   linux_get_num_cpus();
 platform_thread_join_state linux_join_thread(platform_thread* thread, i32 ms); // ms = -1 for infinite
 
-// may want to add 
-	// WaitMultipleObjects
-	// InterlockedCompareExchange
-
 platform_error linux_create_semaphore(platform_semaphore* sem, i32 initial_count, i32 max_count);
 platform_error linux_destroy_semaphore(platform_semaphore* sem);
 platform_error linux_signal_semaphore(platform_semaphore* sem, i32 times); 
 platform_semaphore_state linux_wait_semaphore(platform_semaphore* sem, i32 ms); // ms = -1 for infinite
 
+u64 linux_atomic_exchange(u64* dest, u64 val);
 void linux_create_mutex(platform_mutex* mut, bool aquire);
 void linux_destroy_mutex(platform_mutex* mut);
 void linux_try_aquire_mutex(platform_mutex* mut);

@@ -62,15 +62,12 @@ void			   sdl_thread_sleep(i32 ms);
 i32  			   sdl_get_num_cpus();
 platform_thread_join_state sdl_join_thread(platform_thread* thread, i32 ms); // ms = -1 for infinite
 
-// may want to add 
-	// WaitMultipleObjects
-	// InterlockedCompareExchange
-
 platform_error sdl_create_semaphore(platform_semaphore* sem, i32 initial_count, i32 max_count);
 platform_error sdl_destroy_semaphore(platform_semaphore* sem);
 platform_error sdl_signal_semaphore(platform_semaphore* sem, i32 times); 
 platform_semaphore_state sdl_wait_semaphore(platform_semaphore* sem, i32 ms); // ms = -1 for infinite
 
+u64 sdl_atomic_exchange(u64* dest, u64 val);
 void sdl_create_mutex(platform_mutex* mut, bool aquire);
 void sdl_destroy_mutex(platform_mutex* mut);
 void sdl_try_aquire_mutex(platform_mutex* mut);

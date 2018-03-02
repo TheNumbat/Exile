@@ -215,7 +215,6 @@ EXPORT void on_unload(engine* state) {
 
 	state->thread_pool.stop_all();
 	state->log.stop();
-	global_dbg->collate();
 	
 	end_thread();
 }

@@ -65,15 +65,12 @@ void			   win32_thread_sleep(i32 ms);
 i32  			   win32_get_num_cpus();
 platform_thread_join_state win32_join_thread(platform_thread* thread, i32 ms); // ms = -1 for infinite
 
-// may want to add 
-	// WaitMultipleObjects
-	// InterlockedCompareExchange
-
 platform_error win32_create_semaphore(platform_semaphore* sem, i32 initial_count, i32 max_count);
 platform_error win32_destroy_semaphore(platform_semaphore* sem);
 platform_error win32_signal_semaphore(platform_semaphore* sem, i32 times); 
 platform_semaphore_state win32_wait_semaphore(platform_semaphore* sem, i32 ms); // ms = -1 for infinite
 
+u64 win32_atomic_exchange(u64* dest, u64 val);
 void win32_create_mutex(platform_mutex* mut, bool aquire);
 void win32_destroy_mutex(platform_mutex* mut);
 void win32_try_aquire_mutex(platform_mutex* mut);

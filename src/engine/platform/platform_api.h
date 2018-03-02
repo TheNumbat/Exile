@@ -321,6 +321,7 @@ struct platform_api {
 	platform_error 	(*terminate_thread)(platform_thread* thread, i32 exit_code)											= null;
 	void 		   	(*exit_this_thread)(i32 exit_code)																	= null;
 	void		   	(*thread_sleep)(i32 ms)																				= null;
+	u64 			(*atomic_exchange)(u64* dest, u64 val)																= null;
 	platform_error 	(*destroy_thread)(platform_thread* thread)															= null;
 	platform_error 	(*create_semaphore)(platform_semaphore* sem, i32 initial_count, i32 max_count)						= null;
 	platform_error 	(*destroy_semaphore)(platform_semaphore* sem)														= null;

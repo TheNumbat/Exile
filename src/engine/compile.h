@@ -61,6 +61,7 @@
 
 #include "ds/string.h"
 #include "util/context.h"
+#include "util/atomic.h"
 
 #include "platform/platform_api.h"
 #include "util/fptr.h"
@@ -100,6 +101,7 @@ static dbg_manager*  global_dbg = null; // global to provide profiling functiona
 #include "util/fscope.cpp"
 #include "util/threadstate.cpp"
 #include "util/type_table.cpp"
+#include "util/atomic.cpp"
 
 #include "math.cpp"
 #include "log.cpp"

@@ -13,7 +13,7 @@ platform_api platform_build_api() {
 	ret.destroy_window			= &sdl_destroy_window;
 	ret.swap_buffers			= &sdl_swap_buffers;
 	ret.set_queue_callback		= &sdl_set_queue_callback;
-	ret.pump_events			= &sdl_pump_events;
+	ret.pump_events				= &sdl_pump_events;
 	ret.queue_event 			= &sdl_queue_event;
 	ret.wait_message			= &sdl_wait_message;
 	ret.load_library			= &sdl_load_library;
@@ -42,29 +42,35 @@ platform_api platform_build_api() {
 	ret.release_mutex			= &sdl_release_mutex;
 	ret.destroy_thread			= &sdl_destroy_thread;
 	ret.get_num_cpus			= &sdl_get_num_cpus;
-	ret.join_thread			= &sdl_join_thread;
-	ret.create_file			= &sdl_create_file;
+	ret.join_thread				= &sdl_join_thread;
+	ret.create_file				= &sdl_create_file;
 	ret.close_file				= &sdl_close_file;
 	ret.write_file				= &sdl_write_file;
 	ret.read_file				= &sdl_read_file;
 	ret.get_stdout_as_file		= &sdl_get_stdout_as_file;
 	ret.get_timef				= &sdl_get_timef;
 	ret.make_timef				= &sdl_make_timef;
-	ret.get_window_size		= &sdl_get_window_size;
+	ret.get_window_size			= &sdl_get_window_size;
 	ret.write_stdout			= &sdl_write_stdout;
 	ret.file_size				= &sdl_file_size;
 	ret.get_glproc				= &sdl_get_glproc;
-	ret.keydown				= &sdl_keydown;
+	ret.keydown					= &sdl_keydown;
 	ret.is_debugging			= &sdl_is_debugging;
-	ret.debug_break			= &sdl_debug_break;
+	ret.debug_break				= &sdl_debug_break;
 	ret.set_cursor				= &sdl_set_cursor;
 	ret.this_dll				= &sdl_this_dll;
 	ret.capture_mouse			= &sdl_capture_mouse;
 	ret.release_mouse			= &sdl_release_mouse;
 	ret.set_cursor_pos			= &sdl_set_cursor_pos;
-	ret.window_focused 		= &sdl_window_focused;
+	ret.atomic_exchange 		= &sdl_atomic_exchange;
+	ret.window_focused 			= &sdl_window_focused;
 
 	return ret;
+}
+
+u64 sdl_atomic_exchange(u64* dest, u64 val) {
+
+	return *dest;
 }
 
 bool sdl_window_focused(platform_window* win) {

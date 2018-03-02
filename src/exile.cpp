@@ -6,7 +6,7 @@ void exile::init() { PROF
 	store = asset_store::make(&alloc);
 	store.load("assets/game.asset"_);
 
-	w = world::make(&store, &alloc);
+	// w = world::make(&store, &alloc);
 
 	{
 		default_evt = eng->evt.add_handler(FPTR(default_evt_handle), this);
@@ -28,7 +28,7 @@ void exile::update() { PROF
 
 	platform_perfcount now = eng->platform->get_perfcount();
 
-	w.update(now);
+	// w.update(now);
 
 	if(!eng->dbg.show_ui && eng->platform->window_focused(&eng->window)) {
 		eng->platform->set_cursor_pos(&eng->window, eng->window.w / 2, eng->window.h / 2);
@@ -37,7 +37,7 @@ void exile::update() { PROF
 
 void exile::render() { PROF
 
-	w.render();
+	// w.render();
 }
 
 void exile::destroy() { PROF

@@ -14,7 +14,9 @@ struct thread_data {
 
 	bool profiling = false;
 	bool timing_override = true;
+	
 	queue<dbg_msg> dbg_msgs;
+	platform_mutex msgs_mut;
 };
 
 static thread_local thread_data this_thread_data;

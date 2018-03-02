@@ -26,6 +26,9 @@ all includes:
 
 priority:
 	
+	atomic enum state thingy / interlockedexchange
+	fix: make debug system on another thread?
+
 	current issue: the mesh_chunk is allocated in the main thread and reallocated in a worker thread, and the worker thread collates messages first - so the reallocate message can't find the original memory to free (in the profiler). 
 		can't have the worker thread allocate or destroy the mesh, as OpenGL breaks on multiple threads
 		to fix, should we have end-of-frame collate process messages for all threads, sorting them by time of post? or, should we let the allocation profiles fall out of sync/re-sync as more messages come in?

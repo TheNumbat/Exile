@@ -33,11 +33,8 @@ struct chunk {
 	// NOTE(max): x z y
 	block_type blocks[xsz][zsz][ysz] = {};
 	
-	platform_mutex mut;
-	struct {
-		chunk_build_state state = chunk_build_state::none;
-		mesh_chunk mesh;
-	};
+	atomic_enum<chunk_build_state> state;
+	mesh_chunk mesh;
 
 	allocator* alloc = null;
 

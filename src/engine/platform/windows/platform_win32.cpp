@@ -23,7 +23,7 @@ platform_api platform_build_api() {
 	ret.destroy_window			= &win32_destroy_window;
 	ret.swap_buffers			= &win32_swap_buffers;
 	ret.set_queue_callback		= &win32_set_queue_callback;
-	ret.pump_events			= &win32_pump_events;
+	ret.pump_events				= &win32_pump_events;
 	ret.queue_event 			= &win32_queue_event;
 	ret.wait_message			= &win32_wait_message;
 	ret.load_library			= &win32_load_library;
@@ -57,29 +57,35 @@ platform_api platform_build_api() {
 	ret.release_mutex			= &win32_release_mutex;
 	ret.destroy_thread			= &win32_destroy_thread;
 	ret.get_num_cpus			= &win32_get_num_cpus;
-	ret.join_thread			= &win32_join_thread;
-	ret.create_file			= &win32_create_file;
+	ret.join_thread				= &win32_join_thread;
+	ret.create_file				= &win32_create_file;
 	ret.close_file				= &win32_close_file;
 	ret.write_file				= &win32_write_file;
 	ret.read_file				= &win32_read_file;
 	ret.get_stdout_as_file		= &win32_get_stdout_as_file;
 	ret.get_timef				= &win32_get_timef;
 	ret.make_timef				= &win32_make_timef;
-	ret.get_window_size		= &win32_get_window_size;
+	ret.get_window_size			= &win32_get_window_size;
 	ret.write_stdout			= &win32_write_stdout;
 	ret.file_size				= &win32_file_size;
 	ret.get_glproc				= &win32_get_glproc;
-	ret.keydown				= &win32_keydown;
+	ret.keydown					= &win32_keydown;
 	ret.is_debugging			= &win32_is_debugging;
-	ret.debug_break			= &win32_debug_break;
+	ret.debug_break				= &win32_debug_break;
 	ret.set_cursor				= &win32_set_cursor;
 	ret.this_dll				= &win32_this_dll;
 	ret.capture_mouse			= &win32_capture_mouse;
 	ret.release_mouse			= &win32_release_mouse;
 	ret.set_cursor_pos			= &win32_set_cursor_pos;
 	ret.window_focused			= &win32_window_focused;
+	ret.atomic_exchange 		= &win32_atomic_exchange;
 
 	return ret;
+}
+
+u64 win32_atomic_exchange(u64* dest, u64 val) {
+
+	return _InterlockedExchange64((LONGLONG volatile*)dest, val);
 }
 
 bool win32_window_focused(platform_window* win) {

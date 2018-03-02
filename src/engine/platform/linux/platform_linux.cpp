@@ -16,7 +16,7 @@ platform_api platform_build_api() {
 	ret.destroy_window			= &linux_destroy_window;
 	ret.swap_buffers			= &linux_swap_buffers;
 	ret.set_queue_callback		= &linux_set_queue_callback;
-	ret.pump_events			= &linux_pump_events;
+	ret.pump_events				= &linux_pump_events;
 	ret.queue_event 			= &linux_queue_event;
 	ret.wait_message			= &linux_wait_message;
 	ret.load_library			= &linux_load_library;
@@ -45,29 +45,35 @@ platform_api platform_build_api() {
 	ret.release_mutex			= &linux_release_mutex;
 	ret.destroy_thread			= &linux_destroy_thread;
 	ret.get_num_cpus			= &linux_get_num_cpus;
-	ret.join_thread			= &linux_join_thread;
-	ret.create_file			= &linux_create_file;
+	ret.join_thread				= &linux_join_thread;
+	ret.create_file				= &linux_create_file;
 	ret.close_file				= &linux_close_file;
 	ret.write_file				= &linux_write_file;
 	ret.read_file				= &linux_read_file;
 	ret.get_stdout_as_file		= &linux_get_stdout_as_file;
 	ret.get_timef				= &linux_get_timef;
 	ret.make_timef				= &linux_make_timef;
-	ret.get_window_size		= &linux_get_window_size;
+	ret.get_window_size			= &linux_get_window_size;
 	ret.write_stdout			= &linux_write_stdout;
 	ret.file_size				= &linux_file_size;
 	ret.get_glproc				= &linux_get_glproc;
-	ret.keydown				= &linux_keydown;
+	ret.keydown					= &linux_keydown;
 	ret.is_debugging			= &linux_is_debugging;
-	ret.debug_break			= &linux_debug_break;
+	ret.debug_break				= &linux_debug_break;
 	ret.set_cursor				= &linux_set_cursor;
 	ret.this_dll				= &linux_this_dll;
 	ret.capture_mouse 			= &linux_capture_mouse;
 	ret.release_mouse 			= &linux_release_mouse;
 	ret.set_cursor_pos			= &linux_set_cursor_pos;
 	ret.window_focused			= &linux_window_focused;
+	ret.atomic_exchange			= &linux_atomic_exchange;
 
 	return ret;
+}
+
+u64 linux_atomic_exchange(u64* dest, u64 val) {
+
+	return *dest;
 }
 
 bool linux_window_focused(platform_window* win) {
