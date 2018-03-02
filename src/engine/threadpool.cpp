@@ -175,7 +175,6 @@ i32 worker(void* data_) {
 			}
 		}
 
-		global_dbg->collate();
 		global_api->wait_semaphore(data->jobs_semaphore, -1);
 	}
 

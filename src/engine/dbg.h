@@ -9,7 +9,7 @@
 #define POP_PROFILE_PROF() {this_thread_data.timing_override = __pprof;}
 
 #ifdef _MSC_VER
-#define POST_MSG(m) {PUSH_PROFILE(false) {(m).time = __rdtsc(); this_thread_data.dbg_msgs.push(m);} POP_PROFILE();}
+#define POST_MSG(m) {PUSH_PROFILE(false) {(m).time = __rdtsc(); this_thread_data.dbg_queue.push(m);} POP_PROFILE();}
 #else
 #error "Fix this"
 #endif
@@ -18,6 +18,7 @@
 #define PROF_SEC_END() 	_prof_sec_end();
 
 #define BEGIN_FRAME() { \
+	global_api->aquire_mutex(&this_thread_data.dbg_mut); \
 	dbg_msg msg; \
 	msg.type = dbg_msg_type::begin_frame; \
 	msg.begin_frame.perf = global_api->get_perfcount(); \
@@ -28,7 +29,7 @@
 	msg.type = dbg_msg_type::end_frame; \
 	msg.end_frame.perf = global_api->get_perfcount(); \
 	POST_MSG(msg); \
-	global_dbg->collate(); \
+	global_api->release_mutex(&this_thread_data.dbg_mut); \
 }
 
 typedef u64 clock;
@@ -165,6 +166,10 @@ struct alloc_profile {
 };
 
 struct thread_profile {
+
+	queue<dbg_msg>* local_queue = null;
+	platform_mutex* local_mut 	= null;
+
 	string name;
 	queue<frame_profile> frames;
 	
@@ -221,6 +226,7 @@ struct dbg_manager {
 	void register_thread(u32 frames, u32 frame_size);
 
 	void collate();
+	void collate_thread(thread_profile* thread);
 };
 
 void _prof_sec(string name, code_context context);

@@ -86,6 +86,7 @@ EXPORT engine* start_up(platform_api* api) {
 	LOG_POP_CONTEXT();
 
 	END_FRAME();
+	state->dbg.collate();
 
 	state->running = true;
 	return state;
@@ -123,6 +124,7 @@ EXPORT bool main_loop(engine* state) {
 #endif
 
 	END_FRAME();
+	state->dbg.collate();
 
 	return state->running;
 }

@@ -55,6 +55,8 @@ void dbg_manager::destroy() { PROF
 
 	LOG_INFO_F("% allocations remaining at debug shutdown", alloc_totals.num_allocs - alloc_totals.num_frees);
 
+	global_api->aquire_mutex(&stats_mut);
+
 	FORMAP(it, thread_stats) {
 		it->value.destroy();
 	}
@@ -65,12 +67,14 @@ void dbg_manager::destroy() { PROF
 	}
 	alloc_stats.destroy();
 
+	global_api->release_mutex(&stats_mut);
+	global_api->destroy_mutex(&stats_mut);
+
 	FORQ_BEGIN(it, log_cache) {
 		DESTROY_ARENA(&it->arena);
 	} FORQ_END(it, log_cache);
 	log_cache.destroy();
 
-	global_api->destroy_mutex(&stats_mut);
 	DESTROY_ARENA(&scratch);
 }
 
@@ -266,6 +270,8 @@ void dbg_manager::register_thread(u32 frames, u32 frame_size) { PROF
 	thread.frame_size = frame_size;
 	thread.frames = queue<frame_profile>::make(frames, alloc);
 	thread.name = this_thread_data.name;
+	thread.local_queue = &this_thread_data.dbg_queue;
+	thread.local_mut = &this_thread_data.dbg_mut;
 
 	global_dbg->thread_stats.insert(global_api->this_thread_id(), thread);
 	global_api->release_mutex(&stats_mut);
@@ -291,129 +297,138 @@ alloc_frame_profile alloc_frame_profile::make(allocator* alloc) { PROF
 }
 
 void dbg_manager::collate() { PROF
-
+	
 	PUSH_PROFILE(false) {
+		
 		global_api->aquire_mutex(&stats_mut);
-		thread_profile* thread = thread_stats.get(global_api->this_thread_id());
 
-		bool got_a_frame = false;
-		platform_perfcount frame_perf_start = 0;
-
-		FORQ_BEGIN(msg, this_thread_data.dbg_msgs) {
-
-			if(msg->type == dbg_msg_type::begin_frame) {
-			
-				frame_perf_start = msg->begin_frame.perf;
-				thread->num_frames++;
-
-				if(thread->frames.full()) {
-					if(!frame_pause) {
-						thread->frames.pop().destroy();
-						got_a_frame = true;
-					}
-				} else {
-					got_a_frame = true;
-				}
-
-				if(got_a_frame) {
-					frame_profile* frame = thread->frames.push(frame_profile());
-					string name = string::makef("frame %"_, thread->num_frames);
-					frame->setup(name, alloc, msg->time, msg->begin_frame.perf, thread->num_frames);
-					name.destroy();
-				}
-			}
-
-			frame_profile* frame = thread->frames.back();
-			if(frame && got_a_frame) {
-
-				PUSH_ALLOC(&frame->pool) {
-					switch(msg->type) {
-					case dbg_msg_type::enter_func: {
-
-						if(!frame->current) { 	
-							bool found_repeat_head = false;
-							FORVEC(head, frame->heads) {
-								if(string::from_c_str((*head)->context.function) == string::from_c_str(msg->context.function)) {
-									frame->current = *head;
-									found_repeat_head = true;
-								}
-							}
-							if(!found_repeat_head) {
-								frame->current = *frame->heads.push(NEW(profile_node));
-								frame->current->children = vector<profile_node*>::make(4);
-								frame->current->context = msg->context;
-							}
-							frame->current->begin = msg->time;
-							frame->current->calls++;
-							break;
-						}
-
-						profile_node* here = frame->current;
-						FORVEC(node, here->children) {
-							if(string::from_c_str((*node)->context.function) == string::from_c_str(msg->context.function)) {
-								here = *node;
-								break;
-							} 
-						}
-						if(here == frame->current) {
-							profile_node* new_node = *here->children.push(NEW(profile_node));
-							new_node->children = vector<profile_node*>::make(4);
-							new_node->parent = here;
-							here = new_node;
-						}
-						
-						here->context = msg->context;
-						here->calls++;
-						here->begin = msg->time;
-						frame->current = here;
-
-					} break;
-
-					case dbg_msg_type::exit_func: {
-
-						clock runtime = msg->time - frame->current->begin;
-						
-						frame->current->heir += runtime;
-						frame->current->begin = 0;
-						frame->current = frame->current->parent;
-
-					} break;
-
-					case dbg_msg_type::end_frame: {
-						frame->clock_end = msg->time;
-						frame->perf_end = msg->end_frame.perf;
-
-						FORVEC(it, frame->heads) {
-							fixdown_self_timings(*it);
-						}
-
-						got_a_frame = false;
-					} break;
-
-					case dbg_msg_type::allocate: 
-					case dbg_msg_type::reallocate:
-					case dbg_msg_type::free: {
-
-						process_frame_alloc_msg(frame, msg);
-
-					} break;
-					}
-				} POP_ALLOC();
-			}
-
-			if(msg->type == dbg_msg_type::allocate || msg->type == dbg_msg_type::reallocate || msg->type == dbg_msg_type::free) {
-				process_alloc_msg(msg);
-			}
-			if(msg->type == dbg_msg_type::end_frame) {
-				last_frame_time = (f32)(msg->end_frame.perf - frame_perf_start) / (f32)global_api->get_perfcount_freq();
-			}
-
-		} FORQ_END(msg, this_thread_data.dbg_msgs);
+		FORMAP(thread, thread_stats) {
+			collate_thread(&thread->value);
+		}
 
 		global_api->release_mutex(&stats_mut);
-		this_thread_data.dbg_msgs.clear();
 
 	} POP_PROFILE();
+}
+
+void dbg_manager::collate_thread(thread_profile* thread) { PROF
+
+	bool got_a_frame = false;
+	platform_perfcount frame_perf_start = 0;
+
+	FORQ_BEGIN(msg, *thread->local_queue) {
+
+		if(msg->type == dbg_msg_type::begin_frame) {
+		
+			frame_perf_start = msg->begin_frame.perf;
+			thread->num_frames++;
+
+			if(thread->frames.full()) {
+				if(!frame_pause) {
+					thread->frames.pop().destroy();
+					got_a_frame = true;
+				}
+			} else {
+				got_a_frame = true;
+			}
+
+			if(got_a_frame) {
+				frame_profile* frame = thread->frames.push(frame_profile());
+				string name = string::makef("frame %"_, thread->num_frames);
+				frame->setup(name, alloc, msg->time, msg->begin_frame.perf, thread->num_frames);
+				name.destroy();
+			}
+		}
+
+		frame_profile* frame = thread->frames.back();
+		if(frame && got_a_frame) {
+
+			PUSH_ALLOC(&frame->pool) {
+				switch(msg->type) {
+				case dbg_msg_type::enter_func: {
+
+					if(!frame->current) { 	
+						bool found_repeat_head = false;
+						FORVEC(head, frame->heads) {
+							if(string::from_c_str((*head)->context.function) == string::from_c_str(msg->context.function)) {
+								frame->current = *head;
+								found_repeat_head = true;
+							}
+						}
+						if(!found_repeat_head) {
+							frame->current = *frame->heads.push(NEW(profile_node));
+							frame->current->children = vector<profile_node*>::make(4);
+							frame->current->context = msg->context;
+						}
+						frame->current->begin = msg->time;
+						frame->current->calls++;
+						break;
+					}
+
+					profile_node* here = frame->current;
+					FORVEC(node, here->children) {
+						if(string::from_c_str((*node)->context.function) == string::from_c_str(msg->context.function)) {
+							here = *node;
+							break;
+						} 
+					}
+					if(here == frame->current) {
+						profile_node* new_node = *here->children.push(NEW(profile_node));
+						new_node->children = vector<profile_node*>::make(4);
+						new_node->parent = here;
+						here = new_node;
+					}
+					
+					here->context = msg->context;
+					here->calls++;
+					here->begin = msg->time;
+					frame->current = here;
+
+				} break;
+
+				case dbg_msg_type::exit_func: {
+
+					clock runtime = msg->time - frame->current->begin;
+					
+					frame->current->heir += runtime;
+					frame->current->begin = 0;
+					frame->current = frame->current->parent;
+
+				} break;
+
+				case dbg_msg_type::end_frame: {
+					frame->clock_end = msg->time;
+					frame->perf_end = msg->end_frame.perf;
+
+					FORVEC(it, frame->heads) {
+						fixdown_self_timings(*it);
+					}
+
+					got_a_frame = false;
+				} break;
+
+				case dbg_msg_type::allocate: 
+				case dbg_msg_type::reallocate:
+				case dbg_msg_type::free: {
+
+					process_frame_alloc_msg(frame, msg);
+
+				} break;
+				}
+			} POP_ALLOC();
+		}
+
+		if(msg->type == dbg_msg_type::allocate || msg->type == dbg_msg_type::reallocate || msg->type == dbg_msg_type::free) {
+			process_alloc_msg(msg);
+		}
+		if(msg->type == dbg_msg_type::end_frame) {
+			last_frame_time = (f32)(msg->end_frame.perf - frame_perf_start) / (f32)global_api->get_perfcount_freq();
+		}
+
+	} FORQ_END(msg, *thread->local_queue);
+
+	thread->local_queue->clear();
+	global_api->release_mutex(thread->local_mut);
 }
 
 alloc_profile alloc_profile::make(allocator* alloc) { PROF
