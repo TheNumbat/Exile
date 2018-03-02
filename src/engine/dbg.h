@@ -110,6 +110,7 @@ struct dbg_msg {
 	};
 	dbg_msg() {};
 };
+bool operator>(dbg_msg& l, dbg_msg& r);
 
 struct profile_node {
 	code_context context;
@@ -226,7 +227,8 @@ struct dbg_manager {
 	void register_thread(u32 frames, u32 frame_size);
 
 	void collate();
-	void collate_thread(thread_profile* thread);
+	void collate_thread_profile(thread_profile* thread);
+	void merge_alloc_profile(heap<dbg_msg>* queue, thread_profile* thread);
 };
 
 void _prof_sec(string name, code_context context);

@@ -53,9 +53,9 @@ void dbg_manager::destroy() { PROF
 	//			  to the last thing destroyed...the only way for this to _really_ work is the platform
 	//			  layer global_num_allocs, but that doesn't actually give us where the memory came from!
 
-	LOG_INFO_F("% allocations remaining at debug shutdown", alloc_totals.num_allocs - alloc_totals.num_frees);
-
 	global_api->aquire_mutex(&stats_mut);
+
+	LOG_INFO_F("% allocations remaining at debug shutdown", alloc_totals.num_allocs - alloc_totals.num_frees);
 
 	FORMAP(it, thread_stats) {
 		it->value.destroy();
@@ -63,6 +63,9 @@ void dbg_manager::destroy() { PROF
 	thread_stats.destroy();
 
 	FORMAP(it, alloc_stats) {
+		FORMAP(a, it->value.current_set) {
+			LOG_DEBUG_F("\t% bytes in % @ %:%", a->value.size, it->key->name, string::from_c_str(a->value.origin.file), a->value.origin.line);
+		}
 		it->value.destroy();
 	}
 	alloc_stats.destroy();
@@ -126,7 +129,6 @@ void dbg_manager::UI() { PROF
 
 	gui_begin("Console"_, R2(0.0f, dim.y * 0.75f, dim.x, dim.y / 4.0f), (u16)window_flags::nowininput);
 
-	PUSH_ALLOC(&scratch);
 	FORQ_BEGIN(it, log_cache) {
 
 			string level = it->fmt_level();
@@ -238,9 +240,6 @@ void dbg_manager::UI() { PROF
 	gui_end();
 
 	global_api->release_mutex(&stats_mut);
-
-	POP_ALLOC();
-	RESET_ARENA(&scratch);
 }
 
 void dbg_manager::shutdown_log(log_manager* log) { PROF
@@ -296,25 +295,56 @@ alloc_frame_profile alloc_frame_profile::make(allocator* alloc) { PROF
 	return ret;
 }
 
+bool operator>(dbg_msg& l, dbg_msg& r) { PROF
+	return l.time < r.time;
+}
+
 void dbg_manager::collate() { PROF
 	
 	PUSH_PROFILE(false) {
 		
 		global_api->aquire_mutex(&stats_mut);
 
+		heap<dbg_msg> allocations_queue = heap<dbg_msg>::make(32);
+
 		FORMAP(thread, thread_stats) {
-			collate_thread(&thread->value);
+			merge_alloc_profile(&allocations_queue, &thread->value);
+			collate_thread_profile(&thread->value);
 		}
+		
+		dbg_msg msg;
+		while(allocations_queue.try_pop(&msg)) {
+			process_alloc_msg(&msg);
+		}
+
+		allocations_queue.destroy();
 
 		global_api->release_mutex(&stats_mut);
 
 	} POP_PROFILE();
 }
 
-void dbg_manager::collate_thread(thread_profile* thread) { PROF
+void dbg_manager::merge_alloc_profile(heap<dbg_msg>* queue, thread_profile* thread) { PROF
+
+	global_api->aquire_mutex(thread->local_mut);
+
+	FORQ_BEGIN(msg, *thread->local_queue) {
+
+		if(msg->type == dbg_msg_type::allocate || msg->type == dbg_msg_type::reallocate || msg->type == dbg_msg_type::free) {
+			queue->push(*msg);
+		}
+
+	} FORQ_END(msg, *thread->local_queue);
+
+	global_api->release_mutex(thread->local_mut);
+}
+
+void dbg_manager::collate_thread_profile(thread_profile* thread) { PROF
 
 	bool got_a_frame = false;
 	platform_perfcount frame_perf_start = 0;
+
+	global_api->aquire_mutex(thread->local_mut);
 
 	FORQ_BEGIN(msg, *thread->local_queue) {
 
@@ -418,9 +448,6 @@ void dbg_manager::collate_thread(thread_profile* thread) { PROF
 			} POP_ALLOC();
 		}
 
-		if(msg->type == dbg_msg_type::allocate || msg->type == dbg_msg_type::reallocate || msg->type == dbg_msg_type::free) {
-			process_alloc_msg(msg);
-		}
 		if(msg->type == dbg_msg_type::end_frame) {
 			last_frame_time = (f32)(msg->end_frame.perf - frame_perf_start) / (f32)global_api->get_perfcount_freq();
 		}

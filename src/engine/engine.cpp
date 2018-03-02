@@ -140,10 +140,6 @@ EXPORT void shut_down(engine* state) {
 	LOG_DEBUG("Destroying asset system");
 	state->default_store.destroy();
 
-	LOG_DEBUG("Destroying thread pool");
-	state->thread_pool.stop_all();
-	state->thread_pool.destroy();
-
 	LOG_DEBUG("Destroying transient store");
 	DESTROY_ARENA(&state->transient_arena);
 
@@ -160,12 +156,18 @@ EXPORT void shut_down(engine* state) {
 	LOG_DEBUG("Destroying events");
 	state->evt.destroy();
 
-	LOG_DEBUG("Done with shutdown!");
-
+	LOG_DEBUG("Destroying debug system");
 	state->dbg.shutdown_log(&state->log);	
 	END_FRAME();
+	state->dbg.collate();
 	state->dbg.destroy();
 	
+	LOG_DEBUG("Destroying thread pool");
+	state->thread_pool.stop_all();
+	state->thread_pool.destroy();
+	
+	LOG_DEBUG("Done with shutdown!");
+
 	state->log.stop();
 	state->log.destroy();
 
