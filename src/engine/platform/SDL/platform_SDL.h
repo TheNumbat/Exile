@@ -70,7 +70,7 @@ platform_semaphore_state sdl_wait_semaphore(platform_semaphore* sem, i32 ms); //
 u64 sdl_atomic_exchange(u64* dest, u64 val);
 void sdl_create_mutex(platform_mutex* mut, bool aquire);
 void sdl_destroy_mutex(platform_mutex* mut);
-void sdl_try_aquire_mutex(platform_mutex* mut);
+bool sdl_try_aquire_mutex(platform_mutex* mut);
 void sdl_aquire_mutex(platform_mutex* mut);
 void sdl_release_mutex(platform_mutex* mut);
 

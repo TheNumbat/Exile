@@ -49,12 +49,10 @@ void world::populate_local_area() { PROF
 				eng->thread_pool.queue_job([](void* p) -> job_callback {
 					chunk* c = (chunk*)p;
 
-					c->state.set(chunk_build_state::generating);
-
+					eng->platform->aquire_mutex(&c->gen_mut);
 					c->gen();
 					c->build_data();
-
-					c->state.set(chunk_build_state::done);
+					eng->platform->release_mutex(&c->gen_mut);
 
 					return null;
 				}, c);
@@ -78,23 +76,24 @@ void world::render() { PROF
 			current.y = 0;
 			
 			chunk* c = chunks.get(current);
+			if(eng->platform->try_aquire_mutex(&c->gen_mut)) {
 
-			chunk_build_state state = c->state.get();
+				if(!c->mesh.dirty) {
+					c->mesh.free_cpu(); 
+				}
 
-			if(state != chunk_build_state::done) {
-				continue;
+				render_command cmd = render_command::make(render_command_type::mesh_chunk, &c->mesh);
+
+				cmd.texture = block_textures;
+				cmd.model = translate(V3f(current.x * chunk::xsz, current.y * chunk::ysz, current.z * chunk::zsz));
+
+				rcl.add_command(cmd);
+
+				// NOTE(max): we actually need this until execute_command_list ... is this ok? 
+				// 			  if it is done by the time we want to render it, there's no way it should
+				// 			  get regenerated
+				eng->platform->release_mutex(&c->gen_mut);
 			}
-
-			if(!c->mesh.dirty) {
-				c->mesh.free_cpu(); 
-			}
-
-			render_command cmd = render_command::make(render_command_type::mesh_chunk, &c->mesh);
-					
-			cmd.texture = block_textures;
-			cmd.model = translate(V3f(current.x * chunk::xsz, current.y * chunk::ysz, current.z * chunk::zsz));
-
-			rcl.add_command(cmd);
 		}
 	}
 
@@ -195,6 +194,7 @@ chunk chunk::make(chunk_pos p, allocator* a) { PROF
 
 	ret.pos = p;
 	ret.mesh = mesh_chunk::make(16, a);
+	eng->platform->create_mutex(&ret.gen_mut, false);
 
 	return ret;
 }
@@ -202,6 +202,7 @@ chunk chunk::make(chunk_pos p, allocator* a) { PROF
 void chunk::destroy() { PROF
 
 	mesh.destroy();
+	eng->platform->destroy_mutex(&gen_mut);
 }
 
 void chunk::gen() { PROF

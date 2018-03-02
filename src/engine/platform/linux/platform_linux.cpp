@@ -399,8 +399,9 @@ void linux_aquire_mutex(platform_mutex* mut) {
 
 }
 
-void linux_try_aquire_mutex(platform_mutex* mut) {
+bool linux_try_aquire_mutex(platform_mutex* mut) {
 
+	return false;
 }
 
 void linux_release_mutex(platform_mutex* mut) {

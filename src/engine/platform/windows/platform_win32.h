@@ -73,7 +73,7 @@ platform_semaphore_state win32_wait_semaphore(platform_semaphore* sem, i32 ms); 
 u64 win32_atomic_exchange(u64* dest, u64 val);
 void win32_create_mutex(platform_mutex* mut, bool aquire);
 void win32_destroy_mutex(platform_mutex* mut);
-void win32_try_aquire_mutex(platform_mutex* mut);
+bool win32_try_aquire_mutex(platform_mutex* mut);
 void win32_aquire_mutex(platform_mutex* mut);
 void win32_release_mutex(platform_mutex* mut);
 

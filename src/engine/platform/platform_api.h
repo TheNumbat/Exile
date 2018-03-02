@@ -330,7 +330,7 @@ struct platform_api {
 	void 			(*create_mutex)(platform_mutex* mut, bool aquire)													= null;
 	void 			(*destroy_mutex)(platform_mutex* mut)																= null;
 	void 			(*aquire_mutex)(platform_mutex* mut)																= null;
-	void 			(*try_aquire_mutex)(platform_mutex* mut)															= null;
+	bool 			(*try_aquire_mutex)(platform_mutex* mut)															= null;
 	void 			(*release_mutex)(platform_mutex* mut)																= null;
 	i32   		   	(*get_num_cpus)()																					= null;
 	platform_thread_join_state (*join_thread)(platform_thread* thread, i32 ms)											= null;

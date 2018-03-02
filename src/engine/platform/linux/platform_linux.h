@@ -70,7 +70,7 @@ platform_semaphore_state linux_wait_semaphore(platform_semaphore* sem, i32 ms); 
 u64 linux_atomic_exchange(u64* dest, u64 val);
 void linux_create_mutex(platform_mutex* mut, bool aquire);
 void linux_destroy_mutex(platform_mutex* mut);
-void linux_try_aquire_mutex(platform_mutex* mut);
+bool linux_try_aquire_mutex(platform_mutex* mut);
 void linux_aquire_mutex(platform_mutex* mut);
 void linux_release_mutex(platform_mutex* mut);
 

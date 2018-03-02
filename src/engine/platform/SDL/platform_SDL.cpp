@@ -379,8 +379,9 @@ void sdl_aquire_mutex(platform_mutex* mut) {
 
 }
 
-void sdl_try_aquire_mutex(platform_mutex* mut) {
+bool sdl_try_aquire_mutex(platform_mutex* mut) {
 
+	return false;
 }
 
 void sdl_release_mutex(platform_mutex* mut) {
