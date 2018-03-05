@@ -456,7 +456,7 @@ void win32_aquire_mutex(platform_mutex* mut) {
 
 bool win32_try_aquire_mutex(platform_mutex* mut) {
 
-	return (bool)TryEnterCriticalSection(&mut->cs);
+	return TryEnterCriticalSection(&mut->cs) == TRUE;
 }
 
 void win32_release_mutex(platform_mutex* mut) {
