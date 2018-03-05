@@ -31,6 +31,10 @@ struct func_ptr {
 		return ((T(*)(args...))data->func)(arg...);
 	}
 
+	operator bool() {
+		return data != null;
+	}
+
 	void set(_FPTR* f) {
 		data = f;
 	}

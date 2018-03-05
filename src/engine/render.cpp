@@ -524,6 +524,8 @@ void ogl_manager::execute_command_list(render_command_list* rcl) { PROF
 
 		select_texture(cmd->texture);
 		d->run(cmd);
+
+		if(cmd->callback) cmd->callback(cmd->param);
 	}
 
 	glDisable(gl_capability::scissor_test);

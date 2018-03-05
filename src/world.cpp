@@ -62,6 +62,13 @@ void world::populate_local_area() { PROF
 	}
 }
 
+CALLBACK void unlock_chunk(void* v) { PROF
+
+	chunk* c = (chunk*)v;
+
+	eng->platform->release_mutex(&c->swap_mut);
+}
+
 void world::render() { PROF
 
 	render_command_list rcl = render_command_list::make();
@@ -78,6 +85,7 @@ void world::render() { PROF
 			
 			chunk* c = *chunks.get(current);
 
+			eng->platform->aquire_mutex(&c->swap_mut);
 			if(!c->mesh.dirty) {
 				c->mesh.free_cpu(); 
 			}
@@ -86,6 +94,9 @@ void world::render() { PROF
 
 			cmd.texture = block_textures;
 			cmd.model = translate(V3f(current.x * chunk::xsz, current.y * chunk::ysz, current.z * chunk::zsz));
+
+			cmd.callback.set(FPTR(unlock_chunk));
+			cmd.param = c;
 
 			rcl.add_command(cmd);
 		}
@@ -335,22 +346,22 @@ void chunk::build_data() { PROF
 					// emit quad
 					switch (i) {
 					case 0: // -X
-						new_mesh.quad16(v, v + V3(w[0], w[1], w[2]), v + V3(h[0], h[1], h[2]), v + V3(w[0] + h[0], w[1] + h[1], w[2] + h[2]), V3f(width, height, (i32)type));
+						new_mesh.quad(v, v + V3(w[0], w[1], w[2]), v + V3(h[0], h[1], h[2]), v + V3(w[0] + h[0], w[1] + h[1], w[2] + h[2]), V3f(width, height, (i32)type));
 						break;
 					case 1: // -Y
-						new_mesh.quad16(v, v + V3(w[0], w[1], w[2]), v + V3(h[0], h[1], h[2]), v + V3(w[0] + h[0], w[1] + h[1], w[2] + h[2]), V3f(width, height, (i32)type));
+						new_mesh.quad(v, v + V3(w[0], w[1], w[2]), v + V3(h[0], h[1], h[2]), v + V3(w[0] + h[0], w[1] + h[1], w[2] + h[2]), V3f(width, height, (i32)type));
 						break;
 					case 2: // -Z
-						new_mesh.quad16(v + V3(h[0], h[1], h[2]), v, v + V3(w[0] + h[0], w[1] + h[1], w[2] + h[2]), v + V3(w[0], w[1], w[2]), V3f(height, width, (i32)type));
+						new_mesh.quad(v + V3(h[0], h[1], h[2]), v, v + V3(w[0] + h[0], w[1] + h[1], w[2] + h[2]), v + V3(w[0], w[1], w[2]), V3f(height, width, (i32)type));
 						break;
 					case 3: // +X
-						new_mesh.quad16(v + V3(w[0], w[1], w[2]), v, v + V3(w[0] + h[0], w[1] + h[1], w[2] + h[2]), v + V3(h[0], h[1], h[2]), V3f(width, height, (i32)type));
+						new_mesh.quad(v + V3(w[0], w[1], w[2]), v, v + V3(w[0] + h[0], w[1] + h[1], w[2] + h[2]), v + V3(h[0], h[1], h[2]), V3f(width, height, (i32)type));
 						break;
 					case 4: // +Y
-						new_mesh.quad16(v + V3(h[0], h[1], h[2]), v + V3(w[0] + h[0], w[1] + h[1], w[2] + h[2]), v, v + V3(w[0], w[1], w[2]), V3f(width, height, (i32)type));
+						new_mesh.quad(v + V3(h[0], h[1], h[2]), v + V3(w[0] + h[0], w[1] + h[1], w[2] + h[2]), v, v + V3(w[0], w[1], w[2]), V3f(width, height, (i32)type));
 						break;
 					case 5: // +Z
-						new_mesh.quad16(v, v + V3(h[0], h[1], h[2]), v + V3(w[0], w[1], w[2]), v + V3(w[0] + h[0], w[1] + h[1], w[2] + h[2]), V3f(height, width, (i32)type));
+						new_mesh.quad(v, v + V3(h[0], h[1], h[2]), v + V3(w[0], w[1], w[2]), v + V3(w[0] + h[0], w[1] + h[1], w[2] + h[2]), V3f(height, width, (i32)type));
 						break;
 					}
 

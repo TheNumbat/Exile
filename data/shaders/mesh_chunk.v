@@ -28,7 +28,7 @@ float ao_values[4] = {
 
 void main() {
 
-	vec3 pos = vec3((vertex.x & x_mask), (vertex.x & y_mask) >> 20, (vertex.x & z_mask) >> 8) / 16.0f;
+	vec3 pos = vec3((vertex.x & x_mask), (vertex.x & y_mask) >> 20, (vertex.x & z_mask) >> 8);
 	
 	f_ao = ao_values[(vertex.y & ao_mask) >> 12];
 	f_norm = (vertex.x & n_mask)  >> 16;

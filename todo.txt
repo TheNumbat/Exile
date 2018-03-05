@@ -27,11 +27,8 @@ all includes:
 priority:
 
 	next current issue:
-		chunks may also be regenerating	from the time we build the render list / render it
-			need to lock the mutex from render list -> render 
-		something strange is going on with chronologically ordering allocation messages
+		something strange is going on with chronologically ordering allocation messages while generating chunks
 
-	job out meshing	
 	lighting/AO
 	
 	float slider/struct UI options
@@ -42,6 +39,8 @@ priority:
 	update features/readme
 
 bugs:
+	strange z-fighting as render distance increases
+
 	textures get recreated? on asset store reload (and not freed?)
 		make sure textures are only created once
 		asset reload leaks memory

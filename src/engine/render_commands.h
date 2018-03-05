@@ -159,6 +159,9 @@ struct render_command {
 
 	void* mesh = null;
 
+	func_ptr<void, void*> callback; 
+	void* param = null;
+
 	render_command() {}
 
 	static render_command make(render_command_type type, void* data = null, u32 key = 0);
