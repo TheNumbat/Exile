@@ -26,7 +26,7 @@ enum class chunk_build_state : u8 {
 
 struct chunk {
 
-	static const i32 xsz = 32, ysz = 256, zsz = 32;
+	static const i32 xsz = 32, ysz = 255, zsz = 32;
 
 	chunk_pos pos;
 

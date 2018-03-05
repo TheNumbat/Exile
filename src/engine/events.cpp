@@ -32,9 +32,6 @@ void evt_manager::run_events(engine* state) { PROF
 		{
 			// async callback
 			if(evt.type == platform_event_type::async) {
-				if(evt.async.type == platform_async_type::user) {
-					LOG_DEBUG_F("Job ID % finished!", evt.async.user_id);
-				}
 				if(evt.async.callback) {
 					evt.async.callback();
 				}
