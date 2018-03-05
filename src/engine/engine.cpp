@@ -34,7 +34,7 @@ EXPORT engine* start_up(platform_api* api) {
 	CHECKED(get_stdout_as_file, &stdout_file);
 	CHECKED(create_file, &log_all_file, "log_all.html"_, platform_file_open_op::create);
 	state->log.add_file(log_all_file, log_level::alloc, log_out_type::html);
-	state->log.add_file(stdout_file, log_level::info, log_out_type::plaintext, true);
+	state->log.add_file(stdout_file, log_level::debug, log_out_type::plaintext, true);
 
 	LOG_INFO("Beginning startup...");
 	LOG_PUSH_CONTEXT_L("");

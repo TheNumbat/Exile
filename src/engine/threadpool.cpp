@@ -150,21 +150,24 @@ i32 worker(void* data_) {
 
 			if(current_job.work) {
 
-				BEGIN_FRAME();
-
-				job_callback callback;
 				PUSH_PROFILE(true) {
+
+					BEGIN_FRAME();
+	
+					job_callback callback;
 					callback = (*current_job.work)(current_job.data);
+
+					PUSH_PROFILE_PROF(false) {
+						platform_event a;
+						a.type 			 = platform_event_type::async;
+						a.async.type 	 = platform_async_type::user;
+						a.async.user_id  = current_job.id;
+						a.async.callback = callback;
+						global_api->queue_event(a);
+					} POP_PROFILE_PROF();
+					
+					END_FRAME();
 				} POP_PROFILE();
-
-				END_FRAME();
-
-				platform_event a;
-				a.type 			 = platform_event_type::async;
-				a.async.type 	 = platform_async_type::user;
-				a.async.user_id  = current_job.id;
-				a.async.callback = callback;
-				global_api->queue_event(a);
 
 				global_api->aquire_mutex(data->running_mutex);
 				platform_semaphore* sem = data->running->get(current_job.id);

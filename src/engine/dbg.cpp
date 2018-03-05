@@ -244,7 +244,7 @@ void dbg_manager::UI() { PROF
 
 void dbg_manager::shutdown_log(log_manager* log) { PROF
 	log_out dbg_log;
-	dbg_log.level = log_level::debug;
+	dbg_log.level = log_level::info;
 	dbg_log.type = log_out_type::custom;
 	dbg_log.write.set(FPTR(dbg_add_log));
 	dbg_log.param = this;
@@ -253,7 +253,7 @@ void dbg_manager::shutdown_log(log_manager* log) { PROF
 
 void dbg_manager::setup_log(log_manager* log) { PROF
 	log_out dbg_log;
-	dbg_log.level = log_level::debug;
+	dbg_log.level = log_level::info;
 	dbg_log.type = log_out_type::custom;
 	dbg_log.write.set(FPTR(dbg_add_log));
 	dbg_log.param = this;
@@ -525,8 +525,7 @@ void dbg_manager::process_alloc_msg(dbg_msg* msg) { PROF
 	} break;
 	case dbg_msg_type::reallocate: {
 
-		single_alloc* freed = profile->current_set.try_get(msg->reallocate.from);
-		LOG_DEBUG_ASSERT(freed);
+		single_alloc* freed = profile->current_set.get(msg->reallocate.from);
 
 		profile->current_size -= freed->size;
 		profile->total_freed += freed->size;

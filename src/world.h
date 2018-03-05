@@ -33,12 +33,13 @@ struct chunk {
 	// NOTE(max): x z y
 	block_type blocks[xsz][zsz][ysz] = {};
 	
-	platform_mutex gen_mut;
+	platform_mutex swap_mut;
 	mesh_chunk mesh;
 
 	allocator* alloc = null;
 
 	static chunk make(chunk_pos pos, allocator* a);
+	static chunk* make_new(chunk_pos pos, allocator* a);
 	void gen();
 	void destroy();
 
@@ -63,7 +64,9 @@ struct world {
 	// 			  we need to support loaded/unloaded chunks
 	// 			  for simulation and paging to disk
 
-	map<chunk_pos, chunk> chunks;
+	// NOTE(max): map to pointers to chunk so the map can transform while chunks are being operated on
+	// TODO(max): use a free-list allocator to allocate the chunks
+	map<chunk_pos, chunk*> chunks;
 	i32 view_distance = 8;
 
 	texture_id block_textures;

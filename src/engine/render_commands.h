@@ -44,9 +44,11 @@ struct mesh_chunk {
 	bool dirty = false;
 
 	static mesh_chunk make(u32 verts = 8192, allocator* alloc = null);
+	static mesh_chunk make_cpu(u32 verts = 8192, allocator* alloc = null);
 	void destroy();
 	void free_cpu();
 	void clear();
+	void swap_mesh(mesh_chunk other);
 
 	void quad(v3 p1, v3 p2, v3 p3, v3 p4, v3 uv_ext);
 	void quad16(v3 p1, v3 p2, v3 p3, v3 p4, v3 uv_ext);

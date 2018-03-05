@@ -346,6 +346,31 @@ mesh_chunk mesh_chunk::make(u32 verts, allocator* alloc) { PROF
 	return ret;
 }
 
+mesh_chunk mesh_chunk::make_cpu(u32 verts, allocator* alloc) { PROF
+
+	if(alloc == null) {
+		alloc = CURRENT_ALLOC();
+	}
+
+	mesh_chunk ret;
+
+	ret.vertices = vector<chunk_vertex>::make(verts, alloc);
+	ret.elements = vector<uv3>::make(verts, alloc);
+
+	return ret;
+}
+
+void mesh_chunk::swap_mesh(mesh_chunk other) { PROF
+
+	vertices.destroy();
+	elements.destroy();
+
+	vertices = other.vertices;
+	elements = other.elements;
+
+	dirty = true;
+}
+
 void mesh_chunk::destroy() { PROF
 
 	glDeleteBuffers(2, vbos);

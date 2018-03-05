@@ -10,7 +10,7 @@ world world::make(asset_store* store, allocator* a) { PROF
 	eng->ogl.push_tex_array(ret.block_textures, store, "stone"_);
 	eng->ogl.push_tex_array(ret.block_textures, store, "numbat"_);
 
-	ret.chunks = map<chunk_pos, chunk>::make(256, a);
+	ret.chunks = map<chunk_pos, chunk*>::make(512, a);
 
 	return ret;
 }
@@ -18,7 +18,10 @@ world world::make(asset_store* store, allocator* a) { PROF
 void world::destroy() { PROF
 
 	FORMAP(it, chunks) {
-		it->value.destroy();
+		it->value->destroy();
+		PUSH_ALLOC(it->value->alloc) {
+			free(it->value);
+		} POP_ALLOC();
 	}
 	chunks.destroy();
 }
@@ -44,18 +47,16 @@ void world::populate_local_area() { PROF
 			
 			if(!chunks.try_get(current)) {
 				
-				chunk* c = chunks.insert(current, chunk::make(current, alloc));
+				chunk** c = chunks.insert(current, chunk::make_new(current, alloc));
 				
 				eng->thread_pool.queue_job([](void* p) -> job_callback {
 					chunk* c = (chunk*)p;
 
-					eng->platform->aquire_mutex(&c->gen_mut);
 					c->gen();
 					c->build_data();
-					eng->platform->release_mutex(&c->gen_mut);
 
 					return null;
-				}, c);
+				}, *c);
 			}
 		}
 	}
@@ -75,25 +76,18 @@ void world::render() { PROF
 			chunk_pos current = camera + chunk_pos(x,0,z);
 			current.y = 0;
 			
-			chunk* c = chunks.get(current);
-			if(eng->platform->try_aquire_mutex(&c->gen_mut)) {
+			chunk* c = *chunks.get(current);
 
-				if(!c->mesh.dirty) {
-					c->mesh.free_cpu(); 
-				}
-
-				render_command cmd = render_command::make(render_command_type::mesh_chunk, &c->mesh);
-
-				cmd.texture = block_textures;
-				cmd.model = translate(V3f(current.x * chunk::xsz, current.y * chunk::ysz, current.z * chunk::zsz));
-
-				rcl.add_command(cmd);
-
-				// NOTE(max): we actually need this until execute_command_list ... is this ok? 
-				// 			  if it is done by the time we want to render it, there's no way it should
-				// 			  get regenerated
-				eng->platform->release_mutex(&c->gen_mut);
+			if(!c->mesh.dirty) {
+				c->mesh.free_cpu(); 
 			}
+
+			render_command cmd = render_command::make(render_command_type::mesh_chunk, &c->mesh);
+
+			cmd.texture = block_textures;
+			cmd.model = translate(V3f(current.x * chunk::xsz, current.y * chunk::ysz, current.z * chunk::zsz));
+
+			rcl.add_command(cmd);
 		}
 	}
 
@@ -193,8 +187,25 @@ chunk chunk::make(chunk_pos p, allocator* a) { PROF
 	chunk ret;
 
 	ret.pos = p;
-	ret.mesh = mesh_chunk::make(16, a);
-	eng->platform->create_mutex(&ret.gen_mut, false);
+	ret.alloc = a;
+	ret.mesh = mesh_chunk::make(1024, a);
+	eng->platform->create_mutex(&ret.swap_mut, false);
+
+	return ret;
+}
+
+chunk* chunk::make_new(chunk_pos p, allocator* a) { PROF
+
+	PUSH_ALLOC(a);
+
+	chunk* ret = NEW(chunk);
+
+	ret->pos = p;
+	ret->alloc = a;
+	ret->mesh = mesh_chunk::make(1024, a);
+	eng->platform->create_mutex(&ret->swap_mut, false);
+
+	POP_ALLOC();
 
 	return ret;
 }
@@ -202,7 +213,7 @@ chunk chunk::make(chunk_pos p, allocator* a) { PROF
 void chunk::destroy() { PROF
 
 	mesh.destroy();
-	eng->platform->destroy_mutex(&gen_mut);
+	eng->platform->destroy_mutex(&swap_mut);
 }
 
 void chunk::gen() { PROF
@@ -228,7 +239,7 @@ void chunk::gen() { PROF
 
 void chunk::build_data() { PROF
 
-	mesh.clear();
+	mesh_chunk new_mesh = mesh_chunk::make_cpu(1024, alloc);
 
 	block_type slice[xsz * ysz];
 
@@ -324,22 +335,22 @@ void chunk::build_data() { PROF
 					// emit quad
 					switch (i) {
 					case 0: // -X
-						mesh.quad16(v, v + V3(w[0], w[1], w[2]), v + V3(h[0], h[1], h[2]), v + V3(w[0] + h[0], w[1] + h[1], w[2] + h[2]), V3f(width, height, (i32)type));
+						new_mesh.quad16(v, v + V3(w[0], w[1], w[2]), v + V3(h[0], h[1], h[2]), v + V3(w[0] + h[0], w[1] + h[1], w[2] + h[2]), V3f(width, height, (i32)type));
 						break;
 					case 1: // -Y
-						mesh.quad16(v, v + V3(w[0], w[1], w[2]), v + V3(h[0], h[1], h[2]), v + V3(w[0] + h[0], w[1] + h[1], w[2] + h[2]), V3f(width, height, (i32)type));
+						new_mesh.quad16(v, v + V3(w[0], w[1], w[2]), v + V3(h[0], h[1], h[2]), v + V3(w[0] + h[0], w[1] + h[1], w[2] + h[2]), V3f(width, height, (i32)type));
 						break;
 					case 2: // -Z
-						mesh.quad16(v + V3(h[0], h[1], h[2]), v, v + V3(w[0] + h[0], w[1] + h[1], w[2] + h[2]), v + V3(w[0], w[1], w[2]), V3f(height, width, (i32)type));
+						new_mesh.quad16(v + V3(h[0], h[1], h[2]), v, v + V3(w[0] + h[0], w[1] + h[1], w[2] + h[2]), v + V3(w[0], w[1], w[2]), V3f(height, width, (i32)type));
 						break;
 					case 3: // +X
-						mesh.quad16(v + V3(w[0], w[1], w[2]), v, v + V3(w[0] + h[0], w[1] + h[1], w[2] + h[2]), v + V3(h[0], h[1], h[2]), V3f(width, height, (i32)type));
+						new_mesh.quad16(v + V3(w[0], w[1], w[2]), v, v + V3(w[0] + h[0], w[1] + h[1], w[2] + h[2]), v + V3(h[0], h[1], h[2]), V3f(width, height, (i32)type));
 						break;
 					case 4: // +Y
-						mesh.quad16(v + V3(h[0], h[1], h[2]), v + V3(w[0] + h[0], w[1] + h[1], w[2] + h[2]), v, v + V3(w[0], w[1], w[2]), V3f(width, height, (i32)type));
+						new_mesh.quad16(v + V3(h[0], h[1], h[2]), v + V3(w[0] + h[0], w[1] + h[1], w[2] + h[2]), v, v + V3(w[0], w[1], w[2]), V3f(width, height, (i32)type));
 						break;
 					case 5: // +Z
-						mesh.quad16(v, v + V3(h[0], h[1], h[2]), v + V3(w[0], w[1], w[2]), v + V3(w[0] + h[0], w[1] + h[1], w[2] + h[2]), V3f(height, width, (i32)type));
+						new_mesh.quad16(v, v + V3(h[0], h[1], h[2]), v + V3(w[0], w[1], w[2]), v + V3(w[0] + h[0], w[1] + h[1], w[2] + h[2]), V3f(height, width, (i32)type));
 						break;
 					}
 
@@ -356,4 +367,10 @@ void chunk::build_data() { PROF
 			}
 		}
 	}
+
+	LOG_DEBUG_F("Built chunk{%,%}", pos.x, pos.z);
+
+	eng->platform->aquire_mutex(&swap_mut);
+	mesh.swap_mesh(new_mesh);
+	eng->platform->release_mutex(&swap_mut);
 }

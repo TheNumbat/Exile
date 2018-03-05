@@ -27,9 +27,9 @@ all includes:
 priority:
 
 	next current issue:
-		chunks are being generated while being moved in the world hash map - dies
 		chunks may also be regenerating	from the time we build the render list / render it
-	fix: use atomic swapping while generating a new mesh?
+			need to lock the mutex from render list -> render 
+		something strange is going on with chronologically ordering allocation messages
 
 	job out meshing	
 	lighting/AO
