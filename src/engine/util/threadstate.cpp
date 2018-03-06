@@ -5,7 +5,7 @@ void _begin_thread(string fmt, allocator* alloc, code_context start, Targs... ar
 	make_type_table(alloc);
 	this_thread_data.alloc_stack = stack<allocator*>::make(8, alloc);
 
-	this_thread_data.dbg_queue = queue<dbg_msg>::make(1024, alloc);
+	this_thread_data.dbg_queue = queue<dbg_msg>::make(4096, alloc);
 	global_api->create_mutex(&this_thread_data.dbg_mut, false);
 
 	this_thread_data.start_context = start;

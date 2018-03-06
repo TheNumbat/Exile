@@ -18,7 +18,6 @@
 #define PROF_SEC_END() 	_prof_sec_end();
 
 #define BEGIN_FRAME() { \
-	global_api->aquire_mutex(&this_thread_data.dbg_mut); \
 	dbg_msg msg; \
 	msg.type = dbg_msg_type::begin_frame; \
 	msg.begin_frame.perf = global_api->get_perfcount(); \
@@ -29,7 +28,7 @@
 	msg.type = dbg_msg_type::end_frame; \
 	msg.end_frame.perf = global_api->get_perfcount(); \
 	POST_MSG(msg); \
-	global_api->release_mutex(&this_thread_data.dbg_mut); \
+	global_dbg->collate(); \
 }
 
 typedef u64 clock;
@@ -39,7 +38,7 @@ enum class dbg_msg_type : u8 {
 	begin_frame,
 	end_frame,
 	allocate,
-	reallocate,
+	reallocate,	
 	free,
 	enter_func,
 	exit_func,
@@ -168,14 +167,12 @@ struct alloc_profile {
 
 struct thread_profile {
 
-	queue<dbg_msg>* local_queue = null;
-	platform_mutex* local_mut 	= null;
-
 	string name;
 	queue<frame_profile> frames;
 	
-	u32 frame_buf_size = 0, num_frames = 0, frame_size = 0;
+	u32 frame_buf_size = 0, num_frames = 0;
 	i32 selected_frame = 1;
+	bool in_frame = false;
 
 	static thread_profile make();
 	void destroy();
@@ -224,11 +221,11 @@ struct dbg_manager {
 
 	void shutdown_log(log_manager* log);
 	void setup_log(log_manager* log);
-	void register_thread(u32 frames, u32 frame_size);
+	void register_thread(u32 frames);
 
 	void collate();
-	void collate_thread_profile(thread_profile* thread);
-	void merge_alloc_profile(heap<dbg_msg>* queue, thread_profile* thread);
+	void collate_thread_profile();
+	// void merge_alloc_profile(heap<dbg_msg>* queue, thread_profile* thread);
 };
 
 void _prof_sec(string name, code_context context);

@@ -21,7 +21,7 @@ EXPORT engine* start_up(platform_api* api) {
 	state->dbg_a = MAKE_PLATFORM_ALLOCATOR("dbg");
 	state->dbg_a.suppress_messages = true;
 	state->dbg = dbg_manager::make(&state->dbg_a);
-	state->dbg.register_thread(180, 32768);
+	state->dbg.register_thread(180);
 
 	BEGIN_FRAME();
 
@@ -86,7 +86,6 @@ EXPORT engine* start_up(platform_api* api) {
 	LOG_POP_CONTEXT();
 
 	END_FRAME();
-	state->dbg.collate();
 
 	state->running = true;
 	return state;
@@ -124,7 +123,6 @@ EXPORT bool main_loop(engine* state) {
 #endif
 
 	END_FRAME();
-	state->dbg.collate();
 
 	return state->running;
 }
@@ -159,7 +157,6 @@ EXPORT void shut_down(engine* state) {
 	LOG_DEBUG("Destroying debug system");
 	state->dbg.shutdown_log(&state->log);	
 	END_FRAME();
-	state->dbg.collate();
 	state->dbg.destroy();
 	
 	LOG_DEBUG("Destroying thread pool");

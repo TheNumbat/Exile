@@ -260,18 +260,14 @@ void dbg_manager::setup_log(log_manager* log) { PROF
 	log->add_custom_output(dbg_log);
 }
 
-void dbg_manager::register_thread(u32 frames, u32 frame_size) { PROF
+void dbg_manager::register_thread(u32 frames) { PROF
 
-	global_api->aquire_mutex(&stats_mut);
-	
 	thread_profile thread;
 	thread.frame_buf_size = frames;
-	thread.frame_size = frame_size;
 	thread.frames = queue<frame_profile>::make(frames, alloc);
 	thread.name = this_thread_data.name;
-	thread.local_queue = &this_thread_data.dbg_queue;
-	thread.local_mut = &this_thread_data.dbg_mut;
 
+	global_api->aquire_mutex(&stats_mut);
 	global_dbg->thread_stats.insert(global_api->this_thread_id(), thread);
 	global_api->release_mutex(&stats_mut);
 }
@@ -305,48 +301,42 @@ void dbg_manager::collate() { PROF
 		
 		global_api->aquire_mutex(&stats_mut);
 
-		heap<dbg_msg> allocations_queue = heap<dbg_msg>::make(32);
+		//heap<dbg_msg> allocations_queue = heap<dbg_msg>::make(32);
 
-		FORMAP(thread, thread_stats) {
-			merge_alloc_profile(&allocations_queue, &thread->value);
-			collate_thread_profile(&thread->value);
-		}
+		// merge_alloc_profile(&allocations_queue, &thread->value);
+		collate_thread_profile();
 		
-		dbg_msg msg;
-		while(allocations_queue.try_pop(&msg)) {
-			process_alloc_msg(&msg);
-		}
+		// dbg_msg msg;
+		// while(allocations_queue.try_pop(&msg)) {
+		// 	process_alloc_msg(&msg);
+		// }
 
-		allocations_queue.destroy();
+		// allocations_queue.destroy();
 
 		global_api->release_mutex(&stats_mut);
 
 	} POP_PROFILE();
 }
 
-void dbg_manager::merge_alloc_profile(heap<dbg_msg>* queue, thread_profile* thread) { PROF
+// void dbg_manager::merge_alloc_profile(heap<dbg_msg>* queue, thread_profile* thread) { PROF
 
-	global_api->aquire_mutex(thread->local_mut);
+// 	FORQ_BEGIN(msg, *thread->local_queue) {
 
-	FORQ_BEGIN(msg, *thread->local_queue) {
+// 		if(msg->type == dbg_msg_type::allocate || msg->type == dbg_msg_type::reallocate || msg->type == dbg_msg_type::free) {
+// 			queue->push(*msg);
+// 		}
 
-		if(msg->type == dbg_msg_type::allocate || msg->type == dbg_msg_type::reallocate || msg->type == dbg_msg_type::free) {
-			queue->push(*msg);
-		}
+// 	} FORQ_END(msg, *thread->local_queue);
+// }
 
-	} FORQ_END(msg, *thread->local_queue);
-
-	global_api->release_mutex(thread->local_mut);
-}
-
-void dbg_manager::collate_thread_profile(thread_profile* thread) { PROF
+void dbg_manager::collate_thread_profile() { PROF
 
 	bool got_a_frame = false;
 	platform_perfcount frame_perf_start = 0;
 
-	global_api->aquire_mutex(thread->local_mut);
+	thread_profile* thread = thread_stats.get(global_api->this_thread_id());
 
-	FORQ_BEGIN(msg, *thread->local_queue) {
+	FORQ_BEGIN(msg, this_thread_data.dbg_queue) {
 
 		if(msg->type == dbg_msg_type::begin_frame) {
 		
@@ -452,10 +442,9 @@ void dbg_manager::collate_thread_profile(thread_profile* thread) { PROF
 			last_frame_time = (f32)(msg->end_frame.perf - frame_perf_start) / (f32)global_api->get_perfcount_freq();
 		}
 
-	} FORQ_END(msg, *thread->local_queue);
+	} FORQ_END(msg, this_thread_data.dbg_queue);
 
-	thread->local_queue->clear();
-	global_api->release_mutex(thread->local_mut);
+	this_thread_data.dbg_queue.clear();
 }
 
 alloc_profile alloc_profile::make(allocator* alloc) { PROF
@@ -549,8 +538,7 @@ void dbg_manager::process_alloc_msg(dbg_msg* msg) { PROF
 	} break;
 	case dbg_msg_type::free: {
 
-		single_alloc* freed = profile->current_set.try_get(msg->free.from);
-		LOG_DEBUG_ASSERT(freed);
+		single_alloc* freed = profile->current_set.get(msg->free.from);
 
 		profile->current_size -= freed->size;
 		profile->total_freed += freed->size;

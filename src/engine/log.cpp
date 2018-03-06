@@ -332,6 +332,7 @@ i32 log_proc(void* data_) {
 	log_thread_param* data = (log_thread_param*)data_;	
 
 	begin_thread("log"_, data->alloc);
+	this_thread_data.profiling = false;
 
 	while(data->running) {
 
