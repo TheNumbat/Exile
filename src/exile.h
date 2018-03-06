@@ -43,6 +43,13 @@ void shut_down_game(void* game) {
 	free(e);
 }
 
+void unload_game(engine* e, void* game) {
+	exile* ex = (exile*)game;
+	ex->w.thread_pool.stop_all();
+}
+
 void reload_game(engine* e, void* game) {
 	eng = e;
+	exile* ex = (exile*)game;
+	ex->w.thread_pool.start_all();
 }

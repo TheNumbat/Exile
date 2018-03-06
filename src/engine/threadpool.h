@@ -49,6 +49,8 @@ struct threadpool {
 	
 	void stop_all();
 	void start_all();
+
+	void renew_priorities(float (*eval)(job,void*), void* param);
 };
 
 bool operator>(const job& l, const job& r);

@@ -58,6 +58,11 @@ void threadpool::wait_job(job_id id) { PROF
 #endif
 }
 
+void threadpool::renew_priorities(float (*eval)(job, void*), void* param) { PROF
+
+	jobs.renew(eval, param);
+}
+
 job_id threadpool::queue_job(job_work work, void* data, float priority) { PROF
 
 	job j;

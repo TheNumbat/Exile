@@ -1,6 +1,8 @@
 
 #pragma once
 
+#define FORHEAP_LINEAR(it,v) for(auto it = (v).memory; it != (v).memory + (v).size; it++)
+
 template<typename T>
 struct heap {
 
@@ -25,6 +27,7 @@ struct heap {
 
 	void reheap_up(u32 node);
 	void reheap_down(u32 root = 0);
+	void renew(float (*eval)(T,void*), void* param);
 };
 
 template<typename T>
@@ -41,5 +44,6 @@ struct locking_heap : public heap<T> {
 	void push(T value);
 	T wait_pop();
 	bool try_pop(T* out);
+	void renew(float (*eval)(T,void*), void* param);
 };
 

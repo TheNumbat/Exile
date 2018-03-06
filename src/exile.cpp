@@ -6,7 +6,7 @@ void exile::init() { PROF
 	store = asset_store::make(&alloc);
 	store.load("assets/game.asset"_);
 
-	w = world::make(&store, &alloc);
+	w.init(&store, &alloc);
 
 	{
 		default_evt = eng->evt.add_handler(FPTR(default_evt_handle), this);

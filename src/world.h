@@ -74,9 +74,10 @@ struct world {
 
 	player p;
 
+	threadpool thread_pool;
 	allocator* alloc = null;
 
-	static world make(asset_store* store, allocator* a);
+	void init(asset_store* store, allocator* a);
 	void destroy();
 
 	void update(platform_perfcount now);
@@ -85,3 +86,4 @@ struct world {
 };
 
 CALLBACK void unlock_chunk(void* v);
+float check_pirority(job j, void* param);

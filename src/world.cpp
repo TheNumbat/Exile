@@ -1,18 +1,19 @@
 
-world world::make(asset_store* store, allocator* a) { PROF
+void world::init(asset_store* store, allocator* a) { PROF
 
-	world ret;
+	alloc = a;
+	p.init();
 
-	ret.alloc = a;
-	ret.p.init();
+	block_textures = eng->ogl.begin_tex_array(V3i(32, 32, (i32)NUM_BLOCKS), texture_wrap::repeat, true, 1);
+	eng->ogl.push_tex_array(block_textures, store, "stone"_);
+	eng->ogl.push_tex_array(block_textures, store, "numbat"_);
 
-	ret.block_textures = eng->ogl.begin_tex_array(V3i(32, 32, (i32)NUM_BLOCKS), texture_wrap::repeat, true, 1);
-	eng->ogl.push_tex_array(ret.block_textures, store, "stone"_);
-	eng->ogl.push_tex_array(ret.block_textures, store, "numbat"_);
+	chunks = map<chunk_pos, chunk*>::make(512, a);
 
-	ret.chunks = map<chunk_pos, chunk*>::make(512, a);
+	LOG_DEBUG_F("% logical cores % physical cores", global_api->get_num_cpus(), global_api->get_phys_cpus());
 
-	return ret;
+	thread_pool = threadpool::make(a, eng->platform->get_phys_cpus() - 1);
+	thread_pool.start_all();
 }
 
 void world::destroy() { PROF
@@ -24,6 +25,8 @@ void world::destroy() { PROF
 		} POP_ALLOC();
 	}
 	chunks.destroy();
+	thread_pool.stop_all();
+	thread_pool.destroy();
 }
 
 void world::update(platform_perfcount now) { PROF
@@ -49,7 +52,7 @@ void world::populate_local_area() { PROF
 				
 				chunk** c = chunks.insert(current, chunk::make_new(current, alloc));
 				
-				eng->thread_pool.queue_job([](void* p) -> job_callback {
+				thread_pool.queue_job([](void* p) -> job_callback {
 					chunk* c = (chunk*)p;
 
 					c->gen();
@@ -69,12 +72,19 @@ CALLBACK void unlock_chunk(void* v) { PROF
 	eng->platform->release_mutex(&c->swap_mut);
 }
 
+float check_pirority(job j, void* param) {
+
+	// player* p = (player*)param;
+	return 0.0f;
+}
+
 void world::render() { PROF
 
 	render_command_list rcl = render_command_list::make();
 
 	// NOTE(max): we need to do this first so command meshes pointers don't get moved while adding more chunks
 	populate_local_area();
+	thread_pool.renew_priorities(check_pirority, &p);
 
 	chunk_pos camera = chunk_pos::from_abs(p.camera.pos);
 	for(i32 x = -view_distance; x <= view_distance; x++) {

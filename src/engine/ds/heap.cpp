@@ -140,6 +140,21 @@ void heap<T>::reheap_down(u32 root) { PROF
 }
 
 template<typename T>
+void heap<T>::renew(float (*eval)(T, void*), void* param) { PROF
+
+	heap<T> h = heap<T>::make(capacity, alloc);
+
+	FORHEAP_LINEAR(it, *this) {
+
+		it->priority = eval(*it, param);
+		h.push(*it);
+	}
+
+	destroy();
+	*this = h;
+}
+
+template<typename T>
 locking_heap<T> locking_heap<T>::make(u32 capacity, allocator* alloc) { PROF
 
 	locking_heap<T> ret;
@@ -191,4 +206,12 @@ bool locking_heap<T>::try_pop(T* out) { PROF
 	bool ret = heap<T>::try_pop(out);
 	global_api->release_mutex(&mut);
 	return ret;
+}
+
+template<typename T>
+void locking_heap<T>::renew(float (*eval)(T,void*), void* param) { PROF
+
+	global_api->aquire_mutex(&mut);
+	heap<T>::renew(eval, param);
+	global_api->release_mutex(&mut);
 }

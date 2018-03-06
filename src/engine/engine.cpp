@@ -47,23 +47,12 @@ EXPORT engine* start_up(platform_api* api) {
 	state->evt = evt_manager::make(&state->evt_a);
 	state->evt.start();
 
-	LOG_INFO("Starting thread pool...");
-	LOG_DEBUG_F("% logical cores % physical cores", global_api->get_num_cpus(), global_api->get_phys_cpus());
-	state->thread_pool_a = MAKE_PLATFORM_ALLOCATOR("threadpool");
-	state->thread_pool_a.suppress_messages = true;
-	state->thread_pool = threadpool::make(&state->thread_pool_a, global_api->get_phys_cpus() - 1);
-	state->thread_pool.start_all();
-
 	LOG_INFO("Allocating transient store...");
 	state->transient_arena = MAKE_ARENA("transient"_, MEGABYTES(8), &state->default_platform_allocator, false);
 
-	job_id assets = state->thread_pool.queue_job([](void* s) -> job_callback {
-		engine* state = (engine*)s;
-		LOG_INFO("Setting up default assets...");
-		state->default_store = asset_store::make(&state->default_platform_allocator);
-		state->default_store.load("assets/engine.asset"_);
-		return null;
-	}, state);
+	LOG_INFO("Setting up default assets...");
+	state->default_store = asset_store::make(&state->default_platform_allocator);
+	state->default_store.load("assets/engine.asset"_);
 
 	LOG_INFO("Creating window...");
 	CHECKED(create_window, &state->window, "Exile"_, 1280, 720);
@@ -71,8 +60,6 @@ EXPORT engine* start_up(platform_api* api) {
 	LOG_INFO("Setting up OpenGL...");
 	state->ogl_a = MAKE_PLATFORM_ALLOCATOR("ogl");
 	state->ogl = ogl_manager::make(&state->window, &state->ogl_a);
-
-	state->thread_pool.wait_job(assets);
 
 	LOG_INFO("Setting up GUI...");
 	state->gui_a = MAKE_PLATFORM_ALLOCATOR("gui");
@@ -132,7 +119,6 @@ EXPORT void shut_down(engine* state) {
 
 	BEGIN_FRAME();
 	LOG_INFO("Beginning shutdown...");
-	state->thread_pool.stop_all();
 
 	LOG_DEBUG("Destroying game...");
 	shut_down_game(state->game_state);
@@ -161,9 +147,6 @@ EXPORT void shut_down(engine* state) {
 	END_FRAME();
 	state->dbg.destroy();
 	
-	LOG_DEBUG("Destroying thread pool");
-	state->thread_pool.destroy();
-	
 	LOG_DEBUG("Done with shutdown!");
 
 	state->log.stop();
@@ -177,7 +160,6 @@ EXPORT void shut_down(engine* state) {
 	state->ogl_a.destroy();
 	state->gui_a.destroy();
 	state->evt_a.destroy();
-	state->thread_pool_a.destroy();
 	state->suppressed_platform_allocator.destroy();
 	state->default_platform_allocator.destroy();
 
@@ -204,7 +186,6 @@ EXPORT void on_reload(platform_api* api, engine* state) {
 
 	state->evt.start(); // NOTE(max): needed to reset platform function pointer pointing into the game DLL
 	state->log.start();
-	state->thread_pool.start_all();
 
 	LOG_INFO("End reloading game code");
 
@@ -215,7 +196,8 @@ EXPORT void on_unload(engine* state) {
 	
 	LOG_INFO("Begin reloading game code");
 
-	state->thread_pool.stop_all();
+	unload_game(state, state->game_state);
+
 	state->log.stop();
 	
 	end_thread();
