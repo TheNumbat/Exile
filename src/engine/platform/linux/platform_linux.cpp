@@ -67,8 +67,14 @@ platform_api platform_build_api() {
 	ret.set_cursor_pos			= &linux_set_cursor_pos;
 	ret.window_focused			= &linux_window_focused;
 	ret.atomic_exchange			= &linux_atomic_exchange;
+	ret.get_phys_cpus 			= &linux_get_phys_cpus;
 
 	return ret;
+}
+
+i32 linux_get_phys_cpus() {
+
+	return 0;
 }
 
 u64 linux_atomic_exchange(u64* dest, u64 val) {

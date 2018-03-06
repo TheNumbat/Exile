@@ -48,9 +48,10 @@ EXPORT engine* start_up(platform_api* api) {
 	state->evt.start();
 
 	LOG_INFO("Starting thread pool...");
+	LOG_DEBUG_F("% logical cores % physical cores", global_api->get_num_cpus(), global_api->get_phys_cpus());
 	state->thread_pool_a = MAKE_PLATFORM_ALLOCATOR("threadpool");
 	state->thread_pool_a.suppress_messages = true;
-	state->thread_pool = threadpool::make(&state->thread_pool_a);
+	state->thread_pool = threadpool::make(&state->thread_pool_a, global_api->get_phys_cpus() - 1);
 	state->thread_pool.start_all();
 
 	LOG_INFO("Allocating transient store...");
@@ -131,6 +132,7 @@ EXPORT void shut_down(engine* state) {
 
 	BEGIN_FRAME();
 	LOG_INFO("Beginning shutdown...");
+	state->thread_pool.stop_all();
 
 	LOG_DEBUG("Destroying game...");
 	shut_down_game(state->game_state);
@@ -160,7 +162,6 @@ EXPORT void shut_down(engine* state) {
 	state->dbg.destroy();
 	
 	LOG_DEBUG("Destroying thread pool");
-	state->thread_pool.stop_all();
 	state->thread_pool.destroy();
 	
 	LOG_DEBUG("Done with shutdown!");

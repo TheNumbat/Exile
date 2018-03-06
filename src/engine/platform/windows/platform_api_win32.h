@@ -1,6 +1,11 @@
 #pragma once
 
 #include "windows.h"
+#ifdef _MSC_VER
+#include <intrin.h>
+#else
+#error __cpuid
+#endif
 
 // API Structures (mark opaque/transparent)
 

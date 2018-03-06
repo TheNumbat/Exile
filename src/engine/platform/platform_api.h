@@ -333,6 +333,7 @@ struct platform_api {
 	bool 			(*try_aquire_mutex)(platform_mutex* mut)															= null;
 	void 			(*release_mutex)(platform_mutex* mut)																= null;
 	i32   		   	(*get_num_cpus)()																					= null;
+	i32 			(*get_phys_cpus)()																					= null;
 	platform_thread_join_state (*join_thread)(platform_thread* thread, i32 ms)											= null;
 	platform_error 	(*create_file)(platform_file* file, string path, platform_file_open_op mode)						= null;
 	platform_error 	(*close_file)(platform_file* file)																	= null;

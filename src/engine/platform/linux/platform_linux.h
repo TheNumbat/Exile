@@ -60,6 +60,7 @@ platform_error	   linux_terminate_thread(platform_thread* thread, i32 exit_code)
 void 	 		   linux_exit_this_thread(i32 exit_code);
 void			   linux_thread_sleep(i32 ms);
 i32  			   linux_get_num_cpus();
+i32  			   linux_get_phys_cpus();
 platform_thread_join_state linux_join_thread(platform_thread* thread, i32 ms); // ms = -1 for infinite
 
 platform_error linux_create_semaphore(platform_semaphore* sem, i32 initial_count, i32 max_count);

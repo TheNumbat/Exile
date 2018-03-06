@@ -67,7 +67,7 @@ struct world {
 	// NOTE(max): map to pointers to chunk so the map can transform while chunks are being operated on
 	// TODO(max): use a free-list allocator to allocate the chunks
 	map<chunk_pos, chunk*> chunks;
-	i32 view_distance = 16;
+	i32 view_distance = 1;
 
 	texture_id block_textures;
 

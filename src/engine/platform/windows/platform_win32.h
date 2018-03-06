@@ -62,6 +62,7 @@ platform_thread_id win32_this_thread_id();
 platform_error	   win32_terminate_thread(platform_thread* thread, i32 exit_code);
 void 	 		   win32_exit_this_thread(i32 exit_code);
 void			   win32_thread_sleep(i32 ms);
+i32  			   win32_get_phys_cpus();
 i32  			   win32_get_num_cpus();
 platform_thread_join_state win32_join_thread(platform_thread* thread, i32 ms); // ms = -1 for infinite
 

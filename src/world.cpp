@@ -111,7 +111,7 @@ void world::render() { PROF
 
 void player::init() { PROF
 
-	speed = 5.0f;
+	speed = 25.0f;
 	last = 0;
 	camera.reset();
 }

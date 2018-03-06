@@ -64,8 +64,13 @@ platform_api platform_build_api() {
 	ret.set_cursor_pos			= &sdl_set_cursor_pos;
 	ret.atomic_exchange 		= &sdl_atomic_exchange;
 	ret.window_focused 			= &sdl_window_focused;
+	ret.get_phys_cpus			= &sdl_get_phys_cpus;
 
 	return ret;
+}
+
+i32 sdl_get_phys_cpus() {
+	return 0;
 }
 
 u64 sdl_atomic_exchange(u64* dest, u64 val) {

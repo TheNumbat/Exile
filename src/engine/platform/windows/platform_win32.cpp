@@ -79,8 +79,21 @@ platform_api platform_build_api() {
 	ret.set_cursor_pos			= &win32_set_cursor_pos;
 	ret.window_focused			= &win32_window_focused;
 	ret.atomic_exchange 		= &win32_atomic_exchange;
+	ret.get_phys_cpus 			= &win32_get_phys_cpus;
 
 	return ret;
+}
+
+i32 win32_get_phys_cpus() {
+	
+	i32 cpus = win32_get_num_cpus();
+
+	i32 cpuinfo[4];
+	__cpuid(cpuinfo, 1);
+	
+	bool HT = (cpuinfo[3] & (1 << 28)) > 0;
+	
+	return HT ? cpus / 2 : cpus;
 }
 
 u64 win32_atomic_exchange(u64* dest, u64 val) {

@@ -169,7 +169,8 @@ struct thread_profile {
 
 	string name;
 	queue<frame_profile> frames;
-	
+	platform_mutex mut;
+
 	u32 frame_buf_size = 0, num_frames = 0;
 	i32 selected_frame = 1;
 	bool in_frame = false;
@@ -196,8 +197,9 @@ struct dbg_manager {
 
 	allocator* alloc = null;
 
-	platform_mutex stats_mut;
-	map<platform_thread_id, thread_profile> thread_stats;
+	platform_mutex stats_map_mut;
+	map<platform_thread_id, thread_profile*> thread_stats;
+	
 	map<allocator*, alloc_profile> alloc_stats;
 	alloc_profile alloc_totals;
 
@@ -221,11 +223,11 @@ struct dbg_manager {
 
 	void shutdown_log(log_manager* log);
 	void setup_log(log_manager* log);
+
 	void register_thread(u32 frames);
 
 	void collate();
 	void collate_thread_profile();
-	// void merge_alloc_profile(heap<dbg_msg>* queue, thread_profile* thread);
 };
 
 void _prof_sec(string name, code_context context);

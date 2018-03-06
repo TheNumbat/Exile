@@ -26,8 +26,7 @@ all includes:
 
 priority:
 
-	next current issue:
-		something strange is going on with chronologically ordering allocation messages while generating chunks
+	re-add global allocation profiling
 
 	lighting/AO
 	

@@ -16,7 +16,6 @@ struct thread_data {
 	bool timing_override = true;
 	
 	queue<dbg_msg> dbg_queue;
-	platform_mutex dbg_mut;
 };
 
 static thread_local thread_data this_thread_data;

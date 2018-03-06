@@ -60,6 +60,7 @@ platform_error	   sdl_terminate_thread(platform_thread* thread, i32 exit_code);
 void 	 		   sdl_exit_this_thread(i32 exit_code);
 void			   sdl_thread_sleep(i32 ms);
 i32  			   sdl_get_num_cpus();
+i32  			   sdl_get_phys_cpus();
 platform_thread_join_state sdl_join_thread(platform_thread* thread, i32 ms); // ms = -1 for infinite
 
 platform_error sdl_create_semaphore(platform_semaphore* sem, i32 initial_count, i32 max_count);

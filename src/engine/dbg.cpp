@@ -3,7 +3,7 @@ dbg_manager dbg_manager::make(allocator* alloc) { PROF
 
 	dbg_manager ret;
 
-	ret.thread_stats = map<platform_thread_id, thread_profile>::make(global_api->get_num_cpus(), alloc);
+	ret.thread_stats = map<platform_thread_id, thread_profile*>::make(global_api->get_num_cpus(), alloc);
 	ret.alloc_stats  = map<allocator*, alloc_profile>::make(32, alloc);
 
 	ret.log_cache = locking_queue<log_message>::make(1024, alloc);
@@ -11,8 +11,7 @@ dbg_manager dbg_manager::make(allocator* alloc) { PROF
 	ret.alloc = alloc;
 	ret.scratch = MAKE_ARENA("dbg scratch"_, MEGABYTES(1), alloc, false);
 	ret.selected_thread = global_api->this_thread_id();
-
-	global_api->create_mutex(&ret.stats_mut, false);
+	global_api->create_mutex(&ret.stats_map_mut, false);
 
 	return ret;
 }
@@ -45,6 +44,7 @@ void thread_profile::destroy() { PROF
 	} FORQ_END(f, frames);
 
 	frames.destroy();
+	global_api->destroy_mutex(&mut);
 }
 
 void dbg_manager::destroy() { PROF
@@ -53,14 +53,16 @@ void dbg_manager::destroy() { PROF
 	//			  to the last thing destroyed...the only way for this to _really_ work is the platform
 	//			  layer global_num_allocs, but that doesn't actually give us where the memory came from!
 
-	global_api->aquire_mutex(&stats_mut);
-
 	LOG_INFO_F("% allocations remaining at debug shutdown", alloc_totals.num_allocs - alloc_totals.num_frees);
 
 	FORMAP(it, thread_stats) {
-		it->value.destroy();
+		it->value->destroy();
+		PUSH_ALLOC(alloc) {
+			free(it->value);
+		} POP_ALLOC();
 	}
 	thread_stats.destroy();
+	global_api->destroy_mutex(&stats_map_mut);
 
 	FORMAP(it, alloc_stats) {
 		FORMAP(a, it->value.current_set) {
@@ -69,9 +71,6 @@ void dbg_manager::destroy() { PROF
 		it->value.destroy();
 	}
 	alloc_stats.destroy();
-
-	global_api->release_mutex(&stats_mut);
-	global_api->destroy_mutex(&stats_mut);
 
 	FORQ_BEGIN(it, log_cache) {
 		DESTROY_ARENA(&it->arena);
@@ -143,8 +142,6 @@ void dbg_manager::UI() { PROF
 	gui_text(string::makef("FPS: %"_, 1.0f / last_frame_time));
 	gui_checkbox("Pause: "_, &frame_pause);
 
-	global_api->aquire_mutex(&stats_mut);
-
 	if(gui_node("Allocation Stats"_, &show_alloc_stats)) {
 
 		gui_indent();
@@ -175,13 +172,17 @@ void dbg_manager::UI() { PROF
 
 	map<string, platform_thread_id> threads = map<string, platform_thread_id>::make(global_api->get_num_cpus());
 	FORMAP(it, thread_stats) {
-		threads.insert(it->value.name, it->key);
+		threads.insert(it->value->name, it->key);
 	}
 	gui_combo("Select Thread"_, threads, &selected_thread);
 	threads.destroy();
 
-	thread_profile* thread = thread_stats.get(selected_thread);
+	global_api->aquire_mutex(&stats_map_mut);
+	thread_profile* thread = *thread_stats.get(selected_thread);
+	global_api->release_mutex(&stats_map_mut);
 	
+	global_api->aquire_mutex(&thread->mut);
+
 	gui_push_id(thread->name);
 	gui_int_slider("Buffer Position: "_, &thread->selected_frame, 1, thread->frame_buf_size);
 
@@ -236,10 +237,10 @@ void dbg_manager::UI() { PROF
 		gui_pop_id();
 	}
 
+	global_api->release_mutex(&thread->mut);
+
 	gui_pop_id();
 	gui_end();
-
-	global_api->release_mutex(&stats_mut);
 }
 
 void dbg_manager::shutdown_log(log_manager* log) { PROF
@@ -262,14 +263,19 @@ void dbg_manager::setup_log(log_manager* log) { PROF
 
 void dbg_manager::register_thread(u32 frames) { PROF
 
-	thread_profile thread;
-	thread.frame_buf_size = frames;
-	thread.frames = queue<frame_profile>::make(frames, alloc);
-	thread.name = this_thread_data.name;
+	PUSH_ALLOC(alloc);
 
-	global_api->aquire_mutex(&stats_mut);
+	thread_profile* thread = NEW(thread_profile);
+	thread->frame_buf_size = frames;
+	thread->frames = queue<frame_profile>::make(frames, alloc);
+	thread->name = this_thread_data.name;
+	global_api->create_mutex(&thread->mut, false);
+
+	POP_ALLOC();
+
+	global_api->aquire_mutex(&stats_map_mut);
 	global_dbg->thread_stats.insert(global_api->this_thread_id(), thread);
-	global_api->release_mutex(&stats_mut);
+	global_api->release_mutex(&stats_map_mut);
 }
 
 void frame_profile::setup(string name, allocator* alloc, clock time, platform_perfcount p, u32 num) { PROF
@@ -299,8 +305,6 @@ void dbg_manager::collate() { PROF
 	
 	PUSH_PROFILE(false) {
 		
-		global_api->aquire_mutex(&stats_mut);
-
 		//heap<dbg_msg> allocations_queue = heap<dbg_msg>::make(32);
 
 		// merge_alloc_profile(&allocations_queue, &thread->value);
@@ -312,8 +316,6 @@ void dbg_manager::collate() { PROF
 		// }
 
 		// allocations_queue.destroy();
-
-		global_api->release_mutex(&stats_mut);
 
 	} POP_PROFILE();
 }
@@ -334,7 +336,11 @@ void dbg_manager::collate_thread_profile() { PROF
 	bool got_a_frame = false;
 	platform_perfcount frame_perf_start = 0;
 
-	thread_profile* thread = thread_stats.get(global_api->this_thread_id());
+	global_api->aquire_mutex(&stats_map_mut);
+	thread_profile* thread = *thread_stats.get(global_api->this_thread_id());
+	global_api->release_mutex(&stats_map_mut);
+
+	global_api->aquire_mutex(&thread->mut);
 
 	FORQ_BEGIN(msg, this_thread_data.dbg_queue) {
 
@@ -443,6 +449,8 @@ void dbg_manager::collate_thread_profile() { PROF
 		}
 
 	} FORQ_END(msg, this_thread_data.dbg_queue);
+
+	global_api->release_mutex(&thread->mut);
 
 	this_thread_data.dbg_queue.clear();
 }
