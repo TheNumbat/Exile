@@ -265,9 +265,12 @@ CALLBACK void run_mesh_chunk(render_command* cmd) { PROF
 	glBindVertexArray(m->vao);
 
 	glEnable(gl_capability::depth_test);
+	glEnable(gl_capability::cull_face);
 
 	u32 num_tris = ((cmd->num_tris ? cmd->num_tris : m->elements.size) - cmd->start_tri) * 3;
 	glDrawElementsBaseVertex(gl_draw_mode::triangles, num_tris, gl_index_type::unsigned_int, (void*)(u64)(0), cmd->offset);
+
+	glDisable(gl_capability::cull_face);
 
 	glBindVertexArray(0);
 }
@@ -822,7 +825,7 @@ void mesh_chunk::quad(v3 p1, v3 p2, v3 p3, v3 p4, v3 uv_ext) { PROF
 	vertices.push(chunk_vertex::from_vec(p4, V3(uv_ext.x, uv_ext.y, uv_ext.z)));
 
 	elements.push(V3u(idx, idx + 1, idx + 2));
-	elements.push(V3u(idx + 1, idx + 2, idx + 3));
+	elements.push(V3u(idx + 3, idx + 2, idx + 1));
 
 	dirty = true;
 }
@@ -837,7 +840,7 @@ void mesh_chunk::quad16(v3 p1, v3 p2, v3 p3, v3 p4, v3 uv_ext) { PROF
 	vertices.push(chunk_vertex::from_vec(p4 * 16.0f, V3(uv_ext.x, uv_ext.y, uv_ext.z)));
 
 	elements.push(V3u(idx, idx + 1, idx + 2));
-	elements.push(V3u(idx + 1, idx + 2, idx + 3));
+	elements.push(V3u(idx + 3, idx + 2, idx + 1));
 
 	dirty = true;
 }

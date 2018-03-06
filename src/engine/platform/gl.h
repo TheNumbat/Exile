@@ -643,6 +643,12 @@ enum class gl_poly : GLenum {
 	front_and_back = 0x0408
 };
 
+enum class gl_cull_mode : GLenum {
+	front 		   = 0x0404,
+	back 		   = 0x0405,
+	front_and_back = 0x0408
+};
+
 enum class gl_poly_mode : GLenum {
 	point = 0x1B00,
 	line  = 0x1B01,
@@ -672,7 +678,7 @@ DLL_IMPORT void glDrawArrays(gl_draw_mode mode, GLint first, GLsizei count);
 DLL_IMPORT void glDrawElements(gl_draw_mode mode, GLsizei count, gl_index_type type, const GLvoid *indices);
 
 DLL_IMPORT void glScissor(GLint x, GLint y, GLsizei width, GLsizei height);
-
+DLL_IMPORT void glCullFace(gl_cull_mode mode);
 DLL_IMPORT void glPolygonMode(gl_poly face, gl_poly_mode mode);
 
 typedef gl_bool (*glIs_t)(GLuint handle);
