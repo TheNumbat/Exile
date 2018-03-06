@@ -161,7 +161,10 @@ struct alloc_profile {
 
 	bool shown = false;
 
+	platform_mutex mut;
+
 	static alloc_profile make(allocator* alloc);
+	static alloc_profile* make_new(allocator* alloc);
 	void destroy();
 };
 
@@ -200,8 +203,8 @@ struct dbg_manager {
 	platform_mutex stats_map_mut;
 	map<platform_thread_id, thread_profile*> thread_stats;
 	
-	map<allocator*, alloc_profile> alloc_stats;
-	alloc_profile alloc_totals;
+	platform_mutex alloc_map_mut;
+	map<allocator*, alloc_profile*> alloc_stats;
 
 	locking_queue<log_message> log_cache;
 	log_level lvl = log_level::info;
@@ -228,6 +231,8 @@ struct dbg_manager {
 
 	void collate();
 	void collate_thread_profile();
+	void collate_alloc_profile();
+	alloc_profile get_totals();
 };
 
 void _prof_sec(string name, code_context context);

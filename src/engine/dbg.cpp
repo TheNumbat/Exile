@@ -4,7 +4,7 @@ dbg_manager dbg_manager::make(allocator* alloc) { PROF
 	dbg_manager ret;
 
 	ret.thread_stats = map<platform_thread_id, thread_profile*>::make(global_api->get_num_cpus(), alloc);
-	ret.alloc_stats  = map<allocator*, alloc_profile>::make(32, alloc);
+	ret.alloc_stats  = map<allocator*, alloc_profile*>::make(32, alloc);
 
 	ret.log_cache = locking_queue<log_message>::make(1024, alloc);
 
@@ -12,6 +12,7 @@ dbg_manager dbg_manager::make(allocator* alloc) { PROF
 	ret.scratch = MAKE_ARENA("dbg scratch"_, MEGABYTES(1), alloc, false);
 	ret.selected_thread = global_api->this_thread_id();
 	global_api->create_mutex(&ret.stats_map_mut, false);
+	global_api->create_mutex(&ret.alloc_map_mut, false);
 
 	return ret;
 }
@@ -49,34 +50,34 @@ void thread_profile::destroy() { PROF
 
 void dbg_manager::destroy() { PROF
 
-	// TODO(max): how tf do we check if everything has been freed if the debug system is not even close
-	//			  to the last thing destroyed...the only way for this to _really_ work is the platform
-	//			  layer global_num_allocs, but that doesn't actually give us where the memory came from!
+	alloc_profile totals = get_totals();
+	LOG_INFO_F("% allocations remaining at debug shutdown", totals.num_allocs - totals.num_frees);
 
-	LOG_INFO_F("% allocations remaining at debug shutdown", alloc_totals.num_allocs - alloc_totals.num_frees);
-
+	PUSH_ALLOC(alloc);
+	
 	FORMAP(it, thread_stats) {
 		it->value->destroy();
-		PUSH_ALLOC(alloc) {
-			free(it->value);
-		} POP_ALLOC();
+		free(it->value);
 	}
 	thread_stats.destroy();
 	global_api->destroy_mutex(&stats_map_mut);
 
 	FORMAP(it, alloc_stats) {
-		FORMAP(a, it->value.current_set) {
+		FORMAP(a, it->value->current_set) {
 			LOG_DEBUG_F("\t% bytes in % @ %:%", a->value.size, it->key->name, string::from_c_str(a->value.origin.file), a->value.origin.line);
 		}
-		it->value.destroy();
+		it->value->destroy();
+		free(it->value);
 	}
 	alloc_stats.destroy();
+	global_api->destroy_mutex(&alloc_map_mut);
 
 	FORQ_BEGIN(it, log_cache) {
 		DESTROY_ARENA(&it->arena);
 	} FORQ_END(it, log_cache);
 	log_cache.destroy();
 
+	POP_ALLOC();
 	DESTROY_ARENA(&scratch);
 }
 
@@ -118,6 +119,24 @@ bool operator<=(single_alloc l, single_alloc r) { PROF
 	return r.size <= l.size;
 }
 
+alloc_profile dbg_manager::get_totals() { PROF
+
+	alloc_profile ret;
+
+	global_api->aquire_mutex(&alloc_map_mut);
+	FORMAP(a, alloc_stats) {
+		ret.current_size += a->value->current_size;
+		ret.total_allocated += a->value->total_allocated;
+		ret.total_freed += a->value->total_freed;
+		ret.num_allocs += a->value->num_allocs;
+		ret.num_frees += a->value->num_frees;
+		ret.num_reallocs += a->value->num_reallocs;
+	}
+	global_api->release_mutex(&alloc_map_mut);
+
+	return ret;
+}
+
 void dbg_manager::UI() { PROF
 
 	if(!show_ui) return;
@@ -142,16 +161,18 @@ void dbg_manager::UI() { PROF
 	gui_text(string::makef("FPS: %"_, 1.0f / last_frame_time));
 	gui_checkbox("Pause: "_, &frame_pause);
 
+	global_api->aquire_mutex(&alloc_map_mut);
 	if(gui_node("Allocation Stats"_, &show_alloc_stats)) {
 
 		gui_indent();
-		gui_text(string::makef("Total size: %, total allocs: %, total frees: %"_, alloc_totals.current_size, alloc_totals.num_allocs, alloc_totals.num_frees));
+		alloc_profile totals = get_totals();
+		gui_text(string::makef("Total size: %, total allocs: %, total frees: %"_, totals.current_size, totals.num_allocs, totals.num_frees));
 
 		FORMAP(it, alloc_stats) {
-			if(gui_node(string::makef("%: size: %, allocs: %, frees: %"_, it->key->name, it->value.current_size, it->value.num_allocs, it->value.num_frees), &it->value.shown)) {
+			if(gui_node(string::makef("%: size: %, allocs: %, frees: %"_, it->key->name, it->value->current_size, it->value->num_allocs, it->value->num_frees), &it->value->shown)) {
 
-				vector<single_alloc> allocs = vector<single_alloc>::make(it->value.current_set.size);
-				FORMAP(a, it->value.current_set) {
+				vector<single_alloc> allocs = vector<single_alloc>::make(it->value->current_set.size);
+				FORMAP(a, it->value->current_set) {
 					allocs.push(a->value);
 				}
 				
@@ -169,7 +190,9 @@ void dbg_manager::UI() { PROF
 
 		gui_unindent();
 	}
+	global_api->release_mutex(&alloc_map_mut);
 
+	global_api->aquire_mutex(&stats_map_mut);
 	map<string, platform_thread_id> threads = map<string, platform_thread_id>::make(global_api->get_num_cpus());
 	FORMAP(it, thread_stats) {
 		threads.insert(it->value->name, it->key);
@@ -177,7 +200,6 @@ void dbg_manager::UI() { PROF
 	gui_combo("Select Thread"_, threads, &selected_thread);
 	threads.destroy();
 
-	global_api->aquire_mutex(&stats_map_mut);
 	thread_profile* thread = *thread_stats.get(selected_thread);
 	global_api->release_mutex(&stats_map_mut);
 	
@@ -305,31 +327,22 @@ void dbg_manager::collate() { PROF
 	
 	PUSH_PROFILE(false) {
 		
-		//heap<dbg_msg> allocations_queue = heap<dbg_msg>::make(32);
-
-		// merge_alloc_profile(&allocations_queue, &thread->value);
+		collate_alloc_profile();
 		collate_thread_profile();
-		
-		// dbg_msg msg;
-		// while(allocations_queue.try_pop(&msg)) {
-		// 	process_alloc_msg(&msg);
-		// }
-
-		// allocations_queue.destroy();
 
 	} POP_PROFILE();
 }
 
-// void dbg_manager::merge_alloc_profile(heap<dbg_msg>* queue, thread_profile* thread) { PROF
+void dbg_manager::collate_alloc_profile() { PROF
 
-// 	FORQ_BEGIN(msg, *thread->local_queue) {
+	FORQ_BEGIN(msg, this_thread_data.dbg_queue) {
 
-// 		if(msg->type == dbg_msg_type::allocate || msg->type == dbg_msg_type::reallocate || msg->type == dbg_msg_type::free) {
-// 			queue->push(*msg);
-// 		}
+		if(msg->type == dbg_msg_type::allocate || msg->type == dbg_msg_type::reallocate || msg->type == dbg_msg_type::free) {
+			process_alloc_msg(msg);
+		}
 
-// 	} FORQ_END(msg, *thread->local_queue);
-// }
+	} FORQ_END(msg, this_thread_data.dbg_queue);
+}
 
 void dbg_manager::collate_thread_profile() { PROF
 
@@ -460,6 +473,21 @@ alloc_profile alloc_profile::make(allocator* alloc) { PROF
 	alloc_profile ret;
 
 	ret.current_set = map<void*, single_alloc>::make(64, alloc);
+	global_api->create_mutex(&ret.mut, false);
+
+	return ret;
+}
+
+alloc_profile* alloc_profile::make_new(allocator* alloc) { PROF
+
+	PUSH_ALLOC(alloc);
+
+	alloc_profile* ret = NEW(alloc_profile);
+
+	ret->current_set = map<void*, single_alloc>::make(64, alloc);
+	global_api->create_mutex(&ret->mut, false);
+
+	POP_ALLOC();
 
 	return ret;
 }
@@ -467,6 +495,7 @@ alloc_profile alloc_profile::make(allocator* alloc) { PROF
 void alloc_profile::destroy() { PROF
 
 	current_set.destroy();
+	global_api->destroy_mutex(&mut);
 }
 
 void dbg_manager::process_frame_alloc_msg(frame_profile* frame, dbg_msg* msg) { PROF
@@ -479,6 +508,7 @@ void dbg_manager::process_frame_alloc_msg(frame_profile* frame, dbg_msg* msg) { 
 	}
 
 	alloc_frame_profile* fprofile = frame->allocations.try_get(a);
+
 	if(!fprofile) {
 
 		fprofile = frame->allocations.insert(a, alloc_frame_profile::make(alloc));
@@ -495,16 +525,20 @@ void dbg_manager::process_alloc_msg(dbg_msg* msg) { PROF
 	case dbg_msg_type::free: 		a = msg->free.alloc; break;
 	}
 
-	alloc_profile* profile = alloc_stats.try_get(a);
-	if(!profile) {
+	global_api->aquire_mutex(&alloc_map_mut);
+	alloc_profile** p = alloc_stats.try_get(a);
+	if(!p) {
 
-		profile = alloc_stats.insert(a, alloc_profile::make(alloc));
+		p = alloc_stats.insert(a, alloc_profile::make_new(alloc));
 	}
+	alloc_profile* profile = *p;
+	global_api->release_mutex(&alloc_map_mut);
 
+	global_api->aquire_mutex(&profile->mut);
 	switch(msg->type) {
 	case dbg_msg_type::allocate: {
 
-		LOG_DEBUG_ASSERT(!profile->current_set.try_get(msg->allocate.to));
+		// LOG_DEBUG_ASSERT(!profile->current_set.try_get(msg->allocate.to));
 
 		single_alloc stat;
 		stat.origin = msg->context;
@@ -515,19 +549,15 @@ void dbg_manager::process_alloc_msg(dbg_msg* msg) { PROF
 		profile->total_allocated += stat.size;
 		profile->num_allocs++;
 
-		alloc_totals.current_size += stat.size;
-		alloc_totals.total_allocated += stat.size;
-		alloc_totals.num_allocs++;
 
 	} break;
 	case dbg_msg_type::reallocate: {
 
-		single_alloc* freed = profile->current_set.get(msg->reallocate.from);
+		single_alloc* freed = profile->current_set.try_get(msg->reallocate.from);
+		if(!freed) break;
 
 		profile->current_size -= freed->size;
 		profile->total_freed += freed->size;
-		alloc_totals.current_size -= freed->size;
-		alloc_totals.total_freed += freed->size;
 		profile->current_set.erase(msg->reallocate.from);
 
 		single_alloc stat;
@@ -537,27 +567,23 @@ void dbg_manager::process_alloc_msg(dbg_msg* msg) { PROF
 		profile->current_set.insert(msg->reallocate.to, stat);
 		profile->current_size += stat.size;
 		profile->total_allocated += stat.size;
-		alloc_totals.current_size += stat.size;
-		alloc_totals.total_allocated += stat.size;
 
 		profile->num_reallocs++;
-		alloc_totals.num_reallocs++;
 
 	} break;
 	case dbg_msg_type::free: {
 
-		single_alloc* freed = profile->current_set.get(msg->free.from);
+		single_alloc* freed = profile->current_set.try_get(msg->free.from);
+		if(!freed) break;
 
 		profile->current_size -= freed->size;
 		profile->total_freed += freed->size;
 		profile->num_frees++;
-		alloc_totals.current_size -= freed->size;
-		alloc_totals.total_freed += freed->size;
-		alloc_totals.num_frees++;
 		profile->current_set.erase(msg->free.from);
 		
 	} break;
 	}
+	global_api->release_mutex(&profile->mut);
 }
 
 void dbg_manager::fixdown_self_timings(profile_node* node) { PROF
