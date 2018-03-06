@@ -6,14 +6,8 @@
 typedef void (*job_callback)();
 typedef job_callback (*job_work)(void*);
 
-enum class job_priority : u8 {
-	normal = 0,
-	high,
-	asap
-};
-
 struct job {
-	job_priority priority = job_priority::normal;
+	float priority = 0.0f;
 	job_id id	  = 0;
 	job_work work = null;
 	void* data 	  = null;
@@ -49,7 +43,7 @@ struct threadpool {
 	static threadpool make(allocator* a, i32 num_threads_ = 0);
 	void destroy();
 	
-	job_id queue_job(job_work work, void* data, job_priority prirority = job_priority::normal);
+	job_id queue_job(job_work work, void* data, float prirority = 0.0f);
 	job_id queue_job(job j);
 	void wait_job(job_id id);
 	

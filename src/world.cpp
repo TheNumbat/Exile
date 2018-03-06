@@ -56,7 +56,7 @@ void world::populate_local_area() { PROF
 					c->build_data();
 
 					return null;
-				}, *c);
+				}, *c, 1.0f / lengthsq(current.center() - p.camera.pos));
 			}
 		}
 	}
@@ -111,7 +111,7 @@ void world::render() { PROF
 
 void player::init() { PROF
 
-	speed = 25.0f;
+	speed = 300.0f;
 	last = 0;
 	camera.reset();
 }
@@ -175,6 +175,11 @@ chunk_pos chunk_pos::from_abs(v3 pos) { PROF
 	ret.y = (i32)(pos.y / chunk::ysz) - (pos.y < 0 ? 1 : 0);
 	ret.z = (i32)(pos.z / chunk::zsz) - (pos.z < 0 ? 1 : 0);
 	return ret;
+}
+
+v3 chunk_pos::center() { PROF
+
+	return V3(x * chunk::xsz + chunk::xsz / 2.0f, y * chunk::ysz + chunk::ysz / 2.0f, z * chunk::zsz + chunk::zsz / 2.0f);
 }
 
 chunk_pos chunk_pos::operator+(chunk_pos other) { PROF

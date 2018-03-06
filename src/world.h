@@ -11,7 +11,8 @@ struct chunk_pos {
 
 	chunk_pos(i32 _x = 0, i32 _y = 0, i32 _z = 0);
 	static chunk_pos from_abs(v3 pos);
-	
+
+	v3 center();
 	chunk_pos operator+(chunk_pos other);
 	chunk_pos operator-(chunk_pos other);
 };

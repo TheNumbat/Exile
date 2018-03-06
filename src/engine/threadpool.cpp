@@ -1,6 +1,6 @@
 
 bool operator>(const job& l, const job& r) { PROF
-	return (u32)l.priority > (u32)r.priority;
+	return l.priority > r.priority;
 }
 
 threadpool threadpool::make(i32 num_threads_) { PROF
@@ -58,7 +58,7 @@ void threadpool::wait_job(job_id id) { PROF
 #endif
 }
 
-job_id threadpool::queue_job(job_work work, void* data, job_priority priority) { PROF
+job_id threadpool::queue_job(job_work work, void* data, float priority) { PROF
 
 	job j;
 	j.priority = priority;
