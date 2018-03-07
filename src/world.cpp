@@ -74,8 +74,10 @@ CALLBACK void unlock_chunk(void* v) { PROF
 
 float check_pirority(job j, void* param) {
 
-	// player* p = (player*)param;
-	return 0.0f;
+	player* p = (player*)param;
+	chunk* c = (chunk*)j.data;
+
+	return 1.0f / lengthsq(c->pos.center() - p->camera.pos);
 }
 
 void world::render() { PROF

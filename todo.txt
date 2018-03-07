@@ -26,7 +26,6 @@ all includes:
 
 priority:
 
-	finish priority renew check
 	re-add global allocation profiling
 
 	lighting/AO
