@@ -18,6 +18,8 @@ void world::init(asset_store* store, allocator* a) { PROF
 
 void world::destroy() { PROF
 
+	thread_pool.stop_all();
+	thread_pool.destroy();
 	FORMAP(it, chunks) {
 		it->value->destroy();
 		PUSH_ALLOC(it->value->alloc) {
@@ -25,8 +27,6 @@ void world::destroy() { PROF
 		} POP_ALLOC();
 	}
 	chunks.destroy();
-	thread_pool.stop_all();
-	thread_pool.destroy();
 }
 
 void world::update(platform_perfcount now) { PROF
