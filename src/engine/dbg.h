@@ -147,14 +147,14 @@ struct frame_profile {
 	void destroy();
 };
 
-struct single_alloc {
-	code_context origin;
-	u64 size = 0;
+struct addr_info {
+	code_context last_touch;
+	i64 size = 0;
 };
 
 struct alloc_profile {
 
-	map<void*, single_alloc> current_set; 
+	map<void*, addr_info> current_set; 
 
 	u64 current_size = 0, total_allocated = 0, total_freed = 0;
 	u64 num_allocs = 0, num_frees = 0, num_reallocs = 0;
@@ -244,4 +244,4 @@ bool prof_sort_name(profile_node* l, profile_node* r);
 bool prof_sort_heir(profile_node* l, profile_node* r);
 bool prof_sort_self(profile_node* l, profile_node* r);
 bool prof_sort_calls(profile_node* l, profile_node* r);
-bool operator<=(single_alloc l, single_alloc r);
+bool operator<=(addr_info l, addr_info r);

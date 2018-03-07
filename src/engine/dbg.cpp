@@ -64,7 +64,7 @@ void dbg_manager::destroy() { PROF
 
 	FORMAP(it, alloc_stats) {
 		FORMAP(a, it->value->current_set) {
-			LOG_DEBUG_F("\t% bytes in % @ %:%", a->value.size, it->key->name, string::from_c_str(a->value.origin.file), a->value.origin.line);
+			LOG_DEBUG_F("\t% bytes in % @ %:%", a->value.size, it->key->name, string::from_c_str(a->value.last_touch.file), a->value.last_touch.line);
 		}
 		it->value->destroy();
 		free(it->value);
@@ -114,7 +114,7 @@ void dbg_manager::profile_recurse(vector<profile_node*> list) { PROF
 	}
 }
 
-bool operator<=(single_alloc l, single_alloc r) { PROF 
+bool operator<=(addr_info l, addr_info r) { PROF 
 
 	return r.size <= l.size;
 }
@@ -171,7 +171,7 @@ void dbg_manager::UI() { PROF
 		FORMAP(it, alloc_stats) {
 			if(gui_node(string::makef("%: size: %, allocs: %, frees: %"_, it->key->name, it->value->current_size, it->value->num_allocs, it->value->num_frees), &it->value->shown)) {
 
-				vector<single_alloc> allocs = vector<single_alloc>::make(it->value->current_set.size);
+				vector<addr_info> allocs = vector<addr_info>::make(it->value->current_set.size);
 				FORMAP(a, it->value->current_set) {
 					allocs.push(a->value);
 				}
@@ -180,7 +180,7 @@ void dbg_manager::UI() { PROF
 				
 				gui_indent();
 				FORVEC(a, allocs) {
-					gui_text(string::makef("% bytes @ %:%"_, a->size, string::from_c_str(a->origin.file), a->origin.line));
+					gui_text(string::makef("% bytes @ %:%"_, a->size, string::from_c_str(a->last_touch.file), a->last_touch.line));
 				}
 				gui_unindent();
 
@@ -472,7 +472,7 @@ alloc_profile alloc_profile::make(allocator* alloc) { PROF
 
 	alloc_profile ret;
 
-	ret.current_set = map<void*, single_alloc>::make(64, alloc);
+	ret.current_set = map<void*, addr_info>::make(64, alloc);
 	global_api->create_mutex(&ret.mut, false);
 
 	return ret;
@@ -484,7 +484,7 @@ alloc_profile* alloc_profile::make_new(allocator* alloc) { PROF
 
 	alloc_profile* ret = NEW(alloc_profile);
 
-	ret->current_set = map<void*, single_alloc>::make(64, alloc);
+	ret->current_set = map<void*, addr_info>::make(64, alloc);
 	global_api->create_mutex(&ret->mut, false);
 
 	POP_ALLOC();
@@ -538,48 +538,63 @@ void dbg_manager::process_alloc_msg(dbg_msg* msg) { PROF
 	switch(msg->type) {
 	case dbg_msg_type::allocate: {
 
-		// LOG_DEBUG_ASSERT(!profile->current_set.try_get(msg->allocate.to));
+		addr_info* info = profile->current_set.try_get(msg->allocate.to);
+		if(!info) {
+			info = profile->current_set.insert(msg->allocate.to, addr_info());
+		}
 
-		single_alloc stat;
-		stat.origin = msg->context;
-		stat.size = msg->allocate.bytes;
-		profile->current_set.insert(msg->allocate.to, stat);
+		info->last_touch = msg->context;
+		info->size += msg->allocate.bytes;
 
-		profile->current_size += stat.size;
-		profile->total_allocated += stat.size;
+		profile->current_size += msg->allocate.bytes;
+		profile->total_allocated += msg->allocate.bytes;
 		profile->num_allocs++;
-
 
 	} break;
 	case dbg_msg_type::reallocate: {
 
-		single_alloc* freed = profile->current_set.try_get(msg->reallocate.from);
-		if(!freed) break;
+		addr_info* from_info = profile->current_set.try_get(msg->reallocate.from);
+		if(!from_info) {
+			from_info = profile->current_set.insert(msg->reallocate.from, addr_info());
+		}
+		addr_info* to_info = profile->current_set.try_get(msg->reallocate.to);
+		if(!to_info) {
+			to_info = profile->current_set.insert(msg->reallocate.to, addr_info());
+		}
 
-		profile->current_size -= freed->size;
-		profile->total_freed += freed->size;
-		profile->current_set.erase(msg->reallocate.from);
+		from_info->last_touch = msg->context;
+		// from_info->size -= _msize(msg->reallocate.from);
 
-		single_alloc stat;
-		stat.origin = msg->context;
-		stat.size = msg->reallocate.bytes;
+		profile->current_size -= from_info->size;
+		profile->total_freed += from_info->size;
 
-		profile->current_set.insert(msg->reallocate.to, stat);
-		profile->current_size += stat.size;
-		profile->total_allocated += stat.size;
+		if(from_info->size == 0)
+			profile->current_set.erase(msg->reallocate.from);
 
+		to_info->last_touch = msg->context;
+		to_info->size += msg->allocate.bytes;
+
+		profile->current_size += msg->allocate.bytes;
+		profile->total_allocated += msg->allocate.bytes;
 		profile->num_reallocs++;
 
 	} break;
 	case dbg_msg_type::free: {
 
-		single_alloc* freed = profile->current_set.try_get(msg->free.from);
-		if(!freed) break;
+		addr_info* info = profile->current_set.try_get(msg->free.from);
+		if(!info) {
+			info = profile->current_set.insert(msg->free.from, addr_info());
+		}
 
-		profile->current_size -= freed->size;
-		profile->total_freed += freed->size;
+		info->last_touch = msg->context;
+		// info->size -= _msize(msg->free.from);
+
+		profile->current_size -= info->size;
+		profile->total_freed += info->size;
 		profile->num_frees++;
-		profile->current_set.erase(msg->free.from);
+
+		if(info->size == 0)
+			profile->current_set.erase(msg->free.from);
 		
 	} break;
 	}

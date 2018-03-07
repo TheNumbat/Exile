@@ -217,8 +217,7 @@ to do:
 		rename ogl stuff to "renderer" to facilitate different backends
 
 	chunks
-		deferred mesh re/building
-		LOD
+		LOD?
 		storage representation (compression?)
 		world storage (3D chunks?)
 			paging to disk - serialization, etc.
