@@ -58,7 +58,7 @@ void world::populate_local_area() { PROF
 					c->gen();
 					c->build_data();
 
-				}, *c, 1.0f / lengthsq(current.center() - p.camera.pos));
+				}, *c, 1.0f / lengthsq(current.center_xz() - p.camera.pos));
 			}
 		}
 	}
@@ -73,19 +73,24 @@ CALLBACK void unlock_chunk(void* v) { PROF
 
 float check_pirority(super_job* j, void* param) {
 
-	player* p = (player*)param;
+	world* w = (world*)param;
+	player* p = &w->p;
 	chunk* c = (chunk*)j->data;
 
-	return 1.0f / lengthsq(c->pos.center() - p->camera.pos);
+	v3 center = c->pos.center_xz();
+
+	if(absf(center.x - p->camera.pos.x) > (f32)(w->view_distance + 1) * chunk::xsz ||
+	   absf(center.z - p->camera.pos.z) > (f32)(w->view_distance + 1) * chunk::zsz) {
+		// return -FLT_MAX;
+	}
+
+	return 1.0f / lengthsq(center - p->camera.pos);
 }
 
 void world::render() { PROF
 
 	render_command_list rcl = render_command_list::make();
-
-	// NOTE(max): we need to do this first so command meshes pointers don't get moved while adding more chunks
-	populate_local_area();
-	thread_pool.renew_priorities(check_pirority, &p);
+	thread_pool.renew_priorities(check_pirority, this);
 
 	chunk_pos camera = chunk_pos::from_abs(p.camera.pos);
 	for(i32 x = -view_distance; x <= view_distance; x++) {
@@ -94,15 +99,28 @@ void world::render() { PROF
 			chunk_pos current = camera + chunk_pos(x,0,z);
 			current.y = 0;
 			
-			chunk* c = *chunks.get(current);
+			chunk** ch = chunks.try_get(current);
+			if(!ch) {
+				ch = chunks.insert(current, chunk::make_new(current, alloc));
+				
+				thread_pool.queue_job([](void* p) -> void {
+					chunk* c = (chunk*)p;
 
-			eng->platform->aquire_mutex(&c->swap_mut);
+					c->gen();
+					c->build_data();
+
+				}, *ch, 1.0f / lengthsq(current.center_xz() - p.camera.pos));
+			}
+			chunk* c = *ch;
+
 			if(!c->mesh.dirty) {
-				c->mesh.free_cpu(); 
+				c->mesh.free_cpu();
 			}
 
+			eng->platform->aquire_mutex(&c->swap_mut);
 			render_command cmd = render_command::make(render_command_type::mesh_chunk, &c->mesh);
 
+			cmd.num_tris = c->mesh_triangles;
 			cmd.texture = block_textures;
 			cmd.model = translate(V3f(current.x * chunk::xsz, current.y * chunk::ysz, current.z * chunk::zsz));
 
@@ -188,9 +206,9 @@ chunk_pos chunk_pos::from_abs(v3 pos) { PROF
 	return ret;
 }
 
-v3 chunk_pos::center() { PROF
+v3 chunk_pos::center_xz() { PROF
 
-	return V3(x * chunk::xsz + chunk::xsz / 2.0f, y * chunk::ysz + chunk::ysz / 2.0f, z * chunk::zsz + chunk::zsz / 2.0f);
+	return V3(x * chunk::xsz + chunk::xsz / 2.0f, 0.0f, z * chunk::zsz + chunk::zsz / 2.0f);
 }
 
 chunk_pos chunk_pos::operator+(chunk_pos other) { PROF
@@ -215,7 +233,7 @@ chunk chunk::make(chunk_pos p, allocator* a) { PROF
 
 	ret.pos = p;
 	ret.alloc = a;
-	ret.mesh = mesh_chunk::make(1024, a);
+	ret.mesh = mesh_chunk::make_gpu();
 	eng->platform->create_mutex(&ret.swap_mut, false);
 
 	return ret;
@@ -229,7 +247,7 @@ chunk* chunk::make_new(chunk_pos p, allocator* a) { PROF
 
 	ret->pos = p;
 	ret->alloc = a;
-	ret->mesh = mesh_chunk::make(1024, a);
+	ret->mesh = mesh_chunk::make_gpu();
 	eng->platform->create_mutex(&ret->swap_mut, false);
 
 	POP_ALLOC();
@@ -399,5 +417,6 @@ void chunk::build_data() { PROF
 
 	eng->platform->aquire_mutex(&swap_mut);
 	mesh.swap_mesh(new_mesh);
+	mesh_triangles = mesh.elements.size;
 	eng->platform->release_mutex(&swap_mut);
 }

@@ -45,6 +45,7 @@ struct mesh_chunk {
 
 	static mesh_chunk make(u32 verts = 8192, allocator* alloc = null);
 	static mesh_chunk make_cpu(u32 verts = 8192, allocator* alloc = null);
+	static mesh_chunk make_gpu();
 	void destroy();
 	void free_cpu();
 	void clear();

@@ -12,7 +12,7 @@ struct chunk_pos {
 	chunk_pos(i32 _x = 0, i32 _y = 0, i32 _z = 0);
 	static chunk_pos from_abs(v3 pos);
 
-	v3 center();
+	v3 center_xz();
 	chunk_pos operator+(chunk_pos other);
 	chunk_pos operator-(chunk_pos other);
 };
@@ -36,6 +36,7 @@ struct chunk {
 	
 	platform_mutex swap_mut;
 	mesh_chunk mesh;
+	u32 mesh_triangles = 0;
 
 	allocator* alloc = null;
 

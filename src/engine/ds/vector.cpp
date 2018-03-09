@@ -313,6 +313,7 @@ void vector<T>::resize(u32 new_capacity) { PROF
 			alloc->free_(memory, capacity * sizeof(T), alloc, CONTEXT);
 			memory = null;
 		}
+		capacity = size = 0;
 		return;
 	}
 

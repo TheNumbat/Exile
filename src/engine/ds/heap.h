@@ -27,7 +27,9 @@ struct heap {
 
 	void reheap_up(u32 node);
 	void reheap_down(u32 root = 0);
-	void renew(float (*eval)(T,void*), void* param);
+
+	// specialized
+	void renew(float (*eval)(T,void*), void* param) {};
 };
 
 template<typename T, bool(comp)(T,T) = gt>

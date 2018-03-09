@@ -141,18 +141,26 @@ void heap<T,comp>::reheap_down(u32 root) { PROF
 	}
 }
 
-template<typename T, bool(comp)(T,T)>
-void heap<T,comp>::renew(float (*eval)(T, void*), void* param) { PROF
+template<>
+void heap<super_job*,gt>::renew(float (*eval)(super_job*, void*), void* param) { PROF
 
-	heap<T,comp> h = heap<T,comp>::make(capacity);
+	heap<super_job*,gt> h = heap<super_job*,gt>::make(capacity);
 
 	FORHEAP_LINEAR(it, *this) {
 
 		(*it)->priority = eval(*it, param);
-		h.push(*it);
-	}
 
-	memcpy(h.memory, memory, size * sizeof(T));
+		if((*it)->priority > -FLT_MAX) {
+			h.push(*it);
+		} else {
+			PUSH_ALLOC(alloc) {
+				free(*it, sizeof(super_job));
+			} POP_ALLOC();
+		}
+	}
+   
+	memcpy(h.memory, memory, h.size * sizeof(super_job*));
+	size = h.size;
 	h.destroy();
 }
 

@@ -528,7 +528,6 @@ void dbg_manager::process_alloc_msg(dbg_msg* msg) { PROF
 	global_api->aquire_mutex(&alloc_map_mut);
 	alloc_profile** p = alloc_stats.try_get(a);
 	if(!p) {
-
 		p = alloc_stats.insert(a, alloc_profile::make_new(alloc));
 	}
 	alloc_profile* profile = *p;
@@ -550,8 +549,9 @@ void dbg_manager::process_alloc_msg(dbg_msg* msg) { PROF
 		profile->total_allocated += msg->allocate.bytes;
 		profile->num_allocs++;
 
-		if(info->size == 0)
+		if(info->size == 0) {
 			profile->current_set.erase(msg->allocate.to);
+		}
 
 	} break;
 	case dbg_msg_type::reallocate: {
@@ -572,8 +572,9 @@ void dbg_manager::process_alloc_msg(dbg_msg* msg) { PROF
 		profile->current_size -= msg->reallocate.from_bytes;
 		profile->total_freed += msg->reallocate.from_bytes;
 
-		if(from_info->size == 0)
+		if(from_info->size == 0) {
 			profile->current_set.erase(msg->reallocate.from);
+		}
 
 		to_info->last_loc = msg->context;
 		to_info->size += msg->reallocate.to_bytes;
@@ -582,8 +583,9 @@ void dbg_manager::process_alloc_msg(dbg_msg* msg) { PROF
 		profile->total_allocated += msg->reallocate.to_bytes;
 		profile->num_reallocs++;
 
-		if(to_info->size == 0)
+		if(to_info->size == 0) {
 			profile->current_set.erase(msg->reallocate.to);
+		}
 
 	} break;
 	case dbg_msg_type::free: {
@@ -600,8 +602,9 @@ void dbg_manager::process_alloc_msg(dbg_msg* msg) { PROF
 		profile->total_freed += msg->free.bytes;
 		profile->num_frees++;
 
-		if(info->size == 0)
+		if(info->size == 0) {
 			profile->current_set.erase(msg->free.from);
+		}
 		
 	} break;
 	}

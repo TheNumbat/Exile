@@ -182,6 +182,7 @@ CALLBACK void buffers_mesh_chunk(render_command* cmd) { PROF
 	glBufferData(gl_buf_target::element_array, m->elements.size * sizeof(uv3), m->elements.size ? m->elements.memory : null, gl_buf_usage::dynamic_draw);
 
 	glBindVertexArray(0);
+
 	m->dirty = false;
 }
 
@@ -331,6 +332,27 @@ mesh_chunk mesh_chunk::make(u32 verts, allocator* alloc) { PROF
 
 	ret.vertices = vector<chunk_vertex>::make(verts, alloc);
 	ret.elements = vector<uv3>::make(verts, alloc);
+
+	glGenVertexArrays(1, &ret.vao);
+	glGenBuffers(2, ret.vbos);
+
+	glBindVertexArray(ret.vao);
+
+	glBindBuffer(gl_buf_target::array, ret.vbos[0]);
+
+	glVertexAttribIPointer(0, 2, gl_vert_attrib_type::unsigned_int, sizeof(chunk_vertex), (void*)0);
+	glEnableVertexAttribArray(0);
+	
+	glBindBuffer(gl_buf_target::element_array, ret.vbos[1]);
+
+	glBindVertexArray(0);
+
+	return ret;
+}
+
+mesh_chunk mesh_chunk::make_gpu() { PROF
+
+	mesh_chunk ret;
 
 	glGenVertexArrays(1, &ret.vao);
 	glGenBuffers(2, ret.vbos);
