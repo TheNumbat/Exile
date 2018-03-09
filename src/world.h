@@ -19,9 +19,9 @@ struct chunk_pos {
 bool operator==(chunk_pos l, chunk_pos r);
 inline u32 hash(chunk_pos key);
 
-enum class chunk_build_state : u8 {
+enum class work : u8 {
 	none,
-	generating,
+	in_flight,
 	done
 };
 
@@ -35,7 +35,9 @@ struct chunk {
 	block_type blocks[xsz][zsz][ysz] = {};
 	
 	platform_mutex swap_mut;
+	atomic_enum<work> job_state;
 	mesh_chunk mesh;
+
 	u32 mesh_triangles = 0;
 
 	allocator* alloc = null;
@@ -87,4 +89,5 @@ struct world {
 };
 
 CALLBACK void unlock_chunk(void* v);
+CALLBACK void cancel_build(void* param);
 float check_pirority(super_job* j, void* param);

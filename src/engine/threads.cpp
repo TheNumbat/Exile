@@ -92,8 +92,38 @@ void threadpool::renew_priorities(float (*eval)(super_job*, void*), void* param)
 	jobs.renew(eval, param);
 }
 
+template<>
+void heap<super_job*,gt>::renew(float (*eval)(super_job*, void*), void* param) { PROF
+
+	heap<super_job*,gt> h = heap<super_job*,gt>::make(capacity);
+
+	FORHEAP_LINEAR(it, *this) {
+
+		super_job* j = *it;
+
+		j->priority = eval(j, param);
+
+		if(j->priority > -FLT_MAX) {
+			h.push(j);
+		} else {
+			
+			if(j->cancel)
+				j->cancel(j->data);
+
+			// NOTE(max): only works because the elements are allocated with the same allocator passed to the heap (in threadpool)
+			PUSH_ALLOC(alloc) {
+				free(j, sizeof(super_job));
+			} POP_ALLOC();
+		}
+	}
+   
+	memcpy(h.memory, memory, h.size * sizeof(super_job*));
+	size = h.size;
+	h.destroy();
+}
+
 template<typename T>
-void threadpool::queue_job(future<T>* fut, job_work<T> work, void* data, float priority) { PROF
+void threadpool::queue_job(future<T>* fut, job_work<T> work, void* data, float priority, _FPTR* cancel) { PROF
 
 	PUSH_ALLOC(alloc);
 
@@ -102,6 +132,7 @@ void threadpool::queue_job(future<T>* fut, job_work<T> work, void* data, float p
 	j->future = fut;
 	j->work = work;
 	j->data = data;
+	j->cancel.set(cancel);
 
 #ifdef NO_CONCURRENT_JOBS
 	POP_ALLOC();
@@ -116,7 +147,7 @@ void threadpool::queue_job(future<T>* fut, job_work<T> work, void* data, float p
 #endif
 }
 
-void threadpool::queue_job(job_work<void> work, void* data, float priority) {
+void threadpool::queue_job(job_work<void> work, void* data, float priority, _FPTR* cancel) {
 
 	PUSH_ALLOC(alloc);
 
@@ -124,6 +155,7 @@ void threadpool::queue_job(job_work<void> work, void* data, float priority) {
 	j->priority = priority;
 	j->work = work;
 	j->data = data;
+	j->cancel.set(cancel);
 
 #ifdef NO_CONCURRENT_JOBS
 	POP_ALLOC();

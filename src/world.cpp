@@ -81,10 +81,16 @@ float check_pirority(super_job* j, void* param) {
 
 	if(absf(center.x - p->camera.pos.x) > (f32)(w->view_distance + 1) * chunk::xsz ||
 	   absf(center.z - p->camera.pos.z) > (f32)(w->view_distance + 1) * chunk::zsz) {
-		// return -FLT_MAX;
+		return -FLT_MAX;
 	}
 
 	return 1.0f / lengthsq(center - p->camera.pos);
+}
+
+CALLBACK void cancel_build(void* param) {
+
+	chunk* c = (chunk*)param;
+	c->job_state.set(work::none);
 }
 
 void world::render() { PROF
@@ -98,20 +104,31 @@ void world::render() { PROF
 
 			chunk_pos current = camera + chunk_pos(x,0,z);
 			current.y = 0;
-			
 			chunk** ch = chunks.try_get(current);
-			if(!ch) {
-				ch = chunks.insert(current, chunk::make_new(current, alloc));
-				
+
+			auto build_job = [&]() {
+
+				(*ch)->job_state.set(work::in_flight);
+
 				thread_pool.queue_job([](void* p) -> void {
 					chunk* c = (chunk*)p;
 
 					c->gen();
 					c->build_data();
+					c->job_state.set(work::done);
 
-				}, *ch, 1.0f / lengthsq(current.center_xz() - p.camera.pos));
+				}, *ch, 1.0f / lengthsq(current.center_xz() - p.camera.pos), FPTR(cancel_build));
+			};
+			
+			if(!ch) {
+				ch = chunks.insert(current, chunk::make_new(current, alloc));
+				build_job();
 			}
 			chunk* c = *ch;
+
+			if(c->job_state.get() == work::none) {
+				build_job();
+			}
 
 			if(!c->mesh.dirty) {
 				c->mesh.free_cpu();

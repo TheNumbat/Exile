@@ -40,6 +40,7 @@ struct super_job {
 	float priority 		= 0.0f;
 	void* data 	  		= null;
 	u64 my_size			= 0;
+	func_ptr<void,void*> cancel;
 	virtual void do_work() = 0; // NOTE(max): pretty sure this is the only way to make this work...and it breaks hot reloading.
 								//  		  AS A RESULT we need to make sure the threadpool queue is empty before reloading
 };
@@ -86,8 +87,8 @@ struct threadpool {
 	static threadpool make(allocator* a, i32 num_threads_ = 0);
 	void destroy();
 	
-	template<typename T> void queue_job(future<T>* fut, job_work<T> work, void* data = null, float prirority = 0.0f);
-	void queue_job(job_work<void> work, void* data, float prirority = 0.0f);
+	template<typename T> void queue_job(future<T>* fut, job_work<T> work, void* data = null, float prirority = 0.0f, _FPTR* cancel = null);
+	void queue_job(job_work<void> work, void* data = null, float prirority = 0.0f, _FPTR* cancel = null);
 	
 	void stop_all();
 	void start_all();
