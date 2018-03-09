@@ -563,6 +563,7 @@ void dbg_manager::process_alloc_msg(dbg_msg* msg) { PROF
 		addr_info* to_info = profile->current_set.try_get(msg->reallocate.to);
 		if(!to_info) {
 			to_info = profile->current_set.insert(msg->reallocate.to, addr_info());
+			from_info = profile->current_set.get(msg->reallocate.from);
 		}
 
 		from_info->last_loc = msg->context;

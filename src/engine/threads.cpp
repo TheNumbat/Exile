@@ -187,10 +187,11 @@ i32 worker(void* data_) {
 	
 	LOG_DEBUG("Starting worker thread");
 
-	while(data->online) {
+	do {
+		global_api->wait_semaphore(data->jobs_semaphore, -1);
 
 		super_job* current_job = null;
-		if(data->job_queue->try_pop(&current_job)) {
+		while(data->job_queue->try_pop(&current_job)) {
 
 			PUSH_PROFILE(true) {
 
@@ -204,17 +205,15 @@ i32 worker(void* data_) {
 					} POP_ALLOC();
 
 					platform_event a;
-					a.type 			 = platform_event_type::async;
-					a.async.type 	 = platform_async_type::user;
+					a.type 		 = platform_event_type::async;
+					a.async.type = platform_async_type::user;
 					global_api->queue_event(a);
 				} POP_PROFILE_PROF();
 				
 				END_FRAME();
 			} POP_PROFILE();
 		}
-
-		global_api->wait_semaphore(data->jobs_semaphore, -1);
-	}
+	} while(data->online);
 
 	LOG_DEBUG("Ending worker thread");
 	end_thread();
