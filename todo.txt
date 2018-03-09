@@ -26,18 +26,20 @@ all includes:
 
 priority:
 
-	re-add global allocation profiling
+	!~~~~~ FIX BUGS ~~~~~!
 
-	lighting/AO
+	chunk AO/lighting/LOD
+	movement physics
 	
-	float slider/struct UI options
 	gui text wrapping
 	profiler graphs/actually good layout-ing?
-		Columns
 	threading profiling
 	update features/readme
 
 bugs:
+	allocation profiling is somewhat broken for the world system
+	sometimes crashes on quit
+
 	strange z-fighting as render distance increases
 
 	textures get recreated? on asset store reload (and not freed?)
