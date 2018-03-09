@@ -14,6 +14,8 @@ void world::init(asset_store* store, allocator* a) { PROF
 
 	thread_pool = threadpool::make(a, eng->platform->get_phys_cpus() - 1);
 	thread_pool.start_all();
+
+	future<u32> fut = future<u32>::make();
 }
 
 void world::destroy() { PROF
@@ -52,13 +54,12 @@ void world::populate_local_area() { PROF
 				
 				chunk** c = chunks.insert(current, chunk::make_new(current, alloc));
 				
-				thread_pool.queue_job([](void* p) -> job_callback {
+				thread_pool.queue_job([](void* p) -> void {
 					chunk* c = (chunk*)p;
 
 					c->gen();
 					c->build_data();
 
-					return null;
 				}, *c, 1.0f / lengthsq(current.center() - p.camera.pos));
 			}
 		}
@@ -72,10 +73,10 @@ CALLBACK void unlock_chunk(void* v) { PROF
 	eng->platform->release_mutex(&c->swap_mut);
 }
 
-float check_pirority(job j, void* param) {
+float check_pirority(super_job* j, void* param) {
 
 	player* p = (player*)param;
-	chunk* c = (chunk*)j.data;
+	chunk* c = (chunk*)j->data;
 
 	return 1.0f / lengthsq(c->pos.center() - p->camera.pos);
 }

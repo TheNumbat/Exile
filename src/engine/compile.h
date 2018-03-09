@@ -61,7 +61,6 @@
 
 #include "ds/string.h"
 #include "util/context.h"
-#include "util/atomic.h"
 
 #include "platform/platform_api.h"
 #include "util/fptr.h"
@@ -79,7 +78,7 @@
 #include "log_html.h"
 #include "log.h"
 #include "dbg.h"
-#include "threadpool.h"
+#include "threads.h"
 #include "asset.h"
 #include "render_commands.h"
 #include "render.h"
@@ -101,7 +100,6 @@ static dbg_manager*  global_dbg = null; // global to provide profiling functiona
 #include "util/fscope.cpp"
 #include "util/threadstate.cpp"
 #include "util/type_table.cpp"
-#include "util/atomic.cpp"
 
 #include "math.cpp"
 #include "log.cpp"
@@ -111,7 +109,7 @@ static dbg_manager*  global_dbg = null; // global to provide profiling functiona
 #include "gui.cpp"
 #include "dbg.cpp"
 #include "asset.cpp"
-#include "threadpool.cpp"
+#include "threads.cpp"
 #include "engine.cpp"
 
 #include "ds/alloc.cpp"

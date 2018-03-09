@@ -260,7 +260,6 @@ struct _platform_event_mouse {
 	i8 w = 0;
 };
 
-typedef u32 job_id;
 
 enum class platform_async_type : u8 {
 	none,
@@ -269,8 +268,6 @@ enum class platform_async_type : u8 {
 
 struct _platform_event_async {
 	platform_async_type type = platform_async_type::none;
-	job_id user_id	 		 = 0;
-	void (*callback)()		 = null;
 };
 
 struct platform_event {

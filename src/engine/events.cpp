@@ -32,9 +32,6 @@ void evt_manager::run_events(engine* state) { PROF
 		{
 			// async callback
 			if(evt.type == platform_event_type::async) {
-				if(evt.async.callback) {
-					evt.async.callback();
-				}
 			}
 
 			// Exit

@@ -86,4 +86,4 @@ struct world {
 };
 
 CALLBACK void unlock_chunk(void* v);
-float check_pirority(job j, void* param);
+float check_pirority(super_job* j, void* param);

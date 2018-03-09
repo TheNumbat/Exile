@@ -518,6 +518,7 @@ void dbg_manager::process_frame_alloc_msg(frame_profile* frame, dbg_msg* msg) { 
 
 void dbg_manager::process_alloc_msg(dbg_msg* msg) { PROF
 
+#if 0
 	allocator* a = null;
 	switch(msg->type) {
 	case dbg_msg_type::allocate: 	a = msg->allocate.alloc; break;
@@ -599,6 +600,7 @@ void dbg_manager::process_alloc_msg(dbg_msg* msg) { PROF
 	} break;
 	}
 	global_api->release_mutex(&profile->mut);
+#endif
 }
 
 void dbg_manager::fixdown_self_timings(profile_node* node) { PROF

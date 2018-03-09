@@ -1,8 +1,8 @@
 
-template<typename T>
-heap<T> heap<T>::make(u32 capacity, allocator* alloc) { PROF
+template<typename T, bool(comp)(T,T)>
+heap<T,comp> heap<T,comp>::make(u32 capacity, allocator* alloc) { PROF
 
-	heap<T> ret;
+	heap<T,comp> ret;
 	ret.capacity = capacity;
 	
 	if(!alloc) alloc = CURRENT_ALLOC();
@@ -16,30 +16,32 @@ heap<T> heap<T>::make(u32 capacity, allocator* alloc) { PROF
 	return ret;
 }	
 
-template<typename T>
-void heap<T>::destroy() { PROF
+template<typename T, bool(comp)(T,T)>
+void heap<T,comp>::destroy() { PROF
 
-	alloc->free_(memory, alloc, CONTEXT);
-
-	memory = null;
 	size = capacity = 0;
+
+	if(memory) {
+		alloc->free_(memory, alloc, CONTEXT); 
+		memory = null;
+	}
 }
 
-template<typename T>
-void heap<T>::clear() { PROF
+template<typename T, bool(comp)(T,T)>
+void heap<T,comp>::clear() { PROF
 
 	size = 0;
 }
 
-template<typename T>
-void heap<T>::grow() { PROF
+template<typename T, bool(comp)(T,T)>
+void heap<T,comp>::grow() { PROF
 
 	memory = (T*)alloc->reallocate_(memory, capacity * sizeof(T), 2 * capacity * sizeof(T), alloc, CONTEXT);
 	capacity *= 2;
 }
 
-template<typename T>
-void heap<T>::push(T value) { PROF
+template<typename T, bool(comp)(T,T)>
+void heap<T,comp>::push(T value) { PROF
 
 	if(size == capacity) {
 		grow();
@@ -51,8 +53,8 @@ void heap<T>::push(T value) { PROF
 	reheap_up(size - 1);
 }
 
-template<typename T>
-T heap<T>::pop() { PROF
+template<typename T, bool(comp)(T,T)>
+T heap<T,comp>::pop() { PROF
 
 	LOG_DEBUG_ASSERT(size > 0);
 	
@@ -68,8 +70,8 @@ T heap<T>::pop() { PROF
 	return ret;
 }
 
-template<typename T>
-bool heap<T>::try_pop(T* out) { PROF
+template<typename T, bool(comp)(T,T)>
+bool heap<T,comp>::try_pop(T* out) { PROF
 
 	if(!empty()) {
 
@@ -80,14 +82,14 @@ bool heap<T>::try_pop(T* out) { PROF
 	return false;
 }
 
-template<typename T>
-bool heap<T>::empty() { PROF
+template<typename T, bool(comp)(T,T)>
+bool heap<T,comp>::empty() { PROF
 
 	return size == 0;
 }
 
-template<typename T>
-void heap<T>::reheap_up(u32 node) { PROF
+template<typename T, bool(comp)(T,T)>
+void heap<T,comp>::reheap_up(u32 node) { PROF
 
 	if (!node) return;
 
@@ -95,15 +97,15 @@ void heap<T>::reheap_up(u32 node) { PROF
 	u32 p = (node - 1) / 2;
 	T parent = memory[p];
 
-	if(val > parent) {
+	if(comp(val, parent)) {
 		memory[node] = parent;
 		memory[p] = val;
 		reheap_up(p);
 	}
 }
 
-template<typename T>
-void heap<T>::reheap_down(u32 root) { PROF
+template<typename T, bool(comp)(T,T)>
+void heap<T,comp>::reheap_down(u32 root) { PROF
 
 	T val = memory[root];
 
@@ -113,25 +115,25 @@ void heap<T>::reheap_down(u32 root) { PROF
 	if(l < size && r < size) {
 		T lv = memory[l];
 		T rv = memory[r];
-		if(lv > val && lv > rv) {
+		if(comp(lv,val) && comp(lv,rv)) {
 			memory[root] = lv;
 			memory[l] = val;
 			reheap_down(l);
-		} else if(rv > val && rv > lv) {
+		} else if(comp(rv,val) && comp(rv,lv)) {
 			memory[root] = rv;
 			memory[r] = val;
 			reheap_down(r);
 		}
 	} else if(l < size) {
 		T lv = memory[l];
-		if(lv > val) {
+		if(comp(lv,val)) {
 			memory[root] = lv;
 			memory[l] = val;
 			reheap_down(l);
 		}
 	} else if(r < size) {
 		T rv = memory[r];
-		if(rv > val) {
+		if(comp(rv,val)) {
 			memory[root] = rv;
 			memory[r] = val;
 			reheap_down(r);
@@ -139,14 +141,14 @@ void heap<T>::reheap_down(u32 root) { PROF
 	}
 }
 
-template<typename T>
-void heap<T>::renew(float (*eval)(T, void*), void* param) { PROF
+template<typename T, bool(comp)(T,T)>
+void heap<T,comp>::renew(float (*eval)(T, void*), void* param) { PROF
 
-	heap<T> h = heap<T>::make(capacity, alloc);
+	heap<T,comp> h = heap<T,comp>::make(capacity, alloc);
 
 	FORHEAP_LINEAR(it, *this) {
 
-		it->priority = eval(*it, param);
+		(*it)->priority = eval(*it, param);
 		h.push(*it);
 	}
 
@@ -154,10 +156,10 @@ void heap<T>::renew(float (*eval)(T, void*), void* param) { PROF
 	*this = h;
 }
 
-template<typename T>
-locking_heap<T> locking_heap<T>::make(u32 capacity, allocator* alloc) { PROF
+template<typename T, bool(comp)(T,T)>
+locking_heap<T,comp> locking_heap<T,comp>::make(u32 capacity, allocator* alloc) { PROF
 
-	locking_heap<T> ret;
+	locking_heap<T,comp> ret;
 	ret.capacity = capacity;
 	
 	if(!alloc) alloc = CURRENT_ALLOC();
@@ -173,25 +175,25 @@ locking_heap<T> locking_heap<T>::make(u32 capacity, allocator* alloc) { PROF
 	return ret;
 }
 
-template<typename T>
-void locking_heap<T>::destroy() { PROF
+template<typename T, bool(comp)(T,T)>
+void locking_heap<T,comp>::destroy() { PROF
 
-	heap<T>::destroy();
+	heap<T,comp>::destroy();
 	global_api->destroy_mutex(&mut);
 	global_api->destroy_semaphore(&sem);
 }
 
-template<typename T>
-void locking_heap<T>::push(T value) { PROF
+template<typename T, bool(comp)(T,T)>
+void locking_heap<T,comp>::push(T value) { PROF
 
 	global_api->aquire_mutex(&mut);
-	heap<T>::push(value);
+	heap<T,comp>::push(value);
 	global_api->release_mutex(&mut);
 	global_api->signal_semaphore(&sem, 1);
 }
 
-template<typename T>
-T locking_heap<T>::wait_pop() { PROF
+template<typename T, bool(comp)(T,T)>
+T locking_heap<T,comp>::wait_pop() { PROF
 
 	global_api->wait_semaphore(&sem, -1);
 	T ret;
@@ -199,19 +201,19 @@ T locking_heap<T>::wait_pop() { PROF
 	return ret;
 }
 
-template<typename T>
-bool locking_heap<T>::try_pop(T* out) { PROF
+template<typename T, bool(comp)(T,T)>
+bool locking_heap<T,comp>::try_pop(T* out) { PROF
 
 	global_api->aquire_mutex(&mut);
-	bool ret = heap<T>::try_pop(out);
+	bool ret = heap<T,comp>::try_pop(out);
 	global_api->release_mutex(&mut);
 	return ret;
 }
 
-template<typename T>
-void locking_heap<T>::renew(float (*eval)(T,void*), void* param) { PROF
+template<typename T, bool(comp)(T,T)>
+void locking_heap<T,comp>::renew(float (*eval)(T,void*), void* param) { PROF
 
 	global_api->aquire_mutex(&mut);
-	heap<T>::renew(eval, param);
+	heap<T,comp>::renew(eval, param);
 	global_api->release_mutex(&mut);
 }
