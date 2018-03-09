@@ -18,7 +18,7 @@ void asset_store::destroy() { PROF
 		assets.destroy();
 
 		PUSH_ALLOC(alloc) {
-			free(store);
+			free(store, store_sz);
 		} POP_ALLOC();
 
 		store = null;
@@ -88,7 +88,7 @@ bool asset_store::try_reload() { PROF
 
 		PUSH_ALLOC(alloc) {
 
-			free(store);
+			free(store, store_sz);
 			store = null;
 
 		} POP_ALLOC();
@@ -125,14 +125,14 @@ void asset_store::load(string file) { PROF
 	path = string::make_copy(file, alloc);
 	CHECKED(get_file_attributes, &last, file);
 
-	u32 store_size = global_api->file_size(&store_file);
+	store_sz = global_api->file_size(&store_file);
 
 	PUSH_ALLOC(alloc) {
 
-		store = malloc(store_size);
+		store = malloc(store_sz);
 		u8* store_mem = (u8*)store;
 
-		CHECKED(read_file, &store_file, (void*)store_mem, store_size);
+		CHECKED(read_file, &store_file, (void*)store_mem, store_sz);
 		CHECKED(close_file, &store_file);
 
 		asset_file_header* header = (asset_file_header*)store_mem;

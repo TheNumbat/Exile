@@ -39,6 +39,7 @@ using job_work = T(*)(void*);
 struct super_job {
 	float priority 		= 0.0f;
 	void* data 	  		= null;
+	u64 my_size			= 0;
 	virtual void do_work() = 0;
 };
 
@@ -46,6 +47,7 @@ bool gt(super_job* l, super_job* r);
 
 template<typename T>
 struct job : super_job {
+	job() { my_size = sizeof(job<T>); };
 	future<T>* future = null;
 	job_work<T> work  = null;
 	void do_work() { future->set(work(data)); }
@@ -53,6 +55,7 @@ struct job : super_job {
 
 template<>
 struct NOREFLECT job<void> : super_job {
+	job() { my_size = sizeof(job<void>); };
 	job_work<void> work;
 	void do_work() { work(data); }
 };

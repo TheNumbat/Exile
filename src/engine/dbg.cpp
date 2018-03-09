@@ -57,17 +57,17 @@ void dbg_manager::destroy() { PROF
 	
 	FORMAP(it, thread_stats) {
 		it->value->destroy();
-		free(it->value);
+		free(it->value, sizeof(thread_profile));
 	}
 	thread_stats.destroy();
 	global_api->destroy_mutex(&stats_map_mut);
 
 	FORMAP(it, alloc_stats) {
 		FORMAP(a, it->value->current_set) {
-			LOG_DEBUG_F("\t% bytes in % @ %:%", a->value.size, it->key->name, string::from_c_str(a->value.last_touch.file), a->value.last_touch.line);
+			LOG_DEBUG_F("\t% bytes in % @ %:%", a->value.size, it->key->name, string::from_c_str(a->value.last_loc.file), a->value.last_loc.line);
 		}
 		it->value->destroy();
-		free(it->value);
+		free(it->value, sizeof(alloc_profile));
 	}
 	alloc_stats.destroy();
 	global_api->destroy_mutex(&alloc_map_mut);
@@ -180,7 +180,7 @@ void dbg_manager::UI() { PROF
 				
 				gui_indent();
 				FORVEC(a, allocs) {
-					gui_text(string::makef("% bytes @ %:%"_, a->size, string::from_c_str(a->last_touch.file), a->last_touch.line));
+					gui_text(string::makef("% bytes @ %:%"_, a->size, string::from_c_str(a->last_loc.file), a->last_loc.line));
 				}
 				gui_unindent();
 
@@ -241,7 +241,7 @@ void dbg_manager::UI() { PROF
 							gui_text(string::makef("% bytes @ %:%"_, msg->allocate.bytes, string::from_c_str(msg->context.file), msg->context.line));
 						} break;
 						case dbg_msg_type::reallocate: {
-							gui_text(string::makef("% bytes re@ %:%"_, msg->reallocate.bytes, string::from_c_str(msg->context.file), msg->context.line));
+							gui_text(string::makef("% bytes re@ %:%"_, msg->reallocate.to_bytes, string::from_c_str(msg->context.file), msg->context.line));
 						} break;
 						case dbg_msg_type::free: {
 							gui_text(string::makef("free @ %:%"_, string::from_c_str(msg->context.file), msg->context.line));
@@ -518,7 +518,6 @@ void dbg_manager::process_frame_alloc_msg(frame_profile* frame, dbg_msg* msg) { 
 
 void dbg_manager::process_alloc_msg(dbg_msg* msg) { PROF
 
-#if 0
 	allocator* a = null;
 	switch(msg->type) {
 	case dbg_msg_type::allocate: 	a = msg->allocate.alloc; break;
@@ -544,12 +543,15 @@ void dbg_manager::process_alloc_msg(dbg_msg* msg) { PROF
 			info = profile->current_set.insert(msg->allocate.to, addr_info());
 		}
 
-		info->last_touch = msg->context;
+		info->last_loc = msg->context;
 		info->size += msg->allocate.bytes;
 
 		profile->current_size += msg->allocate.bytes;
 		profile->total_allocated += msg->allocate.bytes;
 		profile->num_allocs++;
+
+		if(info->size == 0)
+			profile->current_set.erase(msg->allocate.to);
 
 	} break;
 	case dbg_msg_type::reallocate: {
@@ -563,21 +565,24 @@ void dbg_manager::process_alloc_msg(dbg_msg* msg) { PROF
 			to_info = profile->current_set.insert(msg->reallocate.to, addr_info());
 		}
 
-		from_info->last_touch = msg->context;
-		// from_info->size -= _msize(msg->reallocate.from);
+		from_info->last_loc = msg->context;
+		from_info->size -= msg->reallocate.from_bytes;
 
-		profile->current_size -= from_info->size;
-		profile->total_freed += from_info->size;
+		profile->current_size -= msg->reallocate.from_bytes;
+		profile->total_freed += msg->reallocate.from_bytes;
 
 		if(from_info->size == 0)
 			profile->current_set.erase(msg->reallocate.from);
 
-		to_info->last_touch = msg->context;
-		to_info->size += msg->allocate.bytes;
+		to_info->last_loc = msg->context;
+		to_info->size += msg->reallocate.to_bytes;
 
-		profile->current_size += msg->allocate.bytes;
-		profile->total_allocated += msg->allocate.bytes;
+		profile->current_size += msg->reallocate.to_bytes;
+		profile->total_allocated += msg->reallocate.to_bytes;
 		profile->num_reallocs++;
+
+		if(to_info->size == 0)
+			profile->current_set.erase(msg->reallocate.to);
 
 	} break;
 	case dbg_msg_type::free: {
@@ -587,11 +592,11 @@ void dbg_manager::process_alloc_msg(dbg_msg* msg) { PROF
 			info = profile->current_set.insert(msg->free.from, addr_info());
 		}
 
-		info->last_touch = msg->context;
-		// info->size -= _msize(msg->free.from);
+		info->last_loc = msg->context;
+		info->size -= msg->free.bytes;
 
-		profile->current_size -= info->size;
-		profile->total_freed += info->size;
+		profile->current_size -= msg->free.bytes;
+		profile->total_freed += msg->free.bytes;
 		profile->num_frees++;
 
 		if(info->size == 0)
@@ -600,7 +605,6 @@ void dbg_manager::process_alloc_msg(dbg_msg* msg) { PROF
 	} break;
 	}
 	global_api->release_mutex(&profile->mut);
-#endif
 }
 
 void dbg_manager::fixdown_self_timings(profile_node* node) { PROF

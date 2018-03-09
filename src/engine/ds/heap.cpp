@@ -19,12 +19,12 @@ heap<T,comp> heap<T,comp>::make(u32 capacity, allocator* alloc) { PROF
 template<typename T, bool(comp)(T,T)>
 void heap<T,comp>::destroy() { PROF
 
-	size = capacity = 0;
-
 	if(memory) {
-		alloc->free_(memory, alloc, CONTEXT); 
+		alloc->free_(memory, capacity * sizeof(T), alloc, CONTEXT); 
 		memory = null;
 	}
+
+	size = capacity = 0;
 }
 
 template<typename T, bool(comp)(T,T)>
@@ -144,7 +144,7 @@ void heap<T,comp>::reheap_down(u32 root) { PROF
 template<typename T, bool(comp)(T,T)>
 void heap<T,comp>::renew(float (*eval)(T, void*), void* param) { PROF
 
-	heap<T,comp> h = heap<T,comp>::make(capacity, alloc);
+	heap<T,comp> h = heap<T,comp>::make(capacity);
 
 	FORHEAP_LINEAR(it, *this) {
 
@@ -152,8 +152,8 @@ void heap<T,comp>::renew(float (*eval)(T, void*), void* param) { PROF
 		h.push(*it);
 	}
 
-	destroy();
-	*this = h;
+	memcpy(h.memory, memory, size * sizeof(T));
+	h.destroy();
 }
 
 template<typename T, bool(comp)(T,T)>

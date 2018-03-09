@@ -14,8 +14,6 @@ void world::init(asset_store* store, allocator* a) { PROF
 
 	thread_pool = threadpool::make(a, eng->platform->get_phys_cpus() - 1);
 	thread_pool.start_all();
-
-	future<u32> fut = future<u32>::make();
 }
 
 void world::destroy() { PROF
@@ -25,7 +23,7 @@ void world::destroy() { PROF
 	FORMAP(it, chunks) {
 		it->value->destroy();
 		PUSH_ALLOC(it->value->alloc) {
-			free(it->value);
+			free(it->value, sizeof(chunk));
 		} POP_ALLOC();
 	}
 	chunks.destroy();

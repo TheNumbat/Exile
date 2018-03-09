@@ -12,7 +12,7 @@ bool operator==(allocator l, allocator r) { PROF
 void allocator::destroy() { PROF
 	if(name.c_str) {
 		PUSH_PROFILE(false) {
-			free_(name.c_str, this, CONTEXT);
+			free_(name.c_str, name.cap, this, CONTEXT);
 		} POP_PROFILE();
 	}
 }
@@ -39,7 +39,7 @@ CALLBACK void* platform_allocate(u64 bytes, allocator* this_, code_context conte
 	return mem;
 }
 
-CALLBACK void platform_free(void* mem, allocator* this_, code_context context) { PROF
+CALLBACK void platform_free(void* mem, u64 sz, allocator* this_, code_context context) { PROF
 
 	LOG_DEBUG_ASSERT(mem != null);
 
@@ -52,13 +52,14 @@ CALLBACK void platform_free(void* mem, allocator* this_, code_context context) {
 		m.context = context;
 		m.free.from = mem;
 		m.free.alloc = this_;
+		m.free.bytes = sz;
 
 		POST_MSG(m);
 	}
 #endif 
 }
 
-CALLBACK void* platform_reallocate(void* mem, u64, u64 bytes, allocator* this_, code_context context) { PROF
+CALLBACK void* platform_reallocate(void* mem, u64 sz, u64 bytes, allocator* this_, code_context context) { PROF
 
 	LOG_DEBUG_ASSERT(mem != null);
 
@@ -71,7 +72,8 @@ CALLBACK void* platform_reallocate(void* mem, u64, u64 bytes, allocator* this_, 
 		dbg_msg m;
 		m.type = dbg_msg_type::reallocate;
 		m.context = context;
-		m.reallocate.bytes = bytes;
+		m.reallocate.to_bytes = bytes;
+		m.reallocate.from_bytes = sz;
 		m.reallocate.to = ret;
 		m.reallocate.from = mem;
 		m.reallocate.alloc = this_;
@@ -120,7 +122,7 @@ CALLBACK void* arena_allocate(u64 bytes, allocator* this_, code_context context)
 	return mem;
 }
 
-CALLBACK void arena_free(void*, allocator*, code_context context) {}
+CALLBACK void arena_free(void*, u64, allocator*, code_context context) {}
 
 CALLBACK void* arena_reallocate(void* mem, u64 sz, u64 bytes, allocator* this_, code_context context) { PROF
 
@@ -142,7 +144,7 @@ inline void arena_destroy(arena_allocator* a, code_context context) { PROF
 
 	LOG_DEBUG_ASSERT(a->memory != null);
 	if(a->memory) {
-		a->backing->free_(a->memory, a->backing, context);
+		a->backing->free_(a->memory, a->size, a->backing, context);
 	}
 }
 
@@ -197,7 +199,7 @@ CALLBACK void* pool_reallocate(void* mem, u64 sz, u64 bytes, allocator* this_, c
 	return ret;
 }
 
-CALLBACK void pool_free(void*, allocator*, code_context) {}
+CALLBACK void pool_free(void*, u64, allocator*, code_context) {}
 
 void pool_destroy(pool_allocator* a, code_context context) {
 
@@ -207,7 +209,7 @@ void pool_destroy(pool_allocator* a, code_context context) {
 	while(cursor) {
 
 		pool_page* next = cursor->next;
-		a->backing->free_(cursor, a->backing, context);
+		a->backing->free_(cursor, a->page_size + sizeof(pool_page), a->backing, context);
 		cursor = next;
 	}
 

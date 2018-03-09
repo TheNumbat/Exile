@@ -4,7 +4,6 @@
 struct engine {
 
 // private
-	arena_allocator 	transient_arena;
 	platform_allocator 	default_platform_allocator, suppressed_platform_allocator;
 
 	func_ptr_state func_state;

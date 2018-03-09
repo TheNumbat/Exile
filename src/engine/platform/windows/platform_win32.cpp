@@ -1432,5 +1432,6 @@ platform_error win32_destroy_window(platform_window* window) {
 		ret.error = GetLastError();
 		return ret;	
 	}
+
 	return ret;
 }

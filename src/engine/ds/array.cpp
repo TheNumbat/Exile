@@ -19,7 +19,7 @@ void array<T>::destroy() { PROF
 
 	if(alloc && memory) {
 
-		alloc->free_(memory, alloc, CONTEXT);
+		alloc->free_(memory, capacity * sizeof(T), alloc, CONTEXT);
 	}
 
 	memory = null;

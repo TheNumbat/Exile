@@ -66,12 +66,14 @@ struct dbg_msg_allocate {
 struct dbg_msg_reallocate {
 	void* to		 = null;
 	void* from 		 = null;
-	u64 bytes		 = 0;
+	u64 to_bytes	 = 0;
+	u64 from_bytes 	 = 0;
 	allocator* alloc = null;
 };
 
 struct dbg_msg_free {
 	void* from 		 = null;
+	u64 bytes 		 = 0;
 	allocator* alloc = null;
 };
 
@@ -148,15 +150,16 @@ struct frame_profile {
 };
 
 struct addr_info {
-	code_context last_touch;
-	i64 size = 0;
+	code_context last_loc;
+	i64 size  = 0;
 };
 
 struct alloc_profile {
 
 	map<void*, addr_info> current_set; 
 
-	u64 current_size = 0, total_allocated = 0, total_freed = 0;
+	i64 current_size = 0;
+	u64 total_allocated = 0, total_freed = 0;
 	u64 num_allocs = 0, num_frees = 0, num_reallocs = 0;
 
 	bool shown = false;

@@ -275,7 +275,7 @@ void vector<T>::destroy() { PROF
 
 	if(memory) {
 
-		alloc->free_(memory, alloc, CONTEXT);
+		alloc->free_(memory, capacity * sizeof(T), alloc, CONTEXT);
 	}
 
 	memory = null;
@@ -310,7 +310,7 @@ void vector<T>::resize(u32 new_capacity) { PROF
 
 	if(new_capacity == 0) {
 		if(memory) {
-			alloc->free_(memory, alloc, CONTEXT);
+			alloc->free_(memory, capacity * sizeof(T), alloc, CONTEXT);
 			memory = null;
 		}
 		return;

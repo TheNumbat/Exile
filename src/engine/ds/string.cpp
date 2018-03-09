@@ -1074,7 +1074,7 @@ string string::make_from_c_str(char* c_str) { PROF
 
 void string::destroy() { PROF
 
-	free(c_str);
+	free(c_str, cap);
 
 	c_str = null;
 	cap = 0;

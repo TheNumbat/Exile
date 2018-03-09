@@ -79,7 +79,7 @@ void threadpool::destroy() { PROF
 	
 	PUSH_ALLOC(alloc);
 	FORHEAP_LINEAR(it, jobs) {
-		free(*it);
+		free(*it, (*it)->my_size);
 	}
 	POP_ALLOC();
 	jobs.destroy();
@@ -190,7 +190,6 @@ i32 worker(void* data_) {
 	while(data->online) {
 
 		super_job* current_job = null;
-
 		if(data->job_queue->try_pop(&current_job)) {
 
 			PUSH_PROFILE(true) {
@@ -200,9 +199,9 @@ i32 worker(void* data_) {
 				current_job->do_work();
 
 				PUSH_PROFILE_PROF(false) {
-					PUSH_ALLOC(data->alloc);
-					free(current_job);
-					POP_ALLOC();
+					PUSH_ALLOC(data->alloc) {
+						free(current_job, current_job->my_size);
+					} POP_ALLOC();
 
 					platform_event a;
 					a.type 			 = platform_event_type::async;

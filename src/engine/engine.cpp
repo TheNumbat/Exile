@@ -47,9 +47,6 @@ EXPORT engine* start_up(platform_api* api) {
 	state->evt = evt_manager::make(&state->evt_a);
 	state->evt.start();
 
-	LOG_INFO("Allocating transient store...");
-	state->transient_arena = MAKE_ARENA("transient"_, MEGABYTES(8), &state->default_platform_allocator, false);
-
 	LOG_INFO("Setting up default assets...");
 	state->default_store = asset_store::make(&state->default_platform_allocator);
 	state->default_store.load("assets/engine.asset"_);
@@ -86,20 +83,17 @@ EXPORT bool main_loop(engine* state) {
 	glClearColor(0.8f, 0.8f, 0.8f, 1.0f);
 	glClear((GLbitfield)gl_clear::color_buffer_bit | (GLbitfield)gl_clear::depth_buffer_bit);
 
-	PUSH_ALLOC(&state->transient_arena) {
-
-		state->evt.run_events(state); 
+	state->evt.run_events(state); 
 		
-		state->gui.begin_frame();
+	state->gui.begin_frame();
 		
-		run_game(state->game_state);
+	run_game(state->game_state);
 
-		state->dbg.UI();
+	state->dbg.UI();
 
-		state->gui.end_frame(&state->window, &state->ogl);
+	state->gui.end_frame(&state->window, &state->ogl);
 
-	} POP_ALLOC();
-	RESET_ARENA(&state->transient_arena);
+	RESET_ARENA(&this_thread_data.scratch_arena);
 
 	CHECKED(swap_buffers, &state->window);
 
@@ -125,9 +119,6 @@ EXPORT void shut_down(engine* state) {
 
 	LOG_DEBUG("Destroying asset system");
 	state->default_store.destroy();
-
-	LOG_DEBUG("Destroying transient store");
-	DESTROY_ARENA(&state->transient_arena);
 
 	LOG_DEBUG("Destroying GUI");
 	state->gui.unregister_events(&state->evt);

@@ -26,7 +26,7 @@ CALLBACK bool ui_evt_handle(void* param, platform_event evt);
 
 void* start_up_game(engine* e) {
 	eng = e;
-	exile* ret = NEW(exile);
+	exile* ret = new(eng->platform->heap_alloc(sizeof(exile)))exile;
 	ret->init();
 	return ret;
 }
@@ -40,7 +40,7 @@ void run_game(void* game) {
 void shut_down_game(void* game) {
 	exile* e = (exile*)game;
 	e->destroy();
-	free(e);
+	eng->platform->heap_free(e);
 }
 
 void unload_game(engine* e, void* game) {

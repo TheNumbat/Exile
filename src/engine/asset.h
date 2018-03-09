@@ -109,7 +109,8 @@ struct asset {
 struct asset_store {
 	map<string, asset> 	assets;
 
-	void* 				store = null;
+	void* store = null;
+	u32 store_sz = 0;
 	
 	string path;
 	platform_file_attributes last;

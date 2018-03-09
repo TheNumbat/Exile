@@ -1,4 +1,5 @@
 
+
 #pragma once
 
 #define MAX_CALL_STACK_DEPTH 	256
@@ -16,6 +17,7 @@ struct thread_data {
 	bool timing_override = true;
 	
 	queue<dbg_msg> dbg_queue;
+	arena_allocator scratch_arena;
 };
 
 static thread_local thread_data this_thread_data;

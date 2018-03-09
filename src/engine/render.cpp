@@ -131,7 +131,7 @@ bool shader_program::check_compile(string name, GLuint shader) { PROF
 		glGetShaderInfoLog(shader, len, &len, msg);
 
 		LOG_WARN_F("Shader % failed to compile: %", name, string::from_c_str(msg));
-		free(msg);
+		free(msg, len);
 
 		return false;
 	}
@@ -804,7 +804,7 @@ void ogl_manager::check_leaked_handles() {
 			
 			LOG_WARN_F("Leaked OpenGL shader %, source %", i, shader_str); 
 
-			free(shader);
+			free(shader, shader_len);
 		}
 	}
 

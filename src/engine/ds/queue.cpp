@@ -4,7 +4,7 @@ void queue<T>::destroy() { PROF
 
 	if(memory) {
 
-		alloc->free_(memory, alloc, CONTEXT);
+		alloc->free_(memory, capacity * sizeof(T), alloc, CONTEXT);
 	}
 
 	memory = null;
@@ -69,7 +69,7 @@ void queue<T>::grow() { PROF
 		} while(i != end);
 		start = 0;
 		end = len;
-		alloc->free_(memory, alloc, CONTEXT);
+		alloc->free_(memory, capacity * sizeof(T), alloc, CONTEXT);
 		memory = new_mem;
 	} else {
 		memory = NEWA(T, new_capacity);
