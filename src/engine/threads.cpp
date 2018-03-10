@@ -112,7 +112,7 @@ void heap<super_job*,gt>::renew(float (*eval)(super_job*, void*), void* param) {
 
 			// NOTE(max): only works because the elements are allocated with the same allocator passed to the heap (in threadpool)
 			PUSH_ALLOC(alloc) {
-				free(j, sizeof(super_job));
+				free(j, j->my_size);
 			} POP_ALLOC();
 		}
 	}

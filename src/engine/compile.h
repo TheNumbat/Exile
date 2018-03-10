@@ -54,8 +54,6 @@
 #ifdef _MSC_VER
 #include <intrin.h>
 #endif
-#define STB_PERLIN_IMPLEMENTATION	// TODO(max): remove
-#include <stb/stb_perlin.h>
 
 #include "util/basic_types.h"
 

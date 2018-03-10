@@ -38,7 +38,7 @@ priority:
 
 bugs:
 	allocation profiling is somewhat broken for the world system
-	sometimes crashes on quit
+		sometimes causes crash on quit (while printing allocs)
 
 	strange z-fighting as render distance increases
 

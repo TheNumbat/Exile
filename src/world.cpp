@@ -285,8 +285,8 @@ void chunk::gen() { PROF
 
 			f32 fx = 4.0f * (pos.x + x / (f32)xsz);
 			f32 fz = 4.0f * (pos.z + z / (f32)zsz);
-
-			f32 val = stb_perlin_noise3(fx / 8.0f, 0, fz / 8.0f, 0, 0, 0);
+				
+			f32 val = perlin(fx / 8.0f, 0, fz / 8.0f, 0, 0, 0);
 			u32 height = (u32)(val * ysz / 2.0f + ysz / 2.0f);
 			
 			for(u32 y = 0; y < height - 2; y++) {

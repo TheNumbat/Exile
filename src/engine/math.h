@@ -187,7 +187,7 @@ inline f32 absf_(f32 value);
 inline f64 absf_(f64 value);
 inline f32 _roundf(f32 value);
 inline f32 _ceilf(f32 value);
-inline f32 _floorf(f32 value);
+inline i32 _floorf(f32 value);
 inline f32 _sinf(f32 value);
 inline f32 _cosf(f32 value);
 inline f32 _lerpf(f32 min, f32 max, f32 dist);
@@ -299,3 +299,7 @@ const color BLACK = V4b(0, 0, 0, 255);
 const color RED   = V4b(255, 0, 0, 255);
 const color GREEN = V4b(0, 255, 0, 255);
 const color BLUE  = V4b(0, 0, 255, 255);
+
+// From stb_perlin
+f32 perlin(f32 x, f32 y, f32 z, i32 x_wrap, i32 y_wrap, i32 z_wrap);
+f32 perlin_grad(i32 hash, f32 x, f32 y, f32 z);
