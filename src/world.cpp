@@ -139,7 +139,9 @@ void world::render() { PROF
 
 			cmd.num_tris = c->mesh_triangles;
 			cmd.texture = block_textures;
-			cmd.model = translate(V3f(current.x * chunk::xsz, current.y * chunk::ysz, current.z * chunk::zsz));
+
+			v3 chunk_pos = V3f(current.x * chunk::xsz, current.y * chunk::ysz, current.z * chunk::zsz);
+			cmd.model = translate(chunk_pos - p.camera.pos);
 
 			cmd.callback.set(FPTR(unlock_chunk));
 			cmd.param = c;
@@ -148,8 +150,8 @@ void world::render() { PROF
 		}
 	}
 
-	rcl.view = p.camera.view();
-	rcl.proj = proj(p.camera.fov, (f32)eng->window.w / (f32)eng->window.h, 0.001f, 1000.0f);
+	rcl.view = p.camera.view_no_translate();
+	rcl.proj = proj(p.camera.fov, (f32)eng->window.w / (f32)eng->window.h, 0.001f, 10000.0f);
 
 	eng->ogl.execute_command_list(&rcl);
 	rcl.destroy();

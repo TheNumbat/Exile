@@ -191,4 +191,5 @@ struct render_camera {
 	void reset();
 	void move(i32 dx, i32 d, f32 sens);
 	m4 view();
+	m4 view_no_translate();
 };

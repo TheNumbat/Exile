@@ -964,6 +964,11 @@ m4 render_camera::view() {
 	return lookAt(pos, pos + front, up);
 }
 
+m4 render_camera::view_no_translate() {
+
+	return lookAt(V3f(0.0f, 0.0f, 0.0f), front, up);
+}
+
 void render_camera::reset() {
 
 	pos = V3(-5.0f, 128.0f, -5.0f);
