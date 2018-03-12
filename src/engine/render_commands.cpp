@@ -272,6 +272,7 @@ CALLBACK void run_mesh_chunk(render_command* cmd) { PROF
 	glDrawElementsBaseVertex(gl_draw_mode::triangles, num_tris, gl_index_type::unsigned_int, (void*)(u64)(0), cmd->offset);
 
 	glDisable(gl_capability::cull_face);
+	glDisable(gl_capability::depth_test);
 
 	glBindVertexArray(0);
 }

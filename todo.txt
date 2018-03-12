@@ -40,8 +40,6 @@ bugs:
 	allocation profiling is somewhat broken for the world system
 		sometimes causes crash on quit (while printing allocs)
 
-	strange z-fighting as render distance increases
-
 	textures get recreated? on asset store reload (and not freed?)
 		make sure textures are only created once
 		asset reload leaks memory
@@ -208,7 +206,6 @@ to do:
 			preprocessor / shader assets
 			tessellation / geometry shaders
 		post-processing effects
-			AO - SSAO/HBAO/SSDO - not a priority as voxel occlusion is simple
 		HDR
 		AZDO (bindless?)
 			glNamed operations
@@ -217,7 +214,9 @@ to do:
 		3D
 			models & animation
 		rename ogl stuff to "renderer" to facilitate different backends
-
+		improve z-fighting as render distance increases
+			http://outerra.blogspot.com/2012/11/maximizing-depth-buffer-range-and.html
+		
 	chunks
 		LOD?
 		storage representation (compression?)

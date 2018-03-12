@@ -655,6 +655,17 @@ enum class gl_poly_mode : GLenum {
 	fill  = 0x1B02
 };
 
+enum class gl_depth_factor : GLenum {
+	never    = 0x0200,
+	less     = 0x0201,
+	equal    = 0x0202,
+	lequal   = 0x0203,
+	greater  = 0x0204,
+	notequal = 0x0205,
+	gequal   = 0x0206,
+	always   = 0x0207
+};
+
 DLL_IMPORT const GLubyte* glGetString(gl_info name);
 
 DLL_IMPORT void glDeleteTextures(GLsizei n, const GLuint *textures);
@@ -666,6 +677,7 @@ DLL_IMPORT void glBindTexture(gl_tex_target target, GLuint handle);
 DLL_IMPORT void glGenTextures(GLsizei n, GLuint* textures);
 
 DLL_IMPORT void glBlendFunc(gl_blend_factor sfactor, gl_blend_factor dfactor);
+DLL_IMPORT void glDepthFunc(gl_depth_factor factor);
 
 DLL_IMPORT void glEnable(gl_capability cap);
 DLL_IMPORT void glDisable(gl_capability cap);

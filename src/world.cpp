@@ -151,7 +151,7 @@ void world::render() { PROF
 	}
 
 	rcl.view = p.camera.view_no_translate();
-	rcl.proj = proj(p.camera.fov, (f32)eng->window.w / (f32)eng->window.h, 0.001f, 10000.0f);
+	rcl.proj = proj(p.camera.fov, (f32)eng->window.w / (f32)eng->window.h, 0.01f, 2000.0f);
 
 	eng->ogl.execute_command_list(&rcl);
 	rcl.destroy();
@@ -291,10 +291,10 @@ void chunk::gen() { PROF
 			f32 val = perlin(fx / 8.0f, 0, fz / 8.0f, 0, 0, 0);
 			u32 height = (u32)(val * ysz / 2.0f + ysz / 2.0f);
 			
-			for(u32 y = 0; y < height - 2; y++) {
+			for(u32 y = 0; y < height - 5; y++) {
 				blocks[x][z][y] = block_type::stone;
 			}
-			for(u32 y = height - 2; y < height; y++) {
+			for(u32 y = height - 5; y < height; y++) {
 				blocks[x][z][y] = block_type::numbat;
 			}
 		}

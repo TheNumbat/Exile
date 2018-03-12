@@ -31,7 +31,7 @@ void main() {
 	vec3 pos = vec3((vertex.x & x_mask), (vertex.x & y_mask) >> 20, (vertex.x & z_mask) >> 8);
 	
 	f_ao = ao_values[(vertex.y & ao_mask) >> 12];
-	f_norm = (vertex.x & n_mask)  >> 16;
+	f_norm = (vertex.x & n_mask) >> 16;
 	
 	f_uv.x = (vertex.y & u_mask) >> 16;
 	f_uv.y = (vertex.y & v_mask) >> 24;
