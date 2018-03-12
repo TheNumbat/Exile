@@ -37,6 +37,10 @@ priority:
 	update features/readme
 
 bugs:
+	AO totally broken
+		only checks in one direction/vertex
+		doesn't check across chunk boundaries
+
 	allocation profiling is somewhat broken for the world system
 		sometimes causes crash on quit (while printing allocs)
 

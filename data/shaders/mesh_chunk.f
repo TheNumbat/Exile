@@ -11,5 +11,7 @@ uniform sampler2DArray tex;
 
 void main() {
 
-	color = texture(tex, vec3(f_uv, f_t));
+	vec4 tex = texture(tex, vec3(f_uv, f_t));
+
+	color = vec4(tex.rgb * f_ao, tex.a);
 }

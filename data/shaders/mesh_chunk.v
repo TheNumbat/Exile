@@ -20,10 +20,10 @@ out float f_ao;
 out vec2 f_uv;
 
 float ao_values[4] = {
-	0.0f,
-	0.0f,
-	0.0f,
-	0.0f
+	0.4f,
+	0.6f,
+	0.8f,
+	1.0f
 };
 
 void main() {

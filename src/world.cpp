@@ -6,7 +6,6 @@ void world::init(asset_store* store, allocator* a) { PROF
 
 	block_textures = eng->ogl.begin_tex_array(V3i(32, 32, (i32)NUM_BLOCKS), texture_wrap::repeat, true, 1);
 	eng->ogl.push_tex_array(block_textures, store, "stone"_);
-	eng->ogl.push_tex_array(block_textures, store, "numbat"_);
 
 	chunks = map<chunk_pos, chunk*>::make(512, a);
 
@@ -159,7 +158,7 @@ void world::render() { PROF
 
 void player::init() { PROF
 
-	speed = 300.0f;
+	speed = 30.0f;
 	last = 0;
 	camera.reset();
 }
@@ -291,15 +290,29 @@ void chunk::gen() { PROF
 			f32 val = perlin(fx / 8.0f, 0, fz / 8.0f, 0, 0, 0);
 			u32 height = (u32)(val * ysz / 2.0f + ysz / 2.0f);
 			
-			for(u32 y = 0; y < height - 5; y++) {
+			for(u32 y = 0; y < height; y++) {
 				blocks[x][z][y] = block_type::stone;
-			}
-			for(u32 y = height - 5; y < height; y++) {
-				blocks[x][z][y] = block_type::numbat;
 			}
 		}
 	}
 }
+
+u8 chunk::ao_at(v3 vert) { PROF
+
+	i32 x = (i32)vert.x, y = (i32)vert.y, z = (i32)vert.z;
+
+	if(x > xsz - 1 || z > zsz - 1 || y > ysz - 1) return 3;
+	if (x - 1 < 0 || z - 1 < 0 || y + 1 > 255) return 3;
+
+	bool side1 = blocks[x-1][z][y] != block_type::air;
+	bool side2 = blocks[x][z-1][y] != block_type::air;
+	bool corner = blocks[x-1][z-1][y+1] != block_type::air;
+
+	if(side1 && side2) {
+		return 0;
+	}
+	return 3 - (side1 + side2 + corner);
+}	
 
 void chunk::build_data() { PROF
 
@@ -382,39 +395,44 @@ void chunk::build_data() { PROF
 						height++;
 					}
 
-					f32 w[] = { 0, 0, 0 };
-					w[d2] = (f32) width;
-					f32 h[] = { 0, 0, 0 };
-					h[d1] = (f32) height;
+					v3 w, h;
+					w.f[d2] = (f32)width;
+					h.f[d1] = (f32)height;
 
-					v3 v = V3((f32) xyz[0], (f32) xyz[1], (f32) xyz[2]);
+					v3 v_0 = V3((f32) xyz[0], (f32) xyz[1], (f32) xyz[2]);
 
 					// shift front faces by one block
 					if (backface > 0) {
-						f32 f[] = { 0, 0, 0 };
-						f[d0] += 1.0f;
-						v += V3(f[0], f[1], f[2]);
+						v3 f;
+						f.f[d0] += 1.0f;
+						v_0 += f;
 					}
 
 					// emit quad
+					v3 v_1 = v_0 + w;
+					v3 v_2 = v_0 + w + h;
+					v3 v_3 = v_0 + h;
+					v3 wht = V3f(width, height, (i32)type), hwt = V3f(height, width, (i32)type);
+					u8 ao_0 = ao_at(v_0), ao_1 = ao_at(v_1), ao_2 = ao_at(v_2), ao_3 = ao_at(v_3);
+
 					switch (i) {
 					case 0: // -X
-						new_mesh.quad(v, v + V3(w[0], w[1], w[2]), v + V3(h[0], h[1], h[2]), v + V3(w[0] + h[0], w[1] + h[1], w[2] + h[2]), V3f(width, height, (i32)type));
+						new_mesh.quad(v_0, v_1, v_3, v_2, wht, V4b(ao_0,ao_1,ao_3,ao_2));
 						break;
 					case 1: // -Y
-						new_mesh.quad(v, v + V3(w[0], w[1], w[2]), v + V3(h[0], h[1], h[2]), v + V3(w[0] + h[0], w[1] + h[1], w[2] + h[2]), V3f(width, height, (i32)type));
+						new_mesh.quad(v_0, v_1, v_3, v_2, wht, V4b(ao_0,ao_1,ao_3,ao_2));
 						break;
 					case 2: // -Z
-						new_mesh.quad(v + V3(h[0], h[1], h[2]), v, v + V3(w[0] + h[0], w[1] + h[1], w[2] + h[2]), v + V3(w[0], w[1], w[2]), V3f(height, width, (i32)type));
+						new_mesh.quad(v_3, v_0, v_2, v_1, hwt, V4b(ao_3,ao_0,ao_2,ao_1));
 						break;
 					case 3: // +X
-						new_mesh.quad(v + V3(w[0], w[1], w[2]), v, v + V3(w[0] + h[0], w[1] + h[1], w[2] + h[2]), v + V3(h[0], h[1], h[2]), V3f(width, height, (i32)type));
+						new_mesh.quad(v_1, v_0, v_2, v_3, wht, V4b(ao_1,ao_0,ao_2,ao_3));
 						break;
 					case 4: // +Y
-						new_mesh.quad(v + V3(h[0], h[1], h[2]), v + V3(w[0] + h[0], w[1] + h[1], w[2] + h[2]), v, v + V3(w[0], w[1], w[2]), V3f(width, height, (i32)type));
+						new_mesh.quad(v_3, v_2, v_0, v_1, wht, V4b(ao_3,ao_2,ao_0,ao_1));
 						break;
 					case 5: // +Z
-						new_mesh.quad(v, v + V3(h[0], h[1], h[2]), v + V3(w[0], w[1], w[2]), v + V3(w[0] + h[0], w[1] + h[1], w[2] + h[2]), V3f(height, width, (i32)type));
+						new_mesh.quad(v_0, v_3, v_1, v_2, hwt, V4b(ao_0,ao_3,ao_1,ao_2));
 						break;
 					}
 
@@ -432,7 +450,7 @@ void chunk::build_data() { PROF
 		}
 	}
 
-	LOG_DEBUG_F("Built chunk{%,%}", pos.x, pos.z);
+	// LOG_DEBUG_F("Built chunk{%,%}", pos.x, pos.z);
 
 	eng->platform->aquire_mutex(&swap_mut);
 	mesh.swap_mesh(new_mesh);

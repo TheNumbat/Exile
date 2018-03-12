@@ -47,6 +47,7 @@ struct chunk {
 	void gen();
 	void destroy();
 
+	u8 ao_at(v3 vert);
 	void build_data();
 };
 
