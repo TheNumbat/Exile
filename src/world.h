@@ -1,5 +1,5 @@
 
-enum class block_type : u16 {
+enum class block_type : u8 {
 	air, 
 	stone,
 	numbat,
@@ -44,10 +44,14 @@ struct chunk {
 
 	static chunk make(chunk_pos pos, allocator* a);
 	static chunk* make_new(chunk_pos pos, allocator* a);
+
 	void gen();
 	void destroy();
 
+	static i32 y_at(i32 x, i32 z);
 	u8 ao_at(v3 vert);
+	block_type block_at(i32 x, i32 y, i32 z);
+
 	void build_data();
 };
 

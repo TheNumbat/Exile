@@ -279,40 +279,48 @@ void chunk::destroy() { PROF
 	eng->platform->destroy_mutex(&swap_mut);
 }
 
+i32 chunk::y_at(i32 x, i32 z) { PROF
+
+	f32 val = perlin((f32)x / 32.0f, 0, (f32)z / 32.0f, 0, 0, 0);
+	i32 height = (u32)(val * ysz / 2.0f + ysz / 2.0f);
+	return height;
+}
+
 void chunk::gen() { PROF
 
 	for(u32 x = 0; x < xsz; x++) {
 		for(u32 z = 0; z < zsz; z++) {
 
-			f32 fx = 4.0f * (pos.x + x / (f32)xsz);
-			f32 fz = 4.0f * (pos.z + z / (f32)zsz);
-				
-			f32 val = perlin(fx / 8.0f, 0, fz / 8.0f, 0, 0, 0);
-			u32 height = (u32)(val * ysz / 2.0f + ysz / 2.0f);
-			
-			for(u32 y = 0; y < height; y++) {
-				blocks[x][z][y] = block_type::stone;
-			}
+			u32 height = y_at(pos.x * xsz + x, pos.z * zsz + z);
+			memset(blocks[x][z], height, (u8)block_type::stone);
 		}
 	}
 }
 
-u8 chunk::ao_at(v3 vert) { PROF
+u8 chunk::ao_at(v3 vert) { 
 
 	i32 x = (i32)vert.x, y = (i32)vert.y, z = (i32)vert.z;
 
-	if(x > xsz - 1 || z > zsz - 1 || y > ysz - 1) return 3;
-	if (x - 1 < 0 || z - 1 < 0 || y + 1 > 255) return 3;
-
-	bool side1 = blocks[x-1][z][y] != block_type::air;
-	bool side2 = blocks[x][z-1][y] != block_type::air;
-	bool corner = blocks[x-1][z-1][y+1] != block_type::air;
+	bool side1 = block_at(x-1,z,y) != block_type::air;
+	bool side2 = block_at(x,z-1,y) != block_type::air;
+	bool corner = block_at(x-1,z-1,y+1) != block_type::air;
 
 	if(side1 && side2) {
 		return 0;
 	}
 	return 3 - (side1 + side2 + corner);
 }	
+
+block_type chunk::block_at(i32 x, i32 y, i32 z) { 
+
+	if(x < 0 || x >= xsz || y < 0 || y >= ysz || z < 0 || z >= zsz) {
+
+		// TODO(max): if the neighboring chunk exists, get a block from it
+		return y_at(pos.x * xsz + x, pos.z * zsz + z) > y ? block_type::stone : block_type::air; 
+	};
+
+	return blocks[x][z][y];
+}
 
 void chunk::build_data() { PROF
 
@@ -336,26 +344,21 @@ void chunk::build_data() { PROF
 			// Fill in slice
 			for (xyz[d1] = 0; xyz[d1] < max[d1]; xyz[d1]++) {
 				for (xyz[d2] = 0; xyz[d2] < max[d2]; xyz[d2]++) {
-					if(xyz[0] >= 0 && xyz[0] < xsz && xyz[1] >= 0 && xyz[1] < ysz && xyz[2] >=0 && xyz[2] < zsz) {
-						block_type b = blocks[xyz[0]][xyz[2]][xyz[1]];
+					block_type b = block_at(xyz[0],xyz[1],xyz[2]);
 
-						// check for air
-						if (b != block_type::air) {
-							// Check neighbor
-							xyz[d0] += backface;
-							if(xyz[0] >= 0 && xyz[0] < xsz && xyz[1] >= 0 && xyz[1] < ysz && xyz[2] >=0 && xyz[2] < zsz) {
-								if (blocks[xyz[0]][xyz[2]][xyz[1]] != block_type::air) {
-									slice[xyz[d1] * max[d2] + xyz[d2]] = block_type::air;
-								} else {
-									slice[xyz[d1] * max[d2] + xyz[d2]] = b;
-								}
-							} else {
-								slice[xyz[d1] * max[d2] + xyz[d2]] = b;
-							}
-							xyz[d0] -= backface;
-						} else {
+					// check for air
+					if (b != block_type::air) {
+						// Check neighbor
+						xyz[d0] += backface;
+
+						if (block_at(xyz[0],xyz[1],xyz[2]) != block_type::air) {
 							slice[xyz[d1] * max[d2] + xyz[d2]] = block_type::air;
+						} else {
+							slice[xyz[d1] * max[d2] + xyz[d2]] = b;
 						}
+						xyz[d0] -= backface;
+					} else {
+						slice[xyz[d1] * max[d2] + xyz[d2]] = block_type::air;
 					}
 				}
 			}
