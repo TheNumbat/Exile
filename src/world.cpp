@@ -301,9 +301,9 @@ u8 chunk::ao_at(v3 vert) {
 
 	i32 x = (i32)vert.x, y = (i32)vert.y, z = (i32)vert.z;
 
-	bool side1 = block_at(x-1,z,y) != block_type::air;
-	bool side2 = block_at(x,z-1,y) != block_type::air;
-	bool corner = block_at(x-1,z-1,y+1) != block_type::air;
+	bool side1 = block_at(x-1,y,z) != block_type::air;
+	bool side2 = block_at(x,y,z-1) != block_type::air;
+	bool corner = block_at(x-1,y+1,z-1) != block_type::air;
 
 	if(side1 && side2) {
 		return 0;
