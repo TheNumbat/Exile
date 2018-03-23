@@ -51,11 +51,14 @@ void world::populate_local_area() { PROF
 				
 				chunk** c = chunks.insert(current, chunk::make_new(current, alloc));
 				
+				(*c)->job_state.set(work::in_flight);
+
 				thread_pool.queue_job([](void* p) -> void {
 					chunk* c = (chunk*)p;
 
 					c->gen();
 					c->build_data();
+					c->job_state.set(work::done);
 
 				}, *c, 1.0f / lengthsq(current.center_xz() - p.camera.pos));
 			}
@@ -309,7 +312,7 @@ u8 chunk::ao_at(v3 vert) {
 		return 0;
 	}
 	return 3 - (side1 + side2 + corner);
-}	
+}
 
 block_type chunk::block_at(i32 x, i32 y, i32 z) { 
 
@@ -317,7 +320,7 @@ block_type chunk::block_at(i32 x, i32 y, i32 z) {
 
 		// TODO(max): if the neighboring chunk exists, get a block from it
 		return y_at(pos.x * xsz + x, pos.z * zsz + z) > y ? block_type::stone : block_type::air; 
-	};
+	}
 
 	return blocks[x][z][y];
 }
@@ -441,9 +444,7 @@ void chunk::build_data() { PROF
 
 					// Zero the quad in the slice
 					for (i32 d11 = xyz[d1]; d11 < xyz[d1] + height; d11++) {
-						for (i32 d22 = xyz[d2]; d22 < xyz[d2] + width; d22++) {
-							slice[d11 * max[d2] + d22] = block_type::air;
-						}
+						memset(&slice[d11 * max[d2] + xyz[d2]], width, (u8)block_type::air);
 					}
 
 					// Advance search position for next quad

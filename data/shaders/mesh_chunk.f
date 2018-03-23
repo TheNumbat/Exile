@@ -13,5 +13,6 @@ void main() {
 
 	vec4 tex = texture(tex, vec3(f_uv, f_t));
 
-	color = vec4(tex.rgb * f_ao, tex.a);
+	color = vec4(f_ao, f_ao, f_ao, tex.a);
+	// color = vec4(tex.rgb * f_ao, tex.a);
 }
