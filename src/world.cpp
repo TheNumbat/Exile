@@ -380,7 +380,7 @@ void chunk::build_data() { PROF
 					i32 width = 1;
 
 					// Find the largest line
-					for (i32 d22 = xyz[d2] + 1; d22 < max[d2]; d22++) {
+					for (i32 d22 = xyz[d2] + 1; d22 < max[d2] && width <= 255; d22++) {
 						if (slice[xyz[d1] * max[d2] + d22] != type) break;
 						width++;
 					}
@@ -389,7 +389,7 @@ void chunk::build_data() { PROF
 
 					// Find the largest rectangle
 					bool done = false;
-					for (i32 d11 = xyz[d1] + 1; d11 < max[d1]; d11++) {
+					for (i32 d11 = xyz[d1] + 1; d11 < max[d1] && height <= 255; d11++) {
 						// Find lines of the same width
 						for (i32 d22 = xyz[d2]; d22 < xyz[d2] + width; d22++) {
 							if (slice[d11 * max[d2] + d22] != type) {
