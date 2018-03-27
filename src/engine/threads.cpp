@@ -135,8 +135,9 @@ void threadpool::queue_job(future<T>* fut, job_work<T> work, void* data, float p
 	j->cancel.set(cancel);
 
 #ifdef NO_CONCURRENT_JOBS
-	POP_ALLOC();
 	j->do_work();
+	free(j, j->my_size);
+	POP_ALLOC();
 #else
 
 	jobs.push(j);

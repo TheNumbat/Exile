@@ -51,6 +51,7 @@ struct Type_enum_info {
 };
 struct Type_string_info {};
 
+// TODO(max): macro/func to stringify enum value
 // TODO(max): reduce memory footprint; Type_enum_info takes up way too much space
 
 struct _type_info {

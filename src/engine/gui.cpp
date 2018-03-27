@@ -834,8 +834,8 @@ void render_checkbox(gui_window* win, r2 pos, bool active) { PROF
 	}
 }
 
-template<typename enumer>
-void gui_enum_buttons(string name, enumer* val) { PROF
+template<typename E>
+void gui_enum_buttons(string name, E* val) { PROF
 
 	gui_window* win = ggui->current;
 	if(!win->full_size) return;
@@ -849,12 +849,12 @@ void gui_enum_buttons(string name, enumer* val) { PROF
 	gui_text(name);
 	gui_same_line();
 
-	_type_info* info = TYPEINFO(enumer);
+	_type_info* info = TYPEINFO(E);
 	for(u32 i = 0; i < info->_enum.member_count; i++) {
 		
 		gui_same_line();
 		if(gui_button(info->_enum.member_names[i])) {
-			*val = (enumer)info->_enum.member_values[i];
+			*val = (E)info->_enum.member_values[i];
 		}
 
 		if(i != info->_enum.member_count - 1) {
