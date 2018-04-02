@@ -10,19 +10,11 @@
 #ifdef RELEASE
 #ifdef PROFILE
 	#undef PROFILE
-	#undef MATH_PROF
 #endif
 #endif
 
 #ifndef CHECKED
 #define CHECKED(func, ...) global_api->func(__VA_ARGS__);
-#endif
-
-#ifdef MATH_PROF
-#undef MATH_PROF
-#define MATH_PROF PROF
-#else
-#define MATH_PROF
 #endif
 
 #ifdef __clang__
@@ -44,16 +36,10 @@
 #endif
 #define CALLBACK EXPORT
 
-// external headers
-#include <math.h> 					// TODO(max): remove
-#include <xmmintrin.h>
 #include <stddef.h>
 #include <stdarg.h>
 #include <typeinfo>
 #include <new>
-#ifdef _MSC_VER
-#include <intrin.h>
-#endif
 
 #include "util/basic_types.h"
 

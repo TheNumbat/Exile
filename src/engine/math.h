@@ -1,4 +1,7 @@
+
 #pragma once
+
+#include <math.h>
 
 // TODO(max): remove cmath, use more SIMD intrinsics
 	// apply to v2_t, v3_t, v4_t, m4_t ops

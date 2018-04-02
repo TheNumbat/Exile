@@ -42,6 +42,11 @@ Immediate To-Do:
 	!~~~~~ FIX BUGS ~~~~~!
 
 	new SIMD-first math lib
+	tests
+		data structures
+		math
+		threadpool
+		
 	chunk AO/lighting/LOD
 	movement physics
 	

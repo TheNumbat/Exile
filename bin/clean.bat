@@ -16,6 +16,7 @@ del *.exp > NUL 2> NUL
 del *.lib > NUL 2> NUL
 del *.map > NUL 2> NUL
 del *.a1 > NUL 2> NUL
+del *.txt > NUL 2> NUl
 del w:\build\*.cpp > NUL 2> NUL
 
 popd

@@ -682,7 +682,5 @@ i32 main(i32 argc, char** argv) {
 	clang_disposeTranslationUnit(unit);
 	clang_disposeIndex(index);
 
-	cout << "Done!" << endl;
-
 	return 0;
 }

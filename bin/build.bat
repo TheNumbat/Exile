@@ -3,8 +3,6 @@
 if not exist w:\build mkdir w:\build
 pushd w:\build
 
-del *.pdb > NUL 2> NUL
-
 set Game_CompilerFlags=%1 -MTd -nologo -fp:fast -GR- -EHa- -Oi -W4 -Z7 -FC -Fegame.dll -LD -wd4100 -wd4201 -Iw:\build\ -Iw:\deps\ -D_HAS_EXCEPTIONS=0 -DCHECKS -DPROFILE
 set Game_LinkerFlags=/NODEFAULTLIB:MSVCRT /SUBSYSTEM:windows opengl32.lib -PDB:game_%random%.pdb 
 
@@ -16,37 +14,74 @@ set Asset_LinkerFlags=/NODEFAULTLIB:MSVCRT /SUBSYSTEM:console
 
 set Meta_CompilerFlags=-O2 -MTd -nologo -EHsc -Oi -W4 -Z7 -FC -Femeta.exe -wd4100 -Iw:\deps\
 set Meta_LinkerFlags=/NODEFAULTLIB:MSVCRT /SUBSYSTEM:console /LIBPATH:w:\deps\clang-c libclang.lib
- 
-if not exist w:\build\asset.exe (
-	echo compiling asset builder...
-	cl %Asset_CompilerFlags% w:\src\tools\asset_builder.cpp /link %Asset_LinkerFlags%
+
+set Test_CompilerFlags=-O2 -MTd -nologo -EHsc -Oi -W4 -Z7 -FC 
+set Test_LinkerFlags=/NODEFAULTLIB:MSVCRT /SUBSYSTEM:console
+
+echo ASSET BUILDER 
+echo.
+(
+	if not exist asset.exe (
+		echo compiling
+		cl %Asset_CompilerFlags% w:\src\tools\asset_builder.cpp /link %Asset_LinkerFlags%
+	)
+
+	if not exist w:\data\assets\engine.asset (
+		echo buliding engine.asset
+		asset.exe w:\data\assets\engine.txt w:\data\assets\engine.asset
+	)
+
+	if not exist w:\data\assets\game.asset (
+		echo buliding game.asset
+		asset.exe w:\data\assets\game.txt w:\data\assets\game.asset
+	)
 )
+echo.
+echo TESTS 
+echo.
+(
+	for %%f in (w:\src\engine\test\*.cpp) do (
+	
+		if not exist %%~nf.exe (	
+			cl %Test_CompilerFlags% -Fe%%~nf.exe %%f /link %Test_LinkerFlags%
+		)
 
-if not exist w:\data\assets\game.asset (
-	echo running asset builder...
-	asset.exe w:\data\assets\game.txt w:\data\assets\game.asset
+		w:\build\%%~nf > test_%%~nf.txt
+
+		if %ERRORLEVEL% neq 0 (
+			echo %%~nf FAILED
+		) else (
+			echo %%~nf PASSED
+		)
+	)
 )
+echo.
+echo META 
+echo.
+(
+	if not exist meta.exe (
+		echo compiling
+		cl %Meta_CompilerFlags% w:\src\tools\meta.cpp /link %Meta_LinkerFlags%
+	)
 
-if not exist w:\data\assets\engine.asset (
-	echo running asset builder...
-	asset.exe w:\data\assets\engine.txt w:\data\assets\engine.asset
+	echo running
+	xcopy w:\deps\clang-c\libclang.dll w:\build\ /C /Y > NUL 2> NUL
+	meta.exe w:\src\compile.cpp
 )
-
-if not exist w:\build\meta.exe (
-	echo compiling metaprogram...
-	cl %Meta_CompilerFlags% w:\src\tools\meta.cpp /link %Meta_LinkerFlags%
+echo. 
+echo GAME 
+echo.
+(
+	cl %Game_CompilerFlags% w:\src\compile.cpp /link %Game_LinkerFlags%
 )
-
-echo running metaprogram...
-xcopy w:\deps\clang-c\libclang.dll w:\build\ /C /Y > NUL 2> NUL
-meta.exe w:\src\compile.cpp
-
-echo compiling game lib...
-cl %Game_CompilerFlags% w:\src\compile.cpp /link %Game_LinkerFlags%
-
-if not exist w:\build\main.exe (
-	echo compiling platform layer...
-	cl %Platform_CompilerFlags% w:\src\engine\platform\platform_main.cpp /link %Platform_LinkerFlags%
+echo.
+echo PLATFORM 
+echo.
+(
+	if not exist main.exe (
+		echo compiling 
+		cl %Platform_CompilerFlags% w:\src\engine\platform\platform_main.cpp /link %Platform_LinkerFlags%
+	)
 )
-
+echo.
 popd
