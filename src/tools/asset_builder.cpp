@@ -395,7 +395,5 @@ int main(int argc, char** argv) {
 
 	assets_out.close();
 
-	cout << "Done!" << endl;
-
 	return 0;
 }
