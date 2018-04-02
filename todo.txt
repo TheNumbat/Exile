@@ -1,6 +1,18 @@
 
-For overall : see #high_level_systems
+Large-Scale Improvements | Changes for Future Projects
+	less templates, please. But we do need them for data structures...
+	rewrite metaprogram for robustness, possibly as a library/outputting a data format
+		don't output through pointers? maybe
+	don't bother with initialized values/constructors, require all allocated memory zero-initialized
+	don't use ::make pattern so much, use .init for not straight POD types
+	rewrite math library SIMD-first
+	less callbacks? good, but also not really, they're quite useful. I wish closures didn't need STL and they didn't heap allocate
+	probably don't use the futures pattern for the thread pool, go back to event loop
+	platform layer can be more elegant
+	asset store can be more meta file + data files for hot/cold loading etc. Not sure if necessary though
+	use Vulkan
 
+[[[[[[UPDATE THIS]]]]]]
 features so far:
 	data structures: array, hash map (robin hood open addressing), queue, stack, vector, string, heap
 	allocation context system + arena allocators, joint allocation, etc.
@@ -14,8 +26,9 @@ features so far:
 	windows platform layer
 		linux platform layer soon...
 	job based thread pool async system, event or callback driven
+[[[[[[[[[]]]]]]]]]
 
-all includes:
+Everything not by me:
 	#include <stdarg.h>
 	#include <stdint.h>
 	#include <float.h>
@@ -24,20 +37,21 @@ all includes:
 	#include <typeinfo>
 	#include <xmmintrin.h>/<intrin.h>
 
-priority:
+Immediate To-Do:
 
 	!~~~~~ FIX BUGS ~~~~~!
 
+	new SIMD-first math lib
 	chunk AO/lighting/LOD
 	movement physics
 	
 	gui text wrapping
 	profiler graphs/actually good layout-ing?
 	threading profiling
-	update features/readme
 
-bugs:
-	AO totally broken
+Bugs:
+
+	AO broken
 		only checks in one direction/vertex
 		doesn't check across chunk boundaries
 
@@ -50,7 +64,7 @@ bugs:
 		actually the asset pack reload is kind of broken in general - RESTRUCTURE
 			textures need to be updated on the GPU
 
-to do:
+Overall To-Do List:
 
 	chunk meshing
 		current vertex format [order in shader], struct is byte-order reversed on u32 boundary
@@ -202,8 +216,9 @@ to do:
 		wgl extension testing/loading
 			OpenGL version testing
 		file change watcher/callback system - maybe?
-		linux platform layer
+			see JBlow catalogs
 		SDL platform layer
+			linux platform layer
 
 	OpenGl
 		Shaders
@@ -220,100 +235,13 @@ to do:
 		rename ogl stuff to "renderer" to facilitate different backends
 		improve z-fighting as render distance increases
 			http://outerra.blogspot.com/2012/11/maximizing-depth-buffer-range-and.html
-		
+		animation - skeletal and procedural
+
 	chunks
 		LOD?
 		storage representation (compression?)
 		world storage (3D chunks?)
 			paging to disk - serialization, etc.
 
-Stuff from #high_level_systems
-
-Systems
-    Debug
-        Logging
-        Profiling
-            Threading
-            Minimum Overhead
-            Metaprogramming
-        Console
-            Metapgramming
-        Visualization
-        Storage
-        Memory
-    Rendering
-        Chunks
-            Meshing
-            Texturing 
-                Atlases
-            Reducing polygon count
-            Culling
-            Render distance
-        UI
-            Metaprogramming
-                QT sig/slot?
-                Tags?
-            Menus
-            Inventory System
-        Animation
-            Skeletal
-            Procedural
-        Model Loading
-            Animation
-            Formats
-        Text
-            Distance Fields?
-            Atlases
-            Internationalization
-        Minimum draw calls
-        OpenGL
-            Abstraction layer
-            Good shaders
-    Memory
-        Allocators
-        Arena-based
-        Allocate at startup?
-        Profiling
-    Platform
-        Windowing
-        Events
-            Translation
-        File IO
-        Threading
-        Code reloading
-        Library loading 
-    Sound
-        Positional Audio
-        Music
-    Assets
-        Compression?
-        Swapping
-        Modularity
-    Input
-        Abstracted input?
-        Key bindings
-        Controllers
-    Networking
-        Server/Client Architecture
-        Serialization
-            Metaprogramming
-    World Storage
-        Chunks
-        Paging
-        Serialization
-            Metaprogramming
-    Simulation
-        Logistics
-        Physics
-    Mods
-        Architecture
-        Libraries
-        API
-    Gameplay
-        Movement
-        Stats
-        Inventory
-        Building
-        Crafting
-        Fighting
-        Settings
+	game-play
+		lots to put here...will do eventually	
