@@ -197,7 +197,7 @@ gui_font* gui_select_best_font_scale() { PROF
 	f32 defl = ggui->style.font_size;
 	f32 min_off = FLT_MAX;
 	FORVEC(it, ggui->fonts) {
-		f32 off = absf(defl - it->font->font.point);
+		f32 off = abs(defl - it->font->font.point);
 		if(off < min_off) {
 			min_off = off;
 			f = it;
@@ -284,7 +284,7 @@ void gui_window::clamp_scroll() { PROF
 
 	r2 content = get_real_content();
 
-	scroll_pos.y = roundf(scroll_pos.y);
+	scroll_pos.y = round(scroll_pos.y);
 
 	if(scroll_pos.y < -previous_content_size.y + content.h - ggui->style.scroll_slop) scroll_pos.y = -previous_content_size.y + content.h - ggui->style.scroll_slop;
 	if(scroll_pos.y > 0.0f) scroll_pos.y = 0.0f;
@@ -348,7 +348,7 @@ void gui_window::update_input() { PROF
 		f32 bar_pos = rel_pos - scroll_size / 2.0f;
 		f32 ratio = bar_pos / (body.h - scroll_size);
 		
-		scroll_pos.y = lerpf(0.0f, -(previous_content_size.y - rect.h), ratio);
+		scroll_pos.y = lerp(0.0f, -(previous_content_size.y - rect.h), ratio);
 		clamp_scroll();
 	}
 }
@@ -665,10 +665,10 @@ i32 gui_int_slider(string text, i32* data, i32 low, i32 high) { PROF
 			f32 bar_w = max(1.0f / (high - low), ggui->style.min_slider_w);
 			f32 rel_pos = ggui->input.mousepos.x - rect.x;
 			
-			f32 bar_pos = clampf(rel_pos - bar_w / 2.0f, 0.0f, rect.w - bar_w);
+			f32 bar_pos = clamp(rel_pos - bar_w / 2.0f, 0.0f, rect.w - bar_w);
 			f32 ratio = bar_pos / (rect.w - bar_w);
 			
-			*data = (i32)lerpf((f32)low, (f32)high, ratio);
+			*data = (i32)lerp((f32)low, (f32)high, ratio);
 		
 			ggui->active_id = id;
 			ggui->active = gui_active_state::active;
@@ -812,7 +812,7 @@ void render_slider(gui_window* win, r2 rect, i32 rel, i32 max) { PROF
 	if(!max) return;
 
 	f32 bar_w = max(1.0f / max, ggui->style.min_slider_w);
-	f32 bar_x = lerpf(rect.x, rect.x + rect.w - bar_w, (f32)rel / max);
+	f32 bar_x = lerp(rect.x, rect.x + rect.w - bar_w, (f32)rel / max);
 
 	r2 bar = r2(bar_x, rect.y + 2.0f, bar_w, rect.h - 4.0f);
 
@@ -1007,7 +1007,7 @@ void render_windowbody(gui_window* win) { PROF
 	f32 pt = ggui->style.font_size + ggui->style.title_padding;
 	v2 resize_tab = ggui->style.resize_tab;
 	
-	u8 alpha = (u8)roundf(win->opacity * 255.0f);
+	u8 alpha = (u8)round(win->opacity * 255.0f);
 	color c_back   		= color(ggui->style.win_back, 		 alpha);
 	color c_scroll 		= color(ggui->style.win_scroll_back, alpha);
 	color c_scroll_bar 	= color(ggui->style.win_scroll_bar,  alpha);
@@ -1041,9 +1041,9 @@ void render_windowbody(gui_window* win) { PROF
 		win->background_mesh.push_tri(p1, p2, p3, c_scroll);
 		win->background_mesh.push_tri(p2, p3, p4, c_scroll);
 
-		f32 scroll_ratio = clampf(-win->scroll_pos.y / (win->previous_content_size.y - r.h), 0.0f, 1.0f);
+		f32 scroll_ratio = clamp(-win->scroll_pos.y / (win->previous_content_size.y - r.h), 0.0f, 1.0f);
 		f32 scroll_size  = max(c.h * c.h / win->previous_content_size.y, 5.0f);
-		f32 scroll_pos   = lerpf(0.0f, r.h - pt - scroll_size, scroll_ratio);
+		f32 scroll_pos   = lerp(0.0f, r.h - pt - scroll_size, scroll_ratio);
 
 		v2 p5 = v2(p1.x + 2, p1.y + scroll_pos);
 		v2 p6 = v2(p2.x - 2, p1.y + scroll_pos);
@@ -1059,6 +1059,6 @@ void render_windowbody(gui_window* win) { PROF
 		v2 r_1 = v2(r.x + r.w - resize_tab.x, r.y + r.h);
 		v2 r_2 = v2(r.x + r.w, r.y + r.h - resize_tab.y);
 		v2 r_3 = v2(r.x + r.w, r.y + r.h);
-		win->background_mesh.push_tri(r_1, r_2, r_3, color(ggui->style.tab_color, (u8)roundf(win->opacity * 255.0f)));
+		win->background_mesh.push_tri(r_1, r_2, r_3, color(ggui->style.tab_color, (u8)round(win->opacity * 255.0f)));
 	}
 }

@@ -81,8 +81,8 @@ float check_pirority(super_job* j, void* param) {
 
 	v3 center = c->pos.center_xz();
 
-	if(absf(center.x - p->camera.pos.x) > (f32)(w->view_distance + 1) * chunk::xsz ||
-	   absf(center.z - p->camera.pos.z) > (f32)(w->view_distance + 1) * chunk::zsz) {
+	if(abs(center.x - p->camera.pos.x) > (f32)(w->view_distance + 1) * chunk::xsz ||
+	   abs(center.z - p->camera.pos.z) > (f32)(w->view_distance + 1) * chunk::zsz) {
 		return -FLT_MAX;
 	}
 

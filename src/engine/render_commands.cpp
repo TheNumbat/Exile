@@ -939,9 +939,9 @@ void mesh_3d_tex::push_cube(v3 pos, f32 len) {
 }
 
 void render_camera::update() {
-	front.x = cosf(RADIANS(pitch)) * cosf(RADIANS(yaw));
-	front.y = sinf(RADIANS(pitch));
-	front.z = sinf(RADIANS(yaw)) * cosf(RADIANS(pitch));
+	front.x = cos(RADIANS(pitch)) * cos(RADIANS(yaw));
+	front.y = sin(RADIANS(pitch));
+	front.z = sin(RADIANS(yaw)) * cos(RADIANS(pitch));
 	front = norm(front);
 	right = norm(cross(front, {0, 1, 0}));
 	up = norm(cross(right, front));
