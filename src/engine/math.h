@@ -281,6 +281,7 @@ union v4 {
 	v4& operator=(v4&& v) {packed = v.packed; return *this;}
 };
 static_assert(sizeof(v4) == 16, "sizeof(v4) != 16");
+static_assert(alignof(v4) == 16, "alignof(v4) != 16");
 
 union bv4 {
 	struct {
@@ -344,6 +345,7 @@ union r2 {
 	r2& operator=(r2&& r) {packed = r.packed; return *this;}
 };
 static_assert(sizeof(r2) == 16, "sizeof(r2) != 16");
+static_assert(alignof(r2) == 16, "alignof(r2) != 16");
 
 // [Column][Row]
 union m4 {
@@ -368,6 +370,7 @@ union m4 {
 	m4& operator=(m4&& m) {for(u8 i = 0; i < 4; i++) packed[i] = m.packed[i]; return *this;}
 };
 static_assert(sizeof(m4) == 64, "sizeof(m4) != 64");
+static_assert(alignof(m4) == 16, "alignof(m4) != 16");
 
 struct colorf {
 	f32 r = 0.0f, g = 0.0f, b = 0.0f, a = 0.0f;
