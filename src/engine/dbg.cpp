@@ -145,7 +145,7 @@ void dbg_manager::UI() { PROF
 
 	// NOTE(max): all the makef-ing here just comes from the scratch buffer
 
-	gui_begin("Console"_, R2(0.0f, dim.y * 0.75f, dim.x, dim.y / 4.0f), (u16)window_flags::nowininput);
+	gui_begin("Console"_, r2(0.0f, dim.y * 0.75f, dim.x, dim.y / 4.0f), (u16)window_flags::nowininput);
 
 	FORQ_BEGIN(it, log_cache) {
 
@@ -156,7 +156,7 @@ void dbg_manager::UI() { PROF
 
 	gui_end();
 
-	gui_begin("Debug"_, R2(20.0f, 20.0f, dim.x / 1.5f, dim.y / 2.0f));
+	gui_begin("Debug"_, r2(20.0f, 20.0f, dim.x / 1.5f, dim.y / 2.0f));
 	
 	gui_text(string::makef("FPS: %"_, 1.0f / last_frame_time));
 	gui_checkbox("Pause: "_, &frame_pause);

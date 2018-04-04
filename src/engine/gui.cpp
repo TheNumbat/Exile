@@ -293,7 +293,7 @@ void gui_window::clamp_scroll() { PROF
 r2 gui_window::get_real_content() { PROF
 
 	r2 r = get_real_body();
-	return R2(r.xy + ggui->style.win_margin.xy, r.wh - ggui->style.win_margin.xy - ggui->style.win_margin.zw);
+	return r2(r.xy + ggui->style.win_margin.xy, r.wh - ggui->style.win_margin.xy - ggui->style.win_margin.zw);
 }
 
 r2 gui_window::get_real_top() { PROF
@@ -301,13 +301,13 @@ r2 gui_window::get_real_top() { PROF
 	f32 carrot_x_diff = ggui->style.carrot_size.x + ggui->style.carrot_padding.x;
 	r2 real_rect = get_real();
 
-	return R2(real_rect.xy, V2(real_rect.w - carrot_x_diff, ggui->style.font_size + ggui->style.title_padding));
+	return r2(real_rect.xy, v2(real_rect.w - carrot_x_diff, ggui->style.font_size + ggui->style.title_padding));
 }
 
 r2 gui_window::get_real_body() { PROF
 
 	r2 real_rect = get_real();
-	r2 body = R2(real_rect.x, real_rect.y + ggui->style.font_size + ggui->style.title_padding, real_rect.w, real_rect.h - ggui->style.font_size + ggui->style.title_padding);
+	r2 body = r2(real_rect.x, real_rect.y + ggui->style.font_size + ggui->style.title_padding, real_rect.w, real_rect.h - ggui->style.font_size + ggui->style.title_padding);
 	
 	if(can_scroll) {
 		body.w -= ggui->style.win_scroll_w;
@@ -329,12 +329,12 @@ void gui_window::update_input() { PROF
 		if(wh.y < ggui->style.min_win_size.y) {
 			wh.y = ggui->style.min_win_size.y;
 		}
-		rect = R2(real_rect.xy, wh);
+		rect = r2(real_rect.xy, wh);
 
 	}
 	else if(input == win_input_state::moving) {
 
-		rect = R2(ggui->input.mousepos - click_offset, rect.wh);
+		rect = r2(ggui->input.mousepos - click_offset, rect.wh);
 	}
 	else if(input == win_input_state::scrolling) {
 
@@ -362,11 +362,11 @@ r2 gui_window::get_real() { PROF
 }
 
 v2 gui_window_dim() { PROF
-	return V2f(ggui->window->w, ggui->window->h);
+	return v2((f32)ggui->window->w, (f32)ggui->window->h);
 }
 
 r2 gui_window::get_title() {
-	return R2(rect.xy, V2(rect.w, ggui->style.font_size + ggui->style.title_padding));
+	return r2(rect.xy, v2(rect.w, ggui->style.font_size + ggui->style.title_padding));
 }
 
 void gui_set_offset(v2 offset) { PROF
@@ -383,10 +383,10 @@ void gui_add_offset(v2 offset, gui_cursor_mode override_mode) { PROF
 		ggui->current->cursor = ggui->current->cursor + offset;
 		break;
 	case gui_cursor_mode::x:
-		ggui->current->cursor = ggui->current->cursor + V2(offset.x, 0.0f);
+		ggui->current->cursor = ggui->current->cursor + v2(offset.x, 0.0f);
 		break;
 	case gui_cursor_mode::y:
-		ggui->current->cursor = ggui->current->cursor + V2(0.0f, offset.y);
+		ggui->current->cursor = ggui->current->cursor + v2(0.0f, offset.y);
 		break;
 	}
 
@@ -443,14 +443,14 @@ bool gui_begin(string name, r2 size, gui_window_flags flags, f32 first_alpha) { 
 
 	r2 real_rect = window->get_real();
 	
-	window->header_size = V2(0.0f, 0.0f);
+	window->header_size = v2(0.0f, 0.0f);
 	{//rendering
 		if((window->flags & (u16)window_flags::nohead) != (u16)window_flags::nohead) {
 			render_windowhead(window);
 
-			render_title(window, V2(3.0f, -1.0f), name);
+			render_title(window, v2(3.0f, -1.0f), name);
 
-			window->header_size = V2(0.0f, ggui->style.font_size + ggui->style.title_padding);
+			window->header_size = v2(0.0f, ggui->style.font_size + ggui->style.title_padding);
 		}
 
 		if((window->flags & (u16)window_flags::noback) != (u16)window_flags::noback && window->full_size) {
@@ -467,7 +467,7 @@ bool gui_begin(string name, r2 size, gui_window_flags flags, f32 first_alpha) { 
 	if((window->flags & (u16)window_flags::nohide) != (u16)window_flags::nohide) {
 
 		f32 carrot_x_diff = ggui->style.carrot_size.x + ggui->style.carrot_padding.x;
-		v2 carrot_pos = V2(window->rect.w - carrot_x_diff, ggui->style.carrot_size.y / 2.0f);
+		v2 carrot_pos = v2(window->rect.w - carrot_x_diff, ggui->style.carrot_size.y / 2.0f);
 		
 		gui_set_offset(carrot_pos);
 		_carrot_toggle_background(&window->full_size);
@@ -500,7 +500,7 @@ bool gui_begin(string name, r2 size, gui_window_flags flags, f32 first_alpha) { 
 	if((window->flags & (u16)window_flags::noresize) != (u16)window_flags::noresize) {
 
 		v2 resize_tab = ggui->style.resize_tab;
-		r2 resize_rect = R2(real_rect.xy + real_rect.wh - resize_tab, resize_tab);
+		r2 resize_rect = r2(real_rect.xy + real_rect.wh - resize_tab, resize_tab);
 		if(in_win && inside(resize_rect, ggui->input.mousepos)) {
 
 			if(ggui->active == gui_active_state::none && ggui->input.lclick) {
@@ -523,7 +523,7 @@ bool gui_begin(string name, r2 size, gui_window_flags flags, f32 first_alpha) { 
 	}
 	if((window->flags & (u16)window_flags::noscroll) != (u16)window_flags::noscroll && window->full_size && window->can_scroll) {
 		
-		r2 scroll_bar = R2(real_body.x + real_body.w, real_body.y, ggui->style.win_scroll_w, real_body.h);
+		r2 scroll_bar = r2(real_body.x + real_body.w, real_body.y, ggui->style.win_scroll_w, real_body.h);
 
 		if(in_win && ggui->input.scroll && (inside(real_body, ggui->input.mousepos) || inside(scroll_bar, ggui->input.mousepos))) {
 			
@@ -558,13 +558,13 @@ void gui_end() { PROF
 
 void gui_indent() { PROF
 
-	gui_add_offset(V2(ggui->style.indent_size, 0.0f), gui_cursor_mode::x);
+	gui_add_offset(v2(ggui->style.indent_size, 0.0f), gui_cursor_mode::x);
 	ggui->current->indent_level++;
 }
 
 void gui_unindent() { PROF
 
-	gui_add_offset(V2(-ggui->style.indent_size, 0.0f), gui_cursor_mode::x);
+	gui_add_offset(v2(-ggui->style.indent_size, 0.0f), gui_cursor_mode::x);
 	ggui->current->indent_level--;
 }
 
@@ -576,7 +576,7 @@ void gui_same_line() { PROF
 
 	ggui->current->cursor.y -= ggui->current->last_offset.y;
 	ggui->current->cursor.x += ggui->current->last_offset.x;
-	ggui->current->last_offset = V2(0.0f, 0.0f);
+	ggui->current->last_offset = v2(0.0f, 0.0f);
 }
 
 void gui_left_cursor() { PROF
@@ -601,16 +601,16 @@ bool gui_checkbox(string name, bool* data) { PROF
 	gui_text(name);
 	gui_same_line();
 
-	v2 pos = win->cursor + V2(0.0f, 2.0f);
-	v2 size = V2(ggui->style.font_size, ggui->style.font_size);
+	v2 pos = win->cursor + v2(0.0f, 2.0f);
+	v2 size = v2(ggui->style.font_size, ggui->style.font_size);
 	gui_add_offset(size);
 
-	if(!win->visible(R2(pos, size))) {
+	if(!win->visible(r2(pos, size))) {
 		gui_left_cursor();
 		return *data;
 	}
 
-	if(gui_in_win() && inside(R2(pos, size), ggui->input.mousepos)) {
+	if(gui_in_win() && inside(r2(pos, size), ggui->input.mousepos)) {
 
 		if(ggui->active == gui_active_state::none && (ggui->input.lclick || ggui->input.ldbl)) {
 
@@ -620,7 +620,7 @@ bool gui_checkbox(string name, bool* data) { PROF
 		}
 	}
 
-	render_checkbox(ggui->current, R2(pos, size), *data);
+	render_checkbox(ggui->current, r2(pos, size), *data);
 	gui_left_cursor();
 	return *data;
 }
@@ -645,9 +645,9 @@ i32 gui_int_slider(string text, i32* data, i32 low, i32 high) { PROF
 	gui_same_line();
 
 	f32 point = ggui->style.font_size;
-	v2 pos = win->cursor + V2(2.0f, 2.0f);
-	v2 size = V2(ggui->style.slider_w, point);
-	r2 rect = R2(pos, size);
+	v2 pos = win->cursor + v2(2.0f, 2.0f);
+	v2 size = v2(ggui->style.slider_w, point);
+	r2 rect = r2(pos, size);
 	
 	gui_add_offset(size);
 
@@ -665,7 +665,7 @@ i32 gui_int_slider(string text, i32* data, i32 low, i32 high) { PROF
 			f32 bar_w = max(1.0f / (high - low), ggui->style.min_slider_w);
 			f32 rel_pos = ggui->input.mousepos.x - rect.x;
 			
-			f32 bar_pos = clamp(rel_pos - bar_w / 2.0f, 0.0f, rect.w - bar_w);
+			f32 bar_pos = clampf(rel_pos - bar_w / 2.0f, 0.0f, rect.w - bar_w);
 			f32 ratio = bar_pos / (rect.w - bar_w);
 			
 			*data = (i32)lerpf((f32)low, (f32)high, ratio);
@@ -676,7 +676,7 @@ i32 gui_int_slider(string text, i32* data, i32 low, i32 high) { PROF
 	}
 
 	gui_same_line();
-	gui_add_offset(V2(3.0f, 0.0f));
+	gui_add_offset(v2(3.0f, 0.0f));
 
 	render_slider(ggui->current, rect, *data - low, high - low);
 
@@ -740,11 +740,11 @@ bool gui_carrot_toggle(string name, bool initial, bool* toggleme) { PROF
 	v2 size = ggui->style.carrot_size;
 	gui_add_offset(size);
 
-	if(!win->visible(R2(pos, size))) {
+	if(!win->visible(r2(pos, size))) {
 		return data->b;
 	}
 
-	if(gui_in_win() && inside(R2(pos, size), ggui->input.mousepos)) {
+	if(gui_in_win() && inside(r2(pos, size), ggui->input.mousepos)) {
 
 		if(ggui->active == gui_active_state::none && (ggui->input.lclick || ggui->input.ldbl)) {
 
@@ -773,7 +773,7 @@ void _carrot_toggle_background(bool* data) { PROF
 	v2 pos = win->cursor;
 	v2 size = ggui->style.carrot_size;
 
-	if(gui_in_win() && inside(R2(pos, size), ggui->input.mousepos)) {
+	if(gui_in_win() && inside(r2(pos, size), ggui->input.mousepos)) {
 
 		if(ggui->active == gui_active_state::none && (ggui->input.lclick || ggui->input.ldbl)) {
 
@@ -784,9 +784,9 @@ void _carrot_toggle_background(bool* data) { PROF
 	}
 
 	if(*data) {
-		win->background_mesh.push_tri(V2(pos.x, pos.y), V2(pos.x + size.x, pos.y), V2(pos.x + size.x / 2.0f, pos.y + size.x), V4b(ggui->style.wid_back, 255));
+		win->background_mesh.push_tri(v2(pos.x, pos.y), v2(pos.x + size.x, pos.y), v2(pos.x + size.x / 2.0f, pos.y + size.x), color(ggui->style.wid_back, 255));
 	} else {
-		win->background_mesh.push_tri(V2(pos.x, pos.y), V2(pos.x, pos.y + size.x), V2(pos.x + size.x, pos.y + size.x / 2.0f), V4b(ggui->style.wid_back, 255));
+		win->background_mesh.push_tri(v2(pos.x, pos.y), v2(pos.x, pos.y + size.x), v2(pos.x + size.x, pos.y + size.x / 2.0f), color(ggui->style.wid_back, 255));
 	}
 }
 
@@ -795,17 +795,17 @@ void render_carrot(gui_window* win, v2 pos, bool active) { PROF
 	f32 size = ggui->style.carrot_size.x;
 
 	if(active) {
-		win->shape_mesh.push_tri(V2(pos.x, pos.y), V2(pos.x + size, pos.y), V2(pos.x + size / 2.0f, pos.y + size), V4b(ggui->style.wid_back, 255));
+		win->shape_mesh.push_tri(v2(pos.x, pos.y), v2(pos.x + size, pos.y), v2(pos.x + size / 2.0f, pos.y + size), color(ggui->style.wid_back, 255));
 	} else {
-		win->shape_mesh.push_tri(V2(pos.x, pos.y), V2(pos.x, pos.y + size), V2(pos.x + size, pos.y + size / 2.0f), V4b(ggui->style.wid_back, 255));
+		win->shape_mesh.push_tri(v2(pos.x, pos.y), v2(pos.x, pos.y + size), v2(pos.x + size, pos.y + size / 2.0f), color(ggui->style.wid_back, 255));
 	}
 }
 
 void render_slider(gui_window* win, r2 rect, i32 rel, i32 max) { PROF
 
 
-	color out = V4b(ggui->style.win_scroll_back, 255);
-	color in  = V4b(ggui->style.win_scroll_bar, 255);
+	color out = color(ggui->style.win_scroll_back, 255);
+	color in  = color(ggui->style.win_scroll_bar, 255);
 
 	win->shape_mesh.push_rect(rect, out);
 
@@ -814,21 +814,21 @@ void render_slider(gui_window* win, r2 rect, i32 rel, i32 max) { PROF
 	f32 bar_w = max(1.0f / max, ggui->style.min_slider_w);
 	f32 bar_x = lerpf(rect.x, rect.x + rect.w - bar_w, (f32)rel / max);
 
-	r2 bar = R2(bar_x, rect.y + 2.0f, bar_w, rect.h - 4.0f);
+	r2 bar = r2(bar_x, rect.y + 2.0f, bar_w, rect.h - 4.0f);
 
 	win->shape_mesh.push_rect(bar, in);
 }
 
 void render_checkbox(gui_window* win, r2 pos, bool active) { PROF
 
-	color out = V4b(ggui->style.win_scroll_back, 255);
-	color in  = V4b(ggui->style.win_scroll_bar, 255);
+	color out = color(ggui->style.win_scroll_back, 255);
+	color in  = color(ggui->style.win_scroll_bar, 255);
 
 	win->shape_mesh.push_rect(pos, out);
 
 	if(active) {
 
-		r2 select = R2(pos.xy + V2(2.0f, 2.0f), pos.wh - V2(4.0f, 4.0f));
+		r2 select = r2(pos.xy + v2(2.0f, 2.0f), pos.wh - v2(4.0f, 4.0f));
 		
 		win->shape_mesh.push_rect(select, in);
 	}
@@ -882,11 +882,11 @@ bool gui_button(string text) { PROF
 	bool ret = false;
 	gui_add_offset(size);
 
-	if(!win->visible(R2(pos, size))) {
+	if(!win->visible(r2(pos, size))) {
 		return ret;
 	}
 
-	if(gui_in_win() && inside(R2(pos, size), ggui->input.mousepos)) {
+	if(gui_in_win() && inside(r2(pos, size), ggui->input.mousepos)) {
 		
 		if(ggui->active == gui_active_state::none && (ggui->input.lclick || ggui->input.ldbl)) {
 
@@ -935,11 +935,11 @@ bool gui_node(string text, bool* store) { PROF
 	v2 size = size_text(win->font->font, text, point);
 	gui_add_offset(size);
 
-	if(!win->visible(R2(pos, size))) {
+	if(!win->visible(r2(pos, size))) {
 		return *data;
 	}
 
-	if(gui_in_win() && inside(R2(pos, size), ggui->input.mousepos)) {
+	if(gui_in_win() && inside(r2(pos, size), ggui->input.mousepos)) {
 		
 		if(ggui->active == gui_active_state::none && (ggui->input.lclick || ggui->input.ldbl)) {
 
@@ -961,16 +961,16 @@ void gui_text(string text) { PROF
 	f32 point = ggui->style.font_size;
 	color c = WHITE;
 
-	v2 pos = win->cursor, size = V2(0.0f, point);
+	v2 pos = win->cursor, size = v2(0.0f, point);
 	
-	if(!win->visible(R2(pos, size))) {
+	if(!win->visible(r2(pos, size))) {
 		gui_add_offset(size);
 		return;
 	}
 
 	size = size_text(win->font->font, text, point);
 
-	if(!win->visible(R2(pos, size))) {
+	if(!win->visible(r2(pos, size))) {
 		gui_add_offset(size);
 		return;
 	}
@@ -984,8 +984,8 @@ void render_windowhead(gui_window* win) { PROF
 	r2 r = win->get_real();
 	f32 pt = ggui->style.font_size + ggui->style.title_padding;
 
-	r2 render = R2(r.x, r.y, r.w, pt);
-	win->background_mesh.push_rect(render, V4b(ggui->style.win_top, 255));
+	r2 render = r2(r.x, r.y, r.w, pt);
+	win->background_mesh.push_rect(render, color(ggui->style.win_top, 255));
 }
 
 void render_title(gui_window* win, v2 pos, string title) { PROF
@@ -1007,23 +1007,24 @@ void render_windowbody(gui_window* win) { PROF
 	f32 pt = ggui->style.font_size + ggui->style.title_padding;
 	v2 resize_tab = ggui->style.resize_tab;
 	
-	color c_back   		= V4b(ggui->style.win_back, win->opacity * 255.0f);
-	color c_scroll 		= V4b(ggui->style.win_scroll_back, win->opacity * 255.0f);
-	color c_scroll_bar 	= V4b(ggui->style.win_scroll_bar, win->opacity * 255.0f);
+	u8 alpha = (u8)roundf(win->opacity * 255.0f);
+	color c_back   		= color(ggui->style.win_back, 		 alpha);
+	color c_scroll 		= color(ggui->style.win_scroll_back, alpha);
+	color c_scroll_bar 	= color(ggui->style.win_scroll_bar,  alpha);
 
 	bool resizeable = (win->flags & (u16)window_flags::noresize) != (u16)window_flags::noresize;
 	if(!resizeable) {
 
-		r2 render = R2(r.x, r.y + pt, r.w, r.h - pt);
+		r2 render = r2(r.x, r.y + pt, r.w, r.h - pt);
 		win->background_mesh.push_rect(render, c_back);
 
 	} else {
 
-		v2 p1 = V2(r.x, r.y + pt);
-		v2 p2 = V2(r.x, r.y + r.h);
-		v2 p3 = V2(r.x + r.w - resize_tab.x, r.y + r.h);
-		v2 p4 = V2(r.x + r.w, r.y + r.h - resize_tab.y);
-		v2 p5 = V2(r.x + r.w, r.y + pt);
+		v2 p1 = v2(r.x, r.y + pt);
+		v2 p2 = v2(r.x, r.y + r.h);
+		v2 p3 = v2(r.x + r.w - resize_tab.x, r.y + r.h);
+		v2 p4 = v2(r.x + r.w, r.y + r.h - resize_tab.y);
+		v2 p5 = v2(r.x + r.w, r.y + pt);
 
 		win->background_mesh.push_tri(p1, p2, p3, c_back);
 		win->background_mesh.push_tri(p1, p3, p4, c_back);
@@ -1032,22 +1033,22 @@ void render_windowbody(gui_window* win) { PROF
 
 	if(win->can_scroll) {
 
-		v2 p1 = V2(b.x + b.w, r.y + pt);
-		v2 p2 = V2(b.x + b.w + ggui->style.win_scroll_w, r.y + pt);
-		v2 p3 = V2(p1.x, p1.y + r.h - pt);
-		v2 p4 = V2(p2.x, p1.y + r.h - pt);
+		v2 p1 = v2(b.x + b.w, r.y + pt);
+		v2 p2 = v2(b.x + b.w + ggui->style.win_scroll_w, r.y + pt);
+		v2 p3 = v2(p1.x, p1.y + r.h - pt);
+		v2 p4 = v2(p2.x, p1.y + r.h - pt);
 
 		win->background_mesh.push_tri(p1, p2, p3, c_scroll);
 		win->background_mesh.push_tri(p2, p3, p4, c_scroll);
 
-		f32 scroll_ratio = clamp(-win->scroll_pos.y / (win->previous_content_size.y - r.h), 0.0f, 1.0f);
+		f32 scroll_ratio = clampf(-win->scroll_pos.y / (win->previous_content_size.y - r.h), 0.0f, 1.0f);
 		f32 scroll_size  = max(c.h * c.h / win->previous_content_size.y, 5.0f);
 		f32 scroll_pos   = lerpf(0.0f, r.h - pt - scroll_size, scroll_ratio);
 
-		v2 p5 = V2(p1.x + 2, p1.y + scroll_pos);
-		v2 p6 = V2(p2.x - 2, p1.y + scroll_pos);
-		v2 p7 = V2(p5.x, p1.y + scroll_pos + scroll_size);
-		v2 p8 = V2(p6.x, p1.y + scroll_pos + scroll_size);
+		v2 p5 = v2(p1.x + 2, p1.y + scroll_pos);
+		v2 p6 = v2(p2.x - 2, p1.y + scroll_pos);
+		v2 p7 = v2(p5.x, p1.y + scroll_pos + scroll_size);
+		v2 p8 = v2(p6.x, p1.y + scroll_pos + scroll_size);
 
 		win->background_mesh.push_tri(p5, p6, p7, c_scroll_bar);
 		win->background_mesh.push_tri(p6, p7, p8, c_scroll_bar);
@@ -1055,9 +1056,9 @@ void render_windowbody(gui_window* win) { PROF
 
 	if(resizeable) {
 
-		v2 r_1 = V2(r.x + r.w - resize_tab.x, r.y + r.h);
-		v2 r_2 = V2(r.x + r.w, r.y + r.h - resize_tab.y);
-		v2 r_3 = V2(r.x + r.w, r.y + r.h);
-		win->background_mesh.push_tri(r_1, r_2, r_3, V4b(ggui->style.tab_color, win->opacity * 255.0f));
+		v2 r_1 = v2(r.x + r.w - resize_tab.x, r.y + r.h);
+		v2 r_2 = v2(r.x + r.w, r.y + r.h - resize_tab.y);
+		v2 r_3 = v2(r.x + r.w, r.y + r.h);
+		win->background_mesh.push_tri(r_1, r_2, r_3, color(ggui->style.tab_color, (u8)roundf(win->opacity * 255.0f)));
 	}
 }

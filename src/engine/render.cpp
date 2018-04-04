@@ -533,7 +533,7 @@ void ogl_manager::execute_command_list(render_command_list* rcl) { PROF
 
 void ogl_manager::cmd_set_settings(render_command* cmd) {
 
-	ur2 viewport = roundR2(cmd->viewport), scissor = roundR2(cmd->scissor);
+	ur2 viewport = cmd->viewport.to_u(), scissor = cmd->scissor.to_u();
 
 	if(viewport.w && viewport.h)
 		glViewport(viewport.x, viewport.y, viewport.w, viewport.h);

@@ -4,7 +4,7 @@ void world::init(asset_store* store, allocator* a) { PROF
 	alloc = a;
 	p.init();
 
-	block_textures = eng->ogl.begin_tex_array(V3i(32, 32, (i32)NUM_BLOCKS), texture_wrap::repeat, true, 1);
+	block_textures = eng->ogl.begin_tex_array(iv3(32, 32, (i32)NUM_BLOCKS), texture_wrap::repeat, true, 1);
 	eng->ogl.push_tex_array(block_textures, store, "stone"_);
 
 	chunks = map<chunk_pos, chunk*>::make(512, a);
@@ -30,7 +30,7 @@ void world::destroy() { PROF
 
 void world::update(platform_perfcount now) { PROF
 
-	gui_begin("Exile"_, R2(50.0f, 50.0f, 350.0f, 100.0f));
+	gui_begin("Exile"_, r2(50.0f, 50.0f, 350.0f, 100.0f));
 	gui_int_slider(string::makef("view: % "_, view_distance), &view_distance, 0, 32);
 
 	p.update(now);
@@ -60,7 +60,7 @@ void world::populate_local_area() { PROF
 					c->build_data();
 					c->job_state.set(work::done);
 
-				}, *c, 1.0f / lengthsq(current.center_xz() - p.camera.pos));
+				}, *c, 1.0f / lensq(current.center_xz() - p.camera.pos));
 			}
 		}
 	}
@@ -86,7 +86,7 @@ float check_pirority(super_job* j, void* param) {
 		return -FLT_MAX;
 	}
 
-	return 1.0f / lengthsq(center - p->camera.pos);
+	return 1.0f / lensq(center - p->camera.pos);
 }
 
 CALLBACK void cancel_build(void* param) {
@@ -119,7 +119,7 @@ void world::render() { PROF
 					c->build_data();
 					c->job_state.set(work::done);
 
-				}, *ch, 1.0f / lengthsq(current.center_xz() - p.camera.pos), FPTR(cancel_build));
+				}, *ch, 1.0f / lensq(current.center_xz() - p.camera.pos), FPTR(cancel_build));
 			};
 			
 			if(!ch) {
@@ -142,7 +142,7 @@ void world::render() { PROF
 			cmd.num_tris = c->mesh_triangles;
 			cmd.texture = block_textures;
 
-			v3 chunk_pos = V3f(current.x * chunk::xsz, current.y * chunk::ysz, current.z * chunk::zsz);
+			v3 chunk_pos = v3((f32)current.x * chunk::xsz, (f32)current.y * chunk::ysz, (f32)current.z * chunk::zsz);
 			cmd.model = translate(chunk_pos - p.camera.pos);
 
 			cmd.callback.set(FPTR(unlock_chunk));
@@ -173,7 +173,7 @@ void player::update(platform_perfcount now) { PROF
 
 	if(eng->platform->window_focused(&eng->window)) {
 
-		velocity = V3(0.0f, 0.0f, 0.0f);
+		velocity = v3(0.0f, 0.0f, 0.0f);
 		if(eng->platform->keydown(platform_keycode::w)) {
 			velocity += camera.front * speed;
 		}
@@ -229,7 +229,7 @@ chunk_pos chunk_pos::from_abs(v3 pos) { PROF
 
 v3 chunk_pos::center_xz() { PROF
 
-	return V3(x * chunk::xsz + chunk::xsz / 2.0f, 0.0f, z * chunk::zsz + chunk::zsz / 2.0f);
+	return v3(x * chunk::xsz + chunk::xsz / 2.0f, 0.0f, z * chunk::zsz + chunk::zsz / 2.0f);
 }
 
 chunk_pos chunk_pos::operator+(chunk_pos other) { PROF
@@ -402,15 +402,15 @@ void chunk::build_data() { PROF
 					}
 
 					v3 w, h;
-					w.f[d2] = (f32)width;
-					h.f[d1] = (f32)height;
+					w.a[d2] = (f32)width;
+					h.a[d1] = (f32)height;
 
-					v3 v_0 = V3((f32) xyz[0], (f32) xyz[1], (f32) xyz[2]);
+					v3 v_0 = v3((f32) xyz[0], (f32) xyz[1], (f32) xyz[2]);
 
 					// shift front faces by one block
 					if (backface > 0) {
 						v3 f;
-						f.f[d0] += 1.0f;
+						f.a[d0] += 1.0f;
 						v_0 += f;
 					}
 
@@ -418,27 +418,27 @@ void chunk::build_data() { PROF
 					v3 v_1 = v_0 + w;
 					v3 v_2 = v_0 + w + h;
 					v3 v_3 = v_0 + h;
-					v3 wht = V3f(width, height, (i32)type), hwt = V3f(height, width, (i32)type);
+					v3 wht = v3((f32)width, (f32)height, (f32)type), hwt = v3((f32)height, (f32)width, (f32)type);
 					u8 ao_0 = ao_at(v_0), ao_1 = ao_at(v_1), ao_2 = ao_at(v_2), ao_3 = ao_at(v_3);
 
 					switch (i) {
 					case 0: // -X
-						new_mesh.quad(v_0, v_1, v_3, v_2, wht, V4b(ao_0,ao_1,ao_3,ao_2));
+						new_mesh.quad(v_0, v_1, v_3, v_2, wht, bv4(ao_0,ao_1,ao_3,ao_2));
 						break;
 					case 1: // -Y
-						new_mesh.quad(v_0, v_1, v_3, v_2, wht, V4b(ao_0,ao_1,ao_3,ao_2));
+						new_mesh.quad(v_0, v_1, v_3, v_2, wht, bv4(ao_0,ao_1,ao_3,ao_2));
 						break;
 					case 2: // -Z
-						new_mesh.quad(v_3, v_0, v_2, v_1, hwt, V4b(ao_3,ao_0,ao_2,ao_1));
+						new_mesh.quad(v_3, v_0, v_2, v_1, hwt, bv4(ao_3,ao_0,ao_2,ao_1));
 						break;
 					case 3: // +X
-						new_mesh.quad(v_1, v_0, v_2, v_3, wht, V4b(ao_1,ao_0,ao_2,ao_3));
+						new_mesh.quad(v_1, v_0, v_2, v_3, wht, bv4(ao_1,ao_0,ao_2,ao_3));
 						break;
 					case 4: // +Y
-						new_mesh.quad(v_3, v_2, v_0, v_1, wht, V4b(ao_3,ao_2,ao_0,ao_1));
+						new_mesh.quad(v_3, v_2, v_0, v_1, wht, bv4(ao_3,ao_2,ao_0,ao_1));
 						break;
 					case 5: // +Z
-						new_mesh.quad(v_0, v_3, v_1, v_2, hwt, V4b(ao_0,ao_3,ao_1,ao_2));
+						new_mesh.quad(v_0, v_3, v_1, v_2, hwt, bv4(ao_0,ao_3,ao_1,ao_2));
 						break;
 					}
 

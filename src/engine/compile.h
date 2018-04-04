@@ -85,7 +85,6 @@ static dbg_manager*  global_dbg = null; // global to provide profiling functiona
 #include "util/threadstate.cpp"
 #include "util/type_table.cpp"
 
-#include "math.cpp"
 #include "log.cpp"
 #include "events.cpp"
 #include "render_commands.cpp"

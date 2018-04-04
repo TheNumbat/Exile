@@ -530,7 +530,7 @@ void mesh_2d_col::push_tri(v2 p1, v2 p2, v2 p3, color c) { PROF
 
 	DO(3) colors.push(c.to_f());
 
-	elements.push({idx, idx + 1, idx + 2});
+	elements.push(uv3(idx, idx + 1, idx + 2));
 
 	dirty = true;
 }
@@ -539,24 +539,24 @@ void mesh_2d_col::push_cutrect(r2 r, f32 round, color c) { PROF
 
 	u32 idx = vertices.size;
 
-	vertices.push({r.x, r.y + round});
-	vertices.push({r.x, r.y + r.h - round});
-	vertices.push({r.x + round, r.y + r.h});
-	vertices.push({r.x + r.w - round, r.y + r.h});
-	vertices.push({r.x + r.w, r.y + r.h - round});
-	vertices.push({r.x + r.w, r.y + round});
-	vertices.push({r.x + r.w - round, r.y});
-	vertices.push({r.x + round, r.y});
+	vertices.push(v2(r.x, r.y + round));
+	vertices.push(v2(r.x, r.y + r.h - round));
+	vertices.push(v2(r.x + round, r.y + r.h));
+	vertices.push(v2(r.x + r.w - round, r.y + r.h));
+	vertices.push(v2(r.x + r.w, r.y + r.h - round));
+	vertices.push(v2(r.x + r.w, r.y + round));
+	vertices.push(v2(r.x + r.w - round, r.y));
+	vertices.push(v2(r.x + round, r.y));
 
 	colorf cf = c.to_f();
 	DO(8) colors.push(cf);
 
-	elements.push({idx, idx + 1, idx + 2});
-	elements.push({idx, idx + 2, idx + 7});
-	elements.push({idx + 7, idx + 2, idx + 3});
-	elements.push({idx + 7, idx + 6, idx + 3});
-	elements.push({idx + 3, idx + 4, idx + 5});
-	elements.push({idx + 3, idx + 5, idx + 6});
+	elements.push(uv3(idx, idx + 1, idx + 2));
+	elements.push(uv3(idx, idx + 2, idx + 7));
+	elements.push(uv3(idx + 7, idx + 2, idx + 3));
+	elements.push(uv3(idx + 7, idx + 6, idx + 3));
+	elements.push(uv3(idx + 3, idx + 4, idx + 5));
+	elements.push(uv3(idx + 3, idx + 5, idx + 6));
 
 	dirty = true;
 }
@@ -565,15 +565,15 @@ void mesh_2d_col::push_rect(r2 r, color c) { PROF
 
 	u32 idx = vertices.size;
 
-	vertices.push({r.x, r.y + r.h});	// BLC
+	vertices.push(v2(r.x, r.y + r.h));	// BLC
 	vertices.push(r.xy);				// TLC
 	vertices.push(r.xy + r.wh);		 	// BRC
-	vertices.push({r.x + r.w, r.y});	// TRC
+	vertices.push(v2(r.x + r.w, r.y));	// TRC
 
 	DO(4) colors.push(c.to_f());
 
-	elements.push({idx, idx + 1, idx + 2});
-	elements.push({idx + 1, idx + 2, idx + 3});
+	elements.push(uv3(idx, idx + 1, idx + 2));
+	elements.push(uv3(idx + 1, idx + 2, idx + 3));
 
 	dirty = true;
 }
@@ -817,10 +817,10 @@ f32 mesh_2d_tex_col::push_text_line(asset* font, string text_utf8, v2 pos, f32 p
 		v2 trc (glyph.x2/w, 1.0f - glyph.y1/h);
 		v2 blc (glyph.x1/w, 1.0f - glyph.y2/h);
 
-		vertices.push({x + scale*glyph.xoff1, y + scale*glyph.yoff2}); 	// BLC
- 		vertices.push({x + scale*glyph.xoff1, y + scale*glyph.yoff1});	// TLC
- 		vertices.push({x + scale*glyph.xoff2, y + scale*glyph.yoff2});	// BRC
- 		vertices.push({x + scale*glyph.xoff2, y + scale*glyph.yoff1});	// TRC
+		vertices.push(v2(x + scale*glyph.xoff1, y + scale*glyph.yoff2)); 	// BLC
+ 		vertices.push(v2(x + scale*glyph.xoff1, y + scale*glyph.yoff1));	// TLC
+ 		vertices.push(v2(x + scale*glyph.xoff2, y + scale*glyph.yoff2));	// BRC
+ 		vertices.push(v2(x + scale*glyph.xoff2, y + scale*glyph.yoff1));	// TRC
 
 		texCoords.push(blc);
 		texCoords.push(tlc);
@@ -829,8 +829,8 @@ f32 mesh_2d_tex_col::push_text_line(asset* font, string text_utf8, v2 pos, f32 p
 
 		DO(4) colors.push(cf);
 
-		elements.push({idx, idx + 1, idx + 2});
-		elements.push({idx + 1, idx + 2, idx + 3});
+		elements.push(uv3(idx, idx + 1, idx + 2));
+		elements.push(uv3(idx + 1, idx + 2, idx + 3));
 
 		x += scale * glyph.advance;
 	}
@@ -843,13 +843,13 @@ void mesh_chunk::quad(v3 p1, v3 p2, v3 p3, v3 p4, v3 uv_ext, bv4 ao) { PROF
 
 	u32 idx = vertices.size;
 
-	vertices.push(chunk_vertex::from_vec(p1, {0.0f, 0.0f, uv_ext.z}, ao.x));
-	vertices.push(chunk_vertex::from_vec(p2, {uv_ext.x, 0.0f, uv_ext.z}, ao.y));
-	vertices.push(chunk_vertex::from_vec(p3, {0.0f, uv_ext.y, uv_ext.z}, ao.z));
-	vertices.push(chunk_vertex::from_vec(p4, {uv_ext.x, uv_ext.y, uv_ext.z}, ao.w));
+	vertices.push(chunk_vertex::from_vec(p1, v3(0.0f, 0.0f, uv_ext.z), ao.x));
+	vertices.push(chunk_vertex::from_vec(p2, v3(uv_ext.x, 0.0f, uv_ext.z), ao.y));
+	vertices.push(chunk_vertex::from_vec(p3, v3(0.0f, uv_ext.y, uv_ext.z), ao.z));
+	vertices.push(chunk_vertex::from_vec(p4, v3(uv_ext.x, uv_ext.y, uv_ext.z), ao.w));
 
-	elements.push({idx, idx + 1, idx + 2});
-	elements.push({idx + 3, idx + 2, idx + 1});
+	elements.push(uv3(idx, idx + 1, idx + 2));
+	elements.push(uv3(idx + 3, idx + 2, idx + 1));
 
 	dirty = true;
 }
@@ -858,13 +858,13 @@ void mesh_chunk::quad16(v3 p1, v3 p2, v3 p3, v3 p4, v3 uv_ext, bv4 ao) { PROF
 
 	u32 idx = vertices.size;
 
-	vertices.push(chunk_vertex::from_vec(p1 * 16.0f, {0.0f, 0.0f, uv_ext.z}, ao.x));
-	vertices.push(chunk_vertex::from_vec(p2 * 16.0f, {uv_ext.x, 0.0f, uv_ext.z}, ao.y));
-	vertices.push(chunk_vertex::from_vec(p3 * 16.0f, {0.0f, uv_ext.y, uv_ext.z}, ao.z));
-	vertices.push(chunk_vertex::from_vec(p4 * 16.0f, {uv_ext.x, uv_ext.y, uv_ext.z}, ao.w));
+	vertices.push(chunk_vertex::from_vec(p1 * 16.0f, v3(0.0f, 0.0f, uv_ext.z), ao.x));
+	vertices.push(chunk_vertex::from_vec(p2 * 16.0f, v3(uv_ext.x, 0.0f, uv_ext.z), ao.y));
+	vertices.push(chunk_vertex::from_vec(p3 * 16.0f, v3(0.0f, uv_ext.y, uv_ext.z), ao.z));
+	vertices.push(chunk_vertex::from_vec(p4 * 16.0f, v3(uv_ext.x, uv_ext.y, uv_ext.z), ao.w));
 
-	elements.push({idx, idx + 1, idx + 2});
-	elements.push({idx + 3, idx + 2, idx + 1});
+	elements.push(uv3(idx, idx + 1, idx + 2));
+	elements.push(uv3(idx + 3, idx + 2, idx + 1));
 
 	dirty = true;
 }
@@ -876,26 +876,26 @@ void mesh_chunk::cube(v3 pos, f32 len) { PROF
 	f32 len2 = len / 2.0f;
 	pos += {len2, len2, len2};
 
-	vertices.push(chunk_vertex::from_vec(pos + v3{ len2,  len2,  len2}, {0,0,0}, 0));
-	vertices.push(chunk_vertex::from_vec(pos + v3{-len2,  len2,  len2}, {1,0,0}, 0));
-	vertices.push(chunk_vertex::from_vec(pos + v3{ len2, -len2,  len2}, {0,1,0}, 0));
-	vertices.push(chunk_vertex::from_vec(pos + v3{ len2,  len2, -len2}, {0,0,0}, 0));
-	vertices.push(chunk_vertex::from_vec(pos + v3{-len2, -len2,  len2}, {1,0,0}, 0));
-	vertices.push(chunk_vertex::from_vec(pos + v3{ len2, -len2, -len2}, {0,1,0}, 0));
-	vertices.push(chunk_vertex::from_vec(pos + v3{-len2,  len2, -len2}, {1,0,0}, 0));
-	vertices.push(chunk_vertex::from_vec(pos + v3{-len2, -len2, -len2}, {1,1,0}, 0));
+	vertices.push(chunk_vertex::from_vec(pos + v3( len2,  len2,  len2), v3(0,0,0), 0));
+	vertices.push(chunk_vertex::from_vec(pos + v3(-len2,  len2,  len2), v3(1,0,0), 0));
+	vertices.push(chunk_vertex::from_vec(pos + v3( len2, -len2,  len2), v3(0,1,0), 0));
+	vertices.push(chunk_vertex::from_vec(pos + v3( len2,  len2, -len2), v3(0,0,0), 0));
+	vertices.push(chunk_vertex::from_vec(pos + v3(-len2, -len2,  len2), v3(1,0,0), 0));
+	vertices.push(chunk_vertex::from_vec(pos + v3( len2, -len2, -len2), v3(0,1,0), 0));
+	vertices.push(chunk_vertex::from_vec(pos + v3(-len2,  len2, -len2), v3(1,0,0), 0));
+	vertices.push(chunk_vertex::from_vec(pos + v3(-len2, -len2, -len2), v3(1,1,0), 0));
 
-	elements.push({idx + 0, idx + 3, idx + 5});
-	elements.push({idx + 0, idx + 3, idx + 6});
-	elements.push({idx + 0, idx + 1, idx + 6});
-	elements.push({idx + 1, idx + 4, idx + 7});
-	elements.push({idx + 1, idx + 6, idx + 7});
-	elements.push({idx + 4, idx + 2, idx + 5});
-	elements.push({idx + 4, idx + 7, idx + 5});
-	elements.push({idx + 7, idx + 5, idx + 3});
-	elements.push({idx + 7, idx + 6, idx + 3});
-	elements.push({idx + 0, idx + 2, idx + 4});
-	elements.push({idx + 0, idx + 1, idx + 4});
+	elements.push(uv3(idx + 0, idx + 3, idx + 5));
+	elements.push(uv3(idx + 0, idx + 3, idx + 6));
+	elements.push(uv3(idx + 0, idx + 1, idx + 6));
+	elements.push(uv3(idx + 1, idx + 4, idx + 7));
+	elements.push(uv3(idx + 1, idx + 6, idx + 7));
+	elements.push(uv3(idx + 4, idx + 2, idx + 5));
+	elements.push(uv3(idx + 4, idx + 7, idx + 5));
+	elements.push(uv3(idx + 7, idx + 5, idx + 3));
+	elements.push(uv3(idx + 7, idx + 6, idx + 3));
+	elements.push(uv3(idx + 0, idx + 2, idx + 4));
+	elements.push(uv3(idx + 0, idx + 1, idx + 4));
 
 	dirty = true;
 }
@@ -905,35 +905,35 @@ void mesh_3d_tex::push_cube(v3 pos, f32 len) {
 	u32 idx = vertices.size;
 
 	f32 len2 = len / 2.0f;
-	vertices.push(pos + v3{ len2,  len2,  len2});
-	vertices.push(pos + v3{-len2,  len2,  len2});
-	vertices.push(pos + v3{ len2, -len2,  len2});
-	vertices.push(pos + v3{ len2,  len2, -len2});
-	vertices.push(pos + v3{-len2, -len2,  len2});
-	vertices.push(pos + v3{ len2, -len2, -len2});
-	vertices.push(pos + v3{-len2,  len2, -len2});
-	vertices.push(pos + v3{-len2, -len2, -len2});
+	vertices.push(pos + v3( len2,  len2,  len2));
+	vertices.push(pos + v3(-len2,  len2,  len2));
+	vertices.push(pos + v3( len2, -len2,  len2));
+	vertices.push(pos + v3( len2,  len2, -len2));
+	vertices.push(pos + v3(-len2, -len2,  len2));
+	vertices.push(pos + v3( len2, -len2, -len2));
+	vertices.push(pos + v3(-len2,  len2, -len2));
+	vertices.push(pos + v3(-len2, -len2, -len2));
 
-	texCoords.push({0.0f, 0.0f});
-	texCoords.push({1.0f, 0.0f});
-	texCoords.push({0.0f, 1.0f});
-	texCoords.push({0.0f, 0.0f});
-	texCoords.push({1.0f, 0.0f});
-	texCoords.push({0.0f, 1.0f});
-	texCoords.push({1.0f, 0.0f});
-	texCoords.push({1.0f, 1.0f});	
+	texCoords.push(v2(0.0f, 0.0f));
+	texCoords.push(v2(1.0f, 0.0f));
+	texCoords.push(v2(0.0f, 1.0f));
+	texCoords.push(v2(0.0f, 0.0f));
+	texCoords.push(v2(1.0f, 0.0f));
+	texCoords.push(v2(0.0f, 1.0f));
+	texCoords.push(v2(1.0f, 0.0f));
+	texCoords.push(v2(1.0f, 1.0f));	
 
-	elements.push({idx + 0, idx + 3, idx + 6});
-	elements.push({idx + 0, idx + 3, idx + 5});
-	elements.push({idx + 0, idx + 1, idx + 6});
-	elements.push({idx + 1, idx + 4, idx + 7});
-	elements.push({idx + 1, idx + 6, idx + 7});
-	elements.push({idx + 4, idx + 2, idx + 5});
-	elements.push({idx + 4, idx + 7, idx + 5});
-	elements.push({idx + 7, idx + 5, idx + 3});
-	elements.push({idx + 7, idx + 6, idx + 3});
-	elements.push({idx + 0, idx + 2, idx + 4});
-	elements.push({idx + 0, idx + 1, idx + 4});
+	elements.push(uv3(idx + 0, idx + 3, idx + 6));
+	elements.push(uv3(idx + 0, idx + 3, idx + 5));
+	elements.push(uv3(idx + 0, idx + 1, idx + 6));
+	elements.push(uv3(idx + 1, idx + 4, idx + 7));
+	elements.push(uv3(idx + 1, idx + 6, idx + 7));
+	elements.push(uv3(idx + 4, idx + 2, idx + 5));
+	elements.push(uv3(idx + 4, idx + 7, idx + 5));
+	elements.push(uv3(idx + 7, idx + 5, idx + 3));
+	elements.push(uv3(idx + 7, idx + 6, idx + 3));
+	elements.push(uv3(idx + 0, idx + 2, idx + 4));
+	elements.push(uv3(idx + 0, idx + 1, idx + 4));
 
 	dirty = true;
 }
@@ -942,9 +942,9 @@ void render_camera::update() {
 	front.x = cosf(RADIANS(pitch)) * cosf(RADIANS(yaw));
 	front.y = sinf(RADIANS(pitch));
 	front.z = sinf(RADIANS(yaw)) * cosf(RADIANS(pitch));
-	front = normalize(front);
-	right = normalize(cross(front, V3f(0, 1, 0)));
-	up = normalize(cross(right, front));
+	front = norm(front);
+	right = norm(cross(front, {0, 1, 0}));
+	up = norm(cross(right, front));
 }
 
 void render_camera::move(i32 dx, i32 dy, f32 sens) {
@@ -968,12 +968,12 @@ m4 render_camera::view() {
 
 m4 render_camera::view_no_translate() {
 
-	return lookAt({0.0f, 0.0f, 0.0f}, front, up);
+	return lookAt(v3(0.0f, 0.0f, 0.0f), front, up);
 }
 
 void render_camera::reset() {
 
-	pos = {-5.0f, 128.0f, -5.0f};
+	pos = v3(-5.0f, 128.0f, -5.0f);
 
 	pitch = 00.0f; yaw = -45.0f; fov = 60.0f;
 	update();
