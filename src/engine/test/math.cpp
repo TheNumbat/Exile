@@ -5,7 +5,6 @@
 
 #include "..\util\basic_types.h"
 #include "..\math.h"
-#include "..\math.cpp"
 
 i32 main() {
 

@@ -135,30 +135,30 @@ struct _gui_style {
 	f32 title_padding 	= 3.0f;
 	f32 line_padding 	= 3.0f;
 	u32 log_win_lines 	= 15;
-	v2 resize_tab		= {20.0f, 20.0f};
-	v4 win_margin 		= {5.0f, 0.0f, 5.0f, 10.0f}; // l t r b
-	v2 carrot_padding	= {3.0f, 5.0f};
-	v2 box_sel_padding	= {6.0f, 6.0f};
+	v2 resize_tab		= v2(20.0f, 20.0f);
+	v4 win_margin 		= v4(5.0f, 0.0f, 5.0f, 10.0f); // l t r b
+	v2 carrot_padding	= v2(3.0f, 5.0f);
+	v2 box_sel_padding	= v2(6.0f, 6.0f);
 
 	f32 default_win_a 	= 0.75f;
-	v2 default_win_size = {250, 400};
-	v2 min_win_size		= {75, 50};
+	v2 default_win_size = v2(250, 400);
+	v2 min_win_size		= v2(75, 50);
 
-	v2 carrot_size 	 	= {10, 10};
+	v2 carrot_size 	 	= v2(10, 10);
 	f32 slider_w 		= 150.0f;
 	f32 min_slider_w	= 5.0f;
 
-	color3 win_back		= {34, 43, 47};
-	color3 win_top		= {74, 79, 137};
-	color3 wid_back		= {102, 105, 185};
-	color3 tab_color	= {100, 106, 109};
+	color3 win_back		= color3(34, 43, 47);
+	color3 win_top		= color3(74, 79, 137);
+	color3 wid_back		= color3(102, 105, 185);
+	color3 tab_color	= color3(100, 106, 109);
 
 	f32 indent_size 		= 10.0f;
 	f32 win_scroll_w 		= 10.0f;
 	f32 win_scroll_speed	= 15.0f;
 	f32 scroll_slop			= 3.0f;
-	color3 win_scroll_back 	= {102, 105, 185};
-	color3 win_scroll_bar 	= {132, 135, 215};
+	color3 win_scroll_back 	= color3(102, 105, 185);
+	color3 win_scroll_bar 	= color3(132, 135, 215);
 };
 
 enum class gui_active_state : u8 {
@@ -231,7 +231,7 @@ void gui_push_id(u32 id);
 void gui_push_id(string id);
 void gui_pop_id();
 
-bool gui_begin(string name, r2 first = {40,40,0,0}, gui_window_flags flags = 0, f32 first_alpha = 0);
+bool gui_begin(string name, r2 first = r2(40,40,0,0), gui_window_flags flags = 0, f32 first_alpha = 0);
 void gui_end();
 
 void gui_text(string text);

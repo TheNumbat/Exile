@@ -49,11 +49,8 @@ struct texture {
 	texture_wrap wrap 	= texture_wrap::repeat;
 	bool pixelated 		= false;
 	
-	union {
-		texture_array_info array_info;
-	};
+	texture_array_info array_info;
 
-	texture() : array_info() {};
 	static texture make(texture_wrap wrap, bool pixelated);
 	static texture make_array(iv3 dim, texture_wrap wrap, bool pixelated);
 	void destroy();
