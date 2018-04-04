@@ -46,7 +46,7 @@ echo.
 			cl %Test_CompilerFlags% -Fe%%~nf.exe %%f /link %Test_LinkerFlags%
 		)
 
-		%%~nf.exe > %%~nf_test.txt
+		%%~nf.exe 
 
 		if %errorlevel% neq 0 (
 			echo %%~nf FAILED 

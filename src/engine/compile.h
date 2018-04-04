@@ -42,6 +42,7 @@
 #include <new>
 
 #include "util/basic_types.h"
+#include "math.h"
 
 #include "ds/string.h"
 #include "util/context.h"
@@ -58,7 +59,6 @@
 #include "ds/buffer.h"
 #include "ds/heap.h"
 
-#include "math.h"
 #include "log_html.h"
 #include "log.h"
 #include "dbg.h"

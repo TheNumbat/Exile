@@ -1,7 +1,11 @@
 
 #pragma once
 
+#include <math.h>
 #include <xmmintrin.h>
+#ifdef _MSC_VER
+#include <intrin.h>
+#endif
 
 #define PI32 3.14159265359f 
 #define PI64 3.14159265358979323846 
@@ -17,44 +21,36 @@
 union v2; union uv2; union v3; union iv3; union uv3; union v4; union bv4; union m4; union r2; union ur2;
 
 u32 mod(u32 l, u32 r);
-f32 sqrtf(f32 v);
-f32 tanf(f32 v);
-i32 abs(i32 v);
-f32 absf(f32 v);
-f64 absf(f64 v);
-f32 roundf(f32 v);
-f32 ceilf(f32 v);
-f32 floorf(f32 v);
-f32 sinf(f32 v);
-f32 cosf(f32 v);
-f32 tanf(f32 v);
-f32 asinf(f32 v);
-f32 acosf(f32 v);
-f32 atanf(f32 v);
-f32 lerpf(f32 min, f32 max, f32 dist);
-f32 clampf(f32 val, f32 min, f32 max);
+f32 _sqrt(f32 v);
+f32 _abs(f32 v);
+f64 _abs(f64 v);
+f32 _round(f32 v);
+f32 _ceil(f32 v);
+f32 _floor(f32 v);
+f32 _sin(f32 v);
+f32 _cos(f32 v);
+f32 _tan(f32 v);
+f32 _asin(f32 v);
+f32 _acos(f32 v);
+f32 _atan(f32 v);
+f32 lerp(f32 min, f32 max, f32 dist);
+f32 clamp(f32 val, f32 min, f32 max);
 u32 last_pow_two(u32 val);
 u32 next_pow_two(u32 val);
 
 f32 perlin(f32 x, f32 y, f32 z, i32 x_wrap, i32 y_wrap, i32 z_wrap);
 f32 perlin_grad(i32 hash, f32 x, f32 y, f32 z);
 
-v4 sqrtf(v4 v);
-v4 tanf(v4 v);
-v4 absf(v4 v);
-v4 roundf(v4 v);
-v4 ceilf(v4 v);
-v4 floorf(v4 v);
-v4 floorf(v4 v);
-v4 floorf(v4 v);
-v4 sinf(v4 v);
-v4 cosf(v4 v);
-v4 tanf(v4 v);
-v4 asinf(v4 v);
-v4 acosf(v4 v);
-v4 atanf(v4 v);
-v4 lerpf(v4 min, v4 max, v4 dist);
-v4 clampf(v4 val, v4 min, v4 max);
+v4 sqrt(v4 v);
+v4 tan(v4 v);
+v4 abs(v4 v);
+v4 round(v4 v);
+v4 ceil(v4 v);
+v4 floor(v4 v);
+v4 sin(v4 v);
+v4 cos(v4 v);
+v4 lerp(v4 min, v4 max, v4 dist);
+v4 clamp(v4 val, v4 min, v4 max);
 
 f32 lensq(v2 v);
 f32 lensq(v3 v);
@@ -73,8 +69,8 @@ f32 dot(v4 l, v4 r);
 v3 cross(v3 l, v3 r);
 
 v2 operator+(v2 l, v2 r);
-v4 operator+(v4 l, v4 r);
 v3 operator+(v3 l, v3 r);
+v4 operator+(v4 l, v4 r);
 uv2 operator+(uv2 l, uv2 r);
 uv3 operator+(uv3 l, uv3 r);
 iv3 operator+(iv3 l, iv3 r);
@@ -124,7 +120,7 @@ ur2 operator+(ur2 l, ur2 r);
 ur2 operator+(ur2 l, uv2 r);
 ur2 operator-(ur2 l, ur2 r);
 ur2 operator-(ur2 l, uv2 r);
-ur2 operator*(ur2 l, f32 r);
+ur2 operator*(ur2 l, u32 r);
 
 bool inside(r2 l, v2 r);
 bool intersect(r2 l, r2 r);
@@ -132,7 +128,7 @@ bool intersect(r2 l, r2 r);
 m4 operator+(m4 l, m4 r);
 m4 operator-(m4 l, m4 r);
 m4 operator*(m4 l, m4 r);
-m4 operator*(m4 l, v4 r);
+v4 operator*(m4 l, v4 r);
 m4 operator*(m4 l, f32 r);
 m4 operator/(m4 l, f32 r);
 m4 transpose(m4 m);
@@ -160,7 +156,7 @@ union v2 {
 	void operator/=(v2 v) {x /= v.x; y /= v.y;}
 	void operator*=(f32 s) {x *= s; y *= s;}
 	void operator/=(f32 s) {x /= s; y /= s;}
-	f32 operator[](u8 idx) {return a[idx];}
+	f32& operator[](i32 idx) {return a[idx];}
 
 	v2() {}
 	v2(f32 _x, f32 _y) {x = _x; y = _y;}
@@ -183,7 +179,7 @@ union uv2 {
 	void operator/=(uv2 v) {x /= v.x; y /= v.y;}
 	void operator*=(u32 s) {x *= s; y *= s;}
 	void operator/=(u32 s) {x /= s; y /= s;}
-	u32 operator[](u8 idx) {return a[idx];}
+	u32& operator[](i32 idx) {return a[idx];}
 
 	uv2() {}
 	uv2(u32 _x, u32 _y) {x = _x; y = _y;}
@@ -206,7 +202,7 @@ union v3 {
 	void operator/=(v3 v) {x /= v.x; y /= v.y; z /= v.z;}
 	void operator*=(f32 s) {x *= s; y *= s; z *= s;}
 	void operator/=(f32 s) {x /= s; y /= s; z /= s;}
-	f32 operator[](u8 idx) {return a[idx];}
+	f32& operator[](i32 idx) {return a[idx];}
 
 	v3() {}
 	v3(f32 _x, f32 _y, f32 _z) {x = _x; y = _y; z = _z;}
@@ -225,7 +221,7 @@ union uv3 {
 
 	void operator+=(uv3 v) {x += v.x; y += v.y; z += v.z;}
 	void operator-=(uv3 v) {x -= v.x; y -= v.y; z -= v.z;}
-	u32 operator[](u8 idx) {return a[idx];}
+	u32& operator[](i32 idx) {return a[idx];}
 
 	uv3() {}
 	uv3(u32 _x, u32 _y, u32 _z) {x = _x; y = _y; z = _z;}
@@ -244,7 +240,7 @@ union iv3 {
 
 	void operator+=(iv3 v) {x += v.x; y += v.y; z += v.z;}
 	void operator-=(iv3 v) {x -= v.x; y -= v.y; z -= v.z;}
-	i32 operator[](u8 idx) {return a[idx];}
+	i32& operator[](i32 idx) {return a[idx];}
 
 	iv3() {}
 	iv3(i32 _x, i32 _y, i32 _z) {x = _x; y = _y; z = _z;}
@@ -262,6 +258,10 @@ union v4 {
 	struct {
 		v2 xy, zw;
 	};
+	struct {
+		v3 xyz;
+		f32 w;
+	};
 	f32 a[4] = {};
 	__m128 packed;
 
@@ -271,10 +271,11 @@ union v4 {
 	void operator/=(v4 v) {packed = _mm_div_ps(packed, v.packed);}
 	void operator*=(f32 s) {packed = _mm_mul_ps(packed, _mm_set1_ps(s));}
 	void operator/=(f32 s) {packed = _mm_div_ps(packed, _mm_set1_ps(s));}
-	f32 operator[](u8 idx) {return a[idx];}
+	f32& operator[](i32 idx) {return a[idx];}
 
 	v4() {}
 	v4(f32 _x, f32 _y, f32 _z, f32 _w) {packed = _mm_set_ps(_x, _y, _z, _w);}
+	v4(__m128 p) {packed = p;}
 	v4(v4& v) {*this = v;}
 	v4(v4&& v) {*this = v;}
 	v4& operator=(v4& v) {packed = v.packed; return *this;}
@@ -291,7 +292,7 @@ union bv4 {
 
 	void operator+=(bv4 v) {x += v.x; y += v.y; z += v.z; w += v.w;}
 	void operator-=(bv4 v) {x -= v.x; y -= v.y; z -= v.z; w -= v.w;}
-	u32 operator[](u8 idx) {return a[idx];}
+	u8& operator[](i32 idx) {return a[idx];}
 
 	bv4() {}
 	bv4(u8 _x, u8 _y, u8 _z, u8 _w) {x = _x; y = _y; z = _z; w = _w;}
@@ -314,6 +315,7 @@ union ur2 {
 
 	ur2() {}
 	ur2(u32 _x, u32 _y, u32 _w, u32 _h) {x = _x; y = _y; w = _w; h = _h;}
+	ur2(uv2 _xy, uv2 _wh) {xy = _xy; wh = _wh;}
 	ur2(v4 v) {x = (u32)v.x; y = (u32)v.y; w = (u32)v.z; h = (u32)v.w;}
 	ur2(ur2& r) {*this = r;}
 	ur2(ur2&& r) {*this = r;}
@@ -334,11 +336,12 @@ union r2 {
 	f32 a[4] = {};
 	__m128 packed;
 
-	ur2 to_u() {return ur2(roundf(vec));}
+	ur2 to_u() {return ur2(round(vec));}
 
 	r2() {}
 	r2(f32 _x, f32 _y, f32 _w, f32 _h) {packed = _mm_set_ps(_x, _y, _w, _h);}
 	r2(v2 _xy, v2 _wh) {xy = _xy; wh = _wh;}
+	r2(__m128 p) {packed = p;}
 	r2(r2& r) {*this = r;}
 	r2(r2&& r) {*this = r;}
 	r2& operator=(r2& r) {packed = r.packed; return *this;}
@@ -361,16 +364,20 @@ union m4 {
 	void operator*=(m4 v) {*this = *this * v;}
 	void operator*=(f32 s) {__m128 mul = _mm_set1_ps(s); for(u8 i = 0; i < 4; i++) packed[i] = _mm_mul_ps(packed[i], mul);}
 	void operator/=(f32 s) {__m128 div = _mm_set1_ps(s); for(u8 i = 0; i < 4; i++) packed[i] = _mm_div_ps(packed[i], div);}
-	v4 operator[](u8 idx) {return columns[idx];}
+	v4& operator[](i32 idx) {return columns[idx];}
 
 	m4() {}
+	m4(v4 c0, v4 c1, v4 c2, v4 c3) {columns[0] = c0; columns[1] = c1; columns[2] = c2; columns[3] = c3;}
 	m4(m4& m) {*this = m;}
 	m4(m4&& m) {*this = m;}
 	m4& operator=(m4& m) {for(u8 i = 0; i < 4; i++) packed[i] = m.packed[i]; return *this;}
 	m4& operator=(m4&& m) {for(u8 i = 0; i < 4; i++) packed[i] = m.packed[i]; return *this;}
+
+	static m4 zero;
 };
 static_assert(sizeof(m4) == 64, "sizeof(m4) != 64");
 static_assert(alignof(m4) == 16, "alignof(m4) != 16");
+m4 m4::zero = {{0,0,0,0},{0,0,0,0},{0,0,0,0},{0,0,0,0}};
 
 struct colorf {
 	f32 r = 0.0f, g = 0.0f, b = 0.0f, a = 0.0f;
@@ -404,3 +411,711 @@ const color BLACK = color(0, 0, 0, 255);
 const color RED   = color(255, 0, 0, 255);
 const color GREEN = color(0, 255, 0, 255);
 const color BLUE  = color(0, 0, 255, 255);
+
+// IMPL
+
+// yes most of these are useless... TODO(max): improve on math.h functions
+
+u32 mod(u32 l, u32 r) {
+	return l % r;
+}
+f32 _sqrt(f32 v) {
+	return sqrtf(v);
+}
+f32 _abs(f32 v) {
+	return v >= 0.0f ? v : -v;
+}
+f64 _abs(f64 v) {
+	return v >= 0.0f ? v : -v;
+}
+f32 _round(f32 v) {
+	return roundf(v);
+}
+f32 _ceil(f32 v) {
+	return ceilf(v);
+}
+f32 _floor(f32 v) {
+	return floorf(v);
+}
+f32 _sin(f32 v) {
+	return sinf(v);
+}
+f32 _cos(f32 v) {
+	return cosf(v);
+}
+f32 _tan(f32 v) {
+	return tanf(v);
+}
+f32 _asin(f32 v) {
+	return asinf(v);
+}
+f32 _acos(f32 v) {
+	return acosf(v);
+}
+f32 _atan(f32 v) {
+	return atanf(v);
+}
+f32 lerp(f32 min, f32 max, f32 dist) {
+	return (max - min) * dist + min;
+}
+f32 clamp(f32 val, f32 min, f32 max) {
+	if(val < min) return min;
+	if(val > max) return max;
+	return val;
+}
+u32 last_pow_two(u32 val) {
+
+	u32 pos = 0;
+#ifdef _MSC_VER
+	_BitScanReverse((unsigned long*)&pos, val);
+#else
+    for(u32 bit = 31; bit >= 0; bit--) {
+        if(val & (1 << bit)) {
+            pos = bit;
+            break;
+        }
+    }
+#endif
+	return 1 << pos;
+}
+u32 next_pow_two(u32 val) {
+
+	return last_pow_two(val) << 1;
+}
+
+f32 perlin(f32 x, f32 y, f32 z, i32 x_wrap, i32 y_wrap, i32 z_wrap) {
+	static u8 perlin_random[512] = {
+	   23, 125, 161, 52, 103, 117, 70, 37, 247, 101, 203, 169, 124, 126, 44, 123, 
+	   152, 238, 145, 45, 171, 114, 253, 10, 192, 136, 4, 157, 249, 30, 35, 72, 
+	   175, 63, 77, 90, 181, 16, 96, 111, 133, 104, 75, 162, 93, 56, 66, 240, 
+	   8, 50, 84, 229, 49, 210, 173, 239, 141, 1, 87, 18, 2, 198, 143, 57, 
+	   225, 160, 58, 217, 168, 206, 245, 204, 199, 6, 73, 60, 20, 230, 211, 233, 
+	   94, 200, 88, 9, 74, 155, 33, 15, 219, 130, 226, 202, 83, 236, 42, 172, 
+	   165, 218, 55, 222, 46, 107, 98, 154, 109, 67, 196, 178, 127, 158, 13, 243, 
+	   65, 79, 166, 248, 25, 224, 115, 80, 68, 51, 184, 128, 232, 208, 151, 122, 
+	   26, 212, 105, 43, 179, 213, 235, 148, 146, 89, 14, 195, 28, 78, 112, 76, 
+	   250, 47, 24, 251, 140, 108, 186, 190, 228, 170, 183, 139, 39, 188, 244, 246, 
+	   132, 48, 119, 144, 180, 138, 134, 193, 82, 182, 120, 121, 86, 220, 209, 3, 
+	   91, 241, 149, 85, 205, 150, 113, 216, 31, 100, 41, 164, 177, 214, 153, 231, 
+	   38, 71, 185, 174, 97, 201, 29, 95, 7, 92, 54, 254, 191, 118, 34, 221, 
+	   131, 11, 163, 99, 234, 81, 227, 147, 156, 176, 17, 142, 69, 12, 110, 62, 
+	   27, 255, 0, 194, 59, 116, 242, 252, 19, 21, 187, 53, 207, 129, 64, 135, 
+	   61, 40, 167, 237, 102, 223, 106, 159, 197, 189, 215, 137, 36, 32, 22, 5,  
+	   23, 125, 161, 52, 103, 117, 70, 37, 247, 101, 203, 169, 124, 126, 44, 123, 
+	   152, 238, 145, 45, 171, 114, 253, 10, 192, 136, 4, 157, 249, 30, 35, 72, 
+	   175, 63, 77, 90, 181, 16, 96, 111, 133, 104, 75, 162, 93, 56, 66, 240, 
+	   8, 50, 84, 229, 49, 210, 173, 239, 141, 1, 87, 18, 2, 198, 143, 57, 
+	   225, 160, 58, 217, 168, 206, 245, 204, 199, 6, 73, 60, 20, 230, 211, 233, 
+	   94, 200, 88, 9, 74, 155, 33, 15, 219, 130, 226, 202, 83, 236, 42, 172, 
+	   165, 218, 55, 222, 46, 107, 98, 154, 109, 67, 196, 178, 127, 158, 13, 243, 
+	   65, 79, 166, 248, 25, 224, 115, 80, 68, 51, 184, 128, 232, 208, 151, 122, 
+	   26, 212, 105, 43, 179, 213, 235, 148, 146, 89, 14, 195, 28, 78, 112, 76, 
+	   250, 47, 24, 251, 140, 108, 186, 190, 228, 170, 183, 139, 39, 188, 244, 246, 
+	   132, 48, 119, 144, 180, 138, 134, 193, 82, 182, 120, 121, 86, 220, 209, 3, 
+	   91, 241, 149, 85, 205, 150, 113, 216, 31, 100, 41, 164, 177, 214, 153, 231, 
+	   38, 71, 185, 174, 97, 201, 29, 95, 7, 92, 54, 254, 191, 118, 34, 221, 
+	   131, 11, 163, 99, 234, 81, 227, 147, 156, 176, 17, 142, 69, 12, 110, 62, 
+	   27, 255, 0, 194, 59, 116, 242, 252, 19, 21, 187, 53, 207, 129, 64, 135, 
+	   61, 40, 167, 237, 102, 223, 106, 159, 197, 189, 215, 137, 36, 32, 22, 5,  
+	};
+
+   f32 u,v,w;
+   f32 n000,n001,n010,n011,n100,n101,n110,n111;
+   f32 n00,n01,n10,n11;
+   f32 n0,n1;
+
+   u32 x_mask = (x_wrap-1) & 255;
+   u32 y_mask = (y_wrap-1) & 255;
+   u32 z_mask = (z_wrap-1) & 255;
+   i32 px = (i32)floor(x);
+   i32 py = (i32)floor(y);
+   i32 pz = (i32)floor(z);
+   i32 x0 = px & x_mask, x1 = (px+1) & x_mask;
+   i32 y0 = py & y_mask, y1 = (py+1) & y_mask;
+   i32 z0 = pz & z_mask, z1 = (pz+1) & z_mask;
+   i32 r0,r1,r00,r01,r10,r11;
+
+   #define ease(a) (((a*6-15)*a + 10) * a * a * a)
+
+   x -= px; u = ease(x);
+   y -= py; v = ease(y);
+   z -= pz; w = ease(z);
+
+   #undef ease
+
+   r0 = perlin_random[x0];
+   r1 = perlin_random[x1];
+
+   r00 = perlin_random[r0+y0];
+   r01 = perlin_random[r0+y1];
+   r10 = perlin_random[r1+y0];
+   r11 = perlin_random[r1+y1];
+
+   n000 = perlin_grad(perlin_random[r00+z0], x  , y  , z   );
+   n001 = perlin_grad(perlin_random[r00+z1], x  , y  , z-1 );
+   n010 = perlin_grad(perlin_random[r01+z0], x  , y-1, z   );
+   n011 = perlin_grad(perlin_random[r01+z1], x  , y-1, z-1 );
+   n100 = perlin_grad(perlin_random[r10+z0], x-1, y  , z   );
+   n101 = perlin_grad(perlin_random[r10+z1], x-1, y  , z-1 );
+   n110 = perlin_grad(perlin_random[r11+z0], x-1, y-1, z   );
+   n111 = perlin_grad(perlin_random[r11+z1], x-1, y-1, z-1 );
+
+   n00 = lerp(n000,n001,w);
+   n01 = lerp(n010,n011,w);
+   n10 = lerp(n100,n101,w);
+   n11 = lerp(n110,n111,w);
+
+   n0 = lerp(n00,n01,v);
+   n1 = lerp(n10,n11,v);
+
+   return lerp(n0,n1,u);
+}
+f32 perlin_grad(i32 hash, f32 x, f32 y, f32 z) {
+   static f32 basis[12][3] = {
+      { 1, 1, 0},
+      {-1, 1, 0},
+      { 1,-1, 0},
+      {-1,-1, 0},
+      { 1, 0, 1},
+      {-1, 0, 1},
+      { 1, 0,-1},
+      {-1, 0,-1},
+      { 0, 1, 1},
+      { 0,-1, 1},
+      { 0, 1,-1},
+      { 0,-1,-1},
+   };
+   static u8 indices[64] = {
+      0,1,2,3,4,5,6,7,8,9,10,11,
+      0,9,1,11,
+      0,1,2,3,4,5,6,7,8,9,10,11,
+      0,1,2,3,4,5,6,7,8,9,10,11,
+      0,1,2,3,4,5,6,7,8,9,10,11,
+      0,1,2,3,4,5,6,7,8,9,10,11,
+   };
+
+   f32 *grad = basis[indices[hash & 63]];
+   return grad[0]*x + grad[1]*y + grad[2]*z;
+}
+
+// NOTE(max): SSE sin/cos from see_mathfun
+
+#define _PS_CONST_TYPE(Name, Type, Val) static const __declspec(align(16)) Type _ps_##Name[4] = { Val, Val, Val, Val }
+#define _PS_CONST(Name, Val) static const __declspec(align(16)) f32 _ps_##Name[4] = { Val, Val, Val, Val }
+#define _PI32_CONST(Name, Val) static const __declspec(align(16)) int _pi32_##Name[4] = { Val, Val, Val, Val }
+_PS_CONST_TYPE(sign_mask, int, (int)0x80000000);
+_PS_CONST_TYPE(inv_sign_mask, int, ~0x80000000);
+_PI32_CONST(1, 1);
+_PI32_CONST(inv1, ~1);
+_PI32_CONST(2, 2);
+_PI32_CONST(4, 4);
+_PI32_CONST(0x7f, 0x7f);
+_PS_CONST(0p5, 0.5f);
+_PS_CONST(1  , 1.0f);
+_PS_CONST(cephes_FOPI, 1.27323954473516f);
+_PS_CONST(minus_cephes_DP1, -0.78515625f);
+_PS_CONST(minus_cephes_DP2, -2.4187564849853515625e-4f);
+_PS_CONST(minus_cephes_DP3, -3.77489497744594108e-8f);
+_PS_CONST(coscof_p0,  2.443315711809948E-005f);
+_PS_CONST(coscof_p1, -1.388731625493765E-003f);
+_PS_CONST(coscof_p2,  4.166664568298827E-002f);
+_PS_CONST(sincof_p0, -1.9515295891E-4f);
+_PS_CONST(sincof_p1,  8.3321608736E-3f);
+_PS_CONST(sincof_p2, -1.6666654611E-1f);
+
+v4 sqrt(v4 v) {
+	return {_mm_sqrt_ps(v.packed)};
+}
+v4 abs(v4 v) {
+	// for some reason there is no _mm_abs_ps()
+	return {_abs(v.x),_abs(v.y),_abs(v.z),_abs(v.w)};
+}
+v4 round(v4 v) {
+	return {_mm_round_ps(v.packed, _MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC)};
+}
+v4 ceil(v4 v) {
+	return {_mm_round_ps(v.packed, _MM_FROUND_TO_POS_INF | _MM_FROUND_NO_EXC)};
+}
+v4 floor(v4 v) {
+	return {_mm_round_ps(v.packed, _MM_FROUND_TO_NEG_INF | _MM_FROUND_NO_EXC)};
+}
+v4 sin(v4 v) {
+	__m128 xmm1, xmm2 = _mm_setzero_ps(), xmm3, sign_bit, y;
+
+	__m128i emm0, emm2;
+	sign_bit = v.packed;
+	v.packed = _mm_and_ps(v.packed, *(__m128*)_ps_inv_sign_mask);
+	sign_bit = _mm_and_ps(sign_bit, *(__m128*)_ps_sign_mask);
+
+	y = _mm_mul_ps(v.packed, *(__m128*)_ps_cephes_FOPI);
+
+	emm2 = _mm_cvttps_epi32(y);
+	emm2 = _mm_add_epi32(emm2, *(__m128i*)_pi32_1);
+	emm2 = _mm_and_si128(emm2, *(__m128i*)_pi32_inv1);
+	y = _mm_cvtepi32_ps(emm2);
+
+	emm0 = _mm_and_si128(emm2, *(__m128i*)_pi32_4);
+	emm0 = _mm_slli_epi32(emm0, 29);
+	emm2 = _mm_and_si128(emm2, *(__m128i*)_pi32_2);
+	emm2 = _mm_cmpeq_epi32(emm2, _mm_setzero_si128());
+
+	__m128 swap_sign_bit = _mm_castsi128_ps(emm0);
+	__m128 poly_mask = _mm_castsi128_ps(emm2);
+	sign_bit = _mm_xor_ps(sign_bit, swap_sign_bit);
+
+	xmm1 = *(__m128*)_ps_minus_cephes_DP1;
+	xmm2 = *(__m128*)_ps_minus_cephes_DP2;
+	xmm3 = *(__m128*)_ps_minus_cephes_DP3;
+	xmm1 = _mm_mul_ps(y, xmm1);
+	xmm2 = _mm_mul_ps(y, xmm2);
+	xmm3 = _mm_mul_ps(y, xmm3);
+	v.packed = _mm_add_ps(v.packed, xmm1);
+	v.packed = _mm_add_ps(v.packed, xmm2);
+	v.packed = _mm_add_ps(v.packed, xmm3);
+
+	y = *(__m128*)_ps_coscof_p0;
+	__m128 z = _mm_mul_ps(v.packed,v.packed);
+
+	y = _mm_mul_ps(y, z);
+	y = _mm_add_ps(y, *(__m128*)_ps_coscof_p1);
+	y = _mm_mul_ps(y, z);
+	y = _mm_add_ps(y, *(__m128*)_ps_coscof_p2);
+	y = _mm_mul_ps(y, z);
+	y = _mm_mul_ps(y, z);
+	__m128 tmp = _mm_mul_ps(z, *(__m128*)_ps_0p5);
+	y = _mm_sub_ps(y, tmp);
+	y = _mm_add_ps(y, *(__m128*)_ps_1);
+
+	__m128 y2 = *(__m128*)_ps_sincof_p0;
+	y2 = _mm_mul_ps(y2, z);
+	y2 = _mm_add_ps(y2, *(__m128*)_ps_sincof_p1);
+	y2 = _mm_mul_ps(y2, z);
+	y2 = _mm_add_ps(y2, *(__m128*)_ps_sincof_p2);
+	y2 = _mm_mul_ps(y2, z);
+	y2 = _mm_mul_ps(y2, v.packed);
+	y2 = _mm_add_ps(y2, v.packed);
+
+	xmm3 = poly_mask;
+	y2 = _mm_and_ps(xmm3, y2);
+	y = _mm_andnot_ps(xmm3, y);
+	y = _mm_add_ps(y,y2);
+	y = _mm_xor_ps(y, sign_bit);
+	return y;
+}
+v4 cos(v4 v) {
+	__m128 xmm1, xmm2 = _mm_setzero_ps(), xmm3, y;
+	__m128i emm0, emm2;
+	v.packed = _mm_and_ps(v.packed, *(__m128*)_ps_inv_sign_mask);
+	y = _mm_mul_ps(v.packed, *(__m128*)_ps_cephes_FOPI);
+
+	emm2 = _mm_cvttps_epi32(y);
+	emm2 = _mm_add_epi32(emm2, *(__m128i*)_pi32_1);
+	emm2 = _mm_and_si128(emm2, *(__m128i*)_pi32_inv1);
+	y = _mm_cvtepi32_ps(emm2);
+
+	emm2 = _mm_sub_epi32(emm2, *(__m128i*)_pi32_2);
+
+	emm0 = _mm_andnot_si128(emm2, *(__m128i*)_pi32_4);
+	emm0 = _mm_slli_epi32(emm0, 29);
+	emm2 = _mm_and_si128(emm2, *(__m128i*)_pi32_2);
+	emm2 = _mm_cmpeq_epi32(emm2, _mm_setzero_si128());
+
+	__m128 sign_bit = _mm_castsi128_ps(emm0);
+	__m128 poly_mask = _mm_castsi128_ps(emm2);
+
+	xmm1 = *(__m128*)_ps_minus_cephes_DP1;
+	xmm2 = *(__m128*)_ps_minus_cephes_DP2;
+	xmm3 = *(__m128*)_ps_minus_cephes_DP3;
+	xmm1 = _mm_mul_ps(y, xmm1);
+	xmm2 = _mm_mul_ps(y, xmm2);
+	xmm3 = _mm_mul_ps(y, xmm3);
+	v.packed = _mm_add_ps(v.packed, xmm1);
+	v.packed = _mm_add_ps(v.packed, xmm2);
+	v.packed = _mm_add_ps(v.packed, xmm3);
+
+	y = *(__m128*)_ps_coscof_p0;
+	__m128 z = _mm_mul_ps(v.packed,v.packed);
+
+	y = _mm_mul_ps(y, z);
+	y = _mm_add_ps(y, *(__m128*)_ps_coscof_p1);
+	y = _mm_mul_ps(y, z);
+	y = _mm_add_ps(y, *(__m128*)_ps_coscof_p2);
+	y = _mm_mul_ps(y, z);
+	y = _mm_mul_ps(y, z);
+	__m128 tmp = _mm_mul_ps(z, *(__m128*)_ps_0p5);
+	y = _mm_sub_ps(y, tmp);
+	y = _mm_add_ps(y, *(__m128*)_ps_1);
+
+	__m128 y2 = *(__m128*)_ps_sincof_p0;
+	y2 = _mm_mul_ps(y2, z);
+	y2 = _mm_add_ps(y2, *(__m128*)_ps_sincof_p1);
+	y2 = _mm_mul_ps(y2, z);
+	y2 = _mm_add_ps(y2, *(__m128*)_ps_sincof_p2);
+	y2 = _mm_mul_ps(y2, z);
+	y2 = _mm_mul_ps(y2, v.packed);
+	y2 = _mm_add_ps(y2, v.packed);
+
+	xmm3 = poly_mask;
+	y2 = _mm_and_ps(xmm3, y2);
+	y = _mm_andnot_ps(xmm3, y);
+	y = _mm_add_ps(y,y2);
+	y = _mm_xor_ps(y, sign_bit);
+
+	return y;
+}
+v4 lerp(v4 min, v4 max, v4 dist) {
+	return {_mm_add_ps(_mm_mul_ps(_mm_sub_ps(max.packed, min.packed), dist.packed), min.packed)};
+}
+v4 clamp(v4 val, v4 min, v4 max) {
+	__m128 _max = _mm_max_ps(val.packed, max.packed);
+	return {_mm_min_ps(_max, min.packed)};
+}
+
+f32 lensq(v2 v) {
+	return dot(v, v);
+}
+f32 lensq(v3 v) {
+	return dot(v, v);
+}
+f32 lensq(v4 v) {
+	return dot(v, v);
+}
+f32 len(v2 v) {
+	return _sqrt(lensq(v));
+}
+f32 len(v3 v) {
+	return _sqrt(lensq(v));
+}
+f32 len(v4 v) {
+	return _sqrt(lensq(v));
+}
+
+v2 norm(v2 v) {
+	return v / len(v);
+}
+v3 norm(v3 v) {
+	return v / len(v);
+}
+v4 norm(v4 v) {
+	return v / len(v);
+}
+
+f32 dot(v2 l, v2 r) {
+	return l.x * r.x + l.y * r.y;
+}
+f32 dot(v3 l, v3 r) {
+	return l.x * r.x + l.y * r.y + l.z * r.z;
+}
+f32 dot(v4 l, v4 r) {
+	v4 v{_mm_dp_ps(l.packed, r.packed, 0b1111001)};
+	return v.x;
+}
+v3 cross(v3 l, v3 r) {
+	return {l.y * r.z - l.z * r.y, l.z * r.x - l.x * r.z, l.x * r.y - l.y * r.x};
+}
+v2 operator+(v2 l, v2 r) {
+	return {l.x + r.x, l.y + r.y};
+}
+v3 operator+(v3 l, v3 r) {
+	return {l.x + r.x, l.y + r.y, l.z + r.z};	
+}
+v4 operator+(v4 l, v4 r) {
+	return {_mm_add_ps(l.packed, r.packed)};
+}
+uv2 operator+(uv2 l, uv2 r) {
+	return {l.x + r.x, l.y + r.y};
+}
+uv3 operator+(uv3 l, uv3 r) {
+	return {l.x + r.x, l.y + r.y, l.z + r.z};
+}
+iv3 operator+(iv3 l, iv3 r) {
+	return {l.x + r.x, l.y + r.y, l.z + r.z};
+}
+bv4 operator+(bv4 l, bv4 r) {
+	return {(u8)(l.x + r.x), (u8)(l.y + r.y), (u8)(l.z + r.z), (u8)(l.w + r.w)};
+}
+v2 operator-(v2 l, v2 r) {
+	return {l.x - r.x, l.y - r.y};
+}
+v3 operator-(v3 l, v3 r) {
+	return {l.x - r.x, l.y - r.y, l.z - r.z};
+}
+v4 operator-(v4 l, v4 r) {
+	return {_mm_sub_ps(l.packed, r.packed)};
+}
+uv2 operator-(uv2 l, uv2 r) {
+	return {l.x - r.x, l.y - r.y};
+}
+uv3 operator-(uv3 l, uv3 r) {
+	return {l.x - r.x, l.y - r.y, l.z - r.z};
+}
+iv3 operator-(iv3 l, iv3 r) {
+	return {l.x - r.x, l.y - r.y, l.z - r.z};
+}
+bv4 operator-(bv4 l, bv4 r) {
+	return {(u8)(l.x - r.x), (u8)(l.y - r.y), (u8)(l.z - r.z), (u8)(l.w - r.w)};
+}
+v2 operator*(v2 l, v2 r) {
+	return {l.x * r.x, l.y * r.y};
+}
+v3 operator*(v3 l, v3 r) {
+	return {l.x * r.x, l.y * r.y, l.z * r.z};
+}
+v4 operator*(v4 l, v4 r) {
+	return {_mm_mul_ps(l.packed, r.packed)};
+}
+uv2 operator*(uv2 l, uv2 r) {
+	return {l.x * r.x, l.y * r.y};
+}
+uv3 operator*(uv3 l, uv3 r) {
+	return {l.x * r.x, l.y * r.y, l.z * r.z};
+}
+iv3 operator*(iv3 l, iv3 r) {
+	return {l.x * r.x, l.y * r.y, l.z * r.z};	
+}
+bv4 operator*(bv4 l, bv4 r) {
+	return {(u8)(l.x * r.x), (u8)(l.y * r.y), (u8)(l.z * r.z), (u8)(l.w * r.w)};
+}
+v2 operator*(v2 l, f32 r) {
+	return {l.x * r, l.y * r};
+}
+v3 operator*(v3 l, f32 r) {
+	return {l.x * r, l.y * r, l.z * r};
+}
+v4 operator*(v4 l, f32 r) {
+	return {_mm_mul_ps(l.packed, _mm_set1_ps(r))};
+}
+uv2 operator*(uv2 l, u32 r) {
+	return {l.x * r, l.y * r};
+}
+uv3 operator*(uv3 l, u32 r) {
+	return {l.x * r, l.y * r, l.z * r};
+}
+iv3 operator*(iv3 l, i32 r) {
+	return {l.x * r, l.y * r, l.z * r};
+}
+bv4 operator*(bv4 l, u8 r) {
+	return {(u8)(l.x * r), (u8)(l.y * r), (u8)(l.z * r), (u8)(l.w * r)};
+}
+v2 operator/(v2 l, v2 r) {
+	return {l.x / r.x, l.y / r.y};
+}
+v3 operator/(v3 l, v3 r) {
+	return {l.x / r.x, l.y / r.y, l.z / r.z};
+}
+v4 operator/(v4 l, v4 r) {
+	return {_mm_div_ps(l.packed, r.packed)};
+}
+uv2 operator/(uv2 l, uv2 r) {
+	return {l.x / r.x, l.y / r.y};
+}
+uv3 operator/(uv3 l, uv3 r) {
+	return {l.x / r.x, l.y / r.y, l.z / r.z};
+}
+iv3 operator/(iv3 l, iv3 r) {
+	return {l.x / r.x, l.y / r.y, l.z / r.z};
+}
+bv4 operator/(bv4 l, bv4 r) {
+	return {(u8)(l.x * r.x), (u8)(l.y * r.y), (u8)(l.z * r.z), (u8)(l.w * r.w)};
+}
+v2 operator/(v2 l, f32 r) {
+	return {l.x / r, l.y / r};
+}
+v3 operator/(v3 l, f32 r) {
+	return {l.x / r, l.y / r, l.z / r};
+}
+v4 operator/(v4 l, f32 r) {
+	return {_mm_div_ps(l.packed, _mm_set1_ps(r))};
+}
+uv2 operator/(uv2 l, u32 r) {
+	return {l.x / r, l.y / r};
+}
+uv3 operator/(uv3 l, u32 r) {
+	return {l.x / r, l.y / r, l.z / r};
+}
+iv3 operator/(iv3 l, i32 r) {
+	return {l.x / r, l.y / r, l.z / r};
+}
+bv4 operator/(bv4 l, u8 r) {
+	return {(u8)(l.x / r), (u8)(l.y / r), (u8)(l.z / r), (u8)(l.w / r)};
+}
+
+r2 operator+(r2 l, r2 r) {
+	return {_mm_add_ps(l.packed, r.packed)};
+}
+r2 operator+(r2 l, v2 r) {
+	return {l.xy + r, l.wh};
+}
+r2 operator-(r2 l, r2 r) {
+	return {_mm_sub_ps(l.packed, r.packed)};
+}
+r2 operator-(r2 l, v2 r) {
+	return {l.xy - r, l.wh};
+}
+r2 operator*(r2 l, f32 r) {
+	return {l.xy, l.wh * r};
+}
+ur2 operator+(ur2 l, ur2 r) {
+	return {l.xy + r.xy, l.wh + r.wh};
+}
+ur2 operator+(ur2 l, uv2 r) {
+	return {l.xy + r, l.wh};
+}
+ur2 operator-(ur2 l, ur2 r) {
+	return {l.xy - r.xy, l.wh - r.wh};
+}
+ur2 operator-(ur2 l, uv2 r) {
+	return {l.xy - r, l.wh};
+}
+ur2 operator*(ur2 l, u32 r) {
+	return {l.xy, l.wh * r};
+}
+
+bool inside(r2 l, v2 r) {
+	return (r.x >= l.x) && (r.x <= l.x + l.w) && (r.y >= l.y) && (r.y <= l.y + l.h);
+}
+bool intersect(r2 l, r2 r) {
+	return (l.x <= r.x + r.w) && (l.x + l.w >= r.x) && (l.y <= r.y + r.h) && (l.y + l.h >= r.y);
+}
+
+m4 operator+(m4 l, m4 r) {
+	m4 ret;
+	for(u8 i = 0; i < 4; i++)
+		ret.packed[i] = _mm_add_ps(l.packed[i], r.packed[i]);
+	return ret;
+}
+m4 operator-(m4 l, m4 r) {
+	m4 ret;
+	for(u8 i = 0; i < 4; i++)
+		ret.packed[i] = _mm_sub_ps(l.packed[i], r.packed[i]);
+	return ret;
+}
+m4 operator*(m4 l, m4 r) {
+    m4 ret;
+    for(int i=0; i<4; i++) {
+        __m128 brod1 = _mm_set1_ps(l[4*i][0]);
+        __m128 brod2 = _mm_set1_ps(l[4*i][1]);
+        __m128 brod3 = _mm_set1_ps(l[4*i][2]);
+        __m128 brod4 = _mm_set1_ps(l[4*i][3]);
+        ret.packed[i] = _mm_add_ps(_mm_add_ps(_mm_mul_ps(brod1, r.packed[0]), _mm_mul_ps(brod2, r.packed[1])),
+                    			   _mm_add_ps(_mm_mul_ps(brod3, r.packed[2]), _mm_mul_ps(brod4, r.packed[3])));
+    }
+    return ret;
+}
+v4 operator*(m4 l, v4 r) {
+    v4 ret;
+    for(u8 i = 0; i < 4; i++)
+        ret[i] = dot(l.columns[i], r);
+    return ret;
+}
+m4 operator*(m4 l, f32 r) {
+	m4 ret;
+	for(u8 i = 0; i < 4; i++)
+		ret.packed[i] = _mm_mul_ps(l.packed[i], _mm_set1_ps(r));
+	return ret;
+}
+m4 operator/(m4 l, f32 r) {
+	m4 ret;
+	for(u8 i = 0; i < 4; i++)
+		ret.packed[i] = _mm_div_ps(l.packed[i], _mm_set1_ps(r));
+	return ret;
+}
+m4 transpose(m4 m) {
+	m4 ret;
+	for(u8 i = 0; i < 4; i++)
+		for(u8 j = 0; j < 4; j++)
+			ret[i][j] = m[j][i];
+	return ret;
+}
+m4 ortho(f32 l, f32 r, f32 b, f32 t, f32 n, f32 f) {
+    m4 ret;
+    ret[0][0] = 2.0f / (r - l);
+    ret[1][1] = 2.0f / (t - b);
+    ret[2][2] = 2.0f / (n - f);
+    ret[3][0] = (-l - r) / (r - l);
+    ret[3][1] = (-b - t)  / (t - b);
+    ret[3][2] = - n / (f - n);
+    return ret;
+}
+m4 proj(f32 fov, f32 ar, f32 n, f32 f) {
+	m4 ret;
+    f32 to2 = _tan(RADIANS(fov) / 2.0f);
+    ret[0][0] = 1.0f / (to2 * ar);
+    ret[1][1] = 1.0f / to2;
+    ret[2][3] = -1.0f;    
+    ret[2][2] = (n + f) / (n - f);
+    ret[3][2] = (2.0f * f * n) / (n - f);
+    ret[3][3] = 0.0f;
+    return ret;
+}
+m4 translate(v3 v) {
+	m4 ret;
+	ret[3].xyz = v;
+    return ret;
+}
+m4 rotate(f32 a, v3 axis) {
+	m4 ret;
+	f32 c = _cos(RADIANS(a));
+	f32 s = _sin(RADIANS(a));
+	
+	axis = norm(axis);
+	v3 temp = axis * (1.0f - c);
+
+	ret[0][0] = c + temp[0] * axis[0];
+	ret[0][1] = temp[0] * axis[1] + s * axis[2];
+	ret[0][2] = temp[0] * axis[2] - s * axis[1];
+	ret[1][0] = temp[1] * axis[0] - s * axis[2];
+	ret[1][1] = c + temp[1] * axis[1];
+	ret[1][2] = temp[1] * axis[2] + s * axis[0];
+	ret[2][0] = temp[2] * axis[0] + s * axis[1];
+	ret[2][1] = temp[2] * axis[1] - s * axis[0];
+	ret[2][2] = c + temp[2] * axis[2];
+
+	return ret;
+}
+m4 scale(v3 s) {
+	m4 ret;
+    ret[0][0] = s.x;
+    ret[1][1] = s.y;
+    ret[2][2] = s.z;
+    return ret;
+}
+m4 lookAt(v3 pos, v3 at, v3 up) {
+    m4 ret = m4::zero;
+
+    v3 F = norm(at - pos);
+    v3 S = norm(cross(F, up));
+    v3 U = cross(S, F);
+
+    ret[0][0] =  S.x;
+    ret[0][1] =  U.x;
+    ret[0][2] = -F.x;
+
+    ret[1][0] =  S.y;
+    ret[1][1] =  U.y;
+    ret[1][2] = -F.y;
+
+    ret[2][0] =  S.z;
+    ret[2][1] =  U.z;
+    ret[2][2] = -F.z;
+
+    ret[3][0] = -dot(S, pos);
+    ret[3][1] = -dot(U, pos);
+    ret[3][2] =  dot(F, pos);
+    ret[3][3] = 1.0f;
+
+    return ret;
+}
+
+#define sqrt _sqrt
+#define abs _abs
+#define abs _abs
+#define round _round
+#define ceil _ceil
+#define floor _floor
+#define sin _sin
+#define cos _cos
+#define tan _tan
+#define asin _asin
+#define acos _acos
+#define atan _atan
