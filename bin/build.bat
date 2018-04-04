@@ -44,6 +44,8 @@ echo.
 	
 		if not exist %%~nf.exe (	
 			cl %Test_CompilerFlags% -Fe%%~nf.exe %%f /link %Test_LinkerFlags%
+		) else (
+			cl %Test_CompilerFlags% -Fe%%~nf.exe %%f /link %Test_LinkerFlags%
 		)
 
 		w:\build\%%~nf > test_%%~nf.txt
