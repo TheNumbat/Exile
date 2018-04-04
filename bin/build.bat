@@ -7,7 +7,7 @@ set Game_CompilerFlags=%1 -MTd -nologo -fp:fast -GR- -EHa- -Oi -W4 -Z7 -FC -Fega
 set Game_LinkerFlags=/NODEFAULTLIB:MSVCRT /SUBSYSTEM:windows opengl32.lib -PDB:game_%random%.pdb 
 
 set Platform_CompilerFlags=%1 -Z7 -MTd -nologo -fp:fast -GR- -EHa- -W4 -FC -Femain.exe -wd4100 -wd4530 -wd4577 -DTEST_NET_ZERO_ALLOCS
-set Platform_LinkerFlags=/NODEFAULTLIB:MSVCRT /SUBSYSTEM:console kernel32.lib user32.lib gdi32.lib opengl32.lib 
+set Platform_LinkerFlags=/NODEFAULTLIB:MSVCRT /SUBSYSTEM:console user32.lib gdi32.lib opengl32.lib kernel32.lib
 
 set Asset_CompilerFlags=-O2 -MTd -nologo -EHsc -Oi -W4 -Z7 -FC -Feasset.exe -wd4100 -Iw:\deps\
 set Asset_LinkerFlags=/NODEFAULTLIB:MSVCRT /SUBSYSTEM:console
@@ -16,7 +16,7 @@ set Meta_CompilerFlags=-O2 -MTd -nologo -EHsc -Oi -W4 -Z7 -FC -Femeta.exe -wd410
 set Meta_LinkerFlags=/NODEFAULTLIB:MSVCRT /SUBSYSTEM:console /LIBPATH:w:\deps\clang-c libclang.lib
 
 set Test_CompilerFlags=-O2 -MTd -nologo -EHsc -Oi -W4 -Z7 -FC 
-set Test_LinkerFlags=/NODEFAULTLIB:MSVCRT /SUBSYSTEM:console
+set Test_LinkerFlags=/SUBSYSTEM:console
 
 echo ASSET BUILDER 
 echo.
@@ -44,14 +44,13 @@ echo.
 	
 		if not exist %%~nf.exe (	
 			cl %Test_CompilerFlags% -Fe%%~nf.exe %%f /link %Test_LinkerFlags%
-		) else (
-			cl %Test_CompilerFlags% -Fe%%~nf.exe %%f /link %Test_LinkerFlags%
 		)
 
-		w:\build\%%~nf > test_%%~nf.txt
+		%%~nf.exe > %%~nf_test.txt
 
-		if %ERRORLEVEL% neq 0 (
-			echo %%~nf FAILED
+		if %errorlevel% neq 0 (
+			echo %%~nf FAILED 
+			goto done
 		) else (
 			echo %%~nf PASSED
 		)
@@ -86,4 +85,6 @@ echo.
 	)
 )
 echo.
+
+:done
 popd
