@@ -36,24 +36,26 @@ Everything not by me:
 	#include <typeinfo>
 	#include <xmmintrin.h>/<intrin.h>
 
-Immediate To-Do:
+Working To-Do:
+
+	!~~~~~ FIX BUGS ~~~~~!
 
 	new SIMD-first math lib
+		fix batch errorlevel
 		implement all functions
 		write tests
 		replace alloc system...need alignment for v4/m4
 	data structures tests
-	
 	possibly make more structural changes [::make, initializers, platform, vulkan]
 
-	!~~~~~ FIX BUGS ~~~~~!
-		
-	chunk AO/lighting/LOD
-	movement physics
+	~~later~~		
+		chunk AO/lighting/LOD
+		movement physics
 	
-	gui text wrapping
-	profiler graphs/actually good layout-ing?
-	threading profiling
+	~~much later~~
+		gui text wrapping
+		profiler graphs/actually good layout-ing?
+		threading profiling
 
 Bugs:
 
