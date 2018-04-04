@@ -5,7 +5,6 @@ Large-Scale Improvements | Changes for Future Projects
 		don't output through pointers? maybe
 	don't bother with initialized values/constructors, require all allocated memory zero-initialized
 	don't use ::make pattern so much, use .init for not straight POD types
-	rewrite math library SIMD-first
 	less callbacks? good, but also not really, they're quite useful. I wish closures didn't need STL and they didn't heap allocate
 	probably don't use the futures pattern for the thread pool, go back to event loop
 	platform layer can be more elegant
@@ -39,13 +38,15 @@ Everything not by me:
 
 Immediate To-Do:
 
-	!~~~~~ FIX BUGS ~~~~~!
-
 	new SIMD-first math lib
-	tests
-		data structures
-		math
-		threadpool
+		implement all functions
+		write tests
+		replace alloc system...need alignment for v4/m4
+	data structures tests
+	
+	possibly make more structural changes [::make, initializers, platform, vulkan]
+
+	!~~~~~ FIX BUGS ~~~~~!
 		
 	chunk AO/lighting/LOD
 	movement physics
