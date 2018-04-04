@@ -8,5 +8,8 @@
 #include "..\math.cpp"
 
 i32 main() {
+
+	v4 xd;
+	
 	return 0;
 }

@@ -107,7 +107,7 @@ struct mesh_2d_tex_col {
 
 	void push_rect(r2 rect, color c);
 	void push_cutrect(r2 r, f32 round, color c);
-	f32 push_text_line(asset* font, string text_utf8, v2 pos, f32 point = 0.0f, color c = V4b(255, 255, 255, 255)); 
+	f32 push_text_line(asset* font, string text_utf8, v2 pos, f32 point = 0.0f, color c = color(255, 255, 255, 255)); 
 };
 
 struct mesh_3d_tex {
