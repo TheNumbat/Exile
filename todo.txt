@@ -46,16 +46,16 @@ Working To-Do:
 	possibly make more structural changes [::make, initializers, platform, vulkan]
 
 	library-ize more systems
-	config format language stuff? -> rewrite metaprogram to use it?
+	config format language
+		rewrite metaprogram to use it
+	SDL platform layer
 
-	~~later~~		
-		chunk AO/lighting/LOD
-		movement physics
+	chunk AO/lighting/LOD
+	movement physics
 	
-	~~much later~~
-		gui text wrapping
-		profiler graphs/actually good layout-ing?
-		threading profiling
+	gui text wrapping
+	profiler graphs/actually good layout-ing?
+	threading profiling
 
 Bugs:
 

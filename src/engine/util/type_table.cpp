@@ -31,7 +31,7 @@ i64 int_as_i64(void* val, _type_info* info) {
 		}
 	} break;
 	default: {
-		LOG_DEBUG_ASSERT(!"Int was not 1, 2, 4, or 8 bytes?!?!");
+		INVALID_PATH;
 		return 0;
 	} break;
 	}

@@ -15,8 +15,8 @@ set Asset_LinkerFlags=/NODEFAULTLIB:MSVCRT /SUBSYSTEM:console
 set Meta_CompilerFlags=-O2 -MTd -nologo -EHsc -Oi -W4 -Z7 -FC -Femeta.exe -wd4100 -Iw:\deps\
 set Meta_LinkerFlags=/NODEFAULTLIB:MSVCRT /SUBSYSTEM:console /LIBPATH:w:\deps\clang-c libclang.lib
 
-set Test_CompilerFlags=-O2 -MTd -nologo -EHsc -Oi -W4 -Z7 -FC 
-set Test_LinkerFlags=/SUBSYSTEM:console
+set Test_CompilerFlags=-O2 -MTd -nologo -EHsc -Oi -W4 -Z7 -FC -Iw:\build\
+set Test_LinkerFlags=/SUBSYSTEM:console opengl32.lib user32.lib gdi32.lib opengl32.lib kernel32.lib
 
 echo ASSET BUILDER 
 echo.
@@ -37,28 +37,6 @@ echo.
 	)
 )
 echo.
-echo TESTS 
-echo.
-(
-	for %%f in (w:\src\engine\test\*.cpp) do (
-	
-		if not exist %%~nf.exe (	
-			cl %Test_CompilerFlags% -Fe%%~nf.exe %%f /link %Test_LinkerFlags%
-		)
-
-		%%~nf.exe > %%~nf_test.txt
-
-		set name=%%~nf
-
-		if not ERRORLEVEL 1 goto continue end
-		echo %%~nf FAILED 
-		goto done
-
-		:continue
-		echo %name% PASSED
-	)
-)
-echo.
 echo META 
 echo.
 (
@@ -70,6 +48,22 @@ echo.
 	echo running
 	xcopy w:\deps\clang-c\libclang.dll w:\build\ /C /Y > NUL 2> NUL
 	meta.exe w:\src\compile.cpp
+)
+echo.
+echo TESTS 
+echo.
+(
+	for %%f in (w:\src\engine\test\*.cpp) do (
+	
+		if not exist %%~nf.exe (
+			meta.exe %%f %%~nf_types.cpp
+			cl %Test_CompilerFlags% -Fe%%~nf.exe %%f /link %Test_LinkerFlags%
+
+			%%~nf.exe > %%~nf_test.txt
+			if ERRORLEVEL 1 echo %%~nf FAILED && goto done
+			echo %%~nf PASSED
+		)
+	)
 )
 echo. 
 echo GAME 
