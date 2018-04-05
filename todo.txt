@@ -41,12 +41,12 @@ Working To-Do:
 	!~~~~~ FIX BUGS ~~~~~!
 
 	new SIMD-first math lib
-		fix batch errorlevel
-		implement all functions
-		write tests
 		replace alloc system...need alignment for v4/m4
 	data structures tests
 	possibly make more structural changes [::make, initializers, platform, vulkan]
+
+	library-ize more systems
+	config format language stuff? -> rewrite metaprogram to use it?
 
 	~~later~~		
 		chunk AO/lighting/LOD

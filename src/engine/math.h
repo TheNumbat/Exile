@@ -7,8 +7,8 @@
 #include <intrin.h>
 #endif
 
-#define PI32 3.14159265359f 
-#define PI64 3.14159265358979323846 
+#define PI32 3.14159265358979323846264338327950288f
+#define PI64 3.14159265358979323846264338327950288
 #define TAU32 (2.0f*PI32) 
 #define TAU64 (2.0*PI64) 
 
@@ -18,7 +18,11 @@
 #define min(x,y) ((x) < (y) ? (x) : (y))
 #define max(x,y) ((x) < (y) ? (y) : (x))
 
+#define EPSILON32 0.00001f
+#define EPSILON64 0.00001
+
 union v2; union uv2; union v3; union iv3; union uv3; union v4; union bv4; union m4; union r2; union ur2;
+struct color; struct color3; struct colorf;
 
 u32 mod(u32 l, u32 r);
 f32 _sqrt(f32 v);
@@ -41,14 +45,13 @@ u32 next_pow_two(u32 val);
 f32 perlin(f32 x, f32 y, f32 z, i32 x_wrap, i32 y_wrap, i32 z_wrap);
 f32 perlin_grad(i32 hash, f32 x, f32 y, f32 z);
 
-v4 sqrt(v4 v);
-v4 tan(v4 v);
-v4 abs(v4 v);
-v4 round(v4 v);
-v4 ceil(v4 v);
-v4 floor(v4 v);
-v4 sin(v4 v);
-v4 cos(v4 v);
+v4 _sqrt(v4 v);
+v4 _abs(v4 v);
+v4 _round(v4 v);
+v4 _ceil(v4 v);
+v4 _floor(v4 v);
+v4 _sin(v4 v);
+v4 _cos(v4 v);
 v4 lerp(v4 min, v4 max, v4 dist);
 v4 clamp(v4 val, v4 min, v4 max);
 
@@ -96,6 +99,13 @@ uv2 operator*(uv2 l, u32 r);
 uv3 operator*(uv3 l, u32 r);
 iv3 operator*(iv3 l, i32 r);
 bv4 operator*(bv4 l, u8 r);
+v2 operator*(f32 l, v2 r);
+v3 operator*(f32 l, v3 r);
+v4 operator*(f32 l, v4 r);
+uv2 operator*(u32 l, uv2 r);
+uv3 operator*(u32 l, uv3 r);
+iv3 operator*(i32 l, iv3 r);
+bv4 operator*(u8 l, bv4 r);
 v2 operator/(v2 l, v2 r);
 v3 operator/(v3 l, v3 r);
 v4 operator/(v4 l, v4 r);
@@ -110,6 +120,13 @@ uv2 operator/(uv2 l, u32 r);
 uv3 operator/(uv3 l, u32 r);
 iv3 operator/(iv3 l, i32 r);
 bv4 operator/(bv4 l, u8 r);
+v2 operator/(f32 l, v2 r);
+v3 operator/(f32 l, v3 r);
+v4 operator/(f32 l, v4 r);
+uv2 operator/(u32 l, uv2 r);
+uv3 operator/(u32 l, uv3 r);
+iv3 operator/(i32 l, iv3 r);
+bv4 operator/(u8 l, bv4 r);
 
 r2 operator+(r2 l, r2 r);
 r2 operator+(r2 l, v2 r);
@@ -124,6 +141,54 @@ ur2 operator*(ur2 l, u32 r);
 
 bool inside(r2 l, v2 r);
 bool intersect(r2 l, r2 r);
+
+bool operator==(v2 l, v2 r);
+bool operator==(uv2 l, uv2 r);
+bool operator==(v3 l, v3 r);
+bool operator==(iv3 l, iv3 r);
+bool operator==(uv3 l, uv3 r);
+bool operator==(v4 l, v4 r);
+bool operator==(bv4 l, bv4 r);
+bool operator==(m4 l, m4 r);
+bool operator==(r2 l, r2 r);
+bool operator==(ur2 l, ur2 r);
+bool operator==(color l, color r);
+bool operator==(color3 l, color3 r);
+bool operator==(colorf l, colorf r);
+bool operator!=(v2 l, v2 r);
+bool operator!=(uv2 l, uv2 r);
+bool operator!=(v3 l, v3 r);
+bool operator!=(iv3 l, iv3 r);
+bool operator!=(uv3 l, uv3 r);
+bool operator!=(v4 l, v4 r);
+bool operator!=(bv4 l, bv4 r);
+bool operator!=(m4 l, m4 r);
+bool operator!=(r2 l, r2 r);
+bool operator!=(ur2 l, ur2 r);
+bool operator!=(color l, color r);
+bool operator!=(color3 l, color3 r);
+bool operator!=(colorf l, colorf r);
+bool fudge(f32 l, f32 r);
+bool fudge(v2 l, v2 r);
+bool fudge(v3 l, v3 r);
+bool fudge(v4 l, v4 r);
+
+#ifdef OSTREAM_OPS
+#include <ostream>
+std::ostream& operator<<(std::ostream& out, v2 r);
+std::ostream& operator<<(std::ostream& out, uv2 r);
+std::ostream& operator<<(std::ostream& out, v3 r);
+std::ostream& operator<<(std::ostream& out, iv3 r);
+std::ostream& operator<<(std::ostream& out, uv3 r);
+std::ostream& operator<<(std::ostream& out, v4 r);
+std::ostream& operator<<(std::ostream& out, bv4 r);
+std::ostream& operator<<(std::ostream& out, m4 r);
+std::ostream& operator<<(std::ostream& out, r2 r);
+std::ostream& operator<<(std::ostream& out, ur2 r);
+std::ostream& operator<<(std::ostream& out, color r);
+std::ostream& operator<<(std::ostream& out, color3 r);
+std::ostream& operator<<(std::ostream& out, colorf r);
+#endif
 
 m4 operator+(m4 l, m4 r);
 m4 operator-(m4 l, m4 r);
@@ -274,7 +339,7 @@ union v4 {
 	f32& operator[](i32 idx) {return a[idx];}
 
 	v4() {}
-	v4(f32 _x, f32 _y, f32 _z, f32 _w) {packed = _mm_set_ps(_x, _y, _z, _w);}
+	v4(f32 _x, f32 _y, f32 _z, f32 _w) {packed = _mm_set_ps(_w, _z, _y, _x);}
 	v4(__m128 p) {packed = p;}
 	v4(v4& v) {*this = v;}
 	v4(v4&& v) {*this = v;}
@@ -336,7 +401,7 @@ union r2 {
 	f32 a[4] = {};
 	__m128 packed;
 
-	ur2 to_u() {return ur2(round(vec));}
+	ur2 to_u() {return ur2(_round(vec));}
 
 	r2() {}
 	r2(f32 _x, f32 _y, f32 _w, f32 _h) {packed = _mm_set_ps(_x, _y, _w, _h);}
@@ -359,19 +424,19 @@ union m4 {
 	v4 columns[4];
 	__m128 packed[4];
 
-	void operator+=(m4 v) {for(u8 i = 0; i < 4; i++) packed[i] = _mm_add_ps(packed[i], v.packed[i]);}
-	void operator-=(m4 v) {for(u8 i = 0; i < 4; i++) packed[i] = _mm_sub_ps(packed[i], v.packed[i]);}
+	void operator+=(m4 v) {for(i32 i = 0; i < 4; i++) packed[i] = _mm_add_ps(packed[i], v.packed[i]);}
+	void operator-=(m4 v) {for(i32 i = 0; i < 4; i++) packed[i] = _mm_sub_ps(packed[i], v.packed[i]);}
 	void operator*=(m4 v) {*this = *this * v;}
-	void operator*=(f32 s) {__m128 mul = _mm_set1_ps(s); for(u8 i = 0; i < 4; i++) packed[i] = _mm_mul_ps(packed[i], mul);}
-	void operator/=(f32 s) {__m128 div = _mm_set1_ps(s); for(u8 i = 0; i < 4; i++) packed[i] = _mm_div_ps(packed[i], div);}
+	void operator*=(f32 s) {__m128 mul = _mm_set1_ps(s); for(i32 i = 0; i < 4; i++) packed[i] = _mm_mul_ps(packed[i], mul);}
+	void operator/=(f32 s) {__m128 div = _mm_set1_ps(s); for(i32 i = 0; i < 4; i++) packed[i] = _mm_div_ps(packed[i], div);}
 	v4& operator[](i32 idx) {return columns[idx];}
 
 	m4() {}
 	m4(v4 c0, v4 c1, v4 c2, v4 c3) {columns[0] = c0; columns[1] = c1; columns[2] = c2; columns[3] = c3;}
 	m4(m4& m) {*this = m;}
 	m4(m4&& m) {*this = m;}
-	m4& operator=(m4& m) {for(u8 i = 0; i < 4; i++) packed[i] = m.packed[i]; return *this;}
-	m4& operator=(m4&& m) {for(u8 i = 0; i < 4; i++) packed[i] = m.packed[i]; return *this;}
+	m4& operator=(m4& m) {for(i32 i = 0; i < 4; i++) packed[i] = m.packed[i]; return *this;}
+	m4& operator=(m4&& m) {for(i32 i = 0; i < 4; i++) packed[i] = m.packed[i]; return *this;}
 
 	static m4 zero;
 };
@@ -623,23 +688,23 @@ _PS_CONST(sincof_p0, -1.9515295891E-4f);
 _PS_CONST(sincof_p1,  8.3321608736E-3f);
 _PS_CONST(sincof_p2, -1.6666654611E-1f);
 
-v4 sqrt(v4 v) {
+v4 _sqrt(v4 v) {
 	return {_mm_sqrt_ps(v.packed)};
 }
-v4 abs(v4 v) {
+v4 _abs(v4 v) {
 	// for some reason there is no _mm_abs_ps()
 	return {_abs(v.x),_abs(v.y),_abs(v.z),_abs(v.w)};
 }
-v4 round(v4 v) {
+v4 _round(v4 v) {
 	return {_mm_round_ps(v.packed, _MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC)};
 }
-v4 ceil(v4 v) {
+v4 _ceil(v4 v) {
 	return {_mm_round_ps(v.packed, _MM_FROUND_TO_POS_INF | _MM_FROUND_NO_EXC)};
 }
-v4 floor(v4 v) {
+v4 _floor(v4 v) {
 	return {_mm_round_ps(v.packed, _MM_FROUND_TO_NEG_INF | _MM_FROUND_NO_EXC)};
 }
-v4 sin(v4 v) {
+v4 _sin(v4 v) {
 	__m128 xmm1, xmm2 = _mm_setzero_ps(), xmm3, sign_bit, y;
 
 	__m128i emm0, emm2;
@@ -702,7 +767,7 @@ v4 sin(v4 v) {
 	y = _mm_xor_ps(y, sign_bit);
 	return y;
 }
-v4 cos(v4 v) {
+v4 _cos(v4 v) {
 	__m128 xmm1, xmm2 = _mm_setzero_ps(), xmm3, y;
 	__m128i emm0, emm2;
 	v.packed = _mm_and_ps(v.packed, *(__m128*)_ps_inv_sign_mask);
@@ -767,8 +832,8 @@ v4 lerp(v4 min, v4 max, v4 dist) {
 	return {_mm_add_ps(_mm_mul_ps(_mm_sub_ps(max.packed, min.packed), dist.packed), min.packed)};
 }
 v4 clamp(v4 val, v4 min, v4 max) {
-	__m128 _max = _mm_max_ps(val.packed, max.packed);
-	return {_mm_min_ps(_max, min.packed)};
+	__m128 _min = _mm_min_ps(val.packed, max.packed);
+	return {_mm_max_ps(_min, min.packed)};
 }
 
 f32 lensq(v2 v) {
@@ -807,8 +872,7 @@ f32 dot(v3 l, v3 r) {
 	return l.x * r.x + l.y * r.y + l.z * r.z;
 }
 f32 dot(v4 l, v4 r) {
-	v4 v{_mm_dp_ps(l.packed, r.packed, 0b1111001)};
-	return v.x;
+	return v4{_mm_dp_ps(l.packed, r.packed, 0xf1)}.x;
 }
 v3 cross(v3 l, v3 r) {
 	return {l.y * r.z - l.z * r.y, l.z * r.x - l.x * r.z, l.x * r.y - l.y * r.x};
@@ -897,6 +961,27 @@ iv3 operator*(iv3 l, i32 r) {
 bv4 operator*(bv4 l, u8 r) {
 	return {(u8)(l.x * r), (u8)(l.y * r), (u8)(l.z * r), (u8)(l.w * r)};
 }
+v2 operator*(f32 l, v2 r) {
+	return r * l;
+}
+v3 operator*(f32 l, v3 r) {
+	return r * l;
+}
+v4 operator*(f32 l, v4 r) {
+	return r * l;
+}
+uv2 operator*(u32 l, uv2 r) {
+	return r * l;
+}
+uv3 operator*(u32 l, uv3 r) {
+	return r * l;
+}
+iv3 operator*(i32 l, iv3 r) {
+	return r * l;
+}
+bv4 operator*(u8 l, bv4 r) {
+	return r * l;
+}
 v2 operator/(v2 l, v2 r) {
 	return {l.x / r.x, l.y / r.y};
 }
@@ -939,6 +1024,27 @@ iv3 operator/(iv3 l, i32 r) {
 bv4 operator/(bv4 l, u8 r) {
 	return {(u8)(l.x / r), (u8)(l.y / r), (u8)(l.z / r), (u8)(l.w / r)};
 }
+v2 operator/(f32 l, v2 r) {
+	return r / l;
+}
+v3 operator/(f32 l, v3 r) {
+	return r / l;
+}
+v4 operator/(f32 l, v4 r) {
+	return r / l;
+}
+uv2 operator/(u32 l, uv2 r) {
+	return r / l;
+}
+uv3 operator/(u32 l, uv3 r) {
+	return r / l;
+}
+iv3 operator/(i32 l, iv3 r) {
+	return r / l;
+}
+bv4 operator/(u8 l, bv4 r) {
+	return r / l;
+}
 
 r2 operator+(r2 l, r2 r) {
 	return {_mm_add_ps(l.packed, r.packed)};
@@ -978,51 +1084,149 @@ bool intersect(r2 l, r2 r) {
 	return (l.x <= r.x + r.w) && (l.x + l.w >= r.x) && (l.y <= r.y + r.h) && (l.y + l.h >= r.y);
 }
 
+bool operator==(v2 l, v2 r) {
+	return l.x == r.x && l.y == r.y;
+}
+bool operator==(uv2 l, uv2 r) {
+	return l.x == r.x && l.y == r.y;
+}
+bool operator==(v3 l, v3 r) {
+	return l.x == r.x && l.y == r.y && l.z == r.z;
+}
+bool operator==(iv3 l, iv3 r) {
+	return l.x == r.x && l.y == r.y && l.z == r.z;
+}
+bool operator==(uv3 l, uv3 r) {
+	return l.x == r.x && l.y == r.y && l.z == r.z;
+}
+bool operator==(v4 l, v4 r) {
+	__m128 cmp = _mm_cmpeq_ps(l.packed, r.packed);
+	i32 test = _mm_movemask_ps(cmp);
+	return test == 0x0000000f;
+}
+bool operator==(bv4 l, bv4 r) {
+	return l.x == r.x && l.y == r.y && l.z == r.z && l.w == r.w;
+}
+bool operator==(m4 l, m4 r) {
+	for(i32 i = 0; i < 4; i++)
+		if(l.columns[i] != r.columns[i])
+			return false;
+	return true;
+}
+bool operator==(r2 l, r2 r) {
+	__m128 cmp = _mm_cmpeq_ps(l.packed, r.packed);
+	return !!_mm_testc_ps(cmp, cmp);
+}
+bool operator==(ur2 l, ur2 r) {
+	return l.x == r.x && l.y == r.y && l.w == r.w && l.h == r.h;
+}
+bool operator==(color l, color r) {
+	return l.r == r.r && l.g == r.g && l.b == r.b && l.a == r.a;
+}
+bool operator==(color3 l, color3 r) {
+	return l.r == r.r && l.g == r.g && l.b == r.b;
+}
+bool operator==(colorf l, colorf r) {
+	return l.r == r.r && l.g == r.g && l.b == r.b && l.a == r.a;
+}
+bool operator!=(v2 l, v2 r) {
+	return !(l == r);
+}
+bool operator!=(uv2 l, uv2 r) {
+	return !(l == r);
+}
+bool operator!=(v3 l, v3 r) {
+	return !(l == r);
+}
+bool operator!=(iv3 l, iv3 r) {
+	return !(l == r);
+}
+bool operator!=(uv3 l, uv3 r) {
+	return !(l == r);
+}
+bool operator!=(v4 l, v4 r) {
+	return !(l == r);
+}
+bool operator!=(bv4 l, bv4 r) {
+	return !(l == r);
+}
+bool operator!=(m4 l, m4 r) {
+	return !(l == r);
+}
+bool operator!=(r2 l, r2 r) {
+	return !(l == r);
+}
+bool operator!=(ur2 l, ur2 r) {
+	return !(l == r);
+}
+bool operator!=(color l, color r) {
+	return !(l == r);
+}
+bool operator!=(color3 l, color3 r) {
+	return !(l == r);
+}
+bool operator!=(colorf l, colorf r) {
+	return !(l == r);
+}
+bool fudge(f32 l, f32 r) {
+	return (l >= r - EPSILON32) && (l <= r + EPSILON32);
+}
+bool fudge(v2 l, v2 r) {
+	return fudge(l.x,r.x) && fudge(l.y,r.y);
+}
+bool fudge(v3 l, v3 r) {
+	return fudge(l.x,r.x) && fudge(l.y,r.y) && fudge(l.z,r.z);
+}
+bool fudge(v4 l, v4 r) {
+	return fudge(l.x,r.x) && fudge(l.y,r.y) && fudge(l.z,r.z) && fudge(l.w,r.w);
+}
+
 m4 operator+(m4 l, m4 r) {
 	m4 ret;
-	for(u8 i = 0; i < 4; i++)
+	for(i32 i = 0; i < 4; i++)
 		ret.packed[i] = _mm_add_ps(l.packed[i], r.packed[i]);
 	return ret;
 }
 m4 operator-(m4 l, m4 r) {
 	m4 ret;
-	for(u8 i = 0; i < 4; i++)
+	for(i32 i = 0; i < 4; i++)
 		ret.packed[i] = _mm_sub_ps(l.packed[i], r.packed[i]);
 	return ret;
 }
 m4 operator*(m4 l, m4 r) {
-    m4 ret;
-    for(int i=0; i<4; i++) {
-        __m128 brod1 = _mm_set1_ps(l[4*i][0]);
-        __m128 brod2 = _mm_set1_ps(l[4*i][1]);
-        __m128 brod3 = _mm_set1_ps(l[4*i][2]);
-        __m128 brod4 = _mm_set1_ps(l[4*i][3]);
-        ret.packed[i] = _mm_add_ps(_mm_add_ps(_mm_mul_ps(brod1, r.packed[0]), _mm_mul_ps(brod2, r.packed[1])),
-                    			   _mm_add_ps(_mm_mul_ps(brod3, r.packed[2]), _mm_mul_ps(brod4, r.packed[3])));
+	m4 ret;
+    for(i32 i = 0; i < 4; i++) {
+        ret.packed[i] = _mm_add_ps(
+        _mm_add_ps(
+            _mm_mul_ps(_mm_set1_ps(l[i][0]), r.packed[0]),
+            _mm_mul_ps(_mm_set1_ps(l[i][1]), r.packed[1])), 
+       	_mm_add_ps(
+            _mm_mul_ps(_mm_set1_ps(l[i][2]), r.packed[2]),
+            _mm_mul_ps(_mm_set1_ps(l[i][3]), r.packed[3])));
     }
     return ret;
 }
 v4 operator*(m4 l, v4 r) {
     v4 ret;
-    for(u8 i = 0; i < 4; i++)
+    for(i32 i = 0; i < 4; i++)
         ret[i] = dot(l.columns[i], r);
     return ret;
 }
 m4 operator*(m4 l, f32 r) {
 	m4 ret;
-	for(u8 i = 0; i < 4; i++)
+	for(i32 i = 0; i < 4; i++)
 		ret.packed[i] = _mm_mul_ps(l.packed[i], _mm_set1_ps(r));
 	return ret;
 }
 m4 operator/(m4 l, f32 r) {
 	m4 ret;
-	for(u8 i = 0; i < 4; i++)
+	for(i32 i = 0; i < 4; i++)
 		ret.packed[i] = _mm_div_ps(l.packed[i], _mm_set1_ps(r));
 	return ret;
 }
 m4 transpose(m4 m) {
 	m4 ret;
-	for(u8 i = 0; i < 4; i++)
+	for(i32 i = 0; i < 4; i++)
 		for(u8 j = 0; j < 4; j++)
 			ret[i][j] = m[j][i];
 	return ret;
@@ -1106,6 +1310,65 @@ m4 lookAt(v3 pos, v3 at, v3 up) {
 
     return ret;
 }
+
+#ifdef OSTREAM_OPS
+std::ostream& operator<<(std::ostream& out, v2 r) {
+	out << "{" << r.x << "," << r.y << "}";
+	return out;
+}
+std::ostream& operator<<(std::ostream& out, uv2 r) {
+	out << "{" << r.x << "," << r.y << "}";
+	return out;
+}
+std::ostream& operator<<(std::ostream& out, v3 r) {
+	out << "{" << r.x << "," << r.y << "," << r.z << "}";
+	return out;
+}
+std::ostream& operator<<(std::ostream& out, iv3 r) {
+	out << "{" << r.x << "," << r.y << "," << r.z << "}";
+	return out;
+}
+std::ostream& operator<<(std::ostream& out, uv3 r) {
+	out << "{" << r.x << "," << r.y << "," << r.z << "}";
+	return out;
+}
+std::ostream& operator<<(std::ostream& out, v4 r) {
+	out << "{" << r.x << "," << r.y << "," << r.z << "," << r.w << "}";
+	return out;
+}
+std::ostream& operator<<(std::ostream& out, bv4 r) {
+	out << "{" << r.x << "," << r.y << "," << r.z << "," << r.w << "}";
+	return out;
+}
+std::ostream& operator<<(std::ostream& out, m4 r) {
+	out << "{";
+	for(i32 i = 0; i < 4; i++) {
+		out << r.columns[i];
+	}
+	out << "}";
+	return out;
+}
+std::ostream& operator<<(std::ostream& out, r2 r) {
+	out << "{" << r.x << "," << r.y << "," << r.w << "," << r.h << "}";
+	return out;
+}
+std::ostream& operator<<(std::ostream& out, ur2 r) {
+	out << "{" << r.x << "," << r.y << "," << r.w << "," << r.h << "}";
+	return out;
+}
+std::ostream& operator<<(std::ostream& out, color r) {
+	out << "{" << r.r << "," << r.g << "," << r.b << "," << r.a << "}";
+	return out;
+}
+std::ostream& operator<<(std::ostream& out, color3 r) {
+	out << "{" << r.r << "," << r.g << "," << r.b << "}";
+	return out;
+}
+std::ostream& operator<<(std::ostream& out, colorf r) {
+	out << "{" << r.r << "," << r.g << "," << r.b << "," << r.a << "}";
+	return out;
+}
+#endif
 
 #define sqrt _sqrt
 #define abs _abs
