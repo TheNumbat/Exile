@@ -11,8 +11,7 @@
 #define DLL_EXPORT EXTERN __attribute__((dllexport))
 #define DLL_IMPORT EXTERN __attribute__((dllimport))
 #else
-#define DLL_EXPORT
-#define DLL_IMPORT
+#error unsupported compiler?
 #endif
 
 // this file is for both the platform layer and the game - this defines the interface for the game

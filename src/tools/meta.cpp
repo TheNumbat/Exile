@@ -665,7 +665,7 @@ i32 main(i32 argc, char** argv) {
 		return CXChildVisit_Recurse;
 	}, nullptr);
 
-	ofstream fout("meta_types.cpp");
+	ofstream fout(argc > 2 ? argv[2] : "meta_types.cpp");
 	output_pre(fout);
 	for(auto& e : enums) {
 		output_enum(fout, e);
