@@ -10,21 +10,13 @@
 
 i32 global_num_allocs = 0;
 
-#ifdef PLATFORM_SDL
-
-#include "SDL/platform_SDL.cpp"
-
-#elif defined(_WIN32)
+#ifdef _WIN32
 
 #include "windows/platform_win32.cpp"
 
-#elif defined(__linux__)
-
-#include "linux/platform_linux.cpp"
-
 #else
 
-#error "Unsupported platform."
+#include "linux/platform_sdl.cpp"
 
 #endif
 

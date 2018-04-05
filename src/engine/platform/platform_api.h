@@ -345,20 +345,12 @@ struct platform_api {
 
 #include "gl.h"
 
-#ifdef PLATFORM_SDL
-
-#include "SDL/platform_api_SDL.h"
-
-#elif defined(_WIN32)
+#ifdef _WIN32
 
 #include "windows/platform_api_win32.h"
 
-#elif defined(__linux__)
-
-#include "linux/platform_api_linux.h"
-
 #else
 
-#error "Unsupported platform."
+#include "linux/platform_api_sdl.h"
 
 #endif
