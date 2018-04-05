@@ -525,14 +525,14 @@ u32 string::write_struct(u32 idx, void* val, _type_info* info, bool size) { PROF
 	u32 name = const_hash(info->name.c_str);
 
 	switch(name) {
-	case const_hash("v2_t"): {
+	case const_hash("v2"): {
 		idx = write(idx, '{', size);
 		idx = write_type(idx, (u8*)val + info->_struct.member_offsets[0], TYPEINFO_H(info->_struct.member_types[0]), size);
 		idx = write(idx, ',', size);
 		idx = write_type(idx, (u8*)val + info->_struct.member_offsets[1], TYPEINFO_H(info->_struct.member_types[1]), size);
 		idx = write(idx, '}', size);
 	} break;
-	case const_hash("v3_t"): {
+	case const_hash("v3"): {
 		idx = write(idx, '{', size);
 		idx = write_type(idx, (u8*)val + info->_struct.member_offsets[0], TYPEINFO_H(info->_struct.member_types[0]), size);
 		idx = write(idx, ',', size);
@@ -541,7 +541,7 @@ u32 string::write_struct(u32 idx, void* val, _type_info* info, bool size) { PROF
 		idx = write_type(idx, (u8*)val + info->_struct.member_offsets[2], TYPEINFO_H(info->_struct.member_types[2]), size);
 		idx = write(idx, '}', size);		
 	} break;
-	case const_hash("v4_t"): {
+	case const_hash("v4"): {
 		idx = write(idx, '{', size);
 		idx = write_type(idx, (u8*)val + info->_struct.member_offsets[0], TYPEINFO_H(info->_struct.member_types[0]), size);
 		idx = write(idx, ',', size);

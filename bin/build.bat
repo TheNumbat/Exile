@@ -46,14 +46,16 @@ echo.
 			cl %Test_CompilerFlags% -Fe%%~nf.exe %%f /link %Test_LinkerFlags%
 		)
 
-		%%~nf.exe 
+		%%~nf.exe > %%~nf_test.txt
 
-		if %errorlevel% neq 0 (
-			echo %%~nf FAILED 
-			goto done
-		) else (
-			echo %%~nf PASSED
-		)
+		set name=%%~nf
+
+		if not ERRORLEVEL 1 goto continue end
+		echo %%~nf FAILED 
+		goto done
+
+		:continue
+		echo %name% PASSED
 	)
 )
 echo.
