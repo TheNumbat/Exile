@@ -16,7 +16,7 @@ set Meta_CompilerFlags=-O2 -MTd -nologo -EHsc -Oi -W4 -Z7 -FC -Femeta.exe -wd410
 set Meta_LinkerFlags=/NODEFAULTLIB:MSVCRT /SUBSYSTEM:console /LIBPATH:w:\deps\clang-c libclang.lib
 
 set Test_CompilerFlags=-O2 -MTd -nologo -EHsc -Oi -W4 -Z7 -FC -Iw:\build\
-set Test_LinkerFlags=/SUBSYSTEM:console opengl32.lib user32.lib gdi32.lib opengl32.lib kernel32.lib
+set Test_LinkerFlags=/SUBSYSTEM:console 
 
 echo ASSET BUILDER 
 echo.
