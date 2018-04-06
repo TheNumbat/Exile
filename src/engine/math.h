@@ -1199,11 +1199,11 @@ m4 operator*(m4 l, m4 r) {
     for(i32 i = 0; i < 4; i++) {
         ret.packed[i] = _mm_add_ps(
         _mm_add_ps(
-            _mm_mul_ps(_mm_set1_ps(l[i][0]), r.packed[0]),
-            _mm_mul_ps(_mm_set1_ps(l[i][1]), r.packed[1])), 
+            _mm_mul_ps(_mm_set1_ps(r[i][0]), l.packed[0]),
+            _mm_mul_ps(_mm_set1_ps(r[i][1]), l.packed[1])), 
        	_mm_add_ps(
-            _mm_mul_ps(_mm_set1_ps(l[i][2]), r.packed[2]),
-            _mm_mul_ps(_mm_set1_ps(l[i][3]), r.packed[3])));
+            _mm_mul_ps(_mm_set1_ps(r[i][2]), l.packed[2]),
+            _mm_mul_ps(_mm_set1_ps(r[i][3]), l.packed[3])));
     }
     return ret;
 }
@@ -1372,7 +1372,6 @@ std::ostream& operator<<(std::ostream& out, colorf r) {
 #endif
 
 #define sqrt _sqrt
-#define abs _abs
 #define abs _abs
 #define round _round
 #define ceil _ceil
