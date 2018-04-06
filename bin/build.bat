@@ -56,10 +56,9 @@ echo.
 	for %%f in (w:\src\engine\test\*.cpp) do (
 	
 		if not exist %%~nf.exe (
-			meta.exe %%f %%~nf_types.cpp
 			cl %Test_CompilerFlags% -Fe%%~nf.exe %%f /link %Test_LinkerFlags%
 
-			%%~nf.exe > %%~nf_test.txt
+			%%~nf.exe > %%~nf.txt
 			if ERRORLEVEL 1 echo %%~nf FAILED && goto done
 			echo %%~nf PASSED
 		)
