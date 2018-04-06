@@ -40,12 +40,7 @@ Working To-Do:
 
 	!~~~~~ FIX BUGS ~~~~~!
 
-	new SIMD-first math lib
-		replace alloc system...need alignment for v4/m4
-	data structures tests
-	possibly make more structural changes [::make, initializers, platform, vulkan]
-
-	library-ize more systems
+	fix arena/pool allocation alignment for math objects (currently everything is using default platform alloc)
 	config format language
 		rewrite metaprogram to use it
 	SDL platform layer
