@@ -50,7 +50,6 @@
 #include "platform/platform_api.h"
 #include "util/fptr.h"
 
-#include "ds/new_alloc.h"
 #include "ds/alloc.h"
 #include "ds/vector.h"
 #include "ds/stack.h"
@@ -96,7 +95,6 @@ static dbg_manager*  global_dbg = null; // global to provide profiling functiona
 #include "threads.cpp"
 #include "engine.cpp"
 
-#include "ds/new_alloc.cpp"
 #include "ds/alloc.cpp"
 #include "ds/string.cpp"
 #include "ds/vector.cpp"

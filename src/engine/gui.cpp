@@ -236,7 +236,7 @@ void gui_manager::end_frame(platform_window* win, ogl_manager* ogl) { PROF
 	}
 	input.scroll = 0;
 
-	render_command_list rcl = render_command_list::make();
+	render_command_list rcl = render_command_list::make(alloc);
 	FORMAP(it, windows) {
 		
 		if(!it->value.background_mesh.empty()) {
@@ -265,7 +265,9 @@ void gui_manager::end_frame(platform_window* win, ogl_manager* ogl) { PROF
 	}
  
 	rcl.proj = ortho(0, (f32)window->w, (f32)window->h, 0, -1, 1);
-	rcl.sort();
+	PUSH_ALLOC(alloc) {
+		rcl.sort();
+	} POP_ALLOC();
 
 	ogl->execute_command_list(&rcl);
 	rcl.destroy();

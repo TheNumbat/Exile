@@ -78,10 +78,6 @@ EXPORT engine* start_up(platform_api* api) {
 
 EXPORT bool main_loop(engine* state) {
 
-	test_allocators();
-	state->log.stop();
-	exit(0);
-
 	BEGIN_FRAME();
 
 	glClearColor(0.8f, 0.8f, 0.8f, 1.0f);
