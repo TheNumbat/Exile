@@ -15,7 +15,7 @@
 #define NO_CONCURRENT_JOBS		// makes queue_job just run the job and wait_job do nothing
 */
 
-// #define RELEASE // turn off everything for a true release build
+#define RELEASE // turn off everything for a true release build
 
 #include "engine/compile.h"
 engine* eng = null;

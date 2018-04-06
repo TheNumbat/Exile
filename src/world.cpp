@@ -97,7 +97,7 @@ CALLBACK void cancel_build(void* param) {
 
 void world::render() { PROF
 
-	render_command_list rcl = render_command_list::make();
+	render_command_list rcl = render_command_list::make(alloc);
 	thread_pool.renew_priorities(check_pirority, this);
 
 	chunk_pos camera = chunk_pos::from_abs(p.camera.pos);

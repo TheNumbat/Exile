@@ -404,7 +404,7 @@ union r2 {
 	ur2 to_u() {return ur2(_round(vec));}
 
 	r2() {}
-	r2(f32 _x, f32 _y, f32 _w, f32 _h) {packed = _mm_set_ps(_x, _y, _w, _h);}
+	r2(f32 _x, f32 _y, f32 _w, f32 _h) {packed = _mm_set_ps(_h, _w, _y, _x);}
 	r2(v2 _xy, v2 _wh) {xy = _xy; wh = _wh;}
 	r2(__m128 p) {packed = p;}
 	r2(r2& r) {*this = r;}
@@ -1115,7 +1115,8 @@ bool operator==(m4 l, m4 r) {
 }
 bool operator==(r2 l, r2 r) {
 	__m128 cmp = _mm_cmpeq_ps(l.packed, r.packed);
-	return !!_mm_testc_ps(cmp, cmp);
+	i32 test = _mm_movemask_ps(cmp);
+	return test == 0x0000000f;
 }
 bool operator==(ur2 l, ur2 r) {
 	return l.x == r.x && l.y == r.y && l.w == r.w && l.h == r.h;
