@@ -10,14 +10,12 @@
 
 i32 global_num_allocs = 0;
 
-#ifdef _WIN32
-
+#ifdef PLATFORM_SDL
+#include "sdl/platform_sdl.cpp"
+#elif defined(_WIN32)
 #include "windows/platform_win32.cpp"
-
 #else
-
-#include "linux/platform_sdl.cpp"
-
+#error Unsupported Platform
 #endif
 
 // here we treat game_state* as void* so this doesn't have to know anything about the game
