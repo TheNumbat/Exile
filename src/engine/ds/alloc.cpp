@@ -17,7 +17,7 @@ void allocator::destroy() { PROF
 	}
 }
 
-CALLBACK void* platform_allocate(u64 bytes, allocator* this_, code_context context) { PROF
+CALLBACK void* platform_allocate(u64 bytes, u64 align, allocator* this_, code_context context) { PROF
 
 	void* mem = global_api->heap_alloc(bytes);
 
@@ -59,7 +59,7 @@ CALLBACK void platform_free(void* mem, u64 sz, allocator* this_, code_context co
 #endif 
 }
 
-CALLBACK void* platform_reallocate(void* mem, u64 sz, u64 bytes, allocator* this_, code_context context) { PROF
+CALLBACK void* platform_reallocate(void* mem, u64 sz, u64 bytes, u64 align, allocator* this_, code_context context) { PROF
 
 	LOG_DEBUG_ASSERT(mem != null);
 
@@ -103,16 +103,19 @@ inline platform_allocator make_platform_allocator(string name, code_context cont
 	return ret;
 }
 
-CALLBACK void* arena_allocate(u64 bytes, allocator* this_, code_context context) { PROF
+CALLBACK void* arena_allocate(u64 bytes, u64 align, allocator* this_, code_context context) { PROF
 		
 	arena_allocator* this__ = (arena_allocator*)this_;
 
 	void* mem = null;
+	
+	u64 pad = align ? mod(this__->used, align) : 0;
+		pad = (pad ? align - pad : 0);
 
-	if(bytes <= this__->size - this__->used) {
+	if(bytes + pad <= this__->size - this__->used) {
 
+		this__->used += pad;
 		mem = (void*)((u8*)this__->memory + this__->used);
-
 		this__->used += bytes;
 	} else {
 
@@ -124,9 +127,9 @@ CALLBACK void* arena_allocate(u64 bytes, allocator* this_, code_context context)
 
 CALLBACK void arena_free(void*, u64, allocator*, code_context context) {}
 
-CALLBACK void* arena_reallocate(void* mem, u64 sz, u64 bytes, allocator* this_, code_context context) { PROF
+CALLBACK void* arena_reallocate(void* mem, u64 sz, u64 bytes, u64 align, allocator* this_, code_context context) { PROF
 
-	void* ret = arena_allocate(bytes, this_, context);
+	void* ret = arena_allocate(bytes, align, this_, context);
 	memcpy(mem, ret, sz);
 	return ret;
 }
@@ -163,13 +166,13 @@ arena_allocator make_arena_allocator(string name, u64 size, allocator* backing, 
 	ret.free_.set(FPTR(arena_free));
 	ret.reallocate_.set(FPTR(arena_reallocate));
 
-	ret.memory = ret.backing->allocate_(size, ret.backing, context);
+	ret.memory = ret.backing->allocate_(size, 0, ret.backing, context);
 	ret.name = string::make_copy(name, &ret);
 
 	return ret;
 }
 
-CALLBACK void* pool_allocate(u64 bytes, allocator* this_, code_context context) {
+CALLBACK void* pool_allocate(u64 bytes, u64 align, allocator* this_, code_context context) {
 
 	pool_allocator* this__ = (pool_allocator*)this_;
 
@@ -180,21 +183,29 @@ CALLBACK void* pool_allocate(u64 bytes, allocator* this_, code_context context) 
 
 	void* mem = null;
 	pool_page* page = this__->current;
-	if(bytes > this__->page_size - page->used) {
 
-		page->next = (pool_page*)this__->backing->allocate_(sizeof(pool_page) + this__->page_size, this__->backing, context);
+	u64 pad = align ? mod(page->used, align) : 0;
+		pad = (pad ? align - pad : 0);
+
+	if(bytes + pad > this__->page_size - page->used) {
+
+		page->next = (pool_page*)this__->backing->allocate_(sizeof(pool_page) + this__->page_size, 0, this__->backing, context);
 		page = this__->current = page->next;
+		
+		pad = align ? mod(page->used, align) : 0;
+		pad = (pad ? align - pad : 0);		
 	}
 
+	page->used += pad;
 	mem = (void*)((u8*)page + sizeof(pool_page) + page->used);
 	page->used += bytes;
 
 	return mem;
 }
 
-CALLBACK void* pool_reallocate(void* mem, u64 sz, u64 bytes, allocator* this_, code_context context) {
+CALLBACK void* pool_reallocate(void* mem, u64 sz, u64 bytes, u64 align, allocator* this_, code_context context) {
 
-	void* ret = pool_allocate(bytes, this_, context);
+	void* ret = pool_allocate(bytes, align, this_, context);
 	memcpy(mem, ret, sz);
 	return ret;
 }
@@ -229,7 +240,7 @@ pool_allocator make_pool_allocator(string name, u64 page_size, allocator* backin
 	ret.free_.set(FPTR(pool_free));
 	ret.reallocate_.set(FPTR(pool_reallocate));
 	
-	ret.head = (pool_page*)ret.backing->allocate_(sizeof(pool_page) + page_size, ret.backing, context);
+	ret.head = (pool_page*)ret.backing->allocate_(sizeof(pool_page) + page_size, 0, ret.backing, context);
 	ret.current = ret.head;
 	ret.name = string::make_copy(name, backing);
 

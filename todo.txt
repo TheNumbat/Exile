@@ -40,7 +40,6 @@ Working To-Do:
 
 	!~~~~~ FIX BUGS ~~~~~!
 
-	fix arena/pool allocation alignment for math objects (currently everything is using default platform alloc)
 	config format language
 		rewrite metaprogram to use it
 	SDL platform layer

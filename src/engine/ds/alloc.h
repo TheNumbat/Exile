@@ -2,9 +2,9 @@
 #pragma once
 
 struct allocator {
-	func_ptr<void*,u64,allocator*,code_context>				allocate_;
-	func_ptr<void*,void*,u64,u64,allocator*,code_context> 	reallocate_;
-	func_ptr<void,void*,u64,allocator*,code_context> 		free_;
+	func_ptr<void*,u64,u64,allocator*,code_context>				allocate_;
+	func_ptr<void*,void*,u64,u64,u64,allocator*,code_context> 	reallocate_;
+	func_ptr<void,void*,u64,allocator*,code_context> 			free_;
 
 	void destroy();
 
@@ -32,7 +32,7 @@ struct allocator {
 #define MAKE_POOL_FROM_CONTEXT(n, size, s) make_pool_allocator(n, size, CURRENT_ALLOC(), s, CONTEXT)
 #define DESTROY_POOL(a) pool_destroy(a, CONTEXT);
 
-#define malloc(sz) 	((CURRENT_ALLOC()->allocate_)(sz, CURRENT_ALLOC(), CONTEXT)) 
+#define malloc(sz) 	((CURRENT_ALLOC()->allocate_)(sz, 0, CURRENT_ALLOC(), CONTEXT)) 
 #define free(m,sz) 	((CURRENT_ALLOC()->free_)((void*)m, sz, CURRENT_ALLOC(), CONTEXT));
 
 #define NEW(T)    (new ((T*)malloc(sizeof(T))) T)
@@ -45,9 +45,9 @@ struct platform_allocator : public allocator {};
 
 platform_allocator make_platform_allocator(string name, code_context context);
 
-CALLBACK void* platform_allocate(u64 bytes, allocator* this_, code_context context);
+CALLBACK void* platform_allocate(u64 bytes, u64 align, allocator* this_, code_context context);
 CALLBACK void  platform_free(void* mem, u64 sz, allocator* this_, code_context context);
-CALLBACK void* platform_reallocate(void* mem, u64 sz, u64 bytes, allocator* this_, code_context context);
+CALLBACK void* platform_reallocate(void* mem, u64 sz, u64 bytes, u64 align, allocator* this_, code_context context);
 
 struct arena_allocator : public allocator {
 	allocator* backing 	= null;
@@ -60,8 +60,8 @@ arena_allocator make_arena_allocator(string name, u64 size, allocator* backing, 
 void arena_destroy(arena_allocator* a, code_context context);
 void arena_reset(arena_allocator* a, code_context context);
 
-CALLBACK void* arena_allocate(u64 bytes, allocator* this_, code_context context);
-CALLBACK void* arena_reallocate(void* mem, u64 sz, u64 bytes, allocator* this_, code_context context); // same as allocate, can't free from arena
+CALLBACK void* arena_allocate(u64 bytes, u64 align, allocator* this_, code_context context);
+CALLBACK void* arena_reallocate(void* mem, u64 sz, u64 bytes, u64 align, allocator* this_, code_context context); // same as allocate, can't free from arena
 CALLBACK void  arena_free(void*, u64, allocator*, code_context); // does nothing
 
 struct pool_page {
@@ -84,8 +84,8 @@ struct pool_allocator : public allocator {
 pool_allocator make_pool_allocator(string name, u64 page_size, allocator* backing, bool suppress, code_context context);
 void pool_destroy(pool_allocator* a, code_context context);
 
-CALLBACK void* pool_allocate(u64 bytes, allocator* this_, code_context context);
-CALLBACK void* pool_reallocate(void* mem, u64 sz, u64 bytes, allocator* this_, code_context context); // same as allocate, can't free from arena
+CALLBACK void* pool_allocate(u64 bytes, u64 align, allocator* this_, code_context context);
+CALLBACK void* pool_reallocate(void* mem, u64 sz, u64 bytes, u64 align, allocator* this_, code_context context); // same as allocate, can't free from arena
 CALLBACK void  pool_free(void*, u64, allocator*, code_context); // does nothing
 
 void _memcpy(void* source, void* dest, u64 size);

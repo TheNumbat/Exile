@@ -318,7 +318,7 @@ void vector<T>::resize(u32 new_capacity) { PROF
 	}
 
 	if(memory) {
-		memory = (T*)alloc->reallocate_(memory, capacity * sizeof(T), new_capacity * sizeof(T), alloc, CONTEXT);
+		memory = (T*)alloc->reallocate_(memory, capacity * sizeof(T), new_capacity * sizeof(T), alignof(T), alloc, CONTEXT);
 
 		i64 added = new_capacity - capacity;
 		if(added > 0) {
@@ -326,7 +326,7 @@ void vector<T>::resize(u32 new_capacity) { PROF
 			new (new_place) T[added]();
 		}
 	} else {
-		memory = (T*)alloc->allocate_(new_capacity * sizeof(T), alloc, CONTEXT);
+		memory = (T*)alloc->allocate_(new_capacity * sizeof(T), alignof(T), alloc, CONTEXT);
 		new (memory) T[new_capacity]();
 	}
 

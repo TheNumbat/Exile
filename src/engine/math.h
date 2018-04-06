@@ -25,6 +25,7 @@ union v2; union uv2; union v3; union iv3; union uv3; union v4; union bv4; union 
 struct color; struct color3; struct colorf;
 
 u32 mod(u32 l, u32 r);
+u64 mod(u64 l, u64 r);
 f32 _sqrt(f32 v);
 f32 _abs(f32 v);
 f64 _abs(f64 v);
@@ -482,6 +483,9 @@ const color BLUE  = color(0, 0, 255, 255);
 // yes most of these are useless... TODO(max): improve on math.h functions
 
 u32 mod(u32 l, u32 r) {
+	return l % r;
+}
+u64 mod(u64 l, u64 r) {
 	return l % r;
 }
 f32 _sqrt(f32 v) {
