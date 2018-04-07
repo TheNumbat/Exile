@@ -6,31 +6,20 @@
 // NOTE(max): adapted from Ginger Bill's public domain C libraries
 // https://github.com/gingerBill/gb/blob/master/gb.h#L2564
 
-typedef size_t    usize;
-typedef ptrdiff_t isize;
-typedef uintptr_t uintptr;
-typedef intptr_t  intptr;
-
 #define FAR
 #define NEAR
-#define APIENTRY FAR __stdcall
-#define WINAPI   __stdcall
-#define WINAPIV  __cdecl
-#define WINCALLBACK __stdcall
-#define MAX_PATH 260
-#define CCHDEVICENAME 32
-#define CCHFORMNAME   32
+#define APIENTRY 		FAR __stdcall
+#define WINAPI   		__stdcall
+#define WINAPIV  		__cdecl
+#define WINCALLBACK 	__stdcall
+#define MAX_PATH 	  	260
+#define CCHDEVICENAME 	32
+#define CCHFORMNAME   	32
 
 typedef unsigned long DWORD;
 typedef int WINBOOL;
-#ifndef XFree86Server
-	#ifndef __OBJC__
-	typedef WINBOOL BOOL;
-	#else
-	#define BOOL WINBOOL
-	#endif
+typedef WINBOOL BOOL;
 typedef unsigned char BYTE;
-#endif
 typedef unsigned short WORD;
 typedef float FLOAT;
 typedef int INT;
@@ -170,7 +159,7 @@ typedef struct _MEMORY_BASIC_INFORMATION {
 	void *BaseAddress;
 	void *AllocationBase;
 	DWORD AllocationProtect;
-	usize RegionSize;
+	size_t RegionSize;
 	DWORD State;
 	DWORD Protect;
 	DWORD Type;
@@ -342,7 +331,7 @@ typedef struct tagMONITORINFO {
 } MONITORINFO;
 
 #define INFINITE 0xffffffffl
-#define INVALID_HANDLE_VALUE ((void *)(intptr)(-1))
+#define INVALID_HANDLE_VALUE ((void *)(intptr_t)(-1))
 
 typedef DWORD WINAPI THREAD_START_ROUTINE(void *parameter);
 
@@ -352,7 +341,7 @@ DLL_IMPORT HANDLE  WINAPI CreateSemaphoreA   (SECURITY_ATTRIBUTES *semaphore_att
                                                  LONG maximum_count, char const *name);
 DLL_IMPORT BOOL    WINAPI ReleaseSemaphore   (HANDLE semaphore, LONG release_count, LONG *previous_count);
 DLL_IMPORT DWORD   WINAPI WaitForSingleObject(HANDLE handle, DWORD milliseconds);
-DLL_IMPORT HANDLE  WINAPI CreateThread       (SECURITY_ATTRIBUTES *semaphore_attributes, usize stack_size,
+DLL_IMPORT HANDLE  WINAPI CreateThread       (SECURITY_ATTRIBUTES *semaphore_attributes, size_t stack_size,
                                                  THREAD_START_ROUTINE *start_address, void *parameter,
                                                  DWORD creation_flags, DWORD *thread_id);
 DLL_IMPORT DWORD   WINAPI GetThreadId        (HANDLE handle);
@@ -386,9 +375,9 @@ DLL_IMPORT HANDLE    WINAPI GetCurrentThread(void);
 #define MEM_LARGE_PAGES  0x20000000
 #define MEM_4MB_PAGES    0x80000000
 
-DLL_IMPORT void * WINAPI VirtualAlloc (void *addr, usize size, DWORD allocation_type, DWORD protect);
-DLL_IMPORT usize  WINAPI VirtualQuery (void const *address, MEMORY_BASIC_INFORMATION *buffer, usize length);
-DLL_IMPORT BOOL   WINAPI VirtualFree  (void *address, usize size, DWORD free_type);
+DLL_IMPORT void * WINAPI VirtualAlloc (void *addr, size_t size, DWORD allocation_type, DWORD protect);
+DLL_IMPORT size_t  WINAPI VirtualQuery (void const *address, MEMORY_BASIC_INFORMATION *buffer, size_t length);
+DLL_IMPORT BOOL   WINAPI VirtualFree  (void *address, size_t size, DWORD free_type);
 DLL_IMPORT void   WINAPI GetSystemInfo(SYSTEM_INFO *system_info);
 
 #ifndef VK_UNKNOWN
@@ -798,7 +787,7 @@ DLL_IMPORT BOOL     WINAPI ShowWindow(HWND hWnd, int nCmdShow);
 
 DLL_IMPORT void *  WINAPI GlobalLock(HGLOBAL hMem);
 DLL_IMPORT BOOL    WINAPI GlobalUnlock(HGLOBAL hMem);
-DLL_IMPORT HGLOBAL WINAPI GlobalAlloc(UINT uFlags, usize dwBytes);
+DLL_IMPORT HGLOBAL WINAPI GlobalAlloc(UINT uFlags, size_t dwBytes);
 DLL_IMPORT HANDLE  WINAPI GetClipboardData(UINT uFormat);
 DLL_IMPORT BOOL    WINAPI IsClipboardFormatAvailable(UINT format);
 DLL_IMPORT BOOL    WINAPI OpenClipboard(HWND hWndNewOwner);

@@ -643,8 +643,12 @@ i32 main(i32 argc, char** argv) {
 	}
 	bool SDL = (argc > 2) ? string(argv[2]) == "SDL" : false;
 
+	char* args[1] = {""};
+	if(SDL)
+		args[0] = "-DPLATFORM_SDL";
+
 	auto index = clang_createIndex(0, 0);
-	auto unit = clang_parseTranslationUnit(index, argv[1], nullptr, 0, nullptr, 0, CXTranslationUnit_DetailedPreprocessingRecord | CXTranslationUnit_KeepGoing);
+	auto unit = clang_parseTranslationUnit(index, argv[1], args, 1, nullptr, 0, CXTranslationUnit_DetailedPreprocessingRecord | CXTranslationUnit_KeepGoing);
 
 	if (unit == nullptr) {
 		cout << "Unable to parse translation unit." << endl;
@@ -652,36 +656,16 @@ i32 main(i32 argc, char** argv) {
 	}
 
 	auto cursor = clang_getTranslationUnitCursor(unit);
-	if(SDL) {
-		clang_visitChildren(cursor,
-		[](CXCursor c, CXCursor parent, CXClientData client_data) {
+	clang_visitChildren(cursor,
+	[](CXCursor c, CXCursor parent, CXClientData client_data) {
 
-			if(CXFile file = clang_getIncludedFile(c)) {
-				string incl = str(clang_getFileName(file));
-				if(incl == "w:\\src/engine/platform/windows/platform_win32_api.h") {
-					return CXChildVisit_Continue;
-				}
-			}
+		if(clang_Location_isInSystemHeader(clang_getCursorLocation(c))) {
+			return CXChildVisit_Continue;
+		}
 
-			if(clang_Location_isInSystemHeader(clang_getCursorLocation(c))) {
-				return CXChildVisit_Continue;
-			}
-
-			do_parse(c);
-			return CXChildVisit_Recurse;
-		}, nullptr);
-	} else {
-		clang_visitChildren(cursor,
-		[](CXCursor c, CXCursor parent, CXClientData client_data) {
-
-			if(clang_Location_isInSystemHeader(clang_getCursorLocation(c))) {
-				return CXChildVisit_Continue;
-			}
-
-			do_parse(c);
-			return CXChildVisit_Recurse;
-		}, nullptr);
-	}
+		do_parse(c);
+		return CXChildVisit_Recurse;
+	}, nullptr);
 
 	ofstream fout("meta_types.cpp");
 	output_pre(fout);
