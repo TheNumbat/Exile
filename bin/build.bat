@@ -6,7 +6,7 @@ pushd w:\build
 if "%2"=="SDL" (
 	set SDL_COMP=-DPLATFORM_SDL -Iw:\deps\
 	set SDL_LINK=/LIBPATH:w:\deps\SDL2\lib\ SDl2.lib SDL2main.lib
-	set SDL_META=SDL
+	set SDL_META=-DPLATFORM_SDL
 )
 
 set Game_CompilerFlags=%1 %SDL_COMP% -MTd -nologo -fp:fast -GR- -EHa- -Oi -W4 -Z7 -FC -Fegame.dll -LD -wd4100 -wd4201 -Iw:\build\ -D_HAS_EXCEPTIONS=0 -DCHECKS -DPROFILE

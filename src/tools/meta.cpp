@@ -12,7 +12,7 @@
 #include <iterator>
 #include <cctype>
 #include <locale>
-#include <STRING>
+#include <string>
 
 #include "../engine/util/basic_types.h"
 
@@ -641,14 +641,9 @@ i32 main(i32 argc, char** argv) {
 		cout << "Incorrect usage." << endl;
 		return -1;
 	}
-	bool SDL = (argc > 2) ? string(argv[2]) == "SDL" : false;
-
-	char* args[1] = {""};
-	if(SDL)
-		args[0] = "-DPLATFORM_SDL";
 
 	auto index = clang_createIndex(0, 0);
-	auto unit = clang_parseTranslationUnit(index, argv[1], args, 1, nullptr, 0, CXTranslationUnit_DetailedPreprocessingRecord | CXTranslationUnit_KeepGoing);
+	auto unit = clang_parseTranslationUnit(index, argv[1], argv + 2, argc - 2, nullptr, 0, CXTranslationUnit_DetailedPreprocessingRecord | CXTranslationUnit_KeepGoing);
 
 	if (unit == nullptr) {
 		cout << "Unable to parse translation unit." << endl;
