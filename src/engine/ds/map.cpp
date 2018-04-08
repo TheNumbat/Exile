@@ -105,7 +105,8 @@ void map<K,V,hash_func>::trim_rehash() { PROF
 
 	vector<map_element<K,V>> temp = vector<map_element<K,V>>::make_copy(contents);
 
-	contents.resize(size);
+	u32 new_capacity = last_pow_two(contents.capacity) == contents.capacity ? contents.capacity : next_pow_two(contents.capacity);
+	contents.resize(new_capacity);
 
 	size = 0;
 	max_probe = 0;
