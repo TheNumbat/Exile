@@ -61,10 +61,10 @@ struct player {
 
 	f32 speed = 5.0f;
 	v3  velocity;
-	platform_perfcount last = 0;
+	u64 last = 0;
 
 	void init();
-	void update(platform_perfcount now);
+	void update(u64 now);
 };
 
 struct world {
@@ -88,7 +88,7 @@ struct world {
 	void init(asset_store* store, allocator* a);
 	void destroy();
 
-	void update(platform_perfcount now);
+	void update(u64 now);
 	void render();
 	void populate_local_area();
 };

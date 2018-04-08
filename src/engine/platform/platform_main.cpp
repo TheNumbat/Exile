@@ -8,7 +8,9 @@
 #include "platform_strings.cpp"
 #include "platform_api.h"
 
+#ifdef TEST_NET_ZERO_ALLOCS
 i32 global_num_allocs = 0;
+#endif
 
 #ifdef PLATFORM_SDL
 #include "sdl/platform_sdl.cpp"
@@ -44,7 +46,9 @@ bool load_lib();
 bool load_funcs();
 bool try_reload();
 
-int main() {
+i32 main(i32 argc, char** argv) {
+
+	platform_test_api();
 
 	api = platform_build_api();
 	api.your_dll = &game_dll;
@@ -55,7 +59,7 @@ int main() {
 		return 1;
 	}
 
-	int idx = string_last_slash(exe_path);
+	i32 idx = string_last_slash(exe_path);
 	exe_folder 	  = make_substring(exe_path, 0, idx + 1, api.heap_alloc);
 	dll_path 	  = make_cat_string(exe_folder, string_literal("game.dll"), api.heap_alloc);
 	temp_dll_path = make_cat_string(exe_folder, string_literal("game_temp.dll"), api.heap_alloc);

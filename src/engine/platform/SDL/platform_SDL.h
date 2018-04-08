@@ -1,15 +1,13 @@
 
 #pragma once
 
-platform_api   platform_build_api();
-
 bool sdl_window_focused(platform_window* win);
 void sdl_capture_mouse(platform_window* win);
 void sdl_release_mouse();
 platform_error sdl_set_cursor_pos(platform_window* win, i32 x, i32 y);
 
-platform_perfcount sdl_get_perfcount();
-platform_perfcount sdl_get_perfcount_freq();
+u64 sdl_get_perfcount();
+u64 sdl_get_perfcount_freq();
 
 bool sdl_is_debugging();
 void sdl_debug_break();
@@ -46,9 +44,11 @@ platform_error sdl_get_stdout_as_file(platform_file* file);
 platform_error sdl_write_stdout(string str);
 
 // if this fails, we're having big problems
-void*	sdl_heap_alloc(u64 bytes); // initializes memory to zero (important! the data structures assume this!)
+void*	sdl_heap_alloc(u64 bytes); 
 void*	sdl_heap_realloc(void* mem, u64 bytes);
 void	sdl_heap_free(void* mem);
+void*	sdl_heap_alloc_net(u64 bytes);
+void	sdl_heap_free_net(void* mem);
 
 // allocates a string
 platform_error sdl_get_bin_path(string* path);

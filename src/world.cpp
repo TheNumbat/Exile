@@ -28,7 +28,7 @@ void world::destroy() { PROF
 	chunks.destroy();
 }
 
-void world::update(platform_perfcount now) { PROF
+void world::update(u64 now) { PROF
 
 	gui_begin("Exile"_, r2(50.0f, 50.0f, 350.0f, 100.0f));
 	gui_int_slider(string::makef("view: % "_, view_distance), &view_distance, 0, 32);
@@ -166,9 +166,9 @@ void player::init() { PROF
 	camera.reset();
 }
 
-void player::update(platform_perfcount now) { PROF
+void player::update(u64 now) { PROF
 
-	platform_perfcount pdt = now - last;
+	u64 pdt = now - last;
 	f32 dt = (f32)pdt / (f32)eng->platform->get_perfcount_freq();
 
 	if(eng->platform->window_focused(&eng->window)) {

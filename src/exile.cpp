@@ -26,7 +26,7 @@ void exile::init() { PROF
 
 void exile::update() { PROF
 
-	platform_perfcount now = eng->platform->get_perfcount();
+	u64 now = eng->platform->get_perfcount();
 
 	w.update(now);
 

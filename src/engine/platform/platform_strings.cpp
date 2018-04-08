@@ -11,11 +11,15 @@ string make_string_from_c_str(char* c_str, void* (*allocator)(u64 bytes)) {
 	ret.cap = len ;
 	ret.len = len ;
 
-	for(u32 i = 0; i <= len; i++) { // will copy null terminator
+	for(u32 i = 0; i < len; i++) { // will copy null terminator
 		ret.c_str[i] = c_str[i];
 	}
 
 	return ret;
+}
+
+string str(const char* c_str) {
+	return string_from_c_str((char*)c_str);
 }
 
 string string_from_c_str(char* c_str) {

@@ -24,7 +24,6 @@ struct platform_thread;
 struct platform_semaphore;
 struct platform_mutex;
 struct platform_file;
-typedef u64 platform_perfcount;
 typedef u32 platform_thread_id;
 
 struct platform_error {
@@ -35,9 +34,7 @@ struct platform_error {
 
 enum class platform_file_open_op : u8 {
 	existing,
-	existing_or_create,
-	create,
-	clear_existing,
+	cleared
 };
 
 enum class _platform_semaphore_state : u8 {
@@ -286,8 +283,8 @@ struct platform_api {
 	void 			(*capture_mouse)(platform_window* win)																= null;
 	void 			(*release_mouse)()																					= null;
 	platform_error 	(*set_cursor_pos)(platform_window* win, i32 x, i32 y)												= null;
-	platform_perfcount (*get_perfcount)()																				= null;
-	platform_perfcount (*get_perfcount_freq)()																			= null;
+	u64 (*get_perfcount)()																				= null;
+	u64 (*get_perfcount_freq)()																			= null;
 	bool 			(*is_debugging)()																					= null;
 	void 			(*debug_break)()																					= null;
 	void 			(*set_cursor)(cursors c)																			= null;
@@ -341,6 +338,9 @@ struct platform_api {
 	void 			(*get_timef)(string fmt, string* out)																= null;
 	u32			   	(*file_size)(platform_file* file)																	= null;
 };
+
+platform_api platform_build_api();
+void platform_test_api();
 
 #include "gl.h"
 

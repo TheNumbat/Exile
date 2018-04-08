@@ -50,11 +50,11 @@ enum class dbg_msg_type : u8 {
 };
 
 struct dbg_msg_begin_frame {
-	platform_perfcount perf = 0;
+	u64 perf = 0;
 };
 
 struct dbg_msg_end_frame {
-	platform_perfcount perf = 0;
+	u64 perf = 0;
 };
 
 struct dbg_msg_allocate {
@@ -134,7 +134,7 @@ struct alloc_frame_profile {
 struct frame_profile {
 
 	clock clock_start = 0, clock_end = 0;
-	platform_perfcount perf_start = 0, perf_end = 0;
+	u64 perf_start = 0, perf_end = 0;
 	vector<profile_node*> heads;
 	profile_node* current = null;
 
@@ -145,7 +145,7 @@ struct frame_profile {
 
 	bool show_prof = true, show_allocs = true;
 
-	void setup(string name, allocator* alloc, clock time, platform_perfcount perf, u32 num);
+	void setup(string name, allocator* alloc, clock time, u64 perf, u32 num);
 	void destroy();
 };
 

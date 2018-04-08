@@ -32,7 +32,7 @@ EXPORT engine* start_up(platform_api* api) {
 
 	platform_file stdout_file, log_all_file;
 	CHECKED(get_stdout_as_file, &stdout_file);
-	CHECKED(create_file, &log_all_file, "log_all.html"_, platform_file_open_op::create);
+	CHECKED(create_file, &log_all_file, "log_all.html"_, platform_file_open_op::cleared);
 	state->log.add_file(log_all_file, log_level::alloc, log_out_type::html);
 	state->log.add_file(stdout_file, log_level::debug, log_out_type::plaintext, true);
 

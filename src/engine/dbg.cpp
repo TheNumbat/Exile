@@ -300,7 +300,7 @@ void dbg_manager::register_thread(u32 frames) { PROF
 	global_api->release_mutex(&stats_map_mut);
 }
 
-void frame_profile::setup(string name, allocator* alloc, clock time, platform_perfcount p, u32 num) { PROF
+void frame_profile::setup(string name, allocator* alloc, clock time, u64 p, u32 num) { PROF
 
 	pool = MAKE_POOL(name, KILOBYTES(8), alloc, false);
 	heads = vector<profile_node*>::make(2, &pool);
@@ -347,7 +347,7 @@ void dbg_manager::collate_alloc_profile() { PROF
 void dbg_manager::collate_thread_profile() { PROF
 
 	bool got_a_frame = false;
-	platform_perfcount frame_perf_start = 0;
+	u64 frame_perf_start = 0;
 
 	global_api->aquire_mutex(&stats_map_mut);
 	thread_profile* thread = *thread_stats.get(global_api->this_thread_id());

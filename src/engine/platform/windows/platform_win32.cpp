@@ -13,6 +13,10 @@ wglSwapIntervalEXT_t 			wglSwapIntervalEXT;
 void (*global_enqueue)(void* queue_param, platform_event evt) = null;
 void* global_enqueue_param = null;
 
+void platform_test_api() {
+
+}
+
 platform_api platform_build_api() {
 
 	platform_api ret;
@@ -136,16 +140,16 @@ void win32_release_mouse() {
 	ShowCursor(TRUE);
 }
 
-platform_perfcount win32_get_perfcount() {
+u64 win32_get_perfcount() {
 
-	platform_perfcount ret;
+	u64 ret;
 	QueryPerformanceCounter((LARGE_INTEGER*)&ret);
 	return ret;
 }
 
-platform_perfcount win32_get_perfcount_freq() {
+u64 win32_get_perfcount_freq() {
 
-	platform_perfcount ret;
+	u64 ret;
 	QueryPerformanceFrequency((LARGE_INTEGER*)&ret);
 	return ret;
 }
@@ -313,14 +317,8 @@ platform_error win32_create_file(platform_file* file, string path, platform_file
 		case platform_file_open_op::existing:
 		creation = OPEN_EXISTING;
 		break;
-		case platform_file_open_op::existing_or_create:
-		creation = OPEN_ALWAYS;
-		break;
-		case platform_file_open_op::create:
+		case platform_file_open_op::cleared:
 		creation = CREATE_ALWAYS;
-		break;
-		case platform_file_open_op::clear_existing:
-		creation = TRUNCATE_EXISTING;
 		break;
 		default:
 		ret.good = false;

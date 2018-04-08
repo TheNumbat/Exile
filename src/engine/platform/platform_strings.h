@@ -9,6 +9,7 @@ struct string {
 
 string make_string_from_c_str(char* c_str, void* (*allocator)(u64 bytes));
 string string_from_c_str(char* c_str);
+string str(const char* c_str);
 void   free_string(string s, void (*platform_heap_free)(void* mem));
 string make_string(u32 cap, void* (*allocator)(u64 bytes));
 string make_copy_string(string src, void* (*allocator)(u64 bytes));
