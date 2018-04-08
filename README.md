@@ -10,6 +10,8 @@ Gameplay goals:
    - Smooth multiplayer and efficient servers
    - Flexible &amp; powerful modding support
 
+The following needs to be updated.
+
 ### Tools
 - Engine & Game:
   - C-like C++: C with member functions, function/operator overloading, and some templates (no RAII, no exceptions, no polymorphism, no STL, extremely minimal inheritance)
@@ -92,3 +94,6 @@ Tons more is planned!
  - Game
    - Engine testing
    - LOTs to add here
+
+### Screenshots
+![shot1](https://i.imgur.com/OjoIbKH.png)
