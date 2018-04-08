@@ -103,9 +103,9 @@ void map<K,V,hash_func>::grow_rehash() { PROF
 template<typename K, typename V, u32(*hash_func)(K) = hash> 
 void map<K,V,hash_func>::trim_rehash() { PROF
 
-	vector<map_element<K,V>> temp = make_vector_copy(contents);
+	vector<map_element<K,V>> temp = vector<map_element<K,V>>::make_copy(contents);
 
-	contents.resize(size, false);
+	contents.resize(size);
 
 	size = 0;
 	max_probe = 0;
@@ -116,7 +116,7 @@ void map<K,V,hash_func>::trim_rehash() { PROF
 		}
 	}
 
-	destroy_vector(&temp);
+	temp.destroy();
 }
 
 template<typename K, typename V, u32(*hash_func)(K) = hash>
