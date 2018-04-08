@@ -1,41 +1,4 @@
 
-Large-Scale Improvements | Changes for Future Projects
-	less templates, please. But we do need them for data structures...
-	rewrite metaprogram for robustness, possibly as a library/outputting a data format
-		don't output through pointers? maybe
-	don't bother with initialized values/constructors, require all allocated memory zero-initialized
-	don't use ::make pattern so much, use .init for not straight POD types
-	less callbacks? good, but also not really, they're quite useful. I wish closures didn't need STL and they didn't heap allocate
-	probably don't use the futures pattern for the thread pool, go back to event loop
-	platform layer can be more elegant
-	asset store can be more meta file + data files for hot/cold loading etc. Not sure if necessary though
-	use Vulkan
-
-[[[[[[UPDATE THIS]]]]]]
-features so far:
-	data structures: array, hash map (robin hood open addressing), queue, stack, vector, string, heap
-	allocation context system + arena allocators, joint allocation, etc.
-	asset processing & loading: images, fonts, font atlasing
-	event based input system
-	metaprogramming: context, call stack, type reflection info, any-type printf
-	flexible IMGUI system 
-	threaded extensible logging system
-	vector/matrix math
-	opengl rendering system
-	windows platform layer
-		linux platform layer soon...
-	job based thread pool async system, event or callback driven
-[[[[[[[[[]]]]]]]]]
-
-Everything not by me:
-	#include <stdarg.h>
-	#include <stdint.h>
-	#include <float.h>
-	#include <new>
-	#include <cmath>
-	#include <typeinfo>
-	#include <xmmintrin.h>/<intrin.h>
-
 Working To-Do:
 
 	!~~~~~ FIX BUGS ~~~~~!
@@ -65,6 +28,27 @@ Bugs:
 		asset reload leaks memory
 		actually the asset pack reload is kind of broken in general - RESTRUCTURE
 			textures need to be updated on the GPU
+
+Everything not by me:
+	#include <stdarg.h>
+	#include <stdint.h>
+	#include <float.h>
+	#include <new>
+	#include <cmath>
+	#include <typeinfo>
+	#include <xmmintrin.h>/<intrin.h>
+
+Large-Scale Improvements | Changes for Future Projects
+	less templates, please. But we do need them for data structures...
+	rewrite metaprogram for robustness, possibly as a library/outputting a data format
+		don't output through pointers? maybe
+	don't bother with initialized values/constructors, require all allocated memory zero-initialized
+	don't use ::make pattern so much, use .init for not straight POD types
+	less callbacks? good, but also not really, they're quite useful. I wish closures didn't need STL and they didn't heap allocate
+	probably don't use the futures pattern for the thread pool, go back to event loop
+	platform layer can be more elegant
+	asset store can be more meta file + data files for hot/cold loading etc. Not sure if necessary though
+	use Vulkan
 
 Overall To-Do List:
 
@@ -102,60 +86,43 @@ Overall To-Do List:
 			dequeue for work-stealing
 			vector
 			map
-		Config file format, loading/writing
-			GUI style
-			Assets
 
 	allocators
 		free list (one-size pool re-using arenas)
-		alignment - pool / arena is never aligned
-		ideal - no allocate/free per frame
-
-	async
-		better integration with event system https://www.youtube.com/watch?v=gFFqYLgPOWI
-		better job chaining
-		pause/resume job? ~closures~ how do we do this when job != thread?
-
-	uncategorized
-		SIMD & intrinsic math (vectorized functions, vector/mat math, noise & randomness)
-			try to switch v3/v4/m4 to __m128 - how can we minimize transitions between __m128 / f32?
+		alignment is not respected in default heap_alloc 
 		stack allocations (_malloca? can't easily platform-abstract this...) where possible
 
+	async
+		pause/resume job? ~closures~ how do we do this when job != thread?
+
 	meta
-		serialization/deserialization
+		config language: serialization/deserialization
 			deserialize to type vs deserialize to generic JSON like object [tagged/no tagged]
 			data versioning
-		config file format
 		printf
 			use string builder?
 			human readable {} printing (with newlines)
 			increase speed; recursive calls are quite slow (...might not be able to get rid of the recursion, though)
-		do we want to do a subtype dispatcher? https://youtu.be/lCtALewoFjc?t=1h20m16s
 		support loading/writing type table for release (i.e. don't build on startup)
 
 	debug
 		re-enable arena/pool messages?
-		find a way to check net allocations in debug manager?	
 		stats/options 
 			apply meta-types
 		profiler
 			graphs
-			Allocation / sync profiling
-		display - hierarchal, per time, etc. See Code Modification Jai Demo
-		Interesting - https://github.com/Srekel/the-debuginator/
-		Do we want to use CaptureStackBackTrace instead of keeping the call stack ourself? Probably...
+			sync profiling
+			more display modes (sort recursively, etc.)
+		Do we want to use CaptureStackBackTrace instead of keeping the call stack ourself? Maybe...
 
 	log
-		can we remove allocation on message send?
-			pool allocator/free list?
 		colorful console output
 		keep & output statistics
 
 	UI
 		arbitrary render commands per window - different fonts, user textures
 		fonts
-			just pack the TTF and use stb_tt to asynchronously cache correctly sized fonts
-			when they're needed. 
+			just pack the TTF and use stb_tt to asynchronously cache correctly sized fonts when they're needed. 
 				font_cache
 			Don't store font info in window - have text meshes hold font name/size/style
 		widgets
@@ -167,18 +134,21 @@ Overall To-Do List:
 			image widgets
 			texture arrays
 			lots of other input types (float, text, check-box, key, etc.)
-		Debug UI window
-			swap between levels
+		Debug Console
+			swap between verbosity levels
 			tooltip call stack / file:line
-			console + commands (Lua API?)
-		Subl_remote_open for profiler & logging
+			commands (Lua API?)
+		subl_remote_open for profiler & logging
+
+	fonts
+		color/format specifications in string?
+		extra kerning pairs from stb_tt
+		move font stuff into new file - sizing, etc.
 
 	asset
-		Can we just define mods as asset packs?
-			Yes if we include logic 
-		call asset.exe to re/build (do path stuff, platform_exec_cmd)
+		define mods as asset packs
 		auto-reload asset stores
-		asset manager (general allocator?)
+			call asset.exe to re/build (do path stuff, platform_exec_cmd)
 		more types of assets: 
 			Mod Definitions
 			Lua scripts
@@ -196,31 +166,15 @@ Overall To-Do List:
 			debugging LuaJIT
 			dynamic reload
 
-	fonts
-		color/format specifications in string?
-		extra kerning pairs from stb_tt
-		Move font stuff into new file - sizing, etc.
-
 	platform
 		assure LPARAM/WPARAM size based on 32/64 bit
 		Keep window updating during resize/move
-			maybe not, this is a pain
-		async
-			File IO
-			Networking - cURL? WinSock? TCP
-		Experiment with allocation systems
-			learn more about virtual memory
-				HeapAlloc/VirtualAlloc
-			TLSF (for arena-general allocations?)
-			dlmalloc, jemalloc, ptmalloc2, tcmalloc, nedmalloc
-				http://blog.reverberate.org/2009/02/one-malloc-to-rule-them-all.html
-				Definitely try je & tc
+		async File IO
+		Networking - cURL? WinSock? TCP
+		Virtually allocate large block of address space on startup and use jemalloc(eg) for general allocations
 		wgl extension testing/loading
-			OpenGL version testing
-		file change watcher/callback system - maybe?
-			see JBlow catalogs
+		file change watcher/callback system - maybe? see JBlow catalogs
 		SDL platform layer
-			linux platform layer
 
 	OpenGl
 		Shaders
@@ -232,18 +186,14 @@ Overall To-Do List:
 			glNamed operations
 			glMapBuffer?
 			command lists -> translate from mine
-		3D
-			models & animation
-		rename ogl stuff to "renderer" to facilitate different backends
-		improve z-fighting as render distance increases
-			http://outerra.blogspot.com/2012/11/maximizing-depth-buffer-range-and.html
-		animation - skeletal and procedural
+		3D models & procedural animation
+			skeletal animation
 
 	chunks
-		LOD?
+		LOD
 		storage representation (compression?)
 		world storage (3D chunks?)
-			paging to disk - serialization, etc.
+		paging to disk - serialization, etc.
 
-	game-play
-		lots to put here...will do eventually	
+	gameplay
+		this will be filled out eventually
