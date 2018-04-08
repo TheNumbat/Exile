@@ -13,6 +13,10 @@ void* global_enqueue_param = null;
 
 void platform_test_api() {
 
+#define CHECK_ERR if(!err.good) {printf("ERROR: %s", err.error_message.c_str); exit(1);}
+
+	platform_error err;
+
 	puts("Hello World!");
 
 	printf("log cpus: %d\n", sdl_get_num_cpus());
@@ -28,7 +32,8 @@ void platform_test_api() {
 
 	printf("count: %d\n", global_num_allocs);
 	string path;
-	sdl_get_bin_path(&path);
+	err = sdl_get_bin_path(&path);
+	CHECK_ERR
 	printf("count: %d\n", global_num_allocs);
 	puts(path.c_str);
 #ifdef TEST_NET_ZERO_ALLOCS
@@ -37,6 +42,14 @@ void platform_test_api() {
 	free_string(path, sdl_heap_free);
 #endif
 	printf("count: %d\n", global_num_allocs);
+
+	platform_file file;
+	err = sdl_create_file(&file, str("test.txt"), platform_file_open_op::cleared);
+	CHECK_ERR
+	err = sdl_write_file(&file, "Hello World!\n", 14);
+	CHECK_ERR
+	err = sdl_close_file(&file);
+	CHECK_ERR
 
 	fflush(stdout);
 }
@@ -324,10 +337,10 @@ platform_error sdl_create_file(platform_file* file, string path, platform_file_o
 
 	switch(mode) {
 		case platform_file_open_op::existing:
-		creation = "rb+";
+		creation = "r+";
 		break;
 		case platform_file_open_op::cleared:
-		creation = "wb+";
+		creation = "w+";
 		break;
 		default:
 		ret.good = false;
@@ -351,7 +364,13 @@ platform_error sdl_close_file(platform_file* file) {
 
 	platform_error ret;
 
-	UNIMPLEMENTED;
+	if(SDL_RWclose(file->ops)) {
+		ret.good = false;
+		ret.error_message = str(SDL_GetError());
+	}
+
+	file->ops = null;
+
 	return ret;
 }
 
@@ -359,7 +378,11 @@ platform_error sdl_write_file(platform_file* file, void* mem, u32 bytes) {
 
 	platform_error ret;
 
-	UNIMPLEMENTED;
+	if(SDL_RWwrite(file->ops, mem, 1, bytes) < bytes) {
+		ret.good = false;
+		ret.error_message = str(SDL_GetError());
+	}
+
 	return ret;
 }
 

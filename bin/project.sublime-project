@@ -12,24 +12,39 @@
     "build_systems":
     [
         {
-            "shell_cmd": "build",
+            "shell_cmd": "build -O2",
             "file_regex": "^[.\\\\/]*([a-z]?:?[\\w.\\\\/]+)[(:]([0-9]+)[):]([0-9]+)?:?(.*)$",
             "variants":
             [
                 {
-                    "name": "Debug",
-                    "shell_cmd": "dev"
-                },
-                {
-                    "name": "Debug",
+                    "name": "Run",
                     "shell_cmd": "run",
                     "encoding": "UTF-8"
                 },
                 {
-                    "name": "Release",
-                    "shell_cmd": "build release",
+                    "name": "Clean Build",
+                    "shell_cmd": "clean && build -O2",
                     "file_regex": "^[.\\\\/]*([a-z]?:?[\\w.\\\\/]+)[(:]([0-9]+)[):]([0-9]+)?:?(.*)$"
-                }
+                },
+                {
+                    "name": "Debug",
+                    "shell_cmd": "build -Od",
+                    "file_regex": "^[.\\\\/]*([a-z]?:?[\\w.\\\\/]+)[(:]([0-9]+)[):]([0-9]+)?:?(.*)$"
+                },
+                {
+                    "name": "Dev",
+                    "shell_cmd": "dev"
+                },
+                {
+                    "name": "Build SDL",
+                    "shell_cmd": "build -O2 SDL",
+                    "file_regex": "^[.\\\\/]*([a-z]?:?[\\w.\\\\/]+)[(:]([0-9]+)[):]([0-9]+)?:?(.*)$"
+                },
+                {
+                    "name": "Clean Build SDL",
+                    "shell_cmd": "clean && build -O2 SDL",
+                    "file_regex": "^[.\\\\/]*([a-z]?:?[\\w.\\\\/]+)[(:]([0-9]+)[):]([0-9]+)?:?(.*)$"
+                },
             ]
         }
     ]
