@@ -1,6 +1,5 @@
 
 #include <SDL2/SDL.h>
-#include <sys/types.h>
 #include <sys/stat.h>
 #ifdef WIN32
 #define stat _stat
@@ -17,6 +16,7 @@ struct platform_window {
 
 	// Opaque block, do not use outside of platform code
 	SDL_Window* window = null;
+	SDL_GLContext gl_context = {};
 };
 
 struct platform_dll {

@@ -56,8 +56,6 @@ platform_error sdl_get_bin_path(string* path);
 platform_error     sdl_create_thread(platform_thread* thread, i32 (*proc)(void*), void* param, bool start_suspended);
 platform_error	   sdl_destroy_thread(platform_thread* thread);
 platform_thread_id sdl_this_thread_id();
-platform_error	   sdl_terminate_thread(platform_thread* thread, i32 exit_code);
-void 	 		   sdl_exit_this_thread(i32 exit_code);
 void			   sdl_thread_sleep(i32 ms);
 i32  			   sdl_get_num_cpus();
 i32  			   sdl_get_phys_cpus();
@@ -76,7 +74,5 @@ void sdl_aquire_mutex(platform_mutex* mut);
 void sdl_release_mutex(platform_mutex* mut);
 
 // allocates a string
-string sdl_make_timef(string fmt);
-// takes a preallocated string, assumes enough space
-void   sdl_get_timef(string fmt, string* out);
+string sdl_time_string();
 

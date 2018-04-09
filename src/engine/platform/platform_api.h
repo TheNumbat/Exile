@@ -311,8 +311,6 @@ struct platform_api {
 	platform_error 	(*get_bin_path)(string* path) /* heap_allocs a string */											= null;
 	platform_error 	(*create_thread)(platform_thread* thread, i32 (*proc)(void*), void* param, bool start_suspended)	= null;
 	platform_thread_id (*this_thread_id)()																				= null;
-	platform_error 	(*terminate_thread)(platform_thread* thread, i32 exit_code)											= null;
-	void 		   	(*exit_this_thread)(i32 exit_code)																	= null;
 	void		   	(*thread_sleep)(i32 ms)																				= null;
 	u64 			(*atomic_exchange)(u64* dest, u64 val)																= null;
 	platform_error 	(*destroy_thread)(platform_thread* thread)															= null;
@@ -335,7 +333,7 @@ struct platform_api {
 	platform_error 	(*get_stdout_as_file)(platform_file* file)															= null;
 	platform_error 	(*write_stdout)(string str)																			= null;
 	string 			(*make_timef)(string fmt)																			= null;
-	void 			(*get_timef)(string fmt, string* out)																= null;
+	string 			(*time_string)()																					= null;
 	u32			   	(*file_size)(platform_file* file)																	= null;
 };
 

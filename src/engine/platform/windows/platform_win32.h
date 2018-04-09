@@ -59,8 +59,6 @@ platform_error win32_get_bin_path(string* path);
 platform_error     win32_create_thread(platform_thread* thread, i32 (*proc)(void*), void* param, bool start_suspended);
 platform_error	   win32_destroy_thread(platform_thread* thread);
 platform_thread_id win32_this_thread_id();
-platform_error	   win32_terminate_thread(platform_thread* thread, i32 exit_code);
-void 	 		   win32_exit_this_thread(i32 exit_code);
 void			   win32_thread_sleep(i32 ms);
 i32  			   win32_get_phys_cpus();
 i32  			   win32_get_num_cpus();
@@ -79,7 +77,5 @@ void win32_aquire_mutex(platform_mutex* mut);
 void win32_release_mutex(platform_mutex* mut);
 
 // allocates a string
-string win32_make_timef(string fmt);
-// takes a preallocated string, assumes enough space
-void   win32_get_timef(string fmt, string* out);
+string win32_time_string();
 

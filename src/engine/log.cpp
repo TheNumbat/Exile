@@ -242,14 +242,6 @@ void log_manager::msg(string msg, log_level level, code_context context) { PROF_
 	} POP_ALLOC();
 }
 
-string log_message::fmt_time() { PROF
-
-	string time = string::make(9);
-	global_api->get_timef("hh:mm:ss"_, &time);
-
-	return time;
-}
-
 string log_message::fmt_call_stack() { PROF
 
 	string cstack = string::make_cat(thread_name, "/"_);
@@ -299,7 +291,7 @@ string log_message::fmt_level() { PROF
 
 string fmt_msg(log_message* msg, log_out_type type) { PROF
 
-	string time = msg->fmt_time();
+	string time = global_api->time_string();
 	string cstack = msg->fmt_call_stack();
 	string file_line = msg->fmt_file_line();
 	string clevel = msg->fmt_level();
@@ -315,7 +307,7 @@ string fmt_msg(log_message* msg, log_out_type type) { PROF
 		output = string::makef(log_html_msg, time, cstack, file_line, clevel, msg->msg);
 	}
 
-	time.destroy();
+	global_api->heap_free(time.c_str);
 	cstack.destroy();
 	file_line.destroy();
 

@@ -48,8 +48,9 @@ void shader_source::load() { PROF
 		return;
 	}
 
-	u32 len = global_api->file_size(&source_file) + 1;
-	source = string::make(len, alloc);
+	u32 len = global_api->file_size(&source_file);
+	source = string::make(len + 1, alloc);
+	source.c_str[len] = 0;
 	CHECKED(read_file, &source_file, (void*)source.c_str, len);
 
 	CHECKED(close_file, &source_file);

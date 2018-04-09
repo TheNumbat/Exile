@@ -35,7 +35,6 @@ struct log_message {
 ///////////////////////////////////////////////////////////////////////////////
 
 	// allocate strings with current allocator
-	string fmt_time(); // this takes the current time?? TODO(max): real timers
 	string fmt_call_stack();
 	string fmt_file_line();
 	// will not allocate, returns literal (don't free it)

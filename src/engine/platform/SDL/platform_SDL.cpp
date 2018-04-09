@@ -5,6 +5,15 @@
 #include <stdio.h>
 #include <malloc.h>
 #include <assert.h>
+#include <time.h>
+
+#ifdef _WIN32
+extern "C" {
+    // Request dGPU
+    __declspec(dllexport) bool NvOptimusEnablement = true;
+    __declspec(dllexport) bool AmdPowerXpressRequestHighPerformance = true;
+}
+#endif
 
 #define UNIMPLEMENTED assert(!"UNIMPLEMENTED");
 
@@ -43,6 +52,10 @@ void platform_test_api() {
 #endif
 	printf("count: %d\n", global_num_allocs);
 
+	string time = sdl_time_string();
+	printf("%s\n", time.c_str);
+	sdl_heap_free(time.c_str);
+
 	fflush(stdout);
 
 #undef CHECK_ERR
@@ -78,8 +91,6 @@ platform_api platform_build_api() {
 	ret.get_bin_path			= &sdl_get_bin_path;
 	ret.create_thread			= &sdl_create_thread;
 	ret.this_thread_id			= &sdl_this_thread_id;
-	ret.terminate_thread		= &sdl_terminate_thread;
-	ret.exit_this_thread		= &sdl_exit_this_thread;
 	ret.thread_sleep			= &sdl_thread_sleep;
 	ret.create_semaphore		= &sdl_create_semaphore;
 	ret.destroy_semaphore		= &sdl_destroy_semaphore;
@@ -98,8 +109,7 @@ platform_api platform_build_api() {
 	ret.write_file				= &sdl_write_file;
 	ret.read_file				= &sdl_read_file;
 	ret.get_stdout_as_file		= &sdl_get_stdout_as_file;
-	ret.get_timef				= &sdl_get_timef;
-	ret.make_timef				= &sdl_make_timef;
+	ret.time_string				= &sdl_time_string;
 	ret.get_window_size			= &sdl_get_window_size;
 	ret.write_stdout			= &sdl_write_stdout;
 	ret.file_size				= &sdl_file_size;
@@ -157,12 +167,16 @@ platform_error sdl_set_cursor_pos(platform_window* win, i32 x, i32 y) {
 
 void sdl_capture_mouse(platform_window* win) {
 
-	UNIMPLEMENTED;
+	SDL_CaptureMouse(SDL_TRUE);
+	SDL_SetRelativeMouseMode(SDL_TRUE);
+	SDL_ShowCursor(SDL_FALSE);
 }
 
 void sdl_release_mouse() {
 
-	UNIMPLEMENTED;
+	SDL_CaptureMouse(SDL_FALSE);
+	SDL_SetRelativeMouseMode(SDL_FALSE);
+	SDL_ShowCursor(SDL_TRUE);	
 }
 
 u64 sdl_get_perfcount() {
@@ -184,7 +198,11 @@ platform_error sdl_this_dll(platform_dll* dll) {
 }
 
 // no good platform-independent way to do this...could be done but it's not worth it
-void sdl_debug_break() {}
+void sdl_debug_break() {
+#ifdef MSC_VER
+	__debugbreak();
+#endif
+}
 bool sdl_is_debugging() {
 	return false;
 }
@@ -198,7 +216,54 @@ platform_error sdl_create_window(platform_window* window, string title, u32 widt
 
 	platform_error ret;
 
-	UNIMPLEMENTED;
+	window->title = title;
+	window->w = width;
+	window->h = height;
+
+	if(SDL_Init(SDL_INIT_VIDEO)) {
+		ret.good = false;
+		ret.error_message = str(SDL_GetError());
+	}
+
+	window->window = SDL_CreateWindow(title.c_str, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_SHOWN);
+	
+	if(!window->window) {
+		ret.good = false;
+		ret.error_message = str(SDL_GetError());
+	}
+
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+
+#define TRY_VERSION(MAJOR, MINOR) SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, MAJOR); \
+								  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, MINOR); \
+								  if(window->gl_context == null) window->gl_context = SDL_GL_CreateContext(window->window);
+
+	TRY_VERSION(4, 6);
+	TRY_VERSION(4, 5);
+	TRY_VERSION(4, 4);
+	TRY_VERSION(4, 3);
+	TRY_VERSION(4, 2);
+	TRY_VERSION(4, 1);
+	TRY_VERSION(4, 0);
+	TRY_VERSION(3, 3);
+	TRY_VERSION(3, 2);
+	TRY_VERSION(3, 1);
+	TRY_VERSION(3, 0);
+	TRY_VERSION(2, 1);
+	TRY_VERSION(2, 0);
+
+#undef TRY_VERSION
+
+	if(window->gl_context == null) {
+		ret.good = false;
+		ret.error_message = str(SDL_GetError());
+	}
+
+	// TODO(max): vsync/fullscreen/AA/etc settings
+	SDL_GL_SetSwapInterval(0);
+
 	return ret;
 }
 
@@ -505,7 +570,13 @@ platform_error sdl_create_thread(platform_thread* thread, i32 (*proc)(void*), vo
 
 	platform_error ret;
 
-	UNIMPLEMENTED;
+	thread->thrd = SDL_CreateThread(proc, "", param);
+
+	if(!thread->thrd) {
+		ret.good = false;
+		ret.error_message = str(SDL_GetError());
+	}
+
 	return ret;
 }
 
@@ -518,15 +589,16 @@ platform_thread_join_state sdl_join_thread(platform_thread* thread, i32 ms) {
 	SDL_WaitThread(thread->thrd, &result);
 
 	ret.state = _platform_thread_join_state::joined;
+	thread->thrd = null;
 
 	return ret;
 }
 
 platform_error sdl_destroy_thread(platform_thread* thread) {
 
-	platform_error ret;
+	// NOTE(max): sdl_wait_thread destroys the thread
 
-	UNIMPLEMENTED;
+	platform_error ret;
 	return ret;
 }
 
@@ -535,22 +607,9 @@ platform_thread_id sdl_this_thread_id() {
 	return (platform_thread_id)SDL_ThreadID();
 }
 
-platform_error sdl_terminate_thread(platform_thread* thread, i32 exit_code) {
-
-	platform_error ret;
-
-	UNIMPLEMENTED;
-	return ret;
-}
-
-void sdl_exit_this_thread(i32 exit_code) {
-
-	UNIMPLEMENTED;
-}
-
 void sdl_thread_sleep(i32 ms) {
 
-	UNIMPLEMENTED;
+	SDL_Delay((u32)ms);
 }
 
 i32 sdl_get_num_cpus() {
@@ -641,15 +700,19 @@ void sdl_release_mutex(platform_mutex* mut) {
 	SDL_UnlockMutex(mut->mut);
 }
 
-string sdl_make_timef(string fmt) {
+string sdl_time_string() {
 
-	string ret;
+	time_t raw = time(null);
+	struct tm info;
+	localtime_s(&info, &raw);
 
-	UNIMPLEMENTED;
+#ifdef TEST_NET_ZERO_ALLOCS
+	string ret = make_string(9, &sdl_heap_alloc_net);
+#else
+	string ret = make_string(9, &sdl_heap_alloc);
+#endif
+
+	strftime(ret.c_str, 9, "%I:%M:%S", &info);
+	
 	return ret;
-}
-
-void sdl_get_timef(string fmt, string* out) {
-
-	UNIMPLEMENTED;
 }

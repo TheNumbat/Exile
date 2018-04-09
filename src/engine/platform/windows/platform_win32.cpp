@@ -47,8 +47,6 @@ platform_api platform_build_api() {
 	ret.get_bin_path			= &win32_get_bin_path;
 	ret.create_thread			= &win32_create_thread;
 	ret.this_thread_id			= &win32_this_thread_id;
-	ret.terminate_thread		= &win32_terminate_thread;
-	ret.exit_this_thread		= &win32_exit_this_thread;
 	ret.thread_sleep			= &win32_thread_sleep;
 	ret.create_semaphore		= &win32_create_semaphore;
 	ret.destroy_semaphore		= &win32_destroy_semaphore;
@@ -67,8 +65,7 @@ platform_api platform_build_api() {
 	ret.write_file				= &win32_write_file;
 	ret.read_file				= &win32_read_file;
 	ret.get_stdout_as_file		= &win32_get_stdout_as_file;
-	ret.get_timef				= &win32_get_timef;
-	ret.make_timef				= &win32_make_timef;
+	ret.time_string				= &win32_time_string;
 	ret.get_window_size			= &win32_get_window_size;
 	ret.write_stdout			= &win32_write_stdout;
 	ret.file_size				= &win32_file_size;
@@ -236,18 +233,9 @@ platform_error win32_get_window_size(platform_window* window, i32* w, i32* h) {
 	return ret;
 }
 
-void win32_get_timef(string fmt, string* out) {
+string win32_time_string() {
 
-	i32 len = GetTimeFormatA(LOCALE_USER_DEFAULT, 0, null, fmt.c_str, null, 0);
-
-	out->len = len;
-
-	GetTimeFormatA(LOCALE_USER_DEFAULT, 0, null, fmt.c_str, out->c_str, len);
-}
-
-string win32_make_timef(string fmt) {
-
-	i32 len = GetTimeFormatA(LOCALE_USER_DEFAULT, 0, null, fmt.c_str, null, 0);
+	i32 len = GetTimeFormatA(LOCALE_USER_DEFAULT, 0, null, "hh:mm:ss", null, 0);
 
 #ifdef TEST_NET_ZERO_ALLOCS
 	string ret = make_string(len, &win32_heap_alloc_net);
@@ -256,7 +244,7 @@ string win32_make_timef(string fmt) {
 #endif
 	ret.len = ret.cap;
 
-	GetTimeFormatA(LOCALE_USER_DEFAULT, 0, null, fmt.c_str, ret.c_str, len);	
+	GetTimeFormatA(LOCALE_USER_DEFAULT, 0, null, "hh:mm:ss", ret.c_str, len);	
 
 	return ret;
 }
@@ -493,24 +481,6 @@ platform_error win32_destroy_thread(platform_thread* thread) {
 
 void win32_thread_sleep(i32 ms) {
 	Sleep(ms);
-}
-
-platform_error win32_terminate_thread(platform_thread* thread, i32 exit_code) {
-
-	platform_error ret;
-
-	if(TerminateThread(thread->handle, (DWORD)exit_code) == 0) {
-		ret.good = false;
-		ret.error = GetLastError();
-		return ret;		
-	}
-
-	return ret;
-}
-
-void win32_exit_this_thread(i32 exit_code) {
-	
-	ExitThread((DWORD)exit_code);
 }
 
 platform_thread_id win32_this_thread_id() {
