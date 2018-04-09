@@ -3,7 +3,7 @@
 
 /* Included in platform_api.h */
 
-u32 PLATFORM_SHARING_ERROR = 0;
+u32 PLATFORM_SHARING_ERROR = UINT32_MAX;
 
 struct platform_window {
 	// Transparent

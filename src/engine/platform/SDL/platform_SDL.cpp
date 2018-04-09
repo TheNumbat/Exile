@@ -43,14 +43,6 @@ void platform_test_api() {
 #endif
 	printf("count: %d\n", global_num_allocs);
 
-	platform_file file;
-	err = sdl_create_file(&file, str("test.txt"), platform_file_open_op::cleared);
-	CHECK_ERR
-	err = sdl_write_file(&file, "Hello World!\n", 14);
-	CHECK_ERR
-	err = sdl_close_file(&file);
-	CHECK_ERR
-
 	fflush(stdout);
 }
 
@@ -311,7 +303,33 @@ platform_error sdl_copy_file(string source, string dest, bool overwrite) {
 
 	platform_error ret;
 
-	UNIMPLEMENTED;
+	platform_file d, s;
+	
+	// this is why defer {} is good...
+
+	ret = sdl_create_file(&s, source, platform_file_open_op::existing);
+	if(!ret.good) goto close;
+
+	ret = sdl_create_file(&d, dest, platform_file_open_op::cleared);
+	if(!ret.good) goto close;
+
+	u32 s_size = sdl_file_size(&s);
+
+	void* contents = sdl_heap_alloc(s_size);
+
+	ret = sdl_read_file(&s, contents, s_size);
+	if(!ret.good) goto free_close;
+
+	ret = sdl_write_file(&d, contents, s_size);
+
+	free_close:
+
+	sdl_heap_free(contents);
+
+	close:
+
+	sdl_close_file(&s);
+	sdl_close_file(&d);
 	return ret;
 }
 
@@ -337,10 +355,10 @@ platform_error sdl_create_file(platform_file* file, string path, platform_file_o
 
 	switch(mode) {
 		case platform_file_open_op::existing:
-		creation = "r+";
+		creation = "r+b";
 		break;
 		case platform_file_open_op::cleared:
-		creation = "w+";
+		creation = "w+b";
 		break;
 		default:
 		ret.good = false;
@@ -390,14 +408,22 @@ platform_error sdl_read_file(platform_file* file, void* mem, u32 bytes) {
 
 	platform_error ret;
 
-	UNIMPLEMENTED;
+	if(SDL_RWread(file->ops, mem, 1, bytes) < bytes) {
+		ret.good = false;
+		ret.error_message = str(SDL_GetError());
+	}
+
 	return ret;
 }
 
 u32	sdl_file_size(platform_file* file) {
 
-	UNIMPLEMENTED;
-	return 0;
+	i64 current = SDL_RWseek(file->ops, 0, RW_SEEK_CUR);
+	SDL_RWseek(file->ops, 0, RW_SEEK_END);
+	i64 size = SDL_RWtell(file->ops);
+	SDL_RWseek(file->ops, current, RW_SEEK_SET);
+	
+	return (u32)size;
 }
 
 platform_error sdl_get_stdout_as_file(platform_file* file) {
