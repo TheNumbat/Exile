@@ -458,6 +458,7 @@ void win32_create_mutex(platform_mutex* mut, bool aquire) {
 void win32_destroy_mutex(platform_mutex* mut) {
 	
 	DeleteCriticalSection(&mut->cs);
+	mut->cs = {};
 }
 
 void win32_aquire_mutex(platform_mutex* mut) {

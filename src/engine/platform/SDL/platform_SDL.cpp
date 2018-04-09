@@ -44,6 +44,8 @@ void platform_test_api() {
 	printf("count: %d\n", global_num_allocs);
 
 	fflush(stdout);
+
+#undef CHECK_ERR
 }
 
 platform_api platform_build_api() {
@@ -337,14 +339,17 @@ platform_error sdl_get_file_attributes(platform_file_attributes* attrib, string 
 
 	platform_error ret;
 
-	UNIMPLEMENTED;
+	if(stat(file_path.c_str, &attrib->info)) {
+		ret.good = false;
+		ret.error = errno;
+	}
+	
 	return ret;
 }
 
 bool sdl_test_file_written(platform_file_attributes* first, platform_file_attributes* second) {
 
-	UNIMPLEMENTED;
-	return false;
+	return second->info.st_mtime > first->info.st_mtime;
 }
 
 platform_error sdl_create_file(platform_file* file, string path, platform_file_open_op mode) {
@@ -430,7 +435,12 @@ platform_error sdl_get_stdout_as_file(platform_file* file) {
 
 	platform_error ret;
 
-	UNIMPLEMENTED;
+	file->ops = SDL_RWFromFP(stdout, SDL_FALSE);
+	if(!file->ops) {
+		ret.good = false;
+		ret.error_message = str(SDL_GetError());
+	}
+
 	return ret;
 }
 
@@ -503,7 +513,12 @@ platform_thread_join_state sdl_join_thread(platform_thread* thread, i32 ms) {
 
 	platform_thread_join_state ret;
 
-	UNIMPLEMENTED;
+	i32 result = 0;
+
+	SDL_WaitThread(thread->thrd, &result);
+
+	ret.state = _platform_thread_join_state::joined;
+
 	return ret;
 }
 
@@ -517,10 +532,7 @@ platform_error sdl_destroy_thread(platform_thread* thread) {
 
 platform_thread_id sdl_this_thread_id() {
 
-	platform_thread_id ret = 0;
-
-	UNIMPLEMENTED;
-	return ret;
+	return (platform_thread_id)SDL_ThreadID();
 }
 
 platform_error sdl_terminate_thread(platform_thread* thread, i32 exit_code) {
@@ -550,7 +562,12 @@ platform_error sdl_create_semaphore(platform_semaphore* sem, i32 initial_count, 
 
 	platform_error ret;
 
-	UNIMPLEMENTED;
+	sem->sem = SDL_CreateSemaphore(initial_count);
+	if(!sem->sem) {
+		ret.good = false;
+		ret.error_message = str(SDL_GetError());
+	}
+	
 	return ret;
 }
 
@@ -558,7 +575,9 @@ platform_error sdl_destroy_semaphore(platform_semaphore* sem) {
 
 	platform_error ret;
 
-	UNIMPLEMENTED;
+	SDL_DestroySemaphore(sem->sem);
+	sem->sem = null;
+
 	return ret;
 }
 
@@ -566,7 +585,20 @@ platform_semaphore_state sdl_wait_semaphore(platform_semaphore* sem, i32 ms) {
 
 	platform_semaphore_state ret;
 
-	UNIMPLEMENTED;
+	switch(SDL_SemWaitTimeout(sem->sem, (u32)ms)) {
+	case 0:
+		ret.state = _platform_semaphore_state::signaled;
+		break;
+	case SDL_MUTEX_TIMEDOUT:
+		ret.state = _platform_semaphore_state::timed_out;
+		break;
+	default:
+		ret.state = _platform_semaphore_state::failed;
+		ret.error.good = false;
+		ret.error.error_message = str(SDL_GetError());
+		break;
+	}
+
 	return ret;
 }
 
@@ -574,34 +606,39 @@ platform_error sdl_signal_semaphore(platform_semaphore* sem, i32 times) {
 
 	platform_error ret;
 
-	UNIMPLEMENTED;
+	for(i32 i = 0; i < times; i++)
+		SDL_SemPost(sem->sem);
+
 	return ret;
 } 
 
 void sdl_create_mutex(platform_mutex* mut, bool aquire) {
 
-	UNIMPLEMENTED;
+	mut->mut = SDL_CreateMutex();
+	
+	if(aquire)
+		sdl_aquire_mutex(mut);
 }
 
 void sdl_destroy_mutex(platform_mutex* mut) {
 
-	UNIMPLEMENTED;
+	SDL_DestroyMutex(mut->mut);
+	mut->mut = null;
 }
 
 void sdl_aquire_mutex(platform_mutex* mut) {
 
-	UNIMPLEMENTED;
+	SDL_LockMutex(mut->mut);
 }
 
 bool sdl_try_aquire_mutex(platform_mutex* mut) {
 
-	UNIMPLEMENTED;
-	return false;
+	return SDL_TryLockMutex(mut->mut) == 0;
 }
 
 void sdl_release_mutex(platform_mutex* mut) {
 
-	UNIMPLEMENTED;
+	SDL_UnlockMutex(mut->mut);
 }
 
 string sdl_make_timef(string fmt) {

@@ -1,5 +1,10 @@
 
 #include <SDL2/SDL.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#ifdef WIN32
+#define stat _stat
+#endif
 
 /* Included in platform_api.h */
 
@@ -21,7 +26,7 @@ struct platform_dll {
 
 struct platform_file_attributes {
 	// Opaque
-	
+	struct stat info = {};
 };
 
 struct platform_thread {
@@ -29,17 +34,17 @@ struct platform_thread {
 	platform_thread_id id;
 
 	// Opaque
-	
+	SDL_Thread* thrd = null;
 };
 
 struct platform_semaphore {
 	// Opaque
-	
+	SDL_sem* sem = null;
 };
 
 struct platform_mutex {
 	// Opaque
-	
+	SDL_mutex* mut = null;
 };
 
 struct platform_file {
