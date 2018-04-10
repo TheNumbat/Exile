@@ -25,7 +25,6 @@ void		   sdl_queue_event(platform_event evt);
 platform_error sdl_wait_message();
 bool 		   sdl_keydown(platform_keycode key);
 
-platform_error sdl_this_dll(platform_dll* dll);
 platform_error sdl_load_library(platform_dll* dll, string file_path);
 platform_error sdl_free_library(platform_dll* dll);
 

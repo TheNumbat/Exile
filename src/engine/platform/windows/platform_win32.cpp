@@ -74,7 +74,6 @@ platform_api platform_build_api() {
 	ret.is_debugging			= &win32_is_debugging;
 	ret.debug_break				= &win32_debug_break;
 	ret.set_cursor				= &win32_set_cursor;
-	ret.this_dll				= &win32_this_dll;
 	ret.capture_mouse			= &win32_capture_mouse;
 	ret.release_mouse			= &win32_release_mouse;
 	ret.set_cursor_pos			= &win32_set_cursor_pos;
@@ -148,19 +147,6 @@ u64 win32_get_perfcount_freq() {
 
 	u64 ret;
 	QueryPerformanceFrequency((LARGE_INTEGER*)&ret);
-	return ret;
-}
-
-platform_error win32_this_dll(platform_dll* dll) {
-
-	platform_error ret;
-
-	dll->dll_handle = GetModuleHandleA(null);
-	if(!dll->dll_handle) {
-		ret.good = false;
-		ret.error = GetLastError();
-	}
-
 	return ret;
 }
 

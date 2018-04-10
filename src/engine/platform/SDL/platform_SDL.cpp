@@ -118,7 +118,6 @@ platform_api platform_build_api() {
 	ret.is_debugging			= &sdl_is_debugging;
 	ret.debug_break				= &sdl_debug_break;
 	ret.set_cursor				= &sdl_set_cursor;
-	ret.this_dll				= &sdl_this_dll;
 	ret.capture_mouse			= &sdl_capture_mouse;
 	ret.release_mouse			= &sdl_release_mouse;
 	ret.set_cursor_pos			= &sdl_set_cursor_pos;
@@ -187,14 +186,6 @@ u64 sdl_get_perfcount() {
 u64 sdl_get_perfcount_freq() {
 
 	return SDL_GetPerformanceFrequency();
-}
-
-platform_error sdl_this_dll(platform_dll* dll) {
-
-	platform_error ret;
-
-	UNIMPLEMENTED;
-	return ret;
 }
 
 // no good platform-independent way to do this...could be done but it's not worth it
@@ -293,7 +284,8 @@ platform_error sdl_swap_buffers(platform_window* window) {
 
 	platform_error ret;
 
-	UNIMPLEMENTED;
+	SDL_GL_SwapWindow(window->window);
+
 	return ret;
 }
 
@@ -321,10 +313,219 @@ platform_error sdl_wait_message() {
 	return ret;
 }
 
+SDL_Keycode translate_key_code(platform_keycode key) {
+	switch(key) {
+	case platform_keycode::_0: return SDLK_0;
+	case platform_keycode::_1: return SDLK_1;
+	case platform_keycode::_2: return SDLK_2;
+	case platform_keycode::_3: return SDLK_3;
+	case platform_keycode::_4: return SDLK_4;
+	case platform_keycode::_5: return SDLK_5;
+	case platform_keycode::_6: return SDLK_6;
+	case platform_keycode::_7: return SDLK_7;
+	case platform_keycode::_8: return SDLK_8;
+	case platform_keycode::_9: return SDLK_9;
+	case platform_keycode::a: return SDLK_a;
+	case platform_keycode::b: return SDLK_b;
+	case platform_keycode::c: return SDLK_c;
+	case platform_keycode::d: return SDLK_d;
+	case platform_keycode::e: return SDLK_e;
+	case platform_keycode::f: return SDLK_f;
+	case platform_keycode::g: return SDLK_g;
+	case platform_keycode::h: return SDLK_h;
+	case platform_keycode::i: return SDLK_i;
+	case platform_keycode::j: return SDLK_j;
+	case platform_keycode::k: return SDLK_k;
+	case platform_keycode::l: return SDLK_l;
+	case platform_keycode::m: return SDLK_m;
+	case platform_keycode::n: return SDLK_n;
+	case platform_keycode::o: return SDLK_o;
+	case platform_keycode::p: return SDLK_p;
+	case platform_keycode::q: return SDLK_q;
+	case platform_keycode::r: return SDLK_r;
+	case platform_keycode::s: return SDLK_s;
+	case platform_keycode::t: return SDLK_t;
+	case platform_keycode::u: return SDLK_u;
+	case platform_keycode::v: return SDLK_v;
+	case platform_keycode::w: return SDLK_w;
+	case platform_keycode::x: return SDLK_x;
+	case platform_keycode::y: return SDLK_y;
+	case platform_keycode::z: return SDLK_z;
+	case platform_keycode::tab: return SDLK_TAB;
+	case platform_keycode::grave: return SDLK_BACKQUOTE;
+	case platform_keycode::dash: return SDLK_MINUS;
+	case platform_keycode::comma: return SDLK_COMMA;
+	case platform_keycode::slash: return SDLK_SLASH;
+	case platform_keycode::space: return SDLK_SPACE;
+	case platform_keycode::equals: return SDLK_EQUALS;
+	case platform_keycode::enter: return SDLK_RETURN;
+	case platform_keycode::period: return SDLK_PERIOD;
+	case platform_keycode::rbracket: return SDLK_RIGHTBRACKET;
+	case platform_keycode::lbracket: return SDLK_LEFTBRACKET;
+	case platform_keycode::semicolon: return SDLK_SEMICOLON;
+	case platform_keycode::backslash: return SDLK_BACKSLASH;
+	case platform_keycode::np_0: return SDLK_KP_0;
+	case platform_keycode::np_1: return SDLK_KP_1;
+	case platform_keycode::np_2: return SDLK_KP_2;
+	case platform_keycode::np_3: return SDLK_KP_3;
+	case platform_keycode::np_4: return SDLK_KP_4;
+	case platform_keycode::np_5: return SDLK_KP_5;
+	case platform_keycode::np_6: return SDLK_KP_6;
+	case platform_keycode::np_7: return SDLK_KP_7;
+	case platform_keycode::np_8: return SDLK_KP_8;
+	case platform_keycode::np_9: return SDLK_KP_9;
+	case platform_keycode::np_add: return SDLK_KP_PLUS;
+	case platform_keycode::np_period: return SDLK_KP_DECIMAL;
+	case platform_keycode::np_divide: return SDLK_KP_DIVIDE;
+	case platform_keycode::np_multiply: return SDLK_KP_MULTIPLY;
+	case platform_keycode::np_subtract: return SDLK_KP_MINUS;
+	case platform_keycode::backspace: return SDLK_BACKSPACE;
+	case platform_keycode::capslock: return SDLK_CAPSLOCK;
+	case platform_keycode::del: return SDLK_DELETE;
+	case platform_keycode::down: return SDLK_DOWN;
+	case platform_keycode::up: return SDLK_UP;
+	case platform_keycode::left: return SDLK_LEFT;
+	case platform_keycode::right: return SDLK_RIGHT;
+	case platform_keycode::end: return SDLK_END;
+	case platform_keycode::escape: return SDLK_ESCAPE;
+	case platform_keycode::f1: return SDLK_F1;
+	case platform_keycode::f2: return SDLK_F2;
+	case platform_keycode::f3: return SDLK_F3;
+	case platform_keycode::f4: return SDLK_F4;
+	case platform_keycode::f5: return SDLK_F5;
+	case platform_keycode::f6: return SDLK_F6;
+	case platform_keycode::f7: return SDLK_F7;
+	case platform_keycode::f8: return SDLK_F8;
+	case platform_keycode::f9: return SDLK_F9;
+	case platform_keycode::f10: return SDLK_F10;
+	case platform_keycode::f11: return SDLK_F11;
+	case platform_keycode::f12: return SDLK_F12;
+	case platform_keycode::home: return SDLK_HOME;
+	case platform_keycode::insert: return SDLK_INSERT;
+	case platform_keycode::lalt: return SDLK_LALT;
+	case platform_keycode::ralt: return SDLK_RALT;
+	case platform_keycode::lctrl: return SDLK_LCTRL;
+	case platform_keycode::rctrl: return SDLK_RCTRL;
+	case platform_keycode::lshift: return SDLK_LSHIFT;
+	case platform_keycode::rshift: return SDLK_RSHIFT;
+	case platform_keycode::numlock: return SDLK_NUMLOCKCLEAR;
+	case platform_keycode::pgup: return SDLK_PAGEUP;
+	case platform_keycode::pgdown: return SDLK_PAGEDOWN;
+	case platform_keycode::scrolllock: return SDLK_SCROLLLOCK;
+	default:  return 0;
+	}
+}
+
+platform_keycode translate_key_code(SDL_Keycode key) {
+	switch(key) {
+	case SDLK_0: return platform_keycode::_0;
+	case SDLK_1: return platform_keycode::_1;
+	case SDLK_2: return platform_keycode::_2;
+	case SDLK_3: return platform_keycode::_3;
+	case SDLK_4: return platform_keycode::_4;
+	case SDLK_5: return platform_keycode::_5;
+	case SDLK_6: return platform_keycode::_6;
+	case SDLK_7: return platform_keycode::_7;
+	case SDLK_8: return platform_keycode::_8;
+	case SDLK_9: return platform_keycode::_9;
+	case SDLK_a: return platform_keycode::a;
+	case SDLK_b: return platform_keycode::b;
+	case SDLK_c: return platform_keycode::c;
+	case SDLK_d: return platform_keycode::d;
+	case SDLK_e: return platform_keycode::e;
+	case SDLK_f: return platform_keycode::f;
+	case SDLK_g: return platform_keycode::g;
+	case SDLK_h: return platform_keycode::h;
+	case SDLK_i: return platform_keycode::i;
+	case SDLK_j: return platform_keycode::j;
+	case SDLK_k: return platform_keycode::k;
+	case SDLK_l: return platform_keycode::l;
+	case SDLK_m: return platform_keycode::m;
+	case SDLK_n: return platform_keycode::n;
+	case SDLK_o: return platform_keycode::o;
+	case SDLK_p: return platform_keycode::p;
+	case SDLK_q: return platform_keycode::q;
+	case SDLK_r: return platform_keycode::r;
+	case SDLK_s: return platform_keycode::s;
+	case SDLK_t: return platform_keycode::t;
+	case SDLK_u: return platform_keycode::u;
+	case SDLK_v: return platform_keycode::v;
+	case SDLK_w: return platform_keycode::w;
+	case SDLK_x: return platform_keycode::x;
+	case SDLK_y: return platform_keycode::y;
+	case SDLK_z: return platform_keycode::z;
+	case SDLK_TAB: return platform_keycode::tab;
+	case SDLK_BACKQUOTE: return platform_keycode::grave;
+	case SDLK_MINUS: return platform_keycode::dash;
+	case SDLK_COMMA: return platform_keycode::comma;
+	case SDLK_SLASH: return platform_keycode::slash;
+	case SDLK_SPACE: return platform_keycode::space;
+	case SDLK_EQUALS: return platform_keycode::equals;
+	case SDLK_RETURN: return platform_keycode::enter;
+	case SDLK_PERIOD: return platform_keycode::period;
+	case SDLK_RIGHTBRACKET: return platform_keycode::rbracket;
+	case SDLK_LEFTBRACKET: return platform_keycode::lbracket;
+	case SDLK_SEMICOLON: return platform_keycode::semicolon;
+	case SDLK_BACKSLASH: return platform_keycode::backslash;
+	case SDLK_KP_0: return platform_keycode::np_0;
+	case SDLK_KP_1: return platform_keycode::np_1;
+	case SDLK_KP_2: return platform_keycode::np_2;
+	case SDLK_KP_3: return platform_keycode::np_3;
+	case SDLK_KP_4: return platform_keycode::np_4;
+	case SDLK_KP_5: return platform_keycode::np_5;
+	case SDLK_KP_6: return platform_keycode::np_6;
+	case SDLK_KP_7: return platform_keycode::np_7;
+	case SDLK_KP_8: return platform_keycode::np_8;
+	case SDLK_KP_9: return platform_keycode::np_9;
+	case SDLK_KP_PLUS: return platform_keycode::np_add;
+	case SDLK_KP_DECIMAL: return platform_keycode::np_period;
+	case SDLK_KP_DIVIDE: return platform_keycode::np_divide;
+	case SDLK_KP_MULTIPLY: return platform_keycode::np_multiply;
+	case SDLK_KP_MINUS: return platform_keycode::np_subtract;
+	case SDLK_BACKSPACE: return platform_keycode::backspace;
+	case SDLK_CAPSLOCK: return platform_keycode::capslock;
+	case SDLK_DELETE: return platform_keycode::del;
+	case SDLK_DOWN: return platform_keycode::down;
+	case SDLK_UP: return platform_keycode::up;
+	case SDLK_LEFT: return platform_keycode::left;
+	case SDLK_RIGHT: return platform_keycode::right;
+	case SDLK_END: return platform_keycode::end;
+	case SDLK_ESCAPE: return platform_keycode::escape;
+	case SDLK_F1: return platform_keycode::f1;
+	case SDLK_F2: return platform_keycode::f2;
+	case SDLK_F3: return platform_keycode::f3;
+	case SDLK_F4: return platform_keycode::f4;
+	case SDLK_F5: return platform_keycode::f5;
+	case SDLK_F6: return platform_keycode::f6;
+	case SDLK_F7: return platform_keycode::f7;
+	case SDLK_F8: return platform_keycode::f8;
+	case SDLK_F9: return platform_keycode::f9;
+	case SDLK_F10: return platform_keycode::f10;
+	case SDLK_F11: return platform_keycode::f11;
+	case SDLK_F12: return platform_keycode::f12;
+	case SDLK_HOME: return platform_keycode::home;
+	case SDLK_INSERT: return platform_keycode::insert;
+	case SDLK_LALT: return platform_keycode::lalt;
+	case SDLK_RALT: return platform_keycode::ralt;
+	case SDLK_LCTRL: return platform_keycode::lctrl;
+	case SDLK_RCTRL: return platform_keycode::rctrl;
+	case SDLK_LSHIFT: return platform_keycode::lshift;
+	case SDLK_RSHIFT: return platform_keycode::rshift;
+	case SDLK_NUMLOCKCLEAR: return platform_keycode::numlock;
+	case SDLK_PAGEUP: return platform_keycode::pgup;
+	case SDLK_PAGEDOWN: return platform_keycode::pgdown;
+	case SDLK_SCROLLLOCK: return platform_keycode::scrolllock;
+	default: return platform_keycode::none;
+	}
+}
+
 bool sdl_keydown(platform_keycode key) {
 
-	UNIMPLEMENTED;
-	return false;
+	static const u8* keys = SDL_GetKeyboardState(null);
+
+	SDL_Scancode code = SDL_GetScancodeFromKey(translate_key_code(key));
+
+	return keys[code] == 1;
 }
 
 platform_error sdl_load_library(platform_dll* dll, string file_path) {

@@ -297,7 +297,6 @@ struct platform_api {
 	platform_error 	(*get_window_size)(platform_window* window, i32* w, i32* h)											= null;
 	platform_error 	(*swap_buffers)(platform_window* window)															= null;
 	platform_error 	(*wait_message)()																					= null;
-	platform_error  (*this_dll)(platform_dll* dll)																		= null;
 	platform_error 	(*load_library)(platform_dll* dll, string file_path)												= null;
 	platform_error 	(*free_library)(platform_dll* dll)																	= null;
 	platform_error 	(*get_proc_address)(void** address, platform_dll* dll, string name)									= null;
