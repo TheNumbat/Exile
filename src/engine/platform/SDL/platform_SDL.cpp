@@ -271,7 +271,13 @@ platform_error sdl_destroy_window(platform_window* window) {
 
 	platform_error ret;
 
-	UNIMPLEMENTED;
+	SDL_GL_DeleteContext(window->gl_context);
+	SDL_DestroyWindow(window->window);
+	SDL_Quit();
+
+	window->gl_context = null;
+	window->window = null;
+
 	return ret;
 }
 
@@ -518,7 +524,7 @@ platform_error sdl_write_stdout(string str) {
 
 void* sdl_heap_alloc(u64 bytes) {
 
-	return malloc(bytes);
+	return calloc(bytes, 1);
 }
 
 void* sdl_heap_realloc(void* mem, u64 bytes) {
@@ -534,7 +540,7 @@ void sdl_heap_free(void* mem) {
 void* sdl_heap_alloc_net(u64 bytes) {
 
 	SDL_AtomicAdd((SDL_atomic_t*)&global_num_allocs, 1);
-	return malloc(bytes);
+	return calloc(bytes, 1);
 }
 
 void sdl_heap_free_net(void* mem) {

@@ -46,7 +46,8 @@ platform_error win32_get_stdout_as_file(platform_file* file);
 platform_error win32_write_stdout(string str);
 
 // if this fails, we're having big problems
-void*	win32_heap_alloc(u64 bytes); // initializes memory to zero (important! the data structures assume this!)
+// NOTE(max): heap alloc should return zero-initialized memory
+void*	win32_heap_alloc(u64 bytes); 
 void*	win32_heap_realloc(void* mem, u64 bytes);
 void	win32_heap_free(void* mem);
 

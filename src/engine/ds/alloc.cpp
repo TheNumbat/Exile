@@ -109,7 +109,7 @@ CALLBACK void* arena_allocate(u64 bytes, u64 align, allocator* this_, code_conte
 
 	void* mem = null;
 	
-	u64 pad = align ? mod(this__->used, align) : 0;
+	u64 pad = align ? mod(this__->used + (uptr)this__->memory, align) : 0;
 		pad = (pad ? align - pad : 0);
 
 	if(bytes + pad <= this__->size - this__->used) {
@@ -184,7 +184,7 @@ CALLBACK void* pool_allocate(u64 bytes, u64 align, allocator* this_, code_contex
 	void* mem = null;
 	pool_page* page = this__->current;
 
-	u64 pad = align ? mod(page->used, align) : 0;
+	u64 pad = align ? mod(page->used + (uptr)page + sizeof(pool_page), align) : 0;
 		pad = (pad ? align - pad : 0);
 
 	if(bytes + pad > this__->page_size - page->used) {

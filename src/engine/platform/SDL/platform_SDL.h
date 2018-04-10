@@ -44,6 +44,7 @@ platform_error sdl_get_stdout_as_file(platform_file* file);
 platform_error sdl_write_stdout(string str);
 
 // if this fails, we're having big problems
+// NOTE(max): heap alloc should return zero-initialized memory
 void*	sdl_heap_alloc(u64 bytes); 
 void*	sdl_heap_realloc(void* mem, u64 bytes);
 void	sdl_heap_free(void* mem);
