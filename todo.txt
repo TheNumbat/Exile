@@ -2,7 +2,11 @@
 Working To-Do:
 
 	!~~~~~ FIX BUGS ~~~~~!
-	
+
+	SDL platform layer
+		fix time strings
+		crashes on shutdown whereas win32 doesn't
+
 	config format language
 		rewrite metaprogram to use it
 
