@@ -30,12 +30,7 @@ void evt_manager::run_events(engine* state) { PROF
 
 		// Built-in event handling
 		{
-			// async callback
-			if(evt.type == platform_event_type::async) {
-			}
-
-			// Exit
-			else if(evt.type == platform_event_type::window && evt.window.op == platform_windowop::close) {
+			if(evt.type == platform_event_type::window && evt.window.op == platform_windowop::close) {
 				state->running = false;
 			}
 

@@ -161,27 +161,27 @@ bool win32_is_debugging() {
 void win32_set_cursor(cursors c) {
 
 	switch(c) {
-	case cursors::pointer : {
+	case cursors::pointer: {
 		SetCursor(LoadCursorA(0, IDC_ARROW));
 		break;
 	}
-	case cursors::crosshair : {
+	case cursors::crosshair: {
 		SetCursor(LoadCursorA(0, IDC_CROSS));
 		break;
 	}
-	case cursors::hand : {
+	case cursors::hand: {
 		SetCursor(LoadCursorA(0, IDC_HAND));
 		break;
 	}
-	case cursors::help : {
+	case cursors::help: {
 		SetCursor(LoadCursorA(0, IDC_HELP));
 		break;
 	}
-	case cursors::I : {
+	case cursors::I: {
 		SetCursor(LoadCursorA(0, IDC_IBEAM));
 		break;
 	}
-	case cursors::hourglass : {
+	case cursors::hourglass: {
 		SetCursor(LoadCursorA(0, IDC_WAIT));
 		break;
 	}

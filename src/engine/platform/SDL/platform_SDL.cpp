@@ -152,15 +152,13 @@ u64 sdl_atomic_exchange(u64* dest, u64 val) {
 
 bool sdl_window_focused(platform_window* win) {
 
-	UNIMPLEMENTED;
-	return false;
+	return SDL_GetGrabbedWindow() == win->window;
 }
 
 platform_error sdl_set_cursor_pos(platform_window* win, i32 x, i32 y) {
 
 	platform_error ret;
-
-	UNIMPLEMENTED;
+	SDL_WarpMouseInWindow(win->window, x, y);
 	return ret;	
 }
 
@@ -200,7 +198,37 @@ bool sdl_is_debugging() {
 
 void sdl_set_cursor(cursors c) {
 
-	UNIMPLEMENTED;
+	SDL_Cursor* cursor = null;
+
+	switch(c) {
+	case cursors::pointer: {
+		cursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_ARROW);
+		break;
+	}
+	case cursors::crosshair: {
+		cursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_CROSSHAIR);
+		break;
+	}
+	case cursors::hand: {
+		cursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_HAND);
+		break;
+	}
+	case cursors::help: {
+		cursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_WAITARROW);
+		break;
+	}
+	case cursors::I: {
+		cursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_IBEAM);
+		break;
+	}
+	case cursors::hourglass: {
+		cursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_WAIT);
+		break;
+	}
+	}
+
+	SDL_SetCursor(cursor);
+	SDL_FreeCursor(cursor);
 }
 
 platform_error sdl_create_window(platform_window* window, string title, u32 width, u32 height) {
@@ -275,8 +303,7 @@ platform_error sdl_destroy_window(platform_window* window) {
 platform_error sdl_get_window_size(platform_window* window, i32* w, i32* h) {
 
 	platform_error ret;
-
-	UNIMPLEMENTED;
+	SDL_GetWindowSize(window->window, w, h);
 	return ret;
 }
 
@@ -297,7 +324,10 @@ void sdl_set_queue_callback(void (*enqueue)(void* queue_param, platform_event ev
 
 void sdl_pump_events(platform_window* window) {
 
-	UNIMPLEMENTED;
+	SDL_Event evt;
+	while(SDL_PollEvent(&evt)) {
+
+	}
 }
 
 void sdl_queue_event(platform_event evt) {
@@ -308,8 +338,10 @@ void sdl_queue_event(platform_event evt) {
 platform_error sdl_wait_message() {
 
 	platform_error ret;
-
-	UNIMPLEMENTED;
+	if(SDL_WaitEvent(null) == 0) {
+		ret.good = false;
+		ret.error_message = str(SDL_GetError());
+	}
 	return ret;
 }
 
