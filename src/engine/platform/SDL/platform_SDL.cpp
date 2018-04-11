@@ -162,16 +162,12 @@ platform_error sdl_set_cursor_pos(platform_window* win, i32 x, i32 y) {
 
 void sdl_capture_mouse(platform_window* win) {
 
-	SDL_CaptureMouse(SDL_TRUE);
 	SDL_SetRelativeMouseMode(SDL_TRUE);
-	SDL_ShowCursor(SDL_FALSE);
 }
 
 void sdl_release_mouse() {
 
-	SDL_CaptureMouse(SDL_FALSE);
 	SDL_SetRelativeMouseMode(SDL_FALSE);
-	SDL_ShowCursor(SDL_TRUE);	
 }
 
 u64 sdl_get_perfcount() {
@@ -618,8 +614,13 @@ void sdl_pump_events(platform_window* window) {
 		} break;
 		case SDL_MOUSEMOTION: {
 			out.type = platform_event_type::mouse;
-			out.mouse.x = (i16)evt.motion.x;
-			out.mouse.y = (i16)evt.motion.y;
+			if(SDL_GetRelativeMouseMode() == SDL_TRUE) {
+				out.mouse.x = (i16)evt.motion.xrel;
+				out.mouse.y = (i16)evt.motion.yrel;
+			} else {
+				out.mouse.x = (i16)evt.motion.x;
+				out.mouse.y = (i16)evt.motion.y;
+			}
 			out.mouse.flags |= (u16)platform_mouseflag::move;
 		} break;
 		case SDL_MOUSEBUTTONDOWN:

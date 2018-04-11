@@ -3,10 +3,6 @@ Working To-Do:
 
 	!~~~~~ FIX BUGS ~~~~~!
 	
-	SDL platform layer
-		event handling
-		make sure mouse capture/release/input grab is working
-
 	config format language
 		rewrite metaprogram to use it
 

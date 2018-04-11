@@ -29,10 +29,6 @@ void exile::update() { PROF
 	u64 now = eng->platform->get_perfcount();
 
 	w.update(now);
-
-	if(!eng->dbg.show_ui && eng->platform->window_focused(&eng->window)) {
-		eng->platform->set_cursor_pos(&eng->window, eng->window.w / 2, eng->window.h / 2);
-	}
 }
 
 void exile::render() { PROF
@@ -104,10 +100,7 @@ CALLBACK bool camera_evt_handle(void* param, platform_event evt) { PROF
 	
 		if(evt.mouse.flags & (u16)platform_mouseflag::move) {
 		
-			i16 dx = evt.mouse.x - (i16)(eng->window.w / 2);
-			i16 dy = evt.mouse.y - (i16)(eng->window.h / 2);
-
-			p.camera.move(dx, dy, 0.1f);
+			p.camera.move(evt.mouse.x, evt.mouse.y, 0.1f);
 
 			return true;
 		}
