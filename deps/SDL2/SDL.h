@@ -25,7 +25,6 @@
  *  Main include header for the SDL library
  */
 
-
 #ifndef SDL_h_
 #define SDL_h_
 

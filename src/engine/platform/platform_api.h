@@ -234,7 +234,6 @@ enum class platform_windowop : u8 {
 	restored,	// WM_SHOWWINDOW
 	focused,	// WM_ACTIVATEAPP
 	unfocused,	// WM_ACTIVATEAPP
-	setcursor, 	// WM_SETCURSOR
 	close,		// WM_CLOSE, WM_DESTROY, WM_QUIT
 };
 

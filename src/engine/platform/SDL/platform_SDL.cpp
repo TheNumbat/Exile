@@ -15,8 +15,6 @@ extern "C" {
 }
 #endif
 
-#define UNIMPLEMENTED assert(!"UNIMPLEMENTED");
-
 void (*global_enqueue)(void* queue_param, platform_event evt) = null;
 void* global_enqueue_param = null;
 
@@ -322,14 +320,6 @@ void sdl_set_queue_callback(void (*enqueue)(void* queue_param, platform_event ev
 	global_enqueue_param = queue_param;
 }
 
-void sdl_pump_events(platform_window* window) {
-
-	SDL_Event evt;
-	while(SDL_PollEvent(&evt)) {
-
-	}
-}
-
 void sdl_queue_event(platform_event evt) {
 
 	global_enqueue(global_enqueue_param, evt);
@@ -551,6 +541,123 @@ platform_keycode translate_key_code(SDL_Keycode key) {
 	}
 }
 
+void sdl_pump_events(platform_window* window) {
+
+	SDL_Event evt;
+	while(SDL_PollEvent(&evt)) {
+		platform_event out;
+
+		switch(evt.type) {
+		case SDL_QUIT: {
+			out.type = platform_event_type::window;
+			out.window.op = platform_windowop::close;
+		} break;
+		case SDL_WINDOWEVENT: {
+			out.type = platform_event_type::window;
+			switch(evt.window.event) {
+			case SDL_WINDOWEVENT_SHOWN: {
+				out.window.op = platform_windowop::shown;
+			} break;
+			case SDL_WINDOWEVENT_HIDDEN: {
+				out.window.op = platform_windowop::hidden;
+			} break;
+			case SDL_WINDOWEVENT_MOVED: {
+				out.window.op = platform_windowop::moved;
+				out.window.x = (i16)evt.window.data1;
+				out.window.y = (i16)evt.window.data2;
+			} break;
+			case SDL_WINDOWEVENT_RESIZED:
+			case SDL_WINDOWEVENT_SIZE_CHANGED: {
+				out.window.op = platform_windowop::resized;
+				out.window.x = (i16)evt.window.data1;
+				out.window.y = (i16)evt.window.data2;		
+			} break;
+			case SDL_WINDOWEVENT_MAXIMIZED: {
+				out.window.op = platform_windowop::maximized;
+			} break;
+			case SDL_WINDOWEVENT_MINIMIZED: {
+				out.window.op = platform_windowop::minimized;
+			} break;
+			case SDL_WINDOWEVENT_RESTORED: {
+				out.window.op = platform_windowop::restored;
+			} break;
+			case SDL_WINDOWEVENT_FOCUS_GAINED: {
+				out.window.op = platform_windowop::focused;
+			} break;
+			case SDL_WINDOWEVENT_FOCUS_LOST: {
+				out.window.op = platform_windowop::unfocused;
+			} break;
+			case SDL_WINDOWEVENT_CLOSE: {
+				out.window.op = platform_windowop::close;
+			} break;
+			}			
+		} break;
+		case SDL_KEYUP:		
+		case SDL_KEYDOWN: {
+			out.type = platform_event_type::key;
+			if(evt.key.repeat) {
+				out.key.flags |= (u16)platform_keyflag::repeat;
+			} else {
+				if(evt.key.type == SDL_KEYDOWN) {
+					out.key.flags |= (u16)platform_keyflag::press;
+				} else {
+					out.key.flags |= (u16)platform_keyflag::release;
+				}
+			}
+			out.key.code = translate_key_code(evt.key.keysym.sym);
+
+			if(evt.key.keysym.mod & KMOD_LSHIFT) out.key.flags |= (u16)platform_keyflag::lshift;
+			if(evt.key.keysym.mod & KMOD_RSHIFT) out.key.flags |= (u16)platform_keyflag::rshift;
+			if(evt.key.keysym.mod & KMOD_LCTRL) out.key.flags |= (u16)platform_keyflag::lctrl;
+			if(evt.key.keysym.mod & KMOD_RCTRL) out.key.flags |= (u16)platform_keyflag::rctrl;
+			if(evt.key.keysym.mod & KMOD_LALT) out.key.flags |= (u16)platform_keyflag::lalt;
+			if(evt.key.keysym.mod & KMOD_RALT) out.key.flags |= (u16)platform_keyflag::ralt;
+			if(evt.key.keysym.mod & KMOD_NUM) out.key.flags |= (u16)platform_keyflag::numlock_on;
+			if(evt.key.keysym.mod & KMOD_CAPS) out.key.flags |= (u16)platform_keyflag::capslock_on;
+
+		} break;
+		case SDL_MOUSEMOTION: {
+			out.type = platform_event_type::mouse;
+			out.mouse.x = (i16)evt.motion.x;
+			out.mouse.y = (i16)evt.motion.y;
+			out.mouse.flags |= (u16)platform_mouseflag::move;
+		} break;
+		case SDL_MOUSEBUTTONDOWN:
+		case SDL_MOUSEBUTTONUP: {
+			out.type = platform_event_type::mouse;
+			if(evt.button.clicks == 2) {
+				out.mouse.flags |= (u16)platform_mouseflag::dbl;
+			} else {
+				if(evt.button.type == SDL_MOUSEBUTTONDOWN) {
+					out.mouse.flags |= (u16)platform_mouseflag::press;
+				} else {
+					out.mouse.flags |= (u16)platform_mouseflag::release;
+				}
+			}
+			switch(evt.button.button) {
+			case SDL_BUTTON_LEFT: out.mouse.flags |= (u16)platform_mouseflag::lclick; break;
+			case SDL_BUTTON_MIDDLE: out.mouse.flags |= (u16)platform_mouseflag::mclick; break;
+			case SDL_BUTTON_RIGHT: out.mouse.flags |= (u16)platform_mouseflag::rclick; break;
+			case SDL_BUTTON_X1: out.mouse.flags |= (u16)platform_mouseflag::x1click; break;
+			case SDL_BUTTON_X2: out.mouse.flags |= (u16)platform_mouseflag::x2click; break;
+			}
+			out.mouse.x = (i16)evt.button.x;
+			out.mouse.y = (i16)evt.button.y;
+		} break;
+		case SDL_MOUSEWHEEL: {
+			out.type = platform_event_type::mouse;
+			out.mouse.flags |= (u16)platform_mouseflag::wheel;
+			out.mouse.w = (i8)evt.wheel.y;
+			if(evt.wheel.direction == SDL_MOUSEWHEEL_FLIPPED) {
+				out.mouse.w *= -1;
+			}
+		} break;
+		}
+
+		global_enqueue(global_enqueue_param, out);
+	}
+}
+
 bool sdl_keydown(platform_keycode key) {
 
 	static const u8* keys = SDL_GetKeyboardState(null);
@@ -708,6 +815,11 @@ platform_error sdl_write_file(platform_file* file, void* mem, u32 bytes) {
 	if(SDL_RWwrite(file->ops, mem, 1, bytes) < bytes) {
 		ret.good = false;
 		ret.error_message = str(SDL_GetError());
+	}
+
+	// hack for stdout file output
+	if(file->ops->type == SDL_RWOPS_STDFILE) {
+		fflush(file->ops->hidden.stdio.fp);
 	}
 
 	return ret;
@@ -952,6 +1064,6 @@ string sdl_time_string() {
 #endif
 
 	strftime(ret.c_str, 9, "%I:%M:%S", &info);
-	
+
 	return ret;
 }

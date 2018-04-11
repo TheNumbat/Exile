@@ -10,7 +10,7 @@ Working To-Do:
 	config format language
 		rewrite metaprogram to use it
 
-	chunk AO/lighting/LOD
+	lighting/chunk LOD
 	movement physics
 	
 	gui text wrapping
@@ -42,14 +42,11 @@ Everything not by me:
 	#include <xmmintrin.h>/<intrin.h>
 
 Large-Scale Improvements | Changes for Future Projects
-	less templates, please. But we do need them for data structures...
 	rewrite metaprogram for robustness, possibly as a library/outputting a data format
 		don't output through pointers? maybe
-	don't bother with initialized values/constructors, require all allocated memory zero-initialized
 	don't use ::make pattern so much, use .init for not straight POD types
 	less callbacks? good, but also not really, they're quite useful. I wish closures didn't need STL and they didn't heap allocate
 	probably don't use the futures pattern for the thread pool, go back to event loop
-	platform layer can be more elegant
 	asset store can be more meta file + data files for hot/cold loading etc. Not sure if necessary though
 	use Vulkan
 
@@ -177,7 +174,7 @@ Overall To-Do List:
 		Virtually allocate large block of address space on startup and use jemalloc(eg) for general allocations
 		wgl extension testing/loading
 		file change watcher/callback system - maybe? see JBlow catalogs
-		SDL platform layer
+		controller support?
 
 	OpenGl
 		Shaders

@@ -48,7 +48,9 @@ bool try_reload();
 
 i32 main(i32 argc, char** argv) {
 
+#ifdef PLATFORM_TEST
 	platform_test_api();
+#endif
 
 	api = platform_build_api();
 	api.your_dll = &game_dll;

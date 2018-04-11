@@ -985,12 +985,6 @@ LRESULT WINCALLBACK window_proc(HWND handle, UINT msg, WPARAM wParam, LPARAM lPa
 			global_enqueue(global_enqueue_param, evt);
 			return 0;
 		}
-		case WM_SETCURSOR: {
-			evt.type = platform_event_type::window;
-			evt.window.op = platform_windowop::setcursor;
-			global_enqueue(global_enqueue_param, evt);
-			return DefWindowProcA(handle, msg, wParam, lParam);
-		}
 
 		// keyboard messages
 		case WM_KEYDOWN:

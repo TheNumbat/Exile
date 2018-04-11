@@ -56,5 +56,5 @@ struct platform_file {
 };
 
 bool operator==(platform_file first, platform_file second) {
-	return false;
+	return first.ops == second.ops;
 }

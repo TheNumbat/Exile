@@ -25,6 +25,8 @@
  *  This is a general header that includes C language support.
  */
 
+#define HAVE_LIBC
+
 #ifndef SDL_stdinc_h_
 #define SDL_stdinc_h_
 
