@@ -18,6 +18,8 @@ extern "C" {
 void (*global_enqueue)(void* queue_param, platform_event evt) = null;
 void* global_enqueue_param = null;
 
+i32 saved_mouse_x = 0, saved_mouse_y = 0;
+
 void platform_test_api() {
 
 #define CHECK_ERR if(!err.good) {printf("ERROR: %s", err.error_message.c_str); exit(1);}
@@ -162,12 +164,14 @@ platform_error sdl_set_cursor_pos(platform_window* win, i32 x, i32 y) {
 
 void sdl_capture_mouse(platform_window* win) {
 
+	SDL_GetMouseState(&saved_mouse_x, &saved_mouse_y);
 	SDL_SetRelativeMouseMode(SDL_TRUE);
 }
 
-void sdl_release_mouse() {
+void sdl_release_mouse(platform_window* win) {
 
 	SDL_SetRelativeMouseMode(SDL_FALSE);
+	SDL_WarpMouseInWindow(win->window, saved_mouse_x, saved_mouse_y);
 }
 
 u64 sdl_get_perfcount() {

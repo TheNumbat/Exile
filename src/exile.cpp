@@ -65,7 +65,7 @@ CALLBACK bool default_evt_handle(void* param, platform_event evt) { PROF
 CALLBACK void camera_to_ui(void* param) { PROF
 
 	eng->dbg.show_ui = true;
-	eng->platform->release_mouse();
+	eng->platform->release_mouse(&eng->window);
 }
 
 CALLBACK void ui_to_camera(void* param) { PROF

@@ -280,10 +280,10 @@ struct platform_api {
 	platform_dll* your_dll																								= null;
 	bool 			(*window_focused)(platform_window* win)																= null;	
 	void 			(*capture_mouse)(platform_window* win)																= null;
-	void 			(*release_mouse)()																					= null;
+	void 			(*release_mouse)(platform_window* win)																= null;
 	platform_error 	(*set_cursor_pos)(platform_window* win, i32 x, i32 y)												= null;
-	u64 (*get_perfcount)()																				= null;
-	u64 (*get_perfcount_freq)()																			= null;
+	u64 (*get_perfcount)()																								= null;
+	u64 (*get_perfcount_freq)()																							= null;
 	bool 			(*is_debugging)()																					= null;
 	void 			(*debug_break)()																					= null;
 	void 			(*set_cursor)(cursors c)																			= null;

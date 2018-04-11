@@ -139,7 +139,7 @@ void win32_capture_mouse(platform_window* win) {
 	SetCursorPos(pt.x, pt.y);
 }
 
-void win32_release_mouse() {
+void win32_release_mouse(platform_window* win) {
 
 	relative_mouse_mode = false;
 	ReleaseCapture();
