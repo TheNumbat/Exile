@@ -67,10 +67,10 @@ platform_api platform_build_api() {
 	ret.close_file				= &win32_close_file;
 	ret.write_file				= &win32_write_file;
 	ret.read_file				= &win32_read_file;
-	ret.get_stdout_as_file		= &win32_get_stdout_as_file;
 	ret.time_string				= &win32_time_string;
 	ret.get_window_size			= &win32_get_window_size;
 	ret.write_stdout			= &win32_write_stdout;
+	ret.write_stdout_str		= &win32_write_stdout_str;
 	ret.file_size				= &win32_file_size;
 	ret.get_glproc				= &win32_get_glproc;
 	ret.keydown					= &win32_keydown;
@@ -199,17 +199,22 @@ void win32_set_cursor(cursors c) {
 	}
 }
 
-platform_error win32_write_stdout(string str) {
+platform_error win32_write_stdout(void* mem, u32 len) {
 
 	platform_error ret;
 
-	if(WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE), (void*)str.c_str, str.len, 0, 0) == 0) {
+	if(WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE), mem, len, 0, 0) == 0) {
 		ret.good = false;
 		ret.error = GetLastError();
 		return ret;	
 	}
 
-	return ret;
+	return ret;	
+}
+
+platform_error win32_write_stdout_str(string str) {
+
+	return win32_write_stdout(str.c_str, str.len);
 }
 
 platform_error win32_get_window_size(platform_window* window, i32* w, i32* h) {
@@ -242,23 +247,6 @@ string win32_time_string() {
 	ret.len = ret.cap;
 
 	GetTimeFormatA(LOCALE_USER_DEFAULT, 0, null, "hh:mm:ss", ret.c_str, len);	
-
-	return ret;
-}
-
-platform_error win32_get_stdout_as_file(platform_file* file) {
-
-	platform_error ret;
-
-	HANDLE std = GetStdHandle(STD_OUTPUT_HANDLE);
-
-	if(std == INVALID_HANDLE_VALUE || std == null) {
-		ret.good = false;
-		ret.error = GetLastError();
-		return ret;		
-	}
-
-	file->handle = std;
 
 	return ret;
 }

@@ -41,8 +41,8 @@ platform_error win32_close_file(platform_file* file);
 platform_error win32_write_file(platform_file* file, void* mem, u32 bytes);
 platform_error win32_read_file(platform_file* file, void* mem, u32 bytes);
 u32			   win32_file_size(platform_file* file);
-platform_error win32_get_stdout_as_file(platform_file* file);
-platform_error win32_write_stdout(string str);
+platform_error win32_write_stdout_str(string str);
+platform_error win32_write_stdout(void* mem, u32 len);
 
 // if this fails, we're having big problems
 // NOTE(max): heap alloc should return zero-initialized memory

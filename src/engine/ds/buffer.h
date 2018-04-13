@@ -20,3 +20,4 @@ struct buffer {
 };
 
 CALLBACK void write_file_wrapper(platform_file file, void* mem, u32 len);
+CALLBACK void write_stdout_wrapper(u8 ignore, void* mem, u32 len);

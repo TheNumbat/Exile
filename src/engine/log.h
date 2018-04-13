@@ -17,6 +17,7 @@ enum class log_level : u8 {
 };
 
 enum class log_out_type : u8 {
+	console,
 	plaintext,
 	html,
 	custom,
@@ -91,6 +92,7 @@ struct log_manager {
 	void pop_context();
 
 	void add_file(platform_file file, log_level level, log_out_type type = log_out_type::plaintext, bool flush = false); // call from one thread before starting
+	void add_stdout(log_level level, log_out_type type = log_out_type::plaintext); // call from one thread before starting
 	void print_header(log_out* out);
 	void print_footer(log_out* out);
 	void add_custom_output(log_out out);

@@ -64,7 +64,7 @@ void dbg_manager::destroy() { PROF
 
 	FORMAP(it, alloc_stats) {
 		FORMAP(a, it->value->current_set) {
-			LOG_DEBUG_F("\t% bytes in % @ %:%", a->value.size, it->key->name, string::from_c_str(a->value.last_loc.file), a->value.last_loc.line);
+			// LOG_DEBUG_F("\t% bytes in % @ %:%", a->value.size, it->key->name, string::from_c_str(a->value.last_loc.file), a->value.last_loc.line);
 		}
 		it->value->destroy();
 		free(it->value, sizeof(alloc_profile));

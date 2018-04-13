@@ -84,14 +84,26 @@ void log_manager::pop_context() { PROF_NOCS
 
 void log_manager::add_file(platform_file file, log_level level, log_out_type type, bool flush) { PROF
 
-	log_out lfile;
-	lfile.type = type;
-	lfile.flush_on_message = flush;
-	lfile.file = buffer<platform_file,4096>::make(FPTR(write_file_wrapper), file);
-	lfile.level = level;
+	log_out lout;
+	lout.type = type;
+	lout.flush_on_message = flush;
+	lout.file = buffer<platform_file,4096>::make(FPTR(write_file_wrapper), file);
+	lout.level = level;
 	
-	print_header(&lfile);
-	out.push(lfile);
+	print_header(&lout);
+	out.push(lout);
+}
+
+void log_manager::add_stdout(log_level level, log_out_type type) { PROF
+
+	log_out lout;
+	lout.type = log_out_type::console;
+	lout.file = buffer<platform_file,4096>::make(FPTR(write_stdout_wrapper), {});
+	lout.flush_on_message = true;
+	lout.level = level;
+	
+	print_header(&lout);
+	out.push(lout);
 }
 
 void log_manager::add_custom_output(log_out output) { PROF
@@ -298,7 +310,7 @@ string fmt_msg(log_message* msg, log_out_type type) { PROF
 
 	string output;
 
-	if(type == log_out_type::plaintext) {
+	if(type == log_out_type::plaintext || type == log_out_type::console) {
 
 		output = string::makef("%-8 [%-36] [%-20] [%-5] %\n"_, time, cstack, file_line, clevel, msg->msg);
 

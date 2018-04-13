@@ -6,6 +6,11 @@
 #include <malloc.h>
 #include <assert.h>
 #include <time.h>
+#ifdef _MSC_VER
+#include <io.h>
+#else
+#include <unistd.h>
+#endif
 
 #ifdef _WIN32
 extern "C" {
@@ -108,9 +113,9 @@ platform_api platform_build_api() {
 	ret.close_file				= &sdl_close_file;
 	ret.write_file				= &sdl_write_file;
 	ret.read_file				= &sdl_read_file;
-	ret.get_stdout_as_file		= &sdl_get_stdout_as_file;
 	ret.time_string				= &sdl_time_string;
 	ret.get_window_size			= &sdl_get_window_size;
+	ret.write_stdout_str		= &sdl_write_stdout_str;
 	ret.write_stdout			= &sdl_write_stdout;
 	ret.file_size				= &sdl_file_size;
 	ret.get_glproc				= &sdl_get_glproc;
@@ -809,7 +814,6 @@ platform_error sdl_close_file(platform_file* file) {
 	}
 
 	file->ops = null;
-
 	return ret;
 }
 
@@ -852,23 +856,25 @@ u32	sdl_file_size(platform_file* file) {
 	return (u32)size;
 }
 
-platform_error sdl_get_stdout_as_file(platform_file* file) {
+platform_error sdl_write_stdout(void* mem, u32 len) {
 
 	platform_error ret;
 
-	file->ops = SDL_RWFromFP(stdout, SDL_FALSE);
-	if(!file->ops) {
-		ret.good = false;
-		ret.error_message = str(SDL_GetError());
-	}
+#ifdef _MSC_VER
+	_write(1, mem, len);
+	fflush(stdout);
+#else
+	write(stdout, mem, len);
+#endif
 
 	return ret;
 }
 
-platform_error sdl_write_stdout(string str) {
+platform_error sdl_write_stdout_str(string str) {
 
 	platform_error ret;
 	puts(str.c_str);
+	fflush(stdout);
 	return ret;
 }
 

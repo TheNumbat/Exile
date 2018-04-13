@@ -328,8 +328,8 @@ struct platform_api {
 	platform_error 	(*close_file)(platform_file* file)																	= null;
 	platform_error 	(*write_file)(platform_file* file, void* mem, u32 bytes)											= null;
 	platform_error 	(*read_file)(platform_file* file, void* mem, u32 bytes)												= null;
-	platform_error 	(*get_stdout_as_file)(platform_file* file)															= null;
-	platform_error 	(*write_stdout)(string str)																			= null;
+	platform_error 	(*write_stdout_str)(string str)																		= null;
+	platform_error 	(*write_stdout)(void* mem, u32 len)																	= null;	
 	string 			(*make_timef)(string fmt)																			= null;
 	string 			(*time_string)()																					= null;
 	u32			   	(*file_size)(platform_file* file)																	= null;

@@ -39,8 +39,8 @@ platform_error sdl_close_file(platform_file* file);
 platform_error sdl_write_file(platform_file* file, void* mem, u32 bytes);
 platform_error sdl_read_file(platform_file* file, void* mem, u32 bytes);
 u32			   sdl_file_size(platform_file* file);
-platform_error sdl_get_stdout_as_file(platform_file* file);
-platform_error sdl_write_stdout(string str);
+platform_error sdl_write_stdout_str(string str);
+platform_error sdl_write_stdout(void* mem, u32 len);
 
 // if this fails, we're having big problems
 // NOTE(max): heap alloc should return zero-initialized memory

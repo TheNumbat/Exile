@@ -3,10 +3,6 @@ Working To-Do:
 
 	!~~~~~ FIX BUGS ~~~~~!
 
-	SDL platform layer
-		fix time strings
-		crashes on shutdown whereas win32 doesn't
-
 	config format language
 		rewrite metaprogram to use it
 
@@ -19,12 +15,13 @@ Working To-Do:
 
 Bugs:
 
+	allocation profiling is somewhat broken for the world system
+		sometimes causes crash on quit (while printing allocs)
+		this crashes the SDL layer on shutdown
+
 	AO broken
 		only checks in one direction/vertex
 		doesn't check across chunk boundaries
-
-	allocation profiling is somewhat broken for the world system
-		sometimes causes crash on quit (while printing allocs)
 
 	textures get recreated? on asset store reload (and not freed?)
 		make sure textures are only created once
