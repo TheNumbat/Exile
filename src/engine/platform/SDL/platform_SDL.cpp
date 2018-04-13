@@ -1069,6 +1069,7 @@ string sdl_time_string() {
 #endif
 
 	strftime(ret.c_str, 9, "%I:%M:%S", &info);
+	ret.len = 9;
 
 	return ret;
 }
