@@ -862,10 +862,11 @@ platform_error sdl_write_stdout(void* mem, u32 len) {
 
 #ifdef _MSC_VER
 	_write(1, mem, len);
-	fflush(stdout);
 #else
 	write(stdout, mem, len);
 #endif
+	
+	fflush(stdout);
 
 	return ret;
 }

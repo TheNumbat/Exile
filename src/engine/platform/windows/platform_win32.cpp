@@ -203,7 +203,7 @@ platform_error win32_write_stdout(void* mem, u32 len) {
 
 	platform_error ret;
 
-	if(WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE), mem, len, 0, 0) == 0) {
+	if(WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), mem, len, 0, 0) == 0) {
 		ret.good = false;
 		ret.error = GetLastError();
 		return ret;	
@@ -214,7 +214,7 @@ platform_error win32_write_stdout(void* mem, u32 len) {
 
 platform_error win32_write_stdout_str(string str) {
 
-	return win32_write_stdout(str.c_str, str.len);
+	return win32_write_stdout(str.c_str, str.len - 1);
 }
 
 platform_error win32_get_window_size(platform_window* window, i32* w, i32* h) {

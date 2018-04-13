@@ -17,7 +17,6 @@ Bugs:
 
 	allocation profiling is somewhat broken for the world system
 		sometimes causes crash on quit (while printing allocs)
-		this crashes the SDL layer on shutdown
 
 	AO broken
 		only checks in one direction/vertex
