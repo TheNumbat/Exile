@@ -10,7 +10,7 @@ void _begin_thread(string fmt, allocator* alloc, code_context start, Targs... ar
 	this_thread_data.start_context = start;
 	this_thread_data.name = string::makef(fmt, alloc, args...);
 
-	this_thread_data.scratch_arena = MAKE_ARENA("scratch"_, MEGABYTES(32), alloc, false);
+	this_thread_data.scratch_arena = MAKE_ARENA("scratch"_, MEGABYTES(32), alloc);
 	PUSH_ALLOC(&this_thread_data.scratch_arena);
 
 	this_thread_data.profiling = true;

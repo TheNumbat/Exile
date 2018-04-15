@@ -4,8 +4,7 @@
 struct engine {
 
 // private
-	platform_allocator 	default_platform_allocator, suppressed_platform_allocator;
-
+	platform_allocator basic_a;
 	func_ptr_state func_state;
 	asset_store default_store;
 

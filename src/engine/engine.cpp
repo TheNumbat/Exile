@@ -12,21 +12,17 @@ EXPORT engine* start_up(platform_api* api) {
 
 	setup_fptrs();
 
-	state->default_platform_allocator = MAKE_PLATFORM_ALLOCATOR("default");
-	state->suppressed_platform_allocator = MAKE_PLATFORM_ALLOCATOR("default/suppress");
-	state->suppressed_platform_allocator.suppress_messages = true;
+	state->basic_a = MAKE_PLATFORM_ALLOCATOR("basic");
 
-	begin_thread("main"_, &state->suppressed_platform_allocator);
+	begin_thread("main"_, &state->basic_a);
 
 	state->dbg_a = MAKE_PLATFORM_ALLOCATOR("dbg");
-	state->dbg_a.suppress_messages = true;
 	state->dbg = dbg_manager::make(&state->dbg_a);
 	state->dbg.register_thread(180);
 
 	BEGIN_FRAME();
 
 	state->log_a = MAKE_PLATFORM_ALLOCATOR("log");
-	state->log_a.suppress_messages = true;
 	state->log = log_manager::make(&state->log_a);
 	state->dbg.setup_log(&state->log);
 
@@ -47,7 +43,7 @@ EXPORT engine* start_up(platform_api* api) {
 	state->evt.start();
 
 	LOG_INFO("Setting up default assets...");
-	state->default_store = asset_store::make(&state->default_platform_allocator);
+	state->default_store = asset_store::make(&state->basic_a);
 	state->default_store.load("assets/engine.asset"_);
 
 	LOG_INFO("Creating window...");
@@ -162,7 +158,7 @@ EXPORT void on_reload(platform_api* api, engine* state) {
 
 	state->func_state.reload_all();
 
-	begin_thread("main"_, &state->suppressed_platform_allocator);
+	begin_thread("main"_, &state->basic_a);
 
 	state->ogl.load_global_funcs();
 

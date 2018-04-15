@@ -9,7 +9,7 @@ log_manager log_manager::make(allocator* a) { PROF
 	global_api->create_mutex(&ret.output_mut, false);
 
 	ret.alloc = a;
-	ret.scratch = MAKE_ARENA("log scratch"_, MEGABYTES(1), a, true);
+	ret.scratch = MAKE_ARENA("log scratch"_, MEGABYTES(1), a);
 
 	return ret;
 }
@@ -170,7 +170,7 @@ void log_manager::msgf(string fmt, log_level level, code_context context, Targs.
 	// NOTE(max): this is freed in another thread that doesn't participate in the debug system
 	arena_allocator arena;
 	PUSH_PROFILE(false) {
-		arena = MAKE_ARENA("msg"_, arena_size, alloc, true);
+		arena = MAKE_ARENA("msg"_, arena_size, alloc);
 	} POP_PROFILE();
 
 	PUSH_ALLOC(&arena) {
@@ -217,7 +217,7 @@ void log_manager::msg(string msg, log_level level, code_context context) { PROF_
 	// NOTE(max): this is freed in another thread that doesn't participate in the debug system
 	arena_allocator arena;
 	PUSH_PROFILE(false) {
-		arena = MAKE_ARENA("msg"_, arena_size, alloc, true);
+		arena = MAKE_ARENA("msg"_, arena_size, alloc);
 	} POP_PROFILE();
 
 	PUSH_ALLOC(&arena) {

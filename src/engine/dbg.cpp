@@ -9,7 +9,7 @@ dbg_manager dbg_manager::make(allocator* alloc) { PROF
 	ret.log_cache = locking_queue<log_message>::make(1024, alloc);
 
 	ret.alloc = alloc;
-	ret.scratch = MAKE_ARENA("dbg scratch"_, MEGABYTES(1), alloc, false);
+	ret.scratch = MAKE_ARENA("dbg scratch"_, MEGABYTES(1), alloc);
 	ret.selected_thread = global_api->this_thread_id();
 	global_api->create_mutex(&ret.stats_map_mut, false);
 	global_api->create_mutex(&ret.alloc_map_mut, false);
@@ -634,7 +634,7 @@ CALLBACK void dbg_add_log(log_message* msg, void* param) { PROF
 	}
 
 	log_message* m = dbg->log_cache.push(*msg);
-	m->arena       = MAKE_ARENA("cmsg"_, msg->arena.size, dbg->alloc, msg->arena.suppress_messages);
+	m->arena       = MAKE_ARENA("cmsg"_, msg->arena.size, dbg->alloc);
 	m->call_stack  = array<code_context>::make_copy(&msg->call_stack, &m->arena);
 	m->thread_name = string::make_copy(msg->thread_name, &m->arena);
 	m->msg         = string::make_copy(msg->msg, &m->arena);

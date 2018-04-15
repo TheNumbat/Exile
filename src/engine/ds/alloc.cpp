@@ -144,7 +144,7 @@ inline void arena_destroy(arena_allocator* a, code_context context) { PROF
 	}
 }
 
-arena_allocator make_arena_allocator(string name, u64 size, allocator* backing, bool suppress, code_context context) { PROF
+arena_allocator make_arena_allocator(string name, u64 size, allocator* backing, code_context context) { PROF
 
 	arena_allocator ret;
 
@@ -153,7 +153,6 @@ arena_allocator make_arena_allocator(string name, u64 size, allocator* backing, 
 	ret.size 	  	= size;
 	ret.context   	= context;
 	ret.backing   	= backing;
-	ret.suppress_messages = suppress;
 
 	ret.allocate_.set(FPTR(arena_allocate));
 	ret.free_.set(FPTR(arena_free));
@@ -225,7 +224,6 @@ pool_allocator make_pool_allocator(string name, u64 page_size, allocator* backin
 	ret.page_size 	= page_size;
 	ret.context   	= context;
 	ret.backing   	= backing;
-	ret.suppress_messages = suppress;
 
 	ret.allocate_.set(FPTR(pool_allocate));
 	ret.free_.set(FPTR(pool_free));

@@ -9,7 +9,6 @@ struct allocator {
 	func_ptr<void,void*,u64,allocator*,code_context> 			free_;
 
 	code_context context;
-	bool suppress_messages = false;
 
 	char c_name[ALLOC_NAME_LEN] = {};
 	string name();
@@ -25,8 +24,8 @@ struct allocator {
 
 #define MAKE_PLATFORM_ALLOCATOR(n) make_platform_allocator(n##_, CONTEXT)
 
-#define MAKE_ARENA(n, size, a, s) make_arena_allocator(n, size, a, s, CONTEXT) 
-#define MAKE_ARENA_FROM_CONTEXT(n, size, s) make_arena_allocator(n, size, CURRENT_ALLOC(), s, CONTEXT) 
+#define MAKE_ARENA(n, size, a) make_arena_allocator(n, size, a, CONTEXT) 
+#define MAKE_ARENA_FROM_CONTEXT(n, size) make_arena_allocator(n, size, CURRENT_ALLOC(), CONTEXT) 
 #define DESTROY_ARENA(a) arena_destroy(a, CONTEXT);
 #define	RESET_ARENA(a) arena_reset(a, CONTEXT);
 
@@ -58,7 +57,7 @@ struct arena_allocator : public allocator {
 	u64 size			= 0;
 };
 
-arena_allocator make_arena_allocator(string name, u64 size, allocator* backing, bool suppress, code_context context);
+arena_allocator make_arena_allocator(string name, u64 size, allocator* backing, code_context context);
 void arena_destroy(arena_allocator* a, code_context context);
 void arena_reset(arena_allocator* a, code_context context);
 
