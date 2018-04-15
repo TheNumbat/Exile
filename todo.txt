@@ -17,7 +17,6 @@ Working To-Do:
 Bugs:
 
 	allocation profiling is somewhat broken for the world system
-		sometimes causes crash on quit (while printing allocs)
 
 	AO broken
 		only checks in one direction/vertex

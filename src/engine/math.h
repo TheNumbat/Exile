@@ -667,7 +667,7 @@ f32 perlin_grad(i32 hash, f32 x, f32 y, f32 z) {
    return grad[0]*x + grad[1]*y + grad[2]*z;
 }
 
-// NOTE(max): SSE sin/cos from see_mathfun
+// NOTE(max): SSE sin/cos from sse_mathfun
 
 #define _PS_CONST_TYPE(Name, Type, Val) static const __declspec(align(16)) Type _ps_##Name[4] = { Val, Val, Val, Val }
 #define _PS_CONST(Name, Val) static const __declspec(align(16)) f32 _ps_##Name[4] = { Val, Val, Val, Val }
