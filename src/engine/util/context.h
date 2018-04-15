@@ -5,9 +5,12 @@
 #define CTX_FUN_LEN		128
 
 struct code_context {
-	char file[CTX_FILE_LEN]		= {};
-	char function[CTX_FUN_LEN]	= {};
+	char c_file[CTX_FILE_LEN]		= {};
+	char c_function[CTX_FUN_LEN]	= {};
 	u32 line = 0;
+
+	string file();
+	string function();
 };
 
 inline u32 hash(code_context c);

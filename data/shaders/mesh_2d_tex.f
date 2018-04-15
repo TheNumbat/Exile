@@ -1,5 +1,5 @@
 
-#version 450 core
+#version 330 core
 
 uniform sampler2D tex;
 

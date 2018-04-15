@@ -44,7 +44,6 @@ void exile::destroy() { PROF
 	store.destroy();
 	
 	controls.destroy();
-	alloc.destroy();
 }
 
 CALLBACK bool default_evt_handle(void* param, platform_event evt) { PROF

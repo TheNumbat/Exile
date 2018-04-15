@@ -7,15 +7,15 @@
 	
 #define PROFILE					// do function enter/exit profiling
 	
-#define MORE_PROF				// do profiling for functions that are called a _lot_
-								// (still excludes vec constructors)
-
 #define ZERO_ARENA				// memset arena allocator store to zero on reset
 
 #define NO_CONCURRENT_JOBS		// makes queue_job just run the job and wait_job do nothing
+
+#define FAST_CLOSE 				// don't wait for the thread pool to finish its work before shutting down (breaks hot reloading)
 */
 
 // #define RELEASE // turn off everything for a true release build
+#define FAST_CLOSE
 
 #include "engine/compile.h"
 engine* eng = null;

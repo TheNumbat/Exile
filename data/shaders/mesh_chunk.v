@@ -1,17 +1,17 @@
 
-#version 450 core
+#version 330 core
 
 layout (location = 0) in uvec2 vertex;
 
-const uint y_mask = 0xfff00000;
-const uint n_mask = 0x000f0000;
-const uint z_mask = 0x0000ff00;
-const uint x_mask = 0x000000ff;
+const uint y_mask = 0xfff00000u;
+const uint n_mask = 0x000f0000u;
+const uint z_mask = 0x0000ff00u;
+const uint x_mask = 0x000000ffu;
 
-const uint t_mask  = 0x00000fff;
-const uint ao_mask = 0x0000f000;
-const uint u_mask  = 0x00ff0000;
-const uint v_mask  = 0xff000000;
+const uint t_mask  = 0x00000fffu;
+const uint ao_mask = 0x0000f000u;
+const uint u_mask  = 0x00ff0000u;
+const uint v_mask  = 0xff000000u;
 
 uniform mat4 transform;
 

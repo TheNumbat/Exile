@@ -4,7 +4,7 @@
 		#define BOUNDS_CHECK
 		#define BLOCK_OR_EXIT_ON_ERROR
 		#define ZERO_ARENA
-		#define CHECKED(func, ...) {platform_error err = global_api->func(__VA_ARGS__); if(!err.good) LOG_ERR_F("Error % in %", err.error, #func);}
+		#define CHECKED(func, ...) {platform_error err = global_api->func(__VA_ARGS__); if(!err.good) LOG_ERR_F("Error %:\"%\" in %", err.error, err.error_message, #func);}
 	#endif
 #endif
 #ifdef RELEASE

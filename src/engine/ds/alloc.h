@@ -1,16 +1,18 @@
 
 #pragma once
 
+#define ALLOC_NAME_LEN 25
+
 struct allocator {
 	func_ptr<void*,u64,u64,allocator*,code_context>				allocate_;
 	func_ptr<void*,void*,u64,u64,u64,allocator*,code_context> 	reallocate_;
 	func_ptr<void,void*,u64,allocator*,code_context> 			free_;
 
-	void destroy();
-
 	code_context context;
 	bool suppress_messages = false;
-	string name;
+
+	char c_name[ALLOC_NAME_LEN] = {};
+	string name();
 };
 
 #define KILOBYTES(m) (m*1024)
@@ -93,4 +95,4 @@ void _memset(void* mem, u64 size, u8 val);
 void _memcpy_ctx(void* source, void* dest, u64 size);
 
 bool operator==(allocator l, allocator r);
-inline u32 hash(allocator* a);
+inline u32 hash(allocator a);

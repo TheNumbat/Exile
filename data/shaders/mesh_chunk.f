@@ -1,5 +1,5 @@
 
-#version 450 core
+#version 330 core
 
 flat in uint f_t, f_norm;
 in float f_ao;

@@ -185,6 +185,7 @@ ogl_manager ogl_manager::make(platform_window* win, allocator* a) { PROF
 
 	ret.load_global_funcs();
 	ret.info = ogl_info::make(ret.alloc);
+	LOG_DEBUG_F("GL %.% %", ret.info.major, ret.info.minor, ret.info.renderer);
 
 	_type_info* info = TYPEINFO(render_command_type);
 	PUSH_ALLOC(a) {
@@ -212,8 +213,6 @@ ogl_manager ogl_manager::make(platform_window* win, allocator* a) { PROF
 	} POP_ALLOC();
 
 	ret.dbg_shader = shader_program::make("shaders/dbg.v"_,"shaders/dbg.f"_,FPTR(uniforms_dbg),a);
-
-	LOG_DEBUG_F("GL %.% %", ret.info.major, ret.info.minor, ret.info.renderer);
 
 	return ret;
 }
@@ -656,8 +655,7 @@ void debug_proc(gl_debug_source glsource, gl_debug_type gltype, GLuint id, gl_de
 		LOG_WARN_F("LOW OpenGL: % SOURCE: % TYPE: %", message, source, type);
 		break;
 	case gl_debug_severity::notification:
-		// TODO(max): maybe re-enable when we stop updating the buffers every frame
-		// LOG_OGL_F("NOTF OpenGL: % SOURCE: % TYPE: %", message, source, type);
+		LOG_OGL_F("NOTF OpenGL: % SOURCE: % TYPE: %", message, source, type);
 		break;
 	}
 }
@@ -672,7 +670,6 @@ ogl_info ogl_info::make(allocator* a) { PROF
 	
 	ret.shader_version = string::from_c_str((char*)glGetString(gl_info::shading_language_version));
 	
-
 	i32 num_extensions = 0;
 	glGetIntegerv(gl_get::num_extensions, &num_extensions);
 
@@ -779,7 +776,7 @@ void ogl_manager::load_global_funcs() { PROF
 
 void ogl_manager::check_leaked_handles() {
 
-	#define GL_CHECK(type) if(glIs##type(i) == gl_bool::_true) { LOG_WARN_F("Leaked OpenGL handle % of type %", i, #type##_); leaked = true;}
+	#define GL_CHECK(type) if(glIs##type && glIs##type(i) == gl_bool::_true) { LOG_WARN_F("Leaked OpenGL handle % of type %", i, #type##_); leaked = true;}
 
 	bool leaked = false;
 	for(GLuint i = 0; i < 10000; i++) {

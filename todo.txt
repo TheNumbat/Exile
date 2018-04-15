@@ -3,6 +3,7 @@ Working To-Do:
 
 	!~~~~~ FIX BUGS ~~~~~!
 
+	linux build system
 	config format language
 		rewrite metaprogram to use it
 

@@ -7,17 +7,16 @@
 
 enum class log_level : u8 {
 	none = 0,
-	alloc,		// super gratuitous allocation info
-	ogl,		// opengl info (ignores notifications)
-	debug,		// gratuitous info
+	alloc,		// gratuitous allocation info
+	ogl,		// opengl notification info
+	debug,		// debug info
 	info,		// relevant info
-	warn,		// shouldn't happen, debug later
-	error,		// shouldn't happen, debug now
-	fatal,		// basically assert(false), hangs the thread and will exit the program after output
+	warn,		// probably shouldn't happen
+	error,		// really shouldn't happen
+	fatal,		// assert(false), hangs the thread and will exit the program after output
 };
 
 enum class log_out_type : u8 {
-	console,
 	plaintext,
 	html,
 	custom,

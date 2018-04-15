@@ -1,12 +1,19 @@
 
 inline u32 hash(code_context c) { PROF
 
-	return hash(string::from_c_str(c.function)) ^ hash(string::from_c_str(c.file)) ^ hash(c.line);
+	return hash(c.function()) ^ hash(c.file()) ^ hash(c.line);
 }
 
 bool operator==(code_context l, code_context r) { PROF
 
-	return string::from_c_str(l.function) == string::from_c_str(r.function) && string::from_c_str(l.file) == string::from_c_str(r.file) && l.line == r.line;
+	return l.function() == r.function() && l.file() == r.file() && l.line == r.line;
+}
+
+string code_context::file() { 
+	return string::from_c_str(c_file);
+}
+string code_context::function() { 
+	return string::from_c_str(c_function);
 }
 
 inline code_context _make_context(string file, string function, i32 line) {
@@ -18,8 +25,8 @@ inline code_context _make_context(string file, string function, i32 line) {
 
 	LOG_DEBUG_ASSERT(file.len < CTX_FILE_LEN && function.len < CTX_FUN_LEN);
 
-	_memcpy_ctx(file.c_str, ret.file, file.len);
-	_memcpy_ctx(function.c_str, ret.function, function.len);
+	_memcpy_ctx(file.c_str, ret.c_file, file.len);
+	_memcpy_ctx(function.c_str, ret.c_function, function.len);
 	ret.line = line;
 #endif
 	

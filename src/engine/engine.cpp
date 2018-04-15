@@ -136,7 +136,7 @@ EXPORT void shut_down(engine* state) {
 	state->dbg.shutdown_log(&state->log);	
 	END_FRAME();
 	state->dbg.destroy();
-	
+
 	LOG_DEBUG("Done with shutdown!");
 
 	state->log.stop();
@@ -144,14 +144,6 @@ EXPORT void shut_down(engine* state) {
 
 	cleanup_fptrs();
 	end_thread();
-
-	state->dbg_a.destroy();
-	state->log_a.destroy();
-	state->ogl_a.destroy();
-	state->gui_a.destroy();
-	state->evt_a.destroy();
-	state->suppressed_platform_allocator.destroy();
-	state->default_platform_allocator.destroy();
 
 	global_log = null;
 	global_dbg = null;

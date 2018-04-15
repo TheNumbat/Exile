@@ -60,7 +60,7 @@ struct dbg_msg_end_frame {
 struct dbg_msg_allocate {
 	void* to 		 = null;
 	u64 bytes 		 = 0;
-	allocator* alloc = null;
+	allocator alloc;
 };
 
 struct dbg_msg_reallocate {
@@ -68,13 +68,13 @@ struct dbg_msg_reallocate {
 	void* from 		 = null;
 	u64 to_bytes	 = 0;
 	u64 from_bytes 	 = 0;
-	allocator* alloc = null;
+	allocator alloc;
 };
 
 struct dbg_msg_free {
 	void* from 		 = null;
 	u64 bytes 		 = 0;
-	allocator* alloc = null;
+	allocator alloc;
 };
 
 struct dbg_msg_enter_func {};
@@ -138,7 +138,7 @@ struct frame_profile {
 	vector<profile_node*> heads;
 	profile_node* current = null;
 
-	map<allocator*, alloc_frame_profile> allocations;
+	map<allocator, alloc_frame_profile> allocations;
 
 	pool_allocator pool;
 	u32 number = 0;
@@ -207,7 +207,7 @@ struct dbg_manager {
 	map<platform_thread_id, thread_profile*> thread_stats;
 	
 	platform_mutex alloc_map_mut;
-	map<allocator*, alloc_profile*> alloc_stats;
+	map<allocator, alloc_profile*> alloc_stats;
 
 	locking_queue<log_message> log_cache;
 	log_level lvl = log_level::info;

@@ -4,7 +4,7 @@ dbg_manager dbg_manager::make(allocator* alloc) { PROF
 	dbg_manager ret;
 
 	ret.thread_stats = map<platform_thread_id, thread_profile*>::make(global_api->get_num_cpus(), alloc);
-	ret.alloc_stats  = map<allocator*, alloc_profile*>::make(32, alloc);
+	ret.alloc_stats  = map<allocator, alloc_profile*>::make(32, alloc);
 
 	ret.log_cache = locking_queue<log_message>::make(1024, alloc);
 
@@ -64,7 +64,7 @@ void dbg_manager::destroy() { PROF
 
 	FORMAP(it, alloc_stats) {
 		FORMAP(a, it->value->current_set) {
-			LOG_DEBUG_F("\t% bytes in % @ %:%", a->value.size, it->key->name, string::from_c_str(a->value.last_loc.file), a->value.last_loc.line);
+			LOG_DEBUG_F("\t% bytes in % @ %:%", a->value.size, it->key.name(), a->value.last_loc.file(), a->value.last_loc.line);
 		}
 		it->value->destroy();
 		free(it->value, sizeof(alloc_profile));
@@ -104,7 +104,7 @@ void dbg_manager::profile_recurse(vector<profile_node*> list) { PROF
 
 		profile_node* node = *it;
 
-		if(gui_node(string::makef("%--*|%+8|%+10|%+2"_, 35 - gui_indent_level(), string::from_c_str(node->context.function), node->heir, node->self, node->calls), &node->enabled)) {
+		if(gui_node(string::makef("%--*|%+8|%+10|%+2"_, 35 - gui_indent_level(), node->context.function(), node->heir, node->self, node->calls), &node->enabled)) {
 			gui_indent();
 			profile_recurse(node->children);
 			gui_unindent();
@@ -169,7 +169,7 @@ void dbg_manager::UI() { PROF
 		gui_text(string::makef("Total size: %, total allocs: %, total frees: %"_, totals.current_size, totals.num_allocs, totals.num_frees));
 
 		FORMAP(it, alloc_stats) {
-			if(gui_node(string::makef("%: size: %, allocs: %, frees: %"_, it->key->name, it->value->current_size, it->value->num_allocs, it->value->num_frees), &it->value->shown)) {
+			if(gui_node(string::makef("%: size: %, allocs: %, frees: %"_, it->key.name(), it->value->current_size, it->value->num_allocs, it->value->num_frees), &it->value->shown)) {
 
 				vector<addr_info> allocs = vector<addr_info>::make(it->value->current_set.size);
 				FORMAP(a, it->value->current_set) {
@@ -180,7 +180,7 @@ void dbg_manager::UI() { PROF
 				
 				gui_indent();
 				FORVEC(a, allocs) {
-					gui_text(string::makef("% bytes @ %:%"_, a->size, string::from_c_str(a->last_loc.file), a->last_loc.line));
+					gui_text(string::makef("% bytes @ %:%"_, a->size, a->last_loc.file(), a->last_loc.line));
 				}
 				gui_unindent();
 
@@ -233,18 +233,18 @@ void dbg_manager::UI() { PROF
 			gui_indent();
 
 			FORMAP(it, frame->allocations) {
-				if(gui_node(it->key->name, &it->value.show)) {
+				if(gui_node(it->key.name(), &it->value.show)) {
 					gui_indent();
 					FORVEC(msg, it->value.allocs) {
 						switch(msg->type) {
 						case dbg_msg_type::allocate: {
-							gui_text(string::makef("% bytes @ %:%"_, msg->allocate.bytes, string::from_c_str(msg->context.file), msg->context.line));
+							gui_text(string::makef("% bytes @ %:%"_, msg->allocate.bytes, msg->context.file(), msg->context.line));
 						} break;
 						case dbg_msg_type::reallocate: {
-							gui_text(string::makef("% bytes re@ %:%"_, msg->reallocate.to_bytes, string::from_c_str(msg->context.file), msg->context.line));
+							gui_text(string::makef("% bytes re@ %:%"_, msg->reallocate.to_bytes, msg->context.file(), msg->context.line));
 						} break;
 						case dbg_msg_type::free: {
-							gui_text(string::makef("free @ %:%"_, string::from_c_str(msg->context.file), msg->context.line));
+							gui_text(string::makef("free @ %:%"_, msg->context.file(), msg->context.line));
 						} break;
 						}
 					}
@@ -304,7 +304,7 @@ void frame_profile::setup(string name, allocator* alloc, clock time, u64 p, u32 
 
 	pool = MAKE_POOL(name, KILOBYTES(8), alloc, false);
 	heads = vector<profile_node*>::make(2, &pool);
-	allocations = map<allocator*, alloc_frame_profile>::make(8, alloc);
+	allocations = map<allocator, alloc_frame_profile>::make(8, alloc);
 	clock_start = time;
 	perf_start = p;
 	number = num;
@@ -389,7 +389,7 @@ void dbg_manager::collate_thread_profile() { PROF
 					if(!frame->current) { 	
 						bool found_repeat_head = false;
 						FORVEC(head, frame->heads) {
-							if(string::from_c_str((*head)->context.function) == string::from_c_str(msg->context.function)) {
+							if((*head)->context.function() == msg->context.function()) {
 								frame->current = *head;
 								found_repeat_head = true;
 							}
@@ -406,7 +406,7 @@ void dbg_manager::collate_thread_profile() { PROF
 
 					profile_node* here = frame->current;
 					FORVEC(node, here->children) {
-						if(string::from_c_str((*node)->context.function) == string::from_c_str(msg->context.function)) {
+						if((*node)->context.function() == msg->context.function()) {
 							here = *node;
 							break;
 						} 
@@ -500,7 +500,7 @@ void alloc_profile::destroy() { PROF
 
 void dbg_manager::process_frame_alloc_msg(frame_profile* frame, dbg_msg* msg) { PROF
 
-	allocator* a = null;
+	allocator a;
 	switch(msg->type) {
 	case dbg_msg_type::allocate: 	a = msg->allocate.alloc; break;
 	case dbg_msg_type::reallocate: 	a = msg->reallocate.alloc; break;
@@ -518,13 +518,13 @@ void dbg_manager::process_frame_alloc_msg(frame_profile* frame, dbg_msg* msg) { 
 
 void dbg_manager::process_alloc_msg(dbg_msg* msg) { PROF
 
-	allocator* a = null;
+	allocator a;
 	switch(msg->type) {
 	case dbg_msg_type::allocate: 	a = msg->allocate.alloc; break;
 	case dbg_msg_type::reallocate: 	a = msg->reallocate.alloc; break;
 	case dbg_msg_type::free: 		a = msg->free.alloc; break;
 	}
-
+	
 	global_api->aquire_mutex(&alloc_map_mut);
 	alloc_profile** p = alloc_stats.try_get(a);
 	if(!p) {
@@ -642,7 +642,7 @@ CALLBACK void dbg_add_log(log_message* msg, void* param) { PROF
 
 bool prof_sort_name(profile_node* l, profile_node* r) {
 
-	return string::from_c_str(l->context.function) <= string::from_c_str(r->context.function);
+	return l->context.function() <= r->context.function();
 }
 
 bool prof_sort_heir(profile_node* l, profile_node* r) {
@@ -665,7 +665,7 @@ void _prof_sec(string name, code_context context) {
 		dbg_msg m;
 		m.type = dbg_msg_type::enter_func;
 		m.context = context;
-		_memcpy_ctx(name.c_str, m.context.function, name.len);
+		_memcpy_ctx(name.c_str, m.context.c_function, name.len);
 	
 		POST_MSG(m);
 	}

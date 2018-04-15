@@ -1,7 +1,7 @@
 
-inline u32 hash(allocator* a) { PROF
+inline u32 hash(allocator a) { PROF
 
-	return hash((void*)a);
+	return hash(a.name());
 }
 
 bool operator==(allocator l, allocator r) { PROF
@@ -9,12 +9,8 @@ bool operator==(allocator l, allocator r) { PROF
 	return l.context == r.context;
 }
 
-void allocator::destroy() { PROF
-	if(name.c_str) {
-		PUSH_PROFILE(false) {
-			free_(name.c_str, name.cap, this, CONTEXT);
-		} POP_PROFILE();
-	}
+string allocator::name() { PROF
+	return string::from_c_str(c_name);
 }
 
 CALLBACK void* platform_allocate(u64 bytes, u64 align, allocator* this_, code_context context) { PROF
@@ -30,7 +26,7 @@ CALLBACK void* platform_allocate(u64 bytes, u64 align, allocator* this_, code_co
 		m.context = context;
 		m.allocate.to = mem;
 		m.allocate.bytes = bytes;
-		m.allocate.alloc = this_;
+		m.allocate.alloc = *this_;
 
 		POST_MSG(m);
 	}
@@ -51,7 +47,7 @@ CALLBACK void platform_free(void* mem, u64 sz, allocator* this_, code_context co
 		m.type = dbg_msg_type::free;
 		m.context = context;
 		m.free.from = mem;
-		m.free.alloc = this_;
+		m.free.alloc = *this_;
 		m.free.bytes = sz;
 
 		POST_MSG(m);
@@ -76,7 +72,7 @@ CALLBACK void* platform_reallocate(void* mem, u64 sz, u64 bytes, u64 align, allo
 		m.reallocate.from_bytes = sz;
 		m.reallocate.to = ret;
 		m.reallocate.from = mem;
-		m.reallocate.alloc = this_;
+		m.reallocate.alloc = *this_;
 
 		POST_MSG(m);
 	}
@@ -95,10 +91,7 @@ inline platform_allocator make_platform_allocator(string name, code_context cont
 	ret.free_.set(FPTR(platform_free));
 	ret.reallocate_.set(FPTR(platform_reallocate));
 
-	// TODO(max): fix
-	PUSH_PROFILE(false) {
-		ret.name = string::make_copy(name, &ret);
-	} POP_PROFILE();
+	memcpy(name.c_str, ret.c_name, name.len);
 
 	return ret;
 }
@@ -119,7 +112,7 @@ CALLBACK void* arena_allocate(u64 bytes, u64 align, allocator* this_, code_conte
 		this__->used += bytes;
 	} else {
 
-		LOG_ERR_F("Failed to allocate % bytes in allocator %:%", bytes, string::from_c_str(this__->context.file), this__->context.line);
+		LOG_ERR_F("Failed to allocate % bytes in allocator %:%", bytes, this__->context.file(), this__->context.line);
 	}
 
 	return mem;
@@ -167,7 +160,7 @@ arena_allocator make_arena_allocator(string name, u64 size, allocator* backing, 
 	ret.reallocate_.set(FPTR(arena_reallocate));
 
 	ret.memory = ret.backing->allocate_(size, 0, ret.backing, context);
-	ret.name = string::make_copy(name, &ret);
+	memcpy(name.c_str, ret.c_name, name.len);
 
 	return ret;
 }
@@ -177,7 +170,7 @@ CALLBACK void* pool_allocate(u64 bytes, u64 align, allocator* this_, code_contex
 	pool_allocator* this__ = (pool_allocator*)this_;
 
 	if(bytes > this__->page_size) {
-		LOG_ERR_F("Requesting allocation of % bytes (page size %) in pool allocator %", bytes, this__->page_size, this__->name);
+		LOG_ERR_F("Requesting allocation of % bytes (page size %) in pool allocator %", bytes, this__->page_size, this__->name());
 		return null;
 	}
 
@@ -223,8 +216,6 @@ void pool_destroy(pool_allocator* a, code_context context) {
 		a->backing->free_(cursor, a->page_size + sizeof(pool_page), a->backing, context);
 		cursor = next;
 	}
-
-	a->name.destroy(a->backing);
 }
 
 pool_allocator make_pool_allocator(string name, u64 page_size, allocator* backing, bool suppress, code_context context) {
@@ -242,7 +233,7 @@ pool_allocator make_pool_allocator(string name, u64 page_size, allocator* backin
 	
 	ret.head = (pool_page*)ret.backing->allocate_(sizeof(pool_page) + page_size, 0, ret.backing, context);
 	ret.current = ret.head;
-	ret.name = string::make_copy(name, backing);
+	memcpy(name.c_str, ret.c_name, name.len);
 
 	ret.head->used = 0;
 	ret.head->next = 0;

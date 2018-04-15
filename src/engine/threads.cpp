@@ -225,8 +225,11 @@ i32 worker(void* data_) {
 		global_api->wait_semaphore(data->jobs_semaphore, -1);
 
 		super_job* current_job = null;
+#ifdef FAST_CLOSE
+		while(data->online && data->job_queue->try_pop(&current_job)) {
+#else
 		while(data->job_queue->try_pop(&current_job)) {
-
+#endif
 			PUSH_PROFILE(true) {
 
 				BEGIN_FRAME();
