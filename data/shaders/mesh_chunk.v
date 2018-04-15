@@ -15,16 +15,11 @@ const uint v_mask  = 0xff000000u;
 
 uniform mat4 transform;
 
+uniform vec4 ao_values = vec4(0.4f, 0.6f, 0.8f, 1.0f);
+
 flat out uint f_t, f_norm;
 out float f_ao;
 out vec2 f_uv;
-
-float ao_values[4] = {
-	0.4f,
-	0.6f,
-	0.8f,
-	1.0f
-};
 
 void main() {
 
