@@ -12,6 +12,11 @@
 #include <unistd.h>
 #endif
 
+#ifdef TEST_NET_ZERO_ALLOCS
+#define sdl_heap_alloc sdl_heap_alloc_net
+#define sdl_heap_free sdl_heap_free_net
+#endif
+
 #ifdef _WIN32
 extern "C" {
     // Request dGPU
@@ -50,11 +55,7 @@ void platform_test_api() {
 	CHECK_ERR
 	printf("count: %d\n", global_num_allocs);
 	puts(path.c_str);
-#ifdef TEST_NET_ZERO_ALLOCS
-	free_string(path, sdl_heap_free_net);
-#else
-	free_string(path, sdl_heap_free);
-#endif
+	free_string(path, &sdl_heap_free);
 	printf("count: %d\n", global_num_allocs);
 
 	string time = sdl_time_string();
@@ -85,13 +86,8 @@ platform_api platform_build_api() {
 	ret.get_file_attributes 	= &sdl_get_file_attributes;
 	ret.test_file_written		= &sdl_test_file_written;
 	ret.copy_file				= &sdl_copy_file;
-#ifdef TEST_NET_ZERO_ALLOCS
-	ret.heap_alloc				= &sdl_heap_alloc_net;
-	ret.heap_free				= &sdl_heap_free_net;
-#else
 	ret.heap_alloc				= &sdl_heap_alloc;
 	ret.heap_free				= &sdl_heap_free;
-#endif
 	ret.heap_realloc			= &sdl_heap_realloc;
 	ret.get_bin_path			= &sdl_get_bin_path;
 	ret.create_thread			= &sdl_create_thread;
@@ -238,7 +234,7 @@ platform_error sdl_create_window(platform_window* window, string title, u32 widt
 
 	platform_error ret;
 
-	window->title = title;
+	window->title = make_cat_string(title, str(" | SDL CRT"), &sdl_heap_alloc);
 	window->w = width;
 	window->h = height;
 
@@ -247,7 +243,7 @@ platform_error sdl_create_window(platform_window* window, string title, u32 widt
 		ret.error_message = str(SDL_GetError());
 	}
 
-	window->window = SDL_CreateWindow(title.c_str, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_SHOWN);
+	window->window = SDL_CreateWindow(window->title.c_str, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_SHOWN);
 	
 	if(!window->window) {
 		ret.good = false;
@@ -296,6 +292,8 @@ platform_error sdl_destroy_window(platform_window* window) {
 	SDL_GL_DeleteContext(window->gl_context);
 	SDL_DestroyWindow(window->window);
 	SDL_Quit();
+
+	free_string(window->title, &sdl_heap_free);
 
 	window->gl_context = null;
 	window->window = null;
@@ -879,21 +877,7 @@ platform_error sdl_write_stdout_str(string str) {
 	return ret;
 }
 
-void* sdl_heap_alloc(u64 bytes) {
-
-	return calloc(bytes, 1);
-}
-
-void* sdl_heap_realloc(void* mem, u64 bytes) {
-
-	return realloc(mem, bytes);
-}
-
-void sdl_heap_free(void* mem) {
-
-	free(mem);
-}
-
+#ifdef TEST_NET_ZERO_ALLOCS
 void* sdl_heap_alloc_net(u64 bytes) {
 
 	SDL_AtomicAdd((SDL_atomic_t*)&global_num_allocs, 1);
@@ -904,6 +888,22 @@ void sdl_heap_free_net(void* mem) {
 
 	SDL_AtomicAdd((SDL_atomic_t*)&global_num_allocs, -1);
 	return free(mem);
+}
+#else
+void* sdl_heap_alloc(u64 bytes) {
+
+	return calloc(bytes, 1);
+}
+
+void sdl_heap_free(void* mem) {
+
+	free(mem);
+}
+#endif
+
+void* sdl_heap_realloc(void* mem, u64 bytes) {
+
+	return realloc(mem, bytes);
 }
 
 platform_error sdl_get_bin_path(string* p) {
@@ -919,11 +919,7 @@ platform_error sdl_get_bin_path(string* p) {
 
 	} else {
 
-#ifdef TEST_NET_ZERO_ALLOCS
-		*p = make_string_from_c_str(path, sdl_heap_alloc_net);
-#else
-		*p = make_string_from_c_str(path, sdl_heap_alloc);
-#endif
+		*p = make_string_from_c_str(path, &sdl_heap_alloc);
 	}
 	
 	return ret;
@@ -1069,11 +1065,7 @@ string sdl_time_string() {
 	struct tm info;
 	localtime_s(&info, &raw);
 
-#ifdef TEST_NET_ZERO_ALLOCS
-	string ret = make_string(9, &sdl_heap_alloc_net);
-#else
 	string ret = make_string(9, &sdl_heap_alloc);
-#endif
 
 	strftime(ret.c_str, 9, "%I:%M:%S", &info);
 	ret.len = 9;

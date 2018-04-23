@@ -1,6 +1,11 @@
 
 #include "platform_win32.h"
 
+#ifdef TEST_NET_ZERO_ALLOCS
+#define win32_heap_alloc win32_heap_alloc_net
+#define win32_heap_free win32_heap_free_net
+#endif
+
 extern "C" {
     // Request dGPU
     __declspec(dllexport) bool NvOptimusEnablement = true;
@@ -39,13 +44,8 @@ platform_api platform_build_api() {
 	ret.get_file_attributes 	= &win32_get_file_attributes;
 	ret.test_file_written		= &win32_test_file_written;
 	ret.copy_file				= &win32_copy_file;
-#ifdef TEST_NET_ZERO_ALLOCS
-	ret.heap_alloc				= &win32_heap_alloc_net;
-	ret.heap_free				= &win32_heap_free_net;
-#else
 	ret.heap_alloc				= &win32_heap_alloc;
 	ret.heap_free				= &win32_heap_free;
-#endif
 	ret.heap_realloc			= &win32_heap_realloc;
 	ret.get_bin_path			= &win32_get_bin_path;
 	ret.create_thread			= &win32_create_thread;
@@ -239,11 +239,7 @@ string win32_time_string() {
 
 	i32 len = GetTimeFormatA(LOCALE_USER_DEFAULT, 0, null, "hh:mm:ss", null, 0);
 
-#ifdef TEST_NET_ZERO_ALLOCS
-	string ret = make_string(len, &win32_heap_alloc_net);
-#else
 	string ret = make_string(len, &win32_heap_alloc);
-#endif
 	ret.len = ret.cap;
 
 	GetTimeFormatA(LOCALE_USER_DEFAULT, 0, null, "hh:mm:ss", ret.c_str, len);	
@@ -496,11 +492,7 @@ platform_error win32_get_bin_path(string* path) {
 
 	platform_error ret;
 
-#ifdef TEST_NET_ZERO_ALLOCS
-	*path = make_string(MAX_PATH, &win32_heap_alloc_net);
-#else
 	*path = make_string(MAX_PATH, &win32_heap_alloc);
-#endif
 	
 	DWORD len = GetModuleFileNameA(null, (LPSTR)path->c_str, MAX_PATH);
 
@@ -527,6 +519,7 @@ platform_error win32_get_bin_path(string* path) {
 	return ret;
 }
 
+#ifdef TEST_NET_ZERO_ALLOCS
 void* win32_heap_alloc_net(u64 bytes) {
 
 	HANDLE heap = GetProcessHeap();
@@ -544,7 +537,7 @@ void win32_heap_free_net(void* mem) {
 
 	_InterlockedDecrement((LONG volatile*)&global_num_allocs);
 }
-
+#else
 void* win32_heap_alloc(u64 bytes) {
 
 	HANDLE heap = GetProcessHeap();
@@ -553,18 +546,19 @@ void* win32_heap_alloc(u64 bytes) {
 	return ret;
 }
 
+void win32_heap_free(void* mem) {
+
+	HANDLE heap = GetProcessHeap();
+	HeapFree(heap, 0, mem);
+}
+#endif
+
 void* win32_heap_realloc(void* mem, u64 bytes) {
 
 	HANDLE heap = GetProcessHeap();
 	void* ret = HeapReAlloc(heap, HEAP_ZERO_MEMORY | HEAP_GENERATE_EXCEPTIONS, mem, (SIZE_T)bytes);
 
 	return ret;
-}
-
-void win32_heap_free(void* mem) {
-
-	HANDLE heap = GetProcessHeap();
-	HeapFree(heap, 0, mem);
 }
 
 platform_error win32_copy_file(string source, string dest, bool overwrite) {
@@ -1219,7 +1213,7 @@ platform_error win32_create_window(platform_window* window, string title, u32 wi
 
 	platform_error ret;
 
-	window->title = title;
+	window->title = make_cat_string(title, str(" | Win32"), &win32_heap_alloc);
 	window->w = width;
 	window->h = height;
 
@@ -1379,6 +1373,8 @@ platform_error win32_create_window(platform_window* window, string title, u32 wi
 platform_error win32_destroy_window(platform_window* window) {
 
 	platform_error ret;
+
+	free_string(window->title, &win32_heap_free);
 
 	if(wglDeleteContext(window->gl_context) == 0) {
 		ret.good = false;
