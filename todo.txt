@@ -16,6 +16,9 @@ Working To-Do:
 
 Bugs:
 
+	relative mouse mode stops message loop on win32
+		rawinput?
+
 	allocation profiling is somewhat broken for the world system
 
 	AO broken

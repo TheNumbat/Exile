@@ -153,7 +153,7 @@ u64 sdl_atomic_exchange(u64* dest, u64 val) {
 
 bool sdl_window_focused(platform_window* win) {
 
-	return SDL_GetGrabbedWindow() == win->window;
+	return win->focused;
 }
 
 platform_error sdl_set_cursor_pos(platform_window* win, i32 x, i32 y) {
@@ -586,9 +586,11 @@ void sdl_pump_events(platform_window* window) {
 			} break;
 			case SDL_WINDOWEVENT_FOCUS_GAINED: {
 				out.window.op = platform_windowop::focused;
+				window->focused = true;
 			} break;
 			case SDL_WINDOWEVENT_FOCUS_LOST: {
 				out.window.op = platform_windowop::unfocused;
+				window->focused = false;
 			} break;
 			case SDL_WINDOWEVENT_CLOSE: {
 				out.window.op = platform_windowop::close;

@@ -15,6 +15,7 @@ struct platform_window {
 	i32 w = 0, h = 0;
 
 	// Opaque block, do not use outside of platform code
+	bool focused = false;
 	SDL_Window* window = null;
 	SDL_GLContext gl_context = {};
 };
