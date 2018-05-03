@@ -101,9 +101,11 @@ i32 main(i32 argc, char** argv) {
 	free_string(dll_path, api.heap_free);
 	free_string(temp_dll_path, api.heap_free);
 
+#ifdef TEST_NET_ZERO_ALLOCS
 	if(global_num_allocs) {
 	 	api.debug_break();	
 	}
+#endif
 
 	return 0;
 }

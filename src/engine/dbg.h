@@ -14,8 +14,13 @@
 #error "Fix this"
 #endif
 
+#ifdef PROFILE
 #define PROF_SEC(n) 	_prof_sec(n, CONTEXT);
 #define PROF_SEC_END() 	_prof_sec_end();
+#else
+#define PROF_SEC(n)
+#define PROF_SEC_END() 
+#endif
 
 #define BEGIN_FRAME() { \
 	dbg_msg msg; \
