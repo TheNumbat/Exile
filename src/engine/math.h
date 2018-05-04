@@ -51,7 +51,7 @@ v4 _abs(v4 v);
 v4 _round(v4 v);
 v4 _ceil(v4 v);
 v4 _floor(v4 v);
-v4 _sin(v4 v);
+v4 _sin(v4 v); // NOTE(max): SSE sin/cos from sse_mathfun
 v4 _cos(v4 v);
 v4 lerp(v4 min, v4 max, v4 dist);
 v4 clamp(v4 val, v4 min, v4 max);
@@ -666,8 +666,6 @@ f32 perlin_grad(i32 hash, f32 x, f32 y, f32 z) {
    f32 *grad = basis[indices[hash & 63]];
    return grad[0]*x + grad[1]*y + grad[2]*z;
 }
-
-// NOTE(max): SSE sin/cos from sse_mathfun
 
 #define _PS_CONST_TYPE(Name, Type, Val) static const __declspec(align(16)) Type _ps_##Name[4] = { Val, Val, Val, Val }
 #define _PS_CONST(Name, Val) static const __declspec(align(16)) f32 _ps_##Name[4] = { Val, Val, Val, Val }
