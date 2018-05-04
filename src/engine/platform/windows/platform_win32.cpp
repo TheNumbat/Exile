@@ -18,12 +18,9 @@ wglSwapIntervalEXT_t 			wglSwapIntervalEXT;
 void (*global_enqueue)(void* queue_param, platform_event evt) = null;
 void* global_enqueue_param = null;
 
-bool relative_mouse_mode = false;
 POINT saved_mouse_pos = {};
 
-void platform_test_api() {
-
-}
+void platform_test_api() {}
 
 platform_api platform_build_api() {
 
@@ -129,22 +126,22 @@ platform_error win32_set_cursor_pos(platform_window* win, i32 x, i32 y) {
 
 void win32_capture_mouse(platform_window* win) {
 
-	relative_mouse_mode = true;
 	GetCursorPos(&saved_mouse_pos);
 	ShowCursor(FALSE);
 	SetCapture(win->handle);
 
-	POINT pt = {250,250};
-	ClientToScreen(win->handle, &pt);
-	SetCursorPos(pt.x, pt.y);
+	RAWINPUTDEVICE raw_mouse = {0x01, 0x02, RIDEV_NOLEGACY | RIDEV_CAPTUREMOUSE, win->handle};
+	RegisterRawInputDevices(&raw_mouse, 1, sizeof(RAWINPUTDEVICE));
 }
 
 void win32_release_mouse(platform_window* win) {
 
-	relative_mouse_mode = false;
 	ReleaseCapture();
 	ShowCursor(TRUE);
 	SetCursorPos(saved_mouse_pos.x, saved_mouse_pos.y);
+
+	RAWINPUTDEVICE raw_mouse = {0x01, 0x02, RIDEV_REMOVE, null};
+	RegisterRawInputDevices(&raw_mouse, 1, sizeof(RAWINPUTDEVICE));
 }
 
 u64 win32_get_perfcount() {
@@ -1186,16 +1183,23 @@ LRESULT WINCALLBACK window_proc(HWND handle, UINT msg, WPARAM wParam, LPARAM lPa
 			evt.type = platform_event_type::mouse;
 			evt.mouse.flags |= (u16)platform_mouseflag::move;
 
-			if(relative_mouse_mode) {
-				POINT p = {250,250};
-				ClientToScreen(GetFocus(), &p);
-				SetCursorPos(p.x, p.y);
-				evt.mouse.x = GET_X_LPARAM(lParam) - 250;
-				evt.mouse.y = GET_Y_LPARAM(lParam) - 250;
-			} else {
-				evt.mouse.x = GET_X_LPARAM(lParam);
-				evt.mouse.y = GET_Y_LPARAM(lParam);
-			}
+			evt.mouse.x = GET_X_LPARAM(lParam);
+			evt.mouse.y = GET_Y_LPARAM(lParam);
+
+			global_enqueue(global_enqueue_param, evt);
+			return 0;
+		}
+		case WM_INPUT: {
+
+   			RAWINPUT raw = {};
+   			u32 size = sizeof(RAWINPUT);
+			GetRawInputData((HRAWINPUT)lParam, RID_INPUT, &raw, &size, sizeof(RAWINPUTHEADER));
+			
+			evt.type = platform_event_type::mouse;
+			evt.mouse.flags |= (u16)platform_mouseflag::move;
+
+			evt.mouse.x = (i16)raw.mouse.lLastX;
+			evt.mouse.y = (i16)raw.mouse.lLastY;
 
 			global_enqueue(global_enqueue_param, evt);
 			return 0;

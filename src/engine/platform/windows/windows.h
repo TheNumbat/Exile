@@ -699,7 +699,9 @@ DLL_IMPORT BOOL WINAPI SetEnvironmentVariableA(char const *name, char const *val
 #define RI_KEY_E1      0x0004
 #define RI_MOUSE_WHEEL 0x0400
 
-#define RIDEV_NOLEGACY 0x00000030
+#define RIDEV_REMOVE        0x00000001
+#define RIDEV_NOLEGACY 		0x00000030
+#define RIDEV_CAPTUREMOUSE 	0x00000200
 
 #define MAPVK_VK_TO_VSC    0
 #define MAPVK_VSC_TO_VK    1
