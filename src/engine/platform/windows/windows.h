@@ -375,10 +375,10 @@ DLL_IMPORT HANDLE    WINAPI GetCurrentThread(void);
 #define MEM_LARGE_PAGES  0x20000000
 #define MEM_4MB_PAGES    0x80000000
 
-DLL_IMPORT void * WINAPI VirtualAlloc (void *addr, size_t size, DWORD allocation_type, DWORD protect);
-DLL_IMPORT size_t  WINAPI VirtualQuery (void const *address, MEMORY_BASIC_INFORMATION *buffer, size_t length);
-DLL_IMPORT BOOL   WINAPI VirtualFree  (void *address, size_t size, DWORD free_type);
-DLL_IMPORT void   WINAPI GetSystemInfo(SYSTEM_INFO *system_info);
+DLL_IMPORT void* WINAPI VirtualAlloc(void *addr, size_t size, DWORD allocation_type, DWORD protect);
+DLL_IMPORT size_t WINAPI VirtualQuery(void const *address, MEMORY_BASIC_INFORMATION *buffer, size_t length);
+DLL_IMPORT BOOL WINAPI VirtualFree(void *address, size_t size, DWORD free_type);
+DLL_IMPORT void WINAPI GetSystemInfo(SYSTEM_INFO *system_info);
 
 #ifndef VK_UNKNOWN
 #define VK_UNKNOWN 0

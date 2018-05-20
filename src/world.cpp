@@ -6,7 +6,7 @@ void world::init(asset_store* store, allocator* a) { PROF
 
 	block_textures = eng->ogl.begin_tex_array(iv3(32, 32, (i32)NUM_BLOCKS), texture_wrap::repeat, true, 1);
 	eng->ogl.push_tex_array(block_textures, store, "stone"_);
-
+	
 	chunks = map<chunk_pos, chunk*>::make(512, a);
 
 	LOG_DEBUG_F("% logical cores % physical cores", global_api->get_num_cpus(), global_api->get_phys_cpus());

@@ -13,16 +13,6 @@ enum class render_command_type : u8 {
 
 inline u32 hash(render_command_type key);
 
-enum face : u8 {
-	none,
-	up,
-	down,
-	east,
-	west,
-	north,
-	south
-};
-
 struct chunk_vertex {
 	u8 x = 0, z = 0;
 	u16 y_norm = 0;	

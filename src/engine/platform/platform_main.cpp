@@ -65,7 +65,7 @@ i32 main(i32 argc, char** argv) {
 	exe_folder 	  = make_substring(exe_path, 0, idx + 1, api.heap_alloc);
 	dll_path 	  = make_cat_string(exe_folder, string_literal("game.dll"), api.heap_alloc);
 	temp_dll_path = make_cat_string(exe_folder, string_literal("game_temp.dll"), api.heap_alloc);
-
+	
 	free_string(exe_path, api.heap_free);
 
 	if(!load_lib()) {
