@@ -1,9 +1,9 @@
-# exile
+# Exile
 Handmade-style voxel engine &amp; game.  
 
 Objective is to create a featureful low-level programming environment & voxel game engine with minimal libraries, to dig into and perfect critical and noncritical systems, and to create a modded-minecraft-like game on top of the engine.
 
-Gameplay goals:
+Goals:
    - High quality graphics (lighting, render distance, fast movement, large worlds)
    - Interesting and variable procedural terrain & feature generation
    - Powerful &amp; complex player-managed systems (e.g. modded minecraft/factorio)
