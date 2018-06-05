@@ -6,6 +6,12 @@ enum class block_type : u8 {
 };
 #define NUM_BLOCKS (TYPEINFO(block_type)->_enum.member_count)
 
+struct mesh_block {
+
+	block_type type = block_type::air;
+	u8 ao = 0;
+};
+
 struct chunk_pos {
 	i32 x = 0, y = 0, z = 0;
 
@@ -76,7 +82,10 @@ struct world {
 	// NOTE(max): map to pointers to chunk so the map can transform while chunks are being operated on
 	// TODO(max): use a free-list allocator to allocate the chunks
 	map<chunk_pos, chunk*> chunks;
-	i32 view_distance = 8;
+	
+	i32 view_distance = 1;
+	bool wireframe = false;
+	bool respect_cam = false;
 
 	texture_id block_textures;
 
@@ -87,6 +96,7 @@ struct world {
 
 	void init(asset_store* store, allocator* a);
 	void destroy();
+	void destroy_chunks();
 
 	void update(u64 now);
 	void render();

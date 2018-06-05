@@ -272,6 +272,7 @@ union v3 {
 
 	v3() {}
 	v3(f32 _x, f32 _y, f32 _z) {x = _x; y = _y; z = _z;}
+	v3(i32 _x, i32 _y, i32 _z) {x = (f32)_x; y = (f32)_y; z = (f32)_z;}
 	v3(v3& v) {*this = v;}
 	v3(v3&& v) {*this = v;}
 	v3& operator=(v3& v) {x = v.x; y = v.y; z = v.z; return *this;}

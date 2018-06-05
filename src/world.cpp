@@ -15,10 +15,8 @@ void world::init(asset_store* store, allocator* a) { PROF
 	thread_pool.start_all();
 }
 
-void world::destroy() { PROF
+void world::destroy_chunks() { PROF 
 
-	thread_pool.stop_all();
-	thread_pool.destroy();
 	FORMAP(it, chunks) {
 		it->value->destroy();
 		PUSH_ALLOC(it->value->alloc) {
@@ -28,10 +26,25 @@ void world::destroy() { PROF
 	chunks.destroy();
 }
 
+void world::destroy() { PROF
+
+	thread_pool.stop_all();
+	thread_pool.destroy();
+	destroy_chunks();
+}
+
 void world::update(u64 now) { PROF
 
-	gui_begin("Exile"_, r2(50.0f, 50.0f, 350.0f, 100.0f));
+	gui_begin("Exile"_, r2(50.0f, 50.0f, 350.0f, 200.0f));
 	gui_int_slider(string::makef("view: % "_, view_distance), &view_distance, 0, 32);
+	gui_checkbox("Wireframe "_, &wireframe);
+	gui_checkbox("Respect Cam "_, &respect_cam);
+	
+	if(gui_button("Regenerate"_)) {
+		
+		destroy_chunks();
+		chunks = map<chunk_pos, chunk*>::make(512, alloc);
+	}
 
 	p.update(now);
 
@@ -104,7 +117,7 @@ void world::render() { PROF
 	for(i32 x = -view_distance; x <= view_distance; x++) {
 		for(i32 z = -view_distance; z <= view_distance; z++) {
 
-			chunk_pos current = camera + chunk_pos(x,0,z);
+			chunk_pos current = respect_cam ? camera + chunk_pos(x,0,z) : chunk_pos(x,0,z);
 			current.y = 0;
 			chunk** ch = chunks.try_get(current);
 
@@ -155,7 +168,12 @@ void world::render() { PROF
 	rcl.view = p.camera.view_no_translate();
 	rcl.proj = proj(p.camera.fov, (f32)eng->window.w / (f32)eng->window.h, 0.01f, 2000.0f);
 
+	if(wireframe)
+		glPolygonMode(gl_poly::front_and_back, gl_poly_mode::line);
+
 	eng->ogl.execute_command_list(&rcl);
+	glPolygonMode(gl_poly::front_and_back, gl_poly_mode::fill);
+
 	rcl.destroy();
 }
 
@@ -199,6 +217,7 @@ void player::update(u64 now) { PROF
 
 	gui_text(string::makef("pos: %"_, camera.pos));
 	gui_text(string::makef("vel: %"_, velocity));
+	gui_text(string::makef("look: %"_, camera.front));
 	gui_text(string::makef("chunk: %"_, chunk_pos::from_abs(camera.pos)));
 
 	last = now;
@@ -286,6 +305,11 @@ i32 chunk::y_at(i32 x, i32 z) { PROF
 
 	f32 val = perlin((f32)x / 32.0f, 0, (f32)z / 32.0f, 0, 0, 0);
 	i32 height = (u32)(val * ysz / 2.0f + ysz / 2.0f);
+	
+	// i32 height = -x*z;
+	// if(height > 255) height = 255;
+	// if(height < 0) height = 0;
+
 	return height;
 }
 
@@ -295,6 +319,7 @@ void chunk::gen() { PROF
 		for(u32 z = 0; z < zsz; z++) {
 
 			u32 height = y_at(pos.x * xsz + x, pos.z * zsz + z);
+
 			memset(blocks[x][z], height, (u8)block_type::stone);
 		}
 	}
@@ -329,132 +354,39 @@ void chunk::build_data() { PROF
 
 	mesh_chunk new_mesh = mesh_chunk::make_cpu(1024, alloc);
 
-	block_type slice[xsz * ysz];
+	for(i32 x = 0; x < xsz; x++) {
+		for(i32 z = 0; z < zsz; z++) {
+			for(i32 y = 0; y < ysz; y++) {
 
-	i32 xyz[] = {0, 0, 0};
-	i32 max[] = {xsz, ysz, zsz};
+				block_type type = block_at(x, y, z);
+				if(type != block_type::air) {
 
-	for (i32 i = 0; i < 6; i++) {
+					v3 _000 (x, y, z)             ; u8 ao_000 = ao_at(_000);
+					v3 _001 (x, y, z + 1)         ; u8 ao_001 = ao_at(_001);
+					v3 _010 (x, y + 1, z)         ; u8 ao_010 = ao_at(_010);
+					v3 _100 (x + 1, y, z)         ; u8 ao_100 = ao_at(_100);
+					v3 _011 (x, y + 1, z + 1)     ; u8 ao_011 = ao_at(_011);
+					v3 _110 (x + 1, y + 1, z)     ; u8 ao_110 = ao_at(_110);
+					v3 _101 (x + 1, y, z + 1)     ; u8 ao_101 = ao_at(_101);
+					v3 _111 (x + 1, y + 1, z + 1) ; u8 ao_111 = ao_at(_111);
+					v3 wht  (1, 1, (i32)type)     ;
 
-		i32 d0 = (i + 0) % 3;
-		i32 d1 = (i + 1) % 3;
-		i32 d2 = (i + 2) % 3;
-		i32 backface = i / 3 * 2 - 1;
-
-		// Traverse the chunk
-		for (xyz[d0] = 0; xyz[d0] < max[d0]; xyz[d0]++) {
-
-			// Fill in slice
-			for (xyz[d1] = 0; xyz[d1] < max[d1]; xyz[d1]++) {
-				for (xyz[d2] = 0; xyz[d2] < max[d2]; xyz[d2]++) {
-					block_type b = block_at(xyz[0],xyz[1],xyz[2]);
-
-					// check for air
-					if (b != block_type::air) {
-						// Check neighbor
-						xyz[d0] += backface;
-
-						if (block_at(xyz[0],xyz[1],xyz[2]) != block_type::air) {
-							slice[xyz[d1] * max[d2] + xyz[d2]] = block_type::air;
-						} else {
-							slice[xyz[d1] * max[d2] + xyz[d2]] = b;
-						}
-						xyz[d0] -= backface;
-					} else {
-						slice[xyz[d1] * max[d2] + xyz[d2]] = block_type::air;
-					}
-				}
-			}
-
-			// Mesh the slice
-			for (xyz[d1] = 0; xyz[d1] < max[d1]; xyz[d1]++) {
-				for (xyz[d2] = 0; xyz[d2] < max[d2];) {
-					block_type type = slice[xyz[d1] * max[d2] + xyz[d2]];
-
-					// check for air
-					if (type == block_type::air) {
-						xyz[d2]++;
-						continue;
-					}
-
-					i32 width = 1;
-
-					// Find the largest line
-					for (i32 d22 = xyz[d2] + 1; d22 < max[d2] && width <= 255; d22++) {
-						if (slice[xyz[d1] * max[d2] + d22] != type) break;
-						width++;
-					}
-
-					i32 height = 1;
-
-					// Find the largest rectangle
-					bool done = false;
-					for (i32 d11 = xyz[d1] + 1; d11 < max[d1] && height <= 255; d11++) {
-						// Find lines of the same width
-						for (i32 d22 = xyz[d2]; d22 < xyz[d2] + width; d22++) {
-							if (slice[d11 * max[d2] + d22] != type) {
-								done = true;
-								break;
-							}
-						}
-						if (done) break;
-						height++;
-					}
-
-					v3 w, h;
-					w.a[d2] = (f32)width;
-					h.a[d1] = (f32)height;
-
-					v3 v_0 = v3((f32) xyz[0], (f32) xyz[1], (f32) xyz[2]);
-
-					// shift front faces by one block
-					if (backface > 0) {
-						v3 f;
-						f.a[d0] += 1.0f;
-						v_0 += f;
-					}
-
-					// emit quad
-					v3 v_1 = v_0 + w;
-					v3 v_2 = v_0 + w + h;
-					v3 v_3 = v_0 + h;
-					v3 wht = v3((f32)width, (f32)height, (f32)type), hwt = v3((f32)height, (f32)width, (f32)type);
-					u8 ao_0 = ao_at(v_0), ao_1 = ao_at(v_1), ao_2 = ao_at(v_2), ao_3 = ao_at(v_3);
-
-					switch (i) {
-					case 0: // -X
-						new_mesh.quad(v_0, v_1, v_3, v_2, wht, bv4(ao_0,ao_1,ao_3,ao_2));
-						break;
-					case 1: // -Y
-						new_mesh.quad(v_0, v_1, v_3, v_2, wht, bv4(ao_0,ao_1,ao_3,ao_2));
-						break;
-					case 2: // -Z
-						new_mesh.quad(v_3, v_0, v_2, v_1, hwt, bv4(ao_3,ao_0,ao_2,ao_1));
-						break;
-					case 3: // +X
-						new_mesh.quad(v_1, v_0, v_2, v_3, wht, bv4(ao_1,ao_0,ao_2,ao_3));
-						break;
-					case 4: // +Y
-						new_mesh.quad(v_3, v_2, v_0, v_1, wht, bv4(ao_3,ao_2,ao_0,ao_1));
-						break;
-					case 5: // +Z
-						new_mesh.quad(v_0, v_3, v_1, v_2, hwt, bv4(ao_0,ao_3,ao_1,ao_2));
-						break;
-					}
-
-					// Zero the quad in the slice
-					for (i32 d11 = xyz[d1]; d11 < xyz[d1] + height; d11++) {
-						memset(&slice[d11 * max[d2] + xyz[d2]], width, (u8)block_type::air);
-					}
-
-					// Advance search position for next quad
-					xyz[d2] += width;
+					if(block_at(x - 1, y, z) == block_type::air)
+						new_mesh.quad(_000, _001, _010, _011, wht, bv4(ao_000, ao_001, ao_010, ao_011));
+					if(block_at(x, y - 1, z) == block_type::air)
+						new_mesh.quad(_000, _100, _001, _101, wht, bv4(ao_000, ao_100, ao_001, ao_101));
+					if(block_at(x, y, z - 1) == block_type::air)
+						new_mesh.quad(_000, _010, _100, _110, wht, bv4(ao_000, ao_010, ao_100, ao_110));
+					if(block_at(x + 1, y, z) == block_type::air)
+						new_mesh.quad(_101, _100, _111, _110, wht, bv4(ao_101, ao_100, ao_111, ao_110));
+					if(block_at(x, y + 1, z) == block_type::air)
+						new_mesh.quad(_110, _010, _111, _011, wht, bv4(ao_110, ao_010, ao_111, ao_011));
+					if(block_at(x, y, z + 1) == block_type::air)
+						new_mesh.quad(_011, _001, _111, _101, wht, bv4(ao_011, ao_001, ao_111, ao_101));
 				}
 			}
 		}
 	}
-
-	// LOG_DEBUG_F("Built chunk{%,%}", pos.x, pos.z);
 
 	eng->platform->aquire_mutex(&swap_mut);
 	mesh.swap_mesh(new_mesh);

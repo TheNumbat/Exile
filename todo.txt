@@ -3,12 +3,12 @@ Working To-Do:
 
 	!~~~~~ FIX BUGS ~~~~~!
 
+	lighting/chunk LOD
+	movement physics
+
 	linux build system
 	config format language
 		rewrite metaprogram to use it
-
-	lighting/chunk LOD
-	movement physics
 	
 	gui text wrapping
 	profiler graphs/actually good layout-ing?
