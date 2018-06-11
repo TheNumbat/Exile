@@ -305,10 +305,6 @@ i32 chunk::y_at(i32 x, i32 z) { PROF
 
 	f32 val = perlin((f32)x / 32.0f, 0, (f32)z / 32.0f, 0, 0, 0);
 	i32 height = (u32)(val * ysz / 2.0f + ysz / 2.0f);
-	
-	// i32 height = -x*z;
-	// if(height > 255) height = 255;
-	// if(height < 0) height = 0;
 
 	return height;
 }
@@ -319,7 +315,6 @@ void chunk::gen() { PROF
 		for(u32 z = 0; z < zsz; z++) {
 
 			u32 height = y_at(pos.x * xsz + x, pos.z * zsz + z);
-
 			memset(blocks[x][z], height, (u8)block_type::stone);
 		}
 	}
@@ -329,14 +324,41 @@ u8 chunk::ao_at(v3 vert) {
 
 	i32 x = (i32)vert.x, y = (i32)vert.y, z = (i32)vert.z;
 
-	bool side1 = block_at(x-1,y,z) != block_type::air;
-	bool side2 = block_at(x,y,z-1) != block_type::air;
-	bool corner = block_at(x-1,y+1,z-1) != block_type::air;
+	bool top0 = block_at(x-1,y,z) != block_type::air;
+	bool top1 = block_at(x,y,z-1) != block_type::air;
+	bool top2 = block_at(x,y,z) != block_type::air;
+	bool top3 = block_at(x-1,y,z-1) != block_type::air;
+	bool bot0 = block_at(x-1,y-1,z) != block_type::air;
+	bool bot1 = block_at(x,y-1,z-1) != block_type::air;
+	bool bot2 = block_at(x,y-1,z) != block_type::air;
+	bool bot3 = block_at(x-1,y-1,z-1) != block_type::air;
 
-	if(side1 && side2) {
+	bool side0, side1, corner;
+
+	if(!top0 && bot0) {
+		side0 = top2;
+		side1 = top3;
+		corner = top1;
+	} else if(!top1 && bot1) {
+		side0 = top2;
+		side1 = top3;
+		corner = top0;
+	} else if(!top2 && bot2) {
+		side0 = top0;
+		side1 = top1;
+		corner = top3;
+	} else if(!top3 && bot3) {
+		side0 = top0;
+		side1 = top1;
+		corner = top2;
+	} else {
+		return 3;
+	}
+
+	if(side0 && side1) {
 		return 0;
 	}
-	return 3 - (side1 + side2 + corner);
+	return 3 - side0 - side1 - corner;
 }
 
 block_type chunk::block_at(i32 x, i32 y, i32 z) { 
@@ -371,7 +393,7 @@ void chunk::build_data() { PROF
 					v3 _111 (x + 1, y + 1, z + 1) ; u8 ao_111 = ao_at(_111);
 					v3 wht  (1, 1, (i32)type)     ;
 
-					if(block_at(x - 1, y, z) == block_type::air)
+					if(block_at(x - 1, y, z) == block_type::air) 
 						new_mesh.quad(_000, _001, _010, _011, wht, bv4(ao_000, ao_001, ao_010, ao_011));
 					if(block_at(x, y - 1, z) == block_type::air)
 						new_mesh.quad(_000, _100, _001, _101, wht, bv4(ao_000, ao_100, ao_001, ao_101));

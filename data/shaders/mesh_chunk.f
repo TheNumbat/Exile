@@ -17,5 +17,5 @@ void main() {
 	float ao1 = mix(f_ao.z, f_ao.w, fract(f_uv.x));
 	float ao = mix(ao0, ao1, fract(f_uv.y));
 
-	color = vec4(vec3(1.0f) * ao, tex.a);
+	color = vec4(tex.rgb * ao, tex.a);
 }

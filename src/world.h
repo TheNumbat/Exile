@@ -6,12 +6,6 @@ enum class block_type : u8 {
 };
 #define NUM_BLOCKS (TYPEINFO(block_type)->_enum.member_count)
 
-struct mesh_block {
-
-	block_type type = block_type::air;
-	u8 ao = 0;
-};
-
 struct chunk_pos {
 	i32 x = 0, y = 0, z = 0;
 

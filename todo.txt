@@ -1,26 +1,15 @@
 
 Working To-Do:
 
-	!~~~~~ FIX BUGS ~~~~~!
-
-	lighting/chunk LOD
 	movement physics
+	world interaction
 
-	linux build system
 	config format language
 		rewrite metaprogram to use it
-	
-	gui text wrapping
-	profiler graphs/actually good layout-ing?
-	threading profiling
 
 Bugs:
 
 	allocation profiling is somewhat broken for the world system
-
-	AO broken
-		only checks in one direction/vertex
-		doesn't check across chunk boundaries
 
 	textures get recreated? on asset store reload (and not freed?)
 		make sure textures are only created once
@@ -163,6 +152,7 @@ Overall To-Do List:
 			dynamic reload
 
 	platform
+		linux build system with SDL layer
 		assure LPARAM/WPARAM size based on 32/64 bit
 		Keep window updating during resize/move
 		async File IO
