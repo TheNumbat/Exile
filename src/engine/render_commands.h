@@ -1,49 +1,17 @@
 
 typedef i32 texture_id;
 
-enum class render_command_type : u8 {
-	none,
-	mesh_2d_col,
-	mesh_2d_tex,
-	mesh_2d_tex_col,
-	mesh_3d_tex,
-	mesh_3d_tex_instanced,
-	mesh_chunk,
-};
+typedef u16 render_command_type_value;
 
-inline u32 hash(render_command_type key);
+namespace render_command_type {
+	
+	render_command_type_value none;
 
-struct chunk_vertex {
-	u8 x = 0, z = 0;
-	u16 y_ao = 0;	
-
-	u16 ao_t = 0;
-	u8 u = 0, v = 0;
-
-	static chunk_vertex from_vec(v3 v, v3 uv, bv4 ao);
-};
-static_assert(sizeof(chunk_vertex) == 8, "chunk_vertex size != 8");
-
-struct mesh_chunk {
-
-	vector<chunk_vertex> 	vertices;
-	vector<uv3> 			elements;
-
-	GLuint vao = 0;
-	GLuint vbos[2] = {};
-	bool dirty = false;
-
-	static mesh_chunk make(u32 verts = 8192, allocator* alloc = null);
-	static mesh_chunk make_cpu(u32 verts = 8192, allocator* alloc = null);
-	static mesh_chunk make_gpu();
-	void destroy();
-	void free_cpu();
-	void clear();
-	void swap_mesh(mesh_chunk other);
-
-	void quad(v3 p1, v3 p2, v3 p3, v3 p4, v3 uv_ext, bv4 ao);
-	void quad16(v3 p1, v3 p2, v3 p3, v3 p4, v3 uv_ext, bv4 ao);
-	void cube(v3 pos, f32 len);
+	render_command_type_value mesh_2d_col;
+	render_command_type_value mesh_2d_tex;
+	render_command_type_value mesh_2d_tex_col;
+	render_command_type_value mesh_3d_tex;
+	render_command_type_value mesh_3d_tex_instanced;
 };
 
 struct mesh_2d_col {
@@ -134,9 +102,9 @@ struct mesh_3d_tex_instance_data {
 };
 
 struct render_command {
-	render_command_type cmd 	= render_command_type::none;
+	render_command_type_value cmd = render_command_type::none;
 	
-	texture_id 			texture = -1;
+	texture_id texture = -1;
 	
 	m4 model;
 	u32 sort_key = 0;
@@ -155,7 +123,7 @@ struct render_command {
 
 	render_command() {}
 
-	static render_command make(render_command_type type, void* data = null, u32 key = 0);
+	static render_command make(render_command_type_value type, void* data = null, u32 key = 0);
 };
 
 bool operator<=(render_command& first, render_command& second);

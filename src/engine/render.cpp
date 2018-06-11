@@ -181,36 +181,17 @@ ogl_manager ogl_manager::make(platform_window* win, allocator* a) { PROF
 	ret.win = win;
 	ret.alloc = a;
 	ret.textures = map<texture_id, texture>::make(32, a);
-	ret.commands = map<render_command_type, draw_context>::make(32, a);
+	ret.commands = map<render_command_type_value, draw_context>::make(32, a);
 
 	ret.load_global_funcs();
 	ret.info = ogl_info::make(ret.alloc);
 	LOG_DEBUG_F("GL %.% %", ret.info.major, ret.info.minor, ret.info.renderer);
 
-	_type_info* info = TYPEINFO(render_command_type);
-	PUSH_ALLOC(a) {
-		for(u32 i = 0; i < info->_enum.member_count; i++) {
-			
-			string member = info->_enum.member_names[i];
-			if(member == "none"_) continue;
-
-			string buffer_func = string::makef("buffers_%"_, member);
-			string run_func = string::makef("run_%"_, member);
-			string uniforms_func = string::makef("uniforms_%"_, member);
-			string vertex = string::makef("shaders/%.v"_, member);
-			string fragment = string::makef("shaders/%.f"_, member);
-			string compat_func = string::makef("compat_%"_, member);
-
-			ret.add_command((render_command_type)info->_enum.member_values[i], FPTR_STR(buffer_func), FPTR_STR(run_func), vertex, fragment, FPTR_STR(uniforms_func), FPTR_STR(compat_func));
-
-			buffer_func.destroy();
-			run_func.destroy();
-			uniforms_func.destroy();
-			vertex.destroy();
-			fragment.destroy();
-			compat_func.destroy();
-		}
-	} POP_ALLOC();
+	render_command_type::mesh_2d_col = ret.add_command(FPTR(buffers_mesh_2d_col), FPTR(run_mesh_2d_col), "shaders/mesh_2d_col.v"_, "shaders/mesh_2d_col.f"_, FPTR(uniforms_mesh_2d_col), FPTR(compat_mesh_2d_col));
+	render_command_type::mesh_2d_tex = ret.add_command(FPTR(buffers_mesh_2d_tex), FPTR(run_mesh_2d_tex), "shaders/mesh_2d_tex.v"_, "shaders/mesh_2d_tex.f"_, FPTR(uniforms_mesh_2d_tex), FPTR(compat_mesh_2d_tex));
+	render_command_type::mesh_2d_tex_col = ret.add_command(FPTR(buffers_mesh_2d_tex_col), FPTR(run_mesh_2d_tex_col), "shaders/mesh_2d_tex_col.v"_, "shaders/mesh_2d_tex_col.f"_, FPTR(uniforms_mesh_2d_tex_col), FPTR(compat_mesh_2d_tex_col));
+	render_command_type::mesh_3d_tex = ret.add_command(FPTR(buffers_mesh_3d_tex), FPTR(run_mesh_3d_tex), "shaders/mesh_3d_tex.v"_, "shaders/mesh_3d_tex.f"_, FPTR(uniforms_mesh_3d_tex), FPTR(compat_mesh_3d_tex));
+	render_command_type::mesh_3d_tex_instanced = ret.add_command(FPTR(buffers_mesh_3d_tex_instanced), FPTR(run_mesh_3d_tex_instanced), "shaders/mesh_3d_tex_instanced.v"_, "shaders/mesh_3d_tex_instanced.f"_, FPTR(uniforms_mesh_3d_tex_instanced), FPTR(compat_mesh_3d_tex_instanced));
 
 	ret.dbg_shader = shader_program::make("shaders/dbg.v"_,"shaders/dbg.f"_,FPTR(uniforms_dbg),a);
 
@@ -473,14 +454,15 @@ void texture::destroy() { PROF
 	glDeleteTextures(1, &handle);
 }
 
-void ogl_manager::add_command(render_command_type type, _FPTR* buffers, _FPTR* run, string v, string f, _FPTR* uniforms, _FPTR* compat) { PROF
+render_command_type_value ogl_manager::add_command(_FPTR* buffers, _FPTR* run, string v, string f, _FPTR* uniforms, _FPTR* compat) { PROF
 
 	draw_context d;
+	render_command_type_value id = next_command_id++;
 
 	if(!((bool(*)(ogl_info*))compat->func)(&info)) {
 		
-		LOG_WARN_F("Render command % failed compatibility check!!!", type);
-		return;
+		LOG_WARN_F("Render command % failed compatibility check!!!", id);
+		return 0;
 	}
 
 	d.send_buffers.set(buffers);
@@ -488,10 +470,11 @@ void ogl_manager::add_command(render_command_type type, _FPTR* buffers, _FPTR* r
 	d.shader = shader_program::make(v, f, uniforms, alloc);
 	LOG_DEBUG_F("Loaded shader from % and %", v, f);
 
-	commands.insert(type, d);
+	commands.insert(id, d);
+	return id;
 }
 
-draw_context* ogl_manager::get_command_ctx(render_command_type id) { PROF
+draw_context* ogl_manager::get_command_ctx(render_command_type_value id) { PROF
 
 	draw_context* d = commands.try_get(id);
 
@@ -756,6 +739,7 @@ void ogl_manager::load_global_funcs() { PROF
 	GL_LOAD(glVertexAttribIPointer);
 	GL_LOAD(glTexStorage3D);
 	GL_LOAD(glTexSubImage3D);
+	GL_LOAD(glUniform1f);
 
 	GL_LOAD(glGetStringi);
 	GL_LOAD(glGetInteger64v);

@@ -1,6 +1,8 @@
 
 Working To-Do:
 
+	re-implement greedy meshing
+
 	movement physics
 	world interaction
 
@@ -16,6 +18,7 @@ Bugs:
 		asset reload leaks memory
 		actually the asset pack reload is kind of broken in general - RESTRUCTURE
 			textures need to be updated on the GPU
+
 
 Everything not by me:
 	#include <stdarg.h>
@@ -40,7 +43,7 @@ Overall To-Do List:
 	chunk meshing
 		current vertex format [order in shader], struct is byte-order reversed on u32 boundary
 			0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000
-			yyyy yyyy yyyy norm zzzz zzzz xxxx xxxx vvvv vvvv uuuu uuuu aoao tttt tttt tttt
+			yyyy yyyy yyyy aoao zzzz zzzz xxxx xxxx vvvv vvvv uuuu uuuu aoao tttt tttt tttt
 		Tradeoff compactness vs. detail - how do we do LOD and special multifaceted blocks?
 			do we want different vertex layouts for LOD????
 

@@ -19,15 +19,58 @@ struct chunk_pos {
 bool operator==(chunk_pos l, chunk_pos r);
 inline u32 hash(chunk_pos key);
 
+struct mesh_quad {
+	block_type type = block_type::air;
+	bv4 ao;
+};
+
 enum class work : u8 {
 	none,
 	in_flight,
 	done
 };
 
+struct chunk_vertex {
+	u8 x = 0, z = 0;
+	u16 y_ao = 0;	
+
+	u16 ao_t = 0;
+	u8 u = 0, v = 0;
+
+	static chunk_vertex from_vec(v3 v, v3 uv, bv4 ao);
+};
+static_assert(sizeof(chunk_vertex) == 8, "chunk_vertex size != 8");
+
+namespace render_command_type {
+	render_command_type_value mesh_chunk;
+};
+
+struct mesh_chunk {
+
+	vector<chunk_vertex> 	vertices;
+	vector<uv3> 			elements;
+
+	GLuint vao = 0;
+	GLuint vbos[2] = {};
+	bool dirty = false;
+
+	static mesh_chunk make(u32 verts = 8192, allocator* alloc = null);
+	static mesh_chunk make_cpu(u32 verts = 8192, allocator* alloc = null);
+	static mesh_chunk make_gpu();
+	void destroy();
+	void free_cpu();
+	void clear();
+	void swap_mesh(mesh_chunk other);
+
+	void quad(v3 p1, v3 p2, v3 p3, v3 p4, v3 uv_ext, bv4 ao);
+	void cube(v3 pos, f32 len);
+};
+
 struct chunk {
 
-	static const i32 xsz = 32, ysz = 255, zsz = 32;
+	static const i32 xsz = 31, ysz = 255, zsz = 31;
+
+	static const i32 units_per_voxel = 256 / (xsz + 1);
 
 	chunk_pos pos;
 
@@ -100,3 +143,8 @@ struct world {
 CALLBACK void unlock_chunk(void* v);
 CALLBACK void cancel_build(void* param);
 float check_pirority(super_job* j, void* param);
+
+CALLBACK void run_mesh_chunk(render_command* cmd);
+CALLBACK void buffers_mesh_chunk(render_command* cmd);
+CALLBACK void uniforms_mesh_chunk(shader_program* prog, render_command* cmd, render_command_list* rcl);
+CALLBACK bool compat_mesh_chunk(ogl_info* info);

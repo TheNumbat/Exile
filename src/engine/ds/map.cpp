@@ -40,6 +40,11 @@ inline u32 hash(u8 key) { PROF
 	return hash((u32)key);
 }
 
+inline u32 hash(u16 key) { PROF
+
+	return hash((u32)key);
+}
+
 template<typename K, typename V, u32(*hash_func)(K) = hash>
 map<K,V,hash_func> map<K,V,hash_func>::make(u32 capacity) { PROF
 	

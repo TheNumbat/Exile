@@ -731,6 +731,7 @@ typedef void (*glGetShaderSource_t)(GLuint shader, GLsizei buffer, GLsizei* leng
 
 typedef GLint (*glGetUniformLocation_t)(GLuint program, const GLchar *name);
 typedef void (*glUniformMatrix4fv_t)(GLint location, GLsizei count, gl_bool transpose, const GLfloat *value);
+typedef void (*glUniform1f_t)(GLint location, GLfloat f);
 
 typedef void (*glGenerateMipmap_t)(gl_tex_target target);
 typedef void (*glActiveTexture_t)(GLenum texture);
@@ -790,11 +791,13 @@ glDeleteShader_t  			glDeleteShader;
 glLinkProgram_t   			glLinkProgram;
 glShaderSource_t  			glShaderSource;
 glUseProgram_t    			glUseProgram;
-glGetUniformLocation_t 		glGetUniformLocation;
-glUniformMatrix4fv_t   		glUniformMatrix4fv;
 glGetShaderiv_t 			glGetShaderiv;
 glGetShaderInfoLog_t		glGetShaderInfoLog;
 glGetShaderSource_t 		glGetShaderSource;
+
+glGetUniformLocation_t 		glGetUniformLocation;
+glUniformMatrix4fv_t   		glUniformMatrix4fv;
+glUniform1f_t				glUniform1f;
 
 glGenerateMipmap_t			glGenerateMipmap;
 glActiveTexture_t			glActiveTexture;

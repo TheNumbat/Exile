@@ -17,6 +17,7 @@ const uint ao2_mask = 0x0000c000u;
 const uint ao3_mask = 0x00003000u;
 
 uniform mat4 transform;
+uniform float units_per_voxel;
 
 uniform vec4 ao_values = vec4(0.75f, 0.825f, 0.9f, 1.0f);
 
@@ -26,7 +27,7 @@ out vec2 f_uv;
 
 void main() {
 
-	vec3 pos = vec3((vertex.x & x_mask), (vertex.x & y_mask) >> 20, (vertex.x & z_mask) >> 8);
+	vec3 pos = vec3((vertex.x & x_mask), (vertex.x & y_mask) >> 20, (vertex.x & z_mask) >> 8) / units_per_voxel;
 	
 	f_ao[0] = ao_values[(vertex.x & ao0_mask) >> 18];
 	f_ao[1] = ao_values[(vertex.x & ao1_mask) >> 16];

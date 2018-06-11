@@ -11,6 +11,7 @@ inline u32 hash(u32 key);
 inline u32 hash(i32 key);
 inline u32 hash(u64 key);
 inline u32 hash(u8 key);
+inline u32 hash(u16 key);
 inline u32 hash(void* key);
 
 // map foreach
