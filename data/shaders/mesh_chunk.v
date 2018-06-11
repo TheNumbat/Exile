@@ -18,7 +18,7 @@ const uint ao3_mask = 0x00003000u;
 
 uniform mat4 transform;
 
-uniform vec4 ao_values = vec4(0.65f, 0.8f, 0.9f, 1.0f);
+uniform vec4 ao_values = vec4(0.75f, 0.825f, 0.9f, 1.0f);
 
 flat out uint f_t;
 flat out vec4 f_ao; 
