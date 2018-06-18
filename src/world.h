@@ -1,8 +1,8 @@
 
 enum class block_type : u8 {
 	air, 
+	bedrock,
 	stone,
-	numbat,
 };
 #define NUM_BLOCKS (TYPEINFO(block_type)->_enum.member_count)
 
@@ -19,7 +19,10 @@ struct chunk_pos {
 bool operator==(chunk_pos l, chunk_pos r);
 inline u32 hash(chunk_pos key);
 
-struct mesh_quad {
+struct mesh_face {
+	
+	static bool can_merge(mesh_face f1, mesh_face f2, i32 dir);
+
 	block_type type = block_type::air;
 	bv4 ao;
 };
@@ -42,7 +45,7 @@ struct chunk_vertex {
 static_assert(sizeof(chunk_vertex) == 8, "chunk_vertex size != 8");
 
 namespace render_command_type {
-	render_command_type_value mesh_chunk;
+	u16 mesh_chunk = 16;
 };
 
 struct mesh_chunk {
@@ -94,6 +97,7 @@ struct chunk {
 	static i32 y_at(i32 x, i32 z);
 	u8 ao_at(v3 vert);
 	block_type block_at(i32 x, i32 y, i32 z);
+	mesh_face build_face(block_type t, iv3 p, i32 dir);
 
 	void build_data();
 };

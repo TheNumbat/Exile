@@ -6,9 +6,10 @@ void world::init(asset_store* store, allocator* a) { PROF
 
 	LOG_INFO_F("units_per_voxel: %", chunk::units_per_voxel);
 
-	render_command_type::mesh_chunk = eng->ogl.add_command(FPTR(buffers_mesh_chunk), FPTR(run_mesh_chunk), "shaders/mesh_chunk.v"_, "shaders/mesh_chunk.f"_, FPTR(uniforms_mesh_chunk), FPTR(compat_mesh_chunk));
+	eng->ogl.add_command(render_command_type::mesh_chunk, FPTR(buffers_mesh_chunk), FPTR(run_mesh_chunk), "shaders/mesh_chunk.v"_, "shaders/mesh_chunk.f"_, FPTR(uniforms_mesh_chunk), FPTR(compat_mesh_chunk));
 	
 	block_textures = eng->ogl.begin_tex_array(iv3(32, 32, (i32)NUM_BLOCKS), texture_wrap::repeat, true, 1);
+	eng->ogl.push_tex_array(block_textures, store, "bedrock"_);
 	eng->ogl.push_tex_array(block_textures, store, "stone"_);
 
 	chunks = map<chunk_pos, chunk*>::make(512, a);
@@ -319,7 +320,9 @@ void chunk::gen() { PROF
 		for(u32 z = 0; z < zsz; z++) {
 
 			u32 height = y_at(pos.x * xsz + x, pos.z * zsz + z);
-			memset(blocks[x][z], height, (u8)block_type::stone);
+
+			blocks[x][z][0] = block_type::bedrock;
+			memset(&blocks[x][z][1], height, (u8)block_type::stone);
 		}
 	}
 }
@@ -365,9 +368,11 @@ u8 chunk::ao_at(v3 vert) {
 	return 3 - side0 - side1 - corner;
 }
 
-block_type chunk::block_at(i32 x, i32 y, i32 z) { 
+block_type chunk::block_at(i32 x, i32 y, i32 z) { PROF
 
-	if(x < 0 || x >= xsz || y < 0 || y >= ysz || z < 0 || z >= zsz) {
+	if(y < 0) return block_type::air;
+
+	if(x < 0 || x >= xsz || y >= ysz || z < 0 || z >= zsz) {
 
 		// TODO(max): if the neighboring chunk exists, get a block from it
 		return y_at(pos.x * xsz + x, pos.z * zsz + z) > y ? block_type::stone : block_type::air; 
@@ -376,39 +381,190 @@ block_type chunk::block_at(i32 x, i32 y, i32 z) {
 	return blocks[x][z][y];
 }
 
+mesh_face chunk::build_face(block_type t, iv3 p, i32 dir) { PROF
+
+	mesh_face ret;
+	ret.type = t;
+
+	switch(dir) {
+	case 0: {
+		ret.ao[0] = ao_at(p);
+		ret.ao[1] = ao_at(p + v3(0,1,0));
+		ret.ao[2] = ao_at(p + v3(0,0,1));
+		ret.ao[3] = ao_at(p + v3(0,1,1));
+	} break;
+	case 1: {
+		ret.ao[0] = ao_at(p);
+		ret.ao[1] = ao_at(p + v3(1,0,0));
+		ret.ao[2] = ao_at(p + v3(0,0,1));
+		ret.ao[3] = ao_at(p + v3(1,0,1));
+	} break;
+	case 2: {
+		ret.ao[0] = ao_at(p);
+		ret.ao[1] = ao_at(p + v3(1,0,0));
+		ret.ao[2] = ao_at(p + v3(0,1,0));
+		ret.ao[3] = ao_at(p + v3(1,1,0));
+	} break;
+	case 3: {
+		ret.ao[0] = ao_at(p + v3(1,0,0));
+		ret.ao[1] = ao_at(p + v3(1,1,0));
+		ret.ao[2] = ao_at(p + v3(1,0,1));
+		ret.ao[3] = ao_at(p + v3(1,1,1));
+	} break;
+	case 4: {
+		ret.ao[0] = ao_at(p + v3(0,1,0));
+		ret.ao[1] = ao_at(p + v3(1,1,0));
+		ret.ao[2] = ao_at(p + v3(0,1,1));
+		ret.ao[3] = ao_at(p + v3(1,1,1));
+	} break;
+	case 5: {
+		ret.ao[0] = ao_at(p + v3(0,0,1));
+		ret.ao[1] = ao_at(p + v3(1,0,1));
+		ret.ao[2] = ao_at(p + v3(0,1,1));
+		ret.ao[3] = ao_at(p + v3(1,1,1));
+	} break;
+	}
+
+	return ret;
+}
+
+bool mesh_face::can_merge(mesh_face f1, mesh_face f2, i32 dir) { PROF
+
+	return f1.type == f2.type && f1.ao == f2.ao;
+}
+
 void chunk::build_data() { PROF
 
 	mesh_chunk new_mesh = mesh_chunk::make_cpu(1024, alloc);
 
-	for(i32 x = 0; x < xsz; x++) {
-		for(i32 z = 0; z < zsz; z++) {
-			for(i32 y = 0; y < ysz; y++) {
+	// Array to hold 2D block slice (sized for largest slice)
+	block_type slice[xsz * ysz];
 
-				block_type type = block_at(x, y, z);
-				if(type != block_type::air) {
+	iv3 max = {xsz, ysz, zsz};
 
-					v3 _000 (x, y, z)             ; u8 ao_000 = ao_at(_000);
-					v3 _001 (x, y, z + 1)         ; u8 ao_001 = ao_at(_001);
-					v3 _010 (x, y + 1, z)         ; u8 ao_010 = ao_at(_010);
-					v3 _100 (x + 1, y, z)         ; u8 ao_100 = ao_at(_100);
-					v3 _011 (x, y + 1, z + 1)     ; u8 ao_011 = ao_at(_011);
-					v3 _110 (x + 1, y + 1, z)     ; u8 ao_110 = ao_at(_110);
-					v3 _101 (x + 1, y, z + 1)     ; u8 ao_101 = ao_at(_101);
-					v3 _111 (x + 1, y + 1, z + 1) ; u8 ao_111 = ao_at(_111);
-					v3 wht  (1, 1, (i32)type)     ;
+	//  0  1  2  3  4  5 
+	// -x -y -z +x +y +z
+	for(i32 i = 0; i < 6; i++) {
 
-					if(block_at(x - 1, y, z) == block_type::air) 
-						new_mesh.quad(_000, _001, _010, _011, wht, bv4(ao_000, ao_001, ao_010, ao_011));
-					if(block_at(x, y - 1, z) == block_type::air)
-						new_mesh.quad(_000, _100, _001, _101, wht, bv4(ao_000, ao_100, ao_001, ao_101));
-					if(block_at(x, y, z - 1) == block_type::air)
-						new_mesh.quad(_000, _010, _100, _110, wht, bv4(ao_000, ao_010, ao_100, ao_110));
-					if(block_at(x + 1, y, z) == block_type::air)
-						new_mesh.quad(_101, _100, _111, _110, wht, bv4(ao_101, ao_100, ao_111, ao_110));
-					if(block_at(x, y + 1, z) == block_type::air)
-						new_mesh.quad(_110, _010, _111, _011, wht, bv4(ao_110, ao_010, ao_111, ao_011));
-					if(block_at(x, y, z + 1) == block_type::air)
-						new_mesh.quad(_011, _001, _111, _101, wht, bv4(ao_011, ao_001, ao_111, ao_101));
+		// Axes of 2D slice to mesh
+		i32 ortho_2d = i % 3;
+		i32 u_2d = (i + 1) % 3;
+		i32 v_2d = (i + 2) % 3;
+		i32 backface_offset = i / 3 * 2 - 1;
+
+		// Iterate over orthogonal orthogonal to slice
+		iv3 position;
+		for(position[ortho_2d] = 0; position[ortho_2d] < max[ortho_2d]; position[ortho_2d]++) {
+
+			// Iterate over 2D slice blocks to filter culled faces before greedy step
+			for(position[v_2d] = 0; position[v_2d] < max[v_2d]; position[v_2d]++) {
+				for(position[u_2d] = 0; position[u_2d] < max[u_2d]; position[u_2d]++) {
+
+					block_type block = blocks[position[0]][position[2]][position[1]];
+					i32 slice_idx = position[u_2d] + position[v_2d] * max[u_2d];
+
+					// Only add the face to the slice if its opposing face is air
+					if(block != block_type::air) {
+
+						iv3 backface = position;
+						backface[ortho_2d] += backface_offset;
+
+						block_type backface_block = block_at(backface[0],backface[1],backface[2]);
+
+						if(backface_block != block_type::air) {
+							slice[slice_idx] = block_type::air;
+						} else {
+							slice[slice_idx] = block;
+						}
+					} else {
+						slice[slice_idx] = block_type::air;
+					}
+				}
+			}
+
+			// Iterate over slice filled with relevant faces
+			for(i32 v = 0; v < max[v_2d]; v++) {
+				for(i32 u = 0; u < max[u_2d];) {
+
+					position[u_2d] = u;
+					position[v_2d] = v;
+					i32 slice_idx = u + v * max[u_2d];
+
+					block_type single_type = slice[slice_idx];
+					
+					if(single_type != block_type::air) {
+
+						mesh_face face_type = build_face(single_type, position, i);
+
+						i32 width = 1, height = 1;
+
+						// Combine same faces in +u_2d
+						for(; u + width < max[u_2d]; width++) {
+
+							iv3 w_pos = position;
+							w_pos[u_2d] += width;
+
+							mesh_face merge = build_face(slice[slice_idx + width], w_pos, i);
+
+							if(!mesh_face::can_merge(merge, face_type, i)) break;
+						}
+
+						// Combine all-same face row in +v_2d
+						bool done = false;
+						for(; v + height < max[v_2d]; height++) {
+							for(i32 row_idx = 0; row_idx < width; row_idx++) {
+
+								iv3 wh_pos = position;
+								wh_pos[u_2d] += row_idx;
+								wh_pos[v_2d] +=  height;
+
+								mesh_face merge = build_face(slice[slice_idx + row_idx + height * max[u_2d]], wh_pos, i);
+
+								if(!mesh_face::can_merge(merge, face_type, i)) {
+									done = true;
+									break;
+								}
+							}
+							if(done) {
+								break;
+							}
+						}
+
+						// Add quad (u,v,width,height) in 2D slice
+
+						v3 width_offset, height_offset;
+						width_offset[u_2d] = (f32)width;
+						height_offset[v_2d] = (f32)height;
+
+						v3 v_0 = position;
+						if(backface_offset > 0) {
+							v_0[ortho_2d] += 1.0f;
+						}
+
+						v3 v_1 = v_0 + width_offset;
+						v3 v_2 = v_0 + height_offset;
+						v3 v_3 = v_0 + width_offset + height_offset;
+						v3 wht = v3(width, height, (i32)single_type);
+						u8 ao_0 = ao_at(v_0), ao_1 = ao_at(v_1), ao_2 = ao_at(v_2), ao_3 = ao_at(v_3);
+
+						switch (i) {
+						case 0: case 1: case 2: {
+							new_mesh.quad(v_2, v_3, v_0, v_1, wht, bv4(ao_2,ao_3,ao_0,ao_1));
+						} break;
+						case 3: case 4: case 5: {
+							new_mesh.quad(v_3, v_2, v_1, v_0, wht, bv4(ao_3,ao_2,ao_1,ao_0));
+						} break;
+						}
+
+						// Erase quad area in slice
+						for(i32 h = 0; h < height; h++)  {
+							memset(&slice[slice_idx + h * max[u_2d]], sizeof(block_type) * width, 0);
+						}
+
+						u += width;
+					} else {
+						u++;
+					}
 				}
 			}
 		}

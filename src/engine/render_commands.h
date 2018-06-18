@@ -1,17 +1,13 @@
 
 typedef i32 texture_id;
 
-typedef u16 render_command_type_value;
-
 namespace render_command_type {
-	
-	render_command_type_value none;
-
-	render_command_type_value mesh_2d_col;
-	render_command_type_value mesh_2d_tex;
-	render_command_type_value mesh_2d_tex_col;
-	render_command_type_value mesh_3d_tex;
-	render_command_type_value mesh_3d_tex_instanced;
+	u16 none 				  = 0;
+	u16 mesh_2d_col 		  = 1;
+	u16 mesh_2d_tex 		  = 2;
+	u16 mesh_2d_tex_col 	  = 3;
+	u16 mesh_3d_tex 		  = 4;
+	u16 mesh_3d_tex_instanced = 5;
 };
 
 struct mesh_2d_col {
@@ -102,7 +98,7 @@ struct mesh_3d_tex_instance_data {
 };
 
 struct render_command {
-	render_command_type_value cmd = render_command_type::none;
+	u16 cmd = render_command_type::none;
 	
 	texture_id texture = -1;
 	
@@ -123,7 +119,7 @@ struct render_command {
 
 	render_command() {}
 
-	static render_command make(render_command_type_value type, void* data = null, u32 key = 0);
+	static render_command make(u16 type, void* data = null, u32 key = 0);
 };
 
 bool operator<=(render_command& first, render_command& second);

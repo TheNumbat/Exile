@@ -1,7 +1,7 @@
 
 Working To-Do:
 
-	re-implement greedy meshing
+	fix block texture flipping
 
 	movement physics
 	world interaction

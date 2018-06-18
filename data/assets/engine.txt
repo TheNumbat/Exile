@@ -1,12 +1,4 @@
 font {
-	name : gui14,
-	point : 14,
-	width : 128,
-	height : 128,
-	file : gui.ttf,
-	range : 32, 126,
-}
-font {
 	name : guimono,
 	point : 14,
 	width : 128,

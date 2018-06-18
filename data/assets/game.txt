@@ -1,6 +1,6 @@
 image {
-	name : numbat,
-	file : numbat32.png,
+	name : bedrock,
+	file : bedrock.png,
 }
 image {
 	name : stone,

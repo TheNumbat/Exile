@@ -83,14 +83,13 @@ struct ogl_info {
 };
 
 struct ogl_manager {
-	map<texture_id, texture> 			   			textures;
-	map<render_command_type_value, draw_context> 	commands;
+	map<texture_id, texture> textures;
+	map<u16, draw_context> 	 commands;
 
 	shader_program dbg_shader;
 	ogl_info info;
 
 	texture_id 				  next_texture_id = 1;
-	render_command_type_value next_command_id = 1;
 	
 	platform_window* win = null;
 	allocator* alloc = null;
@@ -103,8 +102,8 @@ struct ogl_manager {
 	void load_global_funcs();
 	void check_leaked_handles();
 
-	render_command_type_value add_command(_FPTR* buffers, _FPTR* run, string v, string f, _FPTR* uniforms, _FPTR* compat);
-	draw_context* get_command_ctx(render_command_type_value type);
+	void add_command(u16 id, _FPTR* buffers, _FPTR* run, string v, string f, _FPTR* uniforms, _FPTR* compat);
+	draw_context* get_command_ctx(u16 id);
 
 	texture_id begin_tex_array(iv3 dim, texture_wrap wrap = texture_wrap::repeat, bool pixelated = false, u32 offset = 0);
 	void push_tex_array(texture_id tex, asset_store* as, string name);

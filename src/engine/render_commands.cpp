@@ -577,11 +577,11 @@ bool mesh_3d_tex::empty() { PROF
 	return !vertices.size;
 }
 
-render_command render_command::make(render_command_type_value type, void* data, u32 key) { PROF
+render_command render_command::make(u16 id, void* data, u32 key) { PROF
 
 	render_command ret;
 
-	ret.cmd = type;
+	ret.cmd = id;
 	ret.sort_key = key;
 	ret.mesh = data;
 

@@ -308,6 +308,7 @@ union iv3 {
 	void operator+=(iv3 v) {x += v.x; y += v.y; z += v.z;}
 	void operator-=(iv3 v) {x -= v.x; y -= v.y; z -= v.z;}
 	i32& operator[](i32 idx) {return a[idx];}
+	operator v3() {return v3(x, y, z);}
 
 	iv3() {}
 	iv3(i32 _x, i32 _y, i32 _z) {x = _x; y = _y; z = _z;}
