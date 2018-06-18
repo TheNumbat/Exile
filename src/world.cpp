@@ -375,7 +375,7 @@ block_type chunk::block_at(i32 x, i32 y, i32 z) { PROF
 	if(x < 0 || x >= xsz || y >= ysz || z < 0 || z >= zsz) {
 
 		// TODO(max): if the neighboring chunk exists, get a block from it
-		return y_at(pos.x * xsz + x, pos.z * zsz + z) > y ? block_type::stone : block_type::air; 
+		return y_at(pos.x * xsz + x, pos.z * zsz + z) >= y ? block_type::stone : block_type::air; 
 	}
 
 	return blocks[x][z][y];
