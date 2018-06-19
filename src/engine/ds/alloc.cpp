@@ -239,7 +239,7 @@ pool_allocator make_pool_allocator(string name, u64 page_size, allocator* backin
 	return ret;
 }
 
-void _memcpy(void* source, void* dest, u64 size) { PROF
+inline void _memcpy(void* source, void* dest, u64 size) { PROF
 
 	_memcpy_ctx(source, dest, size);
 }	
@@ -262,9 +262,21 @@ void _memcpy_ctx(void* source, void* dest, u64 size) {
 
 void _memset(void* mem, u64 size, u8 val) { PROF
 
+#ifdef _MSC_VER
+
+	u64 val64 = val;
+	val64 |= val64 << 8;
+	val64 |= val64 << 16;
+	val64 |= val64 << 32;
+
+	__stosq((u64*)mem, val64, size / 8);
+	__stosb((u8*)mem + (size & ~7), val, size & 7);
+
+#else
 	u8* cmem = (u8*)mem;
 
 	while(size--) {
 		*cmem++ = val;
 	}
+#endif
 }
