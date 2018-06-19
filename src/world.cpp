@@ -546,16 +546,28 @@ void chunk::build_data() { PROF
 						v3 v_1 = v_0 + width_offset;
 						v3 v_2 = v_0 + height_offset;
 						v3 v_3 = v_0 + width_offset + height_offset;
-						v3 wht = v3(width, height, (i32)single_type);
+						v3 wht = v3(width, height, (i32)single_type), hwt = v3(height, width, (i32)single_type);
 						u8 ao_0 = ao_at(v_0), ao_1 = ao_at(v_1), ao_2 = ao_at(v_2), ao_3 = ao_at(v_3);
 
 						switch (i) {
-						case 0: case 1: case 2: {
+						case 0: // -X
+							new_mesh.quad(v_0, v_2, v_1, v_3, hwt, bv4(ao_0,ao_2,ao_1,ao_3));
+							break;
+						case 1: // -Y
 							new_mesh.quad(v_2, v_3, v_0, v_1, wht, bv4(ao_2,ao_3,ao_0,ao_1));
-						} break;
-						case 3: case 4: case 5: {
-							new_mesh.quad(v_3, v_2, v_1, v_0, wht, bv4(ao_3,ao_2,ao_1,ao_0));
-						} break;
+							break;
+						case 2: // -Z
+							new_mesh.quad(v_2, v_3, v_0, v_1, wht, bv4(ao_2,ao_3,ao_0,ao_1));
+							break;
+						case 3: // +X
+							new_mesh.quad(v_2, v_0, v_3, v_1, hwt, bv4(ao_2,ao_0,ao_3,ao_1));
+							break;
+						case 4: // +Y
+							new_mesh.quad(v_0, v_1, v_2, v_3, wht, bv4(ao_0,ao_1,ao_2,ao_3));
+							break;
+						case 5: // +Z
+							new_mesh.quad(v_0, v_1, v_2, v_3, wht, bv4(ao_0,ao_1,ao_2,ao_3));
+							break;
 						}
 
 						// Erase quad area in slice

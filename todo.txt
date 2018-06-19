@@ -1,8 +1,6 @@
 
 Working To-Do:
 
-	fix block texture flipping
-
 	movement physics
 	world interaction
 
