@@ -3,6 +3,12 @@ Working To-Do:
 
 	movement physics
 	world interaction
+	chunk paging
+	
+	skybox
+	directional/sun lighting
+	lights
+	shadow mapping?
 
 	config format language
 		rewrite metaprogram to use it
