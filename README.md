@@ -24,7 +24,7 @@ Goals:
   - C++14/STL
 
 ### Screenshots
-![shot1](https://i.imgur.com/OjoIbKH.png)
+![shot1](https://i.imgur.com/SuMKaok.png)
 
 ### Current Features
 

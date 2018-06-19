@@ -435,6 +435,8 @@ bool mesh_face::can_merge(mesh_face f1, mesh_face f2, i32 dir) { PROF
 
 void chunk::build_data() { PROF
 
+	PUSH_PROFILE_PROF(false);
+
 	mesh_chunk new_mesh = mesh_chunk::make_cpu(1024, alloc);
 
 	// Array to hold 2D block slice (sized for largest slice)
@@ -569,6 +571,8 @@ void chunk::build_data() { PROF
 			}
 		}
 	}
+
+	POP_PROFILE_PROF();
 
 	eng->platform->aquire_mutex(&swap_mut);
 	mesh.swap_mesh(new_mesh);
