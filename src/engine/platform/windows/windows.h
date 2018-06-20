@@ -780,7 +780,6 @@ DLL_IMPORT HGDIOBJ WINAPI GetStockObject(int object);
 #define ENUM_CURRENT_SETTINGS  cast(DWORD)-1
 #define ENUM_REGISTRY_SETTINGS cast(DWORD)-2
 
-
 DLL_IMPORT BOOL    WINAPI AdjustWindowRect(RECT *rect, DWORD style, BOOL enu);
 DLL_IMPORT HDC             GetDC(HANDLE);
 DLL_IMPORT BOOL     WINAPI SetWindowPos(HWND hWnd, HWND hWndInsertAfter, int X, int Y, int cx, int cy, UINT uFlags);
@@ -1131,10 +1130,15 @@ DLL_IMPORT DWORD WINAPI GetModuleFileNameA(HMODULE hModule, LPSTR lpFilename, DW
 #define HEAP_REALLOC_IN_PLACE_ONLY      0x00000010      
 #define HEAP_TAIL_CHECKING_ENABLED      0x00000020  
 
+#define GMEM_MOVEABLE       0x0002
+
 DLL_IMPORT HANDLE WINAPI GetProcessHeap(VOID);
 DLL_IMPORT LPVOID WINAPI HeapAlloc(HANDLE hHeap, DWORD dwFlags, SIZE_T dwBytes);
 DLL_IMPORT LPVOID WINAPI HeapReAlloc(HANDLE hHeap, DWORD dwFlags, LPVOID lpMem, SIZE_T dwBytes);
 DLL_IMPORT BOOL WINAPI HeapFree(HANDLE hHeap, DWORD dwFlags, LPVOID lpMem);
+
+DLL_IMPORT HGLOBAL WINAPI GlobalFree(HGLOBAL hMem);
+DLL_IMPORT HGLOBAL WINAPI GlobalAlloc(UINT uFlags, SIZE_T dwBytes);
 
 DLL_IMPORT BOOL WINAPI WriteConsoleA(HANDLE hConsoleOutput, CONST VOID * lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved);
 DLL_IMPORT BOOL WINAPI WriteConsoleW(HANDLE hConsoleOutput, CONST VOID * lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved);
@@ -1160,6 +1164,29 @@ typedef struct tagWNDCLASSEXA {
 
 DLL_IMPORT ATOM WINAPI RegisterClassExA(CONST WNDCLASSEXA *);
 DLL_IMPORT HWND WINAPI CreateWindowExA(DWORD dwExStyle, LPCSTR lpClassName, LPCSTR lpWindowName, DWORD dwStyle, int X, int Y, int nWidth, int nHeight, HWND hWndParent, HMENU hMenu, HINSTANCE hInstance, LPVOID lpParam);
+
+// ime
+
+#define CF_UNICODETEXT      			13
+
+#define CFS_DEFAULT                     0x0000
+#define CFS_RECT                        0x0001
+#define CFS_POINT                       0x0002
+#define CFS_FORCE_POSITION              0x0020
+#define CFS_CANDIDATEPOS                0x0040
+#define CFS_EXCLUDE                     0x0080
+
+typedef HANDLE HIMC;
+typedef HANDLE HIMCC;
+
+typedef struct tagCOMPOSITIONFORM {
+    DWORD dwStyle;
+    POINT ptCurrentPos;
+    RECT  rcArea;
+} COMPOSITIONFORM, *PCOMPOSITIONFORM, NEAR *NPCOMPOSITIONFORM, FAR *LPCOMPOSITIONFORM;
+
+DLL_IMPORT HIMC WINAPI ImmGetContext(HWND hWnd);
+DLL_IMPORT BOOL ImmSetCompositionWindow(HIMC hIMC, LPCOMPOSITIONFORM lpCompForm);
 
 // wglext
 

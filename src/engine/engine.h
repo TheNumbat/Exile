@@ -8,7 +8,7 @@ struct engine {
 	func_ptr_state func_state;
 	asset_store default_store;
 
-	platform_allocator log_a, ogl_a, gui_a, dbg_a, evt_a; // idk about this
+	platform_allocator log_a, ogl_a, gui_a, imgui_a, dbg_a, evt_a; // idk about this
 	
 	void* game_state = null;
 //
@@ -17,6 +17,7 @@ struct engine {
 	log_manager log;
 	ogl_manager ogl;
 	gui_manager gui;
+	imgui_manager imgui;
 	dbg_manager dbg;
 	evt_manager evt;
 

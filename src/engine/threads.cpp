@@ -117,7 +117,7 @@ void heap<super_job*,gt>::renew(float (*eval)(super_job*, void*), void* param) {
 		}
 	}
    
-	memcpy(h.memory, memory, h.size * sizeof(super_job*));
+	_memcpy(h.memory, memory, h.size * sizeof(super_job*));
 	size = h.size;
 	h.destroy();
 }

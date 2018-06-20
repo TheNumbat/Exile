@@ -59,6 +59,10 @@ EXPORT engine* start_up(platform_api* api) {
 	state->gui.add_font(&state->ogl, "guimono"_, &state->default_store, true);
 	state->gui.register_events(&state->evt);
 
+	LOG_INFO("Setting up IMGUI...");
+	state->imgui_a = MAKE_PLATFORM_ALLOCATOR("imgui");
+	state->imgui = imgui_manager::make(&state->imgui_a);
+
 	LOG_INFO("Setting up game...");
 	state->game_state = start_up_game(state);
 
@@ -118,6 +122,9 @@ EXPORT void shut_down(engine* state) {
 	LOG_DEBUG("Destroying GUI");
 	state->gui.unregister_events(&state->evt);
 	state->gui.destroy();
+
+	LOG_DEBUG("Destroying IMGUI");
+	state->imgui.destroy();
 	
 	LOG_DEBUG("Destroying OpenGL");
 	state->ogl.destroy();
@@ -161,6 +168,7 @@ EXPORT void on_reload(platform_api* api, engine* state) {
 	begin_thread("main"_, &state->basic_a);
 
 	state->ogl.load_global_funcs();
+	state->imgui.reload();
 
 	state->evt.start(); // NOTE(max): needed to reset platform function pointer pointing into the game DLL
 	state->log.start();

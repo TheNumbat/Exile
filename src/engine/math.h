@@ -26,6 +26,10 @@ struct color; struct color3; struct colorf;
 
 u32 mod(u32 l, u32 r);
 u64 mod(u64 l, u64 r);
+f32 mod(f32 l, f32 r);
+f64 mod(f64 l, f64 r);
+f32 _pow(f32 l, f32 r);
+f64 _pow(f64 l, f64 r);
 f32 _sqrt(f32 v);
 f32 _abs(f32 v);
 f64 _abs(f64 v);
@@ -38,6 +42,7 @@ f32 _tan(f32 v);
 f32 _asin(f32 v);
 f32 _acos(f32 v);
 f32 _atan(f32 v);
+f32 _atan2(f32 l, f32 r);
 f32 lerp(f32 min, f32 max, f32 dist);
 f32 clamp(f32 val, f32 min, f32 max);
 u32 last_pow_two(u32 val);
@@ -490,6 +495,18 @@ u32 mod(u32 l, u32 r) {
 u64 mod(u64 l, u64 r) {
 	return l % r;
 }
+f32 mod(f32 l, f32 r) {
+	return fmodf(l,r);
+}
+f64 mod(f64 l, f64 r) {
+	return fmod(l,r);
+}
+f32 _pow(f32 l, f32 r) {
+	return powf(l,r);
+}
+f64 _pow(f64 l, f64 r) {
+	return pow(l,r);
+}
 f32 _sqrt(f32 v) {
 	return sqrtf(v);
 }
@@ -525,6 +542,9 @@ f32 _acos(f32 v) {
 }
 f32 _atan(f32 v) {
 	return atanf(v);
+}
+f32 _atan2(f32 l, f32 r) {
+	return atan2f(l, r);
 }
 f32 lerp(f32 min, f32 max, f32 dist) {
 	return (max - min) * dist + min;
@@ -1386,3 +1406,5 @@ std::ostream& operator<<(std::ostream& out, colorf r) {
 #define asin _asin
 #define acos _acos
 #define atan _atan
+#define atan2 _atan2
+#define pow _pow

@@ -25,7 +25,7 @@ CALLBACK void* platform_allocate(u64 bytes, u64 align, allocator* this_, code_co
 		m.type = dbg_msg_type::allocate;
 		m.context = context;
 		m.allocate.to = mem;
-		m.allocate.bytes = bytes;
+		m.allocate.bytes = this_->track_sizes ? bytes : 0;
 		m.allocate.alloc = *this_;
 
 		POST_MSG(m);
@@ -48,7 +48,7 @@ CALLBACK void platform_free(void* mem, u64 sz, allocator* this_, code_context co
 		m.context = context;
 		m.free.from = mem;
 		m.free.alloc = *this_;
-		m.free.bytes = sz;
+		m.free.bytes = this_->track_sizes ? sz : 0;
 
 		POST_MSG(m);
 	}
@@ -68,8 +68,8 @@ CALLBACK void* platform_reallocate(void* mem, u64 sz, u64 bytes, u64 align, allo
 		dbg_msg m;
 		m.type = dbg_msg_type::reallocate;
 		m.context = context;
-		m.reallocate.to_bytes = bytes;
-		m.reallocate.from_bytes = sz;
+		m.reallocate.to_bytes = this_->track_sizes ? bytes : 0;
+		m.reallocate.from_bytes = this_->track_sizes ? sz : 0;
 		m.reallocate.to = ret;
 		m.reallocate.from = mem;
 		m.reallocate.alloc = *this_;
@@ -91,7 +91,7 @@ inline platform_allocator make_platform_allocator(string name, code_context cont
 	ret.free_.set(FPTR(platform_free));
 	ret.reallocate_.set(FPTR(platform_reallocate));
 
-	memcpy(name.c_str, ret.c_name, name.len);
+	_memcpy(name.c_str, ret.c_name, name.len);
 
 	return ret;
 }
@@ -123,7 +123,7 @@ CALLBACK void arena_free(void*, u64, allocator*, code_context context) {}
 CALLBACK void* arena_reallocate(void* mem, u64 sz, u64 bytes, u64 align, allocator* this_, code_context context) { PROF
 
 	void* ret = arena_allocate(bytes, align, this_, context);
-	memcpy(mem, ret, sz);
+	_memcpy(mem, ret, sz);
 	return ret;
 }
 
@@ -132,7 +132,7 @@ void arena_reset(arena_allocator* a, code_context context) { PROF
 	a->used = 0;
 
 #ifdef ZERO_ARENA
-	memset(a->memory, a->size, 0);
+	_memset(a->memory, a->size, 0);
 #endif
 }
 
@@ -159,7 +159,7 @@ arena_allocator make_arena_allocator(string name, u64 size, allocator* backing, 
 	ret.reallocate_.set(FPTR(arena_reallocate));
 
 	ret.memory = ret.backing->allocate_(size, 0, ret.backing, context);
-	memcpy(name.c_str, ret.c_name, name.len);
+	_memcpy(name.c_str, ret.c_name, name.len);
 
 	return ret;
 }
@@ -198,7 +198,7 @@ CALLBACK void* pool_allocate(u64 bytes, u64 align, allocator* this_, code_contex
 CALLBACK void* pool_reallocate(void* mem, u64 sz, u64 bytes, u64 align, allocator* this_, code_context context) {
 
 	void* ret = pool_allocate(bytes, align, this_, context);
-	memcpy(mem, ret, sz);
+	_memcpy(mem, ret, sz);
 	return ret;
 }
 
@@ -231,7 +231,7 @@ pool_allocator make_pool_allocator(string name, u64 page_size, allocator* backin
 	
 	ret.head = (pool_page*)ret.backing->allocate_(sizeof(pool_page) + page_size, 0, ret.backing, context);
 	ret.current = ret.head;
-	memcpy(name.c_str, ret.c_name, name.len);
+	_memcpy(name.c_str, ret.c_name, name.len);
 
 	ret.head->used = 0;
 	ret.head->next = 0;

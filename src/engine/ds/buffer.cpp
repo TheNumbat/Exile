@@ -26,7 +26,7 @@ void buffer<T,size>::write(void* data, u32 len) { PROF
 		flush();
 	}
 	
-	memcpy(data, buf + used, len);
+	_memcpy(data, buf + used, len);
 	used += len;
 }
 

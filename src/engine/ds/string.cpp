@@ -27,7 +27,7 @@ u32 string::write(u32 idx, string ins, bool size) {
 #endif
 
 	if(ins.len == 0) return idx;
-	if(!size) memcpy(ins.c_str, c_str + idx, ins.len - 1);
+	if(!size) _memcpy(ins.c_str, c_str + idx, ins.len - 1);
 	return idx + ins.len - 1;
 }
 
@@ -951,7 +951,7 @@ u32 string::get_next_codepoint(u32* index) {
 
 		codepoint = ((first & 0x0F) << 12) | (second << 6) | third;
 
-		LOG_DEBUG_ASSERT(codepoint >= 2048 && (codepoint < 55296 || codepoint > 57343))
+		LOG_DEBUG_ASSERT(codepoint >= 2048 && (codepoint < 55296 || codepoint > 57343));
 
 		*index += 3;
 		return codepoint;

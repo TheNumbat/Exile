@@ -70,7 +70,7 @@ void log_manager::destroy() { PROF
 
 void log_manager::push_context(string context, code_context fake) { PROF_NOCS
 
-	memcpy(context.c_str, fake.c_function, context.len);
+	_memcpy(context.c_str, fake.c_function, context.len);
 
 	LOG_DEBUG_ASSERT(this_thread_data.call_stack_depth < MAX_CALL_STACK_DEPTH);
 	this_thread_data.call_stack[this_thread_data.call_stack_depth++] = fake;
@@ -182,7 +182,7 @@ void log_manager::msgf(string fmt, log_level level, code_context context, Targs.
 
 		lmsg.call_stack = array<code_context>::make_memory(this_thread_data.call_stack_depth, malloc(sizeof(code_context) * this_thread_data.call_stack_depth));
 		lmsg.thread_name = string::make_copy(this_thread_data.name);
-		memcpy(this_thread_data.call_stack, lmsg.call_stack.memory, sizeof(code_context) * this_thread_data.call_stack_depth);
+		_memcpy(this_thread_data.call_stack, lmsg.call_stack.memory, sizeof(code_context) * this_thread_data.call_stack_depth);
 
 		lmsg.arena = arena;
 		message_queue.push(lmsg);
@@ -228,7 +228,7 @@ void log_manager::msg(string msg, log_level level, code_context context) { PROF_
 
 		lmsg.call_stack = array<code_context>::make_memory(this_thread_data.call_stack_depth, malloc(sizeof(code_context) * this_thread_data.call_stack_depth));
 		lmsg.thread_name = string::make_copy(this_thread_data.name);
-		memcpy(this_thread_data.call_stack, lmsg.call_stack.memory, sizeof(code_context) * this_thread_data.call_stack_depth);
+		_memcpy(this_thread_data.call_stack, lmsg.call_stack.memory, sizeof(code_context) * this_thread_data.call_stack_depth);
 		
 		lmsg.arena = arena;
 		message_queue.push(lmsg);

@@ -9,7 +9,7 @@ template<typename T>
 array<T> array<T>::make_copy(array<T>* src, allocator* a) { PROF
 
 	array<T> ret = array<T>::make(src->capacity, a);
-	memcpy(src->memory, ret.memory, src->capacity * sizeof(T));
+	_memcpy(src->memory, ret.memory, src->capacity * sizeof(T));
 
 	return ret;
 }

@@ -62,12 +62,24 @@
 #include "log_html.h"
 #include "log.h"
 #include "dbg.h"
+
+static log_manager*  global_log = null; // global to provide printf() like functionality everywhere
+static platform_api* global_api = null; // global because it just represents a bunch of what should be free functions
+static dbg_manager*  global_dbg = null; // global to provide profiling functionality everywhere
+
 #include "threads.h"
 #include "asset.h"
 #include "render_commands.h"
 #include "render.h"
 #include "events.h"
 #include "gui.h"
+
+#include <imgui/imgui.h>
+#include <imgui/imgui.cpp>
+#include <imgui/imgui_draw.cpp>
+#include <imgui/imgui_demo.cpp>
+#include "imgui.h"
+
 #include "engine.h"
 
 #include "util/threadstate.h"
@@ -75,9 +87,6 @@
 #include "util/type_table.h"
 
 // IMPLEMENTATIONS
-static platform_api* global_api = null; // global because it just represents a bunch of what should be free functions
-static log_manager*  global_log = null; // global to provide printf() like functionality everywhere
-static dbg_manager*  global_dbg = null; // global to provide profiling functionality everywhere
 
 #include "util/fptr.cpp"
 #include "util/context.cpp"
@@ -89,11 +98,12 @@ static dbg_manager*  global_dbg = null; // global to provide profiling functiona
 #include "events.cpp"
 #include "render_commands.cpp"
 #include "render.cpp"
-#include "gui.cpp"
 #include "dbg.cpp"
 #include "asset.cpp"
 #include "threads.cpp"
 #include "engine.cpp"
+#include "gui.cpp"
+#include "imgui.cpp"
 
 #include "ds/alloc.cpp"
 #include "ds/string.cpp"
@@ -105,3 +115,4 @@ static dbg_manager*  global_dbg = null; // global to provide profiling functiona
 #include "ds/buffer.cpp"
 #include "ds/heap.cpp"
 // /IMPLEMENTATIONS
+

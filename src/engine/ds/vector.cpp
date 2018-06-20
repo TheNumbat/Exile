@@ -6,7 +6,7 @@ void vector<T>::clear() { PROF
 
 template<typename T>
 void vector<T>::zero() { PROF
-	memset(memory, capacity * sizeof(T), 0);
+	_memset(memory, capacity * sizeof(T), 0);
 }
 
 template<typename T>
@@ -340,7 +340,7 @@ vector<T> vector<T>::make_copy(vector<T> source) { PROF
 
 	if(source.memory) {
 
-		memcpy(source.memory, ret.memory, source.capacity * sizeof(T));
+		_memcpy(source.memory, ret.memory, source.capacity * sizeof(T));
 	}
 
 	ret.size = source.size;

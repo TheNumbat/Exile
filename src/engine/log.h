@@ -132,12 +132,9 @@ struct log_manager {
 	#define LOG_DEBUG_F(fmt, ...) 	global_log->msgf(fmt##_, log_level::debug, CONTEXT, ##__VA_ARGS__) 
 	#define LOG_OGL_F(fmt, ...)		global_log->msgf(fmt##_, log_level::ogl,   CONTEXT, ##__VA_ARGS__); 
 	#ifdef _MSC_VER
-	#define LOG_DEBUG_ASSERT(cond) 	__pragma(warning(push)) \
-							 	   	__pragma(warning(disable:4127)) \
-							 	   	{if(!(cond)) LOG_FATAL_F("Debug assertion % failed!", #cond##_);} \
-							 	   	__pragma(warning(pop))
+	#define LOG_DEBUG_ASSERT(cond) 	do{if(!(cond)) LOG_FATAL_F("Debug assertion % failed!", #cond##_);}while(0)
 	#elif defined(__GNUC__)
-	#define LOG_DEBUG_ASSERT(cond) 	{if(!(cond)) LOG_FATAL_F("Debug assertion % failed!", #cond##_);}
+	#define LOG_DEBUG_ASSERT(cond) 	do{if(!(cond)) LOG_FATAL_F("Debug assertion % failed!", #cond##_);}while(0)
 	#else
 	#define LOG_DEBUG_ASSERT(cond)
 	#endif

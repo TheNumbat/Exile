@@ -322,7 +322,7 @@ void chunk::gen() { PROF
 			u32 height = y_at(pos.x * xsz + x, pos.z * zsz + z);
 
 			blocks[x][z][0] = block_type::bedrock;
-			memset(&blocks[x][z][1], height, (u8)block_type::stone);
+			_memset(&blocks[x][z][1], height, (u8)block_type::stone);
 		}
 	}
 }
@@ -572,7 +572,7 @@ void chunk::build_data() { PROF
 
 						// Erase quad area in slice
 						for(i32 h = 0; h < height; h++)  {
-							memset(&slice[slice_idx + h * max[u_2d]], sizeof(block_type) * width, 0);
+							_memset(&slice[slice_idx + h * max[u_2d]], sizeof(block_type) * width, 0);
 						}
 
 						u += width;

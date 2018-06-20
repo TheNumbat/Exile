@@ -10,6 +10,7 @@ struct allocator {
 
 	code_context context;
 
+	bool track_sizes = true;
 	char c_name[ALLOC_NAME_LEN] = {};
 	string name();
 };
@@ -38,9 +39,6 @@ struct allocator {
 
 #define NEW(T)    (new ((T*)malloc(sizeof(T))) T)
 #define NEWA(T,c) (new ((T*)malloc(c * sizeof(T))) T[c])
-
-#define memcpy(s,d,i) _memcpy(s,d,i);
-#define memset(m,s,v) _memset(m,s,v);
 
 struct platform_allocator : public allocator {};
 

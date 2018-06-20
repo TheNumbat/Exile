@@ -1,6 +1,12 @@
 
 Working To-Do:
 
+	IMGUI integration
+		port opengl implementation
+		port platform layer implementation
+		write setup code
+		replace my gui code with imgui code
+
 	movement physics
 	world interaction
 	chunk paging
