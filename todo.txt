@@ -2,6 +2,10 @@
 Working To-Do:
 
 	IMGUI integration
+		bugs
+			cursor placement / turning off input for mouse capture
+			questionable clipping rectangles - check drawable area and factor stuff
+			dynamic reloading crashes
 		text input
 		clipboards
 		SDL layer
