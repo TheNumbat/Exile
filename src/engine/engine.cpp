@@ -61,7 +61,7 @@ EXPORT engine* start_up(platform_api* api) {
 
 	LOG_INFO("Setting up IMGUI...");
 	state->imgui_a = MAKE_PLATFORM_ALLOCATOR("imgui");
-	state->imgui = imgui_manager::make(&state->imgui_a);
+	state->imgui = imgui_manager::make(&state->window, &state->imgui_a);
 
 	LOG_INFO("Setting up game...");
 	state->game_state = start_up_game(state);
@@ -85,7 +85,7 @@ EXPORT bool main_loop(engine* state) {
 	state->evt.run_events(state); 
 		
 	state->gui.begin_frame();
-	state->imgui.begin_frame();
+	state->imgui.begin_frame(&state->window);
 		
 	run_game(state->game_state);
 

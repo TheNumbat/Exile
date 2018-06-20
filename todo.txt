@@ -2,9 +2,10 @@
 Working To-Do:
 
 	IMGUI integration
-		port opengl implementation
-		port platform layer implementation
-		write setup code
+		fix fonts
+		text input
+		clipboards
+		SDL layer
 		replace my gui code with imgui code
 
 	movement physics

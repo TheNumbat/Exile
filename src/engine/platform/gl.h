@@ -655,6 +655,14 @@ enum class gl_poly_mode : GLenum {
 	fill  = 0x1B02
 };
 
+enum class gl_blend_mode : GLenum {
+	add                   = 0x8006,
+	subtract              = 0x800A,
+	reverse_subtract      = 0x800B,
+	min                   = 0x8007,
+	max                   = 0x8008
+};
+
 enum class gl_depth_factor : GLenum {
 	never    = 0x0200,
 	less     = 0x0201,
@@ -678,6 +686,7 @@ DLL_IMPORT void glGenTextures(GLsizei n, GLuint* textures);
 
 DLL_IMPORT void glBlendFunc(gl_blend_factor sfactor, gl_blend_factor dfactor);
 DLL_IMPORT void glDepthFunc(gl_depth_factor factor);
+typedef void (*glBlendEquation_t)(gl_blend_mode mode);
 
 DLL_IMPORT void glEnable(gl_capability cap);
 DLL_IMPORT void glDisable(gl_capability cap);
@@ -733,6 +742,7 @@ typedef GLint (*glGetUniformLocation_t)(GLuint program, const GLchar *name);
 typedef GLint (*glGetAttribLocation_t)(GLuint program, 	const GLchar *name);
 typedef void (*glUniformMatrix4fv_t)(GLint location, GLsizei count, gl_bool transpose, const GLfloat *value);
 typedef void (*glUniform1f_t)(GLint location, GLfloat f);
+typedef void (*glUniform1i_t)(GLint location, GLint i);
 
 typedef void (*glGenerateMipmap_t)(gl_tex_target target);
 typedef void (*glActiveTexture_t)(GLenum texture);
@@ -740,6 +750,7 @@ typedef void (*glCreateTextures_t)(gl_tex_target target, GLsizei n, GLuint *text
 typedef void (*glBindTextureUnit_t)(GLuint unit, GLuint texture);
 typedef void (*glTexStorage3D_t)(gl_tex_target target, GLsizei levels, gl_tex_format format, GLsizei w, GLsizei h, GLsizei z);
 typedef void (*glTexSubImage3D_t)(gl_tex_target target, GLint level, GLint xoff, GLint yoff, GLint zoff, GLsizei w, GLsizei h, GLsizei z, gl_pixel_data_format format, gl_pixel_data_type type, void* data);
+typedef void (*glBindSampler_t)(GLuint unit, GLuint sampler);
 
 typedef void (*glBindVertexArray_t)(GLuint array);
 typedef void (*glDeleteVertexArrays_t)(GLsizei n, const GLuint *arrays);
@@ -800,6 +811,7 @@ glGetUniformLocation_t 		glGetUniformLocation;
 glGetAttribLocation_t		glGetAttribLocation;
 glUniformMatrix4fv_t   		glUniformMatrix4fv;
 glUniform1f_t				glUniform1f;
+glUniform1i_t				glUniform1i;
 
 glGenerateMipmap_t			glGenerateMipmap;
 glActiveTexture_t			glActiveTexture;
@@ -808,10 +820,12 @@ glBindTextureUnit_t			glBindTextureUnit;
 glTexParameterIiv_t 		glTexParameterIiv;
 glTexStorage3D_t 			glTexStorage3D;
 glTexSubImage3D_t			glTexSubImage3D;
+glBindSampler_t				glBindSampler;
 
 glBindVertexArray_t    		glBindVertexArray; 		
 glDeleteVertexArrays_t 		glDeleteVertexArrays;
 glGenVertexArrays_t    		glGenVertexArrays;
+glBlendEquation_t			glBlendEquation;
 
 glBindBuffer_t				glBindBuffer;
 glDeleteBuffers_t			glDeleteBuffers;

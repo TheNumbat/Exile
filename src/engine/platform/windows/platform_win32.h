@@ -7,13 +7,17 @@ bool win32_window_focused(platform_window* win);
 void win32_capture_mouse(platform_window* win);
 void win32_release_mouse(platform_window* win);
 platform_error win32_set_cursor_pos(platform_window* win, i32 x, i32 y);
+platform_error win32_get_cursor_pos(platform_window* win, i32* x, i32* y);
+bool win32_mousedown(platform_mouseflag button);
+void win32_show_cursor(bool show);
+i32 win32_get_scancode(platform_keycode code);
 
 u64 win32_get_perfcount();
 u64 win32_get_perfcount_freq();
 
 bool win32_is_debugging();
 void win32_debug_break();
-void win32_set_cursor(cursors c);
+void win32_set_cursor(platform_cursor c);
 
 platform_error win32_create_window(platform_window* window, string title, u32 width, u32 height);
 platform_error win32_destroy_window(platform_window* window);

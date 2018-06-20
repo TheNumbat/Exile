@@ -705,6 +705,7 @@ void ogl_manager::load_global_funcs() { PROF
 	GL_IS_LOAD(glIsProgramPipeline);
 	GL_IS_LOAD(glIsQuery);
 
+	GL_LOAD(glBlendEquation);
 	GL_LOAD(glDebugMessageCallback);
 	GL_LOAD(glDebugMessageInsert);
 	GL_LOAD(glDebugMessageControl);
@@ -745,6 +746,8 @@ void ogl_manager::load_global_funcs() { PROF
 	GL_LOAD(glTexStorage3D);
 	GL_LOAD(glTexSubImage3D);
 	GL_LOAD(glUniform1f);
+	GL_LOAD(glUniform1i);
+	GL_LOAD(glBindSampler);
 
 	GL_LOAD(glGetStringi);
 	GL_LOAD(glGetInteger64v);

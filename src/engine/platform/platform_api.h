@@ -214,7 +214,8 @@ enum class platform_mouseflag : u16 {
 	move    = 1<<9,
 };
 
-enum class cursors : u8 {
+enum class platform_cursor : u8 {
+	none,
 	pointer,
 	crosshair,
 	hand,
@@ -282,15 +283,19 @@ struct platform_api {
 	void 			(*capture_mouse)(platform_window* win)																= null;
 	void 			(*release_mouse)(platform_window* win)																= null;
 	platform_error 	(*set_cursor_pos)(platform_window* win, i32 x, i32 y)												= null;
+	platform_error 	(*get_cursor_pos)(platform_window* win, i32* x, i32* y)												= null;
+	i32 			(*get_scancode)(platform_keycode code)																= null;
+	void 			(*show_cursor)(bool show)																			= null;
 	u64 			(*get_perfcount)()																					= null;
 	u64 			(*get_perfcount_freq)()																				= null;
 	bool 			(*is_debugging)()																					= null;
 	void 			(*debug_break)()																					= null;
-	void 			(*set_cursor)(cursors c)																			= null;
+	void 			(*set_cursor)(platform_cursor c)																	= null;
 	void 			(*set_queue_callback)(void (*enqueue)(void* queue_param, platform_event evt), void* queue_param)	= null;
 	void 			(*pump_events)(platform_window* window)																= null;
 	void 			(*queue_event)(platform_event evt)																	= null;
 	bool 		    (*keydown)(platform_keycode key)																	= null;
+	bool 		    (*mousedown)(platform_mouseflag button)																= null;
 	platform_error 	(*create_window)(platform_window* window, string title, u32 width, u32 height)						= null;
 	platform_error 	(*destroy_window)(platform_window* window)															= null;
 	platform_error 	(*get_window_size)(platform_window* window, i32* w, i32* h)											= null;

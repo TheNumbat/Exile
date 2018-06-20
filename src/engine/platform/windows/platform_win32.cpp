@@ -80,6 +80,55 @@ platform_api platform_build_api() {
 	ret.window_focused			= &win32_window_focused;
 	ret.atomic_exchange 		= &win32_atomic_exchange;
 	ret.get_phys_cpus 			= &win32_get_phys_cpus;
+	ret.get_cursor_pos 			= &win32_get_cursor_pos;
+	ret.mousedown 				= &win32_mousedown;
+	ret.show_cursor 			= &win32_show_cursor;
+	ret.get_scancode 			= &win32_get_scancode;
+
+	return ret;
+}
+
+bool win32_mousedown(platform_mouseflag button) {
+
+	switch(button) {
+	case platform_mouseflag::lclick: {
+		return (GetAsyncKeyState(VK_LBUTTON) & 0x8000) != 0;
+	} break;
+	case platform_mouseflag::rclick: {
+		return (GetAsyncKeyState(VK_RBUTTON) & 0x8000) != 0;
+	} break;
+	case platform_mouseflag::mclick: {
+		return (GetAsyncKeyState(VK_MBUTTON) & 0x8000) != 0;
+	} break;
+	case platform_mouseflag::x1click: {
+		return (GetAsyncKeyState(VK_XBUTTON1) & 0x8000) != 0;
+	} break;
+	case platform_mouseflag::x2click: {
+		return (GetAsyncKeyState(VK_XBUTTON2) & 0x8000) != 0;
+	} break;
+	}
+
+	return false;
+}
+
+platform_error win32_get_cursor_pos(platform_window* win, i32* x, i32* y) {
+
+	platform_error ret;
+
+	POINT p;
+
+	if(!GetCursorPos(&p)) {
+		ret.good = false;
+		ret.error = GetLastError();
+	}
+
+	if(!ScreenToClient(win->handle, &p)) {
+		ret.good = false;
+		ret.error = GetLastError();
+	}
+
+	*x = p.x;
+	*y = p.y;
 
 	return ret;
 }
@@ -124,6 +173,11 @@ platform_error win32_set_cursor_pos(platform_window* win, i32 x, i32 y) {
 	return ret;
 }
 
+void win32_show_cursor(bool show) {
+
+	ShowCursor(show);
+}
+
 void win32_capture_mouse(platform_window* win) {
 
 	GetCursorPos(&saved_mouse_pos);
@@ -166,30 +220,30 @@ bool win32_is_debugging() {
 	return IsDebuggerPresent() == TRUE;
 }
 
-void win32_set_cursor(cursors c) {
+void win32_set_cursor(platform_cursor c) {
 
 	switch(c) {
-	case cursors::pointer: {
+	case platform_cursor::pointer: {
 		SetCursor(LoadCursorA(0, IDC_ARROW));
 		break;
 	}
-	case cursors::crosshair: {
+	case platform_cursor::crosshair: {
 		SetCursor(LoadCursorA(0, IDC_CROSS));
 		break;
 	}
-	case cursors::hand: {
+	case platform_cursor::hand: {
 		SetCursor(LoadCursorA(0, IDC_HAND));
 		break;
 	}
-	case cursors::help: {
+	case platform_cursor::help: {
 		SetCursor(LoadCursorA(0, IDC_HELP));
 		break;
 	}
-	case cursors::I: {
+	case platform_cursor::I: {
 		SetCursor(LoadCursorA(0, IDC_IBEAM));
 		break;
 	}
-	case cursors::hourglass: {
+	case platform_cursor::hourglass: {
 		SetCursor(LoadCursorA(0, IDC_WAIT));
 		break;
 	}
@@ -891,11 +945,16 @@ platform_keycode translate_key_code(WPARAM wParam) {
 	}
 }
 
+i32 win32_get_scancode(platform_keycode code) {
+
+	return MapVirtualKeyA(translate_key_code(code), MAPVK_VK_TO_VSC);
+}
+
 bool win32_keydown(platform_keycode key) {
 
 	u16 vk_code = translate_key_code(key);
 
-	return (GetKeyState(vk_code) & 0x8000) != 0;
+	return (GetAsyncKeyState(vk_code) & 0x8000) != 0;
 }
 
 LRESULT WINCALLBACK window_proc(HWND handle, UINT msg, WPARAM wParam, LPARAM lParam) {

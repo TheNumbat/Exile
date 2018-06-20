@@ -8,7 +8,7 @@ struct imgui_gl_info {
 	GLuint vertex = 0, fragment = 0;
 	GLuint tex_loc = 0, mat_loc = 0;
 	GLuint pos_loc = 0, uv_loc = 0, color_loc = 0;
-	GLuint vbo = 0, ebo = 0;
+	GLuint vao = 0, vbo = 0, ebo = 0;
 };
 
 struct imgui_manager {
@@ -19,16 +19,18 @@ struct imgui_manager {
 	// NOTE(max): maybe make this use my rendering system like the original GUI system
 	imgui_gl_info gl_info;
 
-	static imgui_manager make(allocator* a);
+	u64 last_perf = 0, perf_freq = 0;
+	bool mouse[3] = {};
+	platform_cursor cursor_values[ImGuiMouseCursor_COUNT] = {};
+
+	static imgui_manager make(platform_window* window, allocator* a);
 	void destroy(); 
 
 	void reload();
 	void process_event(platform_event evt);
 
-	void begin_frame();
+	void begin_frame(platform_window* window);
 	void end_frame();
-
-	void render(ImDrawData* draw_data);
 };
 
 void* imgui_alloc(u64 size, void* data);
