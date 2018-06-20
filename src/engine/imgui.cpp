@@ -28,9 +28,7 @@ imgui_manager imgui_manager::make(platform_window* window, allocator* a) { PROF
 
 	io.BackendFlags |= ImGuiBackendFlags_HasMouseCursors;
 	io.BackendFlags |= ImGuiBackendFlags_HasSetMousePos;
-
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-	io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad; 
 
 	io.KeyMap[ImGuiKey_Tab]        = (i32)platform_keycode::tab;
 	io.KeyMap[ImGuiKey_LeftArrow]  = (i32)platform_keycode::left;
@@ -89,11 +87,9 @@ imgui_manager imgui_manager::make(platform_window* window, allocator* a) { PROF
 	glEnableVertexAttribArray(ret.gl_info.uv_loc);
 	glEnableVertexAttribArray(ret.gl_info.color_loc);
 
-#define OFFSETOF(TYPE, ELEMENT) ((size_t)&(((TYPE *)0)->ELEMENT))
-	glVertexAttribPointer(ret.gl_info.pos_loc, 2, gl_vert_attrib_type::_float, gl_bool::_false, sizeof(ImDrawVert), (GLvoid*)OFFSETOF(ImDrawVert, pos));
-	glVertexAttribPointer(ret.gl_info.uv_loc, 2, gl_vert_attrib_type::_float, gl_bool::_false, sizeof(ImDrawVert), (GLvoid*)OFFSETOF(ImDrawVert, uv));
-	glVertexAttribPointer(ret.gl_info.color_loc, 4, gl_vert_attrib_type::unsigned_byte, gl_bool::_true, sizeof(ImDrawVert), (GLvoid*)OFFSETOF(ImDrawVert, col));
-#undef OFFSETOF
+	glVertexAttribPointer(ret.gl_info.pos_loc, 2, gl_vert_attrib_type::_float, gl_bool::_false, sizeof(ImDrawVert), (GLvoid*)offsetof(ImDrawVert, pos));
+	glVertexAttribPointer(ret.gl_info.uv_loc, 2, gl_vert_attrib_type::_float, gl_bool::_false, sizeof(ImDrawVert), (GLvoid*)offsetof(ImDrawVert, uv));
+	glVertexAttribPointer(ret.gl_info.color_loc, 4, gl_vert_attrib_type::unsigned_byte, gl_bool::_true, sizeof(ImDrawVert), (GLvoid*)offsetof(ImDrawVert, col));
 
 	glBindVertexArray(0);
 
@@ -109,8 +105,6 @@ imgui_manager imgui_manager::make(platform_window* window, allocator* a) { PROF
 	glBindTexture(gl_tex_target::_2D, 0);
 
 	io.Fonts->TexID = (void*)(u64)ret.gl_info.font_texture;
-
-	ImGui::ShowDemoWindow();
 
 	return ret;
 }
@@ -205,16 +199,16 @@ void imgui_manager::begin_frame(platform_window* window) { PROF
 	}
 
 	ImGuiMouseCursor imgui_cursor = ImGui::GetMouseCursor();
+	global_api->set_cursor(cursor_values[imgui_cursor] != platform_cursor::none ? cursor_values[imgui_cursor] : cursor_values[ImGuiMouseCursor_Arrow]);
 
-	if(io.MouseDrawCursor || imgui_cursor == ImGuiMouseCursor_None) {
-		global_api->show_cursor(false);
-	} else {
-		global_api->set_cursor(cursor_values[imgui_cursor] != platform_cursor::none ? cursor_values[imgui_cursor] : cursor_values[ImGuiMouseCursor_Arrow]);
-		global_api->show_cursor(true);
-	}
+	ImGui::NewFrame();
+
+	ImGui::ShowDemoWindow();
 }
 
 void imgui_manager::end_frame() { PROF
+
+	ImGui::Render();
 
 	ImDrawData* draw_data = ImGui::GetDrawData();
 	ImGuiIO& io = ImGui::GetIO();
@@ -242,7 +236,9 @@ void imgui_manager::end_frame() { PROF
 		const ImDrawList* cmd_list = draw_data->CmdLists[n];
 		const ImDrawIdx* idx_buffer_offset = 0;
 
+		glBindBuffer(gl_buf_target::array, gl_info.vbo);
 		glBufferData(gl_buf_target::array, (GLsizeiptr)cmd_list->VtxBuffer.Size * sizeof(ImDrawVert), (const GLvoid*)cmd_list->VtxBuffer.Data, gl_buf_usage::stream_draw);
+		glBindBuffer(gl_buf_target::element_array, gl_info.ebo);
 		glBufferData(gl_buf_target::element_array, (GLsizeiptr)cmd_list->IdxBuffer.Size * sizeof(ImDrawIdx), (const GLvoid*)cmd_list->IdxBuffer.Data, gl_buf_usage::stream_draw);
 
 		for(i32 cmd_i = 0; cmd_i < cmd_list->CmdBuffer.Size; cmd_i++) {
@@ -262,5 +258,6 @@ void imgui_manager::end_frame() { PROF
 	glUseProgram(0);
 	glBindTexture(gl_tex_target::_2D, 0);
 	glBindVertexArray(0);
+	glDisable(gl_capability::scissor_test);
 }
 

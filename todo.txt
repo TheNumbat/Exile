@@ -2,7 +2,6 @@
 Working To-Do:
 
 	IMGUI integration
-		fix fonts
 		text input
 		clipboards
 		SDL layer
