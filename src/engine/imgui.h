@@ -1,16 +1,61 @@
 
 #pragma once
 
+struct imgui_gl_info {
+	
+	GLuint font_texture = 0;
+	GLuint program = 0;
+	GLuint vertex = 0, fragment = 0;
+	GLuint tex_loc = 0, mat_loc = 0;
+	GLuint pos_loc = 0, uv_loc = 0, color_loc = 0;
+	GLuint vbo = 0, ebo = 0;
+};
+
 struct imgui_manager {
 
 	ImGuiContext* context = null;
 	allocator* alloc = null;
 
+	// NOTE(max): maybe make this use my rendering system like the original GUI system
+	imgui_gl_info gl_info;
+
 	static imgui_manager make(allocator* a);
 	void destroy(); 
 
 	void reload();
+	void process_event(platform_event evt);
+
+	void begin_frame();
+	void end_frame();
+
+	void render(ImDrawData* draw_data);
 };
 
 void* imgui_alloc(u64 size, void* data);
 void imgui_free(void* mem, void* data);
+
+const GLchar* imgui_vertex_shader =
+	"#version 330\n"
+    "uniform mat4 ProjMtx;\n"
+    "in vec2 Position;\n"
+    "in vec2 UV;\n"
+    "in vec4 Color;\n"
+    "out vec2 Frag_UV;\n"
+    "out vec4 Frag_Color;\n"
+    "void main()\n"
+    "{\n"
+    "	Frag_UV = UV;\n"
+    "	Frag_Color = Color;\n"
+    "	gl_Position = ProjMtx * vec4(Position.xy,0,1);\n"
+    "}\n";
+
+const GLchar* imgui_fragment_shader =
+	"#version 330\n"
+    "uniform sampler2D Texture;\n"
+    "in vec2 Frag_UV;\n"
+    "in vec4 Frag_Color;\n"
+    "out vec4 Out_Color;\n"
+    "void main()\n"
+    "{\n"
+    "	Out_Color = Frag_Color * texture( Texture, Frag_UV.st);\n"
+    "}\n";

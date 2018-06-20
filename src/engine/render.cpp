@@ -718,6 +718,7 @@ void ogl_manager::load_global_funcs() { PROF
 	GL_LOAD(glShaderSource);
 	GL_LOAD(glUseProgram);
 	GL_LOAD(glGetUniformLocation);
+	GL_LOAD(glGetAttribLocation);
 	GL_LOAD(glUniformMatrix4fv);
 	GL_LOAD(glGetShaderiv);
 	GL_LOAD(glGetShaderInfoLog);

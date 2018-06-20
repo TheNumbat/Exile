@@ -85,12 +85,14 @@ EXPORT bool main_loop(engine* state) {
 	state->evt.run_events(state); 
 		
 	state->gui.begin_frame();
+	state->imgui.begin_frame();
 		
 	run_game(state->game_state);
 
 	state->dbg.UI();
 
 	state->gui.end_frame(&state->window, &state->ogl);
+	state->imgui.end_frame();
 
 	RESET_ARENA(&this_thread_data.scratch_arena);
 

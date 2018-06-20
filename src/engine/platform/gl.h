@@ -730,6 +730,7 @@ typedef void (*glGetShaderInfoLog_t)(GLuint shader, GLsizei maxLength, GLsizei *
 typedef void (*glGetShaderSource_t)(GLuint shader, GLsizei buffer, GLsizei* length, GLchar* source);
 
 typedef GLint (*glGetUniformLocation_t)(GLuint program, const GLchar *name);
+typedef GLint (*glGetAttribLocation_t)(GLuint program, 	const GLchar *name);
 typedef void (*glUniformMatrix4fv_t)(GLint location, GLsizei count, gl_bool transpose, const GLfloat *value);
 typedef void (*glUniform1f_t)(GLint location, GLfloat f);
 
@@ -796,6 +797,7 @@ glGetShaderInfoLog_t		glGetShaderInfoLog;
 glGetShaderSource_t 		glGetShaderSource;
 
 glGetUniformLocation_t 		glGetUniformLocation;
+glGetAttribLocation_t		glGetAttribLocation;
 glUniformMatrix4fv_t   		glUniformMatrix4fv;
 glUniform1f_t				glUniform1f;
 

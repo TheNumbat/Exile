@@ -30,6 +30,8 @@ void evt_manager::run_events(engine* state) { PROF
 
 		// Built-in event handling
 		{
+			state->imgui.process_event(evt);
+
 			if(evt.type == platform_event_type::window && evt.window.op == platform_windowop::close) {
 				state->running = false;
 			}
