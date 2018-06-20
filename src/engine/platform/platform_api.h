@@ -278,66 +278,82 @@ struct platform_event {
 };
 
 struct platform_api {
-	platform_dll* your_dll																								= null;
-	bool 			(*window_focused)(platform_window* win)																= null;	
-	void 			(*capture_mouse)(platform_window* win)																= null;
-	void 			(*release_mouse)(platform_window* win)																= null;
-	platform_error 	(*set_cursor_pos)(platform_window* win, i32 x, i32 y)												= null;
-	platform_error 	(*get_cursor_pos)(platform_window* win, i32* x, i32* y)												= null;
-	i32 			(*get_scancode)(platform_keycode code)																= null;
-	void 			(*show_cursor)(bool show)																			= null;
-	u64 			(*get_perfcount)()																					= null;
-	u64 			(*get_perfcount_freq)()																				= null;
-	bool 			(*is_debugging)()																					= null;
-	void 			(*debug_break)()																					= null;
-	void 			(*set_cursor)(platform_cursor c)																	= null;
-	void 			(*set_queue_callback)(void (*enqueue)(void* queue_param, platform_event evt), void* queue_param)	= null;
-	void 			(*pump_events)(platform_window* window)																= null;
-	void 			(*queue_event)(platform_event evt)																	= null;
-	bool 		    (*keydown)(platform_keycode key)																	= null;
-	bool 		    (*mousedown)(platform_mouseflag button)																= null;
-	platform_error 	(*create_window)(platform_window* window, string title, u32 width, u32 height)						= null;
-	platform_error 	(*destroy_window)(platform_window* window)															= null;
-	platform_error 	(*get_window_size)(platform_window* window, i32* w, i32* h)											= null;
-	platform_error 	(*swap_buffers)(platform_window* window)															= null;
-	platform_error 	(*wait_message)()																					= null;
-	platform_error 	(*load_library)(platform_dll* dll, string file_path)												= null;
-	platform_error 	(*free_library)(platform_dll* dll)																	= null;
-	platform_error 	(*get_proc_address)(void** address, platform_dll* dll, string name)									= null;
-	void*		   	(*get_glproc)(string name)																			= null;
-	platform_error 	(*get_file_attributes)(platform_file_attributes* attrib, string file_path)							= null;
-	bool 		   	(*test_file_written)(platform_file_attributes* first, platform_file_attributes* second) 			= null;
-	platform_error 	(*copy_file)(string source, string dest, bool overwrite)											= null;
-	void*		   	(*heap_alloc)(u64 bytes)																			= null;
-	void	  	   	(*heap_free)(void* mem)																				= null;
-	void* 			(*heap_realloc)(void* mem, u64 bytes)																= null;
-	platform_error 	(*get_bin_path)(string* path) /* heap_allocs a string */											= null;
-	platform_error 	(*create_thread)(platform_thread* thread, i32 (*proc)(void*), void* param, bool start_suspended)	= null;
-	platform_thread_id (*this_thread_id)()																				= null;
-	void		   	(*thread_sleep)(i32 ms)																				= null;
-	u64 			(*atomic_exchange)(u64* dest, u64 val)																= null;
-	platform_error 	(*destroy_thread)(platform_thread* thread)															= null;
-	platform_error 	(*create_semaphore)(platform_semaphore* sem, i32 initial_count, i32 max_count)						= null;
-	platform_error 	(*destroy_semaphore)(platform_semaphore* sem)														= null;
-	platform_error 	(*signal_semaphore)(platform_semaphore* sem, i32 times)												= null;
-	platform_semaphore_state (*wait_semaphore)(platform_semaphore* sem, i32 ms)											= null;
-	void 			(*create_mutex)(platform_mutex* mut, bool aquire)													= null;
-	void 			(*destroy_mutex)(platform_mutex* mut)																= null;
-	void 			(*aquire_mutex)(platform_mutex* mut)																= null;
-	bool 			(*try_aquire_mutex)(platform_mutex* mut)															= null;
-	void 			(*release_mutex)(platform_mutex* mut)																= null;
-	i32   		   	(*get_num_cpus)()																					= null;
-	i32 			(*get_phys_cpus)()																					= null;
-	platform_thread_join_state (*join_thread)(platform_thread* thread, i32 ms)											= null;
-	platform_error 	(*create_file)(platform_file* file, string path, platform_file_open_op mode)						= null;
-	platform_error 	(*close_file)(platform_file* file)																	= null;
-	platform_error 	(*write_file)(platform_file* file, void* mem, u32 bytes)											= null;
-	platform_error 	(*read_file)(platform_file* file, void* mem, u32 bytes)												= null;
-	platform_error 	(*write_stdout_str)(string str)																		= null;
-	platform_error 	(*write_stdout)(void* mem, u32 len)																	= null;	
-	string 			(*make_timef)(string fmt)																			= null;
-	string 			(*time_string)()																					= null;
-	u32			   	(*file_size)(platform_file* file)																	= null;
+
+	platform_dll* your_dll;
+
+	bool 		   (*window_focused)(platform_window* win);	
+	platform_error (*swap_buffers)(platform_window* window);
+	platform_error (*destroy_window)(platform_window* window);
+	platform_error (*get_window_size)(platform_window* window, i32* w, i32* h);
+	platform_error (*get_window_drawable)(platform_window* window, i32* w, i32* h);
+	platform_error (*create_window)(platform_window* window, string title, u32 width, u32 height);
+	
+	void 		   (*show_cursor)(bool show);
+	void 		   (*set_cursor)(platform_cursor c);
+	void 		   (*capture_mouse)(platform_window* win);
+	void 		   (*release_mouse)(platform_window* win);
+	platform_error (*set_cursor_pos)(platform_window* win, i32 x, i32 y);
+	platform_error (*get_cursor_pos)(platform_window* win, i32* x, i32* y);
+	bool 		   (*mousedown)(platform_mouseflag button);
+	
+	void 		   (*debug_break)();
+	bool 		   (*is_debugging)();
+	u64 		   (*get_perfcount)();
+	u64 		   (*get_perfcount_freq)();
+	
+	platform_error (*wait_message)();
+	void 		   (*queue_event)(platform_event evt);
+	void 		   (*pump_events)(platform_window* window);
+	void 		   (*set_queue_callback)(void (*enqueue)(void* queue_param, platform_event evt), void* queue_param);
+	
+	bool 		   (*keydown)(platform_keycode key);
+	i32 		   (*get_scancode)(platform_keycode code);
+	
+	void*		   (*get_glproc)(string name);
+	platform_error (*free_library)(platform_dll* dll);
+	platform_error (*load_library)(platform_dll* dll, string file_path);
+	platform_error (*get_proc_address)(void** address, platform_dll* dll, string name);
+
+	void	  	   (*heap_free)(void* mem);
+	void*		   (*heap_alloc)(u64 bytes);
+	void* 		   (*heap_realloc)(void* mem, u64 bytes);
+	
+	platform_thread_id  	   (*this_thread_id)();
+	void		   			   (*thread_sleep)(i32 ms);
+	u64 					   (*atomic_exchange)(u64* dest, u64 val);
+	platform_error 			   (*destroy_thread)(platform_thread* thread);
+	platform_thread_join_state (*join_thread)(platform_thread* thread, i32 ms);
+	platform_error 			   (*create_thread)(platform_thread* thread, i32 (*proc)(void*), void* param, bool start_suspended);
+
+	platform_error 			 (*destroy_semaphore)(platform_semaphore* sem);
+	platform_error 			 (*signal_semaphore)(platform_semaphore* sem, i32 times);
+	platform_error 			 (*create_semaphore)(platform_semaphore* sem, i32 initial_count, i32 max_count);
+	platform_semaphore_state (*wait_semaphore)(platform_semaphore* sem, i32 ms);
+
+	void 		   (*aquire_mutex)(platform_mutex* mut);
+	void 		   (*release_mutex)(platform_mutex* mut);
+	void 		   (*destroy_mutex)(platform_mutex* mut);
+	bool 		   (*try_aquire_mutex)(platform_mutex* mut);
+	void 		   (*create_mutex)(platform_mutex* mut, bool aquire);
+	
+	i32   		   (*get_num_cpus)();
+	i32 		   (*get_phys_cpus)();
+	
+	platform_error (*get_bin_path)(string* path); // allocates
+	u32			   (*file_size)(platform_file* file);
+	platform_error (*close_file)(platform_file* file);
+	platform_error (*read_file)(platform_file* file, void* mem, u32 bytes);
+	platform_error (*write_file)(platform_file* file, void* mem, u32 bytes);
+	platform_error (*copy_file)(string source, string dest, bool overwrite);
+	platform_error (*get_file_attributes)(platform_file_attributes* attrib, string file_path);
+	platform_error (*create_file)(platform_file* file, string path, platform_file_open_op mode);
+	bool 		   (*test_file_written)(platform_file_attributes* first, platform_file_attributes* second);
+
+	platform_error (*write_stdout_str)(string str);
+	platform_error (*write_stdout)(void* mem, u32 len);	
+	
+	string 		   (*time_string)();
+	string 		   (*make_timef)(string fmt);
 };
 
 platform_api platform_build_api();

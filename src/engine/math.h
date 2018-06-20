@@ -450,7 +450,6 @@ union m4 {
 };
 static_assert(sizeof(m4) == 64, "sizeof(m4) != 64");
 static_assert(alignof(m4) == 16, "alignof(m4) != 16");
-m4 m4::zero = {{0,0,0,0},{0,0,0,0},{0,0,0,0},{0,0,0,0}};
 
 struct colorf {
 	f32 r = 0.0f, g = 0.0f, b = 0.0f, a = 0.0f;
@@ -486,6 +485,9 @@ const color GREEN = color(0, 255, 0, 255);
 const color BLUE  = color(0, 0, 255, 255);
 
 // IMPL
+#ifndef MATH_NO_IMPLEMENTATIONS
+
+m4 m4::zero = {{0,0,0,0},{0,0,0,0},{0,0,0,0},{0,0,0,0}};
 
 // yes most of these are useless... TODO(max): improve on math.h functions
 
@@ -1393,6 +1395,7 @@ std::ostream& operator<<(std::ostream& out, colorf r) {
 	out << "{" << r.r << "," << r.g << "," << r.b << "," << r.a << "}";
 	return out;
 }
+#endif
 #endif
 
 #define sqrt _sqrt

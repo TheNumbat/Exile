@@ -707,6 +707,7 @@ DLL_IMPORT BOOL WINAPI SetEnvironmentVariableA(char const *name, char const *val
 #define MAPVK_VSC_TO_VK    1
 #define MAPVK_VK_TO_CHAR   2
 #define MAPVK_VSC_TO_VK_EX 3
+#define MAPVK_VK_TO_VSC_EX 4
 
 DLL_IMPORT BOOL WINAPI RegisterRawInputDevices(RAWINPUTDEVICE const *raw_input_devices, UINT num_devices, UINT size);
 DLL_IMPORT UINT WINAPI GetRawInputData(HRAWINPUT raw_input, UINT ui_command, void *data, UINT *size, UINT size_header);
@@ -1079,6 +1080,7 @@ DLL_IMPORT LRESULT WINCALLBACK DefWindowProcA(HWND hWnd, UINT Msg, WPARAM wParam
 
 DLL_IMPORT SHORT WINAPI GetKeyState(int nVirtKey);
 DLL_IMPORT UINT WINAPI MapVirtualKeyA(UINT uCode, UINT uMapType);
+DLL_IMPORT UINT WINAPI MapVirtualKeyExA(UINT uCode, UINT uMapType, HKL dwhkl);
 
 DLL_IMPORT HMODULE WINAPI GetModuleHandleA(LPCSTR lpModuleName);
 DLL_IMPORT HANDLE WINAPI GetCurrentProcess(VOID);

@@ -29,6 +29,7 @@ imgui_manager imgui_manager::make(platform_window* window, allocator* a) { PROF
 	io.BackendFlags |= ImGuiBackendFlags_HasMouseCursors;
 	io.BackendFlags |= ImGuiBackendFlags_HasSetMousePos;
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+	io.MouseDrawCursor = true;
 
 	io.KeyMap[ImGuiKey_Tab]        = (i32)platform_keycode::tab;
 	io.KeyMap[ImGuiKey_LeftArrow]  = (i32)platform_keycode::left;
@@ -101,6 +102,7 @@ imgui_manager imgui_manager::make(platform_window* window, allocator* a) { PROF
 	glBindTexture(gl_tex_target::_2D, ret.gl_info.font_texture);
 	glTexParameteri(gl_tex_target::_2D, gl_tex_param::min_filter, (GLint)gl_tex_filter::nearest);
 	glTexParameteri(gl_tex_target::_2D, gl_tex_param::mag_filter, (GLint)gl_tex_filter::nearest);
+	glPixelStorei(gl_pix_store::unpack_row_length, 0);
 	glTexImage2D(gl_tex_target::_2D, 0, gl_tex_format::rgba, w, h, 0, gl_pixel_data_format::rgba, gl_pixel_data_type::unsigned_byte, bitmap);
 	glBindTexture(gl_tex_target::_2D, 0);
 
@@ -141,8 +143,8 @@ void imgui_manager::process_event(platform_event evt) { PROF
 
 	if(evt.type == platform_event_type::key) {
 
-		i32 scancode = global_api->get_scancode(evt.key.code);
-		io.KeysDown[scancode] = evt.key.flags & (u16)platform_keyflag::press;
+		io.KeysDown[(i32)evt.key.code] = (evt.key.flags & (u16)platform_keyflag::press) != 0 || 
+										 (evt.key.flags & (u16)platform_keyflag::repeat) != 0;
 		io.KeyShift = (evt.key.flags & (u16)platform_keyflag::shift) != 0;
 		io.KeyCtrl 	= (evt.key.flags & (u16)platform_keyflag::ctrl) != 0;
 		io.KeyAlt 	= (evt.key.flags & (u16)platform_keyflag::alt) != 0;
@@ -170,21 +172,20 @@ void imgui_manager::begin_frame(platform_window* window) { PROF
 
 	ImGuiIO& io = ImGui::GetIO();
 
-	i32 w, h;
-	global_api->get_window_size(window, &w, &h);
-
-	io.DisplaySize = ImVec2((f32)w, (f32)h);
+    int w, h;
+    int display_w, display_h;
+    global_api->get_window_size(window, &w, &h);
+    global_api->get_window_drawable(window, &display_w, &display_h);
+    io.DisplaySize = ImVec2((f32)w, (f32)h);
+    io.DisplayFramebufferScale = ImVec2(w > 0 ? ((f32)display_w / w) : 0, h > 0 ? ((f32)display_h / h) : 0);
 
 	u64 perf = global_api->get_perfcount();
 	
 	io.DeltaTime = (f32)((f64)(perf - last_perf) / perf_freq);
 	last_perf = perf;
 
-	ImVec2 mouse_pos = io.MousePos;
-	io.MousePos = ImVec2(-FLT_MAX, -FLT_MAX);
-
 	if(io.WantSetMousePos)
-		CHECKED(set_cursor_pos, window, (i32)mouse_pos.x, (i32)mouse_pos.y);
+		CHECKED(set_cursor_pos, window, (i32)io.MousePos.x, (i32)io.MousePos.y);
 
 	io.MouseDown[0] = mouse[0] || global_api->mousedown(platform_mouseflag::lclick);
 	io.MouseDown[1] = mouse[1] || global_api->mousedown(platform_mouseflag::rclick);
@@ -198,8 +199,7 @@ void imgui_manager::begin_frame(platform_window* window) { PROF
 		io.MousePos = ImVec2((f32)mx, (f32)my);
 	}
 
-	ImGuiMouseCursor imgui_cursor = ImGui::GetMouseCursor();
-	global_api->set_cursor(cursor_values[imgui_cursor] != platform_cursor::none ? cursor_values[imgui_cursor] : cursor_values[ImGuiMouseCursor_Arrow]);
+	global_api->set_cursor(cursor_values[ImGui::GetMouseCursor()]);
 
 	ImGui::NewFrame();
 
@@ -213,8 +213,11 @@ void imgui_manager::end_frame() { PROF
 	ImDrawData* draw_data = ImGui::GetDrawData();
 	ImGuiIO& io = ImGui::GetIO();
 
-	if(io.DisplaySize.x <= 0 || io.DisplaySize.y <= 0)
-		return;
+    i32 fb_width = (i32)(io.DisplaySize.x * io.DisplayFramebufferScale.x);
+    i32 fb_height = (i32)(io.DisplaySize.y * io.DisplayFramebufferScale.y);
+    if (fb_width == 0 || fb_height == 0)
+        return;
+    draw_data->ScaleClipRects(io.DisplayFramebufferScale);
 
 	glEnable(gl_capability::blend);
 	glBlendEquation(gl_blend_mode::add);
@@ -224,6 +227,7 @@ void imgui_manager::end_frame() { PROF
 	glEnable(gl_capability::scissor_test);
 	glPolygonMode(gl_poly::front_and_back, gl_poly_mode::fill);
 
+	glViewport(0, 0, (GLsizei)fb_width, (GLsizei)fb_height);
 	m4 mat = ortho(0, (f32)io.DisplaySize.x, (f32)io.DisplaySize.y, 0, -1, 1);
 
 	glUseProgram(gl_info.program);
@@ -233,8 +237,8 @@ void imgui_manager::end_frame() { PROF
 
 	for(i32 n = 0; n < draw_data->CmdListsCount; n++) {
 
-		const ImDrawList* cmd_list = draw_data->CmdLists[n];
-		const ImDrawIdx* idx_buffer_offset = 0;
+		ImDrawList* cmd_list = draw_data->CmdLists[n];
+		ImDrawIdx* idx_buffer_offset = 0;
 
 		glBindBuffer(gl_buf_target::array, gl_info.vbo);
 		glBufferData(gl_buf_target::array, (GLsizeiptr)cmd_list->VtxBuffer.Size * sizeof(ImDrawVert), (const GLvoid*)cmd_list->VtxBuffer.Data, gl_buf_usage::stream_draw);
@@ -243,7 +247,8 @@ void imgui_manager::end_frame() { PROF
 
 		for(i32 cmd_i = 0; cmd_i < cmd_list->CmdBuffer.Size; cmd_i++) {
 
-			const ImDrawCmd* pcmd = &cmd_list->CmdBuffer[cmd_i];
+			ImDrawCmd* pcmd = &cmd_list->CmdBuffer[cmd_i];
+
 			if(pcmd->UserCallback) {
 				pcmd->UserCallback(cmd_list, pcmd);
 			} else {
@@ -251,6 +256,7 @@ void imgui_manager::end_frame() { PROF
 				glScissor((i32)pcmd->ClipRect.x, (i32)(io.DisplaySize.y - pcmd->ClipRect.w), (i32)(pcmd->ClipRect.z - pcmd->ClipRect.x), (i32)(pcmd->ClipRect.w - pcmd->ClipRect.y));
 				glDrawElements(gl_draw_mode::triangles, (GLsizei)pcmd->ElemCount, sizeof(ImDrawIdx) == 2 ? gl_index_type::unsigned_short : gl_index_type::unsigned_int, idx_buffer_offset);
 			}
+
 			idx_buffer_offset += pcmd->ElemCount;
 		}
 	}

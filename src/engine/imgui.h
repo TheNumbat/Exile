@@ -21,7 +21,7 @@ struct imgui_manager {
 
 	u64 last_perf = 0, perf_freq = 0;
 	bool mouse[3] = {};
-	platform_cursor cursor_values[ImGuiMouseCursor_COUNT] = {};
+	platform_cursor cursor_values[ImGuiMouseCursor_COUNT] = {platform_cursor::pointer};
 
 	static imgui_manager make(platform_window* window, allocator* a);
 	void destroy(); 

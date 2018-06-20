@@ -674,6 +674,25 @@ enum class gl_depth_factor : GLenum {
 	always   = 0x0207
 };
 
+enum class gl_pix_store : GLenum {
+	pack_alignment      = 0x0D05,
+	pack_lsb_first      = 0x0D01,
+	pack_row_length     = 0x0D02,
+	pack_skip_pixels    = 0x0D04,
+	pack_skip_rows      = 0x0D03,
+	pack_swap_bytes     = 0x0D00,
+	pack_image_height   = 0x806C,
+	pack_skip_images    = 0x806B,
+	unpack_alignment    = 0x0CF5,
+	unpack_lsb_first    = 0x0CF1,
+	unpack_skip_images  = 0x806D,
+	unpack_image_height = 0x806E,
+	unpack_row_length   = 0x0CF2,
+	unpack_skip_pixels  = 0x0CF4,
+	unpack_skip_rows    = 0x0CF3,
+	unpack_swap_bytes   = 0x0CF0
+};
+
 DLL_IMPORT const GLubyte* glGetString(gl_info name);
 
 DLL_IMPORT void glDeleteTextures(GLsizei n, const GLuint *textures);
@@ -751,6 +770,7 @@ typedef void (*glBindTextureUnit_t)(GLuint unit, GLuint texture);
 typedef void (*glTexStorage3D_t)(gl_tex_target target, GLsizei levels, gl_tex_format format, GLsizei w, GLsizei h, GLsizei z);
 typedef void (*glTexSubImage3D_t)(gl_tex_target target, GLint level, GLint xoff, GLint yoff, GLint zoff, GLsizei w, GLsizei h, GLsizei z, gl_pixel_data_format format, gl_pixel_data_type type, void* data);
 typedef void (*glBindSampler_t)(GLuint unit, GLuint sampler);
+DLL_IMPORT void glPixelStorei(gl_pix_store type, GLint param);
 
 typedef void (*glBindVertexArray_t)(GLuint array);
 typedef void (*glDeleteVertexArrays_t)(GLsizei n, const GLuint *arrays);

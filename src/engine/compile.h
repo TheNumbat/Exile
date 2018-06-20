@@ -75,9 +75,6 @@ static dbg_manager*  global_dbg = null; // global to provide profiling functiona
 #include "gui.h"
 
 #include <imgui/imgui.h>
-#include <imgui/imgui.cpp>
-#include <imgui/imgui_draw.cpp>
-#include <imgui/imgui_demo.cpp>
 #include "imgui.h"
 
 #include "engine.h"

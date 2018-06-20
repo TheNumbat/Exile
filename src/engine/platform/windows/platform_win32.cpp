@@ -19,6 +19,7 @@ void (*global_enqueue)(void* queue_param, platform_event evt) = null;
 void* global_enqueue_param = null;
 
 POINT saved_mouse_pos = {};
+bool mouse_is_captured = false;
 
 void platform_test_api() {}
 
@@ -84,6 +85,7 @@ platform_api platform_build_api() {
 	ret.mousedown 				= &win32_mousedown;
 	ret.show_cursor 			= &win32_show_cursor;
 	ret.get_scancode 			= &win32_get_scancode;
+	ret.get_window_drawable 	= &win32_get_window_drawable;
 
 	return ret;
 }
@@ -186,6 +188,8 @@ void win32_capture_mouse(platform_window* win) {
 
 	RAWINPUTDEVICE raw_mouse = {0x01, 0x02, RIDEV_NOLEGACY | RIDEV_CAPTUREMOUSE, win->handle};
 	RegisterRawInputDevices(&raw_mouse, 1, sizeof(RAWINPUTDEVICE));
+
+	mouse_is_captured = true;
 }
 
 void win32_release_mouse(platform_window* win) {
@@ -196,6 +200,8 @@ void win32_release_mouse(platform_window* win) {
 
 	RAWINPUTDEVICE raw_mouse = {0x01, 0x02, RIDEV_REMOVE, null};
 	RegisterRawInputDevices(&raw_mouse, 1, sizeof(RAWINPUTDEVICE));
+
+	mouse_is_captured = false;
 }
 
 u64 win32_get_perfcount() {
@@ -266,6 +272,24 @@ platform_error win32_write_stdout(void* mem, u32 len) {
 platform_error win32_write_stdout_str(string str) {
 
 	return win32_write_stdout(str.c_str, str.len - 1);
+}
+
+platform_error win32_get_window_drawable(platform_window* window, i32* w, i32* h) {
+
+	platform_error ret;
+
+	RECT rect;
+
+	if(GetClientRect(window->handle, &rect) == 0) {
+		ret.good = false;
+		ret.error = GetLastError();
+		return ret;	
+	}
+
+	*w = rect.right - rect.left;
+	*h = rect.bottom - rect.top;
+
+	return ret;
 }
 
 platform_error win32_get_window_size(platform_window* window, i32* w, i32* h) {
@@ -947,7 +971,7 @@ platform_keycode translate_key_code(WPARAM wParam) {
 
 i32 win32_get_scancode(platform_keycode code) {
 
-	return MapVirtualKeyA(translate_key_code(code), MAPVK_VK_TO_VSC);
+	return MapVirtualKeyExA(translate_key_code(code), MAPVK_VK_TO_VSC_EX, null);
 }
 
 bool win32_keydown(platform_keycode key) {

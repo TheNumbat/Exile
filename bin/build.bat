@@ -13,11 +13,11 @@ if "%2"=="SDL" (
 	set SDL_META=
 )
 
-set Game_CompilerFlags=%1 %SDL_COMP% -MTd -nologo -fp:fast -GR- -EHa- -Oi -W4 -Z7 -FC -Fegame.dll -LD -wd4100 -wd4201 -Iw:\build\ -D_HAS_EXCEPTIONS=0 -DCHECKS -DPROFILE -Iw:\deps\
+set Game_CompilerFlags=%1 -MTd -nologo -fp:fast -GR- -EHa- -Oi -W4 -MP -Z7 -FC -LD -wd4100 -wd4201 -Iw:\build\ -D_HAS_EXCEPTIONS=0 -DCHECKS -DPROFILE -Iw:\deps\
 set Game_LinkerFlags=/NODEFAULTLIB:MSVCRT /SUBSYSTEM:windows opengl32.lib -PDB:game_%random%.pdb 
 
-set Platform_CompilerFlags=%1 %SDL_COMP% -Z7 -MTd -nologo -fp:fast -GR- -EHa- -W4 -FC -Femain.exe -wd4100 -wd4530 -wd4577 -DTEST_NET_ZERO_ALLOCS
-set Platform_LinkerFlags=/NODEFAULTLIB:MSVCRT /SUBSYSTEM:console user32.lib gdi32.lib opengl32.lib kernel32.lib %SDL_LINK%
+set Platform_CompilerFlags=%1 -Z7 -MTd -nologo -fp:fast -GR- -EHa- -W4 -FC -Femain.exe -wd4100 -wd4530 -wd4577 -DTEST_NET_ZERO_ALLOCS
+set Platform_LinkerFlags=/NODEFAULTLIB:MSVCRT /SUBSYSTEM:console user32.lib gdi32.lib opengl32.lib kernel32.lib 
 
 set Asset_CompilerFlags=-O2 -MTd -nologo -EHsc -Oi -W4 -Z7 -FC -Feasset.exe -wd4100 -Iw:\deps\
 set Asset_LinkerFlags=/NODEFAULTLIB:MSVCRT /SUBSYSTEM:console
@@ -78,7 +78,10 @@ echo.
 echo GAME 
 echo.
 (
-	cl %Game_CompilerFlags% w:\src\compile.cpp /link %Game_LinkerFlags%
+	if not exist imgui_compile.obj (
+		cl %Game_CompilerFlags% -c w:\deps\imgui\imgui_compile.cpp /link %Game_LinkerFlags%
+	)
+	cl %Game_CompilerFlags% %SDL_COMP% -Fegame.dll w:\src\compile.cpp /link %Game_LinkerFlags% imgui_compile.obj
 )
 echo.
 echo PLATFORM 
@@ -86,7 +89,7 @@ echo.
 (
 	if not exist main.exe (
 		echo compiling 
-		cl %Platform_CompilerFlags% w:\src\engine\platform\platform_main.cpp /link %Platform_LinkerFlags%
+		cl %Platform_CompilerFlags% %SDL_COMP% w:\src\engine\platform\platform_main.cpp /link %Platform_LinkerFlags% %SDL_LINK%
 	)
 	
 	if "%2"=="SDL" (

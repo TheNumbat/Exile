@@ -691,9 +691,9 @@ bool ogl_info::check_version(i32 maj, i32 min) { PROF
 void ogl_manager::load_global_funcs() { PROF
 
 	#define GL_IS_LOAD(name) name = (glIs_t)global_api->get_glproc(#name##_); \
-							 if(!name) LOG_WARN_F("Failed to load GL function %", #name##_);
+							 if(!name) LOG_ERR_F("Failed to load GL function %", #name##_);
 	#define GL_LOAD(name) name = (name##_t)global_api->get_glproc(#name##_); \
-						  if(!name) LOG_WARN_F("Failed to load GL function %", #name##_);
+						  if(!name) LOG_ERR_F("Failed to load GL function %", #name##_);
 
 	GL_IS_LOAD(glIsTexture);
 	GL_IS_LOAD(glIsBuffer);
