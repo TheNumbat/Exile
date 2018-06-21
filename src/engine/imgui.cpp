@@ -191,7 +191,7 @@ void imgui_manager::begin_frame(platform_window* window) { PROF
 	io.MouseDown[2] = mouse[2] || global_api->mousedown(platform_mouseflag::mclick);
 	mouse[0] = mouse[1] = mouse[2] = false;
 
-	if(global_api->window_focused(window)) {
+	if(global_api->window_focused(window) && global_api->cursor_shown()) {
 		i32 mx, my;
 		CHECKED(get_cursor_pos, window, &mx, &my);
 		io.MousePos = ImVec2((f32)mx, (f32)my);

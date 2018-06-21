@@ -329,6 +329,12 @@ typedef struct tagMONITORINFO {
 	RECT  rcWork;
 	DWORD dwFlags;
 } MONITORINFO;
+typedef struct tagCURSORINFO {
+	DWORD   cbSize;
+	DWORD   flags;
+	HCURSOR hCursor;
+	POINT   ptScreenPos;
+} CURSORINFO, *PCURSORINFO, *LPCURSORINFO;
 
 #define INFINITE 0xffffffffl
 #define INVALID_HANDLE_VALUE ((void *)(intptr_t)(-1))
@@ -824,6 +830,10 @@ DLL_IMPORT HANDLE  WINAPI SetClipboardData(UINT uFormat, HANDLE hMem);
 #define GWL_ID    -12
 #define GWL_STYLE -16
 
+#define CURSOR_HIDDEN 		0x00000000
+#define CURSOR_SHOWING 		0x00000001
+#define CURSOR_SUPPRESSED 	0x00000002
+
 DLL_IMPORT BOOL  WINAPI SetPixelFormat   (HDC hdc, int pixel_format, PIXELFORMATDESCRIPTOR const *pfd);
 DLL_IMPORT int   WINAPI ChoosePixelFormat(HDC hdc, PIXELFORMATDESCRIPTOR const *pfd);
 DLL_IMPORT HGLRC WINAPI wglCreateContext (HDC hdc);
@@ -843,6 +853,7 @@ DLL_IMPORT BOOL 	WINAPI ReleaseCapture(void);
 DLL_IMPORT HWND 	WINAPI SetCapture(HWND hWnd);
 DLL_IMPORT int 		WINAPI ShowCursor(BOOL bShow);
 DLL_IMPORT BOOL 	WINAPI SetCursorPos(int X, int Y);
+DLL_IMPORT BOOL 	WINAPI GetCursorInfo(PCURSORINFO pci);
 DLL_IMPORT BOOL            ScreenToClient(HWND hWnd, POINT *lpPoint);
 DLL_IMPORT BOOL            ClientToScreen(HWND hWnd, POINT *lpPoint);
 DLL_IMPORT BOOL     WINAPI MoveWindow(HWND hWnd, int X, int Y, int nWidth, int nHeight, BOOL bRepaint);

@@ -2,7 +2,6 @@
 Working To-Do:
 
 	IMGUI integration
-		turning off input for mouse capture
 		text input
 		clipboards
 		SDL layer

@@ -19,9 +19,11 @@ void (*global_enqueue)(void* queue_param, platform_event evt) = null;
 void* global_enqueue_param = null;
 
 POINT saved_mouse_pos = {};
-bool mouse_is_captured = false;
 
 void platform_test_api() {}
+
+void* win32_heap_alloc_net(u64 bytes);
+void win32_heap_free_net(void* mem);
 
 platform_api platform_build_api() {
 
@@ -86,8 +88,19 @@ platform_api platform_build_api() {
 	ret.show_cursor 			= &win32_show_cursor;
 	ret.get_scancode 			= &win32_get_scancode;
 	ret.get_window_drawable 	= &win32_get_window_drawable;
+	ret.cursor_shown 			= &win32_cursor_shown;
 
 	return ret;
+}
+
+bool win32_cursor_shown() {
+
+	CURSORINFO info = {};
+	info.cbSize = sizeof(CURSORINFO);
+
+	GetCursorInfo(&info);
+
+	return info.flags & CURSOR_SHOWING;
 }
 
 bool win32_mousedown(platform_mouseflag button) {
@@ -188,8 +201,6 @@ void win32_capture_mouse(platform_window* win) {
 
 	RAWINPUTDEVICE raw_mouse = {0x01, 0x02, RIDEV_NOLEGACY | RIDEV_CAPTUREMOUSE, win->handle};
 	RegisterRawInputDevices(&raw_mouse, 1, sizeof(RAWINPUTDEVICE));
-
-	mouse_is_captured = true;
 }
 
 void win32_release_mouse(platform_window* win) {
@@ -200,8 +211,6 @@ void win32_release_mouse(platform_window* win) {
 
 	RAWINPUTDEVICE raw_mouse = {0x01, 0x02, RIDEV_REMOVE, null};
 	RegisterRawInputDevices(&raw_mouse, 1, sizeof(RAWINPUTDEVICE));
-
-	mouse_is_captured = false;
 }
 
 u64 win32_get_perfcount() {

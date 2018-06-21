@@ -288,6 +288,7 @@ struct platform_api {
 	platform_error (*get_window_drawable)(platform_window* window, i32* w, i32* h);
 	platform_error (*create_window)(platform_window* window, string title, u32 width, u32 height);
 	
+	bool 		   (*cursor_shown)();
 	void 		   (*show_cursor)(bool show);
 	void 		   (*set_cursor)(platform_cursor c);
 	void 		   (*capture_mouse)(platform_window* win);
