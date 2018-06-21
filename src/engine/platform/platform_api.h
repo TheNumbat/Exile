@@ -68,13 +68,14 @@ bool operator==(platform_file first, platform_file second);
 // TODO(max): Is this really the best way to handle input? We're basically just translating the OS event system.
 //			  Instead, we could do it the HMH way of representing all input since last poll as one structure.
 
-// TODO(max): more event types (e.g. controller, text?)
+// TODO(max): controller events 
 enum class platform_event_type : u8 {
 	none,
-	window, // includes quit
+	window,
 	key,
 	mouse,
-	async,
+	rune,
+	async
 };
 
 enum class platform_keycode : u8 {
@@ -256,6 +257,9 @@ struct _platform_event_mouse {
 	i8 w = 0;
 };
 
+struct _platform_event_rune {
+	char rune_utf8[5] = {};
+};
 
 enum class platform_async_type : u8 {
 	none,
@@ -272,6 +276,7 @@ struct platform_event {
 		_platform_event_window		window;
 		_platform_event_key 		key;
 		_platform_event_mouse 		mouse;
+		_platform_event_rune 		rune;
 		_platform_event_async 		async;
 	};
 	platform_event() : type(), window() {}; // c++ reee

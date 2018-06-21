@@ -1067,6 +1067,19 @@ LRESULT WINCALLBACK window_proc(HWND handle, UINT msg, WPARAM wParam, LPARAM lPa
 			global_enqueue(global_enqueue_param, evt);
 			return 0;
 		}
+		
+		// character messages
+		case WM_SYSCHAR:
+		case WM_CHAR: {
+			evt.type = platform_event_type::rune;
+
+			wchar_t rune = (wchar_t)wParam;
+
+			if(WideCharToMultiByte(CP_UTF8, 0, &rune, 1, evt.rune.rune_utf8, 5, null, null))
+				global_enqueue(global_enqueue_param, evt);
+
+			return 0;
+		} 
 
 		// keyboard messages
 		case WM_KEYDOWN:

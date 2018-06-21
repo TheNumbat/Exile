@@ -54,6 +54,10 @@ imgui_manager imgui_manager::make(platform_window* window, allocator* a) { PROF
 
 	ret.cursor_values[(i32)ImGuiMouseCursor_Arrow] = platform_cursor::pointer;
 	ret.cursor_values[(i32)ImGuiMouseCursor_TextInput] = platform_cursor::I;
+	ret.cursor_values[(i32)ImGuiMouseCursor_ResizeNS] = platform_cursor::hand;
+	ret.cursor_values[(i32)ImGuiMouseCursor_ResizeEW] = platform_cursor::hand;
+	ret.cursor_values[(i32)ImGuiMouseCursor_ResizeNESW] = platform_cursor::hand;
+	ret.cursor_values[(i32)ImGuiMouseCursor_ResizeNWSE] = platform_cursor::hand;
 
 	// TODO(max): non-windows clipboard handling
 
@@ -164,7 +168,10 @@ void imgui_manager::process_event(platform_event evt) { PROF
 		}
 	}
 
-	// TODO(max): text input
+	else if(evt.type == platform_event_type::rune) {
+
+		io.AddInputCharactersUTF8(evt.rune.rune_utf8);
+	}
 }
 
 void imgui_manager::begin_frame(platform_window* window) { PROF

@@ -194,7 +194,7 @@ void player::update(u64 now) { PROF
 	u64 pdt = now - last;
 	f32 dt = (f32)pdt / (f32)eng->platform->get_perfcount_freq();
 
-	if(eng->platform->window_focused(&eng->window)) {
+	if(enable && eng->platform->window_focused(&eng->window)) {
 
 		velocity = v3(0.0f, 0.0f, 0.0f);
 		if(eng->platform->keydown(platform_keycode::w)) {

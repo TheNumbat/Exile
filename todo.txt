@@ -2,10 +2,11 @@
 Working To-Do:
 
 	IMGUI integration
-		text input
 		clipboards
 		SDL layer
+		augment imgui with my types and reflection stuff
 		replace my gui code with imgui code
+		remove my gui code
 
 	movement physics
 	world interaction
@@ -118,21 +119,10 @@ Overall To-Do List:
 		keep & output statistics
 
 	UI
-		arbitrary render commands per window - different fonts, user textures
+		fix cursor change flicker
 		fonts
-			just pack the TTF and use stb_tt to asynchronously cache correctly sized fonts when they're needed. 
-				font_cache
-			Don't store font info in window - have text meshes hold font name/size/style
-		widgets
-			lists
-			text wrapping/auto-size
-			horizontal scrolling
-			dividers
-			text input
-			image widgets
-			texture arrays
-			lots of other input types (float, text, check-box, key, etc.)
-		Debug Console
+			change asset system to cache TTF files
+		Debug Console / log stuff
 			swap between verbosity levels
 			tooltip call stack / file:line
 			commands (Lua API?)

@@ -16,8 +16,8 @@ void exile::init() { PROF
 		camera_evt = controls.add_state(FPTR(camera_evt_handle), this);
 		ui_evt = controls.add_state(FPTR(ui_evt_handle), this);
 
-		controls.add_transition(camera_evt, ui_evt, FPTR(camera_to_ui), this);
-		controls.add_transition(ui_evt, camera_evt, FPTR(ui_to_camera), this);
+		controls.add_transition(camera_evt, ui_evt, FPTR(camera_to_ui), &w.p);
+		controls.add_transition(ui_evt, camera_evt, FPTR(ui_to_camera), &w.p);
 		
 		controls.set_state(camera_evt);
 		eng->platform->capture_mouse(&eng->window);
@@ -65,12 +65,18 @@ CALLBACK void camera_to_ui(void* param) { PROF
 
 	eng->dbg.show_ui = true;
 	eng->platform->release_mouse(&eng->window);
+
+	player* p = (player*)param;
+	p->enable = false;
 }
 
 CALLBACK void ui_to_camera(void* param) { PROF
 
 	eng->dbg.show_ui = false;
 	eng->platform->capture_mouse(&eng->window);
+
+	player* p = (player*)param;
+	p->enable = true;
 }
 
 CALLBACK bool camera_evt_handle(void* param, platform_event evt) { PROF

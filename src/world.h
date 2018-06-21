@@ -110,6 +110,8 @@ struct player {
 	v3  velocity;
 	u64 last = 0;
 
+	bool enable = true;
+
 	void init();
 	void update(u64 now);
 };

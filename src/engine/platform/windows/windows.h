@@ -19,6 +19,7 @@
 typedef unsigned long DWORD;
 typedef int WINBOOL;
 typedef WINBOOL BOOL;
+typedef BOOL* LPBOOL;
 typedef unsigned char BYTE;
 typedef unsigned short WORD;
 typedef float FLOAT;
@@ -34,6 +35,14 @@ typedef unsigned long long ULONGLONG;
 /* ?????????? This is what it needs to be...but this isn't how it is in the default headers */
 typedef ULONGLONG WPARAM;
 typedef LONGLONG LPARAM;
+
+typedef DWORD* PDWORD;
+typedef DWORD* LPDWORD;
+typedef char* LPSTR;
+typedef const char* LPCSTR;
+typedef const wchar_t* LPCWCH;
+typedef DWORD LCID;
+typedef void* LPVOID;
 
 typedef LONG LRESULT;
 typedef LONG HRESULT;
@@ -861,7 +870,20 @@ DLL_IMPORT BOOL     WINAPI MoveWindow(HWND hWnd, int X, int Y, int nWidth, int n
 #define PM_NOREMOVE 0
 #define PM_REMOVE   1
 
+#define CP_ACP                    0           // default to ANSI code page
+#define CP_OEMCP                  1           // default to OEM  code page
+#define CP_MACCP                  2           // default to MAC  code page
+#define CP_THREAD_ACP             3           // current thread's ANSI code page
+#define CP_SYMBOL                 42          // SYMBOL translations
+#define CP_UTF7                   65000       // UTF-7 translation
+#define CP_UTF8                   65001       // UTF-8 translation
+
+#define WC_COMPOSITECHECK         0x00000200  // convert composite to precomposed
+#define WC_ERR_INVALID_CHARS      0x00000080  // error for invalid chars
+#define WC_NO_BEST_FIT_CHARS      0x00000400  // do not use best fit chars
+
 DLL_IMPORT BOOL    WINAPI TranslateMessage(MSG const *lpMsg);
+DLL_IMPORT int 	   WINAPI WideCharToMultiByte(UINT CodePage, DWORD dwFlags, LPCWCH lpWideCharStr, int cchWideChar, LPSTR lpMultiByteStr, int cbMultiByte, LPCSTR lpDefaultChar, LPBOOL lpUsedDefaultChar);
 
 typedef  enum
 {
@@ -961,13 +983,6 @@ DLL_IMPORT BOOL WINAPI DestroyWindow(HWND hWnd);
 #define CS_BYTEALIGNCLIENT  0x1000
 #define CS_BYTEALIGNWINDOW  0x2000
 #define CS_GLOBALCLASS      0x4000
-
-typedef DWORD* PDWORD;
-typedef DWORD* LPDWORD;
-typedef char* LPSTR;
-typedef const char* LPCSTR;
-typedef DWORD LCID;
-typedef void* LPVOID;
 
 typedef struct _LIST_ENTRY {
    struct _LIST_ENTRY *Blink;
