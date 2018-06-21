@@ -29,7 +29,6 @@ imgui_manager imgui_manager::make(platform_window* window, allocator* a) { PROF
 	io.BackendFlags |= ImGuiBackendFlags_HasMouseCursors;
 	io.BackendFlags |= ImGuiBackendFlags_HasSetMousePos;
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-	io.MouseDrawCursor = true;
 
 	io.KeyMap[ImGuiKey_Tab]        = (i32)platform_keycode::tab;
 	io.KeyMap[ImGuiKey_LeftArrow]  = (i32)platform_keycode::left;
@@ -193,10 +192,11 @@ void imgui_manager::begin_frame(platform_window* window) { PROF
 	mouse[0] = mouse[1] = mouse[2] = false;
 
 	if(global_api->window_focused(window)) {
-
 		i32 mx, my;
 		CHECKED(get_cursor_pos, window, &mx, &my);
 		io.MousePos = ImVec2((f32)mx, (f32)my);
+	} else {
+		io.MousePos = ImVec2(-FLT_MAX, -FLT_MAX);
 	}
 
 	global_api->set_cursor(cursor_values[ImGui::GetMouseCursor()]);
@@ -217,7 +217,6 @@ void imgui_manager::end_frame() { PROF
     i32 fb_height = (i32)(io.DisplaySize.y * io.DisplayFramebufferScale.y);
     if (fb_width == 0 || fb_height == 0)
         return;
-    draw_data->ScaleClipRects(io.DisplayFramebufferScale);
 
 	glEnable(gl_capability::blend);
 	glBlendEquation(gl_blend_mode::add);
@@ -228,7 +227,7 @@ void imgui_manager::end_frame() { PROF
 	glPolygonMode(gl_poly::front_and_back, gl_poly_mode::fill);
 
 	glViewport(0, 0, (GLsizei)fb_width, (GLsizei)fb_height);
-	m4 mat = ortho(0, (f32)io.DisplaySize.x, (f32)io.DisplaySize.y, 0, -1, 1);
+	m4 mat = ortho(0, (f32)fb_width, (f32)fb_height, 0, -1, 1);
 
 	glUseProgram(gl_info.program);
 	glUniform1i(gl_info.tex_loc, 0);
@@ -253,7 +252,7 @@ void imgui_manager::end_frame() { PROF
 				pcmd->UserCallback(cmd_list, pcmd);
 			} else {
 				glBindTexture(gl_tex_target::_2D, (GLuint)(u64)pcmd->TextureId);
-				glScissor((i32)pcmd->ClipRect.x, (i32)(io.DisplaySize.y - pcmd->ClipRect.w), (i32)(pcmd->ClipRect.z - pcmd->ClipRect.x), (i32)(pcmd->ClipRect.w - pcmd->ClipRect.y));
+				glScissor((i32)pcmd->ClipRect.x, (i32)(fb_height - pcmd->ClipRect.w), (i32)(pcmd->ClipRect.z - pcmd->ClipRect.x), (i32)(pcmd->ClipRect.w - pcmd->ClipRect.y));
 				glDrawElements(gl_draw_mode::triangles, (GLsizei)pcmd->ElemCount, sizeof(ImDrawIdx) == 2 ? gl_index_type::unsigned_short : gl_index_type::unsigned_int, idx_buffer_offset);
 			}
 
