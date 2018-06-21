@@ -31,6 +31,9 @@ void evt_manager::run_events(engine* state) { PROF
 		// Built-in event handling
 		{
 			state->imgui.process_event(evt);
+			if(ImGui::GetIO().WantCaptureMouse && evt.type == platform_event_type::mouse) continue;
+			if(ImGui::GetIO().WantCaptureKeyboard && evt.type == platform_event_type::key) continue;
+			if(ImGui::GetIO().WantTextInput && evt.type == platform_event_type::rune) continue;
 
 			if(evt.type == platform_event_type::window && evt.window.op == platform_windowop::close) {
 				state->running = false;

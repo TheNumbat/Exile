@@ -2,7 +2,6 @@
 Working To-Do:
 
 	IMGUI integration
-		clipboards
 		SDL layer
 		augment imgui with my types and reflection stuff
 		replace my gui code with imgui code

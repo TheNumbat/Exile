@@ -96,7 +96,8 @@ i32 main(i32 argc, char** argv) {
 	(*shut_down)(game_state);
 
 	api.free_library(&game_dll);
-	
+	platform_shutdown();
+
 	free_string(exe_folder, api.heap_free);
 	free_string(dll_path, api.heap_free);
 	free_string(temp_dll_path, api.heap_free);

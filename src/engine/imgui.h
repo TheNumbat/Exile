@@ -25,6 +25,10 @@ struct imgui_manager {
 	platform_cursor cursor_values[ImGuiMouseCursor_COUNT] = {platform_cursor::pointer};
 	platform_cursor current_cursor = platform_cursor::pointer;
 
+#ifndef RELEASE
+	string text;
+#endif
+
 	static imgui_manager make(platform_window* window, allocator* a);
 	void destroy(); 
 
@@ -33,6 +37,8 @@ struct imgui_manager {
 
 	void begin_frame(platform_window* window);
 	void end_frame();
+
+	void demo_window();
 };
 
 void* imgui_alloc(u64 size, void* data);

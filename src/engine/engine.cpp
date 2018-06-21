@@ -86,7 +86,8 @@ EXPORT bool main_loop(engine* state) {
 		
 	state->gui.begin_frame();
 	state->imgui.begin_frame(&state->window);
-		
+	state->imgui.demo_window();
+
 	run_game(state->game_state);
 
 	state->dbg.UI();

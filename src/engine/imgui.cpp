@@ -1,4 +1,22 @@
 
+namespace ImGui {
+
+	bool InputText(string label, string buf, ImGuiInputTextFlags flags = 0, ImGuiTextEditCallback callback = null, void* user_data = null) {
+		return InputText(label.c_str, buf.c_str, buf.cap, flags, callback, user_data);
+	}
+};
+
+void imgui_manager::demo_window() { PROF
+#ifndef RELEASE
+
+	ImGui::SetNextWindowSize(ImVec2(300,500), ImGuiCond_FirstUseEver);
+	ImGui::Begin("Demo");
+	ImGui::InputText("text: "_, text);
+	ImGui::End();
+
+#endif
+}
+
 void* imgui_alloc(u64 size, void* data) { PROF
 
 	allocator* a = (allocator*)data;
@@ -13,6 +31,16 @@ void imgui_free(void* mem, void* data) { PROF
 	}
 }
 
+const char* imgui_get_clipboard(void* data) { PROF
+
+	return global_api->get_clipboard().c_str;
+}
+
+void imgui_set_clipboard(void* data, const char* text_utf8) { PROF
+
+	global_api->set_clipboard(string::literal(text_utf8));
+}
+
 imgui_manager imgui_manager::make(platform_window* window, allocator* a) { PROF
 
 	imgui_manager ret;
@@ -21,6 +49,10 @@ imgui_manager imgui_manager::make(platform_window* window, allocator* a) { PROF
 	ret.alloc = a;
 	ret.perf_freq = global_api->get_perfcount_freq();
 
+#ifndef RELEASE
+	ret.text = string::make(256, a);
+#endif
+
 	ImGui::SetAllocatorFunctions(imgui_alloc, imgui_free, a);
 	
 	ret.context = ImGui::CreateContext();
@@ -28,7 +60,6 @@ imgui_manager imgui_manager::make(platform_window* window, allocator* a) { PROF
 
 	io.BackendFlags |= ImGuiBackendFlags_HasMouseCursors;
 	io.BackendFlags |= ImGuiBackendFlags_HasSetMousePos;
-	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 
 	io.KeyMap[ImGuiKey_Tab]        = (i32)platform_keycode::tab;
 	io.KeyMap[ImGuiKey_LeftArrow]  = (i32)platform_keycode::left;
@@ -59,7 +90,9 @@ imgui_manager imgui_manager::make(platform_window* window, allocator* a) { PROF
 	ret.cursor_values[(i32)ImGuiMouseCursor_ResizeNESW] = platform_cursor::hand;
 	ret.cursor_values[(i32)ImGuiMouseCursor_ResizeNWSE] = platform_cursor::hand;
 
-	// TODO(max): non-windows clipboard handling
+    io.SetClipboardTextFn = imgui_set_clipboard;
+    io.GetClipboardTextFn = imgui_get_clipboard;
+    io.ClipboardUserData = null;
 
 	ret.gl_info.program = glCreateProgram();
 	ret.gl_info.vertex = glCreateShader(gl_shader_type::vertex);
@@ -72,10 +105,10 @@ imgui_manager imgui_manager::make(platform_window* window, allocator* a) { PROF
 	glAttachShader(ret.gl_info.program, ret.gl_info.fragment);
 	glLinkProgram(ret.gl_info.program);
 
-	ret.gl_info.tex_loc = glGetUniformLocation(ret.gl_info.program, "Texture");
-	ret.gl_info.mat_loc = glGetUniformLocation(ret.gl_info.program, "ProjMtx");
-	ret.gl_info.pos_loc = glGetAttribLocation(ret.gl_info.program, "Position");
-	ret.gl_info.uv_loc = glGetAttribLocation(ret.gl_info.program, "UV");
+	ret.gl_info.tex_loc   = glGetUniformLocation(ret.gl_info.program, "Texture");
+	ret.gl_info.mat_loc   = glGetUniformLocation(ret.gl_info.program, "ProjMtx");
+	ret.gl_info.pos_loc   = glGetAttribLocation(ret.gl_info.program, "Position");
+	ret.gl_info.uv_loc    = glGetAttribLocation(ret.gl_info.program, "UV");
 	ret.gl_info.color_loc = glGetAttribLocation(ret.gl_info.program, "Color");
 
 	glGenVertexArrays(1, &ret.gl_info.vao);
@@ -115,6 +148,10 @@ imgui_manager imgui_manager::make(platform_window* window, allocator* a) { PROF
 }
 
 void imgui_manager::destroy() { PROF
+
+#ifndef RELEASE
+	text.destroy(alloc);
+#endif
 
 	glDeleteBuffers(1, &gl_info.vbo);
 	glDeleteBuffers(1, &gl_info.ebo);
@@ -209,8 +246,6 @@ void imgui_manager::begin_frame(platform_window* window) { PROF
 	global_api->set_cursor(cursor_values[ImGui::GetMouseCursor()]);
 
 	ImGui::NewFrame();
-
-	ImGui::ShowDemoWindow();
 }
 
 void imgui_manager::end_frame() { PROF

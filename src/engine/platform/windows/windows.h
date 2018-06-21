@@ -39,8 +39,9 @@ typedef LONGLONG LPARAM;
 typedef DWORD* PDWORD;
 typedef DWORD* LPDWORD;
 typedef char* LPSTR;
+typedef wchar_t* LPWSTR;
 typedef const char* LPCSTR;
-typedef const wchar_t* LPCWCH;
+typedef const wchar_t* LPCWSTR;
 typedef DWORD LCID;
 typedef void* LPVOID;
 
@@ -882,11 +883,11 @@ DLL_IMPORT BOOL     WINAPI MoveWindow(HWND hWnd, int X, int Y, int nWidth, int n
 #define WC_ERR_INVALID_CHARS      0x00000080  // error for invalid chars
 #define WC_NO_BEST_FIT_CHARS      0x00000400  // do not use best fit chars
 
-DLL_IMPORT BOOL    WINAPI TranslateMessage(MSG const *lpMsg);
-DLL_IMPORT int 	   WINAPI WideCharToMultiByte(UINT CodePage, DWORD dwFlags, LPCWCH lpWideCharStr, int cchWideChar, LPSTR lpMultiByteStr, int cbMultiByte, LPCSTR lpDefaultChar, LPBOOL lpUsedDefaultChar);
+DLL_IMPORT BOOL WINAPI TranslateMessage(MSG const *lpMsg);
+DLL_IMPORT int 	WINAPI WideCharToMultiByte(UINT CodePage, DWORD dwFlags, LPWSTR lpWideCharStr, int cchWideChar, LPSTR lpMultiByteStr, int cbMultiByte, LPCSTR lpDefaultChar, LPBOOL lpUsedDefaultChar);
+DLL_IMPORT int  WINAPI MultiByteToWideChar(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr, int cbMultiByte, LPWSTR lpWideCharStr, int cchWideChar);
 
-typedef  enum
-{
+typedef enum {
 	DIB_RGB_COLORS  = 0x00,
 	DIB_PAL_COLORS  = 0x01,
 	DIB_PAL_INDICES = 0x02

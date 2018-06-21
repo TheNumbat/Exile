@@ -293,6 +293,9 @@ struct platform_api {
 	platform_error (*get_window_drawable)(platform_window* window, i32* w, i32* h);
 	platform_error (*create_window)(platform_window* window, string title, u32 width, u32 height);
 	
+	string 		   (*get_clipboard)();
+	void 		   (*set_clipboard)(string text);
+
 	bool 		   (*cursor_shown)();
 	void 		   (*show_cursor)(bool show);
 	void 		   (*set_cursor)(platform_cursor c);
@@ -362,8 +365,10 @@ struct platform_api {
 	string 		   (*make_timef)(string fmt);
 };
 
+// NOTE(max): for "main"
 platform_api platform_build_api();
 void platform_test_api();
+void platform_shutdown();
 
 #include "gl.h"
 
