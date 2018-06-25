@@ -1,4 +1,12 @@
 
+string::operator const char*() {
+	return c_str;
+}
+
+string::operator char*() {
+	return c_str;
+}
+
 string operator "" _(const char* str, size_t s) {
 	string ret;
 	ret.c_str = (char*)str;
@@ -752,31 +760,8 @@ u32 string::write_enum(u32 idx, void* val, _type_info* info, bool size) { PROF
 	if(!base) LOG_ERR_F("Enum % with unknown base type!", info->name);
 
 	i64 value = int_as_i64(val, base);
-	string name;
-
-	// binary search
-	u32 low = 0, high = info->_enum.member_count;
-	for(;;) {
-
-		u32 search = low + ((high - low) / 2);
-
-		i64 mem = info->_enum.member_values[search];
-
-		if(value == mem) {
-			name = info->_enum.member_names[search];
-			break;
-		}
-
-		if(mem < value) {
-			low = search + 1;
-		} else {
-			high = search;
-		}
-
-		if(low == high) {
-			break;
-		}
-	}
+	
+	string name = enum_to_string(info, value);
 
 	idx = write(idx, info->name, size);
 	idx = write(idx, "::"_, size);

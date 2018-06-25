@@ -78,9 +78,13 @@ enum class platform_event_type : u8 {
 	async
 };
 
+#ifndef RENAME
+#define RENAME(name)
+#endif
+
 enum class platform_keycode : u8 {
 	none = 0,
-	_0,
+	_0, 
 	_1,
 	_2,
 	_3,

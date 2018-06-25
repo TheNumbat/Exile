@@ -51,7 +51,6 @@ struct Type_enum_info {
 };
 struct Type_string_info {};
 
-// TODO(max): macro/func to stringify enum value
 // TODO(max): reduce memory footprint; Type_enum_info takes up way too much space
 
 struct _type_info {
@@ -112,6 +111,42 @@ struct _get_type_info<T*> {
 		return type_table.insert(ptr_t.hash, ptr_t, false);
 	}
 };
+
+template<typename E>
+string enum_to_string(E val) { PROF
+
+	return enum_to_string(TYPEINFO(E), (i64)val);
+}
+
+string enum_to_string(_type_info* info, i64 val) { PROF
+
+	string name;
+
+	u32 low = 0, high = info->_enum.member_count;
+	for(;;) {
+
+		u32 search = low + ((high - low) / 2);
+
+		i64 mem = info->_enum.member_values[search];
+
+		if(val == mem) {
+			name = info->_enum.member_names[search];
+			break;
+		}
+
+		if(mem < val) {
+			low = search + 1;
+		} else {
+			high = search;
+		}
+
+		if(low == high) {
+			break;
+		}
+	}
+
+	return name;
+}
 
 void make_meta_info();
 void make_type_table(allocator* alloc) { PROF

@@ -4,17 +4,68 @@ namespace ImGui {
 	bool InputText(string label, string buf, ImGuiInputTextFlags flags = 0, ImGuiTextEditCallback callback = null, void* user_data = null) {
 		return InputText(label.c_str, buf.c_str, buf.cap, flags, callback, user_data);
 	}
+
+	void Text(string text) {
+		return TextUnformatted(text.c_str);
+	}
+
+	template<typename E>
+	void EnumCombo(string label, E* val, ImGuiComboFlags flags = 0) {
+
+		_type_info* info = TYPEINFO(E);
+
+		if(BeginCombo(label, enum_to_string(*val), flags)) {
+			for(u32 i = 0; i < info->_enum.member_count; i++) {
+				
+				bool selected = (i64)*val == info->_enum.member_values[i];
+				if(Selectable(info->_enum.member_names[i], selected)) {
+					*val = (E)info->_enum.member_values[i];
+				}
+				if(selected) {
+					SetItemDefaultFocus();
+				}
+			}
+			EndCombo();
+		}
+	}
+
+	template<typename V>
+	void MapCombo(string label, map<string,V> options, V* val, ImGuiComboFlags flags = 0) {
+
+		string preview;
+		FORMAP(it, options) {
+			if(it->value == *val) {
+				preview = it->key;
+			}
+		}
+
+		if(BeginCombo(label, preview, flags)) {
+			
+			FORMAP(it, options) {
+				bool selected = it->value == *val;
+				if(Selectable(it->key, selected)) {
+					*val = it->value;
+				}
+				if(selected) {
+					SetItemDefaultFocus();
+				}
+			}
+			EndCombo();
+		}
+	}
 };
 
 void imgui_manager::demo_window() { PROF
-#ifndef RELEASE
 
 	ImGui::SetNextWindowSize(ImVec2(300,500), ImGuiCond_FirstUseEver);
-	ImGui::Begin("Demo");
-	ImGui::InputText("text: "_, text);
-	ImGui::End();
+	ImGui::Begin("Demo"_);
+	ImGui::Text("Text");
+	ImGui::InputText("<- input"_, text);
+	
+	static platform_keycode test;
+	ImGui::EnumCombo("key: "_, &test);
 
-#endif
+	ImGui::End();
 }
 
 void* imgui_alloc(u64 size, void* data) { PROF
