@@ -32,7 +32,7 @@ void platform_shutdown() {
 
 platform_api platform_build_api() {
 
-	platform_api ret;
+	platform_api ret = {};
 
 	ret.get_perfcount			= &win32_get_perfcount;
 	ret.get_perfcount_freq		= &win32_get_perfcount_freq;
@@ -152,7 +152,7 @@ void win32_set_clipboard(string text) {
 }
 
 bool win32_cursor_shown() {
-
+	
 	CURSORINFO info = {};
 	info.cbSize = sizeof(CURSORINFO);
 

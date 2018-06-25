@@ -362,7 +362,6 @@ struct platform_api {
 	platform_error (*write_stdout)(void* mem, u32 len);	
 	
 	string 		   (*time_string)();
-	string 		   (*make_timef)(string fmt);
 };
 
 // NOTE(max): for "main"

@@ -13,7 +13,10 @@ platform_error sdl_destroy_window(platform_window* window);
 platform_error sdl_get_window_size(platform_window* window, i32* w, i32* h);
 platform_error sdl_get_window_drawable(platform_window* window, i32* w, i32* h);
 platform_error sdl_create_window(platform_window* window, string title, u32 width, u32 height);
-	
+
+string 		   sdl_get_clipboard();
+void 		   sdl_set_clipboard(string text);
+
 bool 		   sdl_cursor_shown();
 void 		   sdl_show_cursor(bool show);
 void 		   sdl_set_cursor(platform_cursor c);
@@ -80,5 +83,4 @@ platform_error sdl_write_stdout_str(string str);
 platform_error sdl_write_stdout(void* mem, u32 len);	
 	
 string 		   sdl_time_string();
-string 		   sdl_make_timef(string fmt);
 

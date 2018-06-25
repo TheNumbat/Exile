@@ -30,6 +30,11 @@ void* global_enqueue_param = null;
 
 i32 saved_mouse_x = 0, saved_mouse_y = 0;
 
+void* sdl_heap_alloc_net(u64 bytes);
+void sdl_heap_free_net(void* mem);
+
+void platform_shutdown() {}
+
 void platform_test_api() {
 
 #define CHECK_ERR if(!err.good) {printf("ERROR: %s", err.error_message.c_str); exit(1);}
@@ -69,7 +74,7 @@ void platform_test_api() {
 
 platform_api platform_build_api() {
 
-	platform_api ret;
+	platform_api ret = {};
 
 	ret.get_perfcount			= &sdl_get_perfcount;
 	ret.get_perfcount_freq		= &sdl_get_perfcount_freq;
@@ -125,8 +130,79 @@ platform_api platform_build_api() {
 	ret.atomic_exchange 		= &sdl_atomic_exchange;
 	ret.window_focused 			= &sdl_window_focused;
 	ret.get_phys_cpus			= &sdl_get_phys_cpus;
+	ret.get_window_drawable		= &sdl_get_window_drawable;
+	ret.get_clipboard			= &sdl_get_clipboard;
+	ret.set_clipboard			= &sdl_set_clipboard;
+	ret.cursor_shown			= &sdl_cursor_shown;
+	ret.show_cursor				= &sdl_show_cursor;
+	ret.get_cursor_pos			= &sdl_get_cursor_pos;
+	ret.mousedown				= &sdl_mousedown;
+	ret.get_scancode			= &sdl_get_scancode;
 
 	return ret;
+}
+
+platform_error sdl_get_window_drawable(platform_window* window, i32* w, i32* h) {
+
+	platform_error ret;
+
+	SDL_GL_GetDrawableSize(window->window, w, h);
+
+	return ret;
+}
+
+string sdl_get_clipboard() {
+
+	return string_from_c_str(SDL_GetClipboardText());
+}
+
+void sdl_set_clipboard(string text) {
+
+	SDL_SetClipboardText(text.c_str);
+}
+
+bool sdl_cursor_shown() {
+
+	return SDL_ShowCursor(SDL_QUERY) == SDL_ENABLE;
+}
+
+void sdl_show_cursor(bool show) {
+
+	SDL_ShowCursor(show);
+}
+
+platform_error sdl_get_cursor_pos(platform_window* win, i32* x, i32* y) {
+
+	platform_error ret;
+
+	SDL_GetMouseState(x, y);
+
+	return ret;
+}
+
+bool sdl_mousedown(platform_mouseflag button) {
+
+	u32 mask = SDL_GetMouseState(null, null);
+
+	switch(button) {
+	case platform_mouseflag::lclick: {
+		return (mask & SDL_BUTTON_LMASK) != 0;
+	} break;
+	case platform_mouseflag::rclick: {
+		return (mask & SDL_BUTTON_RMASK) != 0;
+	} break;
+	case platform_mouseflag::mclick: {
+		return (mask & SDL_BUTTON_MMASK) != 0;
+	} break;
+	case platform_mouseflag::x1click: {
+		return (mask & SDL_BUTTON_X1MASK) != 0;
+	} break;
+	case platform_mouseflag::x2click: {
+		return (mask & SDL_BUTTON_X2MASK) != 0;
+	} break;
+	}
+
+	return false;
 }
 
 i32 sdl_get_phys_cpus() {
@@ -195,32 +271,32 @@ bool sdl_is_debugging() {
 	return false;
 }
 
-void sdl_set_cursor(cursors c) {
+void sdl_set_cursor(platform_cursor c) {
 
 	SDL_Cursor* cursor = null;
 
 	switch(c) {
-	case cursors::pointer: {
+	case platform_cursor::pointer: {
 		cursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_ARROW);
 		break;
 	}
-	case cursors::crosshair: {
+	case platform_cursor::crosshair: {
 		cursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_CROSSHAIR);
 		break;
 	}
-	case cursors::hand: {
+	case platform_cursor::hand: {
 		cursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_HAND);
 		break;
 	}
-	case cursors::help: {
+	case platform_cursor::help: {
 		cursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_WAITARROW);
 		break;
 	}
-	case cursors::I: {
+	case platform_cursor::I: {
 		cursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_IBEAM);
 		break;
 	}
-	case cursors::hourglass: {
+	case platform_cursor::hourglass: {
 		cursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_WAIT);
 		break;
 	}
@@ -281,6 +357,8 @@ platform_error sdl_create_window(platform_window* window, string title, u32 widt
 
 	// TODO(max): vsync/fullscreen/AA/etc settings
 	SDL_GL_SetSwapInterval(0);
+
+	SDL_StartTextInput();
 
 	return ret;
 }
@@ -544,6 +622,26 @@ platform_keycode translate_key_code(SDL_Keycode key) {
 	}
 }
 
+i32 sdl_get_scancode(platform_keycode code) {
+
+	return SDL_GetScancodeFromKey(translate_key_code(code));
+}
+
+i32 sdl_utf8_len(u8 c) {
+
+    c = (u8)(0xff & c);
+    if (c < 0x80)
+        return 1;
+    else if ((c >> 5) ==0x6)
+        return 2;
+    else if ((c >> 4) == 0xe)
+        return 3;
+    else if ((c >> 3) == 0x1e)
+        return 4;
+    else
+        return 0;
+}
+
 void sdl_pump_events(platform_window* window) {
 
 	SDL_Event evt;
@@ -597,6 +695,21 @@ void sdl_pump_events(platform_window* window) {
 			} break;
 			}			
 		} break;
+		case SDL_TEXTINPUT: {
+			out.type = platform_event_type::rune;
+
+			for(i32 i = 0; i < 32 && evt.text.text[i];) {
+
+				i32 len = sdl_utf8_len(evt.text.text[i]);
+
+				for(i32 j = 0; j < len; j++) {
+					out.rune.rune_utf8[j] = evt.text.text[i];
+				}
+
+				i += len;
+				global_enqueue(global_enqueue_param, out);
+			}
+		} return;
 		case SDL_KEYUP:		
 		case SDL_KEYDOWN: {
 			out.type = platform_event_type::key;

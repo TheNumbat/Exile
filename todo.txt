@@ -2,10 +2,10 @@
 Working To-Do:
 
 	IMGUI integration
-		SDL layer
 		augment imgui with my types and reflection stuff
 		replace my gui code with imgui code
 		remove my gui code
+		fix the I cursor flashing
 
 	movement physics
 	world interaction

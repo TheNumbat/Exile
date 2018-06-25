@@ -83,5 +83,4 @@ platform_error win32_write_stdout_str(string str);
 platform_error win32_write_stdout(void* mem, u32 len);	
 	
 string 		   win32_time_string();
-string 		   win32_make_timef(string fmt);
 
