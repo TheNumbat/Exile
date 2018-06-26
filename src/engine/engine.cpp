@@ -53,12 +53,6 @@ EXPORT engine* start_up(platform_api* api) {
 	state->ogl_a = MAKE_PLATFORM_ALLOCATOR("ogl");
 	state->ogl = ogl_manager::make(&state->window, &state->ogl_a);
 
-	LOG_INFO("Setting up GUI...");
-	state->gui_a = MAKE_PLATFORM_ALLOCATOR("gui");
-	state->gui = gui_manager::make(&state->gui_a, &state->window);
-	state->gui.add_font(&state->ogl, "guimono"_, &state->default_store, true);
-	state->gui.register_events(&state->evt);
-
 	LOG_INFO("Setting up IMGUI...");
 	state->imgui_a = MAKE_PLATFORM_ALLOCATOR("imgui");
 	state->imgui = imgui_manager::make(&state->window, &state->imgui_a);
@@ -84,18 +78,12 @@ EXPORT bool main_loop(engine* state) {
 
 	state->evt.run_events(state); 
 		
-	state->gui.begin_frame();
 	state->imgui.begin_frame(&state->window);
-	
-#ifndef RELEASE
-	state->imgui.demo_window();
-#endif
 	
 	run_game(state->game_state);
 
-	state->dbg.UI();
+	state->dbg.UI(&state->window);
 
-	state->gui.end_frame(&state->window, &state->ogl);
 	state->imgui.end_frame();
 
 	RESET_ARENA(&this_thread_data.scratch_arena);
@@ -104,9 +92,7 @@ EXPORT bool main_loop(engine* state) {
 
 #ifndef RELEASE
 	state->ogl.try_reload_programs();
-	if(state->default_store.try_reload()) {
-		state->gui.reload_fonts(&state->ogl);
-	}
+	state->default_store.try_reload();
 #endif
 
 	END_FRAME();
@@ -124,10 +110,6 @@ EXPORT void shut_down(engine* state) {
 
 	LOG_DEBUG("Destroying asset system");
 	state->default_store.destroy();
-
-	LOG_DEBUG("Destroying GUI");
-	state->gui.unregister_events(&state->evt);
-	state->gui.destroy();
 
 	LOG_DEBUG("Destroying IMGUI");
 	state->imgui.destroy();
@@ -167,7 +149,6 @@ EXPORT void on_reload(platform_api* api, engine* state) {
 	global_log = &state->log;
 	global_dbg = &state->dbg;
 	global_func = &state->func_state;
-	state->gui.style = _gui_style();
 
 	state->func_state.reload_all();
 

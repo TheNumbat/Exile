@@ -74,7 +74,6 @@ static dbg_manager*  global_dbg = null; // global to provide profiling functiona
 #include "render_commands.h"
 #include "render.h"
 #include "events.h"
-#include "gui.h"
 
 #include <imgui/imgui.h>
 #include "imgui.h"
@@ -101,7 +100,6 @@ static dbg_manager*  global_dbg = null; // global to provide profiling functiona
 #include "asset.cpp"
 #include "threads.cpp"
 #include "engine.cpp"
-#include "gui.cpp"
 #include "imgui.cpp"
 
 #include "ds/alloc.cpp"

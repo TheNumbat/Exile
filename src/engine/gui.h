@@ -216,6 +216,7 @@ gui_font* gui_select_best_font_scale();
 
 // These functions you can call from anywhere between starting and ending a frame
 
+
 void gui_add_offset(v2 offset, gui_cursor_mode override_mode = gui_cursor_mode::none);
 void gui_set_offset(v2 offset);
 v2 	 gui_window_dim();

@@ -1,6 +1,14 @@
 
 #pragma once
 
+namespace ImGui {
+
+	bool InputText(string label, string buf, ImGuiInputTextFlags flags = 0, ImGuiTextEditCallback callback = null, void* user_data = null);
+	void Text(string text);
+	template<typename E> void EnumCombo(string label, E* val, ImGuiComboFlags flags = 0);
+	template<typename V> void MapCombo(string label, map<string,V> options, V* val, ImGuiComboFlags flags = 0);
+}
+
 struct imgui_gl_info {
 	
 	GLuint font_texture = 0;
@@ -25,10 +33,6 @@ struct imgui_manager {
 	platform_cursor cursor_values[ImGuiMouseCursor_COUNT] = {platform_cursor::pointer};
 	platform_cursor current_cursor = platform_cursor::pointer;
 
-#ifndef RELEASE
-	string text;
-#endif
-
 	static imgui_manager make(platform_window* window, allocator* a);
 	void destroy(); 
 
@@ -37,8 +41,6 @@ struct imgui_manager {
 
 	void begin_frame(platform_window* window);
 	void end_frame();
-
-	void demo_window();
 };
 
 void* imgui_alloc(u64 size, void* data);

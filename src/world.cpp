@@ -40,12 +40,15 @@ void world::destroy() { PROF
 
 void world::update(u64 now) { PROF
 
-	gui_begin("Exile"_, r2(50.0f, 50.0f, 350.0f, 200.0f));
-	gui_int_slider(string::makef("view: % "_, view_distance), &view_distance, 0, 32);
-	gui_checkbox("Wireframe "_, &wireframe);
-	gui_checkbox("Respect Cam "_, &respect_cam);
+	ImGui::Begin("Exile"_, null, ImGuiWindowFlags_AlwaysAutoResize);
 	
-	if(gui_button("Regenerate"_)) {
+	ImGui::SliderInt("view", &view_distance, 0, 32);
+
+	ImGui::Checkbox("Wireframe "_, &wireframe);
+	ImGui::SameLine();
+	ImGui::Checkbox("Respect Cam "_, &respect_cam);
+	
+	if(ImGui::Button("Regenerate"_)) {
 		
 		destroy_chunks();
 		chunks = map<chunk_pos, chunk*>::make(512, alloc);
@@ -53,7 +56,7 @@ void world::update(u64 now) { PROF
 
 	p.update(now);
 
-	gui_end();
+	ImGui::End();
 }
 
 void world::populate_local_area() { PROF
@@ -220,10 +223,10 @@ void player::update(u64 now) { PROF
 		camera.update();
 	}
 
-	gui_text(string::makef("pos: %"_, camera.pos));
-	gui_text(string::makef("vel: %"_, velocity));
-	gui_text(string::makef("look: %"_, camera.front));
-	gui_text(string::makef("chunk: %"_, chunk_pos::from_abs(camera.pos)));
+	ImGui::Text(string::makef("pos: %"_, camera.pos));
+	ImGui::Text(string::makef("vel: %"_, velocity));
+	ImGui::Text(string::makef("look: %"_, camera.front));
+	ImGui::Text(string::makef("chunk: %"_, chunk_pos::from_abs(camera.pos)));
 
 	last = now;
 }

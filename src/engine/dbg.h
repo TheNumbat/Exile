@@ -122,14 +122,12 @@ struct profile_node {
 	code_context context;
 	clock self = 0, heir = 0, begin = 0;
 	u32 calls = 0;
-	bool enabled = false;
 
 	vector<profile_node*> children;
 	CIRCULAR profile_node* parent = null; 
 };
 
 struct alloc_frame_profile {
-	bool show = false;
 	vector<dbg_msg> allocs;
 
 	static alloc_frame_profile make(allocator* alloc);
@@ -148,8 +146,6 @@ struct frame_profile {
 	pool_allocator pool;
 	u32 number = 0;
 
-	bool show_prof = true, show_allocs = true;
-
 	void setup(string name, allocator* alloc, clock time, u64 perf, u32 num);
 	void destroy();
 };
@@ -166,8 +162,6 @@ struct alloc_profile {
 	i64 current_size = 0;
 	u64 total_allocated = 0, total_freed = 0;
 	u64 num_allocs = 0, num_frees = 0, num_reallocs = 0;
-
-	bool shown = false;
 
 	platform_mutex mut;
 
@@ -200,7 +194,7 @@ enum class prof_sort_type : u8 {
 
 struct dbg_manager {
 
-	bool frame_pause = true, show_alloc_stats = false, show_ui = false;
+	bool frame_pause = true, show_ui = false;
 	platform_thread_id selected_thread;
 	f32 last_frame_time = 0.0f;
 
@@ -224,7 +218,7 @@ struct dbg_manager {
 	static dbg_manager make(allocator* alloc);
 	void destroy();
 
-	void UI();
+	void UI(platform_window* window);
 	void profile_recurse(vector<profile_node*> list);
 	void toggle_ui();
 

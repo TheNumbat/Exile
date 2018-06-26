@@ -1,7 +1,7 @@
 
 namespace ImGui {
 
-	bool InputText(string label, string buf, ImGuiInputTextFlags flags = 0, ImGuiTextEditCallback callback = null, void* user_data = null) {
+	bool InputText(string label, string buf, ImGuiInputTextFlags flags, ImGuiTextEditCallback callback, void* user_data) {
 		return InputText(label.c_str, buf.c_str, buf.cap, flags, callback, user_data);
 	}
 
@@ -10,7 +10,7 @@ namespace ImGui {
 	}
 
 	template<typename E>
-	void EnumCombo(string label, E* val, ImGuiComboFlags flags = 0) {
+	void EnumCombo(string label, E* val, ImGuiComboFlags flags) {
 
 		_type_info* info = TYPEINFO(E);
 
@@ -30,7 +30,7 @@ namespace ImGui {
 	}
 
 	template<typename V>
-	void MapCombo(string label, map<string,V> options, V* val, ImGuiComboFlags flags = 0) {
+	void MapCombo(string label, map<string,V> options, V* val, ImGuiComboFlags flags) {
 
 		string preview;
 		FORMAP(it, options) {
@@ -54,19 +54,6 @@ namespace ImGui {
 		}
 	}
 };
-
-void imgui_manager::demo_window() { PROF
-
-	ImGui::SetNextWindowSize(ImVec2(300,500), ImGuiCond_FirstUseEver);
-	ImGui::Begin("Demo"_);
-	ImGui::Text("Text");
-	ImGui::InputText("<- input"_, text);
-	
-	static platform_keycode test;
-	ImGui::EnumCombo("key: "_, &test);
-
-	ImGui::End();
-}
 
 void* imgui_alloc(u64 size, void* data) { PROF
 
@@ -108,6 +95,9 @@ imgui_manager imgui_manager::make(platform_window* window, allocator* a) { PROF
 	
 	ret.context = ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO();
+	ImGuiStyle& style = ImGui::GetStyle();
+
+	style.WindowRounding = 0.0f;
 
 	io.BackendFlags |= ImGuiBackendFlags_HasMouseCursors;
 	io.BackendFlags |= ImGuiBackendFlags_HasSetMousePos;
@@ -211,6 +201,8 @@ void imgui_manager::destroy() { PROF
 	glDeleteShader(gl_info.vertex);
 	glDeleteShader(gl_info.fragment);
 
+	glDeleteVertexArrays(1, &gl_info.vao);
+	
 	glDeleteTextures(1, &gl_info.font_texture);
 
 	ImGuiIO& io = ImGui::GetIO();

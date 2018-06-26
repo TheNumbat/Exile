@@ -100,17 +100,37 @@ void dbg_manager::profile_recurse(vector<profile_node*> list) { PROF
 	}
 
 	FORVEC(it, list) {
-		gui_push_id(__it);
+		ImGui::PushID(__it);
 
 		profile_node* node = *it;
 
-		if(gui_node(string::makef("%--*|%+8|%+10|%+2"_, 35 - gui_indent_level(), node->context.function(), node->heir, node->self, node->calls), &node->enabled)) {
-			gui_indent();
-			profile_recurse(node->children);
-			gui_unindent();
+		if(node->children.size) {
+			bool enabled = ImGui::TreeNode(node->context.c_function);
+			ImGui::NextColumn();
+			ImGui::Text("%d", node->heir);
+			ImGui::NextColumn();
+			ImGui::Text("%d", node->self);
+			ImGui::NextColumn();
+			ImGui::Text("%d", node->calls);
+			ImGui::NextColumn();
+			if(enabled) {
+				profile_recurse(node->children);
+				ImGui::TreePop();
+			}
+		} else {
+			ImGui::Indent();
+			ImGui::Text(node->context.c_function);
+			ImGui::Unindent();
+			ImGui::NextColumn();
+			ImGui::Text("%d", node->heir);
+			ImGui::NextColumn();
+			ImGui::Text("%d", node->self);
+			ImGui::NextColumn();
+			ImGui::Text("%d", node->calls);
+			ImGui::NextColumn();
 		}
 
-		gui_pop_id();
+		ImGui::PopID();
 	}
 }
 
@@ -137,39 +157,41 @@ alloc_profile dbg_manager::get_totals() { PROF
 	return ret;
 }
 
-void dbg_manager::UI() { PROF
+void dbg_manager::UI(platform_window* window) { PROF
 
 	if(!show_ui) return;
 
-	v2 dim = gui_window_dim();
+	i32 win_w, win_h;
+	global_api->get_window_size(window, &win_w, &win_h);
 
 	// NOTE(max): all the makef-ing here just comes from the scratch buffer
-
-	gui_begin("Console"_, r2(0.0f, dim.y * 0.75f, dim.x, dim.y / 4.0f), (u16)window_flags::nowininput);
+	ImGui::SetNextWindowPos({0.0f, floor((f32)win_h * 0.75f)});
+	ImGui::SetNextWindowSize({(f32)win_w, ceil((f32)win_h * 0.25f)});
+	ImGui::Begin("Console"_, null, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings);
 
 	FORQ_BEGIN(it, log_cache) {
 
 			string level = it->fmt_level();
-			gui_text(string::makef("[%-5] %"_, level, it->msg));
+			ImGui::Text(string::makef("[%-5] %"_, level, it->msg));
 	
 	} FORQ_END(it, log_cache);
 
-	gui_end();
+	ImGui::End();
 
-	gui_begin("Debug"_, r2(20.0f, 20.0f, dim.x / 1.5f, dim.y / 2.0f));
+	ImGui::SetNextWindowSize({800, 600}, ImGuiCond_Once);
+	ImGui::Begin("Debug"_, null, ImGuiWindowFlags_NoSavedSettings);
 	
-	gui_text(string::makef("FPS: %"_, 1.0f / last_frame_time));
-	gui_checkbox("Pause: "_, &frame_pause);
+	ImGui::Text(string::makef("FPS: %"_, 1.0f / last_frame_time));
+	ImGui::Checkbox("Pause"_, &frame_pause);
 
 	global_api->aquire_mutex(&alloc_map_mut);
-	if(gui_node("Allocation Stats"_, &show_alloc_stats)) {
+	if(ImGui::TreeNodeEx("Allocation Stats"_, ImGuiTreeNodeFlags_Framed)) {
 
-		gui_indent();
 		alloc_profile totals = get_totals();
-		gui_text(string::makef("Total size: %, total allocs: %, total frees: %"_, totals.current_size, totals.num_allocs, totals.num_frees));
+		ImGui::Text(string::makef("Total size: %, total allocs: %, total frees: %"_, totals.current_size, totals.num_allocs, totals.num_frees));
 
 		FORMAP(it, alloc_stats) {
-			if(gui_node(string::makef("%: size: %, allocs: %, frees: %"_, it->key.name(), it->value->current_size, it->value->num_allocs, it->value->num_frees), &it->value->shown)) {
+			if(ImGui::TreeNode(string::makef("%: size: %, allocs: %, frees: %"_, it->key.name(), it->value->current_size, it->value->num_allocs, it->value->num_frees))) {
 
 				vector<addr_info> allocs = vector<addr_info>::make(it->value->current_set.size);
 				FORMAP(a, it->value->current_set) {
@@ -178,17 +200,16 @@ void dbg_manager::UI() { PROF
 				
 				allocs.stable_sort();
 				
-				gui_indent();
 				FORVEC(a, allocs) {
-					gui_text(string::makef("% bytes @ %:%"_, a->size, a->last_loc.file(), a->last_loc.line));
+					ImGui::Text(string::makef("% bytes @ %:%"_, a->size, a->last_loc.file(), a->last_loc.line));
 				}
-				gui_unindent();
 
 				allocs.destroy();
+				ImGui::TreePop();
 			}
 		}
 
-		gui_unindent();
+		ImGui::TreePop();
 	}
 	global_api->release_mutex(&alloc_map_mut);
 
@@ -197,7 +218,7 @@ void dbg_manager::UI() { PROF
 	FORMAP(it, thread_stats) {
 		threads.insert(it->value->name, it->key);
 	}
-	gui_combo("Select Thread"_, threads, &selected_thread);
+	ImGui::MapCombo("Select Thread"_, threads, &selected_thread);
 	threads.destroy();
 
 	thread_profile* thread = *thread_stats.get(selected_thread);
@@ -205,64 +226,72 @@ void dbg_manager::UI() { PROF
 	
 	global_api->aquire_mutex(&thread->mut);
 
-	gui_push_id(thread->name);
-	gui_int_slider("Buffer Position: "_, &thread->selected_frame, 1, thread->frame_buf_size);
+	ImGui::PushID(thread->name);
+	ImGui::SliderInt("Buffer Position: "_, &thread->selected_frame, 1, thread->frame_buf_size);
 
 	if(thread->frames.len()) {
 		
 		frame_profile* frame = thread->frames.get(thread->selected_frame - 1);
 
 		f32 frame_time = (f32)(frame->perf_end - frame->perf_start) / (f32)global_api->get_perfcount_freq() * 1000.0f;
-		gui_text(string::makef("Frame: %, Time: %ms"_, frame->number, frame_time));
+		ImGui::Text(string::makef("Frame: %, Time: %ms"_, frame->number, frame_time));
 
-		gui_indent();
-		gui_push_id(frame->number);
+		ImGui::PushID(frame->number);		
 		
-		if(gui_node("Profile"_, &frame->show_prof)) {
-			gui_indent();
+		if(ImGui::TreeNodeEx("Profile"_, ImGuiTreeNodeFlags_DefaultOpen)) {
 
-			gui_enum_buttons("Sort By: "_, &prof_sort);
+			ImGui::EnumCombo("Sort By: "_, &prof_sort);
 
+			ImGui::Columns(4);
+			ImGui::SetColumnWidth(0, 300);
+			ImGui::SetColumnWidth(1, 75);
+			ImGui::SetColumnWidth(2, 75);
+			ImGui::SetColumnWidth(3, 75);
+			ImGui::Text("Function"_);
+			ImGui::NextColumn();
+			ImGui::Text("Heir"_);
+			ImGui::NextColumn();
+			ImGui::Text("Self"_);
+			ImGui::NextColumn();
+			ImGui::Text("Calls"_);
+			ImGui::NextColumn();
+			ImGui::Separator();
 			profile_recurse(frame->heads);
+			ImGui::Columns(1);
 
-			gui_unindent();
+			ImGui::TreePop();
 		}
 
-		if(gui_node("Allocations"_, &frame->show_allocs)) {
-
-			gui_indent();
+		if(ImGui::TreeNode("Allocations"_)) {
 
 			FORMAP(it, frame->allocations) {
-				if(gui_node(it->key.name(), &it->value.show)) {
-					gui_indent();
+				if(ImGui::TreeNode(it->key.name())) {
 					FORVEC(msg, it->value.allocs) {
 						switch(msg->type) {
 						case dbg_msg_type::allocate: {
-							gui_text(string::makef("% bytes @ %:%"_, msg->allocate.bytes, msg->context.file(), msg->context.line));
+							ImGui::Text(string::makef("% bytes @ %:%"_, msg->allocate.bytes, msg->context.file(), msg->context.line));
 						} break;
 						case dbg_msg_type::reallocate: {
-							gui_text(string::makef("% bytes re@ %:%"_, msg->reallocate.to_bytes, msg->context.file(), msg->context.line));
+							ImGui::Text(string::makef("% bytes re@ %:%"_, msg->reallocate.to_bytes, msg->context.file(), msg->context.line));
 						} break;
 						case dbg_msg_type::free: {
-							gui_text(string::makef("free @ %:%"_, msg->context.file(), msg->context.line));
+							ImGui::Text(string::makef("free @ %:%"_, msg->context.file(), msg->context.line));
 						} break;
 						}
 					}
-					gui_unindent();
+					ImGui::TreePop();
 				}
 			}
 
-			gui_unindent();
+			ImGui::TreePop();
 		}
 
-		gui_unindent();
-		gui_pop_id();
+		ImGui::PopID();
 	}
 
 	global_api->release_mutex(&thread->mut);
-
-	gui_pop_id();
-	gui_end();
+	ImGui::PopID();
+	ImGui::End();
 }
 
 void dbg_manager::shutdown_log(log_manager* log) { PROF

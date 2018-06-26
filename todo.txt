@@ -2,9 +2,8 @@
 Working To-Do:
 
 	IMGUI integration
-		replace my gui code with imgui code
-		remove my gui code
 		fix the I cursor flashing
+		change font assets
 
 	movement physics
 	world interaction
