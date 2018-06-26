@@ -281,11 +281,6 @@ void imgui_manager::begin_frame(platform_window* window) { PROF
 	global_api->set_cursor(window, cursor_values[ImGui::GetMouseCursor()]);
 
 	ImGui::NewFrame();
-
-	ImGui::Begin("text");
-	static char text[16];
-	ImGui::InputText("lululul", text, 16);
-	ImGui::End();
 }
 
 void imgui_manager::end_frame() { PROF
