@@ -70,9 +70,8 @@ See todo.txt for plans.
     - Event parsing
     - Context state machines
   - Interface
-    - Immediate mode controls
-    - Window formatting
-    - Reflection based components
+    - [depreciated] custom immediate mode GUI system
+    - Dear ImGui implementation and reflection add-ons
   - Log
     - Thread safe log formatting and output
     - HTML and custom output
