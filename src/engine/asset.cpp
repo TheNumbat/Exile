@@ -37,7 +37,7 @@ asset* asset_store::get(string name) { PROF
 	return a;
 }
 
-glyph_data _asset_font::get_glyph(u32 codepoint) { 
+glyph_data _asset_raster_font::get_glyph(u32 codepoint) { 
 
 #ifdef MORE_PROF
 	PROF
@@ -73,9 +73,9 @@ glyph_data asset_store::get_glyph(string font_asset_name, u32 codepoint) { PROF
 
 	asset* a = get(font_asset_name);
 
-	LOG_ASSERT(a->type == asset_type::font);
+	LOG_ASSERT(a->type == asset_type::raster_font);
 
-	return a->font.get_glyph(codepoint);
+	return a->raster_font.get_glyph(codepoint);
 }
 
 bool asset_store::try_reload() { PROF
@@ -157,37 +157,46 @@ void asset_store::load(string file) { PROF
 
 				assets.insert(a.name, a);
 
-				current_asset = (file_asset_header*)((u8*)current_asset + current_asset->next);
+			} else if(current_asset->type == asset_type::ttf_font) {
 
-			} else if(current_asset->type == asset_type::font) {
+				a.type = asset_type::ttf_font;
 
-				a.type = asset_type::font;
+				// yes this is useless
+				file_asset_ttf_font* font = (file_asset_ttf_font*)((u8*)current_asset + sizeof(file_asset_header));
 
-				file_asset_font* font = (file_asset_font*)((u8*)current_asset + sizeof(file_asset_header));
-
-				a.font.ascent   = font->ascent;
-				a.font.descent  = font->descent;
-				a.font.linegap  = font->linegap;
-				a.font.linedist = font->linedist;
-				a.font.width    = font->width;
-				a.font.height   = font->height;
-				a.font.point 	= font->point;
-
-				a.font.glyphs = array<file_glyph_data>::make_memory(font->num_glyphs, (u8*)font + sizeof(file_asset_font));
-
-				a.mem = (u8*)font + sizeof(file_asset_font) + (font->num_glyphs * sizeof(file_glyph_data));
+				a.mem = (u8*)font + sizeof(file_asset_ttf_font);
+				a.ttf_font.file_size = ((u8*)current_asset + current_asset->next) - a.mem;
 
 				assets.insert(a.name, a);
 
-				current_asset = (file_asset_header*)((u8*)current_asset + current_asset->next);				
+			} else if(current_asset->type == asset_type::raster_font) {
+
+				a.type = asset_type::raster_font;
+
+				file_asset_raster_font* font = (file_asset_raster_font*)((u8*)current_asset + sizeof(file_asset_header));
+
+				a.raster_font.ascent   = font->ascent;
+				a.raster_font.descent  = font->descent;
+				a.raster_font.linegap  = font->linegap;
+				a.raster_font.linedist = font->linedist;
+				a.raster_font.width    = font->width;
+				a.raster_font.height   = font->height;
+				a.raster_font.point    = font->point;
+
+				a.raster_font.glyphs = array<file_glyph_data>::make_memory(font->num_glyphs, (u8*)font + sizeof(file_asset_raster_font));
+
+				a.mem = (u8*)font + sizeof(file_asset_raster_font) + (font->num_glyphs * sizeof(file_glyph_data));
+
+				assets.insert(a.name, a);
 
 			} else {
 
-				LOG_ERR("Only bitmaps and fonts for now!");
+				LOG_ERR_F("Unrecognized asset type %!", current_asset->type);
 				break;
 			}
 
 			LOG_DEBUG_F("Loaded asset % of type % from store %", a.name, a.type, file);
+			current_asset = (file_asset_header*)((u8*)current_asset + current_asset->next);
 		}
 
 	} POP_ALLOC();

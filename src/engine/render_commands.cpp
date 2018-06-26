@@ -627,20 +627,20 @@ f32 mesh_2d_tex_col::push_text_line(asset* font, string text_utf8, v2 pos, f32 p
 	colorf cf = c.to_f();
 	f32 x = pos.x;
 	f32 y = pos.y;
-	f32 scale = point / font->font.point;
+	f32 scale = point / font->raster_font.point;
 	if(point == 0.0f) {
 		scale = 1.0f;
 	}
-	y += scale * font->font.linedist;
+	y += scale * font->raster_font.linedist;
 
 	u32 index = 0;
 	while(u32 codepoint = text_utf8.get_next_codepoint(&index)) {
 
 		u32 idx = vertices.size;
-		glyph_data glyph = font->font.get_glyph(codepoint);
+		glyph_data glyph = font->raster_font.get_glyph(codepoint);
 
-		f32 w = (f32)font->font.width;
-		f32 h = (f32)font->font.height;
+		f32 w = (f32)font->raster_font.width;
+		f32 h = (f32)font->raster_font.height;
 		v2 tlc (glyph.x1/w, 1.0f - glyph.y1/h);
 		v2 brc (glyph.x2/w, 1.0f - glyph.y2/h);
 		v2 trc (glyph.x2/w, 1.0f - glyph.y1/h);
@@ -665,7 +665,7 @@ f32 mesh_2d_tex_col::push_text_line(asset* font, string text_utf8, v2 pos, f32 p
 	}
 
 	dirty = true;
-	return scale * font->font.linedist;
+	return scale * font->raster_font.linedist;
 }
 
 void mesh_3d_tex::push_cube(v3 pos, f32 len) {

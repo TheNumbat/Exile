@@ -42,10 +42,6 @@ EXPORT engine* start_up(platform_api* api) {
 	state->evt = evt_manager::make(&state->evt_a);
 	state->evt.start();
 
-	LOG_INFO("Setting up default assets...");
-	state->default_store = asset_store::make(&state->basic_a);
-	state->default_store.load("assets/engine.asset"_);
-
 	LOG_INFO("Creating window...");
 	CHECKED(create_window, &state->window, "Exile"_, 1280, 720);
 
@@ -92,7 +88,6 @@ EXPORT bool main_loop(engine* state) {
 
 #ifndef RELEASE
 	state->ogl.try_reload_programs();
-	state->default_store.try_reload();
 #endif
 
 	END_FRAME();
@@ -107,9 +102,6 @@ EXPORT void shut_down(engine* state) {
 
 	LOG_DEBUG("Destroying game...");
 	shut_down_game(state->game_state);
-
-	LOG_DEBUG("Destroying asset system");
-	state->default_store.destroy();
 
 	LOG_DEBUG("Destroying IMGUI");
 	state->imgui.destroy();

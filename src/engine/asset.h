@@ -24,7 +24,8 @@
 enum class asset_type : u8 {
 	none,
 	bitmap,
-	font,
+	ttf_font,
+	raster_font,
 	// mesh?
 	// audio?
 	// shader?
@@ -45,7 +46,7 @@ struct file_glyph_data {
 	f32 yoff2     = 0;
 };
 
-struct file_asset_font {
+struct file_asset_raster_font {
 	u32 num_glyphs = 0;
 	f32 point      = 0;
 	f32 ascent     = 0;
@@ -55,6 +56,8 @@ struct file_asset_font {
 	i32 width      = 0;
 	i32 height     = 0;
 };
+
+struct file_asset_ttf_font {};
 
 struct file_asset_bitmap {
 	i32 width 	= 0;
@@ -80,7 +83,11 @@ struct _asset_bitmap {
 	i32 height = 0;
 };
 
-struct _asset_font {
+struct _asset_ttf_font {
+	u64 file_size = 0;
+};
+
+struct _asset_raster_font {
 	f32 point    = 0;
 	f32 ascent   = 0;
 	f32 descent  = 0;
@@ -100,8 +107,9 @@ struct asset {
 	asset_type type = asset_type::none;
 	u8* mem = null;
 	union {
-		_asset_bitmap 	bitmap;
-		_asset_font 	font;
+		_asset_bitmap 		bitmap;
+		_asset_raster_font  raster_font;
+		_asset_ttf_font 	ttf_font;
 	};
 	asset() {};
 };

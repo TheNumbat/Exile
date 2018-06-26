@@ -38,7 +38,12 @@ struct def_asset_image {
 	string file;
 };
 
-struct def_asset_font {
+struct def_asset_ttf_font {
+	string name;
+	string file;
+};
+
+struct def_asset_raster_font {
 	struct range {
 		u32 start, end;
 	};
@@ -54,18 +59,17 @@ struct def_asset {
 	asset_type type = asset_type::none;
 	
 	// can't union these...
-	def_asset_image image;
-	def_asset_font font;
+	def_asset_image 	  image;
+	def_asset_raster_font raster_font;
+	def_asset_ttf_font 	  ttf_font;
 
 	def_asset(const def_asset& source) {
 		type = source.type;
-		if(type == asset_type::bitmap) {
-			image = source.image;
-		} else if(type == asset_type::font) {
-			font = source.font;
-		}
+		image = source.image;
+		raster_font = source.raster_font;
+		ttf_font = source.ttf_font;
 	};
-	def_asset() : type(), image(), font() {};
+	def_asset() : type(), image(), raster_font() {};
 	~def_asset() {};
 };
 
@@ -128,9 +132,9 @@ def_file_structure build_def_file(ifstream& in) {
 			}
 			in.get();
 
-		} else if(type == "font") {
+		} else if(type == "raster_font") {
 
-			asset.type = asset_type::font;
+			asset.type = asset_type::raster_font;
 			eat_control(in);
 
 			while(in.peek() != '}') {
@@ -144,7 +148,7 @@ def_file_structure build_def_file(ifstream& in) {
 					getline(in, name, ',');
 					eat_control(in);
 					name.erase(name.find_last_not_of(" \n\r\t") + 1);
-					asset.font.name = name;
+					asset.raster_font.name = name;
 
 				} else if(field == "write_out") {
 
@@ -154,7 +158,7 @@ def_file_structure build_def_file(ifstream& in) {
 					eat_control(in);
 					write_out.erase(write_out.find_last_not_of(" \n\r\t") + 1);
 					if(write_out == "true") {
-						asset.font.write_out = true;
+						asset.raster_font.write_out = true;
 					}
 
 				} else if(field == "file") {
@@ -164,7 +168,7 @@ def_file_structure build_def_file(ifstream& in) {
 					getline(in, file, ',');
 					eat_control(in);
 					file.erase(file.find_last_not_of(" \n\r\t") + 1);
-					asset.font.file = file;
+					asset.raster_font.file = file;
 
 				} else if(field == "point") {
 
@@ -172,7 +176,7 @@ def_file_structure build_def_file(ifstream& in) {
 					eat_control(in);
 					in >> point;
 					eat_control(in);
-					asset.font.point = point;
+					asset.raster_font.point = point;
 
 				} else if(field == "width") {
 
@@ -180,7 +184,7 @@ def_file_structure build_def_file(ifstream& in) {
 					eat_control(in);
 					in >> width;
 					eat_control(in);
-					asset.font.width = width;
+					asset.raster_font.width = width;
 
 				} else if(field == "height") {
 
@@ -188,11 +192,11 @@ def_file_structure build_def_file(ifstream& in) {
 					eat_control(in);
 					in >> height;
 					eat_control(in);
-					asset.font.height = height;
+					asset.raster_font.height = height;
 
 				} else if(field == "range") {
 
-					def_asset_font::range range;
+					def_asset_raster_font::range range;
 					i32 start, end;
 					eat_control(in);
 					in >> start;
@@ -201,7 +205,37 @@ def_file_structure build_def_file(ifstream& in) {
 					eat_control(in);
 					range.start = start;
 					range.end = end;
-					asset.font.ranges.push_back(range);
+					asset.raster_font.ranges.push_back(range);
+				}
+			}
+			in.get();
+
+		} else if(type == "ttf_font") {
+
+			asset.type = asset_type::ttf_font;
+			eat_control(in);
+
+			while(in.peek() != '}') {
+				string field;
+				in >> field;
+
+				if(field == "name") {
+
+					string name;
+					eat_control(in);
+					getline(in, name, ',');
+					eat_control(in);
+					name.erase(name.find_last_not_of(" \n\r\t") + 1);
+					asset.ttf_font.name = name;
+
+				} else if(field == "file") {
+
+					string file;
+					eat_control(in);
+					getline(in, file, ',');
+					eat_control(in);
+					file.erase(file.find_last_not_of(" \n\r\t") + 1);
+					asset.ttf_font.file = file;
 				}
 			}
 			in.get();
@@ -285,14 +319,35 @@ int main(int argc, char** argv) {
 
 			stbi_image_free(bitmap);
 
-		} else if(def_asset.type == asset_type::font) {
+		} else if(def_asset.type == asset_type::ttf_font) {
 
-			asset_header.type = asset_type::font;
-			memcpy(asset_header.name, def_asset.font.name.c_str(), def_asset.font.name.size() + 1);			
+ 			asset_header.type = asset_type::ttf_font;
+			memcpy(asset_header.name, def_asset.ttf_font.name.c_str(), def_asset.ttf_font.name.size() + 1);
 
-			file_asset_font asset_font;
+			file_asset_ttf_font asset_font;
 
-			ifstream font_in(rel_path + def_asset.font.file, ios::binary | ios::ate);
+			ifstream font_in(rel_path + def_asset.ttf_font.file, ios::binary | ios::ate);
+			streamsize file_size = font_in.tellg();
+			font_in.seekg(0, ios::beg);
+
+			vector<char> data((u32)file_size);
+			font_in.read(data.data(), file_size);
+
+			asset_header.next = sizeof(file_asset_header) + sizeof(file_asset_ttf_font) + file_size;
+
+			assets_out.write((char*)&asset_header, sizeof(file_asset_header));
+			assets_out.write((char*)&asset_font, sizeof(file_asset_ttf_font));
+
+			assets_out.write((char*)data.data(), file_size);
+
+		} else if(def_asset.type == asset_type::raster_font) {
+
+			asset_header.type = asset_type::raster_font;
+			memcpy(asset_header.name, def_asset.raster_font.name.c_str(), def_asset.raster_font.name.size() + 1);			
+
+			file_asset_raster_font asset_font;
+
+			ifstream font_in(rel_path + def_asset.raster_font.file, ios::binary | ios::ate);
 			streamsize size = font_in.tellg();
 			font_in.seekg(0, ios::beg);
 
@@ -305,35 +360,35 @@ int main(int argc, char** argv) {
 			f32 scale;
 
 			stbtt_InitFont(&font_info, (u8*)data.data(), 0);
-			scale = stbtt_ScaleForPixelHeight(&font_info, (f32)def_asset.font.point);
+			scale = stbtt_ScaleForPixelHeight(&font_info, (f32)def_asset.raster_font.point);
 			stbtt_GetFontVMetrics(&font_info, &ascent, &descent, &linegap);
 
-			u32 pixel_stride =  def_asset.font.width;
-			u32 pixel_size = pixel_stride * def_asset.font.height;
+			u32 pixel_stride =  def_asset.raster_font.width;
+			u32 pixel_size = pixel_stride * def_asset.raster_font.height;
 			u8* baked_bitmap = (u8*)malloc(pixel_size);
 			memset(baked_bitmap, 0, pixel_size);
 
 			// Two pixel-padding needed for scaling (likely because of FP rounding error)
-			stbtt_PackBegin(&pack_context, baked_bitmap, def_asset.font.width, def_asset.font.height, 0, 2, nullptr);
+			stbtt_PackBegin(&pack_context, baked_bitmap, def_asset.raster_font.width, def_asset.raster_font.height, 0, 2, nullptr);
 			stbtt_PackSetOversampling(&pack_context, 1, 1);
 
 			u32 total_packedchars = 0;
 			vector<stbtt_packedchar*> packedchars;	
-			for(u32 ri = 0; ri < def_asset.font.ranges.size(); ri++) {
+			for(u32 ri = 0; ri < def_asset.raster_font.ranges.size(); ri++) {
 			
-				i32 cp_num = def_asset.font.ranges[ri].end - def_asset.font.ranges[ri].start + 1;
+				i32 cp_num = def_asset.raster_font.ranges[ri].end - def_asset.raster_font.ranges[ri].start + 1;
 
 				stbtt_packedchar* row = (stbtt_packedchar*)malloc(cp_num * sizeof(stbtt_packedchar));
 				memset(row, 0, cp_num * sizeof(stbtt_packedchar));
 				packedchars.push_back(row);
 				total_packedchars += cp_num;
 
-				stbtt_PackFontRange(&pack_context, (u8*)data.data(), 0, STBTT_POINT_SIZE((f32)def_asset.font.point), def_asset.font.ranges[ri].start, cp_num, packedchars[ri]);
+				stbtt_PackFontRange(&pack_context, (u8*)data.data(), 0, STBTT_POINT_SIZE((f32)def_asset.raster_font.point), def_asset.raster_font.ranges[ri].start, cp_num, packedchars[ri]);
 			}
 			stbtt_PackEnd(&pack_context);
 
-			if(def_asset.font.write_out) {
-				stbi_write_png((rel_path + def_asset.font.name + ".png").c_str(), def_asset.font.width, def_asset.font.height, 1, baked_bitmap, 0);
+			if(def_asset.raster_font.write_out) {
+				stbi_write_png((rel_path + def_asset.raster_font.name + ".png").c_str(), def_asset.raster_font.width, def_asset.raster_font.height, 1, baked_bitmap, 0);
 			}
 
 			asset_font.num_glyphs 	= total_packedchars;
@@ -341,14 +396,14 @@ int main(int argc, char** argv) {
 			asset_font.descent 		= descent * scale;
 			asset_font.linegap 		= linegap * scale;
 			asset_font.linedist 	= asset_font.ascent - asset_font.descent + asset_font.linegap;
-			asset_font.width		= def_asset.font.width;
-			asset_font.height		= def_asset.font.height;
-			asset_font.point 		= (f32)def_asset.font.point;
+			asset_font.width		= def_asset.raster_font.width;
+			asset_font.height		= def_asset.raster_font.height;
+			asset_font.point 		= (f32)def_asset.raster_font.point;
 
 			vector<file_glyph_data> glyph_data;
-			for(u32 ri = 0; ri < def_asset.font.ranges.size(); ri++) {
+			for(u32 ri = 0; ri < def_asset.raster_font.ranges.size(); ri++) {
 
-				def_asset_font::range& r = def_asset.font.ranges[ri];
+				def_asset_raster_font::range& r = def_asset.raster_font.ranges[ri];
 				for(u32 point = r.start; point <= r.end; point++) {
 
 					file_glyph_data glyph;
@@ -368,10 +423,10 @@ int main(int argc, char** argv) {
 			}
 			sort(glyph_data.begin(), glyph_data.end(), [](file_glyph_data& one, file_glyph_data& two) -> bool {return one.codepoint < two.codepoint;});
 
-			asset_header.next = sizeof(file_asset_header) + sizeof(file_asset_font) + sizeof(file_glyph_data) * glyph_data.size() + pixel_size;
+			asset_header.next = sizeof(file_asset_header) + sizeof(file_asset_raster_font) + sizeof(file_glyph_data) * glyph_data.size() + pixel_size;
 
 			assets_out.write((char*)&asset_header, sizeof(file_asset_header));
-			assets_out.write((char*)&asset_font, sizeof(file_asset_font));
+			assets_out.write((char*)&asset_font, sizeof(file_asset_raster_font));
 			assets_out.write((char*)glyph_data.data(), sizeof(file_glyph_data) * glyph_data.size());
 			
 			u32 out_size = pixel_size;

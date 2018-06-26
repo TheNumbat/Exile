@@ -6,7 +6,6 @@ struct engine {
 // private
 	platform_allocator basic_a;
 	func_ptr_state func_state;
-	asset_store default_store;
 
 	platform_allocator log_a, ogl_a, imgui_a, dbg_a, evt_a; // idk about this
 	

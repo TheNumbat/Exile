@@ -3,7 +3,7 @@ v2 size_text(asset* font, string text_utf8, f32 point) { PROF
 
 	v2 ret;
 
-	f32 scale = point / font->font.point;
+	f32 scale = point / font->raster_font.point;
 	if(point == 0.0f) {
 		scale = 1.0f;
 	}
@@ -11,11 +11,11 @@ v2 size_text(asset* font, string text_utf8, f32 point) { PROF
 	u32 index = 0;
 	while(u32 codepoint = text_utf8.get_next_codepoint(&index)) {
 
-		glyph_data glyph = font->font.get_glyph(codepoint);
+		glyph_data glyph = font->raster_font.get_glyph(codepoint);
 		ret.x += scale * glyph.advance;
 	}
 
-	ret.y = scale * font->font.linedist;
+	ret.y = scale * font->raster_font.linedist;
 	return ret;
 }
 
@@ -399,12 +399,12 @@ void texture::set_params() { PROF
 void texture::load_bitmap_from_font(asset* font) { PROF
 
 	LOG_DEBUG_ASSERT(font);
-	LOG_DEBUG_ASSERT(font->type == asset_type::font);
+	LOG_DEBUG_ASSERT(font->type == asset_type::raster_font);
 	LOG_DEBUG_ASSERT(type == gl_tex_target::_2D);
 
 	glBindTexture(type, handle);
 
-	glTexImage2D(gl_tex_target::_2D, 0, gl_tex_format::rgba8, font->font.width, font->font.height, 0, gl_pixel_data_format::red, gl_pixel_data_type::unsigned_byte, font->mem);
+	glTexImage2D(gl_tex_target::_2D, 0, gl_tex_format::rgba8, font->raster_font.width, font->raster_font.height, 0, gl_pixel_data_format::red, gl_pixel_data_type::unsigned_byte, font->mem);
 	gl_tex_swizzle swizzle[] = {gl_tex_swizzle::red, gl_tex_swizzle::red, gl_tex_swizzle::red, gl_tex_swizzle::red};
 	glTexParameteriv(gl_tex_target::_2D, gl_tex_param::swizzle_rgba, (GLint*)swizzle);
 
@@ -418,12 +418,12 @@ void texture::load_bitmap_from_font(asset_store* as, string name) { PROF
 	asset* a = as->get(name);
 
 	LOG_DEBUG_ASSERT(a);
-	LOG_DEBUG_ASSERT(a->type == asset_type::font);
+	LOG_DEBUG_ASSERT(a->type == asset_type::raster_font);
 	LOG_DEBUG_ASSERT(type == gl_tex_target::_2D);
 
 	glBindTexture(type, handle);
 
-	glTexImage2D(gl_tex_target::_2D, 0, gl_tex_format::rgba8, a->font.width, a->font.height, 0, gl_pixel_data_format::red, gl_pixel_data_type::unsigned_byte, a->mem);
+	glTexImage2D(gl_tex_target::_2D, 0, gl_tex_format::rgba8, a->raster_font.width, a->raster_font.height, 0, gl_pixel_data_format::red, gl_pixel_data_type::unsigned_byte, a->mem);
 	gl_tex_swizzle swizzle[] = {gl_tex_swizzle::red, gl_tex_swizzle::red, gl_tex_swizzle::red, gl_tex_swizzle::red};
 	glTexParameteriv(gl_tex_target::_2D, gl_tex_param::swizzle_rgba, (GLint*)swizzle);
 

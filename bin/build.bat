@@ -36,11 +36,6 @@ echo.
 		cl %Asset_CompilerFlags% w:\src\tools\asset_builder.cpp /link %Asset_LinkerFlags%
 	)
 
-	if not exist w:\data\assets\engine.asset (
-		echo buliding engine.asset
-		asset.exe w:\data\assets\engine.txt w:\data\assets\engine.asset
-	)
-
 	if not exist w:\data\assets\game.asset (
 		echo buliding game.asset
 		asset.exe w:\data\assets\game.txt w:\data\assets\game.asset
@@ -87,10 +82,10 @@ echo.
 echo PLATFORM 
 echo.
 (
-	rem if not exist main.exe (
+	if not exist main.exe (
 		echo compiling 
 		cl %Platform_CompilerFlags% %SDL_COMP% w:\src\engine\platform\platform_main.cpp /link %Platform_LinkerFlags% %SDL_LINK%
-	rem )
+	)
 	
 	if "%2"=="SDL" (
 		xcopy w:\deps\SDL2\lib\SDL2.dll w:\build\ /C /Y  > NUL 2> NUL

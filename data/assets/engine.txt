@@ -1,9 +1,0 @@
-font {
-	name : guimono,
-	point : 14,
-	width : 128,
-	height : 128,
-	file : mono.ttf,
-	range : 32, 126,
-}
-

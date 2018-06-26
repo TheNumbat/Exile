@@ -1,8 +1,6 @@
 
 Working To-Do:
 
-	change font asset system
-
 	movement physics
 	world interaction
 	chunk paging
