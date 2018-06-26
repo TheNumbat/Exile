@@ -87,10 +87,6 @@ imgui_manager imgui_manager::make(platform_window* window, allocator* a) { PROF
 	ret.alloc = a;
 	ret.perf_freq = global_api->get_perfcount_freq();
 
-#ifndef RELEASE
-	ret.text = string::make(256, a);
-#endif
-
 	ImGui::SetAllocatorFunctions(imgui_alloc, imgui_free, a);
 	
 	ret.context = ImGui::CreateContext();
@@ -189,10 +185,6 @@ imgui_manager imgui_manager::make(platform_window* window, allocator* a) { PROF
 }
 
 void imgui_manager::destroy() { PROF
-
-#ifndef RELEASE
-	text.destroy(alloc);
-#endif
 
 	glDeleteBuffers(1, &gl_info.vbo);
 	glDeleteBuffers(1, &gl_info.ebo);
