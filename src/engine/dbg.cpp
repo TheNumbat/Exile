@@ -162,7 +162,7 @@ void dbg_manager::UI(platform_window* window) { PROF
 	if(!show_ui) return;
 
 	i32 win_w, win_h;
-	global_api->get_window_size(window, &win_w, &win_h);
+	global_api->get_window_drawable(window, &win_w, &win_h);
 
 	// NOTE(max): all the makef-ing here just comes from the scratch buffer
 	ImGui::SetNextWindowPos({0.0f, floor((f32)win_h * 0.75f)});

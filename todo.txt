@@ -125,11 +125,6 @@ Overall To-Do List:
 			commands (Lua API?)
 		subl_remote_open for profiler & logging
 
-	fonts
-		color/format specifications in string?
-		extra kerning pairs from stb_tt
-		move font stuff into new file - sizing, etc.
-
 	asset
 		define mods as asset packs
 		auto-reload asset stores
@@ -153,14 +148,13 @@ Overall To-Do List:
 
 	platform
 		linux build system with SDL layer
-		assure LPARAM/WPARAM size based on 32/64 bit
-		Keep window updating during resize/move
 		async File IO
 		Networking - cURL? WinSock? TCP
 		Virtually allocate large block of address space on startup and use jemalloc(eg) for general allocations
 		wgl extension testing/loading
 		file change watcher/callback system - maybe? see JBlow catalogs
 		controller support?
+		Keep window updating during resize/move
 
 	OpenGl
 		Shaders
