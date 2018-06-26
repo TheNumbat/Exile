@@ -4,7 +4,7 @@ Working To-Do:
 	movement physics
 	world interaction
 	chunk paging
-	
+
 	skybox
 	directional/sun lighting
 	lights
@@ -14,16 +14,9 @@ Working To-Do:
 		rewrite metaprogram to use it
 
 Bugs:
-
 	SDL layer resets the cursor to pointer on every mouse move
 
 	allocation profiling is somewhat broken for the world system
-
-	textures get recreated? on asset store reload (and not freed?)
-		make sure textures are only created once
-		asset reload leaks memory
-		textures need to be updated on the GPU
-
 
 Everything not by me:
 	#include <stdarg.h>

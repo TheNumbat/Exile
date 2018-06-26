@@ -165,6 +165,13 @@ void shader_program::destroy() { PROF
 	glDeleteProgram(handle);
 }
 
+void ogl_manager::reload_texture_assets(asset_store* store) {
+
+	FORMAP(it, textures) {
+		it->value.reload_from_asset(store);
+	}
+}
+
 void ogl_manager::try_reload_programs() { PROF
 	FORMAP(it, commands) {
 		if(it->value.shader.refresh()) {
@@ -204,7 +211,7 @@ void ogl_manager::destroy() { PROF
 		it->value.shader.destroy();
 	}
 	FORMAP(it, textures) {
-		it->value.destroy();
+		it->value.destroy(alloc);
 	}
 
 	dbg_shader.destroy();
@@ -262,9 +269,8 @@ texture_id ogl_manager::add_texture(asset_store* as, string name, texture_wrap w
 
 texture_id ogl_manager::begin_tex_array(iv3 dim, texture_wrap wrap, bool pixelated, u32 offset) { PROF
 
-	texture t = texture::make_array(dim, wrap, pixelated);
+	texture t = texture::make_array(dim, offset, wrap, pixelated, alloc);
 	t.id = next_texture_id;
-	t.array_info.current_layer = offset;
 
 	textures.insert(next_texture_id, t);
 
@@ -277,21 +283,11 @@ texture_id ogl_manager::begin_tex_array(iv3 dim, texture_wrap wrap, bool pixelat
 void ogl_manager::push_tex_array(texture_id tex, asset_store* as, string name) { PROF
 
 	texture* t = textures.try_get(tex);
-	asset* a = as->get(name);
 
 	LOG_DEBUG_ASSERT(t);
-	LOG_DEBUG_ASSERT(a);
-	LOG_DEBUG_ASSERT(a->type == asset_type::bitmap);
 	LOG_DEBUG_ASSERT(t->type == gl_tex_target::_2D_array);
-	LOG_DEBUG_ASSERT(t->array_info.dim.x == a->bitmap.width && t->array_info.dim.y == a->bitmap.height && t->array_info.dim.z != 0);
-	LOG_DEBUG_ASSERT(t->array_info.current_layer < t->array_info.dim.z);
 
-	glBindTexture(gl_tex_target::_2D_array, t->handle);
-
-	glTexSubImage3D(gl_tex_target::_2D_array, 0, 0, 0, t->array_info.current_layer, a->bitmap.width, a->bitmap.height, 1, gl_pixel_data_format::rgba, gl_pixel_data_type::unsigned_byte, a->mem);
-	t->array_info.current_layer++;
-
-	glBindTexture(gl_tex_target::_2D_array, 0);
+	t->push_array_bitmap(as, name);
 
 	return;
 }
@@ -340,7 +336,7 @@ texture texture::make(texture_wrap wrap, bool pixelated) { PROF
 	return ret;
 }
 
-texture texture::make_array(iv3 dim, texture_wrap wrap, bool pixelated) { PROF
+texture texture::make_array(iv3 dim, u32 offset, texture_wrap wrap, bool pixelated, allocator* a) { PROF
 
 	texture ret;
 
@@ -348,6 +344,9 @@ texture texture::make_array(iv3 dim, texture_wrap wrap, bool pixelated) { PROF
 	ret.wrap = wrap;
 	ret.pixelated = pixelated;
 	ret.array_info.dim = dim;
+	ret.array_info.layer_offset = offset;
+	ret.array_info.current_layer = offset;
+	ret.array_info.asset_names = array<string>::make(dim.z, a);
 
 	glGenTextures(1, &ret.handle);
 
@@ -402,6 +401,9 @@ void texture::load_bitmap_from_font(asset* font) { PROF
 	LOG_DEBUG_ASSERT(font->type == asset_type::raster_font);
 	LOG_DEBUG_ASSERT(type == gl_tex_target::_2D);
 
+	a_name = font->name;
+	a_type = asset_type::raster_font;
+
 	glBindTexture(type, handle);
 
 	glTexImage2D(gl_tex_target::_2D, 0, gl_tex_format::rgba8, font->raster_font.width, font->raster_font.height, 0, gl_pixel_data_format::red, gl_pixel_data_type::unsigned_byte, font->mem);
@@ -416,6 +418,9 @@ void texture::load_bitmap_from_font(asset* font) { PROF
 void texture::load_bitmap_from_font(asset_store* as, string name) { PROF
 
 	asset* a = as->get(name);
+
+	a_name = name;
+	a_type = asset_type::raster_font;
 
 	LOG_DEBUG_ASSERT(a);
 	LOG_DEBUG_ASSERT(a->type == asset_type::raster_font);
@@ -435,6 +440,9 @@ void texture::load_bitmap_from_font(asset_store* as, string name) { PROF
 void texture::load_bitmap(asset_store* as, string name) { PROF
 
 	asset* a = as->get(name);
+	
+	a_name = name;
+	a_type = asset_type::bitmap;
 
 	LOG_DEBUG_ASSERT(a);
 	LOG_DEBUG_ASSERT(a->type == asset_type::bitmap);
@@ -449,9 +457,51 @@ void texture::load_bitmap(asset_store* as, string name) { PROF
 	glBindTexture(type, 0);
 }
 
-void texture::destroy() { PROF
+void texture::push_array_bitmap(asset_store* store, string name) {
+
+	asset* a = store->get(name);
+
+	LOG_DEBUG_ASSERT(a);
+	LOG_DEBUG_ASSERT(a->type == asset_type::bitmap);
+	LOG_DEBUG_ASSERT(array_info.dim.x == a->bitmap.width && array_info.dim.y == a->bitmap.height && array_info.dim.z != 0);
+	LOG_DEBUG_ASSERT(array_info.current_layer < array_info.dim.z);
+
+	glBindTexture(gl_tex_target::_2D_array, handle);
+
+	glTexSubImage3D(gl_tex_target::_2D_array, 0, 0, 0, array_info.current_layer, a->bitmap.width, a->bitmap.height, 1, gl_pixel_data_format::rgba, gl_pixel_data_type::unsigned_byte, a->mem);
+	
+	*array_info.asset_names.get(array_info.current_layer) = name;
+	array_info.current_layer++;
+
+	glBindTexture(gl_tex_target::_2D_array, 0);
+}
+
+void texture::reload_from_asset(asset_store* store) {
+
+	if(type == gl_tex_target::_2D_array) {
+
+		array_info.current_layer = array_info.layer_offset;
+		
+		FORARR(it, array_info.asset_names) {
+			if(it->c_str)
+				push_array_bitmap(store, *it);
+		}
+
+		return;
+	}
+
+	if(a_type == asset_type::bitmap) {
+		load_bitmap(store, a_name);
+	} else if(a_type == asset_type::raster_font) {
+		load_bitmap_from_font(store, a_name);
+	}
+}
+
+void texture::destroy(allocator* a) { PROF
 
 	glDeleteTextures(1, &handle);
+
+	array_info.asset_names.destroy();
 }
 
 void ogl_manager::add_command(u16 id, _FPTR* buffers, _FPTR* run, string v, string f, _FPTR* uniforms, _FPTR* compat) { PROF

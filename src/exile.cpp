@@ -29,6 +29,12 @@ void exile::update() { PROF
 	u64 now = eng->platform->get_perfcount();
 
 	w.update(now);
+
+#ifndef RELEASE 
+	if(store.try_reload()) {
+		eng->ogl.reload_texture_assets(&store);
+	}
+#endif
 }
 
 void exile::render() { PROF

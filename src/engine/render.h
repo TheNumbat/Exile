@@ -39,12 +39,17 @@ enum class texture_wrap : u8 {
 struct texture_array_info {
 	iv3 dim;
 	i32 current_layer = 0;
+	i32 layer_offset = 0;
+	array<string> asset_names;
 };
 
 struct texture {
 	texture_id id 		= 0;
 	GLuint handle 		= 0;
 	
+	string a_name;
+	asset_type a_type = asset_type::none;
+
 	gl_tex_target type 	= gl_tex_target::_2D;
 	texture_wrap wrap 	= texture_wrap::repeat;
 	bool pixelated 		= false;
@@ -52,12 +57,14 @@ struct texture {
 	texture_array_info array_info;
 
 	static texture make(texture_wrap wrap, bool pixelated);
-	static texture make_array(iv3 dim, texture_wrap wrap, bool pixelated);
-	void destroy();
+	static texture make_array(iv3 dim, u32 idx_offset, texture_wrap wrap, bool pixelated, allocator* a);
+	void destroy(allocator* a);
 
-	void load_bitmap(asset_store* as, string name);
-	void load_bitmap_from_font(asset_store* as, string name);
+	void load_bitmap(asset_store* store, string name);
+	void load_bitmap_from_font(asset_store* store, string name);
 	void load_bitmap_from_font(asset* font);
+	void push_array_bitmap(asset_store* store, string name);
+	void reload_from_asset(asset_store* store);
 
 	void set_params();
 };
@@ -99,6 +106,8 @@ struct ogl_manager {
 	void destroy();
 
 	void try_reload_programs();
+	void reload_texture_assets(asset_store* store);
+	
 	void load_global_funcs();
 	void check_leaked_handles();
 

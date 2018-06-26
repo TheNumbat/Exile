@@ -5,6 +5,7 @@ asset_store asset_store::make(allocator* a) { PROF
 	asset_store ret;
 
 	ret.alloc = a;
+	ret.assets = map<string,asset>::make(64, ret.alloc);
 
 	return ret;
 }
@@ -12,10 +13,9 @@ asset_store asset_store::make(allocator* a) { PROF
 void asset_store::destroy() { PROF
 
 	path.destroy(alloc);
+	assets.destroy();
 
 	if(store) {
-
-		assets.destroy();
 
 		PUSH_ALLOC(alloc) {
 			free(store, store_sz);
@@ -122,12 +122,13 @@ void asset_store::load(string file) { PROF
 		return;
 	}
 
-	path = string::make_copy(file, alloc);
-	CHECKED(get_file_attributes, &last, file);
-
-	store_sz = global_api->file_size(&store_file);
-
 	PUSH_ALLOC(alloc) {
+	
+		if(path.c_str) path.destroy();
+		path = string::make_copy(file);
+		CHECKED(get_file_attributes, &last, file);
+
+		store_sz = global_api->file_size(&store_file);
 
 		store = malloc(store_sz);
 		u8* store_mem = (u8*)store;
@@ -137,8 +138,6 @@ void asset_store::load(string file) { PROF
 
 		asset_file_header* header = (asset_file_header*)store_mem;
 		file_asset_header* current_asset = (file_asset_header*)(store_mem + sizeof(asset_file_header));
-
-		assets = map<string,asset>::make(header->num_assets, alloc);
 
 		for(u32 i = 0; i < header->num_assets; i++) {
 

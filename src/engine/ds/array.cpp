@@ -67,7 +67,6 @@ array<T> array<T>::make_memory(u32 capacity, void* memory) { PROF
 	return ret;
 }
 
-// operator[] but not a member
 template<typename T>
 inline T* array<T>::get(u32 idx) { 
 
