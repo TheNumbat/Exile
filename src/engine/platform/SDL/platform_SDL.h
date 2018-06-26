@@ -19,13 +19,13 @@ void 		   sdl_set_clipboard(string text);
 
 bool 		   sdl_cursor_shown();
 void 		   sdl_show_cursor(bool show);
-void 		   sdl_set_cursor(platform_cursor c);
+void 		   sdl_set_cursor(platform_window* win, platform_cursor c);
 void 		   sdl_capture_mouse(platform_window* win);
 void 		   sdl_release_mouse(platform_window* win);
 platform_error sdl_set_cursor_pos(platform_window* win, i32 x, i32 y);
 platform_error sdl_get_cursor_pos(platform_window* win, i32* x, i32* y);
 bool 		   sdl_mousedown(platform_mouseflag button);
-	
+
 void 		   sdl_debug_break();
 bool 		   sdl_is_debugging();
 u64 		   sdl_get_perfcount();

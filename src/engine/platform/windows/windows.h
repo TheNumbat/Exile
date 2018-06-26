@@ -844,6 +844,8 @@ DLL_IMPORT HANDLE  WINAPI SetClipboardData(UINT uFormat, HANDLE hMem);
 #define CURSOR_SHOWING 		0x00000001
 #define CURSOR_SUPPRESSED 	0x00000002
 
+#define HTCLIENT            1
+
 DLL_IMPORT BOOL  WINAPI SetPixelFormat   (HDC hdc, int pixel_format, PIXELFORMATDESCRIPTOR const *pfd);
 DLL_IMPORT int   WINAPI ChoosePixelFormat(HDC hdc, PIXELFORMATDESCRIPTOR const *pfd);
 DLL_IMPORT HGLRC WINAPI wglCreateContext (HDC hdc);
@@ -1051,6 +1053,7 @@ DLL_IMPORT BOOL WINAPI ShowWindowAsync(HWND hWnd, int nCmdShow);
 
 DLL_IMPORT HCURSOR WINAPI LoadCursorA(HINSTANCE hInstance, LPCSTR lpCursorName);
 DLL_IMPORT HCURSOR WINAPI SetCursor(HCURSOR hCursor);
+DLL_IMPORT HCURSOR WINAPI GetCursor();
 
 DLL_IMPORT void WINAPI InitializeCriticalSection(LPCRITICAL_SECTION lpCriticalSection);
 DLL_IMPORT void WINAPI EnterCriticalSection(LPCRITICAL_SECTION lpCriticalSection);

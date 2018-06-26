@@ -293,7 +293,12 @@ bool win32_is_debugging() {
 	return IsDebuggerPresent() == TRUE;
 }
 
-void win32_set_cursor(platform_cursor c) {
+void win32_set_cursor(platform_window* window, platform_cursor c) {
+
+	i32 x, y, w, h;
+	win32_get_cursor_pos(window, &x, &y);
+	win32_get_window_drawable(window, &w, &h);
+	if(x < 0 || y < 0 || x > w || y > h) return;
 
 	switch(c) {
 	case platform_cursor::pointer: {
@@ -1367,6 +1372,10 @@ LRESULT WINCALLBACK window_proc(HWND handle, UINT msg, WPARAM wParam, LPARAM lPa
 			global_enqueue(global_enqueue_param, evt);
 			return 0;
 		}
+
+		case WM_SETCURSOR: {
+			return LOWORD(lParam) == HTCLIENT ? false : DefWindowProcA(handle, msg, wParam, lParam);
+		} break;
 
 		// case WM_NCCREATE: return true;
 		// all others

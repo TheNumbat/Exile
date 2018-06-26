@@ -1,9 +1,7 @@
 
 Working To-Do:
 
-	IMGUI integration
-		fix the I cursor flashing
-		change font assets
+	change font asset system
 
 	movement physics
 	world interaction
@@ -19,13 +17,14 @@ Working To-Do:
 
 Bugs:
 
+	SDL layer resets the cursor to pointer on every mouse move
+
 	allocation profiling is somewhat broken for the world system
 
 	textures get recreated? on asset store reload (and not freed?)
 		make sure textures are only created once
 		asset reload leaks memory
-		actually the asset pack reload is kind of broken in general - RESTRUCTURE
-			textures need to be updated on the GPU
+		textures need to be updated on the GPU
 
 
 Everything not by me:

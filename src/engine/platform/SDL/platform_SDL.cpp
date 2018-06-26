@@ -271,7 +271,12 @@ bool sdl_is_debugging() {
 	return false;
 }
 
-void sdl_set_cursor(platform_cursor c) {
+void sdl_set_cursor(platform_window* window, platform_cursor c) {
+
+	i32 x, y, w, h;
+	sdl_get_cursor_pos(window, &x, &y);
+	sdl_get_window_drawable(window, &w, &h);
+	if(x < 0 || y < 0 || x > w || y > h) return;
 
 	SDL_Cursor* cursor = null;
 

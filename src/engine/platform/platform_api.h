@@ -302,10 +302,10 @@ struct platform_api {
 
 	bool 		   (*cursor_shown)();
 	void 		   (*show_cursor)(bool show);
-	void 		   (*set_cursor)(platform_cursor c);
 	void 		   (*capture_mouse)(platform_window* win);
 	void 		   (*release_mouse)(platform_window* win);
 	platform_error (*set_cursor_pos)(platform_window* win, i32 x, i32 y);
+	void 		   (*set_cursor)(platform_window* win, platform_cursor c);
 	platform_error (*get_cursor_pos)(platform_window* win, i32* x, i32* y);
 	bool 		   (*mousedown)(platform_mouseflag button);
 	

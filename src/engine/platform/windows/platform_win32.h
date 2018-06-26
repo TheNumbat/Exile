@@ -19,7 +19,7 @@ void 		   win32_set_clipboard(string text);
 
 bool 		   win32_cursor_shown();
 void 		   win32_show_cursor(bool show);
-void 		   win32_set_cursor(platform_cursor c);
+void 		   win32_set_cursor(platform_window* win, platform_cursor c);
 void 		   win32_capture_mouse(platform_window* win);
 void 		   win32_release_mouse(platform_window* win);
 platform_error win32_set_cursor_pos(platform_window* win, i32 x, i32 y);

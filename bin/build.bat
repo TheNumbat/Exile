@@ -87,10 +87,10 @@ echo.
 echo PLATFORM 
 echo.
 (
-	if not exist main.exe (
+	rem if not exist main.exe (
 		echo compiling 
 		cl %Platform_CompilerFlags% %SDL_COMP% w:\src\engine\platform\platform_main.cpp /link %Platform_LinkerFlags% %SDL_LINK%
-	)
+	rem )
 	
 	if "%2"=="SDL" (
 		xcopy w:\deps\SDL2\lib\SDL2.dll w:\build\ /C /Y  > NUL 2> NUL
