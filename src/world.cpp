@@ -38,6 +38,33 @@ void world::destroy() { PROF
 	destroy_chunks();
 }
 
+v3 world::raymarch(v3 pos3, v3 dir3, f32 max) {
+
+	chunk** start = chunks.try_get(chunk_pos::from_abs(pos3));
+	if(!start) return pos3;
+	chunk* c = *start;
+
+	v4 pos; pos.xyz = pos3;
+	v4 dir; dir.xyz = norm(dir3);
+	
+	f32 progress = 0.0f;
+
+	while(progress < max) {
+
+		v4 current = pos + dir * progress;
+		iv3 current_vox = current;
+
+		if(c->block_at(current_vox.x % chunk::xsz, current_vox.y % chunk::ysz, current_vox.z % chunk::zsz) != block_type::air) {
+			return current.xyz;
+		}
+
+		v4 delta = (v4(1.0f) - fract(current)) / dir;
+		progress += min3(delta.x, delta.y, delta.z);
+	}
+
+	return pos3 + dir3 * max;
+}
+
 void world::update(u64 now) { PROF
 
 	ImGui::Begin("Exile"_, null, ImGuiWindowFlags_AlwaysAutoResize);
@@ -183,6 +210,26 @@ void world::render() { PROF
 	glPolygonMode(gl_poly::front_and_back, gl_poly_mode::fill);
 
 	rcl.destroy();
+
+	p.render();
+}
+
+void player::render() { PROF
+
+	render_command_list rcl = render_command_list::make();
+	mesh_lines lines = mesh_lines::make();
+
+	lines.push(camera.pos, camera.pos + camera.front, colorf(1,0,0,1), colorf(0,0,1,1));
+
+	render_command cmd = render_command::make(render_command_type::mesh_lines, &lines);
+
+	rcl.add_command(cmd);
+	rcl.view = camera.view3();
+	rcl.proj = proj(camera.fov, (f32)eng->window.w / (f32)eng->window.h, 0.01f, 2000.0f);
+
+	eng->ogl.execute_command_list(&rcl);
+	rcl.destroy();
+	lines.destroy();
 }
 
 void player::init() { PROF

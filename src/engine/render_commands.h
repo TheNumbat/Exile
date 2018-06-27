@@ -8,6 +8,21 @@ namespace render_command_type {
 	u16 mesh_2d_tex_col 	  = 3;
 	u16 mesh_3d_tex 		  = 4;
 	u16 mesh_3d_tex_instanced = 5;
+	u16 mesh_lines 			  = 6;
+};
+
+struct mesh_lines {
+	vector<v3> 	   vertices;
+	vector<colorf> colors;
+	
+	GLuint vao = 0;
+	GLuint vbos[2] = {};
+	bool dirty = false;
+
+	static mesh_lines make(allocator* alloc = null);
+	void destroy();
+
+	void push(v3 p1, v3 p2, colorf c1 = colorf(0,0,0,1), colorf c2 = colorf(0,0,0,1));
 };
 
 struct mesh_2d_col {
@@ -146,4 +161,6 @@ struct render_camera {
 	void move(i32 dx, i32 d, f32 sens);
 	m4 view();
 	m4 view_no_translate();
+
+	m4 view3();
 };

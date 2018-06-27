@@ -36,6 +36,15 @@ CALLBACK void uniforms_mesh_3d_tex(shader_program* prog, render_command* cmd, re
 	glUniformMatrix4fv(loc, 1, gl_bool::_false, transform.a);
 }
 
+CALLBACK void uniforms_mesh_lines(shader_program* prog, render_command* cmd, render_command_list* rcl) { PROF
+	
+	GLint loc = glGetUniformLocation(prog->handle, "transform");
+
+	m4 transform = rcl->proj * rcl->view * cmd->model;
+
+	glUniformMatrix4fv(loc, 1, gl_bool::_false, transform.a);
+}
+
 CALLBACK void uniforms_mesh_3d_tex_instanced(shader_program* prog, render_command* cmd, render_command_list* rcl) { PROF
 	
 	GLint loc = glGetUniformLocation(prog->handle, "transform");
@@ -57,7 +66,7 @@ CALLBACK void buffers_mesh_2d_col(render_command* cmd) { PROF
 	glBufferData(gl_buf_target::array, m->vertices.size * sizeof(v2), m->vertices.size ? m->vertices.memory : null, gl_buf_usage::dynamic_draw);
 
 	glBindBuffer(gl_buf_target::array, m->vbos[1]);
-	glBufferData(gl_buf_target::array, m->colors.size * sizeof(v4), m->colors.size ? m->colors.memory : null, gl_buf_usage::dynamic_draw);
+	glBufferData(gl_buf_target::array, m->colors.size * sizeof(colorf), m->colors.size ? m->colors.memory : null, gl_buf_usage::dynamic_draw);
 
 	glBindBuffer(gl_buf_target::element_array, m->vbos[2]);
 	glBufferData(gl_buf_target::element_array, m->elements.size * sizeof(uv3), m->elements.size ? m->elements.memory : null, gl_buf_usage::dynamic_draw);
@@ -100,7 +109,7 @@ CALLBACK void buffers_mesh_2d_tex_col(render_command* cmd) { PROF
 	glBufferData(gl_buf_target::array, m->texCoords.size * sizeof(v2), m->texCoords.size ? m->texCoords.memory : null, gl_buf_usage::dynamic_draw);
 
 	glBindBuffer(gl_buf_target::array, m->vbos[2]);
-	glBufferData(gl_buf_target::array, m->colors.size * sizeof(v4), m->colors.size ? m->colors.memory : null, gl_buf_usage::dynamic_draw);
+	glBufferData(gl_buf_target::array, m->colors.size * sizeof(colorf), m->colors.size ? m->colors.memory : null, gl_buf_usage::dynamic_draw);
 
 	glBindBuffer(gl_buf_target::element_array, m->vbos[3]);
 	glBufferData(gl_buf_target::element_array, m->elements.size * sizeof(uv3), m->elements.size ? m->elements.memory : null, gl_buf_usage::dynamic_draw);
@@ -124,6 +133,23 @@ CALLBACK void buffers_mesh_3d_tex(render_command* cmd) { PROF
 
 	glBindBuffer(gl_buf_target::element_array, m->vbos[2]);
 	glBufferData(gl_buf_target::element_array, m->elements.size * sizeof(uv3), m->elements.size ? m->elements.memory : null, gl_buf_usage::dynamic_draw);
+
+	glBindVertexArray(0);
+	m->dirty = false;
+}
+
+CALLBACK void buffers_mesh_lines(render_command* cmd) { PROF
+
+	mesh_lines* m = (mesh_lines*)cmd->mesh;
+	if(!m->dirty) return;
+
+	glBindVertexArray(m->vao);
+
+	glBindBuffer(gl_buf_target::array, m->vbos[0]);
+	glBufferData(gl_buf_target::array, m->vertices.size * sizeof(v3), m->vertices.size ? m->vertices.memory : null, gl_buf_usage::dynamic_draw);
+
+	glBindBuffer(gl_buf_target::array, m->vbos[1]);
+	glBufferData(gl_buf_target::array, m->colors.size * sizeof(colorf), m->colors.size ? m->colors.memory : null, gl_buf_usage::dynamic_draw);
 
 	glBindVertexArray(0);
 	m->dirty = false;
@@ -218,6 +244,19 @@ CALLBACK void run_mesh_3d_tex(render_command* cmd) { PROF
 	glBindVertexArray(0);
 }
 
+CALLBACK void run_mesh_lines(render_command* cmd) { PROF
+
+	mesh_lines* m = (mesh_lines*)cmd->mesh;
+
+	glBindVertexArray(m->vao);
+
+	glEnable(gl_capability::depth_test);
+
+	glDrawArrays(gl_draw_mode::lines, 0, m->vertices.size);
+
+	glBindVertexArray(0);
+}
+
 CALLBACK void run_mesh_3d_tex_instanced(render_command* cmd) { PROF
 
 	mesh_3d_tex_instance_data* data = (mesh_3d_tex_instance_data*)cmd->mesh;
@@ -247,8 +286,56 @@ CALLBACK bool compat_mesh_2d_tex_col(ogl_info* info) { PROF
 CALLBACK bool compat_mesh_3d_tex(ogl_info* info) { PROF
 	return info->check_version(3, 2);
 }
+CALLBACK bool compat_mesh_lines(ogl_info* info) { PROF
+	return info->check_version(3, 2);
+}
 CALLBACK bool compat_mesh_3d_tex_instanced(ogl_info* info) { PROF
 	return info->check_version(3, 3);
+}
+
+mesh_lines mesh_lines::make(allocator* alloc) {
+
+	if(!alloc) alloc = CURRENT_ALLOC();
+
+	mesh_lines ret;
+	ret.vertices = vector<v3>::make(32, alloc);
+	ret.colors = vector<colorf>::make(32, alloc);
+
+	glGenVertexArrays(1, &ret.vao);
+	glGenBuffers(2, ret.vbos);
+
+	glBindVertexArray(ret.vao);
+
+	glBindBuffer(gl_buf_target::array, ret.vbos[0]);
+	glVertexAttribPointer(0, 3, gl_vert_attrib_type::_float, gl_bool::_false, sizeof(v3), (void*)0);
+	glEnableVertexAttribArray(0);
+	
+	glBindBuffer(gl_buf_target::array, ret.vbos[1]);
+	glVertexAttribPointer(1, 4, gl_vert_attrib_type::_float, gl_bool::_false, sizeof(colorf), (void*)0);
+	glEnableVertexAttribArray(1);
+	
+	glBindVertexArray(0);
+
+	return ret;
+}
+
+void mesh_lines::push(v3 p1, v3 p2, colorf c1, colorf c2) {
+
+	vertices.push(p1);
+	vertices.push(p2);
+	colors.push(c1);
+	colors.push(c2);
+
+	dirty = true;
+}
+
+void mesh_lines::destroy() {
+
+	glDeleteBuffers(2, vbos);
+	glDeleteVertexArrays(1, &vao);
+
+	vertices.destroy();
+	colors.destroy();
 }
 
 mesh_3d_tex_instance_data mesh_3d_tex_instance_data::make(mesh_3d_tex* parent, u32 instances, allocator* alloc) { PROF
@@ -732,6 +819,13 @@ void render_camera::move(i32 dx, i32 dy, f32 sens) {
 m4 render_camera::view() {
 
 	return lookAt(pos, pos + front, up);
+}
+
+m4 render_camera::view3() {
+
+	v3 offset(0,1,0);
+
+	return lookAt(pos - 2.0f * front + offset, pos + offset, up);
 }
 
 m4 render_camera::view_no_translate() {

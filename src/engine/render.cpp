@@ -194,11 +194,12 @@ ogl_manager ogl_manager::make(platform_window* win, allocator* a) { PROF
 	ret.info = ogl_info::make(ret.alloc);
 	LOG_DEBUG_F("GL %.% %", ret.info.major, ret.info.minor, ret.info.renderer);
 
-	ret.add_command((u8)render_command_type::mesh_2d_col, FPTR(buffers_mesh_2d_col), FPTR(run_mesh_2d_col), "shaders/mesh_2d_col.v"_, "shaders/mesh_2d_col.f"_, FPTR(uniforms_mesh_2d_col), FPTR(compat_mesh_2d_col));
-	ret.add_command((u8)render_command_type::mesh_2d_tex, FPTR(buffers_mesh_2d_tex), FPTR(run_mesh_2d_tex), "shaders/mesh_2d_tex.v"_, "shaders/mesh_2d_tex.f"_, FPTR(uniforms_mesh_2d_tex), FPTR(compat_mesh_2d_tex));
-	ret.add_command((u8)render_command_type::mesh_2d_tex_col, FPTR(buffers_mesh_2d_tex_col), FPTR(run_mesh_2d_tex_col), "shaders/mesh_2d_tex_col.v"_, "shaders/mesh_2d_tex_col.f"_, FPTR(uniforms_mesh_2d_tex_col), FPTR(compat_mesh_2d_tex_col));
-	ret.add_command((u8)render_command_type::mesh_3d_tex, FPTR(buffers_mesh_3d_tex), FPTR(run_mesh_3d_tex), "shaders/mesh_3d_tex.v"_, "shaders/mesh_3d_tex.f"_, FPTR(uniforms_mesh_3d_tex), FPTR(compat_mesh_3d_tex));
-	ret.add_command((u8)render_command_type::mesh_3d_tex_instanced, FPTR(buffers_mesh_3d_tex_instanced), FPTR(run_mesh_3d_tex_instanced), "shaders/mesh_3d_tex_instanced.v"_, "shaders/mesh_3d_tex_instanced.f"_, FPTR(uniforms_mesh_3d_tex_instanced), FPTR(compat_mesh_3d_tex_instanced));
+	ret.add_command(render_command_type::mesh_2d_col, FPTR(buffers_mesh_2d_col), FPTR(run_mesh_2d_col), "shaders/mesh_2d_col.v"_, "shaders/mesh_2d_col.f"_, FPTR(uniforms_mesh_2d_col), FPTR(compat_mesh_2d_col));
+	ret.add_command(render_command_type::mesh_2d_tex, FPTR(buffers_mesh_2d_tex), FPTR(run_mesh_2d_tex), "shaders/mesh_2d_tex.v"_, "shaders/mesh_2d_tex.f"_, FPTR(uniforms_mesh_2d_tex), FPTR(compat_mesh_2d_tex));
+	ret.add_command(render_command_type::mesh_2d_tex_col, FPTR(buffers_mesh_2d_tex_col), FPTR(run_mesh_2d_tex_col), "shaders/mesh_2d_tex_col.v"_, "shaders/mesh_2d_tex_col.f"_, FPTR(uniforms_mesh_2d_tex_col), FPTR(compat_mesh_2d_tex_col));
+	ret.add_command(render_command_type::mesh_3d_tex, FPTR(buffers_mesh_3d_tex), FPTR(run_mesh_3d_tex), "shaders/mesh_3d_tex.v"_, "shaders/mesh_3d_tex.f"_, FPTR(uniforms_mesh_3d_tex), FPTR(compat_mesh_3d_tex));
+	ret.add_command(render_command_type::mesh_3d_tex_instanced, FPTR(buffers_mesh_3d_tex_instanced), FPTR(run_mesh_3d_tex_instanced), "shaders/mesh_3d_tex_instanced.v"_, "shaders/mesh_3d_tex_instanced.f"_, FPTR(uniforms_mesh_3d_tex_instanced), FPTR(compat_mesh_3d_tex_instanced));
+	ret.add_command(render_command_type::mesh_lines, FPTR(buffers_mesh_lines), FPTR(run_mesh_lines), "shaders/mesh_lines.v"_, "shaders/mesh_lines.f"_, FPTR(uniforms_mesh_lines), FPTR(compat_mesh_lines));
 
 	ret.dbg_shader = shader_program::make("shaders/dbg.v"_,"shaders/dbg.f"_,FPTR(uniforms_dbg),a);
 

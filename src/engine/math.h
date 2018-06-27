@@ -17,6 +17,8 @@
 
 #define min(x,y) ((x) < (y) ? (x) : (y))
 #define max(x,y) ((x) < (y) ? (y) : (x))
+#define min3(x,y,z) (min(min(x,y), z))
+#define max3(x,y,z) (min(min(x,y), z))
 
 #define EPSILON32 0.00001f
 #define EPSILON64 0.00001
@@ -30,6 +32,8 @@ f32 mod(f32 l, f32 r);
 f64 mod(f64 l, f64 r);
 f32 _pow(f32 l, f32 r);
 f64 _pow(f64 l, f64 r);
+f32 fract(f32 v);
+f64 fract(f64 v);
 f32 _sqrt(f32 v);
 f32 _abs(f32 v);
 f64 _abs(f64 v);
@@ -58,6 +62,7 @@ v4 _ceil(v4 v);
 v4 _floor(v4 v);
 v4 _sin(v4 v); // NOTE(max): SSE sin/cos from sse_mathfun
 v4 _cos(v4 v);
+v4 fract(v4 v);
 v4 lerp(v4 min, v4 max, v4 dist);
 v4 clamp(v4 val, v4 min, v4 max);
 
@@ -274,6 +279,7 @@ union v3 {
 	void operator*=(f32 s) {x *= s; y *= s; z *= s;}
 	void operator/=(f32 s) {x /= s; y /= s; z /= s;}
 	f32& operator[](i32 idx) {return a[idx];}
+	v3 operator-() {return {-x,-y,-z};}
 
 	v3() {}
 	v3(f32 _x, f32 _y, f32 _z) {x = _x; y = _y; z = _z;}
@@ -345,8 +351,10 @@ union v4 {
 	void operator*=(f32 s) {packed = _mm_mul_ps(packed, _mm_set1_ps(s));}
 	void operator/=(f32 s) {packed = _mm_div_ps(packed, _mm_set1_ps(s));}
 	f32& operator[](i32 idx) {return a[idx];}
+	operator iv3() {v4 r = _round(*this); return {(i32)r.x, (i32)r.y, (i32)r.z};}
 
 	v4() {}
+	v4(f32 _v) {packed = _mm_set_ps(_v, _v, _v, _v);}
 	v4(f32 _x, f32 _y, f32 _z, f32 _w) {packed = _mm_set_ps(_w, _z, _y, _x);}
 	v4(__m128 p) {packed = p;}
 	v4(v4& v) {*this = v;}
@@ -508,6 +516,12 @@ f32 _pow(f32 l, f32 r) {
 }
 f64 _pow(f64 l, f64 r) {
 	return pow(l,r);
+}
+f32 fract(f32 v) {
+	return v - (i64)v;
+}
+f64 fract(f64 v) {
+	return v - (i64)v;
 }
 f32 _sqrt(f32 v) {
 	return sqrtf(v);
@@ -717,6 +731,9 @@ _PS_CONST(sincof_p2, -1.6666654611E-1f);
 v4 _sqrt(v4 v) {
 	return {_mm_sqrt_ps(v.packed)};
 }
+v4 fract(v4 v) {
+	return {_mm_sub_ps(v.packed, _mm_round_ps(v.packed, _MM_FROUND_TRUNC))};
+}
 v4 _abs(v4 v) {
 	// for some reason there is no _mm_abs_ps()
 	return {_abs(v.x),_abs(v.y),_abs(v.z),_abs(v.w)};
@@ -889,6 +906,10 @@ v3 norm(v3 v) {
 }
 v4 norm(v4 v) {
 	return v / len(v);
+}
+
+v3 reflect(v3 i, v3 n) {
+	return i - 2.0f * dot(n, i) * n;
 }
 
 f32 dot(v2 l, v2 r) {

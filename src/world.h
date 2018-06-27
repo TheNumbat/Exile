@@ -114,6 +114,7 @@ struct player {
 
 	void init();
 	void update(u64 now);
+	void render();
 };
 
 struct world {
@@ -144,6 +145,8 @@ struct world {
 	void update(u64 now);
 	void render();
 	void populate_local_area();
+
+	v3 raymarch(v3 origin, v3 dir, f32 max);
 };
 
 CALLBACK void unlock_chunk(void* v);
