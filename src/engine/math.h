@@ -62,6 +62,7 @@ v4 _ceil(v4 v);
 v4 _floor(v4 v);
 v4 _sin(v4 v); // NOTE(max): SSE sin/cos from sse_mathfun
 v4 _cos(v4 v);
+v4 step(v4 l, v4 r);
 v4 fract(v4 v);
 v4 lerp(v4 min, v4 max, v4 dist);
 v4 clamp(v4 val, v4 min, v4 max);
@@ -732,6 +733,12 @@ _PS_CONST(sincof_p2, -1.6666654611E-1f);
 
 v4 _sqrt(v4 v) {
 	return {_mm_sqrt_ps(v.packed)};
+}
+v4 step(v4 l, v4 r) {
+	v4 ret;
+	for(i32 i = 0; i < 4; i++)
+		ret[i] = l[i] < r[i];
+	return ret;
 }
 v4 fract(v4 v) {
 	return {_mm_sub_ps(v.packed, _mm_round_ps(v.packed, _MM_FROUND_TRUNC))};

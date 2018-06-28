@@ -163,6 +163,8 @@ struct render_camera {
 	float pitch = 0.0f, yaw = 0.0f, fov = 60.0f;
 
 	v3 offset3rd = v3(0, 1, 0);
+	f32 reach3rd = 5.0f;
+
 	camera_mode mode = camera_mode::third;
 
 	void update();

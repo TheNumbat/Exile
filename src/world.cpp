@@ -58,8 +58,8 @@ v3 world::raymarch(v3 pos3, v3 dir3, f32 max) {
 			return current.xyz;
 		}
 
-		v4 delta = (v4(1.0f) - fract(current)) / dir;
-		progress += min3(delta.x, delta.y, delta.z);
+		v4 delta = (step(v4(), dir) - fract(current)) / dir;
+		progress += max(min3(delta.x, delta.y, delta.z), 0.001f);
 	}
 
 	return pos3 + dir3 * max;
@@ -67,7 +67,7 @@ v3 world::raymarch(v3 pos3, v3 dir3, f32 max) {
 
 void world::update(u64 now) { PROF
 
-	ImGui::Begin("Exile"_, null, ImGuiWindowFlags_AlwaysAutoResize);
+	ImGui::Begin("World"_, null, ImGuiWindowFlags_AlwaysAutoResize);
 	
 	ImGui::SliderInt("view", &view_distance, 0, 32);
 
@@ -145,6 +145,16 @@ CALLBACK void cancel_build(void* param) {
 
 void world::render() { PROF
 
+	ImGui::Begin("World"_, null, ImGuiWindowFlags_AlwaysAutoResize);
+
+	render_chunks();
+	render_player();
+
+	ImGui::End();
+}
+
+void world::render_chunks() { PROF
+
 	render_command_list rcl = render_command_list::make();
 	thread_pool.renew_priorities(check_pirority, this);
 
@@ -210,30 +220,36 @@ void world::render() { PROF
 	glPolygonMode(gl_poly::front_and_back, gl_poly_mode::fill);
 
 	rcl.destroy();
-
-	p.render();
 }
 
-void player::render() { PROF
+void world::render_player() { PROF
+
+	render_camera& cam = p.camera;
+	ImGui::EnumCombo("View"_, &cam.mode);
 
 	render_command_list rcl = render_command_list::make();
 
 	{
 		mesh_lines lines = mesh_lines::make();
 
-		lines.push(camera.pos, camera.pos + camera.front, colorf(1,0,0,1), colorf(0,0,1,1));
-		lines.push(camera.pos + camera.front, camera.pos + 5.0f * camera.front, colorf(0,0,1,1), colorf(0,1,0,1));
+		lines.push(cam.pos, cam.pos + cam.front, colorf(1,0,0,1), colorf(0,0,1,1));
+		lines.push(cam.pos + cam.front, cam.pos + cam.reach3rd * cam.front, colorf(0,0,1,1), colorf(0,1,0,1));
+
+		v3 intersection = raymarch(cam.pos, cam.front, cam.reach3rd);
+		ImGui::Text(string::makef("inter: %"_, intersection));
+
+		lines.push(cam.pos, intersection, colorf(0,0,0,1), colorf(0,0,0,1));
 
 		render_command cmd = render_command::make(render_command_type::mesh_lines, &lines);
 
 		rcl.add_command(cmd);
-		rcl.view = camera.view();
-		rcl.proj = proj(camera.fov, (f32)eng->window.w / (f32)eng->window.h, 0.01f, 2000.0f);
+		rcl.view = cam.view();
+		rcl.proj = proj(cam.fov, (f32)eng->window.w / (f32)eng->window.h, 0.01f, 2000.0f);
 
 		eng->ogl.execute_command_list(&rcl);
 		lines.destroy();
 	}
-	
+
 	rcl.clear();
 
 	{
@@ -254,6 +270,11 @@ void player::render() { PROF
 	}
 
 	rcl.destroy();
+
+	ImGui::Text(string::makef("dir: %"_, cam.front));
+	ImGui::Text(string::makef("pos: %"_, cam.pos));
+	ImGui::Text(string::makef("look: %"_, cam.pos + cam.reach3rd * cam.front));
+	ImGui::Text(string::makef("chunk: %"_, chunk_pos::from_abs(cam.pos)));
 }
 
 void player::init() { PROF
@@ -291,12 +312,6 @@ void player::update(u64 now) { PROF
 		camera.pos += velocity * dt;
 		camera.update();
 	}
-
-	ImGui::EnumCombo("View"_, &camera.mode);
-	ImGui::Text(string::makef("pos: %"_, camera.pos));
-	ImGui::Text(string::makef("vel: %"_, velocity));
-	ImGui::Text(string::makef("look: %"_, camera.front));
-	ImGui::Text(string::makef("chunk: %"_, chunk_pos::from_abs(camera.pos)));
 
 	last = now;
 }

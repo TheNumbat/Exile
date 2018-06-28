@@ -833,7 +833,7 @@ m4 render_camera::view() {
 		return lookAt(pos, pos + front, up);
 	} break;
 	case camera_mode::third: {
-		return lookAt(pos - 2.0f * front + offset3rd, pos + front, up);
+		return lookAt(pos - 2.0f * front + offset3rd, pos + reach3rd * front, up);
 	} break;
 	}
 
@@ -847,7 +847,7 @@ m4 render_camera::view_no_translate() {
 		return lookAt(v3(0.0f, 0.0f, 0.0f), front, up);
 	} break;
 	case camera_mode::third: {
-		return lookAt(-2.0f * front + offset3rd, front, up);
+		return lookAt(-2.0f * front + offset3rd, reach3rd * front, up);
 	} break;
 	}
 

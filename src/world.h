@@ -114,7 +114,6 @@ struct player {
 
 	void init();
 	void update(u64 now);
-	void render();
 };
 
 struct world {
@@ -143,8 +142,11 @@ struct world {
 	void destroy_chunks();
 
 	void update(u64 now);
-	void render();
 	void populate_local_area();
+
+	void render();
+	void render_chunks();
+	void render_player();
 
 	v3 raymarch(v3 origin, v3 dir, f32 max);
 };
