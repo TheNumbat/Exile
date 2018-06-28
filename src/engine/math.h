@@ -73,6 +73,7 @@ f32 lensq(v4 v);
 f32 len(v2 v);
 f32 len(v3 v);
 f32 len(v4 v);
+f32 min_reset(v3 v);
 
 v2 norm(v2 v);
 v3 norm(v3 v);
@@ -905,6 +906,13 @@ f32 len(v3 v) {
 }
 f32 len(v4 v) {
 	return _sqrt(lensq(v));
+}
+
+f32 min_reset(v3 v) {
+	if(isinf(v.x) || isnan(v.x)) v.x = 0.0f;
+	if(isinf(v.y) || isnan(v.x)) v.y = 0.0f;
+	if(isinf(v.z) || isnan(v.x)) v.z = 0.0f;
+	return min3(v.x,v.y,v.z);
 }
 
 v2 norm(v2 v) {

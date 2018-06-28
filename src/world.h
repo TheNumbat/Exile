@@ -128,7 +128,7 @@ struct world {
 	i32 view_distance = 1;
 	bool wireframe = false;
 	bool respect_cam = false;
-	f32 gravity = 0.0f;
+	f32 gravity = 10.0f;
 
 	texture_id block_textures;
 
@@ -150,6 +150,7 @@ struct world {
 	void populate_local_area();
 
 	v3 raymarch(v3 origin, v3 dir, f32 max);
+	v3 raymarch(v3 origin, v3 max);
 };
 
 CALLBACK void unlock_chunk(void* v);

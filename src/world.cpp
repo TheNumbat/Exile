@@ -39,7 +39,11 @@ void world::destroy() { PROF
 	destroy_chunks();
 }
 
-v3 world::raymarch(v3 pos3, v3 dir3, f32 max) {
+v3 world::raymarch(v3 origin, v3 max) { PROF
+	return raymarch(origin, max, len(max));
+}
+
+v3 world::raymarch(v3 pos3, v3 dir3, f32 max) { PROF
 
 	chunk** start = chunks.try_get(chunk_pos::from_abs(pos3));
 	if(!start) return pos3;
@@ -59,13 +63,11 @@ v3 world::raymarch(v3 pos3, v3 dir3, f32 max) {
 			return current.xyz;
 		}
 		
-		v4 s = step({}, dir);
-		v4 f = fract(current);
-		v4 delta = (s - f) / dir;
-		progress += max(min3(delta.x, delta.y, delta.z), 0.001f);
+		v4 delta = (step({}, dir) - fract(current)) / dir;
+		progress += max(min_reset(delta.xyz), 0.001f);
 	}
 
-	return pos3 + dir3 * max;
+	return pos.xyz + dir.xyz * max;
 }
 
 void world::update(u64 now) { PROF
@@ -157,6 +159,7 @@ void player::reset() { PROF
 	camera.reset();
 	speed = 5.0f;
 	velocity = v3();
+	last = global_api->get_perfcount();
 }
 
 void world::render() { PROF
@@ -248,8 +251,8 @@ void world::render_player() { PROF
 	{
 		mesh_lines lines = mesh_lines::make();
 
-		// lines.push(cam.pos, cam.pos + cam.front, colorf(1,0,0,1), colorf(0,0,1,1));
-		// lines.push(cam.pos + cam.front, cam.pos + cam.reach3rd * cam.front, colorf(0,0,1,1), colorf(0,1,0,1));
+		lines.push(cam.pos, cam.pos + cam.front, colorf(1,0,0,1), colorf(0,0,1,1));
+		lines.push(cam.pos + cam.front, cam.pos + cam.reach3rd * cam.front, colorf(0,0,1,1), colorf(0,1,0,1));
 
 		v3 intersection = raymarch(cam.pos, cam.front, cam.reach3rd);
 		ImGui::Text(string::makef("inter: %"_, intersection));
@@ -330,7 +333,15 @@ void world::update_player(u64 now) { PROF
 		}
 
 		p.velocity += accel * (f32)dt;
-		cam.pos += (p.velocity + mov_v) * (f32)dt;
+
+		v3 dp = (p.velocity + mov_v) * (f32)dt;
+		v3 collide = raymarch(cam.pos, dp);
+
+		if(collide != cam.pos + dp) {
+			p.velocity = {};
+		}
+
+		cam.pos = collide;
 		cam.update();
 	}
 
