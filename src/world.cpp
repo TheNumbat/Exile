@@ -47,7 +47,7 @@ v3 world::raymarch(v3 pos3, v3 dir3, f32 max) {
 
 	v4 pos; pos.xyz = pos3;
 	v4 dir; dir.xyz = norm(dir3);
-	
+
 	f32 progress = 0.0f;
 
 	while(progress < max) {
@@ -58,8 +58,10 @@ v3 world::raymarch(v3 pos3, v3 dir3, f32 max) {
 		if(c->block_at(current_vox.x % chunk::xsz, current_vox.y % chunk::ysz, current_vox.z % chunk::zsz) != block_type::air) {
 			return current.xyz;
 		}
-
-		v4 delta = (step(v4(), dir) - fract(current)) / dir;
+		
+		v4 s = step({}, dir);
+		v4 f = fract(current);
+		v4 delta = (s - f) / dir;
 		progress += max(min3(delta.x, delta.y, delta.z), 0.001f);
 	}
 
@@ -246,8 +248,8 @@ void world::render_player() { PROF
 	{
 		mesh_lines lines = mesh_lines::make();
 
-		lines.push(cam.pos, cam.pos + cam.front, colorf(1,0,0,1), colorf(0,0,1,1));
-		lines.push(cam.pos + cam.front, cam.pos + cam.reach3rd * cam.front, colorf(0,0,1,1), colorf(0,1,0,1));
+		// lines.push(cam.pos, cam.pos + cam.front, colorf(1,0,0,1), colorf(0,0,1,1));
+		// lines.push(cam.pos + cam.front, cam.pos + cam.reach3rd * cam.front, colorf(0,0,1,1), colorf(0,1,0,1));
 
 		v3 intersection = raymarch(cam.pos, cam.front, cam.reach3rd);
 		ImGui::Text(string::makef("inter: %"_, intersection));

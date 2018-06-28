@@ -844,7 +844,7 @@ m4 render_camera::view_no_translate() {
 
 	switch(mode) {
 	case camera_mode::first: {
-		return lookAt(v3(0.0f, 0.0f, 0.0f), front, up);
+		return lookAt({}, front, up);
 	} break;
 	case camera_mode::third: {
 		return lookAt(-2.0f * front + offset3rd, reach3rd * front, up);

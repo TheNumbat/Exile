@@ -352,7 +352,7 @@ union v4 {
 	void operator*=(f32 s) {packed = _mm_mul_ps(packed, _mm_set1_ps(s));}
 	void operator/=(f32 s) {packed = _mm_div_ps(packed, _mm_set1_ps(s));}
 	f32& operator[](i32 idx) {return a[idx];}
-	operator iv3() {v4 r = _round(*this); return {(i32)r.x, (i32)r.y, (i32)r.z};}
+	operator iv3() {return {(i32)x, (i32)y, (i32)z};}
 
 	v4() {}
 	v4(f32 _v) {packed = _mm_set_ps(_v, _v, _v, _v);}
