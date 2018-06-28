@@ -818,6 +818,20 @@ void render_camera::move(i32 dx, i32 dy, f32 sens) {
 
 m4 render_camera::view() {
 
+	switch(mode) {
+	case camera_mode::first: {
+		return view1();
+	} break;
+	case camera_mode::third: {
+		return view3();
+	} break;
+	}
+
+	return m4::zero;
+}
+
+m4 render_camera::view1() {
+
 	return lookAt(pos, pos + front, up);
 }
 

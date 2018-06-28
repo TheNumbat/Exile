@@ -151,16 +151,25 @@ struct render_command_list {
 	void sort();
 };
 
+enum class camera_mode : u8 {
+	first,
+	third
+};
+
 struct render_camera {
 
 	v3 	  pos, front, up, right;
 	float pitch = 0.0f, yaw = 0.0f, fov = 60.0f;
 
+	camera_mode mode = camera_mode::third;
+
 	void update();
 	void reset();
 	void move(i32 dx, i32 d, f32 sens);
+	
 	m4 view();
 	m4 view_no_translate();
 
+	m4 view1();
 	m4 view3();
 };

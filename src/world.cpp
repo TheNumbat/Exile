@@ -224,7 +224,7 @@ void player::render() { PROF
 	render_command cmd = render_command::make(render_command_type::mesh_lines, &lines);
 
 	rcl.add_command(cmd);
-	rcl.view = camera.view3();
+	rcl.view = camera.view();
 	rcl.proj = proj(camera.fov, (f32)eng->window.w / (f32)eng->window.h, 0.01f, 2000.0f);
 
 	eng->ogl.execute_command_list(&rcl);
