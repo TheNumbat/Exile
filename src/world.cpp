@@ -217,25 +217,47 @@ void world::render() { PROF
 void player::render() { PROF
 
 	render_command_list rcl = render_command_list::make();
-	mesh_lines lines = mesh_lines::make();
 
-	lines.push(camera.pos, camera.pos + camera.front, colorf(1,0,0,1), colorf(0,0,1,1));
+	{
+		mesh_lines lines = mesh_lines::make();
 
-	render_command cmd = render_command::make(render_command_type::mesh_lines, &lines);
+		lines.push(camera.pos, camera.pos + camera.front, colorf(1,0,0,1), colorf(0,0,1,1));
+		lines.push(camera.pos + camera.front, camera.pos + 5.0f * camera.front, colorf(0,0,1,1), colorf(0,1,0,1));
 
-	rcl.add_command(cmd);
-	rcl.view = camera.view();
-	rcl.proj = proj(camera.fov, (f32)eng->window.w / (f32)eng->window.h, 0.01f, 2000.0f);
+		render_command cmd = render_command::make(render_command_type::mesh_lines, &lines);
 
-	eng->ogl.execute_command_list(&rcl);
+		rcl.add_command(cmd);
+		rcl.view = camera.view();
+		rcl.proj = proj(camera.fov, (f32)eng->window.w / (f32)eng->window.h, 0.01f, 2000.0f);
+
+		eng->ogl.execute_command_list(&rcl);
+		lines.destroy();
+	}
+	
+	rcl.clear();
+
+	{
+		f32 w = (f32)eng->window.w, h = (f32)eng->window.h;
+
+		mesh_2d_col crosshair = mesh_2d_col::make();
+
+		crosshair.push_rect(r2(w / 2.0f - 5.0f, h / 2.0f - 1.0f, 10.0f, 2.0f), WHITE);
+		crosshair.push_rect(r2(w / 2.0f - 1.0f, h / 2.0f - 5.0f, 2.0f, 10.0f), WHITE);
+
+		render_command cmd = render_command::make(render_command_type::mesh_2d_col, &crosshair);
+
+		rcl.add_command(cmd);
+		rcl.proj = ortho(0, w, h, 0, -1, 1);
+
+		eng->ogl.execute_command_list(&rcl);
+		crosshair.destroy();
+	}
+
 	rcl.destroy();
-	lines.destroy();
 }
 
 void player::init() { PROF
 
-	speed = 30.0f;
-	last = 0;
 	camera.reset();
 }
 
@@ -270,6 +292,7 @@ void player::update(u64 now) { PROF
 		camera.update();
 	}
 
+	ImGui::EnumCombo("View"_, &camera.mode);
 	ImGui::Text(string::makef("pos: %"_, camera.pos));
 	ImGui::Text(string::makef("vel: %"_, velocity));
 	ImGui::Text(string::makef("look: %"_, camera.front));

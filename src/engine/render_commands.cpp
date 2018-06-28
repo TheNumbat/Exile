@@ -251,8 +251,11 @@ CALLBACK void run_mesh_lines(render_command* cmd) { PROF
 	glBindVertexArray(m->vao);
 
 	glEnable(gl_capability::depth_test);
+	glEnable(gl_capability::line_smooth);
 
 	glDrawArrays(gl_draw_mode::lines, 0, m->vertices.size);
+
+	glDisable(gl_capability::line_smooth);
 
 	glBindVertexArray(0);
 }
@@ -693,6 +696,13 @@ render_command_list render_command_list::make(allocator* alloc, u32 cmds) { PROF
 	return ret;
 }
 
+void render_command_list::clear() { PROF
+
+	commands.clear();
+	view = m4::I;
+	proj = m4::I;
+}
+
 void render_command_list::destroy() { PROF
 
 	commands.destroy();
@@ -820,31 +830,28 @@ m4 render_camera::view() {
 
 	switch(mode) {
 	case camera_mode::first: {
-		return view1();
+		return lookAt(pos, pos + front, up);
 	} break;
 	case camera_mode::third: {
-		return view3();
+		return lookAt(pos - 2.0f * front + offset3rd, pos + front, up);
 	} break;
 	}
 
 	return m4::zero;
 }
 
-m4 render_camera::view1() {
-
-	return lookAt(pos, pos + front, up);
-}
-
-m4 render_camera::view3() {
-
-	v3 offset(0,1,0);
-
-	return lookAt(pos - 2.0f * front + offset, pos + offset, up);
-}
-
 m4 render_camera::view_no_translate() {
 
-	return lookAt(v3(0.0f, 0.0f, 0.0f), front, up);
+	switch(mode) {
+	case camera_mode::first: {
+		return lookAt(v3(0.0f, 0.0f, 0.0f), front, up);
+	} break;
+	case camera_mode::third: {
+		return lookAt(-2.0f * front + offset3rd, front, up);
+	} break;
+	}
+
+	return m4::zero;
 }
 
 void render_camera::reset() {

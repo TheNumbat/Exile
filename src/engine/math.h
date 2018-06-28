@@ -455,6 +455,7 @@ union m4 {
 	m4& operator=(m4&& m) {for(i32 i = 0; i < 4; i++) packed[i] = m.packed[i]; return *this;}
 
 	static m4 zero;
+	static m4 I;
 };
 static_assert(sizeof(m4) == 64, "sizeof(m4) != 64");
 static_assert(alignof(m4) == 16, "alignof(m4) != 16");
@@ -496,6 +497,7 @@ const color BLUE  = color(0, 0, 255, 255);
 #ifndef MATH_NO_IMPLEMENTATIONS
 
 m4 m4::zero = {{0,0,0,0},{0,0,0,0},{0,0,0,0},{0,0,0,0}};
+m4 m4::I 	= {{1,0,0,0},{0,1,0,0},{0,0,1,0},{0,0,0,1}};
 
 // yes most of these are useless... TODO(max): improve on math.h functions
 
