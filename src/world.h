@@ -112,8 +112,7 @@ struct player {
 
 	bool enable = true;
 
-	void init();
-	void update(u64 now);
+	void reset();
 };
 
 struct world {
@@ -129,6 +128,7 @@ struct world {
 	i32 view_distance = 1;
 	bool wireframe = false;
 	bool respect_cam = false;
+	f32 gravity = 0.0f;
 
 	texture_id block_textures;
 
@@ -142,11 +142,12 @@ struct world {
 	void destroy_chunks();
 
 	void update(u64 now);
-	void populate_local_area();
+	void update_player(u64 now);
 
 	void render();
 	void render_chunks();
 	void render_player();
+	void populate_local_area();
 
 	v3 raymarch(v3 origin, v3 dir, f32 max);
 };

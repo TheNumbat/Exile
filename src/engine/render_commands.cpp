@@ -856,7 +856,7 @@ m4 render_camera::view_no_translate() {
 
 void render_camera::reset() {
 
-	pos = v3(-5.0f, 128.0f, -5.0f);
+	pos = v3(3.0f, 115.0f, 16.0f);
 
 	pitch = 00.0f; yaw = -45.0f; fov = 60.0f;
 	update();

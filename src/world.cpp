@@ -2,7 +2,8 @@
 void world::init(asset_store* store, allocator* a) { PROF
 
 	alloc = a;
-	p.init();
+
+	p.reset();
 
 	LOG_INFO_F("units_per_voxel: %", chunk::units_per_voxel);
 
@@ -81,7 +82,13 @@ void world::update(u64 now) { PROF
 		chunks = map<chunk_pos, chunk*>::make(512, alloc);
 	}
 
-	p.update(now);
+	ImGui::SameLine();
+	if(ImGui::Button("Reset")) {
+
+		p.reset();
+	}
+
+	update_player(now);
 
 	ImGui::End();
 }
@@ -141,6 +148,13 @@ CALLBACK void cancel_build(void* param) {
 
 	chunk* c = (chunk*)param;
 	c->job_state.set(work::none);
+}
+
+void player::reset() { PROF
+
+	camera.reset();
+	speed = 5.0f;
+	velocity = v3();
 }
 
 void world::render() { PROF
@@ -277,43 +291,48 @@ void world::render_player() { PROF
 	ImGui::Text(string::makef("chunk: %"_, chunk_pos::from_abs(cam.pos)));
 }
 
-void player::init() { PROF
+void world::update_player(u64 now) { PROF
 
-	camera.reset();
-}
+	render_camera& cam = p.camera;
 
-void player::update(u64 now) { PROF
+	ImGui::SliderFloat("gravity", &gravity, 0.0f, 10.0f);
 
-	u64 pdt = now - last;
-	f32 dt = (f32)pdt / (f32)eng->platform->get_perfcount_freq();
+	u64 pdt = now - p.last;
+	f64 dt = (f64)pdt / (f64)eng->platform->get_perfcount_freq();
 
-	if(enable && eng->platform->window_focused(&eng->window)) {
+	if(p.enable) {
 
-		velocity = v3(0.0f, 0.0f, 0.0f);
-		if(eng->platform->keydown(platform_keycode::w)) {
-			velocity += camera.front * speed;
-		}
-		if(eng->platform->keydown(platform_keycode::a)) {
-			velocity += camera.right * -speed;
-		}
-		if(eng->platform->keydown(platform_keycode::s)) {
-			velocity += camera.front * -speed;
-		}
-		if(eng->platform->keydown(platform_keycode::d)) {
-			velocity += camera.right * speed;
-		}
-		if(eng->platform->keydown(platform_keycode::space)) {
-			velocity.y += speed;
-		}
-		if(eng->platform->keydown(platform_keycode::lshift)) {
-			velocity.y += -speed;
+		v3 accel = v3(0.0f, -gravity, 0.0f);
+		v3 mov_v;
+
+		if(eng->platform->window_focused(&eng->window)) {
+
+			if(eng->platform->keydown(platform_keycode::w)) {
+				mov_v += cam.front * p.speed;
+			}
+			if(eng->platform->keydown(platform_keycode::a)) {
+				mov_v += cam.right * -p.speed;
+			}
+			if(eng->platform->keydown(platform_keycode::s)) {
+				mov_v += cam.front * -p.speed;
+			}
+			if(eng->platform->keydown(platform_keycode::d)) {
+				mov_v += cam.right * p.speed;
+			}
+			if(eng->platform->keydown(platform_keycode::space)) {
+				mov_v.y += p.speed;
+			}
+			if(eng->platform->keydown(platform_keycode::lshift)) {
+				mov_v.y += -p.speed;
+			}
 		}
 
-		camera.pos += velocity * dt;
-		camera.update();
+		p.velocity += accel * (f32)dt;
+		cam.pos += (p.velocity + mov_v) * (f32)dt;
+		cam.update();
 	}
 
-	last = now;
+	p.last = now;
 }
 
 inline u32 hash(chunk_pos key) { PROF
