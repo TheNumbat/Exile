@@ -700,6 +700,7 @@ DLL_IMPORT void glTexParameteri(gl_tex_target target, gl_tex_param pname, GLint 
 DLL_IMPORT void glTexParameterfv(gl_tex_target target, gl_tex_param pname, const GLfloat *params);
 DLL_IMPORT void glTexImage2D(gl_tex_target target, GLint level, gl_tex_format internalformat, GLsizei width, GLsizei height, GLint border, gl_pixel_data_format format, gl_pixel_data_type type, const GLvoid *pixels);
 DLL_IMPORT void glTexParameteriv(gl_tex_target target, gl_tex_param pname, const GLint *params);
+DLL_IMPORT void glTexParameterf(gl_tex_target target, gl_tex_param pname, GLfloat param);
 DLL_IMPORT void glBindTexture(gl_tex_target target, GLuint handle);
 DLL_IMPORT void glGenTextures(GLsizei n, GLuint* textures);
 

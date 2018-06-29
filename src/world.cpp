@@ -45,6 +45,8 @@ v3 world::raymarch(v3 origin, v3 max) { PROF
 
 v3 world::raymarch(v3 pos3, v3 dir3, f32 max) { PROF
 
+	if (max == 0.0f) return pos3;
+
 	chunk** start = chunks.try_get(chunk_pos::from_abs(pos3));
 	if(!start) return pos3;
 	chunk* c = *start;
@@ -324,6 +326,7 @@ void world::update_player(u64 now) { PROF
 			if(eng->platform->keydown(platform_keycode::d)) {
 				mov_v += cam.right * p.speed;
 			}
+			mov_v.y = 0.0f;
 			if(eng->platform->keydown(platform_keycode::space)) {
 				mov_v.y += p.speed;
 			}

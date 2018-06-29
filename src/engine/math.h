@@ -282,6 +282,7 @@ union v3 {
 	void operator/=(f32 s) {x /= s; y /= s; z /= s;}
 	f32& operator[](i32 idx) {return a[idx];}
 	v3 operator-() {return {-x,-y,-z};}
+	operator bool() {return x || y || z;}
 
 	v3() {}
 	v3(f32 _x, f32 _y, f32 _z) {x = _x; y = _y; z = _z;}
