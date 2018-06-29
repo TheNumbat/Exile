@@ -534,30 +534,33 @@ u32 string::write_struct(u32 idx, void* val, _type_info* info, bool size) { PROF
 
 	switch(name) {
 	case const_hash("v2"): {
+		v2* v = (v2*)val;
 		idx = write(idx, '{', size);
-		idx = write_type(idx, (u8*)val + info->_struct.member_offsets[0], TYPEINFO_H(info->_struct.member_types[0]), size);
+		idx = write_float(idx, 4, &v->x, TYPEINFO(f32), size);
 		idx = write(idx, ',', size);
-		idx = write_type(idx, (u8*)val + info->_struct.member_offsets[1], TYPEINFO_H(info->_struct.member_types[1]), size);
+		idx = write_float(idx, 4, &v->y, TYPEINFO(f32), size);
 		idx = write(idx, '}', size);
 	} break;
 	case const_hash("v3"): {
+		v3* v = (v3*)val;
 		idx = write(idx, '{', size);
-		idx = write_type(idx, (u8*)val + info->_struct.member_offsets[0], TYPEINFO_H(info->_struct.member_types[0]), size);
+		idx = write_float(idx, 4, &v->x, TYPEINFO(f32), size);
 		idx = write(idx, ',', size);
-		idx = write_type(idx, (u8*)val + info->_struct.member_offsets[1], TYPEINFO_H(info->_struct.member_types[1]), size);
+		idx = write_float(idx, 4, &v->y, TYPEINFO(f32), size);
 		idx = write(idx, ',', size);
-		idx = write_type(idx, (u8*)val + info->_struct.member_offsets[2], TYPEINFO_H(info->_struct.member_types[2]), size);
+		idx = write_float(idx, 4, &v->z, TYPEINFO(f32), size);
 		idx = write(idx, '}', size);		
 	} break;
 	case const_hash("v4"): {
+		v4* v = (v4*)val;
 		idx = write(idx, '{', size);
-		idx = write_type(idx, (u8*)val + info->_struct.member_offsets[0], TYPEINFO_H(info->_struct.member_types[0]), size);
+		idx = write_float(idx, 4, &v->x, TYPEINFO(f32), size);
 		idx = write(idx, ',', size);
-		idx = write_type(idx, (u8*)val + info->_struct.member_offsets[1], TYPEINFO_H(info->_struct.member_types[1]), size);
+		idx = write_float(idx, 4, &v->y, TYPEINFO(f32), size);
 		idx = write(idx, ',', size);
-		idx = write_type(idx, (u8*)val + info->_struct.member_offsets[2], TYPEINFO_H(info->_struct.member_types[2]), size);
+		idx = write_float(idx, 4, &v->z, TYPEINFO(f32), size);
 		idx = write(idx, ',', size);
-		idx = write_type(idx, (u8*)val + info->_struct.member_offsets[3], TYPEINFO_H(info->_struct.member_types[3]), size);
+		idx = write_float(idx, 4, &v->w, TYPEINFO(f32), size);
 		idx = write(idx, '}', size);
 	} break;
 	case const_hash("vector"): {
@@ -761,7 +764,7 @@ u32 string::write_enum(u32 idx, void* val, _type_info* info, bool size) { PROF
 
 	i64 value = int_as_i64(val, base);
 	
-	string name = enum_to_string(info, value);
+	string name = enum_to_string(value, info);
 
 	idx = write(idx, info->name, size);
 	idx = write(idx, "::"_, size);

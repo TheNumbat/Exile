@@ -82,6 +82,7 @@ Overall To-Do List:
 		pause/resume job? ~closures~ how do we do this when job != thread?
 
 	meta
+		range tags on struct members for GUI editing (sliders)
 		config language: serialization/deserialization
 			deserialize to type vs deserialize to generic JSON like object [tagged/no tagged]
 			data versioning

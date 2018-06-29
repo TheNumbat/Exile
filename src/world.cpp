@@ -246,7 +246,6 @@ void world::render_chunks() { PROF
 void world::render_player() { PROF
 
 	render_camera& cam = p.camera;
-	ImGui::EnumCombo("View"_, &cam.mode);
 
 	render_command_list rcl = render_command_list::make();
 
@@ -257,7 +256,7 @@ void world::render_player() { PROF
 		lines.push(cam.pos + cam.front, cam.pos + cam.reach3rd * cam.front, colorf(0,0,1,1), colorf(0,1,0,1));
 
 		v3 intersection = raymarch(cam.pos, cam.front, cam.reach3rd);
-		ImGui::Text(string::makef("inter: %"_, intersection));
+		ImGui::ViewAny("inter:"_, intersection);
 
 		lines.push(cam.pos, intersection, colorf(0,0,0,1), colorf(0,0,0,1));
 
@@ -292,10 +291,7 @@ void world::render_player() { PROF
 
 	rcl.destroy();
 
-	ImGui::Text(string::makef("dir: %"_, cam.front));
-	ImGui::Text(string::makef("pos: %"_, cam.pos));
-	ImGui::Text(string::makef("look: %"_, cam.pos + cam.reach3rd * cam.front));
-	ImGui::Text(string::makef("chunk: %"_, chunk_pos::from_abs(cam.pos)));
+	ImGui::EditAny("camera:"_, &cam, true);
 }
 
 void world::update_player(u64 now) { PROF

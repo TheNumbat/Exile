@@ -7,6 +7,9 @@ namespace ImGui {
 	void Text(string text);
 	template<typename E> void EnumCombo(string label, E* val, ImGuiComboFlags flags = 0);
 	template<typename V> void MapCombo(string label, map<string,V> options, V* val, ImGuiComboFlags flags = 0);
+
+	template<typename S> void ViewAny(string label, S val, bool open = false);
+	template<typename S> void EditAny(string label, S* val, bool open = false);
 }
 
 struct imgui_gl_info {

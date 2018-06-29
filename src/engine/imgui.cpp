@@ -13,13 +13,22 @@ namespace ImGui {
 	void EnumCombo(string label, E* val, ImGuiComboFlags flags) {
 
 		_type_info* info = TYPEINFO(E);
+		LOG_DEBUG_ASSERT(info->type_type == Type::_enum);
 
-		if(BeginCombo(label, enum_to_string(*val), flags)) {
+		EnumCombo_T(label, val, info, flags);
+	}
+
+	void EnumCombo_T(string label, void* val, _type_info* info, ImGuiComboFlags flags) {
+
+		_type_info* base = TYPEINFO_H(info->_enum.base_type);
+		i64 ival = int_as_i64(val, base);
+
+		if(BeginCombo(label, enum_to_string(ival, info), flags)) {
 			for(u32 i = 0; i < info->_enum.member_count; i++) {
 				
-				bool selected = (i64)*val == info->_enum.member_values[i];
+				bool selected = ival == info->_enum.member_values[i];
 				if(Selectable(info->_enum.member_names[i], selected)) {
-					*val = (E)info->_enum.member_values[i];
+					int_from_i64(info->_enum.member_values[i], val, base);
 				}
 				if(selected) {
 					SetItemDefaultFocus();
@@ -53,7 +62,196 @@ namespace ImGui {
 			EndCombo();
 		}
 	}
-};
+
+	template<typename S>
+	void ViewAny(string label, S val, bool open) {
+
+		View_T(label, &val, TYPEINFO(S), open);
+	}
+
+	template<typename S>
+	void EditAny(string label, S* val, bool open) {
+
+		Edit_T(label, val, TYPEINFO(S), open);
+	}
+
+	constexpr u32 const_hash(const char* str) {
+
+	    return *str ? (u32)(*str) + 33 * const_hash(str + 1) : 5381;
+	}
+
+	void View_T(string label, void* val, _type_info* info, bool open = false) {
+
+		if(info->type_type != Type::_array && info->type_type != Type::_struct) {
+			Text("%s", label.c_str); SameLine();
+		}
+
+		switch(info->type_type) {
+		case Type::_int: {
+			Text("%d", int_as_i64(val, info));
+		} break;
+
+		case Type::_float: {
+			Text("%f", float_as_f64(val, info));
+		} break;
+
+		case Type::_bool: {
+			*(bool*)val ? Text("true") : Text("false");
+		} break;
+
+		case Type::_ptr: {
+			Text("%p", *(void**)val);
+		} break;
+
+		case Type::_array: {
+			if(TreeNodeEx(label, open ? ImGuiTreeNodeFlags_DefaultOpen : 0)) {
+				
+				_type_info* of = TYPEINFO_H(info->_array.of);
+
+				for(u32 i = 0; i < info->_array.length; i++) {
+
+					u8* place = (u8*)val + i * of->size;
+					PushID(i);
+					View_T(""_, place, of);
+					PopID();
+				}
+				TreePop();
+			}
+		} break;
+
+		case Type::_func: {
+			Text(info->_func.signature);
+		} break;
+
+		// TODO(max): specializations for data structures
+		case Type::_struct: {
+			u32 name = const_hash(info->name.c_str);
+
+			switch(name) {
+			case const_hash("v2"): {
+				v2* v = (v2*)val;
+				Text("%s {%f,%f}", label.c_str, v->x, v->y);
+			} break;
+			case const_hash("v3"): {
+				v3* v = (v3*)val;
+				Text("%s {%f,%f,%f}", label.c_str, v->x, v->y, v->z);
+			} break;
+			case const_hash("v4"): {
+				v4* v = (v4*)val;
+				Text("%s {%f,%f,%f,%f}", label.c_str, v->x, v->y, v->z, v->w);
+			} break;
+			default: {
+				if(TreeNodeEx(label, open ? ImGuiTreeNodeFlags_DefaultOpen : 0)) {
+
+					for(u32 i = 0; i < info->_struct.member_count; i++) {
+
+						string member_name = info->_struct.member_names[i];
+						_type_info* member = TYPEINFO_H(info->_struct.member_types[i]);
+						u8* place = (u8*)val + info->_struct.member_offsets[i];
+
+						View_T(member_name, place, member);
+					}
+					TreePop();
+				}
+			} break;
+			}
+		} break;
+
+		case Type::_enum: {
+			Text(enum_to_string(int_as_i64(val, TYPEINFO_H(info->_enum.base_type)), info));
+		} break;
+
+		case Type::_string: {
+			Text("\"%s\"", (*(string*)val).c_str);
+		} break;
+		}
+	}
+
+	void Edit_T(string label, void* val, _type_info* info, bool open = false) {
+
+		switch(info->type_type) {
+		case Type::_int: {
+			LOG_DEBUG_ASSERT(info->size == 4 && info->_int.is_signed);
+			InputInt(label, (i32*)val);
+		} break;
+
+		case Type::_float: {
+			LOG_DEBUG_ASSERT(info->size == 4);
+			InputFloat(label, (f32*)val);
+		} break;
+
+		case Type::_bool: {
+			Checkbox(label, (bool*)val);
+		} break;
+
+		case Type::_ptr: {
+			Text("%p", *(void**)val);
+		} break;
+
+		case Type::_array: {
+			if(TreeNodeEx(label, open ? ImGuiTreeNodeFlags_DefaultOpen : 0)) {
+				
+				_type_info* of = TYPEINFO_H(info->_array.of);
+
+				for(u32 i = 0; i < info->_array.length; i++) {
+
+					u8* place = (u8*)val + i * of->size;
+					PushID(i);
+					Edit_T(""_, place, of);
+					PopID();
+				}
+				TreePop();
+			}
+		} break;
+
+		case Type::_func: {
+			Text(info->_func.signature);
+		} break;
+
+		// TODO(max): specializations for data structures
+		// TODO(max): reflect member range labels for sliders
+		case Type::_struct: {
+			u32 name = const_hash(info->name.c_str);
+
+			switch(name) {
+			case const_hash("v2"): {
+				InputFloat2(label, ((v2*)val)->a);
+			} break;
+			case const_hash("v3"): {
+				InputFloat3(label, ((v3*)val)->a);
+			} break;
+			case const_hash("v4"): {
+				InputFloat4(label, ((v4*)val)->a);
+			} break;
+			default: {
+				if(TreeNodeEx(label, open ? ImGuiTreeNodeFlags_DefaultOpen : 0)) {
+
+					for(u32 i = 0; i < info->_struct.member_count; i++) {
+
+						string member_name = info->_struct.member_names[i];
+						_type_info* member = TYPEINFO_H(info->_struct.member_types[i]);
+						u8* place = (u8*)val + info->_struct.member_offsets[i];
+
+						Edit_T(member_name, place, member);
+					}
+					TreePop();
+				}
+			} break;
+			}
+		} break;
+
+		case Type::_enum: {
+			EnumCombo_T(label, val, info, 0);
+		} break;
+
+		case Type::_string: {
+			// NOTE(max): DANGER! If string is statically (as in text segment) allocated, editing it will crash the program
+			string s = *(string*)val;
+			InputText(label, s.c_str, s.cap);
+		} break;
+		}
+	}
+}
 
 void* imgui_alloc(u64 size, void* data) { PROF
 
