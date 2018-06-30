@@ -45,7 +45,7 @@ struct chunk_vertex {
 static_assert(sizeof(chunk_vertex) == 8, "chunk_vertex size != 8");
 
 namespace render_command_type {
-	u16 mesh_chunk = 16;
+	u16 mesh_chunk = 1024;
 };
 
 struct mesh_chunk {
@@ -120,8 +120,10 @@ struct world_settings {
 
 	f32 gravity = 0.0f;
 	i32 view_distance = 1;
-	bool wireframe = false;
 	bool respect_cam = true;
+	
+	bool wireframe = false;
+	bool cull_backface = true;
 };
 
 struct world {

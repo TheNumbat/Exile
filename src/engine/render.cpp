@@ -189,6 +189,8 @@ ogl_manager ogl_manager::make(platform_window* win, allocator* a) { PROF
 	ret.alloc = a;
 	ret.textures = map<texture_id, texture>::make(32, a);
 	ret.commands = map<u16, draw_context>::make(32, a);
+	ret.settings = stack<ogl_settings>::make(4, a);
+	ret.settings.push(ogl_settings());
 
 	ret.load_global_funcs();
 	ret.info = ogl_info::make(ret.alloc);
@@ -202,6 +204,8 @@ ogl_manager ogl_manager::make(platform_window* win, allocator* a) { PROF
 	ret.add_command(render_command_type::mesh_lines, FPTR(buffers_mesh_lines), FPTR(run_mesh_lines), "shaders/mesh_lines.v"_, "shaders/mesh_lines.f"_, FPTR(uniforms_mesh_lines), FPTR(compat_mesh_lines));
 
 	ret.dbg_shader = shader_program::make("shaders/dbg.v"_,"shaders/dbg.f"_,FPTR(uniforms_dbg),a);
+
+	glBlendFunc(gl_blend_factor::one, gl_blend_factor::one_minus_src_alpha);
 
 	return ret;
 }
@@ -219,6 +223,7 @@ void ogl_manager::destroy() { PROF
 	textures.destroy();
 	commands.destroy();
 	info.destroy();
+	settings.destroy();
 
 	check_leaked_handles();
 } 
@@ -545,31 +550,86 @@ draw_context* ogl_manager::get_command_ctx(u16 id) { PROF
 	return d;
 }
 
-void ogl_manager::execute_command_list(render_command_list* rcl) { PROF
+void ogl_manager::push_settings() {
 
-	glEnable(gl_capability::blend);
-	glEnable(gl_capability::scissor_test);
-	glBlendFunc(gl_blend_factor::one, gl_blend_factor::one_minus_src_alpha);
+	settings.push(ogl_settings());
+}
+
+void ogl_manager::pop_settings() {
+
+	settings.pop();
+}
+
+void ogl_manager::set_setting(render_setting setting, bool enable) {
+
+	ogl_settings* set = settings.top();
+
+	switch(setting) {
+	case render_setting::wireframe: set->polygon_line = enable; break;
+	case render_setting::depth_test: set->depth_test = enable; break;
+	case render_setting::aa_lines: set->line_smooth = enable; break;
+	case render_setting::blend: set->blend = enable; break;
+	case render_setting::scissor: set->scissor = enable; break;
+	case render_setting::cull: set->cull_backface = enable; break;
+	default: break;
+	}
+}
+
+void ogl_manager::apply_settings() {
+
+	ogl_settings* set = settings.top();
+
+	set->polygon_line 	? glPolygonMode(gl_poly::front_and_back, gl_poly_mode::line) : glPolygonMode(gl_poly::front_and_back, gl_poly_mode::fill);
+	set->depth_test 	? glEnable(gl_capability::depth_test) : glDisable(gl_capability::depth_test);
+	set->line_smooth 	? glEnable(gl_capability::line_smooth) : glDisable(gl_capability::line_smooth);
+	set->blend 			? glEnable(gl_capability::blend) : glDisable(gl_capability::blend);
+	set->scissor 		? glEnable(gl_capability::scissor_test) : glDisable(gl_capability::scissor_test);
+	set->cull_backface 	? glEnable(gl_capability::cull_face) : glDisable(gl_capability::cull_face);
+}
+
+void ogl_manager::execute_command_list(render_command_list* rcl) { PROF
 
 	FORVEC(cmd, rcl->commands) {
 
-		cmd_set_settings(cmd);
+		switch(cmd->cmd) {
+		case render_command_type::push_settings: {
+			push_settings();
+		} break;
+		case render_command_type::pop_settings: {
+			pop_settings();
+		} break;
+		case render_command_type::setting: {
+			set_setting(cmd->setting, cmd->enable);
+		} break;
+		default: {
+			cmd_set_settings(cmd);
 
-		draw_context* d = get_command_ctx(cmd->cmd);
+			draw_context* d = get_command_ctx(cmd->cmd);
 
-		d->send_buffers(cmd);
-		d->shader.send_uniforms(&d->shader, cmd, rcl);
+			d->send_buffers(cmd);
+			d->shader.send_uniforms(&d->shader, cmd, rcl);
 
-		select_texture(cmd->texture);
-		d->run(cmd);
+			select_texture(cmd->texture);
+			d->run(cmd);
+		} break;
+		}
 
 		if(cmd->callback) cmd->callback(cmd->param);
 	}
-
-	glDisable(gl_capability::scissor_test);
 }
 
 void ogl_manager::cmd_set_settings(render_command* cmd) {
+
+	apply_settings();
+
+	// NOTE(max): special cases for built-in non-defaults 
+	if(cmd->cmd == render_command_type::mesh_2d_col ||
+	   cmd->cmd == render_command_type::mesh_2d_tex ||
+	   cmd->cmd == render_command_type::mesh_2d_tex_col) {
+		glDisable(gl_capability::depth_test);		
+	} else if(cmd->cmd == render_command_type::mesh_lines) {
+		glEnable(gl_capability::line_smooth);
+	}
 
 	ur2 viewport = cmd->viewport.to_u(), scissor = cmd->scissor.to_u();
 
@@ -584,7 +644,6 @@ void ogl_manager::cmd_set_settings(render_command* cmd) {
 		glScissor(0, 0, win->w, win->h);
 }
 
-// temporary and inefficient texture render
 void ogl_manager::dbg_render_texture_fullscreen(texture_id id) { PROF
 
 	f32 data[] = {

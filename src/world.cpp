@@ -39,14 +39,14 @@ void world::init(asset_store* store, allocator* a) { PROF
 	thread_pool = threadpool::make(a, eng->platform->get_phys_cpus() - 1);
 	thread_pool.start_all();
 
-	eng->dbg.add_ele("world/ui"_, FPTR(world_debug_ui), this);
+	eng->dbg.add_ele("ui"_, FPTR(world_debug_ui), this);
 	
-	eng->dbg.add_var("world/settings"_, &settings);
-	eng->dbg.add_var("world/player/cam"_, &p.camera);
-	eng->dbg.add_var("world/player/speed"_, &p.speed);
-	eng->dbg.add_var("world/player/enable"_, &p.enable);
-	eng->dbg.add_var("world/player/noclip"_, &p.noclip);
-	eng->dbg.add_ele("world/player/inter"_, FPTR(player_debug_ui), this);
+	eng->dbg.add_var("world"_, &settings);
+	eng->dbg.add_var("player/cam"_, &p.camera);
+	eng->dbg.add_var("player/speed"_, &p.speed);
+	eng->dbg.add_var("player/enable"_, &p.enable);
+	eng->dbg.add_var("player/noclip"_, &p.noclip);
+	eng->dbg.add_ele("player/inter"_, FPTR(player_debug_ui), this);
 }
 
 void world::destroy_chunks() { PROF 
@@ -179,6 +179,12 @@ void world::render_chunks() { PROF
 	render_command_list rcl = render_command_list::make();
 	thread_pool.renew_priorities(check_pirority, this);
 
+	rcl.push_settings();
+	if(settings.wireframe)
+		rcl.set_setting(render_setting::wireframe, true);
+	if(settings.cull_backface)
+		rcl.set_setting(render_setting::cull, true);
+
 	chunk_pos camera = chunk_pos::from_abs(p.camera.pos);
 	for(i32 x = -settings.view_distance; x <= settings.view_distance; x++) {
 		for(i32 z = -settings.view_distance; z <= settings.view_distance; z++) {
@@ -234,12 +240,9 @@ void world::render_chunks() { PROF
 	rcl.view = p.camera.view_no_translate();
 	rcl.proj = proj(p.camera.fov, (f32)eng->window.w / (f32)eng->window.h, 0.01f, 2000.0f);
 
-	if(settings.wireframe)
-		glPolygonMode(gl_poly::front_and_back, gl_poly_mode::line);
+	rcl.pop_settings();
 
 	eng->ogl.execute_command_list(&rcl);
-	glPolygonMode(gl_poly::front_and_back, gl_poly_mode::fill);
-
 	rcl.destroy();
 }
 
@@ -716,14 +719,8 @@ CALLBACK void run_mesh_chunk(render_command* cmd) { PROF
 
 	glBindVertexArray(m->vao);
 
-	glEnable(gl_capability::depth_test);
-	glEnable(gl_capability::cull_face);
-
 	u32 num_tris = ((cmd->num_tris ? cmd->num_tris : m->elements.size) - cmd->start_tri) * 3;
 	glDrawElementsBaseVertex(gl_draw_mode::triangles, num_tris, gl_index_type::unsigned_int, (void*)(u64)(0), cmd->offset);
-
-	glDisable(gl_capability::cull_face);
-	glDisable(gl_capability::depth_test);
 
 	glBindVertexArray(0);
 }

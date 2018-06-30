@@ -194,11 +194,9 @@ CALLBACK void run_mesh_2d_col(render_command* cmd) { PROF
 
 	glBindVertexArray(m->vao);
 
-	glDisable(gl_capability::depth_test);
-
 	u32 num_tris = ((cmd->num_tris ? cmd->num_tris : m->elements.size) - cmd->start_tri) * 3;
 	glDrawElementsBaseVertex(gl_draw_mode::triangles, num_tris, gl_index_type::unsigned_int, (void*)(u64)(0), cmd->offset);
-	
+
 	glBindVertexArray(0);
 }
 
@@ -207,8 +205,6 @@ CALLBACK void run_mesh_2d_tex(render_command* cmd) { PROF
 	mesh_2d_tex* m = (mesh_2d_tex*)cmd->mesh;
 
 	glBindVertexArray(m->vao);
-
-	glDisable(gl_capability::depth_test);
 
 	u32 num_tris = ((cmd->num_tris ? cmd->num_tris : m->elements.size) - cmd->start_tri) * 3;
 	glDrawElementsBaseVertex(gl_draw_mode::triangles, num_tris, gl_index_type::unsigned_int, (void*)(u64)(0), cmd->offset);
@@ -222,8 +218,6 @@ CALLBACK void run_mesh_2d_tex_col(render_command* cmd) { PROF
 
 	glBindVertexArray(m->vao);
 
-	glDisable(gl_capability::depth_test);
-
 	u32 num_tris = ((cmd->num_tris ? cmd->num_tris : m->elements.size) - cmd->start_tri) * 3;
 	glDrawElementsBaseVertex(gl_draw_mode::triangles, num_tris, gl_index_type::unsigned_int, (void*)(u64)(0), cmd->offset);
 
@@ -235,8 +229,6 @@ CALLBACK void run_mesh_3d_tex(render_command* cmd) { PROF
 	mesh_3d_tex* m = (mesh_3d_tex*)cmd->mesh;
 
 	glBindVertexArray(m->vao);
-
-	glEnable(gl_capability::depth_test);
 
 	u32 num_tris = ((cmd->num_tris ? cmd->num_tris : m->elements.size) - cmd->start_tri) * 3;
 	glDrawElementsBaseVertex(gl_draw_mode::triangles, num_tris, gl_index_type::unsigned_int, (void*)(u64)(0), cmd->offset);
@@ -250,12 +242,7 @@ CALLBACK void run_mesh_lines(render_command* cmd) { PROF
 
 	glBindVertexArray(m->vao);
 
-	glEnable(gl_capability::depth_test);
-	glEnable(gl_capability::line_smooth);
-
 	glDrawArrays(gl_draw_mode::lines, 0, m->vertices.size);
-
-	glDisable(gl_capability::line_smooth);
 
 	glBindVertexArray(0);
 }
@@ -266,8 +253,6 @@ CALLBACK void run_mesh_3d_tex_instanced(render_command* cmd) { PROF
 	mesh_3d_tex* m = data->parent;
 
 	glBindVertexArray(m->vao);
-
-	glEnable(gl_capability::depth_test);
 
 	u32 num_tris = ((cmd->num_tris ? cmd->num_tris : m->elements.size) - cmd->start_tri) * 3;
 
@@ -667,14 +652,28 @@ bool mesh_3d_tex::empty() { PROF
 	return !vertices.size;
 }
 
+render_command render_command::make(u16 type) {
+
+	render_command ret;
+	ret.cmd = type;
+	return ret;
+}
+
+render_command render_command::make(u16 type, render_setting setting, bool enable) { PROF
+
+	render_command ret;
+	ret.cmd = type;
+	ret.setting = setting;
+	ret.enable = enable;
+	return ret;
+}
+
 render_command render_command::make(u16 id, void* data, u32 key) { PROF
 
 	render_command ret;
-
 	ret.cmd = id;
 	ret.sort_key = key;
 	ret.mesh = data;
-
 	return ret;
 }
 
@@ -707,6 +706,21 @@ void render_command_list::destroy() { PROF
 
 	commands.destroy();
 	alloc = null;
+}
+
+void render_command_list::push_settings() {
+
+	add_command(render_command::make(render_command_type::push_settings));
+}
+
+void render_command_list::pop_settings() {
+
+	add_command(render_command::make(render_command_type::pop_settings));
+}
+
+void render_command_list::set_setting(render_setting setting, bool enable) {
+
+	add_command(render_command::make(render_command_type::setting, setting, enable));
 }
 
 void render_command_list::add_command(render_command rc) { PROF

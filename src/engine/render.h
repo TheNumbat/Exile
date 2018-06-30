@@ -89,9 +89,20 @@ struct ogl_info {
 	bool check_version(i32 major, i32 minor);
 };
 
+struct ogl_settings {
+	bool polygon_line = false;
+	bool depth_test = true;
+	bool line_smooth = false;
+	bool blend = true;
+	bool scissor = true;
+	bool cull_backface = false;
+};
+
 struct ogl_manager {
 	map<texture_id, texture> textures;
 	map<u16, draw_context> 	 commands;
+
+	stack<ogl_settings> settings;
 
 	shader_program dbg_shader;
 	ogl_info info;
@@ -101,9 +112,13 @@ struct ogl_manager {
 	platform_window* win = null;
 	allocator* alloc = null;
 
-
 	static ogl_manager make(platform_window* win, allocator* a);
 	void destroy();
+
+	void push_settings();
+	void pop_settings();
+	void set_setting(render_setting setting, bool enable);
+	void apply_settings();
 
 	void try_reload_programs();
 	void reload_texture_assets(asset_store* store);
