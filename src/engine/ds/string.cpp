@@ -1004,6 +1004,17 @@ string string::substring(u32 start, u32 end) {
 	return ret;
 }
 
+i32 string::first_slash() { 
+
+	for(u32 i = 0; i < len; i++) {
+		if(c_str[i] == '\\' || c_str[i] == '/') {
+			return i;
+		}
+	}
+
+	return -1;
+}
+
 i32 string::last_slash() { 
 
 	for(u32 i = len - 1; i >= 0; i--) {

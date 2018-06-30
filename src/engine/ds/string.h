@@ -44,7 +44,8 @@ struct NOREFLECT string { // no-reflect because hard-coded
 	u32 parse_u32(u32 idx = 0, u32* used = null);
 
 	string substring(u32 start, u32 end); 	// uses same memory
-	i32 last_slash(); 						// this returns an i32. just use this on non-2GB strings...
+	i32 last_slash();
+	i32 first_slash();
 
 	template<typename... Targs> void writef(string fmt, Targs... args);
 

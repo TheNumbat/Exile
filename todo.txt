@@ -1,14 +1,20 @@
 
 Working To-Do:
 
-	movement physics
-	world interaction
-	chunk paging
+	global debug UI widget/reactive values
+	debug console
 
 	skybox
 	directional/sun lighting
 	lights
-	shadow mapping?
+	sample shading
+	bindless textures
+	shadow mapping
+	normal mapping
+
+	movement physics
+	world interaction
+	chunk paging
 
 	config format language
 		rewrite metaprogram to use it

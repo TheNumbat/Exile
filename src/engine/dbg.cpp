@@ -14,12 +14,21 @@ dbg_manager dbg_manager::make(allocator* alloc) { PROF
 	global_api->create_mutex(&ret.stats_map_mut, false);
 	global_api->create_mutex(&ret.alloc_map_mut, false);
 
+	ret.value_store = dbg_value::make_sec(alloc);
+
 	return ret;
 }
 
-void dbg_manager::toggle_ui() { PROF
+void dbg_manager::toggle_profile() { PROF
+	show_profile = !show_profile;
+}
 
-	show_ui = !show_ui;
+void dbg_manager::toggle_vars() { PROF
+	show_vars = !show_vars;
+}
+
+void dbg_manager::toggle_console() { PROF
+	show_console = !show_console;
 }
 
 void alloc_frame_profile::destroy() { PROF
@@ -76,6 +85,8 @@ void dbg_manager::destroy() { PROF
 		DESTROY_ARENA(&it->arena);
 	} FORQ_END(it, log_cache);
 	log_cache.destroy();
+
+	value_store.destroy();
 
 	POP_ALLOC();
 	DESTROY_ARENA(&scratch);
@@ -161,10 +172,40 @@ void dbg_manager::UI(platform_window* window) { PROF
 
 	if(!show_ui) return;
 
+	if(show_profile)
+		UIprofiler(window);
+	if(show_vars)
+		UIvars(window);
+	if(show_console)
+		UIconsole(window);
+}
+
+void dbg_manager::UIvars_recurse(map<string, dbg_value> store) { PROF
+
+	FORMAP(it, store) {
+		if(it->value.type == dbg_value_class::section) {
+			if(ImGui::TreeNode(it->key)) {
+				UIvars_recurse(it->value.children);
+				ImGui::TreePop();
+			}
+		} else {
+			ImGui::Edit_T(it->key, it->value.value, it->value.info);
+		}
+	}
+}
+
+void dbg_manager::UIvars(platform_window* window) { PROF
+
+	ImGui::Begin("Debug Vars", null, ImGuiWindowFlags_AlwaysAutoResize);
+	UIvars_recurse(value_store.children);
+	ImGui::End();
+}
+
+void dbg_manager::UIconsole(platform_window* window) { PROF
+
 	i32 win_w, win_h;
 	global_api->get_window_drawable(window, &win_w, &win_h);
 
-	// NOTE(max): all the makef-ing here just comes from the scratch buffer
 	ImGui::SetNextWindowPos({0.0f, floor((f32)win_h * 0.75f)});
 	ImGui::SetNextWindowSize({(f32)win_w, ceil((f32)win_h * 0.25f)});
 	ImGui::Begin("Console"_, null, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings);
@@ -177,9 +218,12 @@ void dbg_manager::UI(platform_window* window) { PROF
 	} FORQ_END(it, log_cache);
 
 	ImGui::End();
+}
+
+void dbg_manager::UIprofiler(platform_window* window) { PROF
 
 	ImGui::SetNextWindowSize({800, 600}, ImGuiCond_Once);
-	ImGui::Begin("Debug"_, null, ImGuiWindowFlags_NoSavedSettings);
+	ImGui::Begin("Profile"_, null, ImGuiWindowFlags_NoSavedSettings);
 	
 	ImGui::Text(string::makef("FPS: %"_, 1.0f / last_frame_time));
 	ImGui::Checkbox("Pause"_, &frame_pause);
@@ -651,6 +695,61 @@ void dbg_manager::fixdown_self_timings(profile_node* node) { PROF
 	node->self = node->heir - children;
 }
 
+template<typename T>
+void dbg_manager::add_var(string path, T* val) { PROF
+
+	dbg_value* value = &value_store;
+	path.len--;
+
+	for(;;) {
+		
+		string key;
+		i32 slash = path.first_slash();
+		if(slash != -1) {
+			key  = path.substring(0, (u32)slash - 1);
+			path = path.substring((u32)slash + 1, path.len);
+		} else {
+			key = path;
+			if(!value->children.try_get(key))
+				value->children.insert(key, dbg_value::make_val(TYPEINFO(T), val));
+			break;
+		}
+
+		dbg_value* next = value->children.try_get(key);
+		if(!next) value = value->children.insert(key, dbg_value::make_sec(alloc));
+		else if (next->type != dbg_value_class::section) break;
+		else value = next;
+	}
+}
+
+template<typename T>
+T dbg_manager::get_var(string path) { PROF
+
+	dbg_value* value = &value_store;
+	path.len--;
+
+	for(;;) {
+		
+		string key;
+		i32 slash = path.first_slash();
+		if(slash != -1) {
+			key  = path.substring(0, (u32)slash - 1);
+			path = path.substring((u32)slash + 1, path.len);
+		} else {
+			key = path;
+			value = value->children.try_get(key);
+			break;
+		}
+
+		value = value->children.try_get(key);
+		if(!value) return null;
+	}
+
+	LOG_DEBUG_ASSERT(value->type == dbg_value_class::value);
+	LOG_DEBUG_ASSERT(value->info == TYPEINFO(T));
+	return *(T*)value->value;
+}
+
 CALLBACK void dbg_add_log(log_message* msg, void* param) { PROF
 
 	dbg_manager* dbg = (dbg_manager*)param;
@@ -667,6 +766,36 @@ CALLBACK void dbg_add_log(log_message* msg, void* param) { PROF
 	m->call_stack  = array<code_context>::make_copy(&msg->call_stack, &m->arena);
 	m->thread_name = string::make_copy(msg->thread_name, &m->arena);
 	m->msg         = string::make_copy(msg->msg, &m->arena);
+}
+
+dbg_value dbg_value::make_sec(allocator* alloc) {
+
+	dbg_value ret;
+	ret.type = dbg_value_class::section;
+	ret.children = map<string,dbg_value>::make(8, alloc);
+	return ret;
+}
+
+dbg_value dbg_value::make_val(_type_info* i, void* v) {
+
+	dbg_value ret;
+	ret.type = dbg_value_class::value;
+	ret.info = i;
+	ret.value = v;
+	return ret;
+}
+
+void dbg_value::destroy() {
+
+	if(type == dbg_value_class::section) {
+		FORMAP(it, children) {
+			it->value.destroy();
+		}
+		children.destroy();
+	} else {
+		info = null;
+		value = null;
+	}
 }
 
 bool prof_sort_name(profile_node* l, profile_node* r) {

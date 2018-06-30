@@ -1,12 +1,16 @@
 
 namespace ImGui {
 
+	bool TreeNode(string label) {
+	    return TreeNodeL(label.c_str, label.c_str + label.len);
+	}
+
 	bool InputText(string label, string buf, ImGuiInputTextFlags flags, ImGuiTextEditCallback callback, void* user_data) {
 		return InputText(label.c_str, buf.c_str, buf.cap, flags, callback, user_data);
 	}
 
 	void Text(string text) {
-		return TextUnformatted(text.c_str);
+		return TextUnformatted(text.c_str, text.c_str + text.len);
 	}
 
 	template<typename E>
@@ -80,7 +84,7 @@ namespace ImGui {
 	    return *str ? (u32)(*str) + 33 * const_hash(str + 1) : 5381;
 	}
 
-	void View_T(string label, void* val, _type_info* info, bool open = false) {
+	void View_T(string label, void* val, _type_info* info, bool open) {
 
 		if(info->type_type != Type::_array && info->type_type != Type::_struct) {
 			Text("%s", label.c_str); SameLine();
@@ -167,7 +171,7 @@ namespace ImGui {
 		}
 	}
 
-	void Edit_T(string label, void* val, _type_info* info, bool open = false) {
+	void Edit_T(string label, void* val, _type_info* info, bool open) {
 
 		switch(info->type_type) {
 		case Type::_int: {
@@ -292,6 +296,8 @@ imgui_manager imgui_manager::make(platform_window* window, allocator* a) { PROF
 	ImGuiStyle& style = ImGui::GetStyle();
 
 	style.WindowRounding = 0.0f;
+
+	io.IniFilename = null;
 
 	io.BackendFlags |= ImGuiBackendFlags_HasMouseCursors;
 	io.BackendFlags |= ImGuiBackendFlags_HasSetMousePos;

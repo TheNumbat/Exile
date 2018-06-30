@@ -10,6 +10,12 @@ namespace ImGui {
 
 	template<typename S> void ViewAny(string label, S val, bool open = false);
 	template<typename S> void EditAny(string label, S* val, bool open = false);
+
+	bool TreeNode(string label);
+
+	void EnumCombo_T(string label, void* val, _type_info* info, ImGuiComboFlags flags);
+	void View_T(string label, void* val, _type_info* info, bool open = false);
+	void Edit_T(string label, void* val, _type_info* info, bool open = false);
 }
 
 struct imgui_gl_info {

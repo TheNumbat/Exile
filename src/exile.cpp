@@ -39,6 +39,22 @@ void exile::update() { PROF
 
 void exile::render() { PROF
 
+	const ImGuiWindowFlags flags = ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_AlwaysAutoResize;
+	if(!eng->dbg.show_ui) {
+		ImGui::SetNextWindowPos({0.0f, 0.0f});
+		ImGui::Begin("Help"_, null, flags);
+		ImGui::Text("GRAVE : show debug UI");
+		ImGui::Text("W/A/S/D/Space/Shift : move");
+		ImGui::End();
+	} else {
+		ImGui::SetNextWindowPos({0.0f, 0.0f});
+		ImGui::Begin("Help"_, null, flags);
+		ImGui::Text("GRAVE : hide debug UI");
+		ImGui::Text("P : toggle profiler");
+		ImGui::Text("O : toggle debug vars");
+		ImGui::End();
+	}
+
 	w.render();
 }
 
@@ -69,8 +85,8 @@ CALLBACK bool default_evt_handle(void* param, platform_event evt) { PROF
 
 CALLBACK void camera_to_ui(void* param) { PROF
 
-	eng->dbg.show_ui = true;
 	eng->platform->release_mouse(&eng->window);
+	eng->dbg.show_ui = true;
 
 	player* p = (player*)param;
 	p->enable = false;
@@ -78,8 +94,8 @@ CALLBACK void camera_to_ui(void* param) { PROF
 
 CALLBACK void ui_to_camera(void* param) { PROF
 
-	eng->dbg.show_ui = false;
 	eng->platform->capture_mouse(&eng->window);
+	eng->dbg.show_ui = false;
 
 	player* p = (player*)param;
 	p->enable = true;
@@ -142,6 +158,18 @@ CALLBACK bool ui_evt_handle(void* param, platform_event evt) { PROF
 
 				game->controls.transition(game->camera_evt);
 
+			} return true;
+
+			case platform_keycode::p: {
+
+				eng->dbg.toggle_profile();
+
+			} return true;
+
+			case platform_keycode::o: {
+
+				eng->dbg.toggle_vars();
+				
 			} return true;
 
 			default: return false;

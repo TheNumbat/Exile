@@ -192,9 +192,31 @@ enum class prof_sort_type : u8 {
 	calls,
 };
 
+enum class dbg_value_class : u8 {
+	section,
+	value
+};
+
+struct dbg_value {
+	dbg_value_class type = dbg_value_class::section;
+	union {
+		map<string, dbg_value> children;
+		struct {
+			_type_info* info;
+			void* value;
+		};
+	};
+	dbg_value() {}
+	static dbg_value make_sec(allocator* alloc);
+	static dbg_value make_val(_type_info* i, void* v);
+	void destroy();
+};
+
 struct dbg_manager {
 
-	bool frame_pause = true, show_ui = false;
+	bool frame_pause = true;
+	bool show_ui = false, show_profile = false, show_vars = false, show_console = true;
+
 	platform_thread_id selected_thread;
 	f32 last_frame_time = 0.0f;
 
@@ -209,7 +231,9 @@ struct dbg_manager {
 	map<allocator, alloc_profile*> alloc_stats;
 
 	locking_queue<log_message> log_cache;
-	log_level lvl = log_level::info;
+	log_level lvl = log_level::info; 
+
+	dbg_value value_store;
 
 	arena_allocator scratch;
 
@@ -218,10 +242,8 @@ struct dbg_manager {
 	static dbg_manager make(allocator* alloc);
 	void destroy();
 
-	void UI(platform_window* window);
 	void profile_recurse(vector<profile_node*> list);
-	void toggle_ui();
-
+	
 	void fixdown_self_timings(profile_node* node);
 	void process_frame_alloc_msg(frame_profile* frame, dbg_msg* msg);
 	void process_alloc_msg(dbg_msg* msg);
@@ -231,10 +253,23 @@ struct dbg_manager {
 
 	void register_thread(u32 frames);
 
+	template<typename T> void add_var(string path, T* value);
+	template<typename T> T get_var(string path);
+
 	void collate();
 	void collate_thread_profile();
 	void collate_alloc_profile();
 	alloc_profile get_totals();
+
+	void UI(platform_window* window);
+	void UIprofiler(platform_window* window);
+	void UIvars(platform_window* window);
+	void UIvars_recurse(map<string, dbg_value> store);
+	void UIconsole(platform_window* window);
+
+	void toggle_profile();
+	void toggle_vars();
+	void toggle_console();
 };
 
 void _prof_sec(string name, code_context context);

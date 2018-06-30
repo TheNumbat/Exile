@@ -19,6 +19,12 @@ void world::init(asset_store* store, allocator* a) { PROF
 
 	thread_pool = threadpool::make(a, eng->platform->get_phys_cpus() - 1);
 	thread_pool.start_all();
+
+	eng->dbg.add_var("world/settings"_, &settings);
+	eng->dbg.add_var("world/player/speed"_, &p.speed);
+	eng->dbg.add_var("world/player/enable"_, &p.enable);
+	eng->dbg.add_var("world/player/fov"_, &p.camera.fov);
+	eng->dbg.add_var("world/player/reach"_, &p.camera.reach);
 }
 
 void world::destroy_chunks() { PROF 
@@ -74,13 +80,8 @@ v3 world::raymarch(v3 pos3, v3 dir3, f32 max) { PROF
 
 void world::update(u64 now) { PROF
 
+#if 0
 	ImGui::Begin("World"_, null, ImGuiWindowFlags_AlwaysAutoResize);
-	
-	ImGui::SliderInt("view", &view_distance, 0, 32);
-
-	ImGui::Checkbox("Wireframe "_, &wireframe);
-	ImGui::SameLine();
-	ImGui::Checkbox("Respect Cam "_, &respect_cam);
 	
 	if(ImGui::Button("Regenerate"_)) {
 		
@@ -94,16 +95,17 @@ void world::update(u64 now) { PROF
 		p.reset();
 	}
 
-	update_player(now);
-
 	ImGui::End();
+#endif
+
+	update_player(now);
 }
 
 void world::populate_local_area() { PROF
 
 	chunk_pos camera = chunk_pos::from_abs(p.camera.pos);
-	for(i32 x = -view_distance; x <= view_distance; x++) {
-		for(i32 z = -view_distance; z <= view_distance; z++) {
+	for(i32 x = -settings.view_distance; x <= settings.view_distance; x++) {
+		for(i32 z = -settings.view_distance; z <= settings.view_distance; z++) {
 
 			chunk_pos current = camera + chunk_pos(x,0,z);
 			current.y = 0;
@@ -142,8 +144,8 @@ float check_pirority(super_job* j, void* param) {
 
 	v3 center = c->pos.center_xz();
 
-	if(abs(center.x - p->camera.pos.x) > (f32)(w->view_distance + 1) * chunk::xsz ||
-	   abs(center.z - p->camera.pos.z) > (f32)(w->view_distance + 1) * chunk::zsz) {
+	if(abs(center.x - p->camera.pos.x) > (f32)(w->settings.view_distance + 1) * chunk::xsz ||
+	   abs(center.z - p->camera.pos.z) > (f32)(w->settings.view_distance + 1) * chunk::zsz) {
 		return -FLT_MAX;
 	}
 
@@ -159,6 +161,7 @@ CALLBACK void cancel_build(void* param) {
 void player::reset() { PROF
 
 	camera.reset();
+	camera.pos = {3.0f, 115.0f, 16.0f};
 	speed = 5.0f;
 	velocity = v3();
 	last = global_api->get_perfcount();
@@ -166,12 +169,8 @@ void player::reset() { PROF
 
 void world::render() { PROF
 
-	ImGui::Begin("World"_, null, ImGuiWindowFlags_AlwaysAutoResize);
-
 	render_chunks();
 	render_player();
-
-	ImGui::End();
 }
 
 void world::render_chunks() { PROF
@@ -180,10 +179,10 @@ void world::render_chunks() { PROF
 	thread_pool.renew_priorities(check_pirority, this);
 
 	chunk_pos camera = chunk_pos::from_abs(p.camera.pos);
-	for(i32 x = -view_distance; x <= view_distance; x++) {
-		for(i32 z = -view_distance; z <= view_distance; z++) {
+	for(i32 x = -settings.view_distance; x <= settings.view_distance; x++) {
+		for(i32 z = -settings.view_distance; z <= settings.view_distance; z++) {
 
-			chunk_pos current = respect_cam ? camera + chunk_pos(x,0,z) : chunk_pos(x,0,z);
+			chunk_pos current = settings.respect_cam ? camera + chunk_pos(x,0,z) : chunk_pos(x,0,z);
 			current.y = 0;
 			chunk** ch = chunks.try_get(current);
 
@@ -234,7 +233,7 @@ void world::render_chunks() { PROF
 	rcl.view = p.camera.view_no_translate();
 	rcl.proj = proj(p.camera.fov, (f32)eng->window.w / (f32)eng->window.h, 0.01f, 2000.0f);
 
-	if(wireframe)
+	if(settings.wireframe)
 		glPolygonMode(gl_poly::front_and_back, gl_poly_mode::line);
 
 	eng->ogl.execute_command_list(&rcl);
@@ -253,10 +252,9 @@ void world::render_player() { PROF
 		mesh_lines lines = mesh_lines::make();
 
 		lines.push(cam.pos, cam.pos + cam.front, colorf(1,0,0,1), colorf(0,0,1,1));
-		lines.push(cam.pos + cam.front, cam.pos + cam.reach3rd * cam.front, colorf(0,0,1,1), colorf(0,1,0,1));
+		lines.push(cam.pos + cam.front, cam.pos + cam.reach * cam.front, colorf(0,0,1,1), colorf(0,1,0,1));
 
-		v3 intersection = raymarch(cam.pos, cam.front, cam.reach3rd);
-		ImGui::ViewAny("inter:"_, intersection);
+		v3 intersection = raymarch(cam.pos, cam.front, cam.reach);
 
 		lines.push(cam.pos, intersection, colorf(0,0,0,1), colorf(0,0,0,1));
 
@@ -290,22 +288,18 @@ void world::render_player() { PROF
 	}
 
 	rcl.destroy();
-
-	ImGui::EditAny("camera:"_, &cam, true);
 }
 
 void world::update_player(u64 now) { PROF
 
 	render_camera& cam = p.camera;
 
-	ImGui::SliderFloat("gravity", &gravity, 0.0f, 10.0f);
-
 	u64 pdt = now - p.last;
 	f64 dt = (f64)pdt / (f64)eng->platform->get_perfcount_freq();
 
 	if(p.enable) {
 
-		v3 accel = v3(0.0f, -gravity, 0.0f);
+		v3 accel = v3(0.0f, -settings.gravity, 0.0f);
 		v3 mov_v;
 
 		if(eng->platform->window_focused(&eng->window)) {

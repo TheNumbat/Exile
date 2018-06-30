@@ -8633,6 +8633,13 @@ bool ImGui::TreeNode(const char* label)
     return TreeNodeBehavior(window->GetID(label), 0, label, NULL);
 }
 
+bool ImGui::TreeNodeL(const char* label, const char* label_end) {
+    ImGuiWindow* window = GetCurrentWindow();
+    if (window->SkipItems)
+        return false;
+    return TreeNodeBehavior(window->GetID(label, label_end), 0, label, label_end);
+}
+
 void ImGui::TreeAdvanceToLabelPos()
 {
     ImGuiContext& g = *GImGui;

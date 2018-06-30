@@ -833,7 +833,7 @@ m4 render_camera::view() {
 		return lookAt(pos, pos + front, up);
 	} break;
 	case camera_mode::third: {
-		return lookAt(pos - 2.0f * front + offset3rd, pos + reach3rd * front, up);
+		return lookAt(pos - 2.0f * front + offset3rd, pos + reach * front, up);
 	} break;
 	}
 
@@ -847,7 +847,7 @@ m4 render_camera::view_no_translate() {
 		return lookAt({}, front, up);
 	} break;
 	case camera_mode::third: {
-		return lookAt(-2.0f * front + offset3rd, reach3rd * front, up);
+		return lookAt(-2.0f * front + offset3rd, reach * front, up);
 	} break;
 	}
 
@@ -856,8 +856,7 @@ m4 render_camera::view_no_translate() {
 
 void render_camera::reset() {
 
-	pos = v3(3.0f, 115.0f, 16.0f);
-
+	pos = {};
 	pitch = 0.0f; yaw = -45.0f; fov = 60.0f;
 	update();
 }

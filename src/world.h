@@ -115,6 +115,14 @@ struct player {
 	void reset();
 };
 
+struct world_settings {
+
+	f32 gravity = 0.0f;
+	i32 view_distance = 1;
+	bool wireframe = false;
+	bool respect_cam = true;
+};
+
 struct world {
 	
 	// TODO(max): how do we really want to do storage here?
@@ -124,14 +132,10 @@ struct world {
 	// NOTE(max): map to pointers to chunk so the map can transform while chunks are being operated on
 	// TODO(max): use a free-list allocator to allocate the chunks
 	map<chunk_pos, chunk*> chunks;
-	
-	i32 view_distance = 1;
-	bool wireframe = false;
-	bool respect_cam = false;
-	f32 gravity = 10.0f;
 
 	texture_id block_textures;
 
+	world_settings settings;
 	player p;
 
 	threadpool thread_pool;
