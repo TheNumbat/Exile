@@ -3,6 +3,9 @@ Working To-Do:
 
 	global debug UI widget/reactive values
 	debug console
+	reload fonts on asset store load
+	serialization/deserialization
+	config format
 
 	skybox
 	directional/sun lighting
@@ -16,22 +19,14 @@ Working To-Do:
 	world interaction
 	chunk paging
 
-	config format language
-		rewrite metaprogram to use it
 
 Bugs:
-	SDL layer resets the cursor to pointer on every mouse move
-
 	allocation profiling is somewhat broken for the world system
+	
+	SDL layer resets the cursor to pointer on every mouse move
+	
+	profiler window | Time: XXXXXms?
 
-Everything not by me:
-	#include <stdarg.h>
-	#include <stdint.h>
-	#include <float.h>
-	#include <new>
-	#include <cmath>
-	#include <typeinfo>
-	#include <xmmintrin.h>/<intrin.h>
 
 Large-Scale Improvements | Changes for Future Projects
 	rewrite metaprogram for robustness, possibly as a library/outputting a data format
@@ -42,6 +37,7 @@ Large-Scale Improvements | Changes for Future Projects
 	asset store can be more meta file + data files for hot/cold loading etc. Not sure if necessary though
 	use Vulkan
 
+
 Overall To-Do List:
 
 	chunk meshing
@@ -51,7 +47,7 @@ Overall To-Do List:
 		Tradeoff compactness vs. detail - how do we do LOD and special multifaceted blocks?
 			do we want different vertex layouts for LOD????
 
-	other voxel structures - SHOULD EXPLORE
+	other voxel structures
 		stb_voxel_render approach
 			separate vertex/face data
 			vertex : 1 byte x 1 byte y 1 byte z 1 byte lighting (2b AO)
@@ -61,8 +57,6 @@ Overall To-Do List:
 			why is this any better than the cube?
 			would this actually be good though? it would likely be similar to meshing but larger/less "vertices"
 			Calculate vertex stuff from uniform face data???
-		3D texture ray-marching - should explore, probably doesn't make much sense for versatility
-			would represent chunks as octrees?
 
 	new build system with clang
 		make metaprogram a real compilation step, get rid of PROF
@@ -76,8 +70,7 @@ Overall To-Do List:
 			try separate vectors of keys, values, hashes (no map_element)
 		concurrent
 			dequeue for work-stealing
-			vector
-			map
+			vector, map
 
 	allocators
 		free list (one-size pool re-using arenas)
@@ -100,12 +93,10 @@ Overall To-Do List:
 
 	debug
 		re-enable arena/pool messages?
-		stats/options 
-			apply meta-types
 		profiler
 			graphs
 			sync profiling
-			more display modes (sort recursively, etc.)
+			more display modes (sort total calls, etc.)
 		Do we want to use CaptureStackBackTrace instead of keeping the call stack ourself? Maybe...
 
 	log
@@ -113,9 +104,7 @@ Overall To-Do List:
 		keep & output statistics
 
 	UI
-		fix cursor change flicker
-		fonts
-			change asset system to cache TTF files
+		font swapping and regeneration on asset store reload
 		Debug Console / log stuff
 			swap between verbosity levels
 			tooltip call stack / file:line
@@ -148,9 +137,8 @@ Overall To-Do List:
 		async File IO
 		Networking - cURL? WinSock? TCP
 		Virtually allocate large block of address space on startup and use jemalloc(eg) for general allocations
-		wgl extension testing/loading
 		file change watcher/callback system - maybe? see JBlow catalogs
-		controller support?
+		controller support
 		Keep window updating during resize/move
 
 	OpenGl
@@ -168,8 +156,6 @@ Overall To-Do List:
 
 	chunks
 		LOD
-		storage representation (compression?)
-		world storage (3D chunks?)
 		paging to disk - serialization, etc.
 
 	gameplay
