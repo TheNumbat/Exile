@@ -5,13 +5,13 @@ namespace ImGui {
 
 	bool InputText(string label, string buf, ImGuiInputTextFlags flags = 0, ImGuiTextEditCallback callback = null, void* user_data = null);
 	void Text(string text);
+	bool TreeNodeNoNull(string label);
+
 	template<typename E> void EnumCombo(string label, E* val, ImGuiComboFlags flags = 0);
 	template<typename V> void MapCombo(string label, map<string,V> options, V* val, ImGuiComboFlags flags = 0);
 
 	template<typename S> void ViewAny(string label, S val, bool open = false);
 	template<typename S> void EditAny(string label, S* val, bool open = false);
-
-	bool TreeNode(string label);
 
 	void EnumCombo_T(string label, void* val, _type_info* info, ImGuiComboFlags flags);
 	void View_T(string label, void* val, _type_info* info, bool open = false);

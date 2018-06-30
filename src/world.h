@@ -111,6 +111,7 @@ struct player {
 	u64 last = 0;
 
 	bool enable = true;
+	bool noclip = true;
 
 	void reset();
 };

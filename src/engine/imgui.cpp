@@ -1,7 +1,7 @@
 
 namespace ImGui {
 
-	bool TreeNode(string label) {
+	bool TreeNodeNoNull(string label) {
 	    return TreeNodeL(label.c_str, label.c_str + label.len);
 	}
 
@@ -10,7 +10,7 @@ namespace ImGui {
 	}
 
 	void Text(string text) {
-		return TextUnformatted(text.c_str, text.c_str + text.len);
+		return TextUnformatted(text.c_str, text.c_str + text.len - 1);
 	}
 
 	template<typename E>

@@ -185,7 +185,7 @@ void dbg_manager::UIvars_recurse(map<string, dbg_value> store) { PROF
 	FORMAP(it, store) {
 		switch(it->value.type) {
 		case dbg_value_class::section: {
-			if(ImGui::TreeNode(it->key)) {
+			if(ImGui::TreeNodeNoNull(it->key)) {
 				UIvars_recurse(it->value.sec.children);
 				ImGui::TreePop();
 			}

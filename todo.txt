@@ -23,8 +23,6 @@ Bugs:
 	allocation profiling is somewhat broken for the world system
 	
 	SDL layer resets the cursor to pointer on every mouse move
-	
-	profiler window | Time: XXXXXms?
 
 
 Large-Scale Improvements | Changes for Future Projects

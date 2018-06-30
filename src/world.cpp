@@ -1,15 +1,13 @@
 
 CALLBACK void world_debug_ui(world* w) { PROF
 
-	if(ImGui::Button("Regenerate"_)) {
-		
+	if(ImGui::SmallButton("Regenerate"_)) {
 		w->destroy_chunks();
 		w->chunks = map<chunk_pos, chunk*>::make(512, w->alloc);
 	}
 
 	ImGui::SameLine();
-	if(ImGui::Button("Reset")) {
-
+	if(ImGui::SmallButton("Reset")) {
 		w->p.reset();
 	}
 }
@@ -47,6 +45,7 @@ void world::init(asset_store* store, allocator* a) { PROF
 	eng->dbg.add_var("world/player/cam"_, &p.camera);
 	eng->dbg.add_var("world/player/speed"_, &p.speed);
 	eng->dbg.add_var("world/player/enable"_, &p.enable);
+	eng->dbg.add_var("world/player/noclip"_, &p.noclip);
 	eng->dbg.add_ele("world/player/inter"_, FPTR(player_debug_ui), this);
 }
 
@@ -329,14 +328,18 @@ void world::update_player(u64 now) { PROF
 
 		p.velocity += accel * (f32)dt;
 
-		v3 dp = (p.velocity + mov_v) * (f32)dt;
-		v3 collide = raymarch(cam.pos, dp);
+		if(p.noclip) {
+			cam.pos += (p.velocity + mov_v) * (f32)dt;
+		} else {
+			v3 dp = (p.velocity + mov_v) * (f32)dt;
+			v3 collide = raymarch(cam.pos, dp);
 
-		if(collide != cam.pos + dp) {
-			p.velocity = {};
+			if(collide != cam.pos + dp) {
+				p.velocity = {};
+			}
+
+			cam.pos = collide;
 		}
-
-		cam.pos = collide;
 		cam.update();
 	}
 
