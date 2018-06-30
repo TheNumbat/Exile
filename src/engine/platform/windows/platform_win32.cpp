@@ -7,12 +7,13 @@
 #endif
 
 extern "C" {
-    // Request dGPU
-    __declspec(dllexport) bool NvOptimusEnablement = true;
-    __declspec(dllexport) bool AmdPowerXpressRequestHighPerformance = true;
+	// Request dGPU
+	__declspec(dllexport) bool NvOptimusEnablement = true;
+	__declspec(dllexport) bool AmdPowerXpressRequestHighPerformance = true;
 }
 
 wglCreateContextAttribsARB_t	wglCreateContextAttribsARB;
+wglChoosePixelFormatARB_t 		wglChoosePixelFormatARB;
 wglSwapIntervalEXT_t 			wglSwapIntervalEXT;
 
 void (*global_enqueue)(void* queue_param, platform_event evt) = null;
@@ -1359,8 +1360,8 @@ LRESULT WINCALLBACK window_proc(HWND handle, UINT msg, WPARAM wParam, LPARAM lPa
 		}
 		case WM_INPUT: {
 
-   			RAWINPUT raw = {};
-   			u32 size = sizeof(RAWINPUT);
+			RAWINPUT raw = {};
+			u32 size = sizeof(RAWINPUT);
 			GetRawInputData((HRAWINPUT)lParam, RID_INPUT, &raw, &size, sizeof(RAWINPUTHEADER));
 			
 			evt.type = platform_event_type::mouse;
@@ -1385,6 +1386,129 @@ LRESULT WINCALLBACK window_proc(HWND handle, UINT msg, WPARAM wParam, LPARAM lPa
 	}
 }
 
+LRESULT WINCALLBACK temp_window_proc(HWND handle, UINT msg, WPARAM wParam, LPARAM lParam) {
+
+	if(msg == WM_CLOSE) {
+		return 0;
+	} else {
+		return DefWindowProcA(handle, msg, wParam, lParam);
+	}
+}
+
+platform_error win32_setup_modern_context() {
+
+	platform_error ret;
+
+	HINSTANCE instance = GetModuleHandleA(null);
+
+	WNDCLASSEXA temp_class = {
+		sizeof(WNDCLASSEXA),
+		CS_HREDRAW | CS_VREDRAW | CS_OWNDC | CS_DBLCLKS,
+		temp_window_proc,
+		0, 0,
+		instance,
+		0, LoadCursorA(0, IDC_ARROW), 0, 0,
+		"temp", 0
+	};
+
+	if(RegisterClassExA(&temp_class) == 0) {
+		ret.good = false;
+		ret.error = GetLastError();
+		return ret;
+	}
+
+	HANDLE temp_window = CreateWindowExA(WS_EX_ACCEPTFILES, "temp", "temp", WS_OVERLAPPEDWINDOW,
+							 			 CW_USEDEFAULT, CW_USEDEFAULT, 0, 0, 0, 0, instance, 0);
+
+	if(temp_window == null) {
+		ret.good = false;
+		ret.error = GetLastError();
+		return ret;
+	}
+
+	HDC temp_device_context = GetDC(temp_window);
+
+	if(temp_device_context == null) {
+		ret.good = false;
+		ret.error = GetLastError();
+		return ret;
+	}
+
+	PIXELFORMATDESCRIPTOR pixel_format = {
+		sizeof(PIXELFORMATDESCRIPTOR),
+		1, 
+		PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER,
+		PFD_TYPE_RGBA, 
+		24, 8, 0, 8, 0, 8, 0, 8, 0,
+		0, 0, 0, 0, 0,
+		24, 8, 0, 0, 0, 0, 0, 0
+	};
+
+	int pixel_index = ChoosePixelFormat(temp_device_context, &pixel_format);
+
+	if(pixel_index == 0) {
+		ret.good = false;
+		ret.error = GetLastError();
+		return ret;
+	}
+
+	if(SetPixelFormat(temp_device_context, pixel_index, 0) == 0) {
+		ret.good = false;
+		ret.error = GetLastError();
+		return ret;		
+	}
+
+	HGLRC gl_temp = wglCreateContext(temp_device_context);
+
+	if(gl_temp == null) {
+		ret.good = false;
+		ret.error = GetLastError();
+		return ret;				
+	}
+
+	if(wglMakeCurrent(temp_device_context, gl_temp) == 0) {
+		ret.good = false;
+		ret.error = GetLastError();
+		return ret;		
+	}
+
+	wglCreateContextAttribsARB = (wglCreateContextAttribsARB_t)wglGetProcAddress("wglCreateContextAttribsARB");
+
+	if(wglCreateContextAttribsARB == null) {
+		ret.good = false;
+		ret.error = GetLastError();
+		return ret;		
+	}
+
+	wglChoosePixelFormatARB = (wglChoosePixelFormatARB_t)wglGetProcAddress("wglChoosePixelFormatARB");
+
+	if(wglChoosePixelFormatARB == null) {
+		ret.good = false;
+		ret.error = GetLastError();
+		return ret;		
+	}
+
+	if(wglMakeCurrent(temp_device_context, null) == 0) {
+		ret.good = false;
+		ret.error = GetLastError();
+		return ret;		
+	}
+
+	if(wglDeleteContext(gl_temp) == 0) {
+		ret.good = false;
+		ret.error = GetLastError();
+		return ret;	
+	}
+
+	if(DestroyWindow(temp_window) == 0) {
+		ret.good = false;
+		ret.error = GetLastError();
+		return ret;	
+	}
+
+	return ret;
+}
+
 platform_error win32_create_window(platform_window* window, string title, u32 width, u32 height) {
 
 	platform_error ret;
@@ -1394,7 +1518,6 @@ platform_error win32_create_window(platform_window* window, string title, u32 wi
 	window->h = height;
 
 	HINSTANCE 	instance = GetModuleHandleA(null);
-	HGLRC 		gl_temp  = {};
 	HANDLE 		process  = GetCurrentProcess();
 
 	SetPriorityClass(process, ABOVE_NORMAL_PRIORITY_CLASS);
@@ -1403,6 +1526,11 @@ platform_error win32_create_window(platform_window* window, string title, u32 wi
 		ret.good = false;
 		ret.error = GetLastError();
 		return ret;
+	}
+
+	platform_error setup = win32_setup_modern_context();
+	if(!setup.good) {
+		return setup;
 	}
 
 	window->window_class = {
@@ -1422,7 +1550,7 @@ platform_error win32_create_window(platform_window* window, string title, u32 wi
 	}
 
 	window->handle = CreateWindowExA(WS_EX_ACCEPTFILES, window->title.c_str, window->title.c_str, WS_OVERLAPPEDWINDOW,
-			           				 CW_USEDEFAULT, CW_USEDEFAULT, width, height, 0, 0, instance, 0);
+									 CW_USEDEFAULT, CW_USEDEFAULT, width, height, 0, 0, instance, 0);
 
 	if(window->handle == null) {
 		ret.good = false;
@@ -1438,68 +1566,47 @@ platform_error win32_create_window(platform_window* window, string title, u32 wi
 		return ret;
 	}
 
-	window->pixel_format = {
-		sizeof(PIXELFORMATDESCRIPTOR),
-		1, 
-		PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER,
-		PFD_TYPE_RGBA, 
-		32, 8, 0, 8, 0, 8, 0, 8, 0,
-		0, 0, 0, 0,
-		24, 8, 0, 0, 0, 0, 0
+	f32 pfdf_attribs[] = {0.0f};
+
+	i32 pfdi_attribs[] = {
+		(i32)wgl_context::draw_to_window_arb, 1,
+		(i32)wgl_context::support_opengl_arb, 1,
+		(i32)wgl_context::double_buffer_arb,  1,
+		(i32)wgl_context::pixel_type_arb,	  (i32)wgl_context::type_rgba_arb,
+		(i32)wgl_context::color_bits_arb,	  24,
+		(i32)wgl_context::alpha_bits_arb, 	  8,
+		(i32)wgl_context::depth_bits_arb,	  24,
+		(i32)wgl_context::stencil_bits_arb,	  8,
+		(i32)wgl_context::sample_buffers_arb, 1,
+		(i32)wgl_context::samples_arb,		  4,
+		0,
 	};
 
-	int pixel_index = ChoosePixelFormat(window->device_context, &window->pixel_format);
-
-	if(pixel_index == 0) {
+	u32 match = 0;
+	i32 pixel_index = 0;
+	BOOL result = wglChoosePixelFormatARB(window->device_context, pfdi_attribs, pfdf_attribs, 1, &pixel_index, &match);
+	if(!result || !match)	 {
 		ret.good = false;
 		ret.error = GetLastError();
 		return ret;
 	}
 
-	if(SetPixelFormat(window->device_context, pixel_index, 0) == 0) {
+	if(SetPixelFormat(window->device_context, pixel_index, null) == 0) {
 		ret.good = false;
 		ret.error = GetLastError();
 		return ret;		
 	}
 
-	gl_temp = wglCreateContext(window->device_context);
-
-	if(gl_temp == null) {
-		ret.good = false;
-		ret.error = GetLastError();
-		return ret;				
-	}
-
-	if(wglMakeCurrent(window->device_context, gl_temp) == 0) {
-		ret.good = false;
-		ret.error = GetLastError();
-		return ret;		
-	}
-
-	wglCreateContextAttribsARB = (wglCreateContextAttribsARB_t)wglGetProcAddress("wglCreateContextAttribsARB");
-
-	if(wglCreateContextAttribsARB == null) {
-		ret.good = false;
-		ret.error = GetLastError();
-		return ret;		
-	}
-
-	if(wglDeleteContext(gl_temp) == 0) {
-		ret.good = false;
-		ret.error = GetLastError();
-		return ret;	
-	}
-
-	i32 attribs[9] = {
+	i32 context_attribs[] = {
 		(i32)wgl_context::major_version_arb, 	4,
-    	(i32)wgl_context::minor_version_arb, 	6,
-    	(i32)wgl_context::flags_arb, 			(i32)wgl_context::forward_compatible_bit_arb,
-    	(i32)wgl_context::profile_mask_arb, 	(i32)wgl_context::core_profile_bit_arb,
-    	0
+		(i32)wgl_context::minor_version_arb, 	6,
+		(i32)wgl_context::flags_arb, 			(i32)wgl_context::forward_compatible_bit_arb,
+		(i32)wgl_context::profile_mask_arb, 	(i32)wgl_context::core_profile_bit_arb,
+		0
 	};
 
-#define TRY_VERSION(MAJOR, MINOR) attribs[1] = MAJOR; attribs[3] = MINOR; \
-								  if(window->gl_context == null) window->gl_context = wglCreateContextAttribsARB(window->device_context, 0, attribs);
+#define TRY_VERSION(MAJOR, MINOR) context_attribs[1] = MAJOR; context_attribs[3] = MINOR; \
+								  if(window->gl_context == null) window->gl_context = wglCreateContextAttribsARB(window->device_context, 0, context_attribs);
 
 	TRY_VERSION(4, 6);
 	TRY_VERSION(4, 5);

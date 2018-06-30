@@ -20,7 +20,6 @@ struct platform_window {
 	WNDCLASSEXA window_class			= {};
 	HWND handle							= {};
 	HDC device_context					= {};
-	PIXELFORMATDESCRIPTOR pixel_format 	= {};
 	HGLRC gl_context					= {};
 };
 

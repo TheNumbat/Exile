@@ -1222,6 +1222,7 @@ DLL_IMPORT BOOL ImmSetCompositionWindow(HIMC hIMC, LPCOMPOSITIONFORM lpCompForm)
 
 // wglext
 
-typedef HGLRC (WINAPI *wglCreateContextAttribsARB_t)(HDC hDC, HGLRC hShareContext,
-													 const int* attribList);
+typedef BOOL (WINAPI *wglChoosePixelFormatARB_t)(HDC hdc, const int *piAttribIList, const FLOAT *pfAttribFList, 
+												 UINT nMaxFormats, int *piFormats, UINT *nNumFormats);
+typedef HGLRC (WINAPI *wglCreateContextAttribsARB_t)(HDC hDC, HGLRC hShareContext, const int* attribList);
 typedef BOOL  (WINAPI *wglSwapIntervalEXT_t)(int interval);

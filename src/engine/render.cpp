@@ -571,6 +571,7 @@ void ogl_manager::set_setting(render_setting setting, bool enable) {
 	case render_setting::blend: set->blend = enable; break;
 	case render_setting::scissor: set->scissor = enable; break;
 	case render_setting::cull: set->cull_backface = enable; break;
+	case render_setting::msaa: set->multisample = enable; break;
 	default: break;
 	}
 }
@@ -585,6 +586,7 @@ void ogl_manager::apply_settings() {
 	set->blend 			? glEnable(gl_capability::blend) : glDisable(gl_capability::blend);
 	set->scissor 		? glEnable(gl_capability::scissor_test) : glDisable(gl_capability::scissor_test);
 	set->cull_backface 	? glEnable(gl_capability::cull_face) : glDisable(gl_capability::cull_face);
+	set->multisample 	? glEnable(gl_capability::multisample) : glDisable(gl_capability::multisample);
 }
 
 void ogl_manager::execute_command_list(render_command_list* rcl) { PROF

@@ -96,9 +96,11 @@ struct ogl_settings {
 	bool blend = true;
 	bool scissor = true;
 	bool cull_backface = false;
+	bool multisample = true;
 };
 
 struct ogl_manager {
+
 	map<texture_id, texture> textures;
 	map<u16, draw_context> 	 commands;
 

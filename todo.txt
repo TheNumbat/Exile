@@ -6,6 +6,8 @@ Working To-Do:
 	config format
 	user settings
 
+	window creation options - begin with default, recreate to change (AA, vsync, fullscreen)
+	framebuffer objects (msaa + effects)
 	skybox
 	directional/sun lighting
 	lights
@@ -17,7 +19,6 @@ Working To-Do:
 	movement physics
 	world interaction
 	chunk paging
-
 
 Bugs:
 	allocation profiling is somewhat broken for the world system
