@@ -183,13 +183,19 @@ void dbg_manager::UI(platform_window* window) { PROF
 void dbg_manager::UIvars_recurse(map<string, dbg_value> store) { PROF
 
 	FORMAP(it, store) {
-		if(it->value.type == dbg_value_class::section) {
+		switch(it->value.type) {
+		case dbg_value_class::section: {
 			if(ImGui::TreeNode(it->key)) {
-				UIvars_recurse(it->value.children);
+				UIvars_recurse(it->value.sec.children);
 				ImGui::TreePop();
 			}
-		} else {
-			ImGui::Edit_T(it->key, it->value.value, it->value.info);
+		} break;
+		case dbg_value_class::value: {
+			ImGui::Edit_T(it->key, it->value.val.value, it->value.val.info);
+		} break;
+		case dbg_value_class::callback: {
+			it->value.cal.callback(it->value.cal.callback_param);
+		} break;
 		}
 	}
 }
@@ -197,7 +203,7 @@ void dbg_manager::UIvars_recurse(map<string, dbg_value> store) { PROF
 void dbg_manager::UIvars(platform_window* window) { PROF
 
 	ImGui::Begin("Debug Vars", null, ImGuiWindowFlags_AlwaysAutoResize);
-	UIvars_recurse(value_store.children);
+	UIvars_recurse(value_store.sec.children);
 	ImGui::End();
 }
 
@@ -695,6 +701,32 @@ void dbg_manager::fixdown_self_timings(profile_node* node) { PROF
 	node->self = node->heir - children;
 }
 
+void dbg_manager::add_ele(string path, _FPTR* callback, void* param) { PROF
+
+	dbg_value* value = &value_store;
+	path.len--;
+
+	for(;;) {
+		
+		string key;
+		i32 slash = path.first_slash();
+		if(slash != -1) {
+			key  = path.substring(0, (u32)slash - 1);
+			path = path.substring((u32)slash + 1, path.len);
+		} else {
+			key = path;
+			if(!value->sec.children.try_get(key))
+				value->sec.children.insert(key, dbg_value::make_cal(callback, param));
+			break;
+		}
+
+		dbg_value* next = value->sec.children.try_get(key);
+		if(!next) value = value->sec.children.insert(key, dbg_value::make_sec(alloc));
+		else if (next->type != dbg_value_class::section) break;
+		else value = next;
+	}
+}
+
 template<typename T>
 void dbg_manager::add_var(string path, T* val) { PROF
 
@@ -710,13 +742,13 @@ void dbg_manager::add_var(string path, T* val) { PROF
 			path = path.substring((u32)slash + 1, path.len);
 		} else {
 			key = path;
-			if(!value->children.try_get(key))
-				value->children.insert(key, dbg_value::make_val(TYPEINFO(T), val));
+			if(!value->sec.children.try_get(key))
+				value->sec.children.insert(key, dbg_value::make_val(TYPEINFO(T), val));
 			break;
 		}
 
-		dbg_value* next = value->children.try_get(key);
-		if(!next) value = value->children.insert(key, dbg_value::make_sec(alloc));
+		dbg_value* next = value->sec.children.try_get(key);
+		if(!next) value = value->sec.children.insert(key, dbg_value::make_sec(alloc));
 		else if (next->type != dbg_value_class::section) break;
 		else value = next;
 	}
@@ -768,34 +800,40 @@ CALLBACK void dbg_add_log(log_message* msg, void* param) { PROF
 	m->msg         = string::make_copy(msg->msg, &m->arena);
 }
 
-dbg_value dbg_value::make_sec(allocator* alloc) {
+dbg_value dbg_value::make_sec(allocator* alloc) { PROF
 
 	dbg_value ret;
 	ret.type = dbg_value_class::section;
-	ret.children = map<string,dbg_value>::make(8, alloc);
+	ret.sec.children = map<string,dbg_value>::make(8, alloc);
 	return ret;
 }
 
-dbg_value dbg_value::make_val(_type_info* i, void* v) {
+dbg_value dbg_value::make_val(_type_info* i, void* v) { PROF
 
 	dbg_value ret;
 	ret.type = dbg_value_class::value;
-	ret.info = i;
-	ret.value = v;
+	ret.val.info = i;
+	ret.val.value = v;
+	return ret;
+}
+
+dbg_value dbg_value::make_cal(_FPTR* c, void* p) { PROF
+
+	dbg_value ret;
+	ret.type = dbg_value_class::callback;
+	ret.cal.callback.set(c);
+	ret.cal.callback_param = p;
 	return ret;
 }
 
 void dbg_value::destroy() {
 
 	if(type == dbg_value_class::section) {
-		FORMAP(it, children) {
+		FORMAP(it, sec.children) {
 			it->value.destroy();
 		}
-		children.destroy();
-	} else {
-		info = null;
-		value = null;
-	}
+		sec.children.destroy();
+	} 
 }
 
 bool prof_sort_name(profile_node* l, profile_node* r) {

@@ -1,4 +1,25 @@
 
+CALLBACK void world_debug_ui(world* w) { PROF
+
+	if(ImGui::Button("Regenerate"_)) {
+		
+		w->destroy_chunks();
+		w->chunks = map<chunk_pos, chunk*>::make(512, w->alloc);
+	}
+
+	ImGui::SameLine();
+	if(ImGui::Button("Reset")) {
+
+		w->p.reset();
+	}
+}
+
+CALLBACK void player_debug_ui(world* w) { PROF
+
+	v3 intersection = w->raymarch(w->p.camera.pos, w->p.camera.front, w->p.camera.reach);
+	ImGui::ViewAny("inter"_, intersection);
+}
+
 void world::init(asset_store* store, allocator* a) { PROF
 
 	alloc = a;
@@ -20,11 +41,13 @@ void world::init(asset_store* store, allocator* a) { PROF
 	thread_pool = threadpool::make(a, eng->platform->get_phys_cpus() - 1);
 	thread_pool.start_all();
 
+	eng->dbg.add_ele("world/ui"_, FPTR(world_debug_ui), this);
+	
 	eng->dbg.add_var("world/settings"_, &settings);
+	eng->dbg.add_var("world/player/cam"_, &p.camera);
 	eng->dbg.add_var("world/player/speed"_, &p.speed);
 	eng->dbg.add_var("world/player/enable"_, &p.enable);
-	eng->dbg.add_var("world/player/fov"_, &p.camera.fov);
-	eng->dbg.add_var("world/player/reach"_, &p.camera.reach);
+	eng->dbg.add_ele("world/player/inter"_, FPTR(player_debug_ui), this);
 }
 
 void world::destroy_chunks() { PROF 
@@ -80,24 +103,6 @@ v3 world::raymarch(v3 pos3, v3 dir3, f32 max) { PROF
 
 void world::update(u64 now) { PROF
 
-#if 0
-	ImGui::Begin("World"_, null, ImGuiWindowFlags_AlwaysAutoResize);
-	
-	if(ImGui::Button("Regenerate"_)) {
-		
-		destroy_chunks();
-		chunks = map<chunk_pos, chunk*>::make(512, alloc);
-	}
-
-	ImGui::SameLine();
-	if(ImGui::Button("Reset")) {
-
-		p.reset();
-	}
-
-	ImGui::End();
-#endif
-
 	update_player(now);
 }
 
@@ -129,9 +134,7 @@ void world::populate_local_area() { PROF
 	}
 }
 
-CALLBACK void unlock_chunk(void* v) { PROF
-
-	chunk* c = (chunk*)v;
+CALLBACK void unlock_chunk(chunk* c) { PROF
 
 	eng->platform->release_mutex(&c->swap_mut);
 }
@@ -152,9 +155,8 @@ float check_pirority(super_job* j, void* param) {
 	return 1.0f / lensq(center - p->camera.pos);
 }
 
-CALLBACK void cancel_build(void* param) {
+CALLBACK void cancel_build(chunk* c) {
 
-	chunk* c = (chunk*)param;
 	c->job_state.set(work::none);
 }
 

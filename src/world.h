@@ -157,8 +157,9 @@ struct world {
 	v3 raymarch(v3 origin, v3 max);
 };
 
-CALLBACK void unlock_chunk(void* v);
-CALLBACK void cancel_build(void* param);
+CALLBACK void world_debug_ui(world* w);
+CALLBACK void unlock_chunk(chunk* v);
+CALLBACK void cancel_build(chunk* param);
 float check_pirority(super_job* j, void* param);
 
 CALLBACK void run_mesh_chunk(render_command* cmd);

@@ -1,7 +1,6 @@
 
 Working To-Do:
 
-	global debug UI widget/reactive values
 	debug console
 	reload fonts on asset store load
 	serialization/deserialization

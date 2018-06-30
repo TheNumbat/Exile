@@ -194,21 +194,37 @@ enum class prof_sort_type : u8 {
 
 enum class dbg_value_class : u8 {
 	section,
-	value
+	value,
+	callback // NOTE(max): can also be used for "reactive" values
+};
+
+struct dbg_value;
+struct dbg_value_sec {
+	map<string, dbg_value> children;
+};
+
+// NOTE(max): or, an "any"
+struct dbg_value_val {
+	_type_info* info;
+	void* value;
+};
+
+struct dbg_value_cal {
+	func_ptr<void, void*> callback;
+	void* callback_param;
 };
 
 struct dbg_value {
 	dbg_value_class type = dbg_value_class::section;
 	union {
-		map<string, dbg_value> children;
-		struct {
-			_type_info* info;
-			void* value;
-		};
+		dbg_value_sec sec;
+		dbg_value_val val;
+		dbg_value_cal cal;
 	};
 	dbg_value() {}
 	static dbg_value make_sec(allocator* alloc);
 	static dbg_value make_val(_type_info* i, void* v);
+	static dbg_value make_cal(_FPTR* c, void* p);
 	void destroy();
 };
 
@@ -253,6 +269,7 @@ struct dbg_manager {
 
 	void register_thread(u32 frames);
 
+	void add_ele(string path, _FPTR* callback, void* param = null);
 	template<typename T> void add_var(string path, T* value);
 	template<typename T> T get_var(string path);
 
