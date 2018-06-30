@@ -42,8 +42,14 @@ struct imgui_manager {
 	platform_cursor cursor_values[ImGuiMouseCursor_COUNT] = {platform_cursor::pointer};
 	platform_cursor current_cursor = platform_cursor::pointer;
 
+	string font_asset_name;
+	f32 font_size = 12.0f;
+
 	static imgui_manager make(platform_window* window, allocator* a);
 	void destroy(); 
+
+	void set_font(string name, f32 size, asset_store* store);
+	void load_font(asset_store* store);
 
 	void reload();
 	void process_event(platform_event evt);

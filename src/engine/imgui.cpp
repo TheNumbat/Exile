@@ -371,21 +371,56 @@ imgui_manager imgui_manager::make(platform_window* window, allocator* a) { PROF
 
 	glBindVertexArray(0);
 
+	ret.load_font(null);
+
+	return ret;
+}
+
+void imgui_manager::set_font(string name, f32 size, asset_store* store) { PROF
+
+	font_asset_name = name;
+	font_size = size;
+	load_font(store);
+}
+
+void imgui_manager::load_font(asset_store* store) { PROF
+
+	ImGuiIO io = ImGui::GetIO();
+	if(gl_info.font_texture) {
+		glDeleteTextures(1, &gl_info.font_texture);
+		
+		gl_info.font_texture = 0;
+		io.Fonts->TexID = 0;
+	}
+
+	io.Fonts->Clear();
+	if(font_asset_name) {
+		asset* font = store->get(font_asset_name);
+
+		ImFontConfig cfg;
+		cfg.FontData = font->mem;
+		cfg.FontDataSize = (i32)font->ttf_font.file_size;
+		cfg.FontDataOwnedByAtlas = false;
+		cfg.SizePixels = font_size;
+
+		io.Fonts->AddFont(&cfg);
+	} else {
+		io.Fonts->AddFontDefault();
+	}
+
 	u8* bitmap;
 	i32 w, h;
 	io.Fonts->GetTexDataAsRGBA32(&bitmap, &w, &h);
-
-	glGenTextures(1, &ret.gl_info.font_texture);
-	glBindTexture(gl_tex_target::_2D, ret.gl_info.font_texture);
+	
+	glGenTextures(1, &gl_info.font_texture);
+	glBindTexture(gl_tex_target::_2D, gl_info.font_texture);
 	glTexParameteri(gl_tex_target::_2D, gl_tex_param::min_filter, (GLint)gl_tex_filter::nearest);
 	glTexParameteri(gl_tex_target::_2D, gl_tex_param::mag_filter, (GLint)gl_tex_filter::nearest);
 	glPixelStorei(gl_pix_store::unpack_row_length, 0);
 	glTexImage2D(gl_tex_target::_2D, 0, gl_tex_format::rgba, w, h, 0, gl_pixel_data_format::rgba, gl_pixel_data_type::unsigned_byte, bitmap);
 	glBindTexture(gl_tex_target::_2D, 0);
 
-	io.Fonts->TexID = (void*)(u64)ret.gl_info.font_texture;
-
-	return ret;
+	io.Fonts->TexID = (void*)(u64)gl_info.font_texture;
 }
 
 void imgui_manager::destroy() { PROF

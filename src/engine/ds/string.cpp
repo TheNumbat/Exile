@@ -7,6 +7,10 @@ string::operator char*() {
 	return c_str;
 }
 
+string::operator bool() {
+	return c_str != null;
+}
+
 string operator "" _(const char* str, size_t s) {
 	string ret;
 	ret.c_str = (char*)str;

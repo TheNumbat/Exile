@@ -34,6 +34,7 @@ struct NOREFLECT string { // no-reflect because hard-coded
 
 	operator const char*();
 	operator char*();
+	operator bool();
 
 	void destroy(allocator* a);
 	void destroy_plt();

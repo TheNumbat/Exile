@@ -61,9 +61,13 @@
 #include "ds/buffer.h"
 #include "ds/heap.h"
 
+#include "util/type_table.h"
+
 #include "log_html.h"
 #include "log.h"
 #include "dbg.h"
+#include "util/threadstate.h"
+#include "util/fscope.h"
 
 static log_manager*  global_log = null; // global to provide printf() like functionality everywhere
 static platform_api* global_api = null; // global because it just represents a bunch of what should be free functions
@@ -79,10 +83,6 @@ static dbg_manager*  global_dbg = null; // global to provide profiling functiona
 #include "imgui.h"
 
 #include "engine.h"
-
-#include "util/threadstate.h"
-#include "util/fscope.h"
-#include "util/type_table.h"
 
 // IMPLEMENTATIONS
 

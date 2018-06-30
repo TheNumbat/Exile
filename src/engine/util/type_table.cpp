@@ -1,3 +1,11 @@
+
+template<typename T> 
+any make(T* val) {
+	any ret;
+	ret.info = TYPEINFO(T);
+	ret.value = val;
+	return ret;
+}
 	
 i64 int_as_i64(void* val, _type_info* info) {
 

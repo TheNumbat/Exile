@@ -203,12 +203,6 @@ struct dbg_value_sec {
 	map<string, dbg_value> children;
 };
 
-// NOTE(max): or, an "any"
-struct dbg_value_val {
-	_type_info* info;
-	void* value;
-};
-
 struct dbg_value_cal {
 	func_ptr<void, void*> callback;
 	void* callback_param;
@@ -218,7 +212,7 @@ struct dbg_value {
 	dbg_value_class type = dbg_value_class::section;
 	union {
 		dbg_value_sec sec;
-		dbg_value_val val;
+		any 		  val;
 		dbg_value_cal cal;
 	};
 	dbg_value() {}
@@ -259,7 +253,7 @@ struct dbg_manager {
 	void destroy();
 
 	void profile_recurse(vector<profile_node*> list);
-	
+
 	void fixdown_self_timings(profile_node* node);
 	void process_frame_alloc_msg(frame_profile* frame, dbg_msg* msg);
 	void process_alloc_msg(dbg_msg* msg);

@@ -73,6 +73,13 @@ struct _type_info {
 	_type_info() : _enum() {}
 };
 
+struct any {
+	_type_info* info = null;
+	void* value = null;
+
+	template<typename T> any make(T* val);
+};
+
 thread_local map<type_id,_type_info> type_table;
 
 #define TYPEINFO(...) _get_type_info< __VA_ARGS__ >::get_type_info()

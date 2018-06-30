@@ -5,6 +5,7 @@ Working To-Do:
 	reload fonts on asset store load
 	serialization/deserialization
 	config format
+	user settings
 
 	skybox
 	directional/sun lighting
