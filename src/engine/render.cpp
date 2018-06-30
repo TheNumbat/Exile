@@ -572,6 +572,7 @@ void ogl_manager::set_setting(render_setting setting, bool enable) {
 	case render_setting::scissor: set->scissor = enable; break;
 	case render_setting::cull: set->cull_backface = enable; break;
 	case render_setting::msaa: set->multisample = enable; break;
+	case render_setting::aa_shading: set->sample_shading = enable; break;
 	default: break;
 	}
 }
@@ -587,6 +588,11 @@ void ogl_manager::apply_settings() {
 	set->scissor 		? glEnable(gl_capability::scissor_test) : glDisable(gl_capability::scissor_test);
 	set->cull_backface 	? glEnable(gl_capability::cull_face) : glDisable(gl_capability::cull_face);
 	set->multisample 	? glEnable(gl_capability::multisample) : glDisable(gl_capability::multisample);
+	set->sample_shading	? glEnable(gl_capability::sample_shading) : glDisable(gl_capability::sample_shading);
+
+	if(set->sample_shading && info.check_version(4,0)) {
+		glMinSampleShading(1.0f);
+	}
 }
 
 void ogl_manager::execute_command_list(render_command_list* rcl) { PROF
@@ -803,9 +809,9 @@ bool ogl_info::check_version(i32 maj, i32 min) { PROF
 void ogl_manager::load_global_funcs() { PROF
 
 	#define GL_IS_LOAD(name) name = (glIs_t)global_api->get_glproc(#name##_); \
-							 if(!name) LOG_ERR_F("Failed to load GL function %", #name##_);
+							 if(!name) LOG_WARN_F("Failed to load GL function %", #name##_);
 	#define GL_LOAD(name) name = (name##_t)global_api->get_glproc(#name##_); \
-						  if(!name) LOG_ERR_F("Failed to load GL function %", #name##_);
+						  if(!name) LOG_WARN_F("Failed to load GL function %", #name##_);
 
 	GL_IS_LOAD(glIsTexture);
 	GL_IS_LOAD(glIsBuffer);
@@ -817,6 +823,7 @@ void ogl_manager::load_global_funcs() { PROF
 	GL_IS_LOAD(glIsProgramPipeline);
 	GL_IS_LOAD(glIsQuery);
 
+	GL_LOAD(glMinSampleShading);
 	GL_LOAD(glBlendEquation);
 	GL_LOAD(glDebugMessageCallback);
 	GL_LOAD(glDebugMessageInsert);

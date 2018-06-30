@@ -184,6 +184,8 @@ void world::render_chunks() { PROF
 		rcl.set_setting(render_setting::wireframe, true);
 	if(settings.cull_backface)
 		rcl.set_setting(render_setting::cull, true);
+	if(settings.sample_shading)
+		rcl.set_setting(render_setting::aa_shading, true);
 
 	chunk_pos camera = chunk_pos::from_abs(p.camera.pos);
 	for(i32 x = -settings.view_distance; x <= settings.view_distance; x++) {

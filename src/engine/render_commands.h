@@ -26,7 +26,8 @@ enum class render_setting : u8 {
 	blend,
 	scissor,
 	cull,
-	msaa
+	msaa,
+	aa_shading,
 };
 
 struct mesh_lines {

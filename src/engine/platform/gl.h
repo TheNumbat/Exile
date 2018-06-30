@@ -735,6 +735,7 @@ DLL_IMPORT void glPolygonMode(gl_poly face, gl_poly_mode mode);
 DLL_IMPORT void glLineWidth(GLfloat width);
 
 typedef gl_bool (*glIs_t)(GLuint handle);
+typedef void (*glMinSampleShading_t)(GLfloat value);
 
 DLL_IMPORT void glGetBooleanv(gl_get name, GLboolean* data);
 DLL_IMPORT void glGetDoublev(gl_get name, GLdouble* data);
@@ -839,6 +840,7 @@ glUseProgram_t    			glUseProgram;
 glGetShaderiv_t 			glGetShaderiv;
 glGetShaderInfoLog_t		glGetShaderInfoLog;
 glGetShaderSource_t 		glGetShaderSource;
+glMinSampleShading_t		glMinSampleShading;
 
 glGetUniformLocation_t 		glGetUniformLocation;
 glGetAttribLocation_t		glGetAttribLocation;

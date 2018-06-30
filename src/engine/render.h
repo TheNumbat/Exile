@@ -97,6 +97,7 @@ struct ogl_settings {
 	bool scissor = true;
 	bool cull_backface = false;
 	bool multisample = true;
+	bool sample_shading = false;
 };
 
 struct ogl_manager {

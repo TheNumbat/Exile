@@ -124,6 +124,7 @@ struct world_settings {
 	
 	bool wireframe = false;
 	bool cull_backface = true;
+	bool sample_shading = true;
 };
 
 struct world {
