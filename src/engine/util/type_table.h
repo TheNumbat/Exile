@@ -74,10 +74,12 @@ struct _type_info {
 };
 
 struct any {
-	_type_info* info = null;
+	type_id id  = 0;
 	void* value = null;
 
-	template<typename T> any make(T* val);
+	_type_info* info();
+
+	template<typename T> static any make(T* val);
 };
 
 thread_local map<type_id,_type_info> type_table;

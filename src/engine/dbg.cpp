@@ -59,6 +59,9 @@ void thread_profile::destroy() { PROF
 
 void dbg_manager::destroy() { PROF
 
+	value_store.destroy(alloc);
+	collate_alloc_profile();
+
 	alloc_profile totals = get_totals();
 	LOG_INFO_F("% allocations remaining at debug shutdown", totals.num_allocs - totals.num_frees);
 
@@ -85,8 +88,6 @@ void dbg_manager::destroy() { PROF
 		DESTROY_ARENA(&it->arena);
 	} FORQ_END(it, log_cache);
 	log_cache.destroy();
-
-	value_store.destroy();
 
 	POP_ALLOC();
 	DESTROY_ARENA(&scratch);
@@ -191,7 +192,7 @@ void dbg_manager::UIvars_recurse(map<string, dbg_value> store) { PROF
 			}
 		} break;
 		case dbg_value_class::value: {
-			ImGui::Edit_T(it->key, it->value.val.value, it->value.val.info);
+			ImGui::Edit_T(it->key, it->value.val.value, it->value.val.info());
 		} break;
 		case dbg_value_class::callback: {
 			it->value.cal.callback(it->value.cal.callback_param);
@@ -716,12 +717,12 @@ void dbg_manager::add_ele(string path, _FPTR* callback, void* param) { PROF
 		} else {
 			key = path;
 			if(!value->sec.children.try_get(key))
-				value->sec.children.insert(key, dbg_value::make_cal(callback, param));
+				value->sec.children.insert(string::make_copy(key, alloc), dbg_value::make_cal(callback, param));
 			break;
 		}
 
 		dbg_value* next = value->sec.children.try_get(key);
-		if(!next) value = value->sec.children.insert(key, dbg_value::make_sec(alloc));
+		if(!next) value = value->sec.children.insert(string::make_copy(key, alloc), dbg_value::make_sec(alloc));
 		else if (next->type != dbg_value_class::section) break;
 		else value = next;
 	}
@@ -743,12 +744,12 @@ void dbg_manager::add_var(string path, T* val) { PROF
 		} else {
 			key = path;
 			if(!value->sec.children.try_get(key))
-				value->sec.children.insert(key, dbg_value::make_val(TYPEINFO(T), val));
+				value->sec.children.insert(string::make_copy(key, alloc), dbg_value::make_val(any::make(val)));
 			break;
 		}
 
 		dbg_value* next = value->sec.children.try_get(key);
-		if(!next) value = value->sec.children.insert(key, dbg_value::make_sec(alloc));
+		if(!next) value = value->sec.children.insert(string::make_copy(key, alloc), dbg_value::make_sec(alloc));
 		else if (next->type != dbg_value_class::section) break;
 		else value = next;
 	}
@@ -808,12 +809,11 @@ dbg_value dbg_value::make_sec(allocator* alloc) { PROF
 	return ret;
 }
 
-dbg_value dbg_value::make_val(_type_info* i, void* v) { PROF
+dbg_value dbg_value::make_val(any a) { PROF
 
 	dbg_value ret;
 	ret.type = dbg_value_class::value;
-	ret.val.info = i;
-	ret.val.value = v;
+	ret.val = a;
 	return ret;
 }
 
@@ -826,11 +826,12 @@ dbg_value dbg_value::make_cal(_FPTR* c, void* p) { PROF
 	return ret;
 }
 
-void dbg_value::destroy() {
+void dbg_value::destroy(allocator* alloc) {
 
 	if(type == dbg_value_class::section) {
 		FORMAP(it, sec.children) {
-			it->value.destroy();
+			it->key.destroy(alloc);
+			it->value.destroy(alloc);
 		}
 		sec.children.destroy();
 	} 

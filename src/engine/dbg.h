@@ -217,9 +217,9 @@ struct dbg_value {
 	};
 	dbg_value() {}
 	static dbg_value make_sec(allocator* alloc);
-	static dbg_value make_val(_type_info* i, void* v);
+	static dbg_value make_val(any a);
 	static dbg_value make_cal(_FPTR* c, void* p);
-	void destroy();
+	void destroy(allocator* alloc);
 };
 
 struct dbg_manager {

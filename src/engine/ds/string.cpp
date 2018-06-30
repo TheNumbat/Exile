@@ -1031,11 +1031,12 @@ i32 string::last_slash() {
 }
 
 void string::destroy(allocator* a) { PROF
-	PUSH_ALLOC(a) {
 
-		destroy();
+	a->free_(c_str, cap, a, CONTEXT);
 
-	} POP_ALLOC();
+	c_str = null;
+	cap = 0;
+	len = 0;
 }
 
 string string::literal(const char* literal) { 

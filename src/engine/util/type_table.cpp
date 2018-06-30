@@ -1,10 +1,14 @@
 
 template<typename T> 
-any make(T* val) {
+any any::make(T* val) {
 	any ret;
-	ret.info = TYPEINFO(T);
 	ret.value = val;
+	ret.id = (type_id)typeid(T).hash_code();
 	return ret;
+}
+
+_type_info* any::info() {
+	return TYPEINFO_H(id);
 }
 	
 i64 int_as_i64(void* val, _type_info* info) {

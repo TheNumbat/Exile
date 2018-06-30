@@ -2,7 +2,6 @@
 Working To-Do:
 
 	debug console
-	reload fonts on asset store load
 	serialization/deserialization
 	config format
 	user settings
