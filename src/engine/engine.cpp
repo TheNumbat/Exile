@@ -43,7 +43,11 @@ EXPORT engine* start_up(platform_api* api) {
 	state->evt.start();
 
 	LOG_INFO("Creating window...");
-	CHECKED(create_window, &state->window, "Exile"_, 1280, 720);
+	_memcpy("Exile", state->window.settings.c_title, 6);
+	state->window.settings.samples = 1;
+	CHECKED(create_window, &state->window);
+	state->dbg.add_var("window/settings"_, &state->window.settings);
+	state->dbg.add_ele("window/apply"_, FPTR(dbg_reup_window), &state->window);
 
 	LOG_INFO("Setting up OpenGL...");
 	state->ogl_a = MAKE_PLATFORM_ALLOCATOR("ogl");

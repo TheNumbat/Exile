@@ -39,9 +39,9 @@ void world::init(asset_store* store, allocator* a) { PROF
 	thread_pool = threadpool::make(a, eng->platform->get_phys_cpus() - 1);
 	thread_pool.start_all();
 
-	eng->dbg.add_ele("ui"_, FPTR(world_debug_ui), this);
+	eng->dbg.add_var("world/settings"_, &settings);
+	eng->dbg.add_ele("world/ui"_, FPTR(world_debug_ui), this);
 	
-	eng->dbg.add_var("world"_, &settings);
 	eng->dbg.add_var("player/cam"_, &p.camera);
 	eng->dbg.add_var("player/speed"_, &p.speed);
 	eng->dbg.add_var("player/enable"_, &p.enable);
@@ -240,7 +240,7 @@ void world::render_chunks() { PROF
 	}
 
 	rcl.view = p.camera.view_no_translate();
-	rcl.proj = proj(p.camera.fov, (f32)eng->window.w / (f32)eng->window.h, 0.01f, 2000.0f);
+	rcl.proj = proj(p.camera.fov, (f32)eng->window.settings.w / (f32)eng->window.settings.h, 0.01f, 2000.0f);
 
 	rcl.pop_settings();
 
@@ -268,7 +268,7 @@ void world::render_player() { PROF
 
 		rcl.add_command(cmd);
 		rcl.view = cam.view();
-		rcl.proj = proj(cam.fov, (f32)eng->window.w / (f32)eng->window.h, 0.01f, 2000.0f);
+		rcl.proj = proj(cam.fov, (f32)eng->window.settings.w / (f32)eng->window.settings.h, 0.01f, 2000.0f);
 
 		eng->ogl.execute_command_list(&rcl);
 		lines.destroy();
@@ -277,7 +277,7 @@ void world::render_player() { PROF
 	rcl.clear();
 
 	{
-		f32 w = (f32)eng->window.w, h = (f32)eng->window.h;
+		f32 w = (f32)eng->window.settings.w, h = (f32)eng->window.settings.h;
 
 		mesh_2d_col crosshair = mesh_2d_col::make();
 

@@ -79,6 +79,7 @@ platform_api platform_build_api() {
 	ret.get_perfcount			= &sdl_get_perfcount;
 	ret.get_perfcount_freq		= &sdl_get_perfcount_freq;
 	ret.create_window			= &sdl_create_window;
+	ret.recreate_window			= &sdl_recreate_window;
 	ret.destroy_window			= &sdl_destroy_window;
 	ret.swap_buffers			= &sdl_swap_buffers;
 	ret.set_queue_callback		= &sdl_set_queue_callback;
@@ -311,7 +312,13 @@ void sdl_set_cursor(platform_window* window, platform_cursor c) {
 	SDL_FreeCursor(cursor);
 }
 
-platform_error sdl_create_window(platform_window* window, string title, u32 width, u32 height) {
+platform_error sdl_recreate_window(platform_window* window) {
+
+	platform_error ret;
+	return ret;
+}
+
+platform_error sdl_create_window(platform_window* window) {
 
 	platform_error ret;
 

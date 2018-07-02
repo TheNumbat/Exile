@@ -97,6 +97,7 @@ platform_api platform_build_api() {
 	ret.cursor_shown 			= &win32_cursor_shown;
 	ret.get_clipboard 			= &win32_get_clipboard;
 	ret.set_clipboard 			= &win32_set_clipboard;
+	ret.recreate_window			= &win32_recreate_window;
 
 	return ret;
 }
@@ -1395,9 +1396,11 @@ LRESULT WINCALLBACK temp_window_proc(HWND handle, UINT msg, WPARAM wParam, LPARA
 	}
 }
 
-platform_error win32_setup_modern_context() {
+platform_error win32_wgl_setup() {
 
 	platform_error ret;
+
+	if(wglChoosePixelFormatARB && wglCreateContextAttribsARB && wglSwapIntervalEXT) return ret;
 
 	HINSTANCE instance = GetModuleHandleA(null);
 
@@ -1488,6 +1491,14 @@ platform_error win32_setup_modern_context() {
 		return ret;		
 	}
 
+	wglSwapIntervalEXT = (wglSwapIntervalEXT_t)wglGetProcAddress("wglSwapIntervalEXT");
+
+	if(wglSwapIntervalEXT == null) {
+		ret.good = false;
+		ret.error = GetLastError();
+		return ret;		
+	}
+
 	if(wglMakeCurrent(temp_device_context, null) == 0) {
 		ret.good = false;
 		ret.error = GetLastError();
@@ -1509,13 +1520,22 @@ platform_error win32_setup_modern_context() {
 	return ret;
 }
 
-platform_error win32_create_window(platform_window* window, string title, u32 width, u32 height) {
+platform_error win32_recreate_window(platform_window* window) {
 
 	platform_error ret;
 
-	window->title = make_cat_string(title, str(" | Win32"), &win32_heap_alloc);
-	window->w = width;
-	window->h = height;
+	ret = win32_destroy_window(window);
+	if(!ret.good) return ret;
+
+	ret = win32_create_window(window);
+	return ret;
+}
+
+platform_error win32_create_window(platform_window* window) {
+
+	platform_error ret;
+
+	string title = make_cat_string(string_from_c_str(window->settings.c_title), str(" | Win32"), &win32_heap_alloc);
 
 	HINSTANCE 	instance = GetModuleHandleA(null);
 	HANDLE 		process  = GetCurrentProcess();
@@ -1528,7 +1548,7 @@ platform_error win32_create_window(platform_window* window, string title, u32 wi
 		return ret;
 	}
 
-	platform_error setup = win32_setup_modern_context();
+	platform_error setup = win32_wgl_setup();
 	if(!setup.good) {
 		return setup;
 	}
@@ -1540,7 +1560,7 @@ platform_error win32_create_window(platform_window* window, string title, u32 wi
 		0, 0,
 		instance,
 		0, LoadCursorA(0, IDC_ARROW), 0, 0,
-		window->title.c_str, 0
+		window->settings.c_title, 0
 	};
 
 	if(RegisterClassExA(&window->window_class) == 0) {
@@ -1549,8 +1569,8 @@ platform_error win32_create_window(platform_window* window, string title, u32 wi
 		return ret;
 	}
 
-	window->handle = CreateWindowExA(WS_EX_ACCEPTFILES, window->title.c_str, window->title.c_str, WS_OVERLAPPEDWINDOW,
-									 CW_USEDEFAULT, CW_USEDEFAULT, width, height, 0, 0, instance, 0);
+	window->handle = CreateWindowExA(WS_EX_ACCEPTFILES, window->settings.c_title, title.c_str, WS_OVERLAPPEDWINDOW,
+									 CW_USEDEFAULT, CW_USEDEFAULT, window->settings.w, window->settings.h, 0, 0, instance, 0);
 
 	if(window->handle == null) {
 		ret.good = false;
@@ -1577,8 +1597,8 @@ platform_error win32_create_window(platform_window* window, string title, u32 wi
 		(i32)wgl_context::alpha_bits_arb, 	  8,
 		(i32)wgl_context::depth_bits_arb,	  24,
 		(i32)wgl_context::stencil_bits_arb,	  8,
-		(i32)wgl_context::sample_buffers_arb, 1,
-		(i32)wgl_context::samples_arb,		  4,
+		(i32)wgl_context::sample_buffers_arb, window->settings.samples > 1 ? 1 : 0,
+		(i32)wgl_context::samples_arb,		  window->settings.samples > 1 ? window->settings.samples : 0,
 		0,
 	};
 
@@ -1636,19 +1656,11 @@ platform_error win32_create_window(platform_window* window, string title, u32 wi
 		return ret;	
 	}
 
-	wglSwapIntervalEXT = (wglSwapIntervalEXT_t)wglGetProcAddress("wglSwapIntervalEXT");
-
-	if(wglSwapIntervalEXT == null) {
-		ret.good = false;
-		ret.error = GetLastError();
-		return ret;		
-	}
-
-	// TODO(max): vsync/fullscreen/AA/etc settings
-		// https://blogs.msdn.microsoft.com/oldnewthing/20100412-00/?p=14353
-	wglSwapIntervalEXT(0);
+	wglSwapIntervalEXT(window->settings.vsync ? 1 : 0);
 
 	ShowWindowAsync(window->handle, SW_SHOW);
+
+	free_string(title, win32_heap_free);
 
 	return ret;
 }
@@ -1656,8 +1668,6 @@ platform_error win32_create_window(platform_window* window, string title, u32 wi
 platform_error win32_destroy_window(platform_window* window) {
 
 	platform_error ret;
-
-	free_string(window->title, &win32_heap_free);
 
 	if(wglDeleteContext(window->gl_context) == 0) {
 		ret.good = false;
@@ -1668,6 +1678,11 @@ platform_error win32_destroy_window(platform_window* window) {
 		ret.good = false;
 		ret.error = GetLastError();
 		return ret;	
+	}
+	if(!UnregisterClassA(window->settings.c_title, null)) {
+		ret.good = false;
+		ret.error = GetLastError();
+		return ret;
 	}
 
 	return ret;

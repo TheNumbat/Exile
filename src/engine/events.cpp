@@ -41,12 +41,12 @@ void evt_manager::run_events(engine* state) { PROF
 
 			// Window Resize
 			else if(evt.type == platform_event_type::window && evt.window.op == platform_windowop::resized) {
-				state->window.w = evt.window.x;
-				state->window.h = evt.window.y;
+				state->window.settings.w = evt.window.x;
+				state->window.settings.h = evt.window.y;
 			}
 			else if(evt.type == platform_event_type::window && evt.window.op == platform_windowop::maximized) {
-				state->window.w = evt.window.x;
-				state->window.h = evt.window.y;
+				state->window.settings.w = evt.window.x;
+				state->window.settings.h = evt.window.y;
 			}
 		}
 

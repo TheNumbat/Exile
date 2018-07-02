@@ -644,12 +644,12 @@ void ogl_manager::cmd_set_settings(render_command* cmd) {
 	if(viewport.w && viewport.h)
 		glViewport(viewport.x, viewport.y, viewport.w, viewport.h);
 	else
-		glViewport(0, 0, win->w, win->h);
+		glViewport(0, 0, win->settings.w, win->settings.h);
 
 	if(scissor.w && scissor.h)
-		glScissor(scissor.x, win->h - scissor.y - scissor.h, scissor.w, scissor.h);
+		glScissor(scissor.x, win->settings.h - scissor.y - scissor.h, scissor.w, scissor.h);
 	else
-		glScissor(0, 0, win->w, win->h);
+		glScissor(0, 0, win->settings.w, win->settings.h);
 }
 
 void ogl_manager::dbg_render_texture_fullscreen(texture_id id) { PROF
@@ -681,7 +681,7 @@ void ogl_manager::dbg_render_texture_fullscreen(texture_id id) { PROF
 	glUseProgram(dbg_shader.handle);
 	select_texture(id);
 
-	glViewport(0, 0, win->w, win->h);
+	glViewport(0, 0, win->settings.w, win->settings.h);
 	glEnable(gl_capability::blend);
 	glBlendFunc(gl_blend_factor::one, gl_blend_factor::one_minus_src_alpha);
 

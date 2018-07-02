@@ -783,6 +783,13 @@ T dbg_manager::get_var(string path) { PROF
 	return *(T*)value->value;
 }
 
+CALLBACK void dbg_reup_window(platform_window* window) { PROF
+
+	if(ImGui::Button("Apply Settings")) {
+		global_api->recreate_window(window);
+	}
+}
+
 CALLBACK void dbg_add_log(log_message* msg, void* param) { PROF
 
 	dbg_manager* dbg = (dbg_manager*)param;

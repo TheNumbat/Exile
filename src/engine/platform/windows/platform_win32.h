@@ -9,11 +9,12 @@ platform_api platform_build_api();
 
 bool 		   win32_window_focused(platform_window* win);	
 platform_error win32_swap_buffers(platform_window* window);
+platform_error win32_create_window(platform_window* window);
 platform_error win32_destroy_window(platform_window* window);
+platform_error win32_recreate_window(platform_window* window);
 platform_error win32_get_window_size(platform_window* window, i32* w, i32* h);
 platform_error win32_get_window_drawable(platform_window* window, i32* w, i32* h);
-platform_error win32_create_window(platform_window* window, string title, u32 width, u32 height);
-	
+
 string 		   win32_get_clipboard();
 void 		   win32_set_clipboard(string text);
 

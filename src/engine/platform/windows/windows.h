@@ -1195,6 +1195,7 @@ typedef struct tagWNDCLASSEXA {
 } WNDCLASSEXA, *PWNDCLASSEXA, NEAR *NPWNDCLASSEXA, FAR *LPWNDCLASSEXA;
 
 DLL_IMPORT ATOM WINAPI RegisterClassExA(CONST WNDCLASSEXA *);
+DLL_IMPORT BOOL WINAPI UnregisterClassA(LPCSTR lpClassName, HINSTANCE hInstance);
 DLL_IMPORT HWND WINAPI CreateWindowExA(DWORD dwExStyle, LPCSTR lpClassName, LPCSTR lpWindowName, DWORD dwStyle, int X, int Y, int nWidth, int nHeight, HWND hWndParent, HMENU hMenu, HINSTANCE hInstance, LPVOID lpParam);
 
 // ime

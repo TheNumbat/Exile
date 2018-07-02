@@ -6,7 +6,9 @@ Working To-Do:
 	config format
 	user settings
 
-	window creation options - begin with default, recreate to change (AA, vsync, fullscreen)
+	window creation options - begin with default, recreate to change
+		fullscreen modes
+		https://blogs.msdn.microsoft.com/oldnewthing/20100412-00/?p=14353
 	framebuffer objects (msaa + effects)
 	skybox
 	directional/sun lighting

@@ -26,6 +26,25 @@ struct platform_mutex;
 struct platform_file;
 typedef u32 platform_thread_id;
 
+enum platform_window_mode : u8 {
+	windowed,
+	fullscreen,
+	borderless
+};
+
+#define WINDOW_TITLE_LEN 128
+
+// part of platform_window
+struct platform_window_settings {
+
+	char c_title[WINDOW_TITLE_LEN] = {};
+
+	platform_window_mode mode = platform_window_mode::windowed;
+	i32 w = 1280, h = 720;
+	i32 samples = 4;
+	bool vsync = false;
+};
+
 struct platform_error {
 	bool good = true;
 	u32 error = 0;
@@ -292,10 +311,11 @@ struct platform_api {
 
 	bool 		   (*window_focused)(platform_window* win);	
 	platform_error (*swap_buffers)(platform_window* window);
+	platform_error (*create_window)(platform_window* window);
 	platform_error (*destroy_window)(platform_window* window);
+	platform_error (*recreate_window)(platform_window* window);
 	platform_error (*get_window_size)(platform_window* window, i32* w, i32* h);
 	platform_error (*get_window_drawable)(platform_window* window, i32* w, i32* h);
-	platform_error (*create_window)(platform_window* window, string title, u32 width, u32 height);
 	
 	string 		   (*get_clipboard)();
 	void 		   (*set_clipboard)(string text);

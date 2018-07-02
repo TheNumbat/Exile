@@ -9,10 +9,11 @@ platform_api platform_build_api();
 
 bool 		   sdl_window_focused(platform_window* win);	
 platform_error sdl_swap_buffers(platform_window* window);
+platform_error sdl_create_window(platform_window* window);
 platform_error sdl_destroy_window(platform_window* window);
+platform_error sdl_recreate_window(platform_window* window);
 platform_error sdl_get_window_size(platform_window* window, i32* w, i32* h);
 platform_error sdl_get_window_drawable(platform_window* window, i32* w, i32* h);
-platform_error sdl_create_window(platform_window* window, string title, u32 width, u32 height);
 
 string 		   sdl_get_clipboard();
 void 		   sdl_set_clipboard(string text);
