@@ -191,6 +191,13 @@ void threadpool::stop_all() { PROF
 
 		online = false;
 	}
+
+	PUSH_ALLOC(alloc);
+	FORHEAP_LINEAR(it, jobs) {
+		free(*it, (*it)->my_size);
+	}
+	POP_ALLOC();
+	jobs.clear();
 } 
 
 void threadpool::start_all() { PROF

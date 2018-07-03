@@ -24,6 +24,8 @@ Working To-Do:
 	world interaction
 	chunk paging
 
+	some good deps: iconFontHeaders, nativeFileDialog from dbartolini
+
 Bugs:
 	allocation profiling is somewhat broken for the world system
 	

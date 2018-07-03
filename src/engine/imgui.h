@@ -53,7 +53,6 @@ struct imgui_manager {
 	void load_font(asset_store* store = null);
 
 	void gl_load();
-	void gl_reload();
 	void gl_destroy();
 
 	void reload();

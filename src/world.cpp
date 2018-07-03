@@ -2,8 +2,10 @@
 CALLBACK void world_debug_ui(world* w) { PROF
 
 	if(ImGui::SmallButton("Regenerate"_)) {
+		w->thread_pool.stop_all();
 		w->destroy_chunks();
 		w->chunks = map<chunk_pos, chunk*>::make(512, w->alloc);
+		w->thread_pool.start_all();
 	}
 
 	ImGui::SameLine();

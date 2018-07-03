@@ -340,11 +340,6 @@ imgui_manager imgui_manager::make(platform_window* window, allocator* a) { PROF
 	return ret;
 }
 
-void imgui_manager::gl_reload() {
-	gl_destroy();
-	gl_load();
-}
-
 void imgui_manager::gl_destroy() {
 
 	glDeleteBuffers(1, &gl_info.vbo);
@@ -426,7 +421,7 @@ void imgui_manager::load_font(asset_store* store) { PROF
 		io.Fonts->TexID = 0;
 	}
 
-	io.Fonts->Clear();
+	io.Fonts->ClearInputData();
 	if(font_asset_name && store) {
 		asset* font = store->get(font_asset_name);
 
