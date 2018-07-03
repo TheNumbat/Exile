@@ -43,13 +43,18 @@ struct imgui_manager {
 	platform_cursor current_cursor = platform_cursor::pointer;
 
 	string font_asset_name;
+	asset_store* last_store = null;
 	f32 font_size = 12.0f;
 
 	static imgui_manager make(platform_window* window, allocator* a);
 	void destroy(); 
 
 	void set_font(string name, f32 size, asset_store* store);
-	void load_font(asset_store* store);
+	void load_font(asset_store* store = null);
+
+	void gl_load();
+	void gl_reload();
+	void gl_destroy();
 
 	void reload();
 	void process_event(platform_event evt);

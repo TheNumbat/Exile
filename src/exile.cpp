@@ -32,7 +32,7 @@ void exile::update() { PROF
 
 #ifndef RELEASE 
 	if(store.try_reload()) {
-		eng->ogl.reload_texture_assets(&store);
+		eng->ogl.reload_texture_assets();
 		eng->imgui.load_font(&store);
 	}
 #endif

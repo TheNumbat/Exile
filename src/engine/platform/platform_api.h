@@ -250,6 +250,7 @@ enum class platform_cursor : u8 {
 
 enum class platform_windowop : u8 {
 	none,
+	recreate,
 	resized,	// WM_SIZE
 	moved,		// WM_MOVE
 	shown,		// WM_SHOWWINDOW

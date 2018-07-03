@@ -12,7 +12,7 @@ struct shader_source {
 	static shader_source make(string path, allocator* a);
 	void load();
 	void destroy();
-	bool refresh();
+	bool refresh(bool force = false);
 };
 
 struct shader_program {
@@ -24,7 +24,7 @@ struct shader_program {
 
 	static shader_program make(string vert, string frag, _FPTR* uniforms, allocator* a);
 	void compile();
-	bool refresh();
+	bool refresh(bool force = false);
 	void destroy();
 	bool check_compile(string name, GLuint shader);
 };
@@ -36,11 +36,16 @@ enum class texture_wrap : u8 {
 	clamp_border,
 };
 
+struct asset_pair {
+	string name;
+	asset_store* store = null;
+};
+
 struct texture_array_info {
 	iv3 dim;
 	i32 current_layer = 0;
 	i32 layer_offset = 0;
-	array<string> asset_names;
+	array<asset_pair> assets;
 };
 
 struct texture {
@@ -49,6 +54,7 @@ struct texture {
 	
 	string a_name;
 	asset_type a_type = asset_type::none;
+	asset_store* store = null;
 
 	gl_tex_target type 	= gl_tex_target::_2D;
 	texture_wrap wrap 	= texture_wrap::repeat;
@@ -60,19 +66,13 @@ struct texture {
 	static texture make_array(iv3 dim, u32 idx_offset, texture_wrap wrap, bool pixelated, allocator* a);
 	void destroy(allocator* a);
 
+	void recreate();
+	void reload_data();
 	void load_bitmap(asset_store* store, string name);
-	void load_bitmap_from_font(asset_store* store, string name);
-	void load_bitmap_from_font(asset* font);
 	void push_array_bitmap(asset_store* store, string name);
-	void reload_from_asset(asset_store* store);
+	void load_bitmap_from_font(asset_store* store, string name);
 
 	void set_params();
-};
-
-struct draw_context {
-	func_ptr<void, render_command*> send_buffers;
-	func_ptr<void, render_command*> run;
-	shader_program shader;
 };
 
 struct ogl_info {
@@ -87,6 +87,13 @@ struct ogl_info {
 	void destroy();
 
 	bool check_version(i32 major, i32 minor);
+};
+
+struct draw_context {
+	func_ptr<void, render_command*> send_buffers;
+	func_ptr<void, render_command*> run;
+	func_ptr<bool, ogl_info*> compat;
+	shader_program shader;
 };
 
 struct ogl_settings {
@@ -105,6 +112,8 @@ struct ogl_manager {
 	map<texture_id, texture> textures;
 	map<u16, draw_context> 	 commands;
 
+	asset_store* last_store = null;
+
 	stack<ogl_settings> settings;
 
 	shader_program dbg_shader;
@@ -118,28 +127,28 @@ struct ogl_manager {
 	static ogl_manager make(platform_window* win, allocator* a);
 	void destroy();
 
-	void push_settings();
 	void pop_settings();
-	void set_setting(render_setting setting, bool enable);
+	void push_settings();
 	void apply_settings();
+	void set_setting(render_setting setting, bool enable);
 
-	void try_reload_programs();
-	void reload_texture_assets(asset_store* store);
-	
+	void reload_contexts();
+	void reload_everything();
 	void load_global_funcs();
+	void try_reload_programs();
 	void check_leaked_handles();
-
-	void add_command(u16 id, _FPTR* buffers, _FPTR* run, string v, string f, _FPTR* uniforms, _FPTR* compat);
+	void reload_texture_assets();
+	
 	draw_context* get_command_ctx(u16 id);
+	void add_command(u16 id, _FPTR* buffers, _FPTR* run, string v, string f, _FPTR* uniforms, _FPTR* compat);
 
-	texture_id begin_tex_array(iv3 dim, texture_wrap wrap = texture_wrap::repeat, bool pixelated = false, u32 offset = 0);
 	void push_tex_array(texture_id tex, asset_store* as, string name);
+	texture_id begin_tex_array(iv3 dim, texture_wrap wrap = texture_wrap::repeat, bool pixelated = false, u32 offset = 0);
 
-	texture_id add_texture(asset_store* as, string name, texture_wrap wrap = texture_wrap::repeat, bool pixelated = false);
-	texture* select_texture(texture_id id);
-	texture_id add_texture_from_font(asset_store* as, string name, texture_wrap wrap = texture_wrap::repeat, bool pixelated = false);
-	texture_id add_texture_from_font(asset* font, texture_wrap wrap = texture_wrap::repeat, bool pixelated = false);
 	void destroy_texture(texture_id id);
+	texture* select_texture(texture_id id);
+	texture_id add_texture(asset_store* as, string name, texture_wrap wrap = texture_wrap::repeat, bool pixelated = false);
+	texture_id add_texture_from_font(asset_store* as, string name, texture_wrap wrap = texture_wrap::repeat, bool pixelated = false);
 
 	void dbg_render_texture_fullscreen(texture_id id);
 	void execute_command_list(render_command_list* rcl);
@@ -147,5 +156,5 @@ struct ogl_manager {
 	void cmd_set_settings(render_command* cmd);
 };
 
-void debug_proc(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userPointer);
 CALLBACK void uniforms_dbg(shader_program* prog, render_command* rc, render_command_list* rcl) {};
+void debug_proc(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userPointer);

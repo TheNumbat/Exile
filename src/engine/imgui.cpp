@@ -335,45 +335,75 @@ imgui_manager imgui_manager::make(platform_window* window, allocator* a) { PROF
     io.GetClipboardTextFn = imgui_get_clipboard;
     io.ClipboardUserData = null;
 
-	ret.gl_info.program = glCreateProgram();
-	ret.gl_info.vertex = glCreateShader(gl_shader_type::vertex);
-	ret.gl_info.fragment = glCreateShader(gl_shader_type::fragment);
-	glShaderSource(ret.gl_info.vertex, 1, &imgui_vertex_shader, null);
-	glShaderSource(ret.gl_info.fragment, 1, &imgui_fragment_shader, null);
-	glCompileShader(ret.gl_info.vertex);
-	glCompileShader(ret.gl_info.fragment);
-	glAttachShader(ret.gl_info.program, ret.gl_info.vertex);
-	glAttachShader(ret.gl_info.program, ret.gl_info.fragment);
-	glLinkProgram(ret.gl_info.program);
+    ret.gl_load();
 
-	ret.gl_info.tex_loc   = glGetUniformLocation(ret.gl_info.program, "Texture");
-	ret.gl_info.mat_loc   = glGetUniformLocation(ret.gl_info.program, "ProjMtx");
-	ret.gl_info.pos_loc   = glGetAttribLocation(ret.gl_info.program, "Position");
-	ret.gl_info.uv_loc    = glGetAttribLocation(ret.gl_info.program, "UV");
-	ret.gl_info.color_loc = glGetAttribLocation(ret.gl_info.program, "Color");
+	return ret;
+}
 
-	glGenVertexArrays(1, &ret.gl_info.vao);
-	glBindVertexArray(ret.gl_info.vao);
+void imgui_manager::gl_reload() {
+	gl_destroy();
+	gl_load();
+}
 
-	glGenBuffers(1, &ret.gl_info.vbo);
-	glGenBuffers(1, &ret.gl_info.ebo);
+void imgui_manager::gl_destroy() {
+
+	glDeleteBuffers(1, &gl_info.vbo);
+	glDeleteBuffers(1, &gl_info.ebo);
+
+	glUseProgram(0);
+	glDeleteProgram(gl_info.program);
+	glDeleteShader(gl_info.vertex);
+	glDeleteShader(gl_info.fragment);
+
+	glDeleteVertexArrays(1, &gl_info.vao);
 	
-	glBindBuffer(gl_buf_target::array, ret.gl_info.vbo);
-	glBindBuffer(gl_buf_target::element_array, ret.gl_info.ebo);
+	glDeleteTextures(1, &gl_info.font_texture);
 
-	glEnableVertexAttribArray(ret.gl_info.pos_loc);
-	glEnableVertexAttribArray(ret.gl_info.uv_loc);
-	glEnableVertexAttribArray(ret.gl_info.color_loc);
+	ImGuiIO& io = ImGui::GetIO();
+	io.Fonts->TexID = 0;
 
-	glVertexAttribPointer(ret.gl_info.pos_loc, 2, gl_vert_attrib_type::_float, gl_bool::_false, sizeof(ImDrawVert), (GLvoid*)offsetof(ImDrawVert, pos));
-	glVertexAttribPointer(ret.gl_info.uv_loc, 2, gl_vert_attrib_type::_float, gl_bool::_false, sizeof(ImDrawVert), (GLvoid*)offsetof(ImDrawVert, uv));
-	glVertexAttribPointer(ret.gl_info.color_loc, 4, gl_vert_attrib_type::unsigned_byte, gl_bool::_true, sizeof(ImDrawVert), (GLvoid*)offsetof(ImDrawVert, col));
+	gl_info = {};
+}
+
+void imgui_manager::gl_load() {
+
+	gl_info.program = glCreateProgram();
+	gl_info.vertex = glCreateShader(gl_shader_type::vertex);
+	gl_info.fragment = glCreateShader(gl_shader_type::fragment);
+	glShaderSource(gl_info.vertex, 1, &imgui_vertex_shader, null);
+	glShaderSource(gl_info.fragment, 1, &imgui_fragment_shader, null);
+	glCompileShader(gl_info.vertex);
+	glCompileShader(gl_info.fragment);
+	glAttachShader(gl_info.program, gl_info.vertex);
+	glAttachShader(gl_info.program, gl_info.fragment);
+	glLinkProgram(gl_info.program);
+
+	gl_info.tex_loc   = glGetUniformLocation(gl_info.program, "Texture");
+	gl_info.mat_loc   = glGetUniformLocation(gl_info.program, "ProjMtx");
+	gl_info.pos_loc   = glGetAttribLocation(gl_info.program, "Position");
+	gl_info.uv_loc    = glGetAttribLocation(gl_info.program, "UV");
+	gl_info.color_loc = glGetAttribLocation(gl_info.program, "Color");
+
+	glGenVertexArrays(1, &gl_info.vao);
+	glBindVertexArray(gl_info.vao);
+
+	glGenBuffers(1, &gl_info.vbo);
+	glGenBuffers(1, &gl_info.ebo);
+	
+	glBindBuffer(gl_buf_target::array, gl_info.vbo);
+	glBindBuffer(gl_buf_target::element_array, gl_info.ebo);
+
+	glEnableVertexAttribArray(gl_info.pos_loc);
+	glEnableVertexAttribArray(gl_info.uv_loc);
+	glEnableVertexAttribArray(gl_info.color_loc);
+
+	glVertexAttribPointer(gl_info.pos_loc, 2, gl_vert_attrib_type::_float, gl_bool::_false, sizeof(ImDrawVert), (GLvoid*)offsetof(ImDrawVert, pos));
+	glVertexAttribPointer(gl_info.uv_loc, 2, gl_vert_attrib_type::_float, gl_bool::_false, sizeof(ImDrawVert), (GLvoid*)offsetof(ImDrawVert, uv));
+	glVertexAttribPointer(gl_info.color_loc, 4, gl_vert_attrib_type::unsigned_byte, gl_bool::_true, sizeof(ImDrawVert), (GLvoid*)offsetof(ImDrawVert, col));
 
 	glBindVertexArray(0);
 
-	ret.load_font(null);
-
-	return ret;
+	load_font();
 }
 
 void imgui_manager::set_font(string name, f32 size, asset_store* store) { PROF
@@ -385,6 +415,9 @@ void imgui_manager::set_font(string name, f32 size, asset_store* store) { PROF
 
 void imgui_manager::load_font(asset_store* store) { PROF
 
+	if(!store) store = last_store;
+	else last_store = store;
+
 	ImGuiIO io = ImGui::GetIO();
 	if(gl_info.font_texture) {
 		glDeleteTextures(1, &gl_info.font_texture);
@@ -394,7 +427,7 @@ void imgui_manager::load_font(asset_store* store) { PROF
 	}
 
 	io.Fonts->Clear();
-	if(font_asset_name) {
+	if(font_asset_name && store) {
 		asset* font = store->get(font_asset_name);
 
 		ImFontConfig cfg;
@@ -425,21 +458,7 @@ void imgui_manager::load_font(asset_store* store) { PROF
 
 void imgui_manager::destroy() { PROF
 
-	glDeleteBuffers(1, &gl_info.vbo);
-	glDeleteBuffers(1, &gl_info.ebo);
-
-	glDeleteProgram(gl_info.program);
-	glDeleteShader(gl_info.vertex);
-	glDeleteShader(gl_info.fragment);
-
-	glDeleteVertexArrays(1, &gl_info.vao);
-	
-	glDeleteTextures(1, &gl_info.font_texture);
-
-	ImGuiIO& io = ImGui::GetIO();
-	io.Fonts->TexID = 0;
-
-	gl_info = {};
+	gl_destroy();
 
 	ImGui::DestroyContext(context);
 	context = null;

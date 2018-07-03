@@ -1074,7 +1074,7 @@ LRESULT WINCALLBACK window_proc(HWND handle, UINT msg, WPARAM wParam, LPARAM lPa
 		}
 		case WM_QUIT:
 		case WM_CLOSE:
-		case WM_DESTROY: {
+		/*case WM_DESTROY:*/ {
 			evt.type = platform_event_type::window;
 			evt.window.op = platform_windowop::close;
 			global_enqueue(global_enqueue_param, evt);
@@ -1528,6 +1528,14 @@ platform_error win32_recreate_window(platform_window* window) {
 	if(!ret.good) return ret;
 
 	ret = win32_create_window(window);
+
+	if(ret.good) {
+		platform_event evt;
+		evt.type = platform_event_type::window;
+		evt.window.op = platform_windowop::recreate;
+		global_enqueue(global_enqueue_param, evt);
+	}
+
 	return ret;
 }
 
@@ -1674,12 +1682,19 @@ platform_error win32_destroy_window(platform_window* window) {
 		ret.error = GetLastError();
 		return ret;	
 	}
+	window->gl_context = null;
+	if(ReleaseDC(window->handle, window->device_context) == 0) {
+		ret.good = false;
+		ret.error = GetLastError();
+	}
+	window->device_context = null;
 	if(DestroyWindow(window->handle) == 0) {
 		ret.good = false;
 		ret.error = GetLastError();
 		return ret;	
 	}
-	if(!UnregisterClassA(window->settings.c_title, null)) {
+	window->handle = null;
+	if(UnregisterClassA(window->settings.c_title, null) == 0) {
 		ret.good = false;
 		ret.error = GetLastError();
 		return ret;

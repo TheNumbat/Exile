@@ -286,7 +286,7 @@ struct dbg_manager {
 void _prof_sec(string name, code_context context);
 void _prof_sec_end();
 
-CALLBACK void dbg_reup_window(platform_window* window);
+CALLBACK void dbg_reup_window(void* eng);
 CALLBACK void dbg_add_log(log_message* msg, void*);
 
 bool prof_sort_name(profile_node* l, profile_node* r);

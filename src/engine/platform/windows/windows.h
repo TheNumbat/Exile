@@ -799,6 +799,7 @@ DLL_IMPORT HGDIOBJ WINAPI GetStockObject(int object);
 
 DLL_IMPORT BOOL    WINAPI AdjustWindowRect(RECT *rect, DWORD style, BOOL enu);
 DLL_IMPORT HDC             GetDC(HANDLE);
+DLL_IMPORT int             ReleaseDC(HANDLE hWnd, HDC hDC);
 DLL_IMPORT BOOL     WINAPI SetWindowPos(HWND hWnd, HWND hWndInsertAfter, int X, int Y, int cx, int cy, UINT uFlags);
 DLL_IMPORT BOOL     WINAPI SetWindowPlacement(HWND hWnd, WINDOWPLACEMENT const *lpwndpl);
 DLL_IMPORT BOOL     WINAPI ShowWindow(HWND hWnd, int nCmdShow);

@@ -64,13 +64,13 @@ void shader_source::destroy() { PROF
 	path.destroy(alloc);
 }
 
-bool shader_source::refresh() { PROF
+bool shader_source::refresh(bool force) { PROF
 
 	platform_file_attributes new_attrib;
 	
 	CHECKED(get_file_attributes, &new_attrib, path);	
 	
-	if(global_api->test_file_written(&last_attrib, &new_attrib)) {
+	if(force || global_api->test_file_written(&last_attrib, &new_attrib)) {
 
 		source.destroy(alloc);
 		load();
@@ -140,9 +140,9 @@ bool shader_program::check_compile(string name, GLuint shader) { PROF
 	return true;
 }
 
-bool shader_program::refresh() { PROF
+bool shader_program::refresh(bool force) { PROF
 
-	if(vertex.refresh() || fragment.refresh()) {
+	if(vertex.refresh(force) || fragment.refresh(force)) {
 
 		glUseProgram(0);
 		glDeleteProgram(handle);
@@ -165,10 +165,35 @@ void shader_program::destroy() { PROF
 	glDeleteProgram(handle);
 }
 
-void ogl_manager::reload_texture_assets(asset_store* store) {
+void ogl_manager::reload_contexts() { PROF
+
+	FORMAP(it, commands) {
+		if(!it->value.compat(&info)) {	
+			LOG_WARN_F("Render command % failed compatibility check!!!", it->key);
+			continue;
+		}	
+
+		it->value.shader.refresh(true);
+	}
+}
+
+void ogl_manager::reload_everything() { PROF
+
+	info.destroy();
+	info = ogl_info::make(alloc);
+
+	reload_contexts();
+	load_global_funcs();
 
 	FORMAP(it, textures) {
-		it->value.reload_from_asset(store);
+		it->value.recreate();
+	}
+}
+
+void ogl_manager::reload_texture_assets() { PROF
+
+	FORMAP(it, textures) {
+		it->value.reload_data();
 	}
 }
 
@@ -227,21 +252,6 @@ void ogl_manager::destroy() { PROF
 
 	check_leaked_handles();
 } 
-
-texture_id ogl_manager::add_texture_from_font(asset* font, texture_wrap wrap, bool pixelated) { PROF
-
-	texture t = texture::make(wrap, pixelated);
-	t.id = next_texture_id;
-
-	t.load_bitmap_from_font(font);
-
-	textures.insert(next_texture_id, t);
-
-	LOG_DEBUG_F("Created texture % from font %", next_texture_id, font->name);
-
-	next_texture_id++;
-	return next_texture_id - 1;
-}
 
 texture_id ogl_manager::add_texture_from_font(asset_store* as, string name, texture_wrap wrap, bool pixelated) { PROF
 
@@ -352,13 +362,9 @@ texture texture::make_array(iv3 dim, u32 offset, texture_wrap wrap, bool pixelat
 	ret.array_info.dim = dim;
 	ret.array_info.layer_offset = offset;
 	ret.array_info.current_layer = offset;
-	ret.array_info.asset_names = array<string>::make(dim.z, a);
+	ret.array_info.assets = array<asset_pair>::make(dim.z, a);
 
 	glGenTextures(1, &ret.handle);
-
-	glBindTexture(gl_tex_target::_2D_array, ret.handle);
-	glTexStorage3D(gl_tex_target::_2D_array, 1, gl_tex_format::rgba8, dim.x, dim.y, dim.z);
-	glBindTexture(gl_tex_target::_2D_array, 0);
 
 	ret.set_params();
 
@@ -368,6 +374,10 @@ texture texture::make_array(iv3 dim, u32 offset, texture_wrap wrap, bool pixelat
 void texture::set_params() { PROF
 
 	glBindTexture(type, handle);
+
+	if(type == gl_tex_target::_2D_array) {
+		glTexStorage3D(type, 1, gl_tex_format::rgba8, array_info.dim.x, array_info.dim.y, array_info.dim.z);
+	}
 
 	switch(wrap) {
 	case texture_wrap::repeat:
@@ -401,32 +411,13 @@ void texture::set_params() { PROF
 	glBindTexture(type, 0);
 }
 
-void texture::load_bitmap_from_font(asset* font) { PROF
-
-	LOG_DEBUG_ASSERT(font);
-	LOG_DEBUG_ASSERT(font->type == asset_type::raster_font);
-	LOG_DEBUG_ASSERT(type == gl_tex_target::_2D);
-
-	a_name = font->name;
-	a_type = asset_type::raster_font;
-
-	glBindTexture(type, handle);
-
-	glTexImage2D(gl_tex_target::_2D, 0, gl_tex_format::rgba8, font->raster_font.width, font->raster_font.height, 0, gl_pixel_data_format::red, gl_pixel_data_type::unsigned_byte, font->mem);
-	gl_tex_swizzle swizzle[] = {gl_tex_swizzle::red, gl_tex_swizzle::red, gl_tex_swizzle::red, gl_tex_swizzle::red};
-	glTexParameteriv(gl_tex_target::_2D, gl_tex_param::swizzle_rgba, (GLint*)swizzle);
-
-	glGenerateMipmap(gl_tex_target::_2D);
-
-	glBindTexture(type, 0);
-}
-
 void texture::load_bitmap_from_font(asset_store* as, string name) { PROF
 
 	asset* a = as->get(name);
 
 	a_name = name;
 	a_type = asset_type::raster_font;
+	store = as;
 
 	LOG_DEBUG_ASSERT(a);
 	LOG_DEBUG_ASSERT(a->type == asset_type::raster_font);
@@ -449,6 +440,7 @@ void texture::load_bitmap(asset_store* as, string name) { PROF
 	
 	a_name = name;
 	a_type = asset_type::bitmap;
+	store = as;
 
 	LOG_DEBUG_ASSERT(a);
 	LOG_DEBUG_ASSERT(a->type == asset_type::bitmap);
@@ -463,9 +455,9 @@ void texture::load_bitmap(asset_store* as, string name) { PROF
 	glBindTexture(type, 0);
 }
 
-void texture::push_array_bitmap(asset_store* store, string name) {
+void texture::push_array_bitmap(asset_store* as, string name) {
 
-	asset* a = store->get(name);
+	asset* a = as->get(name);
 
 	LOG_DEBUG_ASSERT(a);
 	LOG_DEBUG_ASSERT(a->type == asset_type::bitmap);
@@ -476,21 +468,30 @@ void texture::push_array_bitmap(asset_store* store, string name) {
 
 	glTexSubImage3D(gl_tex_target::_2D_array, 0, 0, 0, array_info.current_layer, a->bitmap.width, a->bitmap.height, 1, gl_pixel_data_format::rgba, gl_pixel_data_type::unsigned_byte, a->mem);
 	
-	*array_info.asset_names.get(array_info.current_layer) = name;
+	array_info.assets.get(array_info.current_layer)->name = name;
+	array_info.assets.get(array_info.current_layer)->store = as;
 	array_info.current_layer++;
 
 	glBindTexture(gl_tex_target::_2D_array, 0);
 }
 
-void texture::reload_from_asset(asset_store* store) {
+void texture::recreate() {
+
+	glDeleteTextures(1, &handle);
+	glGenTextures(1, &handle);
+	set_params();
+	reload_data();
+}
+
+void texture::reload_data() {
 
 	if(type == gl_tex_target::_2D_array) {
 
 		array_info.current_layer = array_info.layer_offset;
 		
-		FORARR(it, array_info.asset_names) {
-			if(it->c_str)
-				push_array_bitmap(store, *it);
+		FORARR(it, array_info.assets) {
+			if(it->name.c_str)
+				push_array_bitmap(it->store, it->name);
 		}
 
 		return;
@@ -507,7 +508,7 @@ void texture::destroy(allocator* a) { PROF
 
 	glDeleteTextures(1, &handle);
 
-	array_info.asset_names.destroy();
+	array_info.assets.destroy();
 }
 
 void ogl_manager::add_command(u16 id, _FPTR* buffers, _FPTR* run, string v, string f, _FPTR* uniforms, _FPTR* compat) { PROF
@@ -518,8 +519,9 @@ void ogl_manager::add_command(u16 id, _FPTR* buffers, _FPTR* run, string v, stri
 	}
 
 	draw_context d;
+	d.compat.set(compat);
 
-	if(!((bool(*)(ogl_info*))compat->func)(&info)) {
+	if(!d.compat(&info)) {
 		
 		LOG_WARN_F("Render command % failed compatibility check!!!", id);
 		return;

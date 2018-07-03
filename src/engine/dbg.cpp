@@ -783,10 +783,13 @@ T dbg_manager::get_var(string path) { PROF
 	return *(T*)value->value;
 }
 
-CALLBACK void dbg_reup_window(platform_window* window) { PROF
+CALLBACK void dbg_reup_window(void* e) { PROF
 
+	engine* eng = (engine*)e;
 	if(ImGui::Button("Apply Settings")) {
-		global_api->recreate_window(window);
+		global_api->recreate_window(&eng->window);
+		eng->ogl.reload_everything();
+		eng->imgui.gl_reload();
 	}
 }
 
