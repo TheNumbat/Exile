@@ -10,7 +10,7 @@ struct engine {
 	platform_allocator log_a, ogl_a, imgui_a, dbg_a, evt_a; // idk about this
 	
 	void* game_state = null;
-	bool reload_gl = false;
+	bool apply_window_settings = false;
 //
 
 // API

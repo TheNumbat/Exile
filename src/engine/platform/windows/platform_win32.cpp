@@ -98,8 +98,14 @@ platform_api platform_build_api() {
 	ret.get_clipboard 			= &win32_get_clipboard;
 	ret.set_clipboard 			= &win32_set_clipboard;
 	ret.recreate_window			= &win32_recreate_window;
+	ret.apply_window_settings 	= &win32_apply_window_settings;
 
 	return ret;
+}
+
+bool win32_apply_window_settings(platform_window* window) {
+
+	return true;
 }
 
 string win32_get_clipboard() {

@@ -56,7 +56,7 @@ void exile::render() { PROF
 		ImGui::End();
 	}
 
-	// w.render();
+	w.render();
 }
 
 void exile::destroy() { PROF

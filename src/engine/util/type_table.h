@@ -37,10 +37,10 @@ struct Type_array_info {
 	u64 	length 	= 0;
 };
 struct Type_struct_info {
-	type_id		member_types[64]	= {};
-	string 		member_names[64];
-	u32 		member_offsets[64]	= {};
-	u8 			member_circular[64] = {};
+	type_id		member_types[96]	= {};
+	string 		member_names[96];
+	u32 		member_offsets[96]	= {};
+	u8 			member_circular[96] = {};
 	u32 		member_count		= 0;
 };
 struct Type_enum_info {

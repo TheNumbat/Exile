@@ -94,15 +94,17 @@ EXPORT bool main_loop(engine* state) {
 	state->ogl.try_reload_programs();
 #endif
 
-	if(state->reload_gl) {
-		state->imgui.gl_destroy();
-		state->ogl.gl_begin_reload();
+	if(state->apply_window_settings) {
+		if(global_api->apply_window_settings(&state->window)) {
+			state->imgui.gl_destroy();
+			state->ogl.gl_begin_reload();
 
-		global_api->recreate_window(&state->window);
+			global_api->recreate_window(&state->window);
 		
-		state->ogl.gl_end_reload();
-		state->imgui.gl_load();
-		state->reload_gl = false;
+			state->ogl.gl_end_reload();
+			state->imgui.gl_load();
+			state->apply_window_settings = false;
+		}
 	}
 
 	END_FRAME();

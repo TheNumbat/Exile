@@ -2,8 +2,10 @@
 Working To-Do:
 
 	window creation options
+		fix external opengl state  
+		settings diff
 		fullscreen modes
-		SDL layer
+		fix SDL layer
 		https://blogs.msdn.microsoft.com/oldnewthing/20100412-00/?p=14353
 
 	debug console

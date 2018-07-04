@@ -315,6 +315,7 @@ struct platform_api {
 	platform_error (*create_window)(platform_window* window);
 	platform_error (*destroy_window)(platform_window* window);
 	platform_error (*recreate_window)(platform_window* window);
+	bool 		   (*apply_window_settings)(platform_window* window); // returns whether or not the window (and OpenGL context stuff) needs to be recreated
 	platform_error (*get_window_size)(platform_window* window, i32* w, i32* h);
 	platform_error (*get_window_drawable)(platform_window* window, i32* w, i32* h);
 	

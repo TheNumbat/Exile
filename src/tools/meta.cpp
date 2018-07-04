@@ -450,7 +450,7 @@ void output_struct(ofstream& fout, const struct_def& s) {
 
 	auto type = clang_getCursorType(s.this_);
 
-	if(s.members.size() > 64) {
+	if(s.members.size() > 96) {
 		cout << "struct " << name << " has too many members!" << endl;
 		return;
 	}

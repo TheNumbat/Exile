@@ -12,6 +12,7 @@ platform_error win32_swap_buffers(platform_window* window);
 platform_error win32_create_window(platform_window* window);
 platform_error win32_destroy_window(platform_window* window);
 platform_error win32_recreate_window(platform_window* window);
+bool 		   win32_apply_window_settings(platform_window* window);
 platform_error win32_get_window_size(platform_window* window, i32* w, i32* h);
 platform_error win32_get_window_drawable(platform_window* window, i32* w, i32* h);
 
