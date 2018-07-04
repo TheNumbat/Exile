@@ -788,10 +788,7 @@ CALLBACK void dbg_reup_window(void* e) { PROF
 	engine* eng = (engine*)e;
 	if(ImGui::Button("Apply Settings")) {
 
-		eng->imgui.gl_destroy();
-		global_api->recreate_window(&eng->window);
-		eng->imgui.gl_load();
-		// eng->ogl.reload_everything();
+		eng->reload_gl = true;
 	}
 }
 

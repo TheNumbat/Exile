@@ -64,13 +64,13 @@ void shader_source::destroy() { PROF
 	path.destroy(alloc);
 }
 
-bool shader_source::refresh(bool force) { PROF
+bool shader_source::try_refresh() { PROF
 
 	platform_file_attributes new_attrib;
 	
 	CHECKED(get_file_attributes, &new_attrib, path);	
 	
-	if(force || global_api->test_file_written(&last_attrib, &new_attrib)) {
+	if(global_api->test_file_written(&last_attrib, &new_attrib)) {
 
 		source.destroy(alloc);
 		load();
@@ -140,15 +140,25 @@ bool shader_program::check_compile(string name, GLuint shader) { PROF
 	return true;
 }
 
-bool shader_program::refresh(bool force) { PROF
+void shader_program::gl_destroy() { PROF 
 
-	if(vertex.refresh(force) || fragment.refresh(force)) {
+	glUseProgram(0);
+	glDeleteProgram(handle);
+	handle = 0;
+}
 
-		glUseProgram(0);
-		glDeleteProgram(handle);
-		handle = glCreateProgram();
+void shader_program::recreate() { PROF 
 
-		compile();
+	handle = glCreateProgram();
+	compile();
+}
+
+bool shader_program::try_refresh() { PROF
+
+	if(vertex.try_refresh() || fragment.try_refresh()) {
+
+		gl_destroy();
+		recreate();
 
 		return true;
 	}
@@ -161,30 +171,37 @@ void shader_program::destroy() { PROF
 	vertex.destroy();
 	fragment.destroy();
 
-	glUseProgram(0);
-	glDeleteProgram(handle);
+	gl_destroy();
 }
 
-void ogl_manager::reload_contexts() { PROF
+void ogl_manager::gl_begin_reload() { PROF
+
+	FORMAP(it, commands) {
+		it->value.shader.gl_destroy();
+	}
+	dbg_shader.gl_destroy();
+	FORMAP(it, textures) {
+		it->value.gl_destroy();
+	}
+
+	info.destroy();
+	check_leaked_handles();
+}
+
+void ogl_manager::gl_end_reload() { PROF
+
+	load_global_funcs();
+	info = ogl_info::make(alloc);
 
 	FORMAP(it, commands) {
 		if(!it->value.compat(&info)) {	
 			LOG_WARN_F("Render command % failed compatibility check!!!", it->key);
 			continue;
-		}	
+		}
 
-		it->value.shader.refresh(true);
+		it->value.shader.recreate();
 	}
-}
-
-void ogl_manager::reload_everything() { PROF
-
-	info.destroy();
-	info = ogl_info::make(alloc);
-
-	reload_contexts();
-	load_global_funcs();
-
+	dbg_shader.recreate();
 	FORMAP(it, textures) {
 		it->value.recreate();
 	}
@@ -199,11 +216,11 @@ void ogl_manager::reload_texture_assets() { PROF
 
 void ogl_manager::try_reload_programs() { PROF
 	FORMAP(it, commands) {
-		if(it->value.shader.refresh()) {
+		if(it->value.shader.try_refresh()) {
 			LOG_DEBUG_F("Reloaded program % with files %, %", it->key, it->value.shader.vertex.path, it->value.shader.fragment.path);
 		}
 	}
-	dbg_shader.refresh();
+	dbg_shader.try_refresh();
 }
 
 ogl_manager ogl_manager::make(platform_window* win, allocator* a) { PROF
@@ -475,9 +492,13 @@ void texture::push_array_bitmap(asset_store* as, string name) {
 	glBindTexture(gl_tex_target::_2D_array, 0);
 }
 
-void texture::recreate() {
-
+void texture::gl_destroy() { PROF
+	
 	glDeleteTextures(1, &handle);
+}
+
+void texture::recreate() { PROF
+
 	glGenTextures(1, &handle);
 	set_params();
 	reload_data();
@@ -506,9 +527,9 @@ void texture::reload_data() {
 
 void texture::destroy(allocator* a) { PROF
 
-	glDeleteTextures(1, &handle);
-
 	array_info.assets.destroy();
+
+	gl_destroy();
 }
 
 void ogl_manager::add_command(u16 id, _FPTR* buffers, _FPTR* run, string v, string f, _FPTR* uniforms, _FPTR* compat) { PROF

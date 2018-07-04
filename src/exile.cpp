@@ -1,4 +1,4 @@
-	
+	// 
 void exile::init() { PROF
 
 	alloc = MAKE_PLATFORM_ALLOCATOR("world");
@@ -56,7 +56,7 @@ void exile::render() { PROF
 		ImGui::End();
 	}
 
-	w.render();
+	// w.render();
 }
 
 void exile::destroy() { PROF

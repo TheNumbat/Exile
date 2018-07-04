@@ -12,7 +12,7 @@ struct shader_source {
 	static shader_source make(string path, allocator* a);
 	void load();
 	void destroy();
-	bool refresh(bool force = false);
+	bool try_refresh();
 };
 
 struct shader_program {
@@ -24,8 +24,10 @@ struct shader_program {
 
 	static shader_program make(string vert, string frag, _FPTR* uniforms, allocator* a);
 	void compile();
-	bool refresh(bool force = false);
+	bool try_refresh();
 	void destroy();
+	void gl_destroy();
+	void recreate();
 	bool check_compile(string name, GLuint shader);
 };
 
@@ -65,6 +67,7 @@ struct texture {
 	static texture make(texture_wrap wrap, bool pixelated);
 	static texture make_array(iv3 dim, u32 idx_offset, texture_wrap wrap, bool pixelated, allocator* a);
 	void destroy(allocator* a);
+	void gl_destroy();
 
 	void recreate();
 	void reload_data();
@@ -132,13 +135,14 @@ struct ogl_manager {
 	void apply_settings();
 	void set_setting(render_setting setting, bool enable);
 
-	void reload_contexts();
-	void reload_everything();
 	void load_global_funcs();
 	void try_reload_programs();
 	void check_leaked_handles();
 	void reload_texture_assets();
 	
+	void gl_end_reload();
+	void gl_begin_reload();
+
 	draw_context* get_command_ctx(u16 id);
 	void add_command(u16 id, _FPTR* buffers, _FPTR* run, string v, string f, _FPTR* uniforms, _FPTR* compat);
 
