@@ -17,3 +17,4 @@ string string_literal(const char* literal);
 i32    string_last_slash(string str);
 string make_substring(string str, u32 start, u32 end, void* (*allocator)(u64 bytes));
 string make_cat_string(string first, string second, void* (*allocator)(u64 bytes));
+bool streql(string l, string r);

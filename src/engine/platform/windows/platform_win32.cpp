@@ -22,6 +22,8 @@ void* global_enqueue_param = null;
 POINT saved_mouse_pos = {};
 string clipboard;
 
+platform_window_settings prev_settings;
+
 void* win32_heap_alloc_net(u64 bytes);
 void win32_heap_free_net(void* mem);
 
@@ -105,7 +107,31 @@ platform_api platform_build_api() {
 
 bool win32_apply_window_settings(platform_window* window) {
 
-	return true;
+	bool need_recreate = false;
+
+	if(!streql(string_from_c_str(window->settings.c_title),string_from_c_str(prev_settings.c_title))) {
+
+		SetWindowTextA(window->handle, window->settings.c_title);
+	}
+
+	if(window->settings.w != prev_settings.w || window->settings.h != prev_settings.h) {
+
+		SetWindowPos(window->handle, null, 0, 0, window->settings.w, window->settings.h, SWP_NOZORDER | SWP_NOMOVE);
+	}
+
+	if(window->settings.vsync != prev_settings.vsync) {
+
+		wglSwapIntervalEXT(window->settings.vsync ? 1 : 0);
+	}
+
+	if(window->settings.samples != prev_settings.samples) {
+
+		need_recreate = true;
+	}
+
+	prev_settings = window->settings;
+
+	return need_recreate;
 }
 
 string win32_get_clipboard() {
@@ -1549,7 +1575,7 @@ platform_error win32_create_window(platform_window* window) {
 
 	platform_error ret;
 
-	string title = make_cat_string(string_from_c_str(window->settings.c_title), str(" | Win32"), &win32_heap_alloc);
+	prev_settings = window->settings;
 
 	HINSTANCE 	instance = GetModuleHandleA(null);
 	HANDLE 		process  = GetCurrentProcess();
@@ -1583,7 +1609,7 @@ platform_error win32_create_window(platform_window* window) {
 		return ret;
 	}
 
-	window->handle = CreateWindowExA(WS_EX_ACCEPTFILES, window->settings.c_title, title.c_str, WS_OVERLAPPEDWINDOW,
+	window->handle = CreateWindowExA(WS_EX_ACCEPTFILES, window->settings.c_title, window->settings.c_title, WS_OVERLAPPEDWINDOW,
 									 CW_USEDEFAULT, CW_USEDEFAULT, window->settings.w, window->settings.h, 0, 0, instance, 0);
 
 	if(window->handle == null) {
@@ -1673,8 +1699,6 @@ platform_error win32_create_window(platform_window* window) {
 	wglSwapIntervalEXT(window->settings.vsync ? 1 : 0);
 
 	ShowWindowAsync(window->handle, SW_SHOW);
-
-	free_string(title, win32_heap_free);
 
 	return ret;
 }

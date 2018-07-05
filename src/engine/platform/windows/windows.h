@@ -797,12 +797,13 @@ DLL_IMPORT HGDIOBJ WINAPI GetStockObject(int object);
 #define ENUM_CURRENT_SETTINGS  cast(DWORD)-1
 #define ENUM_REGISTRY_SETTINGS cast(DWORD)-2
 
-DLL_IMPORT BOOL    WINAPI AdjustWindowRect(RECT *rect, DWORD style, BOOL enu);
+DLL_IMPORT BOOL 	WINAPI AdjustWindowRect(RECT *rect, DWORD style, BOOL enu);
 DLL_IMPORT HDC             GetDC(HANDLE);
 DLL_IMPORT int             ReleaseDC(HANDLE hWnd, HDC hDC);
 DLL_IMPORT BOOL     WINAPI SetWindowPos(HWND hWnd, HWND hWndInsertAfter, int X, int Y, int cx, int cy, UINT uFlags);
 DLL_IMPORT BOOL     WINAPI SetWindowPlacement(HWND hWnd, WINDOWPLACEMENT const *lpwndpl);
 DLL_IMPORT BOOL     WINAPI ShowWindow(HWND hWnd, int nCmdShow);
+DLL_IMPORT BOOL 	WINAPI SetWindowTextA(HWND hWnd, LPCSTR lpString);
 
 DLL_IMPORT void *  WINAPI GlobalLock(HGLOBAL hMem);
 DLL_IMPORT BOOL    WINAPI GlobalUnlock(HGLOBAL hMem);

@@ -193,9 +193,10 @@ namespace ImGui {
 		} break;
 
 		case Type::_array: {
-			if(TreeNodeEx(label, open ? ImGuiTreeNodeFlags_DefaultOpen : 0)) {
-				
-				_type_info* of = TYPEINFO_H(info->_array.of);
+			_type_info* of = TYPEINFO_H(info->_array.of);
+			if(of->hash == (type_id)typeid(char).hash_code()) {
+				InputText(label, (char*)val, info->_array.length);
+			} else if(TreeNodeEx(label, open ? ImGuiTreeNodeFlags_DefaultOpen : 0)) {
 
 				for(u32 i = 0; i < info->_array.length; i++) {
 

@@ -1,4 +1,19 @@
 
+bool streql(string l, string r) {
+
+	if(l.len != r.len) {
+		return false;
+	}
+
+	for(u32 i = 0; i < l.len; i++) {
+		if(l.c_str[i] != r.c_str[i]) {
+			return false;
+		}
+	}
+	
+	return true;
+}
+
 string make_string_from_c_str(char* c_str, void* (*allocator)(u64 bytes)) {
 
 	string ret;
