@@ -44,7 +44,6 @@ EXPORT engine* start_up(platform_api* api) {
 
 	LOG_INFO("Creating window...");
 	_memcpy("Exile", state->window.settings.c_title, 6);
-	state->window.settings.samples = 1;
 	CHECKED(create_window, &state->window);
 	state->dbg.add_var("window/settings"_, &state->window.settings);
 	state->dbg.add_ele("window/apply"_, FPTR(dbg_reup_window), state);
@@ -103,8 +102,8 @@ EXPORT bool main_loop(engine* state) {
 		
 			state->ogl.gl_end_reload();
 			state->imgui.gl_load();
-			state->apply_window_settings = false;
 		}
+		state->apply_window_settings = false;
 	}
 
 	END_FRAME();
