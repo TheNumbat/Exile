@@ -29,5 +29,6 @@ struct engine {
 void* start_up_game(engine* e);
 void run_game(void* game);
 void shut_down_game(void* game);
+void gl_reload_game(void* game);
 void reload_game(engine* e, void* game);
 void unload_game(engine* e, void* game);

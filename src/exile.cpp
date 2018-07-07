@@ -26,6 +26,11 @@ void exile::init() { PROF
 	}
 }
 
+void exile::gl_reload() { PROF
+
+	w.regenerate();	
+}
+
 void exile::update() { PROF
 
 	u64 now = eng->platform->get_perfcount();

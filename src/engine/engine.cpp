@@ -95,6 +95,7 @@ EXPORT bool main_loop(engine* state) {
 
 	if(state->apply_window_settings) {
 		if(global_api->apply_window_settings(&state->window)) {
+
 			state->imgui.gl_destroy();
 			state->ogl.gl_begin_reload();
 
@@ -102,6 +103,8 @@ EXPORT bool main_loop(engine* state) {
 		
 			state->ogl.gl_end_reload();
 			state->imgui.gl_load();
+
+			gl_reload_game(state->game_state);
 		}
 		state->apply_window_settings = false;
 	}

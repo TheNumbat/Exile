@@ -2,16 +2,21 @@
 CALLBACK void world_debug_ui(world* w) { PROF
 
 	if(ImGui::SmallButton("Regenerate"_)) {
-		w->thread_pool.stop_all();
-		w->destroy_chunks();
-		w->chunks = map<chunk_pos, chunk*>::make(512, w->alloc);
-		w->thread_pool.start_all();
+		w->regenerate();
 	}
 
 	ImGui::SameLine();
 	if(ImGui::SmallButton("Reset")) {
 		w->p.reset();
 	}
+}
+
+void world::regenerate() { PROF
+
+	thread_pool.stop_all();
+	destroy_chunks();
+	chunks = map<chunk_pos, chunk*>::make(512, alloc);
+	thread_pool.start_all();
 }
 
 CALLBACK void player_debug_ui(world* w) { PROF

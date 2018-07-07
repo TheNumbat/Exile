@@ -12,6 +12,7 @@ struct exile {
 
 	void init();
 	void destroy();
+	void gl_reload();
 
 	void update();
 	void render();
@@ -29,6 +30,11 @@ void* start_up_game(engine* e) {
 	exile* ret = new(eng->platform->heap_alloc(sizeof(exile)))exile;
 	ret->init();
 	return ret;
+}
+
+void gl_reload_game(void* game) {
+	exile* ex = (exile*)game;
+	ex->gl_reload();
 }
 
 void run_game(void* game) {

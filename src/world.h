@@ -144,6 +144,7 @@ struct world {
 	void init(asset_store* store, allocator* a);
 	void destroy();
 	void destroy_chunks();
+	void regenerate();
 
 	void update(u64 now);
 	void update_player(u64 now);
