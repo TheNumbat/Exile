@@ -19,6 +19,7 @@ wglSwapIntervalEXT_t 			wglSwapIntervalEXT;
 void (*global_enqueue)(void* queue_param, platform_event evt) = null;
 void* global_enqueue_param = null;
 
+WINDOWPLACEMENT prev_window_placement = {};
 POINT saved_mouse_pos = {};
 string clipboard;
 
@@ -117,6 +118,37 @@ bool win32_apply_window_settings(platform_window* window) {
 	if(window->settings.w != prev_settings.w || window->settings.h != prev_settings.h) {
 
 		SetWindowPos(window->handle, null, 0, 0, window->settings.w, window->settings.h, SWP_NOZORDER | SWP_NOMOVE);
+	}
+
+	if(window->settings.mode != prev_settings.mode) {
+
+		DWORD style = GetWindowLongA(window->handle, GWL_STYLE);
+
+		if(window->settings.mode == platform_window_mode::fullscreen) {		
+			
+			MONITORINFO mi = {sizeof(mi)};
+			if (GetWindowPlacement(window->handle, &prev_window_placement) &&
+				GetMonitorInfoA(MonitorFromWindow(window->handle, MONITOR_DEFAULTTOPRIMARY), &mi)) {
+
+				i32 w = mi.rcMonitor.right - mi.rcMonitor.left;
+        		i32 h = mi.rcMonitor.bottom - mi.rcMonitor.top;
+
+				SetWindowLongA(window->handle, GWL_STYLE, style & ~WS_OVERLAPPEDWINDOW);
+				SetWindowPos(window->handle, HWND_TOP, mi.rcMonitor.left, mi.rcMonitor.top, w, h, SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
+
+				window->settings.w = w;
+				window->settings.h = h;
+			}
+
+		} else {
+			
+			SetWindowLongA(window->handle, GWL_STYLE, style | WS_OVERLAPPEDWINDOW);
+			SetWindowPlacement(window->handle, &prev_window_placement);
+			SetWindowPos(window->handle, NULL, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
+
+			window->settings.w = prev_window_placement.rcNormalPosition.right - prev_window_placement.rcNormalPosition.left;
+			window->settings.h = prev_window_placement.rcNormalPosition.bottom - prev_window_placement.rcNormalPosition.top;
+		}
 	}
 
 	if(window->settings.vsync != prev_settings.vsync) {
@@ -1609,14 +1641,35 @@ platform_error win32_create_window(platform_window* window) {
 		return ret;
 	}
 
-	window->handle = CreateWindowExA(WS_EX_ACCEPTFILES, window->settings.c_title, window->settings.c_title, WS_OVERLAPPEDWINDOW,
-									 CW_USEDEFAULT, CW_USEDEFAULT, window->settings.w, window->settings.h, 0, 0, instance, 0);
+	if(window->settings.mode == platform_window_mode::windowed) {
+
+		window->handle = CreateWindowExA(WS_EX_ACCEPTFILES, window->settings.c_title, window->settings.c_title, WS_OVERLAPPEDWINDOW,
+									 	 CW_USEDEFAULT, CW_USEDEFAULT, window->settings.w, window->settings.h, 0, 0, instance, 0);
+
+	} else if(window->settings.mode == platform_window_mode::fullscreen) {
+
+		MONITORINFO mi = {sizeof(mi)};
+		if(GetMonitorInfoA(MonitorFromWindow(window->handle, MONITOR_DEFAULTTOPRIMARY), &mi) == 0) {
+			ret.good = false;
+			ret.error = GetLastError();
+			return ret;
+		}
+
+        i32 w = mi.rcMonitor.right - mi.rcMonitor.left;
+        i32 h = mi.rcMonitor.bottom - mi.rcMonitor.top;
+		window->handle = CreateWindowExA(WS_EX_ACCEPTFILES, window->settings.c_title, window->settings.c_title, WS_POPUP,
+									 	 mi.rcMonitor.left, mi.rcMonitor.top, w, h, 0, 0, instance, 0);
+		window->settings.w = w;
+		window->settings.h = h;
+	}
 
 	if(window->handle == null) {
 		ret.good = false;
 		ret.error = GetLastError();
 		return ret;
 	}
+
+	GetWindowPlacement(window->handle, &prev_window_placement);
 
 	window->device_context = GetDC(window->handle);
 

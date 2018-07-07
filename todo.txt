@@ -3,7 +3,6 @@ Working To-Do:
 
 	window creation options
 		fix external opengl state  
-		fullscreen modes
 		fix SDL layer
 		https://blogs.msdn.microsoft.com/oldnewthing/20100412-00/?p=14353
 

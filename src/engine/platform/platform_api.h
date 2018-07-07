@@ -29,7 +29,6 @@ typedef u32 platform_thread_id;
 enum platform_window_mode : u8 {
 	windowed,
 	fullscreen,
-	borderless
 };
 
 #define WINDOW_TITLE_LEN 128
