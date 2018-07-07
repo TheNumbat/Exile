@@ -44,22 +44,18 @@ struct chunk_vertex {
 };
 static_assert(sizeof(chunk_vertex) == 8, "chunk_vertex size != 8");
 
-namespace render_command_type {
-	u16 mesh_chunk = 1024;
-};
+u16 cmd_mesh_chunk = 1024;
 
 struct mesh_chunk {
 
 	vector<chunk_vertex> 	vertices;
 	vector<uv3> 			elements;
 
-	GLuint vao = 0;
-	GLuint vbos[2] = {};
+	gpu_object_id gpu = -1;
 	bool dirty = false;
 
-	static mesh_chunk make(u32 verts = 8192, allocator* alloc = null);
 	static mesh_chunk make_cpu(u32 verts = 8192, allocator* alloc = null);
-	static mesh_chunk make_gpu();
+	void init_gpu();
 	void destroy();
 	void free_cpu();
 	void clear();
@@ -88,7 +84,7 @@ struct chunk {
 
 	allocator* alloc = null;
 
-	static chunk make(chunk_pos pos, allocator* a);
+	void init(chunk_pos pos, allocator* a);
 	static chunk* make_new(chunk_pos pos, allocator* a);
 
 	void gen();
@@ -166,7 +162,9 @@ CALLBACK void unlock_chunk(chunk* v);
 CALLBACK void cancel_build(chunk* param);
 float check_pirority(super_job* j, void* param);
 
-CALLBACK void run_mesh_chunk(render_command* cmd);
-CALLBACK void buffers_mesh_chunk(render_command* cmd);
+CALLBACK void setup_mesh_chunk(gpu_object* obj);
+CALLBACK void update_mesh_chunk(gpu_object* obj, void* data, bool force);
+
+CALLBACK void run_mesh_chunk(render_command* cmd, gpu_object* gpu);
 CALLBACK void uniforms_mesh_chunk(shader_program* prog, render_command* cmd, render_command_list* rcl);
 CALLBACK bool compat_mesh_chunk(ogl_info* info);

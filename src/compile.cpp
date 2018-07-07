@@ -20,9 +20,11 @@
 #include "engine/compile.h"
 engine* eng = null;
 
+#include "mesh.h"
 #include "world.h"
 #include "exile.h"
 
+#include "mesh.cpp"
 #include "world.cpp"
 #include "exile.cpp"
 #include <meta_types.cpp>

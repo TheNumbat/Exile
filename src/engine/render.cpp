@@ -176,6 +176,9 @@ void shader_program::destroy() { PROF
 
 void ogl_manager::gl_begin_reload() { PROF
 
+	FORMAP(it, objects) {
+		it->value.destroy();
+	}
 	FORMAP(it, commands) {
 		it->value.shader.gl_destroy();
 	}
@@ -205,6 +208,9 @@ void ogl_manager::gl_end_reload() { PROF
 	FORMAP(it, textures) {
 		it->value.recreate();
 	}
+	FORMAP(it, objects) {
+		it->value.recreate();
+	}
 }
 
 void ogl_manager::reload_texture_assets() { PROF
@@ -229,8 +235,12 @@ ogl_manager ogl_manager::make(platform_window* win, allocator* a) { PROF
 
 	ret.win = win;
 	ret.alloc = a;
+	
 	ret.textures = map<texture_id, texture>::make(32, a);
+	ret.objects = map<gpu_object_id, gpu_object>::make(256, a);
+
 	ret.commands = map<u16, draw_context>::make(32, a);
+	
 	ret.settings = stack<ogl_settings>::make(4, a);
 	ret.settings.push(ogl_settings());
 
@@ -238,19 +248,86 @@ ogl_manager ogl_manager::make(platform_window* win, allocator* a) { PROF
 	ret.info = ogl_info::make(ret.alloc);
 	LOG_DEBUG_F("GL %.% %", ret.info.major, ret.info.minor, ret.info.renderer);
 
-	ret.add_command(render_command_type::mesh_2d_col, FPTR(buffers_mesh_2d_col), FPTR(run_mesh_2d_col), "shaders/mesh_2d_col.v"_, "shaders/mesh_2d_col.f"_, FPTR(uniforms_mesh_2d_col), FPTR(compat_mesh_2d_col));
-	ret.add_command(render_command_type::mesh_2d_tex, FPTR(buffers_mesh_2d_tex), FPTR(run_mesh_2d_tex), "shaders/mesh_2d_tex.v"_, "shaders/mesh_2d_tex.f"_, FPTR(uniforms_mesh_2d_tex), FPTR(compat_mesh_2d_tex));
-	ret.add_command(render_command_type::mesh_2d_tex_col, FPTR(buffers_mesh_2d_tex_col), FPTR(run_mesh_2d_tex_col), "shaders/mesh_2d_tex_col.v"_, "shaders/mesh_2d_tex_col.f"_, FPTR(uniforms_mesh_2d_tex_col), FPTR(compat_mesh_2d_tex_col));
-	ret.add_command(render_command_type::mesh_3d_tex, FPTR(buffers_mesh_3d_tex), FPTR(run_mesh_3d_tex), "shaders/mesh_3d_tex.v"_, "shaders/mesh_3d_tex.f"_, FPTR(uniforms_mesh_3d_tex), FPTR(compat_mesh_3d_tex));
-	ret.add_command(render_command_type::mesh_3d_tex_instanced, FPTR(buffers_mesh_3d_tex_instanced), FPTR(run_mesh_3d_tex_instanced), "shaders/mesh_3d_tex_instanced.v"_, "shaders/mesh_3d_tex_instanced.f"_, FPTR(uniforms_mesh_3d_tex_instanced), FPTR(compat_mesh_3d_tex_instanced));
-	ret.add_command(render_command_type::mesh_lines, FPTR(buffers_mesh_lines), FPTR(run_mesh_lines), "shaders/mesh_lines.v"_, "shaders/mesh_lines.f"_, FPTR(uniforms_mesh_lines), FPTR(compat_mesh_lines));
-
 	ret.dbg_shader = shader_program::make("shaders/dbg.v"_,"shaders/dbg.f"_,FPTR(uniforms_dbg),a);
 
 	glBlendFunc(gl_blend_factor::one, gl_blend_factor::one_minus_src_alpha);
 
 	return ret;
 }
+
+gpu_object gpu_object::make() { PROF
+
+	gpu_object ret;
+	glGenVertexArrays(1, &ret.vao);
+	glGenBuffers(5, ret.vbos);
+	return ret;
+}
+ 
+void gpu_object::recreate() { PROF
+
+	glGenVertexArrays(1, &vao);
+	glGenBuffers(5, vbos);
+	
+	glBindVertexArray(vao);
+	setup(this);
+	update(this, data, true);
+}
+
+void gpu_object::destroy() { PROF
+
+	glDeleteBuffers(5, vbos);
+	glDeleteVertexArrays(1, &vao);
+}
+
+gpu_object_id ogl_manager::add_object(_FPTR* setup, _FPTR* update, void* cpu_data) { PROF
+
+	gpu_object obj = gpu_object::make();
+	
+	obj.id = next_gpu_id;
+	obj.data = cpu_data;
+	obj.setup.set(setup);
+	obj.update.set(update);
+
+	glBindVertexArray(obj.vao);
+	obj.setup(&obj);
+
+	objects.insert(obj.id, obj);
+
+	next_gpu_id++;
+	return next_gpu_id - 1;
+}
+
+void ogl_manager::destroy_object(gpu_object_id id) { PROF
+
+	gpu_object* obj = objects.try_get(id);
+	LOG_DEBUG_ASSERT(obj);
+
+	if(obj) {
+
+		obj->destroy();
+		objects.erase(id);
+	}
+}
+
+gpu_object* ogl_manager::get_object(gpu_object_id id) { PROF
+	return objects.try_get(id);
+}
+
+gpu_object* ogl_manager::select_object(gpu_object_id id) { PROF
+
+	gpu_object* obj = objects.try_get(id);
+
+	if(!obj) {
+		LOG_WARN_F("Failed to find object ID %!!!", id);
+		return null;
+	}
+
+	glBindVertexArray(obj->vao);
+	obj->update(obj, obj->data, false);
+
+	return obj;
+}
+
 
 void ogl_manager::destroy() { PROF
 
@@ -260,10 +337,14 @@ void ogl_manager::destroy() { PROF
 	FORMAP(it, textures) {
 		it->value.destroy(alloc);
 	}
+	FORMAP(it, objects) {
+		it->value.destroy();
+	}
 
 	dbg_shader.destroy();
 	textures.destroy();
 	commands.destroy();
+	objects.destroy();
 	info.destroy();
 	settings.destroy();
 
@@ -532,7 +613,7 @@ void texture::destroy(allocator* a) { PROF
 	gl_destroy();
 }
 
-void ogl_manager::add_command(u16 id, _FPTR* buffers, _FPTR* run, string v, string f, _FPTR* uniforms, _FPTR* compat) { PROF
+void ogl_manager::add_command(u16 id, _FPTR* run, string v, string f, _FPTR* uniforms, _FPTR* compat) { PROF
 
 	if(commands.try_get(id)) {
 		LOG_ERR_F("Render command id % already in use!!!", id);
@@ -548,7 +629,6 @@ void ogl_manager::add_command(u16 id, _FPTR* buffers, _FPTR* run, string v, stri
 		return;
 	}
 
-	d.send_buffers.set(buffers);
 	d.run.set(run);
 	d.shader = shader_program::make(v, f, uniforms, alloc);
 	LOG_DEBUG_F("Loaded shader from % and %", v, f);
@@ -557,7 +637,7 @@ void ogl_manager::add_command(u16 id, _FPTR* buffers, _FPTR* run, string v, stri
 	return;
 }
 
-draw_context* ogl_manager::get_command_ctx(u16 id) { PROF
+draw_context* ogl_manager::select_ctx(u16 id) { PROF
 
 	draw_context* d = commands.try_get(id);
 
@@ -573,17 +653,17 @@ draw_context* ogl_manager::get_command_ctx(u16 id) { PROF
 	return d;
 }
 
-void ogl_manager::push_settings() {
+void ogl_manager::push_settings() { PROF
 
 	settings.push(ogl_settings());
 }
 
-void ogl_manager::pop_settings() {
+void ogl_manager::pop_settings() { PROF
 
 	settings.pop();
 }
 
-void ogl_manager::set_setting(render_setting setting, bool enable) {
+void ogl_manager::set_setting(render_setting setting, bool enable) { PROF
 
 	ogl_settings* set = settings.top();
 
@@ -600,7 +680,7 @@ void ogl_manager::set_setting(render_setting setting, bool enable) {
 	}
 }
 
-void ogl_manager::apply_settings() {
+void ogl_manager::apply_settings() { PROF
 
 	ogl_settings* set = settings.top();
 
@@ -623,25 +703,25 @@ void ogl_manager::execute_command_list(render_command_list* rcl) { PROF
 	FORVEC(cmd, rcl->commands) {
 
 		switch(cmd->cmd) {
-		case render_command_type::push_settings: {
+		case cmd_push_settings: {
 			push_settings();
 		} break;
-		case render_command_type::pop_settings: {
+		case cmd_pop_settings: {
 			pop_settings();
 		} break;
-		case render_command_type::setting: {
+		case cmd_setting: {
 			set_setting(cmd->setting, cmd->enable);
 		} break;
 		default: {
 			cmd_set_settings(cmd);
 
-			draw_context* d = get_command_ctx(cmd->cmd);
-
-			d->send_buffers(cmd);
-			d->shader.send_uniforms(&d->shader, cmd, rcl);
-
 			select_texture(cmd->texture);
-			d->run(cmd);
+			gpu_object* obj = select_object(cmd->object);
+
+			draw_context* d = select_ctx(cmd->cmd);
+
+			d->shader.send_uniforms(&d->shader, cmd, rcl);
+			d->run(cmd, obj);
 		} break;
 		}
 
@@ -649,18 +729,9 @@ void ogl_manager::execute_command_list(render_command_list* rcl) { PROF
 	}
 }
 
-void ogl_manager::cmd_set_settings(render_command* cmd) {
+void ogl_manager::cmd_set_settings(render_command* cmd) { PROF
 
 	apply_settings();
-
-	// NOTE(max): special cases for built-in non-defaults 
-	if(cmd->cmd == render_command_type::mesh_2d_col ||
-	   cmd->cmd == render_command_type::mesh_2d_tex ||
-	   cmd->cmd == render_command_type::mesh_2d_tex_col) {
-		glDisable(gl_capability::depth_test);		
-	} else if(cmd->cmd == render_command_type::mesh_lines) {
-		glEnable(gl_capability::line_smooth);
-	}
 
 	ur2 viewport = cmd->viewport.to_u(), scissor = cmd->scissor.to_u();
 
@@ -945,4 +1016,144 @@ void ogl_manager::check_leaked_handles() {
 	}
 
 	#undef GL_CHECK
+}
+
+
+render_command render_command::make(u16 type) {
+
+	render_command ret;
+	ret.cmd = type;
+	return ret;
+}
+
+render_command render_command::make(u16 type, render_setting setting, bool enable) { PROF
+
+	render_command ret;
+	ret.cmd = type;
+	ret.setting = setting;
+	ret.enable = enable;
+	return ret;
+}
+
+render_command render_command::make(u16 id, gpu_object_id gpu, u32 key) { PROF
+
+	render_command ret;
+	ret.object = gpu;
+	ret.cmd = id;
+	ret.sort_key = key;
+	return ret;
+}
+
+bool operator<=(render_command& first, render_command& second) { PROF
+	return first.sort_key <= second.sort_key;
+}
+
+render_command_list render_command_list::make(allocator* alloc, u32 cmds) { PROF
+
+	if(alloc == null) {
+		alloc = CURRENT_ALLOC();
+	}
+
+	render_command_list ret;
+
+	ret.alloc = alloc;
+	ret.commands = vector<render_command>::make(cmds, alloc);
+
+	return ret;
+}
+
+void render_command_list::clear() { PROF
+
+	commands.clear();
+	view = m4::I;
+	proj = m4::I;
+}
+
+void render_command_list::destroy() { PROF
+
+	commands.destroy();
+	alloc = null;
+}
+
+void render_command_list::push_settings() {
+
+	add_command(render_command::make(ogl_manager::cmd_push_settings));
+}
+
+void render_command_list::pop_settings() {
+
+	add_command(render_command::make(ogl_manager::cmd_pop_settings));
+}
+
+void render_command_list::set_setting(render_setting setting, bool enable) {
+
+	add_command(render_command::make(ogl_manager::cmd_setting, setting, enable));
+}
+
+void render_command_list::add_command(render_command rc) { PROF
+
+	commands.push(rc);
+}
+
+void render_command_list::sort() { PROF
+
+	commands.stable_sort();
+}
+
+void render_camera::update() {
+	front.x = cos(RADIANS(pitch)) * cos(RADIANS(yaw));
+	front.y = sin(RADIANS(pitch));
+	front.z = sin(RADIANS(yaw)) * cos(RADIANS(pitch));
+	front = norm(front);
+	right = norm(cross(front, {0, 1, 0}));
+	up = norm(cross(right, front));
+}
+
+void render_camera::move(i32 dx, i32 dy, f32 sens) {
+	
+	yaw   += dx * sens;
+	pitch -= dy * sens;
+
+	if (yaw > 360.0f) yaw -= 360.0f;
+	else if (yaw < 0.0f) yaw += 360.0f;
+
+	if (pitch > 89.0f) pitch = 89.0f;
+	else if (pitch < -89.0f) pitch = -89.0f;
+
+	update();
+}
+
+m4 render_camera::view() {
+
+	switch(mode) {
+	case camera_mode::first: {
+		return lookAt(pos, pos + front, up);
+	} break;
+	case camera_mode::third: {
+		return lookAt(pos - 2.0f * front + offset3rd, pos + reach * front, up);
+	} break;
+	}
+
+	return m4::zero;
+}
+
+m4 render_camera::view_no_translate() {
+
+	switch(mode) {
+	case camera_mode::first: {
+		return lookAt({}, front, up);
+	} break;
+	case camera_mode::third: {
+		return lookAt(-2.0f * front + offset3rd, reach * front, up);
+	} break;
+	}
+
+	return m4::zero;
+}
+
+void render_camera::reset() {
+
+	pos = {};
+	pitch = 0.0f; yaw = -45.0f; fov = 60.0f;
+	update();
 }

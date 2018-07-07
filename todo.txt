@@ -2,10 +2,11 @@
 Working To-Do:
 
 	window creation options
-		fix external opengl state  
+		force re-mesh chunks for GL reload
+		re-test other mesh types, particularly instancing
 		fix SDL layer
 		https://blogs.msdn.microsoft.com/oldnewthing/20100412-00/?p=14353
-
+ 
 	debug console
 	serialization/deserialization
 	config format

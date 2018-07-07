@@ -3,6 +3,9 @@
 
 v2 size_text(asset* font, string text_utf8, f32 point);
 
+typedef i32 texture_id;
+typedef i32 gpu_object_id;
+
 struct shader_source {
 	string path;
 	platform_file_attributes last_attrib;
@@ -14,6 +17,8 @@ struct shader_source {
 	void destroy();
 	bool try_refresh();
 };
+
+struct render_command; struct render_command_list;
 
 struct shader_program {
 	GLuint handle = 0;
@@ -92,17 +97,43 @@ struct ogl_info {
 	bool check_version(i32 major, i32 minor);
 };
 
+struct gpu_object {
+	func_ptr<void, gpu_object*> setup;
+	func_ptr<void, gpu_object*, void*, bool> update;
+
+	GLuint vao = 0;
+	GLuint vbos[5] = {};
+
+	void* data = null;
+	gpu_object_id id = -1;
+
+	static gpu_object make();
+	void destroy();
+	void recreate();
+};
+
 struct draw_context {
-	func_ptr<void, render_command*> send_buffers;
-	func_ptr<void, render_command*> run;
 	func_ptr<bool, ogl_info*> compat;
+	func_ptr<void, render_command*, gpu_object*> run;
 	shader_program shader;
+};
+
+enum class render_setting : u8 {
+	none,
+	wireframe,
+	depth_test,
+	aa_lines,
+	blend,
+	scissor,
+	cull,
+	msaa,
+	aa_shading,
 };
 
 struct ogl_settings {
 	bool polygon_line = false;
 	bool depth_test = true;
-	bool line_smooth = false;
+	bool line_smooth = true;
 	bool blend = true;
 	bool scissor = true;
 	bool cull_backface = false;
@@ -110,10 +141,91 @@ struct ogl_settings {
 	bool sample_shading = false;
 };
 
+struct render_command {
+	u16 cmd = 0;
+
+	struct {	
+		texture_id texture = -1;
+		gpu_object_id object = -1;
+		
+		m4 model;
+		u32 sort_key = 0;
+
+		// triangle index, gets * 3 to compute element index
+		u32 offset = 0, num_tris = 0, start_tri = 0;
+
+		// zero for entire window
+		r2 viewport;
+		r2 scissor;
+
+		func_ptr<void, void*> callback;
+		void* param = null;
+	};
+
+	struct {
+		render_setting setting;
+		bool enable = false;
+	};
+
+	render_command() {}
+
+	static render_command make(u16 type);
+	static render_command make(u16 type, gpu_object_id gpu, u32 key = 0);
+	static render_command make(u16 type, render_setting setting, bool enable);
+};
+
+bool operator<=(render_command& first, render_command& second);
+
+struct render_command_list {
+	vector<render_command> commands;
+	allocator* alloc = null;
+	m4 view;
+	m4 proj;
+
+	static render_command_list make(allocator* alloc = null, u32 cmds = 8);
+	void destroy();
+	void clear();
+	void add_command(render_command rc);
+	void sort();
+
+	void push_settings();
+	void pop_settings();
+	void set_setting(render_setting setting, bool enable);
+};
+
+enum class camera_mode : u8 {
+	first,
+	third
+};
+
+struct render_camera {
+
+	v3 	  pos, front, up, right;
+	float pitch = 0.0f, yaw = 0.0f, fov = 60.0f;
+
+	v3 offset3rd = v3(0, 1, 0);
+	f32 reach = 5.0f;
+
+	camera_mode mode = camera_mode::third;
+
+	void update();
+	void reset();
+	void move(i32 dx, i32 d, f32 sens);
+	
+	m4 view();
+	m4 view_no_translate();
+};
+
 struct ogl_manager {
 
-	map<texture_id, texture> textures;
+	static const u16 cmd_push_settings = 1;
+	static const u16 cmd_pop_settings = 2;
+	static const u16 cmd_setting = 3;
+
 	map<u16, draw_context> 	 commands;
+
+	map<texture_id, texture> textures;
+	map<gpu_object_id, gpu_object> objects;
 
 	asset_store* last_store = null;
 
@@ -122,7 +234,8 @@ struct ogl_manager {
 	shader_program dbg_shader;
 	ogl_info info;
 
-	texture_id 				  next_texture_id = 1;
+	gpu_object_id 	next_gpu_id = 1;
+	texture_id 		next_texture_id = 1;
 	
 	platform_window* win = null;
 	allocator* alloc = null;
@@ -143,8 +256,8 @@ struct ogl_manager {
 	void gl_end_reload();
 	void gl_begin_reload();
 
-	draw_context* get_command_ctx(u16 id);
-	void add_command(u16 id, _FPTR* buffers, _FPTR* run, string v, string f, _FPTR* uniforms, _FPTR* compat);
+	draw_context* select_ctx(u16 id);
+	void add_command(u16 id, _FPTR* run, string v, string f, _FPTR* uniforms, _FPTR* compat);
 
 	void push_tex_array(texture_id tex, asset_store* as, string name);
 	texture_id begin_tex_array(iv3 dim, texture_wrap wrap = texture_wrap::repeat, bool pixelated = false, u32 offset = 0);
@@ -153,6 +266,11 @@ struct ogl_manager {
 	texture* select_texture(texture_id id);
 	texture_id add_texture(asset_store* as, string name, texture_wrap wrap = texture_wrap::repeat, bool pixelated = false);
 	texture_id add_texture_from_font(asset_store* as, string name, texture_wrap wrap = texture_wrap::repeat, bool pixelated = false);
+
+	void destroy_object(gpu_object_id id);
+	gpu_object_id add_object(_FPTR* setup, _FPTR* update, void* cpu_data);
+	gpu_object* select_object(gpu_object_id id);
+	gpu_object* get_object(gpu_object_id id);
 
 	void dbg_render_texture_fullscreen(texture_id id);
 	void execute_command_list(render_command_list* rcl);

@@ -28,7 +28,7 @@ void world::init(asset_store* store, allocator* a) { PROF
 
 	LOG_INFO_F("units_per_voxel: %", chunk::units_per_voxel);
 
-	eng->ogl.add_command(render_command_type::mesh_chunk, FPTR(buffers_mesh_chunk), FPTR(run_mesh_chunk), "shaders/mesh_chunk.v"_, "shaders/mesh_chunk.f"_, FPTR(uniforms_mesh_chunk), FPTR(compat_mesh_chunk));
+	eng->ogl.add_command(cmd_mesh_chunk, FPTR(run_mesh_chunk), "shaders/mesh_chunk.v"_, "shaders/mesh_chunk.f"_, FPTR(uniforms_mesh_chunk), FPTR(compat_mesh_chunk));
 	
 	block_textures = eng->ogl.begin_tex_array(iv3(32, 32, (i32)NUM_BLOCKS), texture_wrap::repeat, true, 1);
 	eng->ogl.push_tex_array(block_textures, store, "bedrock"_);
@@ -226,8 +226,9 @@ void world::render_chunks() { PROF
 			}
 
 			eng->platform->aquire_mutex(&c->swap_mut);
-			render_command cmd = render_command::make(render_command_type::mesh_chunk, &c->mesh);
+			render_command cmd = render_command::make(cmd_mesh_chunk, c->mesh.gpu);
 
+			cmd.object = c->mesh.gpu;
 			cmd.num_tris = c->mesh_triangles;
 			cmd.texture = block_textures;
 
@@ -257,7 +258,7 @@ void world::render_player() { PROF
 	render_command_list rcl = render_command_list::make();
 
 	{
-		mesh_lines lines = mesh_lines::make();
+		mesh_lines lines; lines.init();
 
 		lines.push(cam.pos, cam.pos + cam.front, colorf(1,0,0,1), colorf(0,0,1,1));
 		lines.push(cam.pos + cam.front, cam.pos + cam.reach * cam.front, colorf(0,0,1,1), colorf(0,1,0,1));
@@ -266,7 +267,8 @@ void world::render_player() { PROF
 
 		lines.push(cam.pos, intersection, colorf(0,0,0,1), colorf(0,0,0,1));
 
-		render_command cmd = render_command::make(render_command_type::mesh_lines, &lines);
+		render_command cmd = render_command::make((u16)mesh_cmd_types::mesh_lines, lines.gpu);
+		cmd.object = lines.gpu;
 
 		rcl.add_command(cmd);
 		rcl.view = cam.view();
@@ -281,13 +283,17 @@ void world::render_player() { PROF
 	{
 		f32 w = (f32)eng->window.settings.w, h = (f32)eng->window.settings.h;
 
-		mesh_2d_col crosshair = mesh_2d_col::make();
+		mesh_2d_col crosshair; crosshair.init();
 
 		crosshair.push_rect(r2(w / 2.0f - 5.0f, h / 2.0f - 1.0f, 10.0f, 2.0f), WHITE);
 		crosshair.push_rect(r2(w / 2.0f - 1.0f, h / 2.0f - 5.0f, 2.0f, 10.0f), WHITE);
 
-		render_command cmd = render_command::make(render_command_type::mesh_2d_col, &crosshair);
+		render_command cmd = render_command::make((u16)mesh_cmd_types::mesh_2d_col, crosshair.gpu);
+		cmd.object = crosshair.gpu;
 
+		rcl.push_settings();
+		rcl.set_setting(render_setting::depth_test, false);
+		rcl.pop_settings();
 		rcl.add_command(cmd);
 		rcl.proj = ortho(0, w, h, 0, -1, 1);
 
@@ -397,16 +403,12 @@ chunk_pos chunk_pos::operator-(chunk_pos other) { PROF
 	return ret;
 }
 
-chunk chunk::make(chunk_pos p, allocator* a) { PROF
+void chunk::init(chunk_pos p, allocator* a) { PROF
 
-	chunk ret;
-
-	ret.pos = p;
-	ret.alloc = a;
-	ret.mesh = mesh_chunk::make_gpu();
-	eng->platform->create_mutex(&ret.swap_mut, false);
-
-	return ret;
+	pos = p;
+	alloc = a;
+	mesh.init_gpu();
+	eng->platform->create_mutex(&swap_mut, false);
 }
 
 chunk* chunk::make_new(chunk_pos p, allocator* a) { PROF
@@ -415,10 +417,7 @@ chunk* chunk::make_new(chunk_pos p, allocator* a) { PROF
 
 	chunk* ret = NEW(chunk);
 
-	ret->pos = p;
-	ret->alloc = a;
-	ret->mesh = mesh_chunk::make_gpu();
-	eng->platform->create_mutex(&ret->swap_mut, false);
+	ret->init(p, a);
 
 	POP_ALLOC();
 
@@ -717,32 +716,34 @@ void chunk::build_data() { PROF
 	eng->platform->release_mutex(&swap_mut);
 }
 
-CALLBACK void run_mesh_chunk(render_command* cmd) { PROF
+CALLBACK void run_mesh_chunk(render_command* cmd, gpu_object* gpu) { PROF
 
-	mesh_chunk* m = (mesh_chunk*)cmd->mesh;
-
-	glBindVertexArray(m->vao);
+	mesh_chunk* m = (mesh_chunk*)gpu->data;
 
 	u32 num_tris = ((cmd->num_tris ? cmd->num_tris : m->elements.size) - cmd->start_tri) * 3;
 	glDrawElementsBaseVertex(gl_draw_mode::triangles, num_tris, gl_index_type::unsigned_int, (void*)(u64)(0), cmd->offset);
-
-	glBindVertexArray(0);
 }
 
-CALLBACK void buffers_mesh_chunk(render_command* cmd) { PROF
+CALLBACK void setup_mesh_chunk(gpu_object* obj) { PROF
 
-	mesh_chunk* m = (mesh_chunk*)cmd->mesh;
-	if(!m->dirty) return;
+	glBindBuffer(gl_buf_target::array, obj->vbos[0]);
 
-	glBindVertexArray(m->vao);
+	glVertexAttribIPointer(0, 2, gl_vert_attrib_type::unsigned_int, sizeof(chunk_vertex), (void*)0);
+	glEnableVertexAttribArray(0);
+	
+	glBindBuffer(gl_buf_target::element_array, obj->vbos[1]);
+}
 
-	glBindBuffer(gl_buf_target::array, m->vbos[0]);
+CALLBACK void update_mesh_chunk(gpu_object* obj, void* data, bool force) { PROF
+
+	mesh_chunk* m = (mesh_chunk*)data;
+	if(!force && !m->dirty) return;
+
+	glBindBuffer(gl_buf_target::array, obj->vbos[0]);
 	glBufferData(gl_buf_target::array, m->vertices.size * sizeof(chunk_vertex), m->vertices.size ? m->vertices.memory : null, gl_buf_usage::dynamic_draw);
 
-	glBindBuffer(gl_buf_target::element_array, m->vbos[1]);
+	glBindBuffer(gl_buf_target::element_array, obj->vbos[1]);
 	glBufferData(gl_buf_target::element_array, m->elements.size * sizeof(uv3), m->elements.size ? m->elements.memory : null, gl_buf_usage::dynamic_draw);
-
-	glBindVertexArray(0);
 
 	m->dirty = false;
 }
@@ -787,55 +788,6 @@ chunk_vertex chunk_vertex::from_vec(v3 v, v3 uv, bv4 ao) { PROF
 	return ret;
 }
 
-mesh_chunk mesh_chunk::make(u32 verts, allocator* alloc) { PROF
-
-	if(alloc == null) {
-		alloc = CURRENT_ALLOC();
-	}
-
-	mesh_chunk ret;
-
-	ret.vertices = vector<chunk_vertex>::make(verts, alloc);
-	ret.elements = vector<uv3>::make(verts, alloc);
-
-	glGenVertexArrays(1, &ret.vao);
-	glGenBuffers(2, ret.vbos);
-
-	glBindVertexArray(ret.vao);
-
-	glBindBuffer(gl_buf_target::array, ret.vbos[0]);
-
-	glVertexAttribIPointer(0, 2, gl_vert_attrib_type::unsigned_int, sizeof(chunk_vertex), (void*)0);
-	glEnableVertexAttribArray(0);
-	
-	glBindBuffer(gl_buf_target::element_array, ret.vbos[1]);
-
-	glBindVertexArray(0);
-
-	return ret;
-}
-
-mesh_chunk mesh_chunk::make_gpu() { PROF
-
-	mesh_chunk ret;
-
-	glGenVertexArrays(1, &ret.vao);
-	glGenBuffers(2, ret.vbos);
-
-	glBindVertexArray(ret.vao);
-
-	glBindBuffer(gl_buf_target::array, ret.vbos[0]);
-
-	glVertexAttribIPointer(0, 2, gl_vert_attrib_type::unsigned_int, sizeof(chunk_vertex), (void*)0);
-	glEnableVertexAttribArray(0);
-	
-	glBindBuffer(gl_buf_target::element_array, ret.vbos[1]);
-
-	glBindVertexArray(0);
-
-	return ret;
-}
-
 mesh_chunk mesh_chunk::make_cpu(u32 verts, allocator* alloc) { PROF
 
 	if(alloc == null) {
@@ -848,6 +800,11 @@ mesh_chunk mesh_chunk::make_cpu(u32 verts, allocator* alloc) { PROF
 	ret.elements = vector<uv3>::make(verts, alloc);
 
 	return ret;
+}
+
+void mesh_chunk::init_gpu() { PROF
+
+	gpu = eng->ogl.add_object(FPTR(setup_mesh_chunk), FPTR(update_mesh_chunk), this);
 }
 
 void mesh_chunk::swap_mesh(mesh_chunk other) { PROF
@@ -863,11 +820,11 @@ void mesh_chunk::swap_mesh(mesh_chunk other) { PROF
 
 void mesh_chunk::destroy() { PROF
 
-	glDeleteBuffers(2, vbos);
-	glDeleteVertexArrays(1, &vao);
-
 	vertices.destroy();
 	elements.destroy();
+
+	eng->ogl.destroy_object(gpu);
+	gpu = -1;
 }
 
 void mesh_chunk::free_cpu() { PROF
