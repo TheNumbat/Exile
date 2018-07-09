@@ -1,8 +1,6 @@
 
 Working To-Do:
 
-	fix SDL layer
- 
 	debug console
 	serialization/deserialization
 	config format

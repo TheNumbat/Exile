@@ -29,6 +29,7 @@ void (*global_enqueue)(void* queue_param, platform_event evt) = null;
 void* global_enqueue_param = null;
 
 i32 saved_mouse_x = 0, saved_mouse_y = 0;
+platform_window_settings prev_settings;
 
 void* sdl_heap_alloc_net(u64 bytes);
 void sdl_heap_free_net(void* mem);
@@ -79,7 +80,6 @@ platform_api platform_build_api() {
 	ret.get_perfcount			= &sdl_get_perfcount;
 	ret.get_perfcount_freq		= &sdl_get_perfcount_freq;
 	ret.create_window			= &sdl_create_window;
-	ret.recreate_window			= &sdl_recreate_window;
 	ret.destroy_window			= &sdl_destroy_window;
 	ret.swap_buffers			= &sdl_swap_buffers;
 	ret.set_queue_callback		= &sdl_set_queue_callback;
@@ -139,8 +139,59 @@ platform_api platform_build_api() {
 	ret.get_cursor_pos			= &sdl_get_cursor_pos;
 	ret.mousedown				= &sdl_mousedown;
 	ret.get_scancode			= &sdl_get_scancode;
+	ret.recreate_window 		= &sdl_recreate_window;
+	ret.apply_window_settings 	= &sdl_apply_window_settings;
 
 	return ret;
+}
+
+platform_error sdl_recreate_window(platform_window* window) {
+
+	platform_error ret;
+
+	ret = sdl_destroy_window(window);
+	if(!ret.good) return ret;
+
+	ret = sdl_create_window(window);
+
+	if(ret.good) {
+		platform_event evt;
+		evt.type = platform_event_type::window;
+		evt.window.op = platform_windowop::recreate;
+		global_enqueue(global_enqueue_param, evt);
+	}
+
+	return ret;
+}
+
+bool sdl_apply_window_settings(platform_window* window) {
+
+	bool need_recreate = false;
+
+	if(!streql(string_from_c_str(window->settings.c_title),string_from_c_str(prev_settings.c_title))) {
+	
+		SDL_SetWindowTitle(window->window, window->settings.c_title);
+	}
+
+	if(window->settings.w != prev_settings.w || window->settings.h != prev_settings.h) {
+	}
+
+	if(window->settings.mode != prev_settings.mode) {
+	}
+
+	if(window->settings.vsync != prev_settings.vsync) {
+
+		SDL_GL_SetSwapInterval(window->settings.vsync ? 1 : 0);
+	}
+
+	if(window->settings.samples != prev_settings.samples) {
+
+		need_recreate = true;
+	}
+
+	prev_settings = window->settings;
+
+	return need_recreate;
 }
 
 platform_error sdl_get_window_drawable(platform_window* window, i32* w, i32* h) {
@@ -312,19 +363,9 @@ void sdl_set_cursor(platform_window* window, platform_cursor c) {
 	SDL_FreeCursor(cursor);
 }
 
-platform_error sdl_recreate_window(platform_window* window) {
-
-	platform_error ret;
-	return ret;
-}
-
 platform_error sdl_create_window(platform_window* window) {
 
 	platform_error ret;
-
-	window->title = make_cat_string(title, str(" | SDL CRT"), &sdl_heap_alloc);
-	window->w = width;
-	window->h = height;
 
 	if(SDL_Init(SDL_INIT_VIDEO)) {
 		ret.good = false;
@@ -335,10 +376,12 @@ platform_error sdl_create_window(platform_window* window) {
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
-	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
-	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
+	if(window->settings.samples > 1) {
+		SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
+		SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, window->settings.samples);
+	}
 
-	window->window = SDL_CreateWindow(window->title.c_str, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_SHOWN);
+	window->window = SDL_CreateWindow(window->settings.c_title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, window->settings.w, window->settings.h, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_SHOWN);
 	
 	if(!window->window) {
 		ret.good = false;
@@ -370,8 +413,7 @@ platform_error sdl_create_window(platform_window* window) {
 		ret.error_message = str(SDL_GetError());
 	}
 
-	// TODO(max): vsync/fullscreen/AA/etc settings
-	SDL_GL_SetSwapInterval(0);
+	SDL_GL_SetSwapInterval(window->settings.vsync ? 1 : 0);
 
 	SDL_StartTextInput();
 
@@ -385,8 +427,6 @@ platform_error sdl_destroy_window(platform_window* window) {
 	SDL_GL_DeleteContext(window->gl_context);
 	SDL_DestroyWindow(window->window);
 	SDL_Quit();
-
-	free_string(window->title, &sdl_heap_free);
 
 	window->gl_context = null;
 	window->window = null;

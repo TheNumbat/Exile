@@ -12,6 +12,7 @@ platform_error sdl_swap_buffers(platform_window* window);
 platform_error sdl_create_window(platform_window* window);
 platform_error sdl_destroy_window(platform_window* window);
 platform_error sdl_recreate_window(platform_window* window);
+bool 		   sdl_apply_window_settings(platform_window* window);
 platform_error sdl_get_window_size(platform_window* window, i32* w, i32* h);
 platform_error sdl_get_window_drawable(platform_window* window, i32* w, i32* h);
 
