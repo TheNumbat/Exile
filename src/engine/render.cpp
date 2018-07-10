@@ -251,6 +251,7 @@ ogl_manager ogl_manager::make(platform_window* win, allocator* a) { PROF
 	ret.dbg_shader = shader_program::make("shaders/dbg.v"_,"shaders/dbg.f"_,FPTR(uniforms_dbg),a);
 
 	glBlendFunc(gl_blend_factor::one, gl_blend_factor::one_minus_src_alpha);
+	glDepthFunc(gl_depth_factor::lequal);
 
 	return ret;
 }

@@ -183,17 +183,14 @@ void player::reset() { PROF
 
 void world::render() { PROF
 
-	render_sky();
 	render_chunks();
 	render_player();
+	render_sky();
 }
 
 void world::render_sky() { PROF 
 
 	render_command_list rcl = render_command_list::make();
-
-	rcl.push_settings();
-	rcl.set_setting(render_setting::write_depth, false);
 
 	render_command cmd = render_command::make((u16)mesh_cmd::cubemap, sky.gpu);
 	cmd.texture = sky_texture;
@@ -202,8 +199,6 @@ void world::render_sky() { PROF
 
 	rcl.view = p.camera.view_no_translate();
 	rcl.proj = proj(p.camera.fov, (f32)eng->window.settings.w / (f32)eng->window.settings.h, 0.01f, 2000.0f);
-
-	rcl.pop_settings();
 
 	eng->ogl.execute_command_list(&rcl);
 
