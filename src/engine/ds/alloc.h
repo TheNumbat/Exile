@@ -87,9 +87,9 @@ CALLBACK void* pool_allocate(u64 bytes, u64 align, allocator* this_, code_contex
 CALLBACK void* pool_reallocate(void* mem, u64 sz, u64 bytes, u64 align, allocator* this_, code_context context); // same as allocate, can't free from arena
 CALLBACK void  pool_free(void*, u64, allocator*, code_context); // does nothing
 
-inline void _memcpy(void* dest, void* source, u64 size);
+inline void _memcpy(void* source, void* dest, u64 size);
 void _memset(void* mem, u64 size, u8 val);
-void _memcpy_ctx(void* dest, void* source, u64 size);
+void _memcpy_ctx(void* source, void* dest, u64 size);
 
 bool operator==(allocator l, allocator r);
 inline u32 hash(allocator a);

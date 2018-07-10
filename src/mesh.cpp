@@ -1,11 +1,33 @@
 
 void setup_mesh_commands() { PROF
-	eng->ogl.add_command((u16)mesh_cmd_types::mesh_2d_col, FPTR(run_mesh_2d_col), "shaders/mesh_2d_col.v"_, "shaders/mesh_2d_col.f"_, FPTR(uniforms_mesh_2d_col), FPTR(compat_mesh_2d_col));
-	eng->ogl.add_command((u16)mesh_cmd_types::mesh_2d_tex, FPTR(run_mesh_2d_tex), "shaders/mesh_2d_tex.v"_, "shaders/mesh_2d_tex.f"_, FPTR(uniforms_mesh_2d_tex), FPTR(compat_mesh_2d_tex));
-	eng->ogl.add_command((u16)mesh_cmd_types::mesh_2d_tex_col, FPTR(run_mesh_2d_tex_col), "shaders/mesh_2d_tex_col.v"_, "shaders/mesh_2d_tex_col.f"_, FPTR(uniforms_mesh_2d_tex_col), FPTR(compat_mesh_2d_tex_col));
-	eng->ogl.add_command((u16)mesh_cmd_types::mesh_3d_tex, FPTR(run_mesh_3d_tex), "shaders/mesh_3d_tex.v"_, "shaders/mesh_3d_tex.f"_, FPTR(uniforms_mesh_3d_tex), FPTR(compat_mesh_3d_tex));
-	eng->ogl.add_command((u16)mesh_cmd_types::mesh_3d_tex_instanced, FPTR(run_mesh_3d_tex_instanced), "shaders/mesh_3d_tex_instanced.v"_, "shaders/mesh_3d_tex_instanced.f"_, FPTR(uniforms_mesh_3d_tex_instanced), FPTR(compat_mesh_3d_tex_instanced));
-	eng->ogl.add_command((u16)mesh_cmd_types::mesh_lines, FPTR(run_mesh_lines), "shaders/mesh_lines.v"_, "shaders/mesh_lines.f"_, FPTR(uniforms_mesh_lines), FPTR(compat_mesh_lines));
+	eng->ogl.add_command((u16)mesh_cmd::_2d_col, FPTR(run_mesh_2d_col), "shaders/mesh/2d_col.v"_, "shaders/mesh/2d_col.f"_, FPTR(uniforms_mesh_2d_col), FPTR(compat_mesh_2d_col));
+	eng->ogl.add_command((u16)mesh_cmd::_2d_tex, FPTR(run_mesh_2d_tex), "shaders/mesh/2d_tex.v"_, "shaders/mesh/2d_tex.f"_, FPTR(uniforms_mesh_2d_tex), FPTR(compat_mesh_2d_tex));
+	eng->ogl.add_command((u16)mesh_cmd::_2d_tex_col, FPTR(run_mesh_2d_tex_col), "shaders/mesh/2d_tex_col.v"_, "shaders/mesh/2d_tex_col.f"_, FPTR(uniforms_mesh_2d_tex_col), FPTR(compat_mesh_2d_tex_col));
+	eng->ogl.add_command((u16)mesh_cmd::_3d_tex, FPTR(run_mesh_3d_tex), "shaders/mesh/3d_tex.v"_, "shaders/mesh/3d_tex.f"_, FPTR(uniforms_mesh_3d_tex), FPTR(compat_mesh_3d_tex));
+	eng->ogl.add_command((u16)mesh_cmd::_3d_tex_instanced, FPTR(run_mesh_3d_tex_instanced), "shaders/mesh/3d_tex_instanced.v"_, "shaders/mesh/3d_tex_instanced.f"_, FPTR(uniforms_mesh_3d_tex_instanced), FPTR(compat_mesh_3d_tex_instanced));
+	eng->ogl.add_command((u16)mesh_cmd::lines, FPTR(run_mesh_lines), "shaders/lines.v"_, "shaders/lines.f"_, FPTR(uniforms_mesh_lines), FPTR(compat_mesh_lines));
+	eng->ogl.add_command((u16)mesh_cmd::chunk, FPTR(run_mesh_chunk), "shaders/chunk.v"_, "shaders/chunk.f"_, FPTR(uniforms_mesh_chunk), FPTR(compat_mesh_chunk));
+	eng->ogl.add_command((u16)mesh_cmd::cubemap, FPTR(run_mesh_cubemap), "shaders/cubemap.v"_, "shaders/cubemap.f"_, FPTR(uniforms_mesh_cubemap), FPTR(compat_mesh_cubemap));
+}
+
+CALLBACK void uniforms_mesh_cubemap(shader_program* prog, render_command* cmd, render_command_list* rcl) { PROF
+
+	GLint loc = glGetUniformLocation(prog->handle, "transform");
+
+	m4 transform = rcl->proj * rcl->view * cmd->model;
+
+	glUniformMatrix4fv(loc, 1, gl_bool::_false, transform.a);
+}
+
+CALLBACK void uniforms_mesh_chunk(shader_program* prog, render_command* cmd, render_command_list* rcl) { PROF
+
+	GLint loc = glGetUniformLocation(prog->handle, "transform");
+	GLint szloc = glGetUniformLocation(prog->handle, "units_per_voxel");
+
+	m4 transform = rcl->proj * rcl->view * cmd->model;
+
+	glUniformMatrix4fv(loc, 1, gl_bool::_false, transform.a);
+	glUniform1f(szloc, (f32)chunk::units_per_voxel);
 }
 
 CALLBACK void uniforms_mesh_2d_col(shader_program* prog, render_command* cmd, render_command_list* rcl) { PROF
@@ -62,6 +84,30 @@ CALLBACK void uniforms_mesh_3d_tex_instanced(shader_program* prog, render_comman
 	glUniformMatrix4fv(loc, 1, gl_bool::_false, transform.a);
 }
 
+CALLBACK void update_mesh_cubemap(gpu_object* obj, void* data, bool force) { PROF
+
+	mesh_cubemap* m = (mesh_cubemap*)data;
+	if(!force && !m->dirty) return;
+
+	glBindBuffer(gl_buf_target::array, obj->vbos[0]);
+	glBufferData(gl_buf_target::array, 36 * sizeof(v3), m->vertices, gl_buf_usage::dynamic_draw);
+
+	m->dirty = false;
+}
+
+CALLBACK void update_mesh_chunk(gpu_object* obj, void* data, bool force) { PROF
+
+	mesh_chunk* m = (mesh_chunk*)data;
+	if(!force && !m->dirty) return;
+
+	glBindBuffer(gl_buf_target::array, obj->vbos[0]);
+	glBufferData(gl_buf_target::array, m->vertices.size * sizeof(chunk_vertex), m->vertices.size ? m->vertices.memory : null, gl_buf_usage::dynamic_draw);
+
+	glBindBuffer(gl_buf_target::element_array, obj->vbos[1]);
+	glBufferData(gl_buf_target::element_array, m->elements.size * sizeof(uv3), m->elements.size ? m->elements.memory : null, gl_buf_usage::dynamic_draw);
+
+	m->dirty = false;
+}
 
 CALLBACK void update_mesh_2d_col(gpu_object* obj, void* data, bool force) { PROF
 
@@ -166,6 +212,19 @@ CALLBACK void update_mesh_3d_tex_instanced(gpu_object* obj, void* d, bool force)
 	data->dirty = false;
 }
 
+CALLBACK void run_mesh_cubemap(render_command* cmd, gpu_object* gpu) { PROF
+
+	glDrawArrays(gl_draw_mode::triangles, 0, 36);
+}
+
+CALLBACK void run_mesh_chunk(render_command* cmd, gpu_object* gpu) { PROF
+
+	mesh_chunk* m = (mesh_chunk*)gpu->data;
+
+	u32 num_tris = ((cmd->num_tris ? cmd->num_tris : m->elements.size) - cmd->start_tri) * 3;
+	glDrawElementsBaseVertex(gl_draw_mode::triangles, num_tris, gl_index_type::unsigned_int, (void*)(u64)(0), cmd->offset);
+}
+
 CALLBACK void run_mesh_2d_col(render_command* cmd, gpu_object* gpu) { PROF
 
 	mesh_2d_col* m = (mesh_2d_col*)gpu->data;
@@ -215,6 +274,14 @@ CALLBACK void run_mesh_3d_tex_instanced(render_command* cmd, gpu_object* gpu) { 
 	glDrawElementsInstancedBaseVertex(gl_draw_mode::triangles, num_tris, gl_index_type::unsigned_int, (void*)(u64)(0), data->instances, cmd->offset);
 }
 
+CALLBACK bool compat_mesh_cubemap(ogl_info* info) { PROF
+	return info->check_version(3, 2);
+}
+
+CALLBACK bool compat_mesh_chunk(ogl_info* info) { PROF
+	return info->check_version(3, 2);
+}
+
 CALLBACK bool compat_mesh_2d_col(ogl_info* info) { PROF
 	return info->check_version(3, 2);
 }
@@ -237,6 +304,24 @@ CALLBACK bool compat_mesh_lines(ogl_info* info) { PROF
 
 CALLBACK bool compat_mesh_3d_tex_instanced(ogl_info* info) { PROF
 	return info->check_version(3, 3);
+}
+
+CALLBACK void setup_mesh_cubemap(gpu_object* obj) { PROF
+
+	glBindBuffer(gl_buf_target::array, obj->vbos[0]);
+
+	glVertexAttribPointer(0, 3, gl_vert_attrib_type::_float, gl_bool::_false, sizeof(v3), (void*)0);
+	glEnableVertexAttribArray(0);
+}
+
+CALLBACK void setup_mesh_chunk(gpu_object* obj) { PROF
+
+	glBindBuffer(gl_buf_target::array, obj->vbos[0]);
+
+	glVertexAttribIPointer(0, 2, gl_vert_attrib_type::unsigned_int, sizeof(chunk_vertex), (void*)0);
+	glEnableVertexAttribArray(0);
+	
+	glBindBuffer(gl_buf_target::element_array, obj->vbos[1]);
 }
 
 CALLBACK void setup_mesh_2d_col(gpu_object* obj) { PROF
@@ -336,6 +421,17 @@ CALLBACK void setup_mesh_lines(gpu_object* obj) { PROF
 	glEnableVertexAttribArray(1);
 	
 	glBindVertexArray(0);
+}
+
+void mesh_cubemap::init() {
+
+	dirty = true;
+	gpu = eng->ogl.add_object(FPTR(setup_mesh_cubemap), FPTR(update_mesh_cubemap), this);
+}
+
+void mesh_cubemap::destroy() {
+
+	eng->ogl.destroy_object(gpu);
 }
 
 void mesh_lines::init(allocator* alloc) { PROF
@@ -665,6 +761,130 @@ void mesh_3d_tex::push_cube(v3 pos, f32 len) {
 
 	elements.push(uv3(idx + 0, idx + 3, idx + 6));
 	elements.push(uv3(idx + 0, idx + 3, idx + 5));
+	elements.push(uv3(idx + 0, idx + 1, idx + 6));
+	elements.push(uv3(idx + 1, idx + 4, idx + 7));
+	elements.push(uv3(idx + 1, idx + 6, idx + 7));
+	elements.push(uv3(idx + 4, idx + 2, idx + 5));
+	elements.push(uv3(idx + 4, idx + 7, idx + 5));
+	elements.push(uv3(idx + 7, idx + 5, idx + 3));
+	elements.push(uv3(idx + 7, idx + 6, idx + 3));
+	elements.push(uv3(idx + 0, idx + 2, idx + 4));
+	elements.push(uv3(idx + 0, idx + 1, idx + 4));
+
+	dirty = true;
+}
+
+chunk_vertex chunk_vertex::from_vec(v3 v, v3 uv, bv4 ao) { PROF
+
+	LOG_DEBUG_ASSERT(v.x >= 0 && v.x < 256);
+	LOG_DEBUG_ASSERT(v.y >= 0 && v.y < 4096);
+	LOG_DEBUG_ASSERT(v.z >= 0 && v.z < 256);
+	LOG_DEBUG_ASSERT(uv.x >= 0 && uv.x < 256);
+	LOG_DEBUG_ASSERT(uv.y >= 0 && uv.y < 256);
+	LOG_DEBUG_ASSERT(uv.z >= 0 && uv.z < 1024);
+
+	chunk_vertex ret;
+	ret.x = (u8)v.x;
+	ret.z = (u8)v.z;
+	ret.y_ao |= (u16)v.y << 4;
+	ret.y_ao |= ao.x << 2;
+	ret.y_ao |= ao.y;
+
+	ret.u = (u8)uv.x;
+	ret.v = (u8)uv.y;
+	ret.ao_t = (u16)uv.z;
+	ret.ao_t |= (u16)ao.z << 14;
+	ret.ao_t |= (u16)ao.w << 12;
+
+	return ret;
+}
+
+mesh_chunk mesh_chunk::make_cpu(u32 verts, allocator* alloc) { PROF
+
+	if(alloc == null) {
+		alloc = CURRENT_ALLOC();
+	}
+
+	mesh_chunk ret;
+
+	ret.vertices = vector<chunk_vertex>::make(verts, alloc);
+	ret.elements = vector<uv3>::make(verts, alloc);
+
+	return ret;
+}
+
+void mesh_chunk::init_gpu() { PROF
+
+	gpu = eng->ogl.add_object(FPTR(setup_mesh_chunk), FPTR(update_mesh_chunk), this);
+}
+
+void mesh_chunk::swap_mesh(mesh_chunk other) { PROF
+
+	vertices.destroy();
+	elements.destroy();
+
+	vertices = other.vertices;
+	elements = other.elements;
+
+	dirty = true;
+}
+
+void mesh_chunk::destroy() { PROF
+
+	vertices.destroy();
+	elements.destroy();
+
+	eng->ogl.destroy_object(gpu);
+	gpu = -1;
+}
+
+void mesh_chunk::free_cpu() { PROF
+
+	vertices.resize(0);
+	elements.resize(0);
+}
+
+void mesh_chunk::clear() { PROF
+
+	vertices.clear();
+	elements.clear();
+
+	dirty = true;
+}
+
+void mesh_chunk::quad(v3 p1, v3 p2, v3 p3, v3 p4, v3 uv_ext, bv4 ao) { PROF
+
+	u32 idx = vertices.size;
+
+	vertices.push(chunk_vertex::from_vec(p1 * (f32)chunk::units_per_voxel, v3(0.0f, 0.0f, uv_ext.z), ao));
+	vertices.push(chunk_vertex::from_vec(p2 * (f32)chunk::units_per_voxel, v3(uv_ext.x, 0.0f, uv_ext.z), ao));
+	vertices.push(chunk_vertex::from_vec(p3 * (f32)chunk::units_per_voxel, v3(0.0f, uv_ext.y, uv_ext.z), ao));
+	vertices.push(chunk_vertex::from_vec(p4 * (f32)chunk::units_per_voxel, v3(uv_ext.x, uv_ext.y, uv_ext.z), ao));
+
+	elements.push(uv3(idx, idx + 1, idx + 2));
+	elements.push(uv3(idx + 3, idx + 2, idx + 1));
+
+	dirty = true;
+}
+
+void mesh_chunk::cube(v3 pos, f32 len) { PROF
+
+	u32 idx = vertices.size;
+
+	f32 len2 = len / 2.0f;
+	pos += {len2, len2, len2};
+
+	vertices.push(chunk_vertex::from_vec(pos + v3( len2,  len2,  len2), v3(0,0,0), bv4()));
+	vertices.push(chunk_vertex::from_vec(pos + v3(-len2,  len2,  len2), v3(1,0,0), bv4()));
+	vertices.push(chunk_vertex::from_vec(pos + v3( len2, -len2,  len2), v3(0,1,0), bv4()));
+	vertices.push(chunk_vertex::from_vec(pos + v3( len2,  len2, -len2), v3(0,0,0), bv4()));
+	vertices.push(chunk_vertex::from_vec(pos + v3(-len2, -len2,  len2), v3(1,0,0), bv4()));
+	vertices.push(chunk_vertex::from_vec(pos + v3( len2, -len2, -len2), v3(0,1,0), bv4()));
+	vertices.push(chunk_vertex::from_vec(pos + v3(-len2,  len2, -len2), v3(1,0,0), bv4()));
+	vertices.push(chunk_vertex::from_vec(pos + v3(-len2, -len2, -len2), v3(1,1,0), bv4()));
+
+	elements.push(uv3(idx + 0, idx + 3, idx + 5));
+	elements.push(uv3(idx + 0, idx + 3, idx + 6));
 	elements.push(uv3(idx + 0, idx + 1, idx + 6));
 	elements.push(uv3(idx + 1, idx + 4, idx + 7));
 	elements.push(uv3(idx + 1, idx + 6, idx + 7));

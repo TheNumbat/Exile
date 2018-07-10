@@ -32,12 +32,15 @@ void world::init(asset_store* store, allocator* a) { PROF
 	p.reset();
 
 	LOG_INFO_F("units_per_voxel: %", chunk::units_per_voxel);
-
-	eng->ogl.add_command(cmd_mesh_chunk, FPTR(run_mesh_chunk), "shaders/mesh_chunk.v"_, "shaders/mesh_chunk.f"_, FPTR(uniforms_mesh_chunk), FPTR(compat_mesh_chunk));
 	
-	block_textures = eng->ogl.begin_tex_array(iv3(32, 32, (i32)NUM_BLOCKS), texture_wrap::repeat, true, 1);
-	eng->ogl.push_tex_array(block_textures, store, "bedrock"_);
-	eng->ogl.push_tex_array(block_textures, store, "stone"_);
+	{
+		sky.init();
+		sky_texture = eng->ogl.add_cubemap(store, "stars"_);
+
+		block_textures = eng->ogl.begin_tex_array(iv3(32, 32, (i32)NUM_BLOCKS), texture_wrap::repeat, true, 1);
+		eng->ogl.push_tex_array(block_textures, store, "bedrock"_);
+		eng->ogl.push_tex_array(block_textures, store, "stone"_);
+	}
 
 	chunks = map<chunk_pos, chunk*>::make(512, a);
 
@@ -46,14 +49,16 @@ void world::init(asset_store* store, allocator* a) { PROF
 	thread_pool = threadpool::make(a, eng->platform->get_phys_cpus() - 1);
 	thread_pool.start_all();
 
-	eng->dbg.add_var("world/settings"_, &settings);
-	eng->dbg.add_ele("world/ui"_, FPTR(world_debug_ui), this);
-	
-	eng->dbg.add_var("player/cam"_, &p.camera);
-	eng->dbg.add_var("player/speed"_, &p.speed);
-	eng->dbg.add_var("player/enable"_, &p.enable);
-	eng->dbg.add_var("player/noclip"_, &p.noclip);
-	eng->dbg.add_ele("player/inter"_, FPTR(player_debug_ui), this);
+	{
+		eng->dbg.add_var("world/settings"_, &settings);
+		eng->dbg.add_ele("world/ui"_, FPTR(world_debug_ui), this);
+		
+		eng->dbg.add_var("player/cam"_, &p.camera);
+		eng->dbg.add_var("player/speed"_, &p.speed);
+		eng->dbg.add_var("player/enable"_, &p.enable);
+		eng->dbg.add_var("player/noclip"_, &p.noclip);
+		eng->dbg.add_ele("player/inter"_, FPTR(player_debug_ui), this);
+	}
 }
 
 void world::destroy_chunks() { PROF 
@@ -69,6 +74,7 @@ void world::destroy_chunks() { PROF
 
 void world::destroy() { PROF
 
+	sky.destroy();
 	thread_pool.stop_all();
 	thread_pool.destroy();
 	destroy_chunks();
@@ -177,8 +183,31 @@ void player::reset() { PROF
 
 void world::render() { PROF
 
+	render_sky();
 	render_chunks();
 	render_player();
+}
+
+void world::render_sky() { PROF 
+
+	render_command_list rcl = render_command_list::make();
+
+	rcl.push_settings();
+	rcl.set_setting(render_setting::write_depth, false);
+
+	render_command cmd = render_command::make((u16)mesh_cmd::cubemap, sky.gpu);
+	cmd.texture = sky_texture;
+
+	rcl.add_command(cmd);
+
+	rcl.view = p.camera.view_no_translate();
+	rcl.proj = proj(p.camera.fov, (f32)eng->window.settings.w / (f32)eng->window.settings.h, 0.01f, 2000.0f);
+
+	rcl.pop_settings();
+
+	eng->ogl.execute_command_list(&rcl);
+
+	rcl.destroy();
 }
 
 void world::render_chunks() { PROF
@@ -231,9 +260,8 @@ void world::render_chunks() { PROF
 			}
 
 			eng->platform->aquire_mutex(&c->swap_mut);
-			render_command cmd = render_command::make(cmd_mesh_chunk, c->mesh.gpu);
+			render_command cmd = render_command::make((u16)mesh_cmd::chunk, c->mesh.gpu);
 
-			cmd.object = c->mesh.gpu;
 			cmd.num_tris = c->mesh_triangles;
 			cmd.texture = block_textures;
 
@@ -272,8 +300,7 @@ void world::render_player() { PROF
 
 		lines.push(cam.pos, intersection, colorf(0,0,0,1), colorf(0,0,0,1));
 
-		render_command cmd = render_command::make((u16)mesh_cmd_types::mesh_lines, lines.gpu);
-		cmd.object = lines.gpu;
+		render_command cmd = render_command::make((u16)mesh_cmd::lines, lines.gpu);
 
 		rcl.add_command(cmd);
 		rcl.view = cam.view();
@@ -293,8 +320,7 @@ void world::render_player() { PROF
 		crosshair.push_rect(r2(w / 2.0f - 5.0f, h / 2.0f - 1.0f, 10.0f, 2.0f), WHITE);
 		crosshair.push_rect(r2(w / 2.0f - 1.0f, h / 2.0f - 5.0f, 2.0f, 10.0f), WHITE);
 
-		render_command cmd = render_command::make((u16)mesh_cmd_types::mesh_2d_col, crosshair.gpu);
-		cmd.object = crosshair.gpu;
+		render_command cmd = render_command::make((u16)mesh_cmd::_2d_col, crosshair.gpu);
 
 		rcl.push_settings();
 		rcl.set_setting(render_setting::depth_test, false);
@@ -721,173 +747,4 @@ void chunk::build_data() { PROF
 	eng->platform->release_mutex(&swap_mut);
 }
 
-CALLBACK void run_mesh_chunk(render_command* cmd, gpu_object* gpu) { PROF
 
-	mesh_chunk* m = (mesh_chunk*)gpu->data;
-
-	u32 num_tris = ((cmd->num_tris ? cmd->num_tris : m->elements.size) - cmd->start_tri) * 3;
-	glDrawElementsBaseVertex(gl_draw_mode::triangles, num_tris, gl_index_type::unsigned_int, (void*)(u64)(0), cmd->offset);
-}
-
-CALLBACK void setup_mesh_chunk(gpu_object* obj) { PROF
-
-	glBindBuffer(gl_buf_target::array, obj->vbos[0]);
-
-	glVertexAttribIPointer(0, 2, gl_vert_attrib_type::unsigned_int, sizeof(chunk_vertex), (void*)0);
-	glEnableVertexAttribArray(0);
-	
-	glBindBuffer(gl_buf_target::element_array, obj->vbos[1]);
-}
-
-CALLBACK void update_mesh_chunk(gpu_object* obj, void* data, bool force) { PROF
-
-	mesh_chunk* m = (mesh_chunk*)data;
-	if(!force && !m->dirty) return;
-
-	glBindBuffer(gl_buf_target::array, obj->vbos[0]);
-	glBufferData(gl_buf_target::array, m->vertices.size * sizeof(chunk_vertex), m->vertices.size ? m->vertices.memory : null, gl_buf_usage::dynamic_draw);
-
-	glBindBuffer(gl_buf_target::element_array, obj->vbos[1]);
-	glBufferData(gl_buf_target::element_array, m->elements.size * sizeof(uv3), m->elements.size ? m->elements.memory : null, gl_buf_usage::dynamic_draw);
-
-	m->dirty = false;
-}
-
-CALLBACK void uniforms_mesh_chunk(shader_program* prog, render_command* cmd, render_command_list* rcl) { PROF
-
-	GLint loc = glGetUniformLocation(prog->handle, "transform");
-	GLint szloc = glGetUniformLocation(prog->handle, "units_per_voxel");
-
-	m4 transform = rcl->proj * rcl->view * cmd->model;
-
-	glUniformMatrix4fv(loc, 1, gl_bool::_false, transform.a);
-	glUniform1f(szloc, (f32)chunk::units_per_voxel);
-}
-
-CALLBACK bool compat_mesh_chunk(ogl_info* info) { PROF
-	return info->check_version(3, 2);
-}
-
-chunk_vertex chunk_vertex::from_vec(v3 v, v3 uv, bv4 ao) { PROF
-
-	LOG_DEBUG_ASSERT(v.x >= 0 && v.x < 256);
-	LOG_DEBUG_ASSERT(v.y >= 0 && v.y < 4096);
-	LOG_DEBUG_ASSERT(v.z >= 0 && v.z < 256);
-	LOG_DEBUG_ASSERT(uv.x >= 0 && uv.x < 256);
-	LOG_DEBUG_ASSERT(uv.y >= 0 && uv.y < 256);
-	LOG_DEBUG_ASSERT(uv.z >= 0 && uv.z < 1024);
-
-	chunk_vertex ret;
-	ret.x = (u8)v.x;
-	ret.z = (u8)v.z;
-	ret.y_ao |= (u16)v.y << 4;
-	ret.y_ao |= ao.x << 2;
-	ret.y_ao |= ao.y;
-
-	ret.u = (u8)uv.x;
-	ret.v = (u8)uv.y;
-	ret.ao_t = (u16)uv.z;
-	ret.ao_t |= (u16)ao.z << 14;
-	ret.ao_t |= (u16)ao.w << 12;
-
-	return ret;
-}
-
-mesh_chunk mesh_chunk::make_cpu(u32 verts, allocator* alloc) { PROF
-
-	if(alloc == null) {
-		alloc = CURRENT_ALLOC();
-	}
-
-	mesh_chunk ret;
-
-	ret.vertices = vector<chunk_vertex>::make(verts, alloc);
-	ret.elements = vector<uv3>::make(verts, alloc);
-
-	return ret;
-}
-
-void mesh_chunk::init_gpu() { PROF
-
-	gpu = eng->ogl.add_object(FPTR(setup_mesh_chunk), FPTR(update_mesh_chunk), this);
-}
-
-void mesh_chunk::swap_mesh(mesh_chunk other) { PROF
-
-	vertices.destroy();
-	elements.destroy();
-
-	vertices = other.vertices;
-	elements = other.elements;
-
-	dirty = true;
-}
-
-void mesh_chunk::destroy() { PROF
-
-	vertices.destroy();
-	elements.destroy();
-
-	eng->ogl.destroy_object(gpu);
-	gpu = -1;
-}
-
-void mesh_chunk::free_cpu() { PROF
-
-	vertices.resize(0);
-	elements.resize(0);
-}
-
-void mesh_chunk::clear() { PROF
-
-	vertices.clear();
-	elements.clear();
-
-	dirty = true;
-}
-
-void mesh_chunk::quad(v3 p1, v3 p2, v3 p3, v3 p4, v3 uv_ext, bv4 ao) { PROF
-
-	u32 idx = vertices.size;
-
-	vertices.push(chunk_vertex::from_vec(p1 * (f32)chunk::units_per_voxel, v3(0.0f, 0.0f, uv_ext.z), ao));
-	vertices.push(chunk_vertex::from_vec(p2 * (f32)chunk::units_per_voxel, v3(uv_ext.x, 0.0f, uv_ext.z), ao));
-	vertices.push(chunk_vertex::from_vec(p3 * (f32)chunk::units_per_voxel, v3(0.0f, uv_ext.y, uv_ext.z), ao));
-	vertices.push(chunk_vertex::from_vec(p4 * (f32)chunk::units_per_voxel, v3(uv_ext.x, uv_ext.y, uv_ext.z), ao));
-
-	elements.push(uv3(idx, idx + 1, idx + 2));
-	elements.push(uv3(idx + 3, idx + 2, idx + 1));
-
-	dirty = true;
-}
-
-void mesh_chunk::cube(v3 pos, f32 len) { PROF
-
-	u32 idx = vertices.size;
-
-	f32 len2 = len / 2.0f;
-	pos += {len2, len2, len2};
-
-	vertices.push(chunk_vertex::from_vec(pos + v3( len2,  len2,  len2), v3(0,0,0), bv4()));
-	vertices.push(chunk_vertex::from_vec(pos + v3(-len2,  len2,  len2), v3(1,0,0), bv4()));
-	vertices.push(chunk_vertex::from_vec(pos + v3( len2, -len2,  len2), v3(0,1,0), bv4()));
-	vertices.push(chunk_vertex::from_vec(pos + v3( len2,  len2, -len2), v3(0,0,0), bv4()));
-	vertices.push(chunk_vertex::from_vec(pos + v3(-len2, -len2,  len2), v3(1,0,0), bv4()));
-	vertices.push(chunk_vertex::from_vec(pos + v3( len2, -len2, -len2), v3(0,1,0), bv4()));
-	vertices.push(chunk_vertex::from_vec(pos + v3(-len2,  len2, -len2), v3(1,0,0), bv4()));
-	vertices.push(chunk_vertex::from_vec(pos + v3(-len2, -len2, -len2), v3(1,1,0), bv4()));
-
-	elements.push(uv3(idx + 0, idx + 3, idx + 5));
-	elements.push(uv3(idx + 0, idx + 3, idx + 6));
-	elements.push(uv3(idx + 0, idx + 1, idx + 6));
-	elements.push(uv3(idx + 1, idx + 4, idx + 7));
-	elements.push(uv3(idx + 1, idx + 6, idx + 7));
-	elements.push(uv3(idx + 4, idx + 2, idx + 5));
-	elements.push(uv3(idx + 4, idx + 7, idx + 5));
-	elements.push(uv3(idx + 7, idx + 5, idx + 3));
-	elements.push(uv3(idx + 7, idx + 6, idx + 3));
-	elements.push(uv3(idx + 0, idx + 2, idx + 4));
-	elements.push(uv3(idx + 0, idx + 1, idx + 4));
-
-	dirty = true;
-}

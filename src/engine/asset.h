@@ -111,7 +111,7 @@ struct asset {
 		_asset_raster_font  raster_font;
 		_asset_ttf_font 	ttf_font;
 	};
-	asset() {};
+	asset() {}
 };
 
 struct asset_store {

@@ -6,11 +6,13 @@ Working To-Do:
 	config format
 	user settings
 
-	framebuffer objects (msaa + effects)
-	skybox
+	time-based skybox & blending
+	sun/moon objects
 	directional/sun lighting
-	lights
-	bindless textures
+
+	lighting
+	consolidate shaders?
+	framebuffer objects (msaa + effects)
 	shadow mapping
 	normal mapping
 
@@ -145,10 +147,11 @@ Overall To-Do List:
 			tessellation / geometry shaders
 		post-processing effects
 		HDR
-		AZDO (bindless?)
+		AZDO
 			glNamed operations
 			glMapBuffer?
 			command lists -> translate from mine
+			bindless textures / buffers
 		3D models & procedural animation
 			skeletal animation
 

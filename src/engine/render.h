@@ -43,9 +43,23 @@ enum class texture_wrap : u8 {
 	clamp_border,
 };
 
+enum class texture_type : u8 {
+	none,
+	bmp,
+	rf,
+	array,
+	cube
+};
+
 struct asset_pair {
 	string name;
 	asset_store* store = null;
+};
+
+struct texture_cube_info {
+	asset_pair info;
+
+	void load_single(GLuint handle, asset_store* store, string name);
 };
 
 struct texture_array_info {
@@ -53,33 +67,53 @@ struct texture_array_info {
 	i32 current_layer = 0;
 	i32 layer_offset = 0;
 	array<asset_pair> assets;
+
+	void push(GLuint handle, asset_store* store, string name);
+};
+
+struct texture_bmp_info {
+	asset_pair info;
+
+	void load(GLuint handle, asset_store* store, string name);
+};
+
+struct texture_rf_info {
+	asset_pair info;
+
+	void load(GLuint handle, asset_store* store, string name);
 };
 
 struct texture {
+	texture_type type   = texture_type::none;
 	texture_id id 		= 0;
 	GLuint handle 		= 0;
 	
-	string a_name;
-	asset_type a_type = asset_type::none;
-	asset_store* store = null;
+	gl_tex_target gl_type = gl_tex_target::_2D;
+	texture_wrap wrap     = texture_wrap::repeat;
+	bool pixelated        = false;
 
-	gl_tex_target type 	= gl_tex_target::_2D;
-	texture_wrap wrap 	= texture_wrap::repeat;
-	bool pixelated 		= false;
-	
-	texture_array_info array_info;
+	union {	
+		texture_rf_info    rf_info;
+		texture_bmp_info   bmp_info;
+		texture_cube_info  cube_info;
+		texture_array_info array_info;
+	};
 
-	static texture make(texture_wrap wrap, bool pixelated);
+	// WHY C++ WHY
+	texture() {}
+	texture(texture& t) {_memcpy(&t, this, sizeof(texture));}
+	texture(texture&& t) {_memcpy(&t, this, sizeof(texture));}
+	texture& operator=(texture& t) {_memcpy(&t, this, sizeof(texture)); return *this;}
+
+	static texture make_cube();
+	static texture make_rf(texture_wrap wrap, bool pixelated);
+	static texture make_bmp(texture_wrap wrap, bool pixelated);
 	static texture make_array(iv3 dim, u32 idx_offset, texture_wrap wrap, bool pixelated, allocator* a);
 	void destroy(allocator* a);
 	void gl_destroy();
 
 	void recreate();
 	void reload_data();
-	void load_bitmap(asset_store* store, string name);
-	void push_array_bitmap(asset_store* store, string name);
-	void load_bitmap_from_font(asset_store* store, string name);
-
 	void set_params();
 };
 
@@ -128,6 +162,7 @@ enum class render_setting : u8 {
 	cull,
 	msaa,
 	aa_shading,
+	write_depth
 };
 
 struct ogl_settings {
@@ -139,6 +174,7 @@ struct ogl_settings {
 	bool cull_backface = false;
 	bool multisample = true;
 	bool sample_shading = false;
+	bool depth_mask = true;
 };
 
 struct render_command {
@@ -259,6 +295,7 @@ struct ogl_manager {
 	draw_context* select_ctx(u16 id);
 	void add_command(u16 id, _FPTR* run, string v, string f, _FPTR* uniforms, _FPTR* compat);
 
+	texture_id add_cubemap(asset_store* as, string name);
 	void push_tex_array(texture_id tex, asset_store* as, string name);
 	texture_id begin_tex_array(iv3 dim, texture_wrap wrap = texture_wrap::repeat, bool pixelated = false, u32 offset = 0);
 

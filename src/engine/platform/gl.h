@@ -42,7 +42,14 @@ enum class gl_tex_target : GLenum {
 	_3D                     	= 0x806F,
 	cube_map					= 0x8513,
 	cube_map_array         		= 0x9009,
-	rectangle              		= 0x84F5
+	rectangle              		= 0x84F5,
+
+	cube_map_positive_x 		= 0x8515,
+	cube_map_negative_x 		= 0x8516,
+	cube_map_positive_y 		= 0x8517,
+	cube_map_negative_y 		= 0x8518,
+	cube_map_positive_z 		= 0x8519,
+	cube_map_negative_z 		= 0x851A
 };
 
 enum class gl_tex_param : GLenum {
@@ -725,6 +732,7 @@ DLL_IMPORT void glDisable(gl_capability cap);
 DLL_IMPORT void glClear(GLbitfield mask);
 DLL_IMPORT void glClearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha);
 DLL_IMPORT void glViewport(GLint x, GLint y, GLsizei width, GLsizei height);
+DLL_IMPORT void glDepthMask(gl_bool enable);
 
 DLL_IMPORT void glDrawArrays(gl_draw_mode mode, GLint first, GLsizei count);
 DLL_IMPORT void glDrawElements(gl_draw_mode mode, GLsizei count, gl_index_type type, const GLvoid *indices);

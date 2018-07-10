@@ -33,38 +33,6 @@ enum class work : u8 {
 	done
 };
 
-struct chunk_vertex {
-	u8 x = 0, z = 0;
-	u16 y_ao = 0;	
-
-	u16 ao_t = 0;
-	u8 u = 0, v = 0;
-
-	static chunk_vertex from_vec(v3 v, v3 uv, bv4 ao);
-};
-static_assert(sizeof(chunk_vertex) == 8, "chunk_vertex size != 8");
-
-u16 cmd_mesh_chunk = 1024;
-
-struct mesh_chunk {
-
-	vector<chunk_vertex> 	vertices;
-	vector<uv3> 			elements;
-
-	gpu_object_id gpu = -1;
-	bool dirty = false;
-
-	static mesh_chunk make_cpu(u32 verts = 8192, allocator* alloc = null);
-	void init_gpu();
-	void destroy();
-	void free_cpu();
-	void clear();
-	void swap_mesh(mesh_chunk other);
-
-	void quad(v3 p1, v3 p2, v3 p3, v3 p4, v3 uv_ext, bv4 ao);
-	void cube(v3 pos, f32 len);
-};
-
 struct chunk {
 
 	static const i32 xsz = 31, ysz = 255, zsz = 31;
@@ -133,13 +101,15 @@ struct world {
 	// TODO(max): use a free-list allocator to allocate the chunks
 	map<chunk_pos, chunk*> chunks;
 
-	texture_id block_textures;
-
 	world_settings settings;
 	player p;
 
 	threadpool thread_pool;
 	allocator* alloc = null;
+
+	texture_id block_textures = -1;
+	texture_id sky_texture = -1;
+	mesh_cubemap sky;
 
 	void init(asset_store* store, allocator* a);
 	void destroy();
@@ -152,6 +122,7 @@ struct world {
 	void render();
 	void render_chunks();
 	void render_player();
+	void render_sky();
 	void populate_local_area();
 
 	v3 raymarch(v3 origin, v3 dir, f32 max);
@@ -162,10 +133,3 @@ CALLBACK void world_debug_ui(world* w);
 CALLBACK void unlock_chunk(chunk* v);
 CALLBACK void cancel_build(chunk* param);
 float check_pirority(super_job* j, void* param);
-
-CALLBACK void setup_mesh_chunk(gpu_object* obj);
-CALLBACK void update_mesh_chunk(gpu_object* obj, void* data, bool force);
-
-CALLBACK void run_mesh_chunk(render_command* cmd, gpu_object* gpu);
-CALLBACK void uniforms_mesh_chunk(shader_program* prog, render_command* cmd, render_command_list* rcl);
-CALLBACK bool compat_mesh_chunk(ogl_info* info);

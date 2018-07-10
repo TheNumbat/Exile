@@ -303,7 +303,6 @@ void ogl_manager::destroy_object(gpu_object_id id) { PROF
 	LOG_DEBUG_ASSERT(obj);
 
 	if(obj) {
-
 		obj->destroy();
 		objects.erase(id);
 	}
@@ -353,10 +352,10 @@ void ogl_manager::destroy() { PROF
 
 texture_id ogl_manager::add_texture_from_font(asset_store* as, string name, texture_wrap wrap, bool pixelated) { PROF
 
-	texture t = texture::make(wrap, pixelated);
+	texture t = texture::make_rf(wrap, pixelated);
 	t.id = next_texture_id;
 
-	t.load_bitmap_from_font(as, name);
+	t.rf_info.load(t.handle, as, name);
 
 	textures.insert(next_texture_id, t);
 
@@ -368,14 +367,29 @@ texture_id ogl_manager::add_texture_from_font(asset_store* as, string name, text
 
 texture_id ogl_manager::add_texture(asset_store* as, string name, texture_wrap wrap, bool pixelated) { PROF
 
-	texture t = texture::make(wrap, pixelated);
+	texture t = texture::make_bmp(wrap, pixelated);
 	t.id = next_texture_id;
 
-	t.load_bitmap(as, name);
+	t.bmp_info.load(t.handle, as, name);
 
 	textures.insert(next_texture_id, t);
 
 	LOG_DEBUG_F("Created texture % from bitmap asset %", next_texture_id, name);
+
+	next_texture_id++;
+	return next_texture_id - 1;
+}
+
+texture_id ogl_manager::add_cubemap(asset_store* as, string name) {
+
+	texture t = texture::make_cube();
+	t.id = next_texture_id;
+
+	t.cube_info.load_single(t.handle, as, name);
+
+	textures.insert(next_texture_id, t);
+
+	LOG_DEBUG_F("Created texture array %", next_texture_id);
 
 	next_texture_id++;
 	return next_texture_id - 1;
@@ -399,9 +413,9 @@ void ogl_manager::push_tex_array(texture_id tex, asset_store* as, string name) {
 	texture* t = textures.try_get(tex);
 
 	LOG_DEBUG_ASSERT(t);
-	LOG_DEBUG_ASSERT(t->type == gl_tex_target::_2D_array);
+	LOG_DEBUG_ASSERT(t->type == texture_type::array);
 
-	t->push_array_bitmap(as, name);
+	t->array_info.push(t->handle, as, name);
 
 	return;
 }
@@ -431,16 +445,45 @@ texture* ogl_manager::select_texture(texture_id id) { PROF
 		return null;
 	}
 	
-	glBindTexture(t->type, t->handle);
+	glBindTexture(t->gl_type, t->handle);
 
 	return t;
 }
 
-texture texture::make(texture_wrap wrap, bool pixelated) { PROF
+texture texture::make_bmp(texture_wrap wrap, bool pixelated) { PROF
 
 	texture ret;
 
-	ret.type = gl_tex_target::_2D;
+	ret.type = texture_type::bmp;
+	ret.gl_type = gl_tex_target::_2D;
+	ret.wrap = wrap;
+	ret.pixelated = pixelated;
+	glGenTextures(1, &ret.handle);
+
+	ret.set_params();
+
+	return ret;
+}
+
+texture texture::make_cube() { PROF
+
+	texture ret;
+
+	ret.type = texture_type::cube;
+	ret.gl_type = gl_tex_target::cube_map;
+	glGenTextures(1, &ret.handle);
+
+	ret.set_params();
+
+	return ret;	
+}
+
+texture texture::make_rf(texture_wrap wrap, bool pixelated) { PROF
+
+	texture ret;
+
+	ret.type = texture_type::rf;
+	ret.gl_type = gl_tex_target::_2D;
 	ret.wrap = wrap;
 	ret.pixelated = pixelated;
 	glGenTextures(1, &ret.handle);
@@ -454,7 +497,8 @@ texture texture::make_array(iv3 dim, u32 offset, texture_wrap wrap, bool pixelat
 
 	texture ret;
 
-	ret.type = gl_tex_target::_2D_array;
+	ret.type = texture_type::array;
+	ret.gl_type = gl_tex_target::_2D_array;
 	ret.wrap = wrap;
 	ret.pixelated = pixelated;
 	ret.array_info.dim = dim;
@@ -471,57 +515,90 @@ texture texture::make_array(iv3 dim, u32 offset, texture_wrap wrap, bool pixelat
 
 void texture::set_params() { PROF
 
-	glBindTexture(type, handle);
+	glBindTexture(gl_type, handle);
 
-	if(type == gl_tex_target::_2D_array) {
-		glTexStorage3D(type, 1, gl_tex_format::rgba8, array_info.dim.x, array_info.dim.y, array_info.dim.z);
+	if(gl_type == gl_tex_target::cube_map) {
+		glTexParameteri(gl_type, gl_tex_param::min_filter, (GLint)gl_tex_filter::linear_mipmap_linear);
+		glTexParameteri(gl_type, gl_tex_param::mag_filter, (GLint)gl_tex_filter::linear);
+
+		glTexParameteri(gl_type, gl_tex_param::wrap_r, (GLint)gl_tex_wrap::clamp_to_edge);
+		glTexParameteri(gl_type, gl_tex_param::wrap_s, (GLint)gl_tex_wrap::clamp_to_edge);
+		glTexParameteri(gl_type, gl_tex_param::wrap_t, (GLint)gl_tex_wrap::clamp_to_edge);
+		glBindTexture(gl_type, 0);
+		return;
+	}
+
+	if(gl_type == gl_tex_target::_2D_array) {
+		glTexStorage3D(gl_type, 1, gl_tex_format::rgba8, array_info.dim.x, array_info.dim.y, array_info.dim.z);
 	}
 
 	switch(wrap) {
 	case texture_wrap::repeat:
-		glTexParameteri(type, gl_tex_param::wrap_s, (GLint)gl_tex_wrap::repeat);
-		glTexParameteri(type, gl_tex_param::wrap_t, (GLint)gl_tex_wrap::repeat);
+		glTexParameteri(gl_type, gl_tex_param::wrap_s, (GLint)gl_tex_wrap::repeat);
+		glTexParameteri(gl_type, gl_tex_param::wrap_t, (GLint)gl_tex_wrap::repeat);
 		break;
 	case texture_wrap::mirror:
-		glTexParameteri(type, gl_tex_param::wrap_s, (GLint)gl_tex_wrap::mirrored_repeat);
-		glTexParameteri(type, gl_tex_param::wrap_t, (GLint)gl_tex_wrap::mirrored_repeat);
+		glTexParameteri(gl_type, gl_tex_param::wrap_s, (GLint)gl_tex_wrap::mirrored_repeat);
+		glTexParameteri(gl_type, gl_tex_param::wrap_t, (GLint)gl_tex_wrap::mirrored_repeat);
 		break;
 	case texture_wrap::clamp:
-		glTexParameteri(type, gl_tex_param::wrap_s, (GLint)gl_tex_wrap::clamp_to_edge);
-		glTexParameteri(type, gl_tex_param::wrap_t, (GLint)gl_tex_wrap::clamp_to_edge);
+		glTexParameteri(gl_type, gl_tex_param::wrap_s, (GLint)gl_tex_wrap::clamp_to_edge);
+		glTexParameteri(gl_type, gl_tex_param::wrap_t, (GLint)gl_tex_wrap::clamp_to_edge);
 		break;
 	case texture_wrap::clamp_border:
-		glTexParameteri(type, gl_tex_param::wrap_s, (GLint)gl_tex_wrap::clamp_to_border);
-		glTexParameteri(type, gl_tex_param::wrap_t, (GLint)gl_tex_wrap::clamp_to_border);
+		glTexParameteri(gl_type, gl_tex_param::wrap_s, (GLint)gl_tex_wrap::clamp_to_border);
+		glTexParameteri(gl_type, gl_tex_param::wrap_t, (GLint)gl_tex_wrap::clamp_to_border);
 		f32 borderColor[] = { 0.0f, 0.0f, 0.0f, 1.0f };
-		glTexParameterfv(type, gl_tex_param::border_color, borderColor);  
+		glTexParameterfv(gl_type, gl_tex_param::border_color, borderColor);  
 		break;
 	}
 
 	if(pixelated) {
-		glTexParameteri(type, gl_tex_param::min_filter, (GLint)gl_tex_filter::nearest);
-		glTexParameteri(type, gl_tex_param::mag_filter, (GLint)gl_tex_filter::nearest);
+		glTexParameteri(gl_type, gl_tex_param::min_filter, (GLint)gl_tex_filter::nearest);
+		glTexParameteri(gl_type, gl_tex_param::mag_filter, (GLint)gl_tex_filter::nearest);
 	} else {
-		glTexParameteri(type, gl_tex_param::min_filter, (GLint)gl_tex_filter::linear_mipmap_linear);
-		glTexParameteri(type, gl_tex_param::mag_filter, (GLint)gl_tex_filter::linear);
+		glTexParameteri(gl_type, gl_tex_param::min_filter, (GLint)gl_tex_filter::linear_mipmap_linear);
+		glTexParameteri(gl_type, gl_tex_param::mag_filter, (GLint)gl_tex_filter::linear);
 	}
 
-	glBindTexture(type, 0);
+	glBindTexture(gl_type, 0);
 }
 
-void texture::load_bitmap_from_font(asset_store* as, string name) { PROF
+void texture_cube_info::load_single(GLuint handle, asset_store* store, string name) { PROF 
+
+	asset* a = store->get(name);
+
+	info.name = name;
+	info.store = store;
+
+	LOG_DEBUG_ASSERT(a);
+	LOG_DEBUG_ASSERT(a->type == asset_type::bitmap);
+
+	glBindTexture(gl_tex_target::cube_map, handle);
+
+	glTexImage2D(gl_tex_target::cube_map_negative_z, 0, gl_tex_format::rgba8, a->bitmap.width, a->bitmap.height, 0, gl_pixel_data_format::rgba, gl_pixel_data_type::unsigned_byte, a->mem);
+	glTexImage2D(gl_tex_target::cube_map_positive_z, 0, gl_tex_format::rgba8, a->bitmap.width, a->bitmap.height, 0, gl_pixel_data_format::rgba, gl_pixel_data_type::unsigned_byte, a->mem);
+	glTexImage2D(gl_tex_target::cube_map_positive_y, 0, gl_tex_format::rgba8, a->bitmap.width, a->bitmap.height, 0, gl_pixel_data_format::rgba, gl_pixel_data_type::unsigned_byte, a->mem);
+	glTexImage2D(gl_tex_target::cube_map_negative_y, 0, gl_tex_format::rgba8, a->bitmap.width, a->bitmap.height, 0, gl_pixel_data_format::rgba, gl_pixel_data_type::unsigned_byte, a->mem);
+	glTexImage2D(gl_tex_target::cube_map_negative_x, 0, gl_tex_format::rgba8, a->bitmap.width, a->bitmap.height, 0, gl_pixel_data_format::rgba, gl_pixel_data_type::unsigned_byte, a->mem);
+	glTexImage2D(gl_tex_target::cube_map_positive_x, 0, gl_tex_format::rgba8, a->bitmap.width, a->bitmap.height, 0, gl_pixel_data_format::rgba, gl_pixel_data_type::unsigned_byte, a->mem);
+
+	glGenerateMipmap(gl_tex_target::cube_map);
+
+	glBindTexture(gl_tex_target::cube_map, 0);
+}
+
+void texture_rf_info::load(GLuint handle, asset_store* as, string name) { PROF
 
 	asset* a = as->get(name);
 
-	a_name = name;
-	a_type = asset_type::raster_font;
-	store = as;
+	info.name = name;
+	info.store = as;
 
 	LOG_DEBUG_ASSERT(a);
 	LOG_DEBUG_ASSERT(a->type == asset_type::raster_font);
-	LOG_DEBUG_ASSERT(type == gl_tex_target::_2D);
 
-	glBindTexture(type, handle);
+	glBindTexture(gl_tex_target::_2D, handle);
 
 	glTexImage2D(gl_tex_target::_2D, 0, gl_tex_format::rgba8, a->raster_font.width, a->raster_font.height, 0, gl_pixel_data_format::red, gl_pixel_data_type::unsigned_byte, a->mem);
 	gl_tex_swizzle swizzle[] = {gl_tex_swizzle::red, gl_tex_swizzle::red, gl_tex_swizzle::red, gl_tex_swizzle::red};
@@ -529,46 +606,44 @@ void texture::load_bitmap_from_font(asset_store* as, string name) { PROF
 
 	glGenerateMipmap(gl_tex_target::_2D);
 
-	glBindTexture(type, 0);
+	glBindTexture(gl_tex_target::_2D, 0);
 }
 
-void texture::load_bitmap(asset_store* as, string name) { PROF
+void texture_bmp_info::load(GLuint handle, asset_store* as, string name) { PROF
 
 	asset* a = as->get(name);
 	
-	a_name = name;
-	a_type = asset_type::bitmap;
-	store = as;
+	info.name = name;
+	info.store = as;
 
 	LOG_DEBUG_ASSERT(a);
 	LOG_DEBUG_ASSERT(a->type == asset_type::bitmap);
-	LOG_DEBUG_ASSERT(type == gl_tex_target::_2D);
 
-	glBindTexture(type, handle);
+	glBindTexture(gl_tex_target::_2D, handle);
 
 	glTexImage2D(gl_tex_target::_2D, 0, gl_tex_format::rgba8, a->bitmap.width, a->bitmap.height, 0, gl_pixel_data_format::rgba, gl_pixel_data_type::unsigned_byte, a->mem);
 	
 	glGenerateMipmap(gl_tex_target::_2D);
 
-	glBindTexture(type, 0);
+	glBindTexture(gl_tex_target::_2D, 0);
 }
 
-void texture::push_array_bitmap(asset_store* as, string name) {
+void texture_array_info::push(GLuint handle, asset_store* as, string name) {
 
 	asset* a = as->get(name);
 
 	LOG_DEBUG_ASSERT(a);
 	LOG_DEBUG_ASSERT(a->type == asset_type::bitmap);
-	LOG_DEBUG_ASSERT(array_info.dim.x == a->bitmap.width && array_info.dim.y == a->bitmap.height && array_info.dim.z != 0);
-	LOG_DEBUG_ASSERT(array_info.current_layer < array_info.dim.z);
+	LOG_DEBUG_ASSERT(dim.x == a->bitmap.width && dim.y == a->bitmap.height && dim.z != 0);
+	LOG_DEBUG_ASSERT(current_layer < dim.z);
 
 	glBindTexture(gl_tex_target::_2D_array, handle);
 
-	glTexSubImage3D(gl_tex_target::_2D_array, 0, 0, 0, array_info.current_layer, a->bitmap.width, a->bitmap.height, 1, gl_pixel_data_format::rgba, gl_pixel_data_type::unsigned_byte, a->mem);
+	glTexSubImage3D(gl_tex_target::_2D_array, 0, 0, 0, current_layer, a->bitmap.width, a->bitmap.height, 1, gl_pixel_data_format::rgba, gl_pixel_data_type::unsigned_byte, a->mem);
 	
-	array_info.assets.get(array_info.current_layer)->name = name;
-	array_info.assets.get(array_info.current_layer)->store = as;
-	array_info.current_layer++;
+	assets.get(current_layer)->name = name;
+	assets.get(current_layer)->store = as;
+	current_layer++;
 
 	glBindTexture(gl_tex_target::_2D_array, 0);
 }
@@ -587,22 +662,24 @@ void texture::recreate() { PROF
 
 void texture::reload_data() {
 
-	if(type == gl_tex_target::_2D_array) {
-
+	switch(type) {
+	case texture_type::array: {
 		array_info.current_layer = array_info.layer_offset;
 		
 		FORARR(it, array_info.assets) {
 			if(it->name.c_str)
-				push_array_bitmap(it->store, it->name);
+				array_info.push(handle, it->store, it->name);
 		}
-
-		return;
-	}
-
-	if(a_type == asset_type::bitmap) {
-		load_bitmap(store, a_name);
-	} else if(a_type == asset_type::raster_font) {
-		load_bitmap_from_font(store, a_name);
+	} break;
+	case texture_type::bmp: {
+		bmp_info.load(handle, bmp_info.info.store, bmp_info.info.name);
+	} break;
+	case texture_type::rf: {
+		rf_info.load(handle, rf_info.info.store, rf_info.info.name);
+	} break;
+	case texture_type::cube: {
+		cube_info.load_single(handle, cube_info.info.store, cube_info.info.name);
+	} break;
 	}
 }
 
@@ -676,6 +753,7 @@ void ogl_manager::set_setting(render_setting setting, bool enable) { PROF
 	case render_setting::cull: set->cull_backface = enable; break;
 	case render_setting::msaa: set->multisample = enable; break;
 	case render_setting::aa_shading: set->sample_shading = enable; break;
+	case render_setting::write_depth: set->depth_mask = enable; break;
 	default: break;
 	}
 }
@@ -692,6 +770,7 @@ void ogl_manager::apply_settings() { PROF
 	set->cull_backface 	? glEnable(gl_capability::cull_face) : glDisable(gl_capability::cull_face);
 	set->multisample 	? glEnable(gl_capability::multisample) : glDisable(gl_capability::multisample);
 	set->sample_shading	? glEnable(gl_capability::sample_shading) : glDisable(gl_capability::sample_shading);
+	set->depth_mask 	? glDepthMask(gl_bool::_true) : glDepthMask(gl_bool::_false);
 
 	if(set->sample_shading && info.check_version(4,0)) {
 		glMinSampleShading(1.0f);

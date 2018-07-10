@@ -70,7 +70,7 @@ struct _type_info {
 		Type_enum_info   _enum;
 		Type_string_info _string;
 	};
-	_type_info() : _enum() {}
+	_type_info() {}
 };
 
 struct any {
