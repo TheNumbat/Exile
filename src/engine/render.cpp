@@ -211,6 +211,9 @@ void ogl_manager::gl_end_reload() { PROF
 	FORMAP(it, objects) {
 		it->value.recreate();
 	}
+
+	glBlendFunc(gl_blend_factor::one, gl_blend_factor::one_minus_src_alpha);
+	glDepthFunc(gl_depth_factor::lequal);
 }
 
 void ogl_manager::reload_texture_assets() { PROF
