@@ -1,9 +1,6 @@
 
 Working To-Do:
 
-	move platform globals into window struct
-	finish SDL window apply setting
-
 	debug console
 	serialization/deserialization
 	config format

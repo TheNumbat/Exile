@@ -174,9 +174,14 @@ bool sdl_apply_window_settings(platform_window* window) {
 	}
 
 	if(window->settings.w != prev_settings.w || window->settings.h != prev_settings.h) {
+
+		SDL_SetWindowSize(window->window, window->settings.w, window->settings.h);
 	}
 
 	if(window->settings.mode != prev_settings.mode) {
+
+		SDL_SetWindowFullscreen(window->window, window->settings.mode == platform_window_mode::fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
+		SDL_GetWindowSize(window->window, &window->settings.w, &window->settings.h);
 	}
 
 	if(window->settings.vsync != prev_settings.vsync) {
