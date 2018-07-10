@@ -89,6 +89,8 @@ struct world_settings {
 	bool wireframe = false;
 	bool cull_backface = true;
 	bool sample_shading = true;
+
+	bool time = true;
 };
 
 struct world {
@@ -110,6 +112,9 @@ struct world {
 	texture_id block_textures = -1;
 	texture_id sky_texture = -1;
 	mesh_cubemap sky;
+
+	u64 time = 0;
+	u64 last_update = 0;
 
 	void init(asset_store* store, allocator* a);
 	void destroy();

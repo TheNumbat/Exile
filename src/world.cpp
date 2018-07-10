@@ -51,14 +51,18 @@ void world::init(asset_store* store, allocator* a) { PROF
 
 	{
 		eng->dbg.add_var("world/settings"_, &settings);
+		eng->dbg.add_val("world/time"_, &time);
 		eng->dbg.add_ele("world/ui"_, FPTR(world_debug_ui), this);
-		
+
 		eng->dbg.add_var("player/cam"_, &p.camera);
 		eng->dbg.add_var("player/speed"_, &p.speed);
 		eng->dbg.add_var("player/enable"_, &p.enable);
 		eng->dbg.add_var("player/noclip"_, &p.noclip);
 		eng->dbg.add_ele("player/inter"_, FPTR(player_debug_ui), this);
 	}
+
+	last_update = global_api->get_perfcount();
+	time = global_api->get_perfcount();
 }
 
 void world::destroy_chunks() { PROF 
@@ -114,6 +118,12 @@ v3 world::raymarch(v3 pos3, v3 dir3, f32 max) { PROF
 }
 
 void world::update(u64 now) { PROF
+
+	if(settings.time) {
+		time += now - last_update;
+	}
+	
+	last_update = now;
 
 	update_player(now);
 }

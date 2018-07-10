@@ -194,7 +194,8 @@ enum class prof_sort_type : u8 {
 
 enum class dbg_value_class : u8 {
 	section,
-	value,
+	edit,
+	view,
 	callback // NOTE(max): can also be used for "reactive" values
 };
 
@@ -212,12 +213,14 @@ struct dbg_value {
 	dbg_value_class type = dbg_value_class::section;
 	union {
 		dbg_value_sec sec;
-		any 		  val;
+		any 		  edit;
+		any 		  view;
 		dbg_value_cal cal;
 	};
 	dbg_value() {}
+	static dbg_value make_edit(any a);
+	static dbg_value make_view(any a);
 	static dbg_value make_sec(allocator* alloc);
-	static dbg_value make_val(any a);
 	static dbg_value make_cal(_FPTR* c, void* p);
 	void destroy(allocator* alloc);
 };
@@ -265,6 +268,7 @@ struct dbg_manager {
 
 	void add_ele(string path, _FPTR* callback, void* param = null);
 	template<typename T> void add_var(string path, T* value);
+	template<typename T> void add_val(string path, T* value);
 	template<typename T> T get_var(string path);
 
 	void collate();

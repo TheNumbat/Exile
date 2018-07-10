@@ -14,7 +14,7 @@ namespace ImGui {
 	}
 
 	template<typename E>
-	void EnumCombo(string label, E* val, ImGuiComboFlags flags) {
+	void EnumCombo(string label, E* val, ImGuiComboFlags flags) { PROF
 
 		_type_info* info = TYPEINFO(E);
 		LOG_DEBUG_ASSERT(info->type_type == Type::_enum);
@@ -22,7 +22,7 @@ namespace ImGui {
 		EnumCombo_T(label, val, info, flags);
 	}
 
-	void EnumCombo_T(string label, void* val, _type_info* info, ImGuiComboFlags flags) {
+	void EnumCombo_T(string label, void* val, _type_info* info, ImGuiComboFlags flags) { PROF
 
 		_type_info* base = TYPEINFO_H(info->_enum.base_type);
 		i64 ival = int_as_i64(val, base);
@@ -43,7 +43,7 @@ namespace ImGui {
 	}
 
 	template<typename V>
-	void MapCombo(string label, map<string,V> options, V* val, ImGuiComboFlags flags) {
+	void MapCombo(string label, map<string,V> options, V* val, ImGuiComboFlags flags) { PROF
 
 		string preview;
 		FORMAP(it, options) {
@@ -68,13 +68,13 @@ namespace ImGui {
 	}
 
 	template<typename S>
-	void ViewAny(string label, S val, bool open) {
+	void ViewAny(string label, S val, bool open) { PROF
 
 		View_T(label, &val, TYPEINFO(S), open);
 	}
 
 	template<typename S>
-	void EditAny(string label, S* val, bool open) {
+	void EditAny(string label, S* val, bool open) { PROF
 
 		Edit_T(label, val, TYPEINFO(S), open);
 	}
@@ -84,7 +84,7 @@ namespace ImGui {
 	    return *str ? (u32)(*str) + 33 * const_hash(str + 1) : 5381;
 	}
 
-	void View_T(string label, void* val, _type_info* info, bool open) {
+	void View_T(string label, void* val, _type_info* info, bool open) { PROF
 
 		if(info->type_type != Type::_array && info->type_type != Type::_struct) {
 			Text("%s", label.c_str); SameLine();
@@ -171,17 +171,35 @@ namespace ImGui {
 		}
 	}
 
-	void Edit_T(string label, void* val, _type_info* info, bool open) {
+	void Edit_T(string label, void* val, _type_info* info, bool open) { PROF
 
 		switch(info->type_type) {
 		case Type::_int: {
-			LOG_DEBUG_ASSERT(info->size == 4 && info->_int.is_signed);
-			InputInt(label, (i32*)val);
+			if(info->_int.is_signed) {
+				if(info->size == 4) {
+					InputScalar(label, ImGuiDataType_S32, val);
+				} else if(info->size == 8) {
+					InputScalar(label, ImGuiDataType_S64, val);
+				} else {
+					LOG_ERR("Edit int not 32/64 bit!");
+				}
+			} else {
+				if(info->size == 4) {
+					InputScalar(label, ImGuiDataType_U32, val);
+				} else if(info->size == 8) {
+					InputScalar(label, ImGuiDataType_U64, val);
+				} else {
+					LOG_ERR("Edit int not 32/64 bit!");
+				}
+			}
 		} break;
 
 		case Type::_float: {
-			LOG_DEBUG_ASSERT(info->size == 4);
-			InputFloat(label, (f32*)val);
+			if(info->size == 4) {
+				InputScalar(label, ImGuiDataType_Float, val);
+			} else {
+				InputScalar(label, ImGuiDataType_Double, val);
+			}
 		} break;
 
 		case Type::_bool: {
