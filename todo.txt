@@ -60,7 +60,7 @@ Overall To-Do List:
 		make metaprogram a real compilation step, get rid of PROF
 
 	data structures
-		list (same API as vector, but chunked & no-copy)
+		list (same API as vector, but chunked & no-copy) 
 		strings
 			string builder
 			could improve cache locality by doing gb-string style header then data (also can use as c_str automatically)
