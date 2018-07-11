@@ -280,7 +280,7 @@ void world::render_chunks() { PROF
 		}
 	}
 
-	rcl.view = p.camera.view_no_translate();
+	rcl.view = p.camera.view_pos_origin();
 	rcl.proj = proj(p.camera.fov, (f32)eng->window.settings.w / (f32)eng->window.settings.h, 0.01f, 2000.0f);
 
 	rcl.pop_settings();
@@ -298,8 +298,8 @@ void world::render_player() { PROF
 	{
 		mesh_lines lines; lines.init();
 
-		lines.push(cam.pos, cam.pos + cam.front, colorf(1,0,0,1), colorf(0,0,1,1));
 		lines.push(cam.pos + cam.front, cam.pos + cam.reach * cam.front, colorf(0,0,1,1), colorf(0,1,0,1));
+		lines.push(cam.pos, cam.pos + cam.front, colorf(1,0,0,1), colorf(0,0,1,1));
 
 		v3 intersection = raymarch(cam.pos, cam.front, cam.reach);
 

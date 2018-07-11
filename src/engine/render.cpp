@@ -1217,7 +1217,7 @@ m4 render_camera::view() {
 	} break;
 	}
 
-	return m4::zero;
+	return m4::I;
 }
 
 m4 render_camera::view_no_translate() {
@@ -1227,11 +1227,25 @@ m4 render_camera::view_no_translate() {
 		return lookAt({}, front, up);
 	} break;
 	case camera_mode::third: {
-		return lookAt({}, reach * front + (2.0f * front + offset3rd), up);
+		return lookAt({}, reach * front - offset3rd, up);
 	} break;
 	}
 
-	return m4::zero;
+	return m4::I;
+}
+
+m4 render_camera::view_pos_origin() {
+
+	switch(mode) {
+	case camera_mode::first: {
+		return lookAt({}, front, up);
+	} break;
+	case camera_mode::third: {
+		return lookAt(-2.0f * front + offset3rd, reach * front, up);
+	} break;
+	}
+
+	return m4::I;
 }
 
 void render_camera::reset() {

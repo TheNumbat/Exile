@@ -249,6 +249,7 @@ struct render_camera {
 	void move(i32 dx, i32 d, f32 sens);
 	
 	m4 view();
+	m4 view_pos_origin();
 	m4 view_no_translate();
 };
 
