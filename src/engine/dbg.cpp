@@ -27,9 +27,6 @@ void dbg_profiler::destroy() { PROF
 	global_api->destroy_mutex(&stats_map_mut);
 
 	FORMAP(it, alloc_stats) {
-		FORMAP(a, it->value->current_set) {
-			LOG_DEBUG_F("\t% bytes in % @ %:%", a->value.size, it->key.name(), a->value.last_loc.file(), a->value.last_loc.line);
-		}
 		it->value->destroy();
 		free(it->value, sizeof(alloc_profile));
 	}
@@ -66,6 +63,9 @@ dbg_console dbg_console::make(allocator* alloc) { PROF
 }
 
 void dbg_console::destroy() { PROF
+
+	// imgui pls
+	filter.Filters.~ImVector<ImGuiTextFilter::TextRange>();
 
 	FORQ_BEGIN(it, lines) {
 		it->msg.destroy(alloc);
@@ -129,10 +129,22 @@ void dbg_manager::destroy() { PROF
 	console.destroy();
 
 	profiler.collate_allocs();
+	profiler.print_remaining();
+}
 
-	alloc_profile totals = profiler.get_totals();
+void dbg_profiler::print_remaining() { PROF
+
+	alloc_profile totals = get_totals();
+	
 	LOG_INFO_F("% allocations remaining at debug shutdown", totals.num_allocs - totals.num_frees);
+	FORMAP(it, alloc_stats) {
+		FORMAP(a, it->value->current_set) {
+			LOG_DEBUG_F("\t% bytes in % @ %:%", a->value.size, it->key.name(), a->value.last_loc.file(), a->value.last_loc.line);
+		}
+	}
+}
 
+void dbg_manager::destroy_prof() { PROF
 	profiler.destroy();
 }
 
@@ -275,12 +287,13 @@ void dbg_console::add_console_msg(string line) { PROF
 void dbg_console::UI(platform_window* window) { PROF
 
 	/* TODO
-		Text Filter
+		Fix allocations bug again
+
+		Clear
 		Text coloring
 		Command History
 		ScrollToBottom
 		Copy to Clipboard
-		Clear
 		Actually running commands
 	*/
 
@@ -300,8 +313,10 @@ void dbg_console::UI(platform_window* window) { PROF
     global_api->aquire_mutex(&lines_mut);
 	FORQ_BEGIN(it, lines) {
 
-			string level = enum_to_string(it->lvl);
-			ImGui::TextUnformatted(string::makef("[%] %"_, level, it->msg));
+		string output = string::makef("[%] %"_, enum_to_string(it->lvl), it->msg);
+		
+		if(filter.PassFilter(output))
+			ImGui::TextUnformatted(output);
 	
 	} FORQ_END(it, lines);
 	global_api->release_mutex(&lines_mut);
@@ -309,6 +324,8 @@ void dbg_console::UI(platform_window* window) { PROF
 	ImGui::PopStyleVar();
 	ImGui::EndChild();
 	ImGui::Separator();
+
+	ImGui::Columns(3);
 
 	bool reclaim_focus = false;
 	if(ImGui::InputText("Input", input_buffer, 1024, ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CallbackCompletion | ImGuiInputTextFlags_CallbackHistory, &dbg_console_text_edit, this)) {
@@ -325,6 +342,20 @@ void dbg_console::UI(platform_window* window) { PROF
 	if (reclaim_focus)
 	    ImGui::SetKeyboardFocusHere(-1);
 
+	ImGui::NextColumn();
+
+	filter.Draw();
+
+	ImGui::NextColumn();
+
+	if(ImGui::Button("Clear")) {
+		FORQ_BEGIN(it, lines) {
+			it->msg.destroy(alloc);
+		} FORQ_END(it, lines);
+		lines.clear();
+	}
+
+	ImGui::Columns(1);
 	ImGui::End();
 }
 

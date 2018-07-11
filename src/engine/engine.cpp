@@ -142,6 +142,7 @@ EXPORT void shut_down(engine* state) {
 
 	state->log.stop();
 	state->log.destroy();
+	state->dbg.destroy_prof();
 
 	cleanup_fptrs();
 	end_thread();

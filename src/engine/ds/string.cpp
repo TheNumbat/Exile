@@ -971,7 +971,7 @@ u32 string::get_next_codepoint(u32* index) {
 
 string string::make_copy(string src, allocator* a) { PROF
 
-	string ret = string::make(src.cap, a);
+	string ret = string::make(src.len, a);
 
 	ret.len = src.len;
 
@@ -1108,7 +1108,7 @@ string string::make(u32 cap) { PROF
 
 string string::make_copy(string src) { PROF
 
-	string ret = string::make(src.cap);
+	string ret = string::make(src.len);
 
 	ret.len = src.len;
 

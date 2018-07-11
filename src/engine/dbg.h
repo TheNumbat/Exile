@@ -258,6 +258,7 @@ struct dbg_profiler {
 	void fixdown_self_timings(profile_node* node);
 	void process_frame_alloc_msg(frame_profile* frame, dbg_msg* msg);
 	void process_alloc_msg(dbg_msg* msg);
+	void print_remaining();
 };
 
 struct dbg_value_store {
@@ -277,8 +278,6 @@ struct dbg_value_store {
 	void recurse(map<string, dbg_value> store);
 };
 
-struct ImGuiTextEditCallbackData;
-
 struct console_msg {
 	log_level lvl = log_level::console;
 	string msg;
@@ -288,6 +287,7 @@ struct dbg_console {
 
 	char input_buffer[1024] = {};
 
+	ImGuiTextFilter filter;
 	queue<console_msg> lines;
 	platform_mutex lines_mut;
 
@@ -318,6 +318,7 @@ struct dbg_manager {
 
 	static dbg_manager make(allocator* alloc);
 	void destroy();
+	void destroy_prof();
 
 	void UI(platform_window* window);
 

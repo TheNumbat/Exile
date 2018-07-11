@@ -168,10 +168,7 @@ void log_manager::msgf(string fmt, log_level level, code_context context, Targs.
 	u32 arena_size = msg_len + this_thread_data.name.len + this_thread_data.call_stack_depth * sizeof(code_context);
 	
 	// NOTE(max): this is freed in another thread that doesn't participate in the debug system
-	arena_allocator arena;
-	PUSH_PROFILE(false) {
-		arena = MAKE_ARENA("msg"_, arena_size, alloc);
-	} POP_PROFILE();
+	arena_allocator arena = MAKE_ARENA("msg"_, arena_size, alloc);
 
 	PUSH_ALLOC(&arena) {
 
@@ -215,10 +212,7 @@ void log_manager::msg(string msg, log_level level, code_context context) { PROF_
 	u32 arena_size = msg.len + this_thread_data.name.len + this_thread_data.call_stack_depth * sizeof(code_context);
 	
 	// NOTE(max): this is freed in another thread that doesn't participate in the debug system
-	arena_allocator arena;
-	PUSH_PROFILE(false) {
-		arena = MAKE_ARENA("msg"_, arena_size, alloc);
-	} POP_PROFILE();
+	arena_allocator arena = MAKE_ARENA("msg"_, arena_size, alloc);
 
 	PUSH_ALLOC(&arena) {
 
@@ -339,7 +333,9 @@ i32 log_proc(void* data_) {
 	log_thread_param* data = (log_thread_param*)data_;	
 
 	begin_thread("log"_, data->alloc);
-	this_thread_data.profiling = false;
+	this_thread_data.profiling = true;
+	this_thread_data.timing_override = false;
+	global_dbg->profiler.register_thread(128);
 
 	while(data->running) {
 
@@ -349,6 +345,8 @@ i32 log_proc(void* data_) {
 		while(data->message_queue->try_pop(&msg)) {
 			do_msg(data, msg);
 		}
+
+		global_dbg->profiler.collate();
 	}
 
 	FORVEC(it, *data->out) {
