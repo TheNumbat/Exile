@@ -11,6 +11,7 @@ enum class log_level : u8 {
 	ogl,		// opengl notification info
 	debug,		// debug info
 	info,		// relevant info
+	console, 	// console commands
 	warn,		// probably shouldn't happen
 	error,		// really shouldn't happen
 	fatal,		// assert(false), hangs the thread and will exit the program after output

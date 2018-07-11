@@ -276,25 +276,28 @@ string log_message::fmt_level() { PROF
 	string str;
 	switch(level) {
 	case log_level::debug:
-		str = "DEBUG"_;
+		str = "DBG"_;
 		break;
 	case log_level::info:
-		str = "INFO"_;
+		str = "INF"_;
 		break;
 	case log_level::warn:
-		str = "WARN"_;
+		str = "WRN"_;
 		break;
 	case log_level::error:
-		str = "ERROR"_;
+		str = "ERR"_;
 		break;
 	case log_level::fatal:
-		str = "FATAL"_;
+		str = "FTL"_;
 		break;
 	case log_level::ogl:
 		str = "OGL"_;
 		break;
 	case log_level::alloc:
-		str = "ALLOC"_;
+		str = "ALC"_;
+		break;
+	case log_level::console:
+		str = "CON"_;
 		break;
 	}
 
@@ -312,7 +315,7 @@ string fmt_msg(log_message* msg, log_out_type type) { PROF
 
 	if(type == log_out_type::plaintext) {
 
-		output = string::makef("%-8 [%-36] [%-20] [%-5] %\n"_, time, cstack, file_line, clevel, msg->msg);
+		output = string::makef("%-8 [%-36] [%-20] [%] %\n"_, time, cstack, file_line, clevel, msg->msg);
 
 	} else if(type == log_out_type::html) {
 

@@ -1,5 +1,5 @@
 
-dbg_profiler dbg_profiler::make(allocator* alloc) {
+dbg_profiler dbg_profiler::make(allocator* alloc) { PROF
 
 	dbg_profiler ret;
 
@@ -15,7 +15,7 @@ dbg_profiler dbg_profiler::make(allocator* alloc) {
 	return ret;
 }
 
-void dbg_profiler::destroy() {
+void dbg_profiler::destroy() { PROF
 
 	PUSH_ALLOC(alloc);
 
@@ -39,7 +39,7 @@ void dbg_profiler::destroy() {
 	POP_ALLOC();
 }
 
-dbg_value_store dbg_value_store::make(allocator* alloc) {
+dbg_value_store dbg_value_store::make(allocator* alloc) { PROF
 
 	dbg_value_store ret;
 
@@ -49,27 +49,29 @@ dbg_value_store dbg_value_store::make(allocator* alloc) {
 	return ret;
 }
 
-void dbg_value_store::destroy() {
+void dbg_value_store::destroy() { PROF
 
 	value_store.destroy(alloc);
 }
 
-dbg_console dbg_console::make(allocator* alloc) {
+dbg_console dbg_console::make(allocator* alloc) { PROF
 
 	dbg_console ret;
 
 	ret.alloc = alloc;
-	ret.log_cache = locking_queue<log_message>::make(1024, alloc);
+	ret.lines = queue<console_msg>::make(1024, alloc);
+	global_api->create_mutex(&ret.lines_mut, false);
 
 	return ret;
 }
 
-void dbg_console::destroy() {
+void dbg_console::destroy() { PROF
 
-	FORQ_BEGIN(it, log_cache) {
-		DESTROY_ARENA(&it->arena);
-	} FORQ_END(it, log_cache);
-	log_cache.destroy();
+	FORQ_BEGIN(it, lines) {
+		it->msg.destroy(alloc);
+	} FORQ_END(it, lines);
+	lines.destroy();
+	global_api->destroy_mutex(&lines_mut);
 }
 
 dbg_manager dbg_manager::make(allocator* alloc) { PROF
@@ -252,21 +254,76 @@ void dbg_value_store::UI(platform_window* window) { PROF
 	ImGui::End();
 }
 
+i32 dbg_console_text_edit(ImGuiTextEditCallbackData* data) { PROF
+
+	dbg_console* console = (dbg_console*)data->UserData;
+	console->on_text_edit(data);
+	return 0;
+}
+
+void dbg_console::on_text_edit(ImGuiTextEditCallbackData* data) { PROF
+
+}
+
+void dbg_console::add_console_msg(string line) { PROF
+
+	console_msg msg;
+	msg.msg = string::make_copy(line, alloc);
+	lines.push(msg);
+}
+
 void dbg_console::UI(platform_window* window) { PROF
+
+	/* TODO
+		Text Filter
+		Text coloring
+		Command History
+		ScrollToBottom
+		Copy to Clipboard
+		Clear
+		Actually running commands
+	*/
+
+	ImGui::ShowDemoWindow();
 
 	i32 win_w, win_h;
 	global_api->get_window_drawable(window, &win_w, &win_h);
 
-	ImGui::SetNextWindowPos({0.0f, floor((f32)win_h * 0.75f)});
-	ImGui::SetNextWindowSize({(f32)win_w, ceil((f32)win_h * 0.25f)});
+	ImGui::SetNextWindowPos({0.0f, floor((f32)win_h * 0.6f)});
+	ImGui::SetNextWindowSize({(f32)win_w, ceil((f32)win_h * 0.4f)});
 	ImGui::Begin("Console"_, null, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings);
 
-	FORQ_BEGIN(it, log_cache) {
+	f32 footer = ImGui::GetStyle().ItemSpacing.y + ImGui::GetFrameHeightWithSpacing();
+    ImGui::BeginChild("ScrollingRegion", ImVec2(0, -footer), false, ImGuiWindowFlags_HorizontalScrollbar);
+    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(4,1));
 
-			string level = it->fmt_level();
-			ImGui::Text(string::makef("[%-5] %"_, level, it->msg));
+    global_api->aquire_mutex(&lines_mut);
+	FORQ_BEGIN(it, lines) {
+
+			string level = enum_to_string(it->lvl);
+			ImGui::TextUnformatted(string::makef("[%] %"_, level, it->msg));
 	
-	} FORQ_END(it, log_cache);
+	} FORQ_END(it, lines);
+	global_api->release_mutex(&lines_mut);
+
+	ImGui::PopStyleVar();
+	ImGui::EndChild();
+	ImGui::Separator();
+
+	bool reclaim_focus = false;
+	if(ImGui::InputText("Input", input_buffer, 1024, ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CallbackCompletion | ImGuiInputTextFlags_CallbackHistory, &dbg_console_text_edit, this)) {
+		
+		string input = string::from_c_str(input_buffer);
+		if (input.len) {
+		    add_console_msg(input);
+		}
+		_memset(input_buffer, 1024, 0);
+		reclaim_focus = true;
+	}
+
+	ImGui::SetItemDefaultFocus();
+	if (reclaim_focus)
+	    ImGui::SetKeyboardFocusHere(-1);
 
 	ImGui::End();
 }
@@ -867,18 +924,22 @@ CALLBACK void dbg_add_log(log_message* msg, void* param) { PROF
 
 	dbg_console* console = (dbg_console*)param;
 
-	if(console->log_cache.len() == console->log_cache.capacity) {
+	global_api->aquire_mutex(&console->lines_mut);
 
-		log_message* m = console->log_cache.front();
-		DESTROY_ARENA(&m->arena);
-		console->log_cache.pop();
+	if(console->lines.len() == console->lines.capacity) {
+
+		console_msg* m = console->lines.front();
+		m->msg.destroy(console->alloc);
+		console->lines.pop();
 	}
 
-	log_message* m = console->log_cache.push(*msg);
-	m->arena       = MAKE_ARENA("cmsg"_, msg->arena.size, console->alloc);
-	m->call_stack  = array<code_context>::make_copy(&msg->call_stack, &m->arena);
-	m->thread_name = string::make_copy(msg->thread_name, &m->arena);
-	m->msg         = string::make_copy(msg->msg, &m->arena);
+	console_msg m;
+	m.lvl = msg->level;
+	m.msg = string::make_copy(msg->msg, console->alloc);
+
+	console->lines.push(m);
+
+	global_api->release_mutex(&console->lines_mut);
 }
 
 dbg_value dbg_value::make_sec(allocator* alloc) { PROF

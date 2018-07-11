@@ -103,16 +103,16 @@ struct dbg_msg {
 	clock time = 0;
 	code_context context;
 	union {
-		dbg_msg_begin_frame   begin_frame;	// done
-		dbg_msg_end_frame 	  end_frame;	// done
-		dbg_msg_allocate      allocate;		// done
-		dbg_msg_reallocate    reallocate;	// done
-		dbg_msg_free          free;			// done
-		dbg_msg_enter_func    enter_func;	// done
-		dbg_msg_exit_func     exit_func;	// done
-		dbg_msg_mut_lock      mut_lock;
-		dbg_msg_mut_unlock    mut_unlock;
-		dbg_msg_sem_wait      sem_wait;
+		dbg_msg_begin_frame   begin_frame;
+		dbg_msg_end_frame 	  end_frame;
+		dbg_msg_allocate      allocate;
+		dbg_msg_reallocate    reallocate;
+		dbg_msg_free          free;
+		dbg_msg_enter_func    enter_func;
+		dbg_msg_exit_func     exit_func;
+		dbg_msg_mut_lock      mut_lock;		// TODO(max)
+		dbg_msg_mut_unlock    mut_unlock;	// TODO(max)
+		dbg_msg_sem_wait      sem_wait;		// TODO(max)
 	};
 	dbg_msg() {};
 };
@@ -124,7 +124,7 @@ struct profile_node {
 	u32 calls = 0;
 
 	vector<profile_node*> children;
-	CIRCULAR profile_node* parent = null; 
+	CIRCULAR profile_node* parent = null;
 };
 
 struct alloc_frame_profile {
@@ -206,15 +206,15 @@ struct dbg_value_sec {
 
 struct dbg_value_cal {
 	func_ptr<void, void*> callback;
-	void* callback_param;
+	void* callback_param = null;
 };
 
 struct dbg_value {
 	dbg_value_class type = dbg_value_class::section;
 	union {
+		any edit;
+		any view;
 		dbg_value_sec sec;
-		any 		  edit;
-		any 		  view;
 		dbg_value_cal cal;
 	};
 	dbg_value() {}
@@ -277,9 +277,20 @@ struct dbg_value_store {
 	void recurse(map<string, dbg_value> store);
 };
 
+struct ImGuiTextEditCallbackData;
+
+struct console_msg {
+	log_level lvl = log_level::console;
+	string msg;
+};
+
 struct dbg_console {
 
-	locking_queue<log_message> log_cache;
+	char input_buffer[1024] = {};
+
+	queue<console_msg> lines;
+	platform_mutex lines_mut;
+
 	log_level lvl = log_level::info; 
 
 	allocator* alloc = null;
@@ -288,6 +299,8 @@ struct dbg_console {
 	void destroy();
 
 	void UI(platform_window* window);
+	void on_text_edit(ImGuiTextEditCallbackData* data);
+	void add_console_msg(string msg);
 
 	void shutdown_log(log_manager* log);
 	void setup_log(log_manager* log);
