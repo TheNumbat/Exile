@@ -5,14 +5,9 @@
 #define stat _stat
 #endif
 
-/* Included in platform_api.h */
-
 u32 PLATFORM_SHARING_ERROR = UINT32_MAX;
 
-struct platform_window {
-	platform_window_settings settings;
-
-	// Opaque block, do not use outside of platform code
+struct platform_window_internal {
 	bool focused = false;
 	SDL_Window* window = null;
 	SDL_GLContext gl_context = {};

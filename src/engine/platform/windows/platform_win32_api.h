@@ -7,14 +7,9 @@
 #error __cpuid
 #endif
 
-// API Structures (mark opaque/transparent)
-
 u32 PLATFORM_SHARING_ERROR = 32;
 
-struct platform_window {
-	platform_window_settings settings;
-
-	// Opaque block, do not use outside of platform code
+struct platform_window_internal {
 	WNDCLASSEXA window_class			= {};
 	HWND handle							= {};
 	HDC device_context					= {};

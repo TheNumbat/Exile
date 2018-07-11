@@ -112,29 +112,29 @@ bool win32_apply_window_settings(platform_window* window) {
 
 	if(!streql(string_from_c_str(window->settings.c_title),string_from_c_str(prev_settings.c_title))) {
 
-		SetWindowTextA(window->handle, window->settings.c_title);
+		SetWindowTextA(window->internal.handle, window->settings.c_title);
 	}
 
 	if(window->settings.w != prev_settings.w || window->settings.h != prev_settings.h) {
 
-		SetWindowPos(window->handle, null, 0, 0, window->settings.w, window->settings.h, SWP_NOZORDER | SWP_NOMOVE);
+		SetWindowPos(window->internal.handle, null, 0, 0, window->settings.w, window->settings.h, SWP_NOZORDER | SWP_NOMOVE);
 	}
 
 	if(window->settings.mode != prev_settings.mode) {
 
-		DWORD style = GetWindowLongA(window->handle, GWL_STYLE);
+		DWORD style = GetWindowLongA(window->internal.handle, GWL_STYLE);
 
 		if(window->settings.mode == platform_window_mode::fullscreen) {		
 			
 			MONITORINFO mi = {sizeof(mi)};
-			if (GetWindowPlacement(window->handle, &prev_window_placement) &&
-				GetMonitorInfoA(MonitorFromWindow(window->handle, MONITOR_DEFAULTTOPRIMARY), &mi)) {
+			if (GetWindowPlacement(window->internal.handle, &prev_window_placement) &&
+				GetMonitorInfoA(MonitorFromWindow(window->internal.handle, MONITOR_DEFAULTTOPRIMARY), &mi)) {
 
 				i32 w = mi.rcMonitor.right - mi.rcMonitor.left;
         		i32 h = mi.rcMonitor.bottom - mi.rcMonitor.top;
 
-				SetWindowLongA(window->handle, GWL_STYLE, style & ~WS_OVERLAPPEDWINDOW);
-				SetWindowPos(window->handle, HWND_TOP, mi.rcMonitor.left, mi.rcMonitor.top, w, h, SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
+				SetWindowLongA(window->internal.handle, GWL_STYLE, style & ~WS_OVERLAPPEDWINDOW);
+				SetWindowPos(window->internal.handle, HWND_TOP, mi.rcMonitor.left, mi.rcMonitor.top, w, h, SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
 
 				window->settings.w = w;
 				window->settings.h = h;
@@ -142,9 +142,9 @@ bool win32_apply_window_settings(platform_window* window) {
 
 		} else {
 			
-			SetWindowLongA(window->handle, GWL_STYLE, style | WS_OVERLAPPEDWINDOW);
-			SetWindowPlacement(window->handle, &prev_window_placement);
-			SetWindowPos(window->handle, NULL, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
+			SetWindowLongA(window->internal.handle, GWL_STYLE, style | WS_OVERLAPPEDWINDOW);
+			SetWindowPlacement(window->internal.handle, &prev_window_placement);
+			SetWindowPos(window->internal.handle, NULL, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
 
 			window->settings.w = prev_window_placement.rcNormalPosition.right - prev_window_placement.rcNormalPosition.left;
 			window->settings.h = prev_window_placement.rcNormalPosition.bottom - prev_window_placement.rcNormalPosition.top;
@@ -250,7 +250,7 @@ bool win32_mousedown(platform_mouseflag button) {
 	return false;
 }
 
-platform_error win32_get_cursor_pos(platform_window* win, i32* x, i32* y) {
+platform_error win32_get_cursor_pos(platform_window* window, i32* x, i32* y) {
 
 	platform_error ret;
 
@@ -261,7 +261,7 @@ platform_error win32_get_cursor_pos(platform_window* win, i32* x, i32* y) {
 		ret.error = GetLastError();
 	}
 
-	if(!ScreenToClient(win->handle, &p)) {
+	if(!ScreenToClient(window->internal.handle, &p)) {
 		ret.good = false;
 		ret.error = GetLastError();
 	}
@@ -289,17 +289,17 @@ u64 win32_atomic_exchange(u64* dest, u64 val) {
 	return _InterlockedExchange64((LONGLONG volatile*)dest, val);
 }
 
-bool win32_window_focused(platform_window* win) {
+bool win32_window_focused(platform_window* window) {
 
-	return win->handle == GetFocus();
+	return window->internal.handle == GetFocus();
 }
 
-platform_error win32_set_cursor_pos(platform_window* win, i32 x, i32 y) {
+platform_error win32_set_cursor_pos(platform_window* window, i32 x, i32 y) {
 
 	platform_error ret;
 
 	POINT p = {x,y};
-	if(!ClientToScreen(win->handle, &p)) {
+	if(!ClientToScreen(window->internal.handle, &p)) {
 		ret.good = false;
 		ret.error = GetLastError();
 	}
@@ -317,17 +317,17 @@ void win32_show_cursor(bool show) {
 	ShowCursor(show);
 }
 
-void win32_capture_mouse(platform_window* win) {
+void win32_capture_mouse(platform_window* window) {
 
 	GetCursorPos(&saved_mouse_pos);
 	ShowCursor(FALSE);
-	SetCapture(win->handle);
+	SetCapture(window->internal.handle);
 
-	RAWINPUTDEVICE raw_mouse = {0x01, 0x02, RIDEV_NOLEGACY | RIDEV_CAPTUREMOUSE, win->handle};
+	RAWINPUTDEVICE raw_mouse = {0x01, 0x02, RIDEV_NOLEGACY | RIDEV_CAPTUREMOUSE, window->internal.handle};
 	RegisterRawInputDevices(&raw_mouse, 1, sizeof(RAWINPUTDEVICE));
 }
 
-void win32_release_mouse(platform_window* win) {
+void win32_release_mouse(platform_window* window) {
 
 	ReleaseCapture();
 	ShowCursor(TRUE);
@@ -418,7 +418,7 @@ platform_error win32_get_window_drawable(platform_window* window, i32* w, i32* h
 
 	RECT rect;
 
-	if(GetClientRect(window->handle, &rect) == 0) {
+	if(GetClientRect(window->internal.handle, &rect) == 0) {
 		ret.good = false;
 		ret.error = GetLastError();
 		return ret;	
@@ -436,7 +436,7 @@ platform_error win32_get_window_size(platform_window* window, i32* w, i32* h) {
 
 	RECT rect;
 
-	if(GetWindowRect(window->handle, &rect) == 0) {
+	if(GetWindowRect(window->internal.handle, &rect) == 0) {
 		ret.good = false;
 		ret.error = GetLastError();
 		return ret;	
@@ -869,7 +869,7 @@ platform_error win32_swap_buffers(platform_window* window) {
 
 	platform_error ret;
 
-	if(SwapBuffers(window->device_context) == FALSE) {
+	if(SwapBuffers(window->internal.device_context) == FALSE) {
 		ret.good = false;
 		ret.error = GetLastError();
 		return ret;		
@@ -890,7 +890,7 @@ void win32_pump_events(platform_window* window) {
 	
 	MSG msg;
 
-	while(PeekMessageA(&msg, window->handle, 0, 0, PM_REMOVE) != 0) {
+	while(PeekMessageA(&msg, window->internal.handle, 0, 0, PM_REMOVE) != 0) {
 		TranslateMessage(&msg);
 		DispatchMessageA(&msg);
 	}
@@ -1625,7 +1625,7 @@ platform_error win32_create_window(platform_window* window) {
 		return setup;
 	}
 
-	window->window_class = {
+	window->internal.window_class = {
 		sizeof(WNDCLASSEXA),
 		CS_HREDRAW | CS_VREDRAW | CS_OWNDC | CS_DBLCLKS,
 		window_proc,
@@ -1635,7 +1635,7 @@ platform_error win32_create_window(platform_window* window) {
 		window->settings.c_title, 0
 	};
 
-	if(RegisterClassExA(&window->window_class) == 0) {
+	if(RegisterClassExA(&window->internal.window_class) == 0) {
 		ret.good = false;
 		ret.error = GetLastError();
 		return ret;
@@ -1643,13 +1643,13 @@ platform_error win32_create_window(platform_window* window) {
 
 	if(window->settings.mode == platform_window_mode::windowed) {
 
-		window->handle = CreateWindowExA(WS_EX_ACCEPTFILES, window->settings.c_title, window->settings.c_title, WS_OVERLAPPEDWINDOW,
+		window->internal.handle = CreateWindowExA(WS_EX_ACCEPTFILES, window->settings.c_title, window->settings.c_title, WS_OVERLAPPEDWINDOW,
 									 	 CW_USEDEFAULT, CW_USEDEFAULT, window->settings.w, window->settings.h, 0, 0, instance, 0);
 
 	} else if(window->settings.mode == platform_window_mode::fullscreen) {
 
 		MONITORINFO mi = {sizeof(mi)};
-		if(GetMonitorInfoA(MonitorFromWindow(window->handle, MONITOR_DEFAULTTOPRIMARY), &mi) == 0) {
+		if(GetMonitorInfoA(MonitorFromWindow(window->internal.handle, MONITOR_DEFAULTTOPRIMARY), &mi) == 0) {
 			ret.good = false;
 			ret.error = GetLastError();
 			return ret;
@@ -1657,23 +1657,23 @@ platform_error win32_create_window(platform_window* window) {
 
         i32 w = mi.rcMonitor.right - mi.rcMonitor.left;
         i32 h = mi.rcMonitor.bottom - mi.rcMonitor.top;
-		window->handle = CreateWindowExA(WS_EX_ACCEPTFILES, window->settings.c_title, window->settings.c_title, WS_POPUP,
+		window->internal.handle = CreateWindowExA(WS_EX_ACCEPTFILES, window->settings.c_title, window->settings.c_title, WS_POPUP,
 									 	 mi.rcMonitor.left, mi.rcMonitor.top, w, h, 0, 0, instance, 0);
 		window->settings.w = w;
 		window->settings.h = h;
 	}
 
-	if(window->handle == null) {
+	if(window->internal.handle == null) {
 		ret.good = false;
 		ret.error = GetLastError();
 		return ret;
 	}
 
-	GetWindowPlacement(window->handle, &prev_window_placement);
+	GetWindowPlacement(window->internal.handle, &prev_window_placement);
 
-	window->device_context = GetDC(window->handle);
+	window->internal.device_context = GetDC(window->internal.handle);
 
-	if(window->device_context == null) {
+	if(window->internal.device_context == null) {
 		ret.good = false;
 		ret.error = GetLastError();
 		return ret;
@@ -1697,14 +1697,14 @@ platform_error win32_create_window(platform_window* window) {
 
 	u32 match = 0;
 	i32 pixel_index = 0;
-	BOOL result = wglChoosePixelFormatARB(window->device_context, pfdi_attribs, pfdf_attribs, 1, &pixel_index, &match);
+	BOOL result = wglChoosePixelFormatARB(window->internal.device_context, pfdi_attribs, pfdf_attribs, 1, &pixel_index, &match);
 	if(!result || !match)	 {
 		ret.good = false;
 		ret.error = GetLastError();
 		return ret;
 	}
 
-	if(SetPixelFormat(window->device_context, pixel_index, null) == 0) {
+	if(SetPixelFormat(window->internal.device_context, pixel_index, null) == 0) {
 		ret.good = false;
 		ret.error = GetLastError();
 		return ret;		
@@ -1719,7 +1719,7 @@ platform_error win32_create_window(platform_window* window) {
 	};
 
 #define TRY_VERSION(MAJOR, MINOR) context_attribs[1] = MAJOR; context_attribs[3] = MINOR; \
-								  if(window->gl_context == null) window->gl_context = wglCreateContextAttribsARB(window->device_context, 0, context_attribs);
+								  if(window->internal.gl_context == null) window->internal.gl_context = wglCreateContextAttribsARB(window->internal.device_context, 0, context_attribs);
 
 	TRY_VERSION(4, 6);
 	TRY_VERSION(4, 5);
@@ -1737,13 +1737,13 @@ platform_error win32_create_window(platform_window* window) {
 
 #undef TRY_VERSION
 
-	if(window->gl_context == null) {
+	if(window->internal.gl_context == null) {
 		ret.good = false;
 		ret.error = GetLastError();
 		return ret;	
 	}
 
-	if(wglMakeCurrent(window->device_context, window->gl_context) == 0) {
+	if(wglMakeCurrent(window->internal.device_context, window->internal.gl_context) == 0) {
 		ret.good = false;
 		ret.error = GetLastError();
 		return ret;	
@@ -1751,7 +1751,7 @@ platform_error win32_create_window(platform_window* window) {
 
 	wglSwapIntervalEXT(window->settings.vsync ? 1 : 0);
 
-	ShowWindowAsync(window->handle, SW_SHOW);
+	ShowWindowAsync(window->internal.handle, SW_SHOW);
 
 	return ret;
 }
@@ -1760,23 +1760,23 @@ platform_error win32_destroy_window(platform_window* window) {
 
 	platform_error ret;
 
-	if(wglDeleteContext(window->gl_context) == 0) {
+	if(wglDeleteContext(window->internal.gl_context) == 0) {
 		ret.good = false;
 		ret.error = GetLastError();
 		return ret;	
 	}
-	window->gl_context = null;
-	if(ReleaseDC(window->handle, window->device_context) == 0) {
+	window->internal.gl_context = null;
+	if(ReleaseDC(window->internal.handle, window->internal.device_context) == 0) {
 		ret.good = false;
 		ret.error = GetLastError();
 	}
-	window->device_context = null;
-	if(DestroyWindow(window->handle) == 0) {
+	window->internal.device_context = null;
+	if(DestroyWindow(window->internal.handle) == 0) {
 		ret.good = false;
 		ret.error = GetLastError();
 		return ret;	
 	}
-	window->handle = null;
+	window->internal.handle = null;
 	if(UnregisterClassA(window->settings.c_title, null) == 0) {
 		ret.good = false;
 		ret.error = GetLastError();

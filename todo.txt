@@ -23,7 +23,7 @@ Working To-Do:
 	some good deps: iconFontHeaders, nativeFileDialog from dbartolini
 
 Bugs:
-	allocation profiling is somewhat broken for the world system
+	allocation profiling is somewhat broken for asynchronous allocations: world & log
 	
 	SDL layer resets the cursor to pointer on every mouse move
 

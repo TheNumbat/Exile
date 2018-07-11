@@ -170,18 +170,18 @@ bool sdl_apply_window_settings(platform_window* window) {
 
 	if(!streql(string_from_c_str(window->settings.c_title),string_from_c_str(prev_settings.c_title))) {
 	
-		SDL_SetWindowTitle(window->window, window->settings.c_title);
+		SDL_SetWindowTitle(window->internal.window, window->settings.c_title);
 	}
 
 	if(window->settings.w != prev_settings.w || window->settings.h != prev_settings.h) {
 
-		SDL_SetWindowSize(window->window, window->settings.w, window->settings.h);
+		SDL_SetWindowSize(window->internal.window, window->settings.w, window->settings.h);
 	}
 
 	if(window->settings.mode != prev_settings.mode) {
 
-		SDL_SetWindowFullscreen(window->window, window->settings.mode == platform_window_mode::fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
-		SDL_GetWindowSize(window->window, &window->settings.w, &window->settings.h);
+		SDL_SetWindowFullscreen(window->internal.window, window->settings.mode == platform_window_mode::fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
+		SDL_GetWindowSize(window->internal.window, &window->settings.w, &window->settings.h);
 	}
 
 	if(window->settings.vsync != prev_settings.vsync) {
@@ -203,7 +203,7 @@ platform_error sdl_get_window_drawable(platform_window* window, i32* w, i32* h) 
 
 	platform_error ret;
 
-	SDL_GL_GetDrawableSize(window->window, w, h);
+	SDL_GL_GetDrawableSize(window->internal.window, w, h);
 
 	return ret;
 }
@@ -284,28 +284,28 @@ u64 sdl_atomic_exchange(u64* dest, u64 val) {
 	return (u64)SDL_AtomicSetPtr((void**)dest, (void*)val);
 }
 
-bool sdl_window_focused(platform_window* win) {
+bool sdl_window_focused(platform_window* window) {
 
-	return win->focused;
+	return window->internal.focused;
 }
 
-platform_error sdl_set_cursor_pos(platform_window* win, i32 x, i32 y) {
+platform_error sdl_set_cursor_pos(platform_window* window, i32 x, i32 y) {
 
 	platform_error ret;
-	SDL_WarpMouseInWindow(win->window, x, y);
+	SDL_WarpMouseInWindow(window->internal.window, x, y);
 	return ret;	
 }
 
-void sdl_capture_mouse(platform_window* win) {
+void sdl_capture_mouse(platform_window* window) {
 
 	SDL_GetMouseState(&saved_mouse_x, &saved_mouse_y);
 	SDL_SetRelativeMouseMode(SDL_TRUE);
 }
 
-void sdl_release_mouse(platform_window* win) {
+void sdl_release_mouse(platform_window* window) {
 
 	SDL_SetRelativeMouseMode(SDL_FALSE);
-	SDL_WarpMouseInWindow(win->window, saved_mouse_x, saved_mouse_y);
+	SDL_WarpMouseInWindow(window->internal.window, saved_mouse_x, saved_mouse_y);
 }
 
 u64 sdl_get_perfcount() {
@@ -386,16 +386,16 @@ platform_error sdl_create_window(platform_window* window) {
 		SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, window->settings.samples);
 	}
 
-	window->window = SDL_CreateWindow(window->settings.c_title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, window->settings.w, window->settings.h, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_SHOWN);
+	window->internal.window = SDL_CreateWindow(window->settings.c_title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, window->settings.w, window->settings.h, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_SHOWN);
 	
-	if(!window->window) {
+	if(!window->internal.window) {
 		ret.good = false;
 		ret.error_message = str(SDL_GetError());
 	}
 
 #define TRY_VERSION(MAJOR, MINOR) SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, MAJOR); \
 								  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, MINOR); \
-								  if(window->gl_context == null) window->gl_context = SDL_GL_CreateContext(window->window);
+								  if(window->internal.gl_context == null) window->internal.gl_context = SDL_GL_CreateContext(window->internal.window);
 
 	TRY_VERSION(4, 6);
 	TRY_VERSION(4, 5);
@@ -413,7 +413,7 @@ platform_error sdl_create_window(platform_window* window) {
 
 #undef TRY_VERSION
 
-	if(window->gl_context == null) {
+	if(window->internal.gl_context == null) {
 		ret.good = false;
 		ret.error_message = str(SDL_GetError());
 	}
@@ -429,12 +429,12 @@ platform_error sdl_destroy_window(platform_window* window) {
 
 	platform_error ret;
 
-	SDL_GL_DeleteContext(window->gl_context);
-	SDL_DestroyWindow(window->window);
+	SDL_GL_DeleteContext(window->internal.gl_context);
+	SDL_DestroyWindow(window->internal.window);
 	SDL_Quit();
 
-	window->gl_context = null;
-	window->window = null;
+	window->internal.gl_context = null;
+	window->internal.window = null;
 
 	return ret;
 }
@@ -442,7 +442,7 @@ platform_error sdl_destroy_window(platform_window* window) {
 platform_error sdl_get_window_size(platform_window* window, i32* w, i32* h) {
 
 	platform_error ret;
-	SDL_GetWindowSize(window->window, w, h);
+	SDL_GetWindowSize(window->internal.window, w, h);
 	return ret;
 }
 
@@ -450,7 +450,7 @@ platform_error sdl_swap_buffers(platform_window* window) {
 
 	platform_error ret;
 
-	SDL_GL_SwapWindow(window->window);
+	SDL_GL_SwapWindow(window->internal.window);
 
 	return ret;
 }
@@ -744,11 +744,11 @@ void sdl_pump_events(platform_window* window) {
 			} break;
 			case SDL_WINDOWEVENT_FOCUS_GAINED: {
 				out.window.op = platform_windowop::focused;
-				window->focused = true;
+				window->internal.focused = true;
 			} break;
 			case SDL_WINDOWEVENT_FOCUS_LOST: {
 				out.window.op = platform_windowop::unfocused;
-				window->focused = false;
+				window->internal.focused = false;
 			} break;
 			case SDL_WINDOWEVENT_CLOSE: {
 				out.window.op = platform_windowop::close;

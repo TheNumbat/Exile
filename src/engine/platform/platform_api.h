@@ -14,10 +14,8 @@
 #error unsupported compiler?
 #endif
 
-// this file is for both the platform layer and the game - this defines the interface for the game
-
-// Defined 
-struct platform_window;
+// Defined per platform
+struct platform_window_internal;
 struct platform_dll;
 struct platform_file_attributes;
 struct platform_thread;
@@ -25,6 +23,16 @@ struct platform_semaphore;
 struct platform_mutex;
 struct platform_file;
 typedef u32 platform_thread_id;
+extern u32 PLATFORM_SHARING_ERROR;
+bool operator==(platform_file first, platform_file second);
+
+#ifdef PLATFORM_SDL
+#include "sdl/platform_sdl_api.h"
+#elif defined(_WIN32)
+#include "windows/platform_win32_api.h"
+#else
+#error Unsupported Platform
+#endif
 
 enum platform_window_mode : u8 {
 	windowed,
@@ -32,8 +40,6 @@ enum platform_window_mode : u8 {
 };
 
 #define WINDOW_TITLE_LEN 128
-
-// part of platform_window
 struct platform_window_settings {
 
 	char c_title[WINDOW_TITLE_LEN] = {};
@@ -42,6 +48,11 @@ struct platform_window_settings {
 	i32 w = 1280, h = 720;
 	i32 samples = 4;
 	bool vsync = false;
+};
+
+struct platform_window {
+	platform_window_settings settings;
+	platform_window_internal internal;
 };
 
 struct platform_error {
@@ -78,10 +89,6 @@ struct platform_thread_join_state {
 	_platform_thread_join_state state;
 	platform_error error;
 };
-
-extern u32 PLATFORM_SHARING_ERROR;
-
-bool operator==(platform_file first, platform_file second);
 
 // TODO(max): Is this really the best way to handle input? We're basically just translating the OS event system.
 //			  Instead, we could do it the HMH way of representing all input since last poll as one structure.
@@ -395,11 +402,3 @@ void platform_test_api();
 void platform_shutdown();
 
 #include "gl.h"
-
-#ifdef PLATFORM_SDL
-#include "sdl/platform_sdl_api.h"
-#elif defined(_WIN32)
-#include "windows/platform_win32_api.h"
-#else
-#error Unsupported Platform
-#endif
