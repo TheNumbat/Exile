@@ -56,7 +56,7 @@ dbg_console dbg_console::make(allocator* alloc) { PROF
 	dbg_console ret;
 
 	ret.alloc = alloc;
-	ret.lines = queue<console_msg>::make(1024, alloc);
+	ret.lines = queue<console_msg>::make(4096, alloc);
 	global_api->create_mutex(&ret.lines_mut, false);
 
 	return ret;
@@ -287,36 +287,47 @@ void dbg_console::add_console_msg(string line) { PROF
 void dbg_console::UI(platform_window* window) { PROF
 
 	/* TODO
-		Fix allocations bug again
-
-		Clear
-		Text coloring
 		Command History
 		ScrollToBottom
 		Copy to Clipboard
 		Actually running commands
 	*/
 
-	ImGui::ShowDemoWindow();
-
+	f32 w, h;
 	i32 win_w, win_h;
 	global_api->get_window_drawable(window, &win_w, &win_h);
+	w = (f32)win_w; h = (f32)win_h;
 
-	ImGui::SetNextWindowPos({0.0f, floor((f32)win_h * 0.6f)});
-	ImGui::SetNextWindowSize({(f32)win_w, ceil((f32)win_h * 0.4f)});
+	ImGui::SetNextWindowPos({0.0f, floor(h * 0.6f)});
+	ImGui::SetNextWindowSize({w, ceil(h * 0.4f)});
 	ImGui::Begin("Console"_, null, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings);
 
 	f32 footer = ImGui::GetStyle().ItemSpacing.y + ImGui::GetFrameHeightWithSpacing();
-    ImGui::BeginChild("ScrollingRegion", ImVec2(0, -footer), false, ImGuiWindowFlags_HorizontalScrollbar);
+    ImGui::BeginChild("Scroll", ImVec2(0, -footer), false, ImGuiWindowFlags_HorizontalScrollbar);
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(4,1));
 
     global_api->aquire_mutex(&lines_mut);
 	FORQ_BEGIN(it, lines) {
 
-		string output = string::makef("[%] %"_, enum_to_string(it->lvl), it->msg);
+		if((u8)it->lvl >= (u8)base_level) {
+
+			string output = string::makef("[%] %"_, enum_to_string(it->lvl), it->msg);
 		
-		if(filter.PassFilter(output))
-			ImGui::TextUnformatted(output);
+			if(filter.PassFilter(output)) {
+
+				ImVec4 col = ImGui::GetStyleColorVec4(ImGuiCol_Text);
+				switch(it->lvl) {
+				case log_level::debug: col = col * 0.7f; break;
+				case log_level::console: col = ImColor(1.0f,0.78f,0.58f,1.0f); break;
+				case log_level::warn: col = ImColor(1.0f,0.4f,0.4f,1.0f); break;
+				case log_level::error: col = ImColor(1.0f,0.0f,0.0f,1.0f); break;
+				}
+
+				ImGui::PushStyleColor(ImGuiCol_Text, col);
+				ImGui::TextUnformatted(output);
+				ImGui::PopStyleColor();
+			}
+		}
 	
 	} FORQ_END(it, lines);
 	global_api->release_mutex(&lines_mut);
@@ -325,7 +336,12 @@ void dbg_console::UI(platform_window* window) { PROF
 	ImGui::EndChild();
 	ImGui::Separator();
 
-	ImGui::Columns(3);
+	ImGui::Columns(4);
+
+	ImGui::SetColumnWidth(0, w * 0.44f);
+	ImGui::SetColumnWidth(1, w * 0.27f);
+	ImGui::SetColumnWidth(2, w * 0.17f);
+	ImGui::SetColumnWidth(3, w * 0.12f);
 
 	bool reclaim_focus = false;
 	if(ImGui::InputText("Input", input_buffer, 1024, ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CallbackCompletion | ImGuiInputTextFlags_CallbackHistory, &dbg_console_text_edit, this)) {
@@ -344,7 +360,11 @@ void dbg_console::UI(platform_window* window) { PROF
 
 	ImGui::NextColumn();
 
-	filter.Draw();
+	filter.Draw("(inc,-exc)", 180);
+
+	ImGui::NextColumn();
+
+	ImGui::EnumCombo("Level"_, &base_level);
 
 	ImGui::NextColumn();
 
@@ -353,6 +373,10 @@ void dbg_console::UI(platform_window* window) { PROF
 			it->msg.destroy(alloc);
 		} FORQ_END(it, lines);
 		lines.clear();
+	}
+	ImGui::SameLine();
+	if(ImGui::Button("Bottom")) {
+
 	}
 
 	ImGui::Columns(1);
@@ -479,7 +503,7 @@ void dbg_profiler::UI(platform_window* window) { PROF
 
 void dbg_console::shutdown_log(log_manager* log) { PROF
 	log_out dbg_log;
-	dbg_log.level = log_level::info;
+	dbg_log.level = log_level::debug;
 	dbg_log.type = log_out_type::custom;
 	dbg_log.write.set(FPTR(dbg_add_log));
 	dbg_log.param = this;
@@ -488,7 +512,7 @@ void dbg_console::shutdown_log(log_manager* log) { PROF
 
 void dbg_console::setup_log(log_manager* log) { PROF
 	log_out dbg_log;
-	dbg_log.level = log_level::info;
+	dbg_log.level = log_level::debug;
 	dbg_log.type = log_out_type::custom;
 	dbg_log.write.set(FPTR(dbg_add_log));
 	dbg_log.param = this;

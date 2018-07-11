@@ -288,6 +288,8 @@ struct dbg_console {
 	char input_buffer[1024] = {};
 
 	ImGuiTextFilter filter;
+	log_level base_level = log_level::debug;
+
 	queue<console_msg> lines;
 	platform_mutex lines_mut;
 

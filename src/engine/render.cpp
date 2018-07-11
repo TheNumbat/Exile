@@ -937,7 +937,7 @@ void debug_proc(gl_debug_source glsource, gl_debug_type gltype, GLuint id, gl_de
 		LOG_WARN_F("LOW OpenGL: % SOURCE: % TYPE: %", message, source, type);
 		break;
 	case gl_debug_severity::notification:
-		LOG_OGL_F("NOTF OpenGL: % SOURCE: % TYPE: %", message, source, type);
+		// LOG_OGL_F("NOTF OpenGL: % SOURCE: % TYPE: %", message, source, type);
 		break;
 	}
 }
