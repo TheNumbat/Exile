@@ -50,15 +50,15 @@ void world::init(asset_store* store, allocator* a) { PROF
 	thread_pool.start_all();
 
 	{
-		eng->dbg.add_var("world/settings"_, &settings);
-		eng->dbg.add_val("world/time"_, &time);
-		eng->dbg.add_ele("world/ui"_, FPTR(world_debug_ui), this);
+		eng->dbg.store.add_var("world/settings"_, &settings);
+		eng->dbg.store.add_val("world/time"_, &time);
+		eng->dbg.store.add_ele("world/ui"_, FPTR(world_debug_ui), this);
 
-		eng->dbg.add_var("player/cam"_, &p.camera);
-		eng->dbg.add_var("player/speed"_, &p.speed);
-		eng->dbg.add_var("player/enable"_, &p.enable);
-		eng->dbg.add_var("player/noclip"_, &p.noclip);
-		eng->dbg.add_ele("player/inter"_, FPTR(player_debug_ui), this);
+		eng->dbg.store.add_var("player/cam"_, &p.camera);
+		eng->dbg.store.add_var("player/speed"_, &p.speed);
+		eng->dbg.store.add_var("player/enable"_, &p.enable);
+		eng->dbg.store.add_var("player/noclip"_, &p.noclip);
+		eng->dbg.store.add_ele("player/inter"_, FPTR(player_debug_ui), this);
 	}
 
 	last_update = global_api->get_perfcount();

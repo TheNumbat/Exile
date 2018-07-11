@@ -18,13 +18,13 @@ EXPORT engine* start_up(platform_api* api) {
 
 	state->dbg_a = MAKE_PLATFORM_ALLOCATOR("dbg");
 	state->dbg = dbg_manager::make(&state->dbg_a);
-	state->dbg.register_thread(180);
+	state->dbg.profiler.register_thread(180);
 
 	BEGIN_FRAME();
 
 	state->log_a = MAKE_PLATFORM_ALLOCATOR("log");
 	state->log = log_manager::make(&state->log_a);
-	state->dbg.setup_log(&state->log);
+	state->dbg.console.setup_log(&state->log);
 
 	platform_file log_all_file;
 	CHECKED(create_file, &log_all_file, "log_all.html"_, platform_file_open_op::cleared);
@@ -45,8 +45,8 @@ EXPORT engine* start_up(platform_api* api) {
 	LOG_INFO("Creating window...");
 	_memcpy("Exile", state->window.settings.c_title, 6);
 	CHECKED(create_window, &state->window);
-	state->dbg.add_var("window/settings"_, &state->window.settings);
-	state->dbg.add_ele("window/apply"_, FPTR(dbg_reup_window), state);
+	state->dbg.store.add_var("window/settings"_, &state->window.settings);
+	state->dbg.store.add_ele("window/apply"_, FPTR(dbg_reup_window), state);
 
 	LOG_INFO("Setting up OpenGL...");
 	state->ogl_a = MAKE_PLATFORM_ALLOCATOR("ogl");
@@ -135,7 +135,7 @@ EXPORT void shut_down(engine* state) {
 	state->evt.destroy();
 
 	LOG_DEBUG("Destroying debug system");
-	state->dbg.shutdown_log(&state->log);	
+	state->dbg.console.shutdown_log(&state->log);	
 	state->dbg.destroy();
 
 	LOG_DEBUG("Done with shutdown!");

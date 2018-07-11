@@ -33,7 +33,7 @@
 	msg.type = dbg_msg_type::end_frame; \
 	msg.end_frame.perf = global_api->get_perfcount(); \
 	POST_MSG(msg); \
-	global_dbg->collate(); \
+	global_dbg->profiler.collate(); \
 }
 
 typedef u64 clock;
@@ -225,17 +225,13 @@ struct dbg_value {
 	void destroy(allocator* alloc);
 };
 
-struct dbg_manager {
+struct dbg_profiler {
 
 	bool frame_pause = true;
-	bool show_ui = false, show_profile = false, show_vars = false, show_console = true;
+	prof_sort_type prof_sort = prof_sort_type::heir;
 
 	platform_thread_id selected_thread;
 	f32 last_frame_time = 0.0f;
-
-	prof_sort_type prof_sort = prof_sort_type::heir;
-
-	allocator* alloc = null;
 
 	platform_mutex stats_map_mut;
 	map<platform_thread_id, thread_profile*> thread_stats;
@@ -243,44 +239,74 @@ struct dbg_manager {
 	platform_mutex alloc_map_mut;
 	map<allocator, alloc_profile*> alloc_stats;
 
-	locking_queue<log_message> log_cache;
-	log_level lvl = log_level::info; 
+	allocator* alloc = null;
 
-	dbg_value value_store;
-
-	arena_allocator scratch;
-
-///////////////////////////////////////////////////////////////////////////////
-
-	static dbg_manager make(allocator* alloc);
+	static dbg_profiler make(allocator* alloc);
 	void destroy();
 
-	void profile_recurse(vector<profile_node*> list);
+	void register_thread(u32 frames);
+
+	void UI(platform_window* window);
+	void recurse(vector<profile_node*> list);
+	
+	alloc_profile get_totals();
+
+	void collate();
+	void collate_allocs();
+	void collate_threads();
 
 	void fixdown_self_timings(profile_node* node);
 	void process_frame_alloc_msg(frame_profile* frame, dbg_msg* msg);
 	void process_alloc_msg(dbg_msg* msg);
+};
 
-	void shutdown_log(log_manager* log);
-	void setup_log(log_manager* log);
+struct dbg_value_store {
+	
+	dbg_value value_store;
+	allocator* alloc = null;
 
-	void register_thread(u32 frames);
+	static dbg_value_store make(allocator* alloc);
+	void destroy();
 
 	void add_ele(string path, _FPTR* callback, void* param = null);
 	template<typename T> void add_var(string path, T* value);
 	template<typename T> void add_val(string path, T* value);
 	template<typename T> T get_var(string path);
 
-	void collate();
-	void collate_thread_profile();
-	void collate_alloc_profile();
-	alloc_profile get_totals();
+	void UI(platform_window* window);
+	void recurse(map<string, dbg_value> store);
+};
+
+struct dbg_console {
+
+	locking_queue<log_message> log_cache;
+	log_level lvl = log_level::info; 
+
+	allocator* alloc = null;
+
+	static dbg_console make(allocator* alloc);
+	void destroy();
 
 	void UI(platform_window* window);
-	void UIprofiler(platform_window* window);
-	void UIvars(platform_window* window);
-	void UIvars_recurse(map<string, dbg_value> store);
-	void UIconsole(platform_window* window);
+
+	void shutdown_log(log_manager* log);
+	void setup_log(log_manager* log);
+};
+
+struct dbg_manager {
+
+	bool show_ui = false, show_profile = false, show_vars = false, show_console = true;
+
+	dbg_console console;
+	dbg_profiler profiler;
+	dbg_value_store store;
+
+///////////////////////////////////////////////////////////////////////////////
+
+	static dbg_manager make(allocator* alloc);
+	void destroy();
+
+	void UI(platform_window* window);
 
 	void toggle_profile();
 	void toggle_vars();

@@ -1,20 +1,84 @@
 
-dbg_manager dbg_manager::make(allocator* alloc) { PROF
+dbg_profiler dbg_profiler::make(allocator* alloc) {
 
-	dbg_manager ret;
+	dbg_profiler ret;
+
+	ret.alloc = alloc;
 
 	ret.thread_stats = map<platform_thread_id, thread_profile*>::make(global_api->get_num_cpus(), alloc);
 	ret.alloc_stats  = map<allocator, alloc_profile*>::make(32, alloc);
 
-	ret.log_cache = locking_queue<log_message>::make(1024, alloc);
-
-	ret.alloc = alloc;
-	ret.scratch = MAKE_ARENA("dbg scratch"_, MEGABYTES(1), alloc);
 	ret.selected_thread = global_api->this_thread_id();
 	global_api->create_mutex(&ret.stats_map_mut, false);
 	global_api->create_mutex(&ret.alloc_map_mut, false);
 
+	return ret;
+}
+
+void dbg_profiler::destroy() {
+
+	PUSH_ALLOC(alloc);
+
+	FORMAP(it, thread_stats) {
+		it->value->destroy();
+		free(it->value, sizeof(thread_profile));
+	}
+	thread_stats.destroy();
+	global_api->destroy_mutex(&stats_map_mut);
+
+	FORMAP(it, alloc_stats) {
+		FORMAP(a, it->value->current_set) {
+			LOG_DEBUG_F("\t% bytes in % @ %:%", a->value.size, it->key.name(), a->value.last_loc.file(), a->value.last_loc.line);
+		}
+		it->value->destroy();
+		free(it->value, sizeof(alloc_profile));
+	}
+	alloc_stats.destroy();
+	global_api->destroy_mutex(&alloc_map_mut);
+
+	POP_ALLOC();
+}
+
+dbg_value_store dbg_value_store::make(allocator* alloc) {
+
+	dbg_value_store ret;
+
+	ret.alloc = alloc;
 	ret.value_store = dbg_value::make_sec(alloc);
+
+	return ret;
+}
+
+void dbg_value_store::destroy() {
+
+	value_store.destroy(alloc);
+}
+
+dbg_console dbg_console::make(allocator* alloc) {
+
+	dbg_console ret;
+
+	ret.alloc = alloc;
+	ret.log_cache = locking_queue<log_message>::make(1024, alloc);
+
+	return ret;
+}
+
+void dbg_console::destroy() {
+
+	FORQ_BEGIN(it, log_cache) {
+		DESTROY_ARENA(&it->arena);
+	} FORQ_END(it, log_cache);
+	log_cache.destroy();
+}
+
+dbg_manager dbg_manager::make(allocator* alloc) { PROF
+
+	dbg_manager ret;
+
+	ret.console = dbg_console::make(alloc);
+	ret.store = dbg_value_store::make(alloc);
+	ret.profiler = dbg_profiler::make(alloc);
 
 	return ret;
 }
@@ -59,41 +123,18 @@ void thread_profile::destroy() { PROF
 
 void dbg_manager::destroy() { PROF
 
-	value_store.destroy(alloc);
-	collate_alloc_profile();
+	store.destroy();
+	console.destroy();
 
-	alloc_profile totals = get_totals();
+	profiler.collate_allocs();
+
+	alloc_profile totals = profiler.get_totals();
 	LOG_INFO_F("% allocations remaining at debug shutdown", totals.num_allocs - totals.num_frees);
 
-	PUSH_ALLOC(alloc);
-	
-	FORMAP(it, thread_stats) {
-		it->value->destroy();
-		free(it->value, sizeof(thread_profile));
-	}
-	thread_stats.destroy();
-	global_api->destroy_mutex(&stats_map_mut);
-
-	FORMAP(it, alloc_stats) {
-		FORMAP(a, it->value->current_set) {
-			LOG_DEBUG_F("\t% bytes in % @ %:%", a->value.size, it->key.name(), a->value.last_loc.file(), a->value.last_loc.line);
-		}
-		it->value->destroy();
-		free(it->value, sizeof(alloc_profile));
-	}
-	alloc_stats.destroy();
-	global_api->destroy_mutex(&alloc_map_mut);
-
-	FORQ_BEGIN(it, log_cache) {
-		DESTROY_ARENA(&it->arena);
-	} FORQ_END(it, log_cache);
-	log_cache.destroy();
-
-	POP_ALLOC();
-	DESTROY_ARENA(&scratch);
+	profiler.destroy();
 }
 
-void dbg_manager::profile_recurse(vector<profile_node*> list) { PROF
+void dbg_profiler::recurse(vector<profile_node*> list) { PROF
 
 	switch(prof_sort) {
 	case prof_sort_type::none: break;
@@ -126,7 +167,7 @@ void dbg_manager::profile_recurse(vector<profile_node*> list) { PROF
 			ImGui::Text("%d", node->calls);
 			ImGui::NextColumn();
 			if(enabled) {
-				profile_recurse(node->children);
+				recurse(node->children);
 				ImGui::TreePop();
 			}
 		} else {
@@ -151,7 +192,7 @@ bool operator<=(addr_info l, addr_info r) { PROF
 	return r.size <= l.size;
 }
 
-alloc_profile dbg_manager::get_totals() { PROF
+alloc_profile dbg_profiler::get_totals() { PROF
 
 	alloc_profile ret;
 
@@ -174,20 +215,20 @@ void dbg_manager::UI(platform_window* window) { PROF
 	if(!show_ui) return;
 
 	if(show_profile)
-		UIprofiler(window);
+		profiler.UI(window);
 	if(show_vars)
-		UIvars(window);
+		store.UI(window);
 	if(show_console)
-		UIconsole(window);
+		console.UI(window);
 }
 
-void dbg_manager::UIvars_recurse(map<string, dbg_value> store) { PROF
+void dbg_value_store::recurse(map<string, dbg_value> store) { PROF
 
 	FORMAP(it, store) {
 		switch(it->value.type) {
 		case dbg_value_class::section: {
 			if(ImGui::TreeNodeNoNull(it->key)) {
-				UIvars_recurse(it->value.sec.children);
+				recurse(it->value.sec.children);
 				ImGui::TreePop();
 			}
 		} break;
@@ -204,14 +245,14 @@ void dbg_manager::UIvars_recurse(map<string, dbg_value> store) { PROF
 	}
 }
 
-void dbg_manager::UIvars(platform_window* window) { PROF
+void dbg_value_store::UI(platform_window* window) { PROF
 
 	ImGui::Begin("Debug Vars", null, ImGuiWindowFlags_AlwaysAutoResize);
-	UIvars_recurse(value_store.sec.children);
+	recurse(value_store.sec.children);
 	ImGui::End();
 }
 
-void dbg_manager::UIconsole(platform_window* window) { PROF
+void dbg_console::UI(platform_window* window) { PROF
 
 	i32 win_w, win_h;
 	global_api->get_window_drawable(window, &win_w, &win_h);
@@ -230,7 +271,7 @@ void dbg_manager::UIconsole(platform_window* window) { PROF
 	ImGui::End();
 }
 
-void dbg_manager::UIprofiler(platform_window* window) { PROF
+void dbg_profiler::UI(platform_window* window) { PROF
 
 	ImGui::SetNextWindowSize({800, 600}, ImGuiCond_Once);
 	ImGui::Begin("Profile"_, null, ImGuiWindowFlags_NoSavedSettings);
@@ -310,7 +351,7 @@ void dbg_manager::UIprofiler(platform_window* window) { PROF
 			ImGui::Text("Calls"_);
 			ImGui::NextColumn();
 			ImGui::Separator();
-			profile_recurse(frame->heads);
+			recurse(frame->heads);
 			ImGui::Columns(1);
 
 			ImGui::TreePop();
@@ -348,7 +389,7 @@ void dbg_manager::UIprofiler(platform_window* window) { PROF
 	ImGui::End();
 }
 
-void dbg_manager::shutdown_log(log_manager* log) { PROF
+void dbg_console::shutdown_log(log_manager* log) { PROF
 	log_out dbg_log;
 	dbg_log.level = log_level::info;
 	dbg_log.type = log_out_type::custom;
@@ -357,7 +398,7 @@ void dbg_manager::shutdown_log(log_manager* log) { PROF
 	log->rem_custom_output(dbg_log);
 }
 
-void dbg_manager::setup_log(log_manager* log) { PROF
+void dbg_console::setup_log(log_manager* log) { PROF
 	log_out dbg_log;
 	dbg_log.level = log_level::info;
 	dbg_log.type = log_out_type::custom;
@@ -366,7 +407,7 @@ void dbg_manager::setup_log(log_manager* log) { PROF
 	log->add_custom_output(dbg_log);
 }
 
-void dbg_manager::register_thread(u32 frames) { PROF
+void dbg_profiler::register_thread(u32 frames) { PROF
 
 	PUSH_ALLOC(alloc);
 
@@ -379,7 +420,7 @@ void dbg_manager::register_thread(u32 frames) { PROF
 	POP_ALLOC();
 
 	global_api->aquire_mutex(&stats_map_mut);
-	global_dbg->thread_stats.insert(global_api->this_thread_id(), thread);
+	thread_stats.insert(global_api->this_thread_id(), thread);
 	global_api->release_mutex(&stats_map_mut);
 }
 
@@ -406,17 +447,17 @@ bool operator>(dbg_msg& l, dbg_msg& r) { PROF
 	return l.time < r.time;
 }
 
-void dbg_manager::collate() { PROF
+void dbg_profiler::collate() { PROF
 	
 	PUSH_PROFILE(false) {
 		
-		collate_alloc_profile();
-		collate_thread_profile();
+		collate_allocs();
+		collate_threads();
 
 	} POP_PROFILE();
 }
 
-void dbg_manager::collate_alloc_profile() { PROF
+void dbg_profiler::collate_allocs() { PROF
 
 	FORQ_BEGIN(msg, this_thread_data.dbg_queue) {
 
@@ -427,7 +468,7 @@ void dbg_manager::collate_alloc_profile() { PROF
 	} FORQ_END(msg, this_thread_data.dbg_queue);
 }
 
-void dbg_manager::collate_thread_profile() { PROF
+void dbg_profiler::collate_threads() { PROF
 
 	bool got_a_frame = false;
 	u64 frame_perf_start = 0;
@@ -581,7 +622,7 @@ void alloc_profile::destroy() { PROF
 	global_api->destroy_mutex(&mut);
 }
 
-void dbg_manager::process_frame_alloc_msg(frame_profile* frame, dbg_msg* msg) { PROF
+void dbg_profiler::process_frame_alloc_msg(frame_profile* frame, dbg_msg* msg) { PROF
 
 	allocator a;
 	switch(msg->type) {
@@ -599,7 +640,7 @@ void dbg_manager::process_frame_alloc_msg(frame_profile* frame, dbg_msg* msg) { 
 	fprofile->allocs.push(*msg);
 }
 
-void dbg_manager::process_alloc_msg(dbg_msg* msg) { PROF
+void dbg_profiler::process_alloc_msg(dbg_msg* msg) { PROF
 
 	allocator a;
 	switch(msg->type) {
@@ -694,7 +735,7 @@ void dbg_manager::process_alloc_msg(dbg_msg* msg) { PROF
 	global_api->release_mutex(&profile->mut);
 }
 
-void dbg_manager::fixdown_self_timings(profile_node* node) { PROF
+void dbg_profiler::fixdown_self_timings(profile_node* node) { PROF
 
 	clock children = 0;
 	FORVEC(it, node->children) {
@@ -705,7 +746,7 @@ void dbg_manager::fixdown_self_timings(profile_node* node) { PROF
 	node->self = node->heir - children;
 }
 
-void dbg_manager::add_ele(string path, _FPTR* callback, void* param) { PROF
+void dbg_value_store::add_ele(string path, _FPTR* callback, void* param) { PROF
 
 	dbg_value* value = &value_store;
 	path.len--;
@@ -732,7 +773,7 @@ void dbg_manager::add_ele(string path, _FPTR* callback, void* param) { PROF
 }
 
 template<typename T>
-void dbg_manager::add_val(string path, T* val) { PROF
+void dbg_value_store::add_val(string path, T* val) { PROF
 
 	dbg_value* value = &value_store;
 	path.len--;
@@ -759,7 +800,7 @@ void dbg_manager::add_val(string path, T* val) { PROF
 }
 
 template<typename T>
-void dbg_manager::add_var(string path, T* val) { PROF
+void dbg_value_store::add_var(string path, T* val) { PROF
 
 	dbg_value* value = &value_store;
 	path.len--;
@@ -786,7 +827,7 @@ void dbg_manager::add_var(string path, T* val) { PROF
 }
 
 template<typename T>
-T dbg_manager::get_var(string path) { PROF
+T dbg_value_store::get_var(string path) { PROF
 
 	dbg_value* value = &value_store;
 	path.len--;
@@ -824,17 +865,17 @@ CALLBACK void dbg_reup_window(void* e) { PROF
 
 CALLBACK void dbg_add_log(log_message* msg, void* param) { PROF
 
-	dbg_manager* dbg = (dbg_manager*)param;
+	dbg_console* console = (dbg_console*)param;
 
-	if(dbg->log_cache.len() == dbg->log_cache.capacity) {
+	if(console->log_cache.len() == console->log_cache.capacity) {
 
-		log_message* m = dbg->log_cache.front();
+		log_message* m = console->log_cache.front();
 		DESTROY_ARENA(&m->arena);
-		dbg->log_cache.pop();
+		console->log_cache.pop();
 	}
 
-	log_message* m = dbg->log_cache.push(*msg);
-	m->arena       = MAKE_ARENA("cmsg"_, msg->arena.size, dbg->alloc);
+	log_message* m = console->log_cache.push(*msg);
+	m->arena       = MAKE_ARENA("cmsg"_, msg->arena.size, console->alloc);
 	m->call_stack  = array<code_context>::make_copy(&msg->call_stack, &m->arena);
 	m->thread_name = string::make_copy(msg->thread_name, &m->arena);
 	m->msg         = string::make_copy(msg->msg, &m->arena);

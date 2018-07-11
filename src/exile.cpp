@@ -80,9 +80,16 @@ CALLBACK bool default_evt_handle(void* param, platform_event evt) { PROF
 
 	if(evt.type == platform_event_type::key) {
 		if(evt.key.flags & (u16)platform_keyflag::press) {
+			
 			if(evt.key.code == platform_keycode::escape) {
 
 				eng->running = false;
+				return true;
+			
+			} else if(evt.key.code == platform_keycode::f11) {
+
+				eng->window.settings.mode = eng->window.settings.mode == platform_window_mode::fullscreen ? platform_window_mode::windowed : platform_window_mode::fullscreen;
+				eng->platform->apply_window_settings(&eng->window);
 				return true;
 			}
 		}

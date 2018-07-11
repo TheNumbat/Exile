@@ -224,7 +224,7 @@ i32 worker(void* data_) {
 
 	begin_thread("worker %"_, data->alloc, global_api->this_thread_id());
 	this_thread_data.profiling = false;
-	global_dbg->register_thread(10);
+	global_dbg->profiler.register_thread(10);
 	
 	LOG_DEBUG("Starting worker thread");
 
