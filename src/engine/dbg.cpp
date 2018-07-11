@@ -288,8 +288,6 @@ void dbg_console::UI(platform_window* window) { PROF
 
 	/* TODO
 		Command History
-		ScrollToBottom
-		Copy to Clipboard
 		Actually running commands
 	*/
 
@@ -305,6 +303,10 @@ void dbg_console::UI(platform_window* window) { PROF
 	f32 footer = ImGui::GetStyle().ItemSpacing.y + ImGui::GetFrameHeightWithSpacing();
     ImGui::BeginChild("Scroll", ImVec2(0, -footer), false, ImGuiWindowFlags_HorizontalScrollbar);
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(4,1));
+
+    if(copy_clipboard) {
+    	ImGui::LogToClipboard();
+    }
 
     global_api->aquire_mutex(&lines_mut);
 	FORQ_BEGIN(it, lines) {
@@ -332,16 +334,25 @@ void dbg_console::UI(platform_window* window) { PROF
 	} FORQ_END(it, lines);
 	global_api->release_mutex(&lines_mut);
 
+	if(copy_clipboard) {
+		ImGui::LogFinish();
+		copy_clipboard = false;
+	}
+	if(scroll_bottom) {
+		ImGui::SetScrollHere(1.0f);
+		scroll_bottom = false;
+	}
+
 	ImGui::PopStyleVar();
 	ImGui::EndChild();
 	ImGui::Separator();
 
 	ImGui::Columns(4);
 
-	ImGui::SetColumnWidth(0, w * 0.44f);
-	ImGui::SetColumnWidth(1, w * 0.27f);
-	ImGui::SetColumnWidth(2, w * 0.17f);
-	ImGui::SetColumnWidth(3, w * 0.12f);
+	ImGui::SetColumnWidth(0, w * 0.40f);
+	ImGui::SetColumnWidth(1, w * 0.30f);
+	ImGui::SetColumnWidth(2, w * 0.15f);
+	ImGui::SetColumnWidth(3, w * 0.15f);
 
 	bool reclaim_focus = false;
 	if(ImGui::InputText("Input", input_buffer, 1024, ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CallbackCompletion | ImGuiInputTextFlags_CallbackHistory, &dbg_console_text_edit, this)) {
@@ -349,6 +360,7 @@ void dbg_console::UI(platform_window* window) { PROF
 		string input = string::from_c_str(input_buffer);
 		if (input.len) {
 		    add_console_msg(input);
+		    scroll_bottom = true;
 		}
 		_memset(input_buffer, 1024, 0);
 		reclaim_focus = true;
@@ -373,10 +385,15 @@ void dbg_console::UI(platform_window* window) { PROF
 			it->msg.destroy(alloc);
 		} FORQ_END(it, lines);
 		lines.clear();
+		scroll_bottom = true;
 	}
 	ImGui::SameLine();
 	if(ImGui::Button("Bottom")) {
-
+		scroll_bottom = true;
+	}
+	ImGui::SameLine();
+	if(ImGui::Button("Copy")) {
+		copy_clipboard = true;
 	}
 
 	ImGui::Columns(1);

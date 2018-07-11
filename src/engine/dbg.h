@@ -290,6 +290,9 @@ struct dbg_console {
 	ImGuiTextFilter filter;
 	log_level base_level = log_level::debug;
 
+	bool scroll_bottom = false;
+	bool copy_clipboard = false;
+
 	queue<console_msg> lines;
 	platform_mutex lines_mut;
 
