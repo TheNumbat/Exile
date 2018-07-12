@@ -52,6 +52,7 @@ struct NOREFLECT string { // no-reflect because hard-coded
 	string first_word_no_term();
 	string trim_first_word();
 	bool starts_with_insensitive(string prefix);
+	string trim_no_term();
 
 	template<typename... Targs> void writef(string fmt, Targs... args);
 
@@ -75,6 +76,7 @@ struct NOREFLECT string { // no-reflect because hard-coded
 
 string operator "" _(const char* str, size_t s);
 char uppercase(char c);
+bool whitespace(char c);
 
 inline u32 hash(string one, string two);
 inline u32 hash(string str);

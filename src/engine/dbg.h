@@ -290,7 +290,7 @@ struct console_cmd {
 
 struct dbg_console {
 
-	char input_buffer[1024] = {};
+	char input_buffer[2048] = {};
 
 	ImGuiTextFilter filter;
 	log_level base_level = log_level::debug;
@@ -303,7 +303,8 @@ struct dbg_console {
 
 	log_level lvl = log_level::info; 
 
-	vector<string> candidates;
+	i32 history_idx = -1;
+	vector<string> candidates, history;
 	map<string, console_cmd> commands;
 
 	allocator* alloc = null;

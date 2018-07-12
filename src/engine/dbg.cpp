@@ -77,9 +77,11 @@ CALLBACK void console_cmd_clear(string, void* data) {
 void dbg_console::init(allocator* a) { PROF
 
 	alloc = a;
-	lines = queue<console_msg>::make(4096, alloc);
-	commands = map<string, console_cmd>::make(128, alloc);
-	candidates = vector<string>::make(32, alloc);
+
+	history    = vector<string>::make(64, alloc);
+	candidates = vector<string>::make(128, alloc);
+	lines 	   = queue<console_msg>::make(4096, alloc);
+	commands   = map<string, console_cmd>::make(128, alloc);
 
 	add_command("clear"_, FPTR(console_cmd_clear), this);
 
@@ -96,6 +98,11 @@ void dbg_console::destroy() { PROF
 	}
 	commands.destroy();
 	candidates.destroy();
+
+	FORVEC(it, history) {
+		it->destroy(alloc);
+	}
+	history.destroy();
 
 	FORQ_BEGIN(it, lines) {
 		it->msg.destroy(alloc);
@@ -358,9 +365,33 @@ void dbg_console::on_text_edit(ImGuiTextEditCallbackData* data) { PROF
 
 	} break;
 	case ImGuiInputTextFlags_CallbackCharFilter: {
+		
 		if(data->EventChar == ' ') candidates.clear();
+
 	} break;
 	case ImGuiInputTextFlags_CallbackHistory: {
+		
+		i32 prev_idx = history_idx;
+		if(data->EventKey == ImGuiKey_UpArrow) {
+			
+			if(history_idx == -1) history_idx = history.size - 1;
+			else if(history_idx > 0) history_idx--;
+
+		} else if(data->EventKey == ImGuiKey_DownArrow) {
+
+			if(history_idx != -1 && ++history_idx >= (i32)history.size) history_idx = -1;
+		}
+
+		if(prev_idx != history_idx) {
+
+			string history_str = history_idx >= 0 ? history[history_idx] : ""_;
+
+			data->CursorPos = data->SelectionStart = data->SelectionEnd = data->BufTextLen = history_str.len - 1;
+			_memset(data->Buf, data->BufSize, 0);
+			_memcpy(history_str.c_str, data->Buf, max(data->BufSize, (i32)history_str.len - 1));
+			
+			data->BufDirty = true;
+		}
 
 	} break;
 	}
@@ -380,6 +411,17 @@ void dbg_console::exec_command(string input) { PROF
 
 	console_cmd* cmd = commands.try_get(name);
 
+	string* pos = history.find(input);
+	if(pos) {
+		pos->destroy(alloc);
+		u32 idx = (u32)(pos - history.memory);
+		history.erase(idx);
+	}
+	history_idx = -1;
+
+	if(history.size == history.capacity) history.pop();
+	history.push(string::make_copy(input, alloc));
+	
 	if(!cmd) {
 		add_console_msg(input);
 		return;
@@ -390,17 +432,13 @@ void dbg_console::exec_command(string input) { PROF
 
 void dbg_console::UI(platform_window* window) { PROF
 
-	/* TODO
-		Command History
-	*/
-
 	f32 w, h;
 	i32 win_w, win_h;
 	global_api->get_window_drawable(window, &win_w, &win_h);
 	w = (f32)win_w; h = (f32)win_h;
 
-	ImGui::SetNextWindowPos({0.0f, floor(h * 0.6f)});
-	ImGui::SetNextWindowSize({w, ceil(h * 0.4f)});
+	ImGui::SetNextWindowPos({0.0f, floor(h * 0.65f)});
+	ImGui::SetNextWindowSize({w, ceil(h * 0.35f)});
 	ImGui::Begin("Console"_, null, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings);
 
 	f32 footer = ImGui::GetStyle().ItemSpacing.y + ImGui::GetFrameHeightWithSpacing();
@@ -463,7 +501,7 @@ void dbg_console::UI(platform_window* window) { PROF
 	if(ImGui::InputText("Input", input_buffer, 1024, ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CallbackCharFilter | 
 						ImGuiInputTextFlags_CallbackCompletion | ImGuiInputTextFlags_CallbackHistory, &dbg_console_text_edit, this)) {
 		
-		string input = string::from_c_str(input_buffer);
+		string input = string::from_c_str(input_buffer).trim_no_term();
 		if (input.len) {
 		    candidates.clear();
 		    exec_command(input);
@@ -481,7 +519,7 @@ void dbg_console::UI(platform_window* window) { PROF
 
 	ImGui::NextColumn();
 
-	filter.Draw("(inc,-exc)", 180);
+	filter.Draw("Filter (inc,-exc)", 180);
 
 	ImGui::NextColumn();
 
@@ -512,13 +550,18 @@ void dbg_console::UI(platform_window* window) { PROF
 		candidates.clear();
 	}
 	if(focused && candidates.size > 1) {
-		f32 tip_height = (candidates.size + 1) * (ImGui::GetStyle().ItemSpacing.y + ImGui::GetFrameHeightWithSpacing());
-		ImGui::SetNextWindowPos({0, h - tip_height});
+		
+		f32 element = 2.0f * ImGui::GetStyle().ItemSpacing.y + ImGui::GetFrameHeightWithSpacing();
+
 		ImGui::SetNextWindowFocus();
-		ImGui::Begin("Completions", null, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoInputs);
+		ImGui::Begin("Completions", null, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_AlwaysAutoResize);
 		FORVEC(it, candidates) {
 			ImGui::TextUnformatted(*it);
 		}
+
+		f32 tip_h = ImGui::GetWindowHeight();
+		ImGui::SetWindowPos({0, h - tip_h - element}, ImGuiCond_Always);
+
 		ImGui::End();
 	}
 }

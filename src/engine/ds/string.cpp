@@ -1030,6 +1030,15 @@ i32 string::last_slash() {
 	return -1;
 }
 
+string string::trim_no_term() { PROF
+
+	u32 beg = 0, end = len - 2;
+	for(; beg < len && whitespace(c_str[beg]); beg++);
+	for(; end >= 0 && whitespace(c_str[end]); end--);
+
+	return substring(beg, end + 1);
+}
+
 void string::destroy(allocator* a) { PROF
 
 	a->free_(c_str, cap, a, CONTEXT);
@@ -1037,6 +1046,11 @@ void string::destroy(allocator* a) { PROF
 	c_str = null;
 	cap = 0;
 	len = 0;
+}
+
+bool whitespace(char c) { 
+
+	return c == ' ' || c == '\t' || c == '\n' || c == '\r';
 }
 
 char uppercase(char c) { 
