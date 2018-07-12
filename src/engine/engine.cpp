@@ -17,7 +17,7 @@ EXPORT engine* start_up(platform_api* api) {
 	begin_thread("main"_, &state->basic_a);
 
 	state->dbg_a = MAKE_PLATFORM_ALLOCATOR("dbg");
-	state->dbg = dbg_manager::make(&state->dbg_a);
+	state->dbg.init(&state->dbg_a);
 	state->dbg.profiler.register_thread(180);
 
 	BEGIN_FRAME();
@@ -31,35 +31,35 @@ EXPORT engine* start_up(platform_api* api) {
 	state->log.add_file(log_all_file, log_level::alloc, log_out_type::html);
 	state->log.add_stdout(log_level::debug);
 
-	LOG_INFO("Beginning startup...");
+	LOG_INFO("Beginning startup..."_);
 	LOG_PUSH_CONTEXT_L("");
 
-	LOG_INFO("Starting logger...");
+	LOG_INFO("Starting logger..."_);
 	state->log.start();
 
-	LOG_INFO("Setting up events...");
+	LOG_INFO("Setting up events..."_);
 	state->evt_a = MAKE_PLATFORM_ALLOCATOR("event");
 	state->evt = evt_manager::make(&state->evt_a);
 	state->evt.start();
 
-	LOG_INFO("Creating window...");
+	LOG_INFO("Creating window..."_);
 	_memcpy("Exile", state->window.settings.c_title, 6);
 	CHECKED(create_window, &state->window);
 	state->dbg.store.add_var("window/settings"_, &state->window.settings);
 	state->dbg.store.add_ele("window/apply"_, FPTR(dbg_reup_window), state);
 
-	LOG_INFO("Setting up OpenGL...");
+	LOG_INFO("Setting up OpenGL..."_);
 	state->ogl_a = MAKE_PLATFORM_ALLOCATOR("ogl");
 	state->ogl = ogl_manager::make(&state->window, &state->ogl_a);
 
-	LOG_INFO("Setting up IMGUI...");
+	LOG_INFO("Setting up IMGUI..."_);
 	state->imgui_a = MAKE_PLATFORM_ALLOCATOR("imgui");
 	state->imgui = imgui_manager::make(&state->window, &state->imgui_a);
 
-	LOG_INFO("Setting up game...");
+	LOG_INFO("Setting up game..."_);
 	state->game_state = start_up_game(state);
 
-	LOG_INFO("Done with startup!");
+	LOG_INFO("Done with startup!"_);
 	LOG_POP_CONTEXT();
 
 	END_FRAME();
@@ -117,28 +117,28 @@ EXPORT bool main_loop(engine* state) {
 EXPORT void shut_down(engine* state) { 
 
 	BEGIN_FRAME();
-	LOG_INFO("Beginning shutdown...");
+	LOG_INFO("Beginning shutdown..."_);
 
-	LOG_DEBUG("Destroying game...");
+	LOG_DEBUG("Destroying game..."_);
 	shut_down_game(state->game_state);
 
-	LOG_DEBUG("Destroying IMGUI");
+	LOG_DEBUG("Destroying IMGUI"_);
 	state->imgui.destroy();
 	
-	LOG_DEBUG("Destroying OpenGL");
+	LOG_DEBUG("Destroying OpenGL"_);
 	state->ogl.destroy();
 
-	LOG_DEBUG("Destroying window");
+	LOG_DEBUG("Destroying window"_);
 	CHECKED(destroy_window, &state->window);
 
-	LOG_DEBUG("Destroying events");
+	LOG_DEBUG("Destroying events"_);
 	state->evt.destroy();
 
-	LOG_DEBUG("Destroying debug system");
+	LOG_DEBUG("Destroying debug system"_);
 	state->dbg.console.shutdown_log(&state->log);	
 	state->dbg.destroy();
 
-	LOG_DEBUG("Done with shutdown!");
+	LOG_DEBUG("Done with shutdown!"_);
 
 	state->log.stop();
 	state->log.destroy();
@@ -171,14 +171,14 @@ EXPORT void on_reload(platform_api* api, engine* state) {
 	state->evt.start(); // NOTE(max): needed to reset platform function pointer pointing into the game DLL
 	state->log.start();
 
-	LOG_INFO("End reloading game code");
+	LOG_INFO("End reloading game code"_);
 
 	reload_game(state, state->game_state);
 }
 
 EXPORT void on_unload(engine* state) {
 	
-	LOG_INFO("Begin reloading game code");
+	LOG_INFO("Begin reloading game code"_);
 
 	unload_game(state, state->game_state);
 

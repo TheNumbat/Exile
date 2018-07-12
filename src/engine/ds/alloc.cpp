@@ -112,7 +112,7 @@ CALLBACK void* arena_allocate(u64 bytes, u64 align, allocator* this_, code_conte
 		this__->used += bytes;
 	} else {
 
-		LOG_ERR_F("Failed to allocate % bytes in allocator %:%", bytes, this__->context.file(), this__->context.line);
+		LOG_ERR_F("Failed to allocate % bytes in allocator %:%"_, bytes, this__->context.file(), this__->context.line);
 	}
 
 	return mem;
@@ -169,7 +169,7 @@ CALLBACK void* pool_allocate(u64 bytes, u64 align, allocator* this_, code_contex
 	pool_allocator* this__ = (pool_allocator*)this_;
 
 	if(bytes > this__->page_size) {
-		LOG_ERR_F("Requesting allocation of % bytes (page size %) in pool allocator %", bytes, this__->page_size, this__->name());
+		LOG_ERR_F("Requesting allocation of % bytes (page size %) in pool allocator %"_, bytes, this__->page_size, this__->name());
 		return null;
 	}
 

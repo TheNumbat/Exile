@@ -283,6 +283,11 @@ struct console_msg {
 	string msg;
 };
 
+struct console_cmd {
+	func_ptr<void, string, void*> func;
+	void* param = null;
+};
+
 struct dbg_console {
 
 	char input_buffer[1024] = {};
@@ -290,7 +295,7 @@ struct dbg_console {
 	ImGuiTextFilter filter;
 	log_level base_level = log_level::debug;
 
-	bool scroll_bottom = false;
+	bool scroll_bottom = true;
 	bool copy_clipboard = false;
 
 	queue<console_msg> lines;
@@ -298,14 +303,20 @@ struct dbg_console {
 
 	log_level lvl = log_level::info; 
 
+	vector<string> candidates;
+	map<string, console_cmd> commands;
+
 	allocator* alloc = null;
 
-	static dbg_console make(allocator* alloc);
+	void init(allocator* alloc);
 	void destroy();
 
 	void UI(platform_window* window);
 	void on_text_edit(ImGuiTextEditCallbackData* data);
+	
+	void exec_command(string cmd);
 	void add_console_msg(string msg);
+	void add_command(string name, _FPTR* func, void* param = null);
 
 	void shutdown_log(log_manager* log);
 	void setup_log(log_manager* log);
@@ -321,7 +332,7 @@ struct dbg_manager {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-	static dbg_manager make(allocator* alloc);
+	void init(allocator* alloc);
 	void destroy();
 	void destroy_prof();
 
@@ -337,6 +348,7 @@ void _prof_sec_end();
 
 CALLBACK void dbg_reup_window(void* eng);
 CALLBACK void dbg_add_log(log_message* msg, void*);
+CALLBACK void console_cmd_clear(string, void* data);
 
 bool prof_sort_name(profile_node* l, profile_node* r);
 bool prof_sort_heir(profile_node* l, profile_node* r);

@@ -26,6 +26,7 @@ struct NOREFLECT string { // no-reflect because hard-coded
 	static string make_cat(string first, string second);
 	static string make_cat_v(i32 num_strs, ...);
 	static string from_c_str(char* c_str); // does not allocate
+	static string from_c_str(char* start, char* end); // does not allocate
 	static string literal(const char* literal);
 
 	template<typename... Targs> static string makef(string fmt, Targs... args);
@@ -48,6 +49,10 @@ struct NOREFLECT string { // no-reflect because hard-coded
 	i32 last_slash();
 	i32 first_slash();
 
+	string first_word_no_term();
+	string trim_first_word();
+	bool starts_with_insensitive(string prefix);
+
 	template<typename... Targs> void writef(string fmt, Targs... args);
 
 	u32 write(u32 idx, string ins, bool size = false);
@@ -69,6 +74,7 @@ struct NOREFLECT string { // no-reflect because hard-coded
 };
 
 string operator "" _(const char* str, size_t s);
+char uppercase(char c);
 
 inline u32 hash(string one, string two);
 inline u32 hash(string str);

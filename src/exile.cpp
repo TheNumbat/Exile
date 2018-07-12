@@ -7,6 +7,7 @@ void exile::init() { PROF
 	store.load("assets/game.asset"_);
 
 	setup_mesh_commands();
+	setup_console_commands();
 
 	w.init(&store, &alloc);
 

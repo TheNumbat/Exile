@@ -127,7 +127,7 @@ T queue<T>::pop() { PROF
 		return top;	
 	}
 
-	LOG_FATAL("Trying to pop empty queue!");
+	LOG_FATAL("Trying to pop empty queue!"_);
 	T ret = {};
 	return ret;
 }
@@ -165,7 +165,7 @@ T* queue<T>::front() { PROF
 		return &memory[start];
 	}
 
-	LOG_FATAL("Trying to get front of empty queue!");
+	LOG_FATAL("Trying to get front of empty queue!"_);
 	return null;
 }
 
@@ -212,7 +212,7 @@ T* queue<T>::get(u32 idx) {
 		return memory + (start + idx) % capacity;
 	} else {
 		
-		LOG_FATAL_F("out of bounds, % < 0 || % >= %", idx, idx, capacity);
+		LOG_FATAL_F("out of bounds, % < 0 || % >= %"_, idx, idx, capacity);
 		return null;
 	}
 #else

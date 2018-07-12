@@ -106,39 +106,39 @@ struct log_manager {
 #define LOG_PUSH_CONTEXT_L(str) global_log->push_context(str##_, CONTEXT); 
 #define LOG_POP_CONTEXT() global_log->pop_context();
 
-#define LOG_INFO(m) 	global_log->msg(m##_, log_level::info,  CONTEXT);
-#define LOG_WARN(m) 	global_log->msg(m##_, log_level::warn,  CONTEXT);
-#define LOG_ERR(m) 		global_log->msg(m##_, log_level::error, CONTEXT);
-#define LOG_FATAL(m) 	global_log->msg(m##_, log_level::fatal, CONTEXT);
+#define LOG_INFO(m) 	global_log->msg(m, log_level::info,  CONTEXT);
+#define LOG_WARN(m) 	global_log->msg(m, log_level::warn,  CONTEXT);
+#define LOG_ERR(m) 		global_log->msg(m, log_level::error, CONTEXT);
+#define LOG_FATAL(m) 	global_log->msg(m, log_level::fatal, CONTEXT);
 
-#define LOG_INFO_F(fmt, ...) 	global_log->msgf(fmt##_, log_level::info,  CONTEXT, ##__VA_ARGS__); 
-#define LOG_WARN_F(fmt, ...) 	global_log->msgf(fmt##_, log_level::warn,  CONTEXT, ##__VA_ARGS__); 
-#define LOG_ERR_F(fmt, ...) 	global_log->msgf(fmt##_, log_level::error, CONTEXT, ##__VA_ARGS__); 
-#define LOG_FATAL_F(fmt, ...) 	global_log->msgf(fmt##_, log_level::fatal, CONTEXT, ##__VA_ARGS__); 
+#define LOG_INFO_F(fmt, ...) 	global_log->msgf(fmt, log_level::info,  CONTEXT, ##__VA_ARGS__); 
+#define LOG_WARN_F(fmt, ...) 	global_log->msgf(fmt, log_level::warn,  CONTEXT, ##__VA_ARGS__); 
+#define LOG_ERR_F(fmt, ...) 	global_log->msgf(fmt, log_level::error, CONTEXT, ##__VA_ARGS__); 
+#define LOG_FATAL_F(fmt, ...) 	global_log->msgf(fmt, log_level::fatal, CONTEXT, ##__VA_ARGS__); 
 
 #ifdef _MSC_VER
 #define LOG_ASSERT(cond) __pragma(warning(push)) \
 						 __pragma(warning(disable:4127)) \
-						 {if(!(cond)) LOG_FATAL_F("Assertion % failed!", #cond##_);} \
+						 {if(!(cond)) LOG_FATAL_F("Assertion % failed!"_, #cond##_);} \
 						 __pragma(warning(pop))
 #elif defined(__GNUC__)
-#define LOG_ASSERT(cond) {if(!(cond)) LOG_FATAL_F("Assertion % failed!", #cond##_);}
+#define LOG_ASSERT(cond) {if(!(cond)) LOG_FATAL_F("Assertion % failed!"_, #cond##_);}
 #else
 #define LOG_ASSERT(cond)
 #endif
 
 #ifndef RELEASE
-	#define LOG_DEBUG(m) 			global_log->msg(m##_,  log_level::debug, CONTEXT); 
-	#define LOG_DEBUG_F(fmt, ...) 	global_log->msgf(fmt##_, log_level::debug, CONTEXT, ##__VA_ARGS__) 
-	#define LOG_OGL_F(fmt, ...)		global_log->msgf(fmt##_, log_level::ogl,   CONTEXT, ##__VA_ARGS__); 
+	#define LOG_DEBUG(m) 			global_log->msg(m,  log_level::debug, CONTEXT); 
+	#define LOG_DEBUG_F(fmt, ...) 	global_log->msgf(fmt, log_level::debug, CONTEXT, ##__VA_ARGS__) 
+	#define LOG_OGL_F(fmt, ...)		global_log->msgf(fmt, log_level::ogl,   CONTEXT, ##__VA_ARGS__); 
 	#ifdef _MSC_VER
-	#define LOG_DEBUG_ASSERT(cond) 	do{if(!(cond)) LOG_FATAL_F("Debug assertion % failed!", #cond##_);}while(0)
+	#define LOG_DEBUG_ASSERT(cond) 	do{if(!(cond)) LOG_FATAL_F("Debug assertion % failed!"_, #cond##_);}while(0)
 	#elif defined(__GNUC__)
-	#define LOG_DEBUG_ASSERT(cond) 	do{if(!(cond)) LOG_FATAL_F("Debug assertion % failed!", #cond##_);}while(0)
+	#define LOG_DEBUG_ASSERT(cond) 	do{if(!(cond)) LOG_FATAL_F("Debug assertion % failed!"_, #cond##_);}while(0)
 	#else
 	#define LOG_DEBUG_ASSERT(cond)
 	#endif
-	#define INVALID_PATH 		   	LOG_FATAL("Invalid path taken!"); 
+	#define INVALID_PATH 		   	LOG_FATAL("Invalid path taken!"_); 
 #else
 	#define LOG_DEBUG(msg) 
 	#define LOG_DEBUG_F(fmt, ...) 

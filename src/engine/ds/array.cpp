@@ -80,7 +80,7 @@ inline T* array<T>::get(u32 idx) {
 		return memory + idx;
 	} else {
 
-		LOG_FATAL_F("array_get out of bounds, % < 0 || % > %", idx, idx, capacity);
+		LOG_FATAL_F("array_get out of bounds, % < 0 || % > %"_, idx, idx, capacity);
 
 		return null;
 	}

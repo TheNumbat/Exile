@@ -1,7 +1,8 @@
 
 Working To-Do:
 
-	debug console
+	-> FIX ALLOCATION PROFILING THREADING BUGS <-
+
 	serialization/deserialization
 	config format
 	user settings
@@ -26,7 +27,6 @@ Bugs:
 	allocation profiling is somewhat broken for asynchronous allocations: world & log
 	
 	SDL layer resets the cursor to pointer on every mouse move
-
 
 Large-Scale Improvements | Changes for Future Projects
 	rewrite metaprogram for robustness, possibly as a library/outputting a data format

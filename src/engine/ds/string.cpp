@@ -266,7 +266,7 @@ u32 _string_printf(string out, u32 idx, string fmt, bool size) { PROF
 				idx = out.write(idx, '%', size);
 				i++;
 			} else {
-				LOG_ERR("Missing parameter for string_printf!");
+				LOG_ERR("Missing parameter for string_printf!"_);
 				return idx;
 			}
 		} else {
@@ -764,7 +764,7 @@ u32 string::write_enum(u32 idx, void* val, _type_info* info, bool size) { PROF
 
 	_type_info* base = TYPEINFO_H(info->_enum.base_type);
 
-	if(!base) LOG_ERR_F("Enum % with unknown base type!", info->name);
+	if(!base) LOG_ERR_F("Enum % with unknown base type!"_, info->name);
 
 	i64 value = int_as_i64(val, base);
 	
@@ -964,7 +964,7 @@ u32 string::get_next_codepoint(u32* index) {
 		return codepoint;
 	}
 
-	LOG_FATAL_F("Invalid codepoint index % in %", *index, *this);
+	LOG_FATAL_F("Invalid codepoint index % in %"_, *index, *this);
 	return 0;
 }
 #endif
@@ -1039,9 +1039,55 @@ void string::destroy(allocator* a) { PROF
 	len = 0;
 }
 
+char uppercase(char c) { 
+
+	if(c >= 'a' && c <= 'z') return c - 'a' + 'A';
+	return c;
+}
+
+bool string::starts_with_insensitive(string prefix) { PROF
+
+	for(u32 i = 0; i < prefix.len; i++) {
+		if(uppercase(c_str[i]) != uppercase(prefix.c_str[i])) return false;
+	}
+	return true;
+}
+
+string string::first_word_no_term() { PROF
+
+	u32 i = 0;
+	for(; i < len; i++)
+		if(c_str[i] == ' ') break;
+
+	if(i == len) 
+		return substring(0, len - 2);
+
+	return substring(0, i > 0 ? i - 1 : 0);
+}
+
+string string::trim_first_word() { PROF
+
+	u32 i = 0;
+	for(; i < len; i++)
+		if(c_str[i] == ' ') break;
+
+	return substring(i < len ? i + 1 : i, len - 1);
+}
+
 string string::literal(const char* literal) { 
 
 	return string::from_c_str((char*)literal);
+}
+
+string string::from_c_str(char* begin, char* end) { 
+
+	string ret;
+
+	ret.c_str = begin;
+	ret.len = (u32)(end - begin);
+	ret.cap = (u32)(end - begin);
+
+	return ret;
 }
 
 string string::from_c_str(char* c_str) { 

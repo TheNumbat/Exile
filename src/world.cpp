@@ -31,7 +31,7 @@ void world::init(asset_store* store, allocator* a) { PROF
 
 	p.reset();
 
-	LOG_INFO_F("units_per_voxel: %", chunk::units_per_voxel);
+	LOG_INFO_F("units_per_voxel: %"_, chunk::units_per_voxel);
 	
 	{
 		sky.init();
@@ -44,7 +44,7 @@ void world::init(asset_store* store, allocator* a) { PROF
 
 	chunks = map<chunk_pos, chunk*>::make(512, a);
 
-	LOG_DEBUG_F("% logical cores % physical cores", global_api->get_num_cpus(), global_api->get_phys_cpus());
+	LOG_DEBUG_F("% logical cores % physical cores"_, global_api->get_num_cpus(), global_api->get_phys_cpus());
 
 	thread_pool = threadpool::make(a, eng->platform->get_phys_cpus() - 1);
 	thread_pool.start_all();

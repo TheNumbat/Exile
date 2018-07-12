@@ -43,7 +43,7 @@ void shader_source::load() { PROF
 	} while (error.error == PLATFORM_SHARING_ERROR && itr < 100000);
 
 	if(!error.good) {
-		LOG_ERR_F("Failed to load shader source %", path);
+		LOG_ERR_F("Failed to load shader source %"_, path);
 		CHECKED(close_file, &source_file);
 		return;
 	}
@@ -131,7 +131,7 @@ bool shader_program::check_compile(string name, GLuint shader) { PROF
 		char* msg = (char*)malloc(len);
 		glGetShaderInfoLog(shader, len, &len, msg);
 
-		LOG_WARN_F("Shader % failed to compile: %", name, string::from_c_str(msg));
+		LOG_WARN_F("Shader % failed to compile: %"_, name, string::from_c_str(msg));
 		free(msg, len);
 
 		return false;
@@ -198,7 +198,7 @@ void ogl_manager::gl_end_reload() { PROF
 
 	FORMAP(it, commands) {
 		if(!it->value.compat(&info)) {	
-			LOG_WARN_F("Render command % failed compatibility check!!!", it->key);
+			LOG_WARN_F("Render command % failed compatibility check!!!"_, it->key);
 			continue;
 		}
 
@@ -226,7 +226,7 @@ void ogl_manager::reload_texture_assets() { PROF
 void ogl_manager::try_reload_programs() { PROF
 	FORMAP(it, commands) {
 		if(it->value.shader.try_refresh()) {
-			LOG_DEBUG_F("Reloaded program % with files %, %", it->key, it->value.shader.vertex.path, it->value.shader.fragment.path);
+			LOG_DEBUG_F("Reloaded program % with files %, %"_, it->key, it->value.shader.vertex.path, it->value.shader.fragment.path);
 		}
 	}
 	dbg_shader.try_refresh();
@@ -249,7 +249,7 @@ ogl_manager ogl_manager::make(platform_window* win, allocator* a) { PROF
 
 	ret.load_global_funcs();
 	ret.info = ogl_info::make(ret.alloc);
-	LOG_DEBUG_F("GL %.% %", ret.info.major, ret.info.minor, ret.info.renderer);
+	LOG_DEBUG_F("GL %.% %"_, ret.info.major, ret.info.minor, ret.info.renderer);
 
 	ret.dbg_shader = shader_program::make("shaders/dbg.v"_,"shaders/dbg.f"_,FPTR(uniforms_dbg),a);
 
@@ -321,7 +321,7 @@ gpu_object* ogl_manager::select_object(gpu_object_id id) { PROF
 	gpu_object* obj = objects.try_get(id);
 
 	if(!obj) {
-		LOG_WARN_F("Failed to find object ID %!!!", id);
+		LOG_WARN_F("Failed to find object ID %!!!"_, id);
 		return null;
 	}
 
@@ -363,7 +363,7 @@ texture_id ogl_manager::add_texture_from_font(asset_store* as, string name, text
 
 	textures.insert(next_texture_id, t);
 
-	LOG_DEBUG_F("Created texture % from font asset %", next_texture_id, name);
+	LOG_DEBUG_F("Created texture % from font asset %"_, next_texture_id, name);
 
 	next_texture_id++;
 	return next_texture_id - 1;
@@ -378,7 +378,7 @@ texture_id ogl_manager::add_texture(asset_store* as, string name, texture_wrap w
 
 	textures.insert(next_texture_id, t);
 
-	LOG_DEBUG_F("Created texture % from bitmap asset %", next_texture_id, name);
+	LOG_DEBUG_F("Created texture % from bitmap asset %"_, next_texture_id, name);
 
 	next_texture_id++;
 	return next_texture_id - 1;
@@ -393,7 +393,7 @@ texture_id ogl_manager::add_cubemap(asset_store* as, string name) {
 
 	textures.insert(next_texture_id, t);
 
-	LOG_DEBUG_F("Created texture array %", next_texture_id);
+	LOG_DEBUG_F("Created cubemap %"_, next_texture_id);
 
 	next_texture_id++;
 	return next_texture_id - 1;
@@ -406,7 +406,7 @@ texture_id ogl_manager::begin_tex_array(iv3 dim, texture_wrap wrap, bool pixelat
 
 	textures.insert(next_texture_id, t);
 
-	LOG_DEBUG_F("Created texture array %", next_texture_id);
+	LOG_DEBUG_F("Created texture array %"_, next_texture_id);
 
 	next_texture_id++;
 	return next_texture_id - 1;
@@ -429,7 +429,7 @@ void ogl_manager::destroy_texture(texture_id id) { PROF
 	texture* t = textures.try_get(id);
 
 	if(!t) {
-		LOG_ERR_F("Failed to find texture %", id);
+		LOG_ERR_F("Failed to find texture %"_, id);
 		return;
 	}
 
@@ -445,7 +445,7 @@ texture* ogl_manager::select_texture(texture_id id) { PROF
 	texture* t = textures.try_get(id);
 
 	if(!t) {
-		LOG_ERR_F("Failed to retrieve texture %", id);
+		LOG_ERR_F("Failed to retrieve texture %"_, id);
 		return null;
 	}
 	
@@ -697,7 +697,7 @@ void texture::destroy(allocator* a) { PROF
 void ogl_manager::add_command(u16 id, _FPTR* run, string v, string f, _FPTR* uniforms, _FPTR* compat) { PROF
 
 	if(commands.try_get(id)) {
-		LOG_ERR_F("Render command id % already in use!!!", id);
+		LOG_ERR_F("Render command id % already in use!!!"_, id);
 		return;
 	}
 
@@ -706,13 +706,13 @@ void ogl_manager::add_command(u16 id, _FPTR* run, string v, string f, _FPTR* uni
 
 	if(!d.compat(&info)) {
 		
-		LOG_WARN_F("Render command % failed compatibility check!!!", id);
+		LOG_WARN_F("Render command % failed compatibility check!!!"_, id);
 		return;
 	}
 
 	d.run.set(run);
 	d.shader = shader_program::make(v, f, uniforms, alloc);
-	LOG_DEBUG_F("Loaded shader from % and %", v, f);
+	LOG_DEBUG_F("Loaded shader from % and %"_, v, f);
 
 	commands.insert(id, d);
 	return;
@@ -723,7 +723,7 @@ draw_context* ogl_manager::select_ctx(u16 id) { PROF
 	draw_context* d = commands.try_get(id);
 
 	if(!d) {
-		LOG_ERR_F("Failed to retrieve context %", id);
+		LOG_ERR_F("Failed to retrieve context %"_, id);
 		return null;
 	}
 
@@ -928,16 +928,16 @@ void debug_proc(gl_debug_source glsource, gl_debug_type gltype, GLuint id, gl_de
 
 	switch(severity) {
 	case gl_debug_severity::high:
-		LOG_ERR_F("HIGH OpenGL: % SOURCE: % TYPE: %", message, source, type);
+		LOG_ERR_F("HIGH OpenGL: % SOURCE: % TYPE: %"_, message, source, type);
 		break;
 	case gl_debug_severity::medium:
-		LOG_WARN_F("MED OpenGL: % SOURCE: % TYPE: %", message, source, type);
+		LOG_WARN_F("MED OpenGL: % SOURCE: % TYPE: %"_, message, source, type);
 		break;
 	case gl_debug_severity::low:
-		LOG_WARN_F("LOW OpenGL: % SOURCE: % TYPE: %", message, source, type);
+		LOG_WARN_F("LOW OpenGL: % SOURCE: % TYPE: %"_, message, source, type);
 		break;
 	case gl_debug_severity::notification:
-		// LOG_OGL_F("NOTF OpenGL: % SOURCE: % TYPE: %", message, source, type);
+		// LOG_OGL_F("NOTF OpenGL: % SOURCE: % TYPE: %"_, message, source, type);
 		break;
 	}
 }
@@ -986,9 +986,9 @@ bool ogl_info::check_version(i32 maj, i32 min) { PROF
 void ogl_manager::load_global_funcs() { PROF
 
 	#define GL_IS_LOAD(name) name = (glIs_t)global_api->get_glproc(#name##_); \
-							 if(!name) LOG_WARN_F("Failed to load GL function %", #name##_);
+							 if(!name) LOG_WARN_F("Failed to load GL function %"_, #name##_);
 	#define GL_LOAD(name) name = (name##_t)global_api->get_glproc(#name##_); \
-						  if(!name) LOG_WARN_F("Failed to load GL function %", #name##_);
+						  if(!name) LOG_WARN_F("Failed to load GL function %"_, #name##_);
 
 	GL_IS_LOAD(glIsTexture);
 	GL_IS_LOAD(glIsBuffer);
@@ -1064,7 +1064,7 @@ void ogl_manager::load_global_funcs() { PROF
 
 void ogl_manager::check_leaked_handles() {
 
-	#define GL_CHECK(type) if(glIs##type && glIs##type(i) == gl_bool::_true) { LOG_WARN_F("Leaked OpenGL handle % of type %", i, #type##_); leaked = true;}
+	#define GL_CHECK(type) if(glIs##type && glIs##type(i) == gl_bool::_true) { LOG_WARN_F("Leaked OpenGL handle % of type %"_, i, #type##_); leaked = true;}
 
 	bool leaked = false;
 	for(GLuint i = 0; i < 10000; i++) {
@@ -1088,14 +1088,14 @@ void ogl_manager::check_leaked_handles() {
 
 			string shader_str = string::from_c_str(shader);
 			
-			LOG_WARN_F("Leaked OpenGL shader %, source %", i, shader_str); 
+			LOG_WARN_F("Leaked OpenGL shader %, source %"_, i, shader_str); 
 
 			free(shader, shader_len);
 		}
 	}
 
 	if(!leaked) {
-		LOG_INFO("No OpenGL Objects Leaked!");
+		LOG_INFO("No OpenGL Objects Leaked!"_);
 	}
 
 	#undef GL_CHECK

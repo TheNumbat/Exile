@@ -226,7 +226,7 @@ i32 worker(void* data_) {
 	this_thread_data.profiling = false;
 	global_dbg->profiler.register_thread(10);
 	
-	LOG_DEBUG("Starting worker thread");
+	LOG_DEBUG("Starting worker thread"_);
 
 	do {
 		global_api->wait_semaphore(data->jobs_semaphore, -1);
@@ -259,7 +259,7 @@ i32 worker(void* data_) {
 		}
 	} while(data->online);
 
-	LOG_DEBUG("Ending worker thread");
+	LOG_DEBUG("Ending worker thread"_);
 	end_thread();
 
 	return 0;

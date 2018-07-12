@@ -79,7 +79,7 @@ T stack<T>::pop() { PROF
 		return ret;	
 	}
 
-	LOG_FATAL("Trying to pop empty stack!");
+	LOG_FATAL("Trying to pop empty stack!"_);
 	T ret = {};
 	return ret;
 }
@@ -92,7 +92,7 @@ T* stack<T>::top() { PROF
 		return contents.back();
 	}
 
-	LOG_FATAL("Trying to get top of empty stack!");
+	LOG_FATAL("Trying to get top of empty stack!"_);
 	return null;
 }
 

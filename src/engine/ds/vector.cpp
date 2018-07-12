@@ -256,7 +256,7 @@ inline T* vector<T>::get(u32 idx) {
 		return memory + idx;
 	} else {
 		
-		LOG_FATAL_F("out of bounds, % < 0 || % >= %", idx, idx, capacity);
+		LOG_FATAL_F("out of bounds, % < 0 || % >= %"_, idx, idx, capacity);
 		return null;
 	}
 #else
@@ -382,7 +382,7 @@ T* vector<T>::front() { PROF
 		return memory;
 	}
 
-	LOG_FATAL("Trying to get empty vector front!");
+	LOG_FATAL("Trying to get empty vector front!"_);
 	return null;
 }
 
@@ -394,7 +394,7 @@ T* vector<T>::back() { PROF
 		return memory + size - 1;
 	}
 
-	LOG_FATAL("Trying to get empty vector back!");
+	LOG_FATAL("Trying to get empty vector back!"_);
 	return null;
 }
 
@@ -410,10 +410,10 @@ void vector<T>::erase(u32 index, u32 num) { PROF
 
 			size -= num;
 		} else {
-			LOG_FATAL_F("vector_erase out of bounds % < 0 || % >= %", index, index, capacity);
+			LOG_FATAL_F("vector_erase out of bounds % < 0 || % >= %"_, index, index, capacity);
 		}
 	} else {
-		LOG_FATAL_F("vector_erase trying to erase % elements, % left", num, size);
+		LOG_FATAL_F("vector_erase trying to erase % elements, % left"_, num, size);
 	}
 #else
 	for(u32 i = index + num; i < size; i++) {

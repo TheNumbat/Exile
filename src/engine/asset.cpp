@@ -30,7 +30,7 @@ asset* asset_store::get(string name) { PROF
 	asset* a = assets.try_get(name);
 
 	if(!a) {
-		LOG_ERR_F("Failed to get asset %", name);
+		LOG_ERR_F("Failed to get asset %"_, name);
 		return null;
 	}
 
@@ -97,7 +97,7 @@ bool asset_store::try_reload() { PROF
 
 		load(path);
 
-		LOG_DEBUG_F("Reloaded asset store from %", path);
+		LOG_DEBUG_F("Reloaded asset store from %"_, path);
 
 		return true;
 	}
@@ -117,7 +117,7 @@ void asset_store::load(string file) { PROF
 	} while(error.error == PLATFORM_SHARING_ERROR && itr < 100000);
 
 	if(!error.good) {
-		LOG_ERR_F("Failed to open asset store %, error %", file, error.error);
+		LOG_ERR_F("Failed to open asset store %, error %"_, file, error.error);
 		CHECKED(close_file, &store_file);
 		return;
 	}
@@ -190,11 +190,11 @@ void asset_store::load(string file) { PROF
 
 			} else {
 
-				LOG_ERR_F("Unrecognized asset type %!", current_asset->type);
+				LOG_ERR_F("Unrecognized asset type %!"_, current_asset->type);
 				break;
 			}
 
-			LOG_DEBUG_F("Loaded asset % of type % from store %", a.name, a.type, file);
+			LOG_DEBUG_F("Loaded asset % of type % from store %"_, a.name, a.type, file);
 			current_asset = (file_asset_header*)((u8*)current_asset + current_asset->next);
 		}
 

@@ -51,21 +51,51 @@ void dbg_value_store::destroy() { PROF
 	value_store.destroy(alloc);
 }
 
-dbg_console dbg_console::make(allocator* alloc) { PROF
+void dbg_console::add_command(string input, _FPTR* func, void* param) { PROF
 
-	dbg_console ret;
+	console_cmd cmd;
+	cmd.func.set(func);
+	cmd.param = param;
 
-	ret.alloc = alloc;
-	ret.lines = queue<console_msg>::make(4096, alloc);
-	global_api->create_mutex(&ret.lines_mut, false);
+	string name = string::make(input.len - 1, alloc);
+	name.len = name.cap;
+	_memcpy(input.c_str, name.c_str, name.len);
 
-	return ret;
+	commands.insert(name, cmd);
+}
+
+CALLBACK void console_cmd_clear(string, void* data) {
+
+	dbg_console* console = (dbg_console*)data;
+
+	FORQ_BEGIN(it, console->lines) {
+		it->msg.destroy(console->alloc);
+	} FORQ_END(it, console->lines);
+	console->lines.clear();
+}
+
+void dbg_console::init(allocator* a) { PROF
+
+	alloc = a;
+	lines = queue<console_msg>::make(4096, alloc);
+	commands = map<string, console_cmd>::make(128, alloc);
+	candidates = vector<string>::make(32, alloc);
+
+	add_command("clear"_, FPTR(console_cmd_clear), this);
+
+	global_api->create_mutex(&lines_mut, false);
 }
 
 void dbg_console::destroy() { PROF
 
 	// imgui pls
 	filter.Filters.~ImVector<ImGuiTextFilter::TextRange>();
+
+	FORMAP(it, commands) {
+		it->key.destroy(alloc);
+	}
+	commands.destroy();
+	candidates.destroy();
 
 	FORQ_BEGIN(it, lines) {
 		it->msg.destroy(alloc);
@@ -74,15 +104,11 @@ void dbg_console::destroy() { PROF
 	global_api->destroy_mutex(&lines_mut);
 }
 
-dbg_manager dbg_manager::make(allocator* alloc) { PROF
+void dbg_manager::init(allocator* alloc) { PROF
 
-	dbg_manager ret;
-
-	ret.console = dbg_console::make(alloc);
-	ret.store = dbg_value_store::make(alloc);
-	ret.profiler = dbg_profiler::make(alloc);
-
-	return ret;
+	console.init(alloc);
+	store = dbg_value_store::make(alloc);
+	profiler = dbg_profiler::make(alloc);
 }
 
 void dbg_manager::toggle_profile() { PROF
@@ -136,10 +162,10 @@ void dbg_profiler::print_remaining() { PROF
 
 	alloc_profile totals = get_totals();
 	
-	LOG_INFO_F("% allocations remaining at debug shutdown", totals.num_allocs - totals.num_frees);
+	LOG_INFO_F("% allocations remaining at debug shutdown"_, totals.num_allocs - totals.num_frees);
 	FORMAP(it, alloc_stats) {
 		FORMAP(a, it->value->current_set) {
-			LOG_DEBUG_F("\t% bytes in % @ %:%", a->value.size, it->key.name(), a->value.last_loc.file(), a->value.last_loc.line);
+			LOG_DEBUG_F("\t% bytes in % @ %:%"_, a->value.size, it->key.name(), a->value.last_loc.file(), a->value.last_loc.line);
 		}
 	}
 }
@@ -275,6 +301,69 @@ i32 dbg_console_text_edit(ImGuiTextEditCallbackData* data) { PROF
 
 void dbg_console::on_text_edit(ImGuiTextEditCallbackData* data) { PROF
 
+	switch(data->EventFlag) {
+	case ImGuiInputTextFlags_CallbackCompletion: {
+
+		// Find beginning of current word
+		char* end = data->Buf + data->CursorPos;
+		char* begin = end;
+		while(begin > data->Buf) {
+			char c = begin[-1];
+			if (c == ' ' || c == '\t' || c == ',' || c == ';') break;
+			begin--;
+		}
+		string word = string::from_c_str(begin, end);
+
+		candidates.clear();
+
+		FORMAP(it, commands) {
+			if(it->key.starts_with_insensitive(word)) {
+				candidates.push(it->key);
+			}
+		}
+
+		if(candidates.size == 1) {
+            
+            data->DeleteChars((i32)(begin - data->Buf), (i32)(end - begin));
+            data->InsertChars(data->CursorPos, candidates[0].c_str);
+            data->InsertChars(data->CursorPos, " ");
+
+		} else if(candidates.size > 1) {
+			
+			i32 len = word.len;
+			for(;;) {
+				char cur_char = 0;
+				bool all_match = true;
+
+				for(u32 i = 0; i < candidates.size; i++) {
+					if(i == 0) {
+						
+						cur_char = uppercase(candidates[i].c_str[len]);
+
+					} else if(cur_char == 0 || cur_char != uppercase(candidates[i].c_str[len])) {
+
+						all_match = false;
+					}
+				}
+
+				if(!all_match) break;
+				len++;
+			}
+
+			if(len > 0) {
+                data->DeleteChars((i32)(begin - data->Buf), (i32)(end - begin));
+                data->InsertChars(data->CursorPos, candidates[0].c_str, candidates[0].c_str + len);
+			}
+		}
+
+	} break;
+	case ImGuiInputTextFlags_CallbackCharFilter: {
+		if(data->EventChar == ' ') candidates.clear();
+	} break;
+	case ImGuiInputTextFlags_CallbackHistory: {
+
+	} break;
+	}
 }
 
 void dbg_console::add_console_msg(string line) { PROF
@@ -284,11 +373,25 @@ void dbg_console::add_console_msg(string line) { PROF
 	lines.push(msg);
 }
 
+void dbg_console::exec_command(string input) { PROF 
+
+	string name = input.first_word_no_term();
+	if(!name.len) return;
+
+	console_cmd* cmd = commands.try_get(name);
+
+	if(!cmd) {
+		add_console_msg(input);
+		return;
+	}
+
+	cmd->func(input.trim_first_word(), cmd->param);
+}
+
 void dbg_console::UI(platform_window* window) { PROF
 
 	/* TODO
 		Command History
-		Actually running commands
 	*/
 
 	f32 w, h;
@@ -329,6 +432,8 @@ void dbg_console::UI(platform_window* window) { PROF
 				ImGui::TextUnformatted(output);
 				ImGui::PopStyleColor();
 			}
+
+			output.destroy();
 		}
 	
 	} FORQ_END(it, lines);
@@ -355,11 +460,13 @@ void dbg_console::UI(platform_window* window) { PROF
 	ImGui::SetColumnWidth(3, w * 0.15f);
 
 	bool reclaim_focus = false;
-	if(ImGui::InputText("Input", input_buffer, 1024, ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CallbackCompletion | ImGuiInputTextFlags_CallbackHistory, &dbg_console_text_edit, this)) {
+	if(ImGui::InputText("Input", input_buffer, 1024, ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CallbackCharFilter | 
+						ImGuiInputTextFlags_CallbackCompletion | ImGuiInputTextFlags_CallbackHistory, &dbg_console_text_edit, this)) {
 		
 		string input = string::from_c_str(input_buffer);
 		if (input.len) {
-		    add_console_msg(input);
+		    candidates.clear();
+		    exec_command(input);
 		    scroll_bottom = true;
 		}
 		_memset(input_buffer, 1024, 0);
@@ -369,6 +476,8 @@ void dbg_console::UI(platform_window* window) { PROF
 	ImGui::SetItemDefaultFocus();
 	if (reclaim_focus)
 	    ImGui::SetKeyboardFocusHere(-1);
+
+	bool focused = ImGui::IsItemActive();
 
 	ImGui::NextColumn();
 
@@ -398,6 +507,20 @@ void dbg_console::UI(platform_window* window) { PROF
 
 	ImGui::Columns(1);
 	ImGui::End();
+
+	if(!focused) {
+		candidates.clear();
+	}
+	if(focused && candidates.size > 1) {
+		f32 tip_height = (candidates.size + 1) * (ImGui::GetStyle().ItemSpacing.y + ImGui::GetFrameHeightWithSpacing());
+		ImGui::SetNextWindowPos({0, h - tip_height});
+		ImGui::SetNextWindowFocus();
+		ImGui::Begin("Completions", null, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoInputs);
+		FORVEC(it, candidates) {
+			ImGui::TextUnformatted(*it);
+		}
+		ImGui::End();
+	}
 }
 
 void dbg_profiler::UI(platform_window* window) { PROF

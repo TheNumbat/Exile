@@ -181,7 +181,7 @@ namespace ImGui {
 				} else if(info->size == 8) {
 					InputScalar(label, ImGuiDataType_S64, val);
 				} else {
-					LOG_ERR("Edit int not 32/64 bit!");
+					LOG_ERR("Edit int not 32/64 bit!"_);
 				}
 			} else {
 				if(info->size == 4) {
@@ -189,7 +189,7 @@ namespace ImGui {
 				} else if(info->size == 8) {
 					InputScalar(label, ImGuiDataType_U64, val);
 				} else {
-					LOG_ERR("Edit int not 32/64 bit!");
+					LOG_ERR("Edit int not 32/64 bit!"_);
 				}
 			}
 		} break;
