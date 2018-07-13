@@ -741,6 +741,7 @@ DLL_IMPORT void glScissor(GLint x, GLint y, GLsizei width, GLsizei height);
 DLL_IMPORT void glCullFace(gl_cull_mode mode);
 DLL_IMPORT void glPolygonMode(gl_poly face, gl_poly_mode mode);
 DLL_IMPORT void glLineWidth(GLfloat width);
+DLL_IMPORT void glPointSize(GLfloat width);
 
 typedef gl_bool (*glIs_t)(GLuint handle);
 typedef void (*glMinSampleShading_t)(GLfloat value);

@@ -7,11 +7,11 @@ Working To-Do:
 	config format
 	user settings
 
-	time-based skybox & blending
-	sun/moon objects
+	sun/moon/stars
 	directional/sun lighting
 
 	lighting
+	distance based fog
 	consolidate shaders?
 	framebuffer objects (msaa + effects)
 	shadow mapping

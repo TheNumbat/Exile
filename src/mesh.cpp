@@ -1,87 +1,108 @@
 
 void setup_mesh_commands() { PROF
-	eng->ogl.add_command((u16)mesh_cmd::_2d_col, FPTR(run_mesh_2d_col), "shaders/mesh/2d_col.v"_, "shaders/mesh/2d_col.f"_, FPTR(uniforms_mesh_2d_col), FPTR(compat_mesh_2d_col));
-	eng->ogl.add_command((u16)mesh_cmd::_2d_tex, FPTR(run_mesh_2d_tex), "shaders/mesh/2d_tex.v"_, "shaders/mesh/2d_tex.f"_, FPTR(uniforms_mesh_2d_tex), FPTR(compat_mesh_2d_tex));
-	eng->ogl.add_command((u16)mesh_cmd::_2d_tex_col, FPTR(run_mesh_2d_tex_col), "shaders/mesh/2d_tex_col.v"_, "shaders/mesh/2d_tex_col.f"_, FPTR(uniforms_mesh_2d_tex_col), FPTR(compat_mesh_2d_tex_col));
-	eng->ogl.add_command((u16)mesh_cmd::_3d_tex, FPTR(run_mesh_3d_tex), "shaders/mesh/3d_tex.v"_, "shaders/mesh/3d_tex.f"_, FPTR(uniforms_mesh_3d_tex), FPTR(compat_mesh_3d_tex));
-	eng->ogl.add_command((u16)mesh_cmd::_3d_tex_instanced, FPTR(run_mesh_3d_tex_instanced), "shaders/mesh/3d_tex_instanced.v"_, "shaders/mesh/3d_tex_instanced.f"_, FPTR(uniforms_mesh_3d_tex_instanced), FPTR(compat_mesh_3d_tex_instanced));
-	eng->ogl.add_command((u16)mesh_cmd::lines, FPTR(run_mesh_lines), "shaders/lines.v"_, "shaders/lines.f"_, FPTR(uniforms_mesh_lines), FPTR(compat_mesh_lines));
-	eng->ogl.add_command((u16)mesh_cmd::chunk, FPTR(run_mesh_chunk), "shaders/chunk.v"_, "shaders/chunk.f"_, FPTR(uniforms_mesh_chunk), FPTR(compat_mesh_chunk));
-	eng->ogl.add_command((u16)mesh_cmd::cubemap, FPTR(run_mesh_cubemap), "shaders/cubemap.v"_, "shaders/cubemap.f"_, FPTR(uniforms_mesh_cubemap), FPTR(compat_mesh_cubemap));
+	
+	register_mesh(lines);
+	register_mesh(chunk);
+	register_mesh(cubemap);
+	register_mesh(skydome);
+
+	register_mesh_ex(_2d_col, 2d_col, "mesh/");
+	register_mesh_ex(_2d_tex, 2d_tex, "mesh/");
+	register_mesh_ex(_2d_tex_col, 2d_tex_col, "mesh/");
+	register_mesh_ex(_3d_tex, 3d_tex, "mesh/");
+	register_mesh_ex(_3d_tex_instanced, 3d_tex_instanced, "mesh/");
 }
 
-CALLBACK void uniforms_mesh_cubemap(shader_program* prog, render_command* cmd, render_command_list* rcl) { PROF
+CALLBACK void uniforms_mesh_skydome(shader_program* prog, render_command* cmd) { PROF
+
+	world_time* time = (world_time*)cmd->uniform_info;
+
+	GLint tloc = glGetUniformLocation(prog->handle, "transform");
+	GLint dloc = glGetUniformLocation(prog->handle, "day_01");
+
+	m4 transform = cmd->proj * cmd->view * cmd->model;
+
+	glUniformMatrix4fv(tloc, 1, gl_bool::_false, transform.a);
+	glUniform1f(dloc, time->day_01());
+}
+
+CALLBACK void uniforms_mesh_cubemap(shader_program* prog, render_command* cmd) { PROF
 
 	GLint loc = glGetUniformLocation(prog->handle, "transform");
 
-	m4 transform = rcl->proj * rcl->view * cmd->model;
+	m4 transform = cmd->proj * cmd->view * cmd->model;
 
 	glUniformMatrix4fv(loc, 1, gl_bool::_false, transform.a);
 }
 
-CALLBACK void uniforms_mesh_chunk(shader_program* prog, render_command* cmd, render_command_list* rcl) { PROF
+CALLBACK void uniforms_mesh_chunk(shader_program* prog, render_command* cmd) { PROF
 
 	GLint loc = glGetUniformLocation(prog->handle, "transform");
 	GLint szloc = glGetUniformLocation(prog->handle, "units_per_voxel");
 
-	m4 transform = rcl->proj * rcl->view * cmd->model;
+	m4 transform = cmd->proj * cmd->view * cmd->model;
 
 	glUniformMatrix4fv(loc, 1, gl_bool::_false, transform.a);
 	glUniform1f(szloc, (f32)chunk::units_per_voxel);
 }
 
-CALLBACK void uniforms_mesh_2d_col(shader_program* prog, render_command* cmd, render_command_list* rcl) { PROF
+CALLBACK void uniforms_mesh_2d_col(shader_program* prog, render_command* cmd) { PROF
 
 	GLint loc = glGetUniformLocation(prog->handle, "transform");
 
-	m4 transform = rcl->proj * rcl->view * cmd->model;
+	m4 transform = cmd->proj * cmd->view * cmd->model;
 
 	glUniformMatrix4fv(loc, 1, gl_bool::_false, transform.a);
 }
 
-CALLBACK void uniforms_mesh_2d_tex(shader_program* prog, render_command* cmd, render_command_list* rcl) { PROF
+CALLBACK void uniforms_mesh_2d_tex(shader_program* prog, render_command* cmd) { PROF
 
 	GLint loc = glGetUniformLocation(prog->handle, "transform");
 
-	m4 transform = rcl->proj * rcl->view * cmd->model;
+	m4 transform = cmd->proj * cmd->view * cmd->model;
 
 	glUniformMatrix4fv(loc, 1, gl_bool::_false, transform.a);
 }
 
-CALLBACK void uniforms_mesh_2d_tex_col(shader_program* prog, render_command* cmd, render_command_list* rcl) { PROF
+CALLBACK void uniforms_mesh_2d_tex_col(shader_program* prog, render_command* cmd) { PROF
 
 	GLint loc = glGetUniformLocation(prog->handle, "transform");
 
-	m4 transform = rcl->proj * rcl->view * cmd->model;
+	m4 transform = cmd->proj * cmd->view * cmd->model;
 
 	glUniformMatrix4fv(loc, 1, gl_bool::_false, transform.a);
 }
 
-CALLBACK void uniforms_mesh_3d_tex(shader_program* prog, render_command* cmd, render_command_list* rcl) { PROF
+CALLBACK void uniforms_mesh_3d_tex(shader_program* prog, render_command* cmd) { PROF
 	
 	GLint loc = glGetUniformLocation(prog->handle, "transform");
 
-	m4 transform = rcl->proj * rcl->view * cmd->model;
+	m4 transform = cmd->proj * cmd->view * cmd->model;
 
 	glUniformMatrix4fv(loc, 1, gl_bool::_false, transform.a);
 }
 
-CALLBACK void uniforms_mesh_lines(shader_program* prog, render_command* cmd, render_command_list* rcl) { PROF
+CALLBACK void uniforms_mesh_lines(shader_program* prog, render_command* cmd) { PROF
 	
 	GLint loc = glGetUniformLocation(prog->handle, "transform");
 
-	m4 transform = rcl->proj * rcl->view * cmd->model;
+	m4 transform = cmd->proj * cmd->view * cmd->model;
 
 	glUniformMatrix4fv(loc, 1, gl_bool::_false, transform.a);
 }
 
-CALLBACK void uniforms_mesh_3d_tex_instanced(shader_program* prog, render_command* cmd, render_command_list* rcl) { PROF
+CALLBACK void uniforms_mesh_3d_tex_instanced(shader_program* prog, render_command* cmd) { PROF
 	
 	GLint loc = glGetUniformLocation(prog->handle, "transform");
 
-	m4 transform = rcl->proj * rcl->view * cmd->model;
+	m4 transform = cmd->proj * cmd->view * cmd->model;
 
 	glUniformMatrix4fv(loc, 1, gl_bool::_false, transform.a);
+}
+
+CALLBACK void update_mesh_skydome(gpu_object* obj, void* data, bool force) { PROF
+
+	update_mesh_3d_tex(obj, data, force);
 }
 
 CALLBACK void update_mesh_cubemap(gpu_object* obj, void* data, bool force) { PROF
@@ -212,6 +233,11 @@ CALLBACK void update_mesh_3d_tex_instanced(gpu_object* obj, void* d, bool force)
 	data->dirty = false;
 }
 
+CALLBACK void run_mesh_skydome(render_command* cmd, gpu_object* gpu) { PROF
+
+	run_mesh_3d_tex(cmd, gpu);
+}
+
 CALLBACK void run_mesh_cubemap(render_command* cmd, gpu_object* gpu) { PROF
 
 	glDrawArrays(gl_draw_mode::triangles, 0, 36);
@@ -274,6 +300,10 @@ CALLBACK void run_mesh_3d_tex_instanced(render_command* cmd, gpu_object* gpu) { 
 	glDrawElementsInstancedBaseVertex(gl_draw_mode::triangles, num_tris, gl_index_type::unsigned_int, (void*)(u64)(0), data->instances, cmd->offset);
 }
 
+CALLBACK bool compat_mesh_skydome(ogl_info* info) { PROF
+	return info->check_version(3, 2);
+}
+
 CALLBACK bool compat_mesh_cubemap(ogl_info* info) { PROF
 	return info->check_version(3, 2);
 }
@@ -304,6 +334,11 @@ CALLBACK bool compat_mesh_lines(ogl_info* info) { PROF
 
 CALLBACK bool compat_mesh_3d_tex_instanced(ogl_info* info) { PROF
 	return info->check_version(3, 3);
+}
+
+CALLBACK void setup_mesh_skydome(gpu_object* obj) { PROF
+
+	setup_mesh_3d_tex(obj);
 }
 
 CALLBACK void setup_mesh_cubemap(gpu_object* obj) { PROF
@@ -734,6 +769,50 @@ f32 mesh_2d_tex_col::push_text_line(asset* font, string text_utf8, v2 pos, f32 p
 
 	dirty = true;
 	return scale * font->raster_font.linedist;
+}
+
+v2 sphere_uv(v3 pos) { PROF 
+	return v2(atan2(pos.z, pos.x) / (PI32 * 2.0f) + 0.5f, pos.y * 0.5f + 0.5f);
+}
+
+// Concept from https://github.com/fogleman/Craft
+void mesh_3d_tex::push_dome(v3 center, f32 r, i32 divisions) { PROF
+
+	i32 p_divisions = divisions / 2 + 1;
+	i32 total = divisions * p_divisions;
+
+	f32 th = 0.0f;
+	for(i32 i = 0; i < divisions; i++) {
+
+		f32 ph = 0.0f;
+		for(i32 j = 0; j < p_divisions; j++) {
+
+			f32 ct = cos(th), st = sin(th), sp = sin(ph), cp = cos(ph);
+			v3 point = v3(r * ct * sp, r * cp, r * st * sp);
+			
+			vertices.push(center + point);
+			texCoords.push(v2(0.0f, (0.5f * cp) + 0.5f));
+
+			ph += (PI32 * 2.0f) / divisions;
+		}
+
+		th += (PI32 * 2.0f) / divisions;
+	}
+
+	for (int x = 0; x < divisions; x++) {
+		for (int y = 0; y < p_divisions - 1; y++) {
+			GLuint idx = x * p_divisions + y;
+
+			i32 idx1 = (idx + 1) % total;
+			i32 idxp = (idx + p_divisions) % total;
+			i32 idxp1 = (idx + p_divisions + 1) % total;
+
+			elements.push(uv3(idx, idx1, idxp));
+			elements.push(uv3(idx1, idxp, idxp1));
+		}
+	}
+
+	dirty = true;
 }
 
 void mesh_3d_tex::push_cube(v3 pos, f32 len) {

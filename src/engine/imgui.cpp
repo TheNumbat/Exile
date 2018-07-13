@@ -92,7 +92,27 @@ namespace ImGui {
 
 		switch(info->type_type) {
 		case Type::_int: {
-			Text("%d", int_as_i64(val, info));
+			if(info->_int.is_signed) {
+				if(info->size == 1) {
+					Text("%hh", *(i8*)val);
+				} else if(info->size == 2) {
+					Text("%h", *(i16*)val);
+				} else if(info->size == 4) {
+					Text("%d", *(i32*)val);
+				} else if(info->size == 8) {
+					Text("%ll", *(i64*)val);
+				}
+			} else {
+				if(info->size == 1) {
+					Text("%hhu", *(u8*)val);
+				} else if(info->size == 2) {
+					Text("%hu", *(u16*)val);
+				} else if(info->size == 4) {
+					Text("%u", *(u32*)val);
+				} else if(info->size == 8) {
+					Text("%llu", *(u64*)val);
+				}
+			}
 		} break;
 
 		case Type::_float: {

@@ -35,7 +35,8 @@ void world::init(asset_store* store, allocator* a) { PROF
 	
 	{
 		sky.init();
-		sky_texture = eng->ogl.add_cubemap(store, "stars"_);
+		sky.push_dome({}, 1.0f, 64);
+		sky_texture = eng->ogl.add_texture(store, "sky"_, texture_wrap::mirror);
 
 		block_textures = eng->ogl.begin_tex_array(iv3(32, 32, (i32)NUM_BLOCKS), texture_wrap::repeat, true, 1);
 		eng->ogl.push_tex_array(block_textures, store, "bedrock"_);
@@ -51,7 +52,7 @@ void world::init(asset_store* store, allocator* a) { PROF
 
 	{
 		eng->dbg.store.add_var("world/settings"_, &settings);
-		eng->dbg.store.add_val("world/time"_, &time);
+		eng->dbg.store.add_var("world/time"_, &time);
 		eng->dbg.store.add_ele("world/ui"_, FPTR(world_debug_ui), this);
 
 		eng->dbg.store.add_var("player/cam"_, &p.camera);
@@ -61,8 +62,8 @@ void world::init(asset_store* store, allocator* a) { PROF
 		eng->dbg.store.add_ele("player/inter"_, FPTR(player_debug_ui), this);
 	}
 
-	last_update = global_api->get_perfcount();
-	time = global_api->get_perfcount();
+	time.last_update = global_api->get_perfcount();
+	time.absolute = global_api->get_perfcount();
 }
 
 void world::destroy_chunks() { PROF 
@@ -117,14 +118,43 @@ v3 world::raymarch(v3 pos3, v3 dir3, f32 max) { PROF
 	return pos.xyz + dir.xyz * max;
 }
 
+f32 world_time::day_01() { PROF 
+
+	return (hour + (minute / 60.0f)) / 24.0f;
+}
+
+void world_time::update(u64 now) { PROF 
+
+	if(enable) {
+
+		u64 rel_abs = now - last_update;
+		absolute += rel_abs;
+		
+		f64 rel_ms = 1000.0f * rel_abs / global_api->get_perfcount_freq();
+		absolute_ms += rel_ms;
+		minute_ms += rel_ms;
+
+		f64 ms_per_min = 1000.0f / time_scale;
+
+		while(minute_ms >= ms_per_min) {
+			minute_ms -= ms_per_min;
+			minute++;
+		}
+		while(minute >= 60) {
+			minute -= 60;
+			hour++;
+		}
+		while(hour >= 24) {
+			hour -= 24;
+			day++;
+		}
+	}
+	last_update = now;
+}
+
 void world::update(u64 now) { PROF
 
-	if(settings.time) {
-		time += now - last_update;
-	}
-	
-	last_update = now;
-
+	time.update(now);
 	update_player(now);
 }
 
@@ -202,13 +232,15 @@ void world::render_sky() { PROF
 
 	render_command_list rcl = render_command_list::make();
 
-	render_command cmd = render_command::make((u16)mesh_cmd::cubemap, sky.gpu);
+	render_command cmd = render_command::make((u16)mesh_cmd::skydome, sky.gpu);
+
+	cmd.uniform_info = &time;
 	cmd.texture = sky_texture;
 
-	rcl.add_command(cmd);
+	cmd.view = p.camera.view_no_translate();
+	cmd.proj = proj(p.camera.fov, (f32)eng->window.settings.w / (f32)eng->window.settings.h, 0.01f, 2000.0f);
 
-	rcl.view = p.camera.view_no_translate();
-	rcl.proj = proj(p.camera.fov, (f32)eng->window.settings.w / (f32)eng->window.settings.h, 0.01f, 2000.0f);
+	rcl.add_command(cmd);
 
 	eng->ogl.execute_command_list(&rcl);
 
@@ -276,12 +308,12 @@ void world::render_chunks() { PROF
 			cmd.callback.set(FPTR(unlock_chunk));
 			cmd.param = c;
 
+			cmd.view = p.camera.view_pos_origin();
+			cmd.proj = proj(p.camera.fov, (f32)eng->window.settings.w / (f32)eng->window.settings.h, 0.01f, 2000.0f);
+
 			rcl.add_command(cmd);
 		}
 	}
-
-	rcl.view = p.camera.view_pos_origin();
-	rcl.proj = proj(p.camera.fov, (f32)eng->window.settings.w / (f32)eng->window.settings.h, 0.01f, 2000.0f);
 
 	rcl.pop_settings();
 
@@ -307,9 +339,9 @@ void world::render_player() { PROF
 
 		render_command cmd = render_command::make((u16)mesh_cmd::lines, lines.gpu);
 
+		cmd.view = cam.view();
+		cmd.proj = proj(cam.fov, (f32)eng->window.settings.w / (f32)eng->window.settings.h, 0.01f, 2000.0f);
 		rcl.add_command(cmd);
-		rcl.view = cam.view();
-		rcl.proj = proj(cam.fov, (f32)eng->window.settings.w / (f32)eng->window.settings.h, 0.01f, 2000.0f);
 
 		eng->ogl.execute_command_list(&rcl);
 		lines.destroy();
@@ -326,12 +358,12 @@ void world::render_player() { PROF
 		crosshair.push_rect(r2(w / 2.0f - 1.0f, h / 2.0f - 5.0f, 2.0f, 10.0f), WHITE);
 
 		render_command cmd = render_command::make((u16)mesh_cmd::_2d_col, crosshair.gpu);
+		cmd.proj = ortho(0, w, h, 0, -1, 1);
 
 		rcl.push_settings();
 		rcl.set_setting(render_setting::depth_test, false);
 		rcl.pop_settings();
 		rcl.add_command(cmd);
-		rcl.proj = ortho(0, w, h, 0, -1, 1);
 
 		eng->ogl.execute_command_list(&rcl);
 		crosshair.destroy();

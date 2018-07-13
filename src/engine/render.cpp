@@ -689,7 +689,9 @@ void texture::reload_data() {
 
 void texture::destroy(allocator* a) { PROF
 
-	array_info.assets.destroy();
+	if(type == texture_type::array) {
+		array_info.assets.destroy();
+	}
 
 	gl_destroy();
 }
@@ -803,7 +805,7 @@ void ogl_manager::execute_command_list(render_command_list* rcl) { PROF
 
 			draw_context* d = select_ctx(cmd->cmd);
 
-			d->shader.send_uniforms(&d->shader, cmd, rcl);
+			d->shader.send_uniforms(&d->shader, cmd);
 			d->run(cmd, obj);
 		} break;
 		}
@@ -1148,8 +1150,6 @@ render_command_list render_command_list::make(allocator* alloc, u32 cmds) { PROF
 void render_command_list::clear() { PROF
 
 	commands.clear();
-	view = m4::I;
-	proj = m4::I;
 }
 
 void render_command_list::destroy() { PROF

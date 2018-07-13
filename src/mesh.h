@@ -7,7 +7,8 @@ enum class mesh_cmd : u16 {
 	_3d_tex_instanced,
 	lines,
 	cubemap,
-	chunk
+	chunk,
+	skydome
 };
 
 struct chunk_vertex {
@@ -165,6 +166,7 @@ struct mesh_3d_tex {
 	bool empty();
 
 	void push_cube(v3 pos, f32 len);
+	void push_dome(v3 center, f32 r, i32 divisions);
 };
 
 struct mesh_3d_tex_instance_data {
@@ -183,49 +185,29 @@ struct mesh_3d_tex_instance_data {
 	bool empty();
 };
 
+v2 sphere_uv(v3 pos);
+
 void setup_mesh_commands();
 
-CALLBACK void uniforms_mesh_cubemap(shader_program* prog, render_command* cmd, render_command_list* rcl);
-CALLBACK void uniforms_mesh_chunk(shader_program* prog, render_command* cmd, render_command_list* rcl);
-CALLBACK void uniforms_mesh_2d_col(shader_program* prog, render_command* cmd, render_command_list* rcl);
-CALLBACK void uniforms_mesh_2d_tex(shader_program* prog, render_command* cmd, render_command_list* rcl);
-CALLBACK void uniforms_mesh_2d_tex_col(shader_program* prog, render_command* cmd, render_command_list* rcl);
-CALLBACK void uniforms_mesh_3d_tex(shader_program* prog, render_command* cmd, render_command_list* rcl);
-CALLBACK void uniforms_mesh_3d_tex_instanced(shader_program* prog, render_command* cmd, render_command_list* rcl);
-CALLBACK void uniforms_mesh_lines(shader_program* prog, render_command* cmd, render_command_list* rcl);
+#define decl_mesh(name) \
+	CALLBACK void uniforms_mesh_##name(shader_program* prog, render_command* cmd); 	\
+	CALLBACK void setup_mesh_##name(gpu_object* obj); 								\
+	CALLBACK void update_mesh_##name(gpu_object* obj, void* data, bool force);		\
+	CALLBACK void run_mesh_##name(render_command* cmd, gpu_object* gpu);			\
+	CALLBACK bool compat_mesh_##name(ogl_info* info);
 
-CALLBACK void setup_mesh_cubemap(gpu_object* obj);
-CALLBACK void setup_mesh_chunk(gpu_object* obj);
-CALLBACK void setup_mesh_2d_col(gpu_object* obj);
-CALLBACK void setup_mesh_2d_tex(gpu_object* obj);
-CALLBACK void setup_mesh_2d_tex_col(gpu_object* obj);
-CALLBACK void setup_mesh_3d_tex(gpu_object* obj);
-CALLBACK void setup_mesh_3d_tex_instanced(gpu_object* obj);
-CALLBACK void setup_mesh_lines(gpu_object* obj);
+#define register_mesh(name) \
+	eng->ogl.add_command((u16)mesh_cmd::name, FPTR(run_mesh_##name), "shaders/" #name ".v"_, "shaders/" #name ".f"_, FPTR(uniforms_mesh_##name), FPTR(compat_mesh_##name));
 
-CALLBACK void update_mesh_cubemap(gpu_object* obj, void* data, bool force);
-CALLBACK void update_mesh_chunk(gpu_object* obj, void* data, bool force);
-CALLBACK void update_mesh_2d_col(gpu_object* obj, void* data, bool force);
-CALLBACK void update_mesh_2d_tex(gpu_object* obj, void* data, bool force);
-CALLBACK void update_mesh_2d_tex_col(gpu_object* obj, void* data, bool force);
-CALLBACK void update_mesh_3d_tex(gpu_object* obj, void* data, bool force);
-CALLBACK void update_mesh_3d_tex_instanced(gpu_object* obj, void* data, bool force);
-CALLBACK void update_mesh_lines(gpu_object* obj, void* data, bool force);
+#define register_mesh_ex(cmd, name, path) \
+	eng->ogl.add_command((u16)mesh_cmd::cmd, FPTR(run_mesh_##name), "shaders/" path #name ".v"_, "shaders/" path #name ".f"_, FPTR(uniforms_mesh_##name), FPTR(compat_mesh_##name));
 
-CALLBACK void run_mesh_cubemap(render_command* cmd, gpu_object* gpu);
-CALLBACK void run_mesh_chunk(render_command* cmd, gpu_object* gpu);
-CALLBACK void run_mesh_2d_col(render_command* cmd, gpu_object* gpu);
-CALLBACK void run_mesh_2d_tex(render_command* cmd, gpu_object* gpu);
-CALLBACK void run_mesh_2d_tex_col(render_command* cmd, gpu_object* gpu);
-CALLBACK void run_mesh_3d_tex(render_command* cmd, gpu_object* gpu);
-CALLBACK void run_mesh_3d_tex_instanced(render_command* cmd, gpu_object* gpu);
-CALLBACK void run_mesh_lines(render_command* cmd, gpu_object* gpu);
-
-CALLBACK bool compat_mesh_cubemap(ogl_info* info);
-CALLBACK bool compat_mesh_chunk(ogl_info* info);
-CALLBACK bool compat_mesh_2d_col(ogl_info* info);
-CALLBACK bool compat_mesh_2d_tex(ogl_info* info);
-CALLBACK bool compat_mesh_2d_tex_col(ogl_info* info);
-CALLBACK bool compat_mesh_3d_tex(ogl_info* info);
-CALLBACK bool compat_mesh_3d_tex_instanced(ogl_info* info);
-CALLBACK bool compat_mesh_lines(ogl_info* info);
+decl_mesh(skydome);
+decl_mesh(cubemap);
+decl_mesh(chunk);
+decl_mesh(2d_col);
+decl_mesh(2d_tex);
+decl_mesh(2d_tex_col);
+decl_mesh(3d_tex);
+decl_mesh(3d_tex_instanced);
+decl_mesh(lines);

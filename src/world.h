@@ -89,8 +89,24 @@ struct world_settings {
 	bool wireframe = false;
 	bool cull_backface = true;
 	bool sample_shading = true;
+};
 
-	bool time = true;
+struct world_time {
+
+	bool enable = true;
+
+	// scale is 60 * time_scale
+	f64 time_scale = 1.0f;
+
+	u64 last_update = 0;
+	u64 absolute = 0;
+
+	f64 absolute_ms = 0.0f, minute_ms = 0.0f;
+
+	u32 minute = 0, hour = 0, day = 0;
+
+	void update(u64 now);
+	f32 day_01();
 };
 
 struct world {
@@ -111,10 +127,9 @@ struct world {
 
 	texture_id block_textures = -1;
 	texture_id sky_texture = -1;
-	mesh_cubemap sky;
+	mesh_3d_tex sky;
 
-	u64 time = 0;
-	u64 last_update = 0;
+	world_time time;
 
 	void init(asset_store* store, allocator* a);
 	void destroy();

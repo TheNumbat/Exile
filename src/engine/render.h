@@ -24,7 +24,7 @@ struct shader_program {
 	GLuint handle = 0;
 	shader_source vertex;
 	shader_source fragment;
-	func_ptr<void, shader_program*, render_command*, render_command_list*> send_uniforms;
+	func_ptr<void, shader_program*, render_command*> send_uniforms;
 	// tessellation control, evaluation, geometry
 
 	static shader_program make(string vert, string frag, _FPTR* uniforms, allocator* a);
@@ -181,10 +181,12 @@ struct render_command {
 	u16 cmd = 0;
 
 	struct {	
+		
 		texture_id texture = -1;
 		gpu_object_id object = -1;
-		
-		m4 model;
+		void* uniform_info = null;
+
+		m4 model, view, proj;
 		u32 sort_key = 0;
 
 		// triangle index, gets * 3 to compute element index
@@ -215,8 +217,6 @@ bool operator<=(render_command& first, render_command& second);
 struct render_command_list {
 	vector<render_command> commands;
 	allocator* alloc = null;
-	m4 view;
-	m4 proj;
 
 	static render_command_list make(allocator* alloc = null, u32 cmds = 8);
 	void destroy();

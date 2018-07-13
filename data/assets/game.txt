@@ -7,6 +7,6 @@ image {
 	file : stone.png,
 }
 image {
-	name : stars,
-	file : stars.png,
+	name : sky,
+	file : sky.png,
 }
