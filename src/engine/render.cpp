@@ -438,7 +438,7 @@ void ogl_manager::destroy_texture(texture_id id) { PROF
 	textures.erase(id);
 }
 
-texture* ogl_manager::select_texture(texture_id id) { PROF
+texture* ogl_manager::select_texture(u32 unit, texture_id id) { PROF 
 
 	if(id == -1) return null;
 
@@ -448,10 +448,16 @@ texture* ogl_manager::select_texture(texture_id id) { PROF
 		LOG_ERR_F("Failed to retrieve texture %"_, id);
 		return null;
 	}
-	
-	glBindTexture(t->gl_type, t->handle);
+
+	glBindTextureUnit(unit, t->handle);
 
 	return t;
+}
+
+void ogl_manager::select_textures(render_command* cmd) { PROF
+
+	select_texture(0, cmd->texture0);
+	select_texture(1, cmd->texture1);
 }
 
 texture texture::make_bmp(texture_wrap wrap, bool pixelated) { PROF
@@ -800,7 +806,7 @@ void ogl_manager::execute_command_list(render_command_list* rcl) { PROF
 		default: {
 			cmd_set_settings(cmd);
 
-			select_texture(cmd->texture);
+			select_textures(cmd);
 			gpu_object* obj = select_object(cmd->object);
 
 			draw_context* d = select_ctx(cmd->cmd);
@@ -858,7 +864,7 @@ void ogl_manager::dbg_render_texture_fullscreen(texture_id id) { PROF
 	glEnableVertexAttribArray(1);
 
 	glUseProgram(dbg_shader.handle);
-	select_texture(id);
+	select_texture(0, id);
 
 	glViewport(0, 0, win->settings.w, win->settings.h);
 	glEnable(gl_capability::blend);

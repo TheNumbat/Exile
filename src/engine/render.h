@@ -182,7 +182,7 @@ struct render_command {
 
 	struct {	
 		
-		texture_id texture = -1;
+		texture_id texture0 = -1, texture1 = -1;
 		gpu_object_id object = -1;
 		void* uniform_info = null;
 
@@ -301,7 +301,9 @@ struct ogl_manager {
 	texture_id begin_tex_array(iv3 dim, texture_wrap wrap = texture_wrap::repeat, bool pixelated = false, u32 offset = 0);
 
 	void destroy_texture(texture_id id);
-	texture* select_texture(texture_id id);
+	texture* select_texture(u32 unit, texture_id id);
+	void select_textures(render_command* cmd);
+
 	texture_id add_texture(asset_store* as, string name, texture_wrap wrap = texture_wrap::repeat, bool pixelated = false);
 	texture_id add_texture_from_font(asset_store* as, string name, texture_wrap wrap = texture_wrap::repeat, bool pixelated = false);
 

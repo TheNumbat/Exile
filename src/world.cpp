@@ -37,6 +37,7 @@ void world::init(asset_store* store, allocator* a) { PROF
 		sky.init();
 		sky.push_dome({}, 1.0f, 64);
 		sky_texture = eng->ogl.add_texture(store, "sky"_, texture_wrap::mirror);
+		night_sky_texture = eng->ogl.add_texture(store, "night_sky"_);
 
 		block_textures = eng->ogl.begin_tex_array(iv3(32, 32, (i32)NUM_BLOCKS), texture_wrap::repeat, true, 1);
 		eng->ogl.push_tex_array(block_textures, store, "bedrock"_);
@@ -235,7 +236,8 @@ void world::render_sky() { PROF
 	render_command cmd = render_command::make((u16)mesh_cmd::skydome, sky.gpu);
 
 	cmd.uniform_info = &time;
-	cmd.texture = sky_texture;
+	cmd.texture0 = sky_texture;
+	cmd.texture1 = night_sky_texture;
 
 	cmd.view = p.camera.view_no_translate();
 	cmd.proj = proj(p.camera.fov, (f32)eng->window.settings.w / (f32)eng->window.settings.h, 0.01f, 2000.0f);
@@ -300,7 +302,7 @@ void world::render_chunks() { PROF
 			render_command cmd = render_command::make((u16)mesh_cmd::chunk, c->mesh.gpu);
 
 			cmd.num_tris = c->mesh_triangles;
-			cmd.texture = block_textures;
+			cmd.texture0 = block_textures;
 
 			v3 chunk_pos = v3((f32)current.x * chunk::xsz, (f32)current.y * chunk::ysz, (f32)current.z * chunk::zsz);
 			cmd.model = translate(chunk_pos - p.camera.pos);

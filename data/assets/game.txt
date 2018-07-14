@@ -10,3 +10,7 @@ image {
 	name : sky,
 	file : sky.png,
 }
+image {
+	name : night_sky,
+	file : sky_box.png,
+}

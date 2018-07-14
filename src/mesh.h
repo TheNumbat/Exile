@@ -185,8 +185,6 @@ struct mesh_3d_tex_instance_data {
 	bool empty();
 };
 
-v2 sphere_uv(v3 pos);
-
 void setup_mesh_commands();
 
 #define decl_mesh(name) \

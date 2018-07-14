@@ -76,7 +76,7 @@ void map<K,V,hash_func>::destroy() { PROF
 template<typename K, typename V, u32(*hash_func)(K) = hash>
 void map<K,V,hash_func>::clear() { PROF
 	
-	FORVEC(it, contents) {
+	FORVECCAP(it, contents) {
 		ELEMENT_CLEAR_OCCUPIED(*it);
 	}
 

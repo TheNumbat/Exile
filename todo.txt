@@ -7,7 +7,7 @@ Working To-Do:
 	config format
 	user settings
 
-	sun/moon/stars
+	stars/sun/moon
 	directional/sun lighting
 
 	lighting

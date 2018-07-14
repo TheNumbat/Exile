@@ -19,11 +19,15 @@ CALLBACK void uniforms_mesh_skydome(shader_program* prog, render_command* cmd) {
 
 	GLint tloc = glGetUniformLocation(prog->handle, "transform");
 	GLint dloc = glGetUniformLocation(prog->handle, "day_01");
+	GLint sloc = glGetUniformLocation(prog->handle, "sky");
+	GLint nsloc = glGetUniformLocation(prog->handle, "night_sky");
 
 	m4 transform = cmd->proj * cmd->view * cmd->model;
 
-	glUniformMatrix4fv(tloc, 1, gl_bool::_false, transform.a);
+	glUniform1i(sloc, 0);
+	glUniform1i(nsloc, 1);
 	glUniform1f(dloc, time->day_01());
+	glUniformMatrix4fv(tloc, 1, gl_bool::_false, transform.a);
 }
 
 CALLBACK void uniforms_mesh_cubemap(shader_program* prog, render_command* cmd) { PROF
@@ -771,27 +775,23 @@ f32 mesh_2d_tex_col::push_text_line(asset* font, string text_utf8, v2 pos, f32 p
 	return scale * font->raster_font.linedist;
 }
 
-v2 sphere_uv(v3 pos) { PROF 
-	return v2(atan2(pos.z, pos.x) / (PI32 * 2.0f) + 0.5f, pos.y * 0.5f + 0.5f);
-}
-
 // Concept from https://github.com/fogleman/Craft
 void mesh_3d_tex::push_dome(v3 center, f32 r, i32 divisions) { PROF
 
 	i32 p_divisions = divisions / 2 + 1;
-	i32 total = divisions * p_divisions;
 
 	f32 th = 0.0f;
-	for(i32 i = 0; i < divisions; i++) {
+	for(i32 i = 0; i <= divisions; i++) {
 
 		f32 ph = 0.0f;
 		for(i32 j = 0; j < p_divisions; j++) {
 
 			f32 ct = cos(th), st = sin(th), sp = sin(ph), cp = cos(ph);
 			v3 point = v3(r * ct * sp, r * cp, r * st * sp);
-			
+
 			vertices.push(center + point);
-			texCoords.push(v2(0.0f, (0.5f * cp) + 0.5f));
+			texCoords.push(v2(th / (2.0f * PI32), (0.5f * cp) + 0.5f));
+			// texCoords.push(v2(th / (2.0f * PI32), ph / (1.0f * PI32)));
 
 			ph += (PI32 * 2.0f) / divisions;
 		}
@@ -803,9 +803,9 @@ void mesh_3d_tex::push_dome(v3 center, f32 r, i32 divisions) { PROF
 		for (int y = 0; y < p_divisions - 1; y++) {
 			GLuint idx = x * p_divisions + y;
 
-			i32 idx1 = (idx + 1) % total;
-			i32 idxp = (idx + p_divisions) % total;
-			i32 idxp1 = (idx + p_divisions + 1) % total;
+			i32 idx1 = (idx + 1);
+			i32 idxp = (idx + p_divisions);
+			i32 idxp1 = (idx + p_divisions + 1);
 
 			elements.push(uv3(idx, idx1, idxp));
 			elements.push(uv3(idx1, idxp, idxp1));
