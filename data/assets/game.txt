@@ -12,5 +12,5 @@ image {
 }
 image {
 	name : night_sky,
-	file : sky_box.png,
+	file : night_sky.png,
 }
