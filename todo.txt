@@ -6,6 +6,7 @@ Working To-Do:
 	serialization/deserialization
 	config format
 	user settings
+	profiler graphs & auto save unusually long frames
 
 	stars/sun/moon
 	directional/sun lighting

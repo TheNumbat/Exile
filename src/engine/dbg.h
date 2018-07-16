@@ -280,7 +280,12 @@ struct dbg_value_store {
 
 struct console_msg {
 	log_level lvl = log_level::console;
+	
+	string thread;
+	array<code_context> call_stack;
+	
 	string msg;
+	arena_allocator arena;
 };
 
 struct console_cmd {

@@ -32,7 +32,6 @@ EXPORT engine* start_up(platform_api* api) {
 	state->log.add_stdout(log_level::debug);
 
 	LOG_INFO("Beginning startup..."_);
-	LOG_PUSH_CONTEXT_L("");
 
 	LOG_INFO("Starting logger..."_);
 	state->log.start();
@@ -60,7 +59,6 @@ EXPORT engine* start_up(platform_api* api) {
 	state->game_state = start_up_game(state);
 
 	LOG_INFO("Done with startup!"_);
-	LOG_POP_CONTEXT();
 
 	END_FRAME();
 

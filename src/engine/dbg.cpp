@@ -105,7 +105,7 @@ void dbg_console::destroy() { PROF
 	history.destroy();
 
 	FORQ_BEGIN(it, lines) {
-		it->msg.destroy(alloc);
+		DESTROY_ARENA(&it->arena);
 	} FORQ_END(it, lines);
 	lines.destroy();
 	global_api->destroy_mutex(&lines_mut);
@@ -454,9 +454,9 @@ void dbg_console::UI(platform_window* window) { PROF
 
 		if((u8)it->lvl >= (u8)base_level) {
 
-			string output = string::makef("[%] %"_, enum_to_string(it->lvl), it->msg);
+			string level = enum_to_string(it->lvl);
 		
-			if(filter.PassFilter(output)) {
+			if(filter.PassFilter(level) || filter.PassFilter(it->msg)) {
 
 				ImVec4 col = ImGui::GetStyleColorVec4(ImGuiCol_Text);
 				switch(it->lvl) {
@@ -467,11 +467,25 @@ void dbg_console::UI(platform_window* window) { PROF
 				}
 
 				ImGui::PushStyleColor(ImGuiCol_Text, col);
-				ImGui::TextUnformatted(output);
+				ImGui::Text("[%s] ", level.c_str);
+				if(ImGui::IsItemClicked()) {
+					// TODO(max): subl_remote_open
+				}
+				if(ImGui::IsItemHovered()) {
+					ImGui::PopStyleColor();
+					ImGui::BeginTooltip();
+					ImGui::TextUnformatted(it->thread);
+					FORARR(loc, it->call_stack) {
+						ImGui::TextUnformatted(loc->function());
+					}
+					ImGui::EndTooltip();
+					ImGui::PushStyleColor(ImGuiCol_Text, col);
+				}
+
+				ImGui::SameLine(0, 0);
+				ImGui::TextUnformatted(it->msg);
 				ImGui::PopStyleColor();
 			}
-
-			output.destroy();
 		}
 	
 	} FORQ_END(it, lines);
@@ -1167,15 +1181,18 @@ CALLBACK void dbg_add_log(log_message* msg, void* param) { PROF
 	if(console->lines.len() == console->lines.capacity) {
 
 		console_msg* m = console->lines.front();
-		m->msg.destroy(console->alloc);
+		DESTROY_ARENA(&m->arena);
 		console->lines.pop();
 	}
 
-	console_msg m;
-	m.lvl = msg->level;
-	m.msg = string::make_copy(msg->msg, console->alloc);
-
-	console->lines.push(m);
+	console_msg* m = console->lines.push(console_msg());
+	
+	m->lvl = msg->level;
+	m->arena = MAKE_ARENA("cons"_, msg->arena.size, console->alloc);
+	
+	m->msg = string::make_copy(msg->msg, &m->arena);
+	m->thread = string::make_copy(msg->thread_name, &m->arena);
+	m->call_stack = array<code_context>::make_copy(&msg->call_stack, &m->arena);
 
 	global_api->release_mutex(&console->lines_mut);
 }
