@@ -390,6 +390,7 @@ struct platform_api {
 	platform_error (*create_file)(platform_file* file, string path, platform_file_open_op mode);
 	bool 		   (*test_file_written)(platform_file_attributes* first, platform_file_attributes* second);
 
+	platform_error (*shell_exec)(string cmd);
 	platform_error (*write_stdout_str)(string str);
 	platform_error (*write_stdout)(void* mem, u32 len);	
 	

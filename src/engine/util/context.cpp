@@ -10,10 +10,14 @@ bool operator==(code_context l, code_context r) { PROF
 }
 
 string code_context::file() { 
-	return string::from_c_str(c_file);
+	string f = path();
+	return f.substring(f.last_slash() + 1, f.len - 1);
 }
 string code_context::function() { 
 	return string::from_c_str(c_function);
+}
+string code_context::path() {
+	return string::from_c_str(c_file);
 }
 
 inline code_context _make_context(string file, string function, i32 line) {
@@ -21,7 +25,6 @@ inline code_context _make_context(string file, string function, i32 line) {
 	code_context ret;
 
 #ifdef PROFILE
-	file = file.substring(file.last_slash() + 1, file.len - 1);
 
 	LOG_DEBUG_ASSERT(file.len < CTX_FILE_LEN && function.len < CTX_FUN_LEN);
 

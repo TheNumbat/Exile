@@ -1,7 +1,7 @@
 
 #pragma once
 
-#define CTX_FILE_LEN	32
+#define CTX_FILE_LEN	64
 #define CTX_FUN_LEN		128
 
 struct code_context {
@@ -10,6 +10,7 @@ struct code_context {
 	u32 line = 0;
 
 	string file();
+	string path();
 	string function();
 };
 

@@ -141,6 +141,19 @@ platform_api platform_build_api() {
 	ret.get_scancode			= &sdl_get_scancode;
 	ret.recreate_window 		= &sdl_recreate_window;
 	ret.apply_window_settings 	= &sdl_apply_window_settings;
+	ret.shell_exec 				= &sdl_shell_exec;
+
+	return ret;
+}
+
+platform_error sdl_shell_exec(string cmd) {
+
+	platform_error ret;
+
+	if(system(cmd.c_str) == -1) {
+		ret.good = false;
+		return ret;
+	}
 
 	return ret;
 }

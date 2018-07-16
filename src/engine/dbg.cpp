@@ -468,15 +468,16 @@ void dbg_console::UI(platform_window* window) { PROF
 
 				ImGui::PushStyleColor(ImGuiCol_Text, col);
 				ImGui::Text("[%s] ", level.c_str);
-				if(ImGui::IsItemClicked()) {
-					// TODO(max): subl_remote_open
+				if(ImGui::IsItemClicked() && it->call_stack.capacity) {
+					code_context* last = it->call_stack.get(it->call_stack.capacity - 1);
+					CHECKED(shell_exec, string::makef("subl_remote_open.bat %:%"_, last->path(), last->line));
 				}
 				if(ImGui::IsItemHovered()) {
 					ImGui::PopStyleColor();
 					ImGui::BeginTooltip();
 					ImGui::TextUnformatted(it->thread);
 					FORARR(loc, it->call_stack) {
-						ImGui::TextUnformatted(loc->function());
+						ImGui::TextUnformatted(loc->c_function);
 					}
 					ImGui::EndTooltip();
 					ImGui::PushStyleColor(ImGuiCol_Text, col);
@@ -1184,6 +1185,8 @@ CALLBACK void dbg_add_log(log_message* msg, void* param) { PROF
 		DESTROY_ARENA(&m->arena);
 		console->lines.pop();
 	}
+
+	console->scroll_bottom = true;
 
 	console_msg* m = console->lines.push(console_msg());
 	

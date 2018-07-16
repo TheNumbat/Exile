@@ -81,6 +81,7 @@ platform_error win32_get_file_attributes(platform_file_attributes* attrib, strin
 platform_error win32_create_file(platform_file* file, string path, platform_file_open_op mode);
 bool 		   win32_test_file_written(platform_file_attributes* first, platform_file_attributes* second);
 
+platform_error win32_shell_exec(string cmd);
 platform_error win32_write_stdout_str(string str);
 platform_error win32_write_stdout(void* mem, u32 len);	
 	

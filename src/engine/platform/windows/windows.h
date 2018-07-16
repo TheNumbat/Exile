@@ -21,6 +21,7 @@ typedef int WINBOOL;
 typedef WINBOOL BOOL;
 typedef BOOL* LPBOOL;
 typedef unsigned char BYTE;
+typedef BYTE* LPBYTE;
 typedef unsigned short WORD;
 typedef float FLOAT;
 typedef int INT;
@@ -345,6 +346,32 @@ typedef struct tagCURSORINFO {
 	HCURSOR hCursor;
 	POINT   ptScreenPos;
 } CURSORINFO, *PCURSORINFO, *LPCURSORINFO;
+typedef struct tagSTARTUPINFOA {
+	DWORD  cb;
+	LPSTR  lpReserved;
+	LPSTR  lpDesktop;
+	LPSTR  lpTitle;
+	DWORD  dwX;
+	DWORD  dwY;
+	DWORD  dwXSize;
+	DWORD  dwYSize;
+	DWORD  dwXCountChars;
+	DWORD  dwYCountChars;
+	DWORD  dwFillAttribute;
+	DWORD  dwFlags;
+	WORD   wShowWindow;
+	WORD   cbReserved2;
+	LPBYTE lpReserved2;
+	HANDLE hStdInput;
+	HANDLE hStdOutput;
+	HANDLE hStdError;
+} STARTUPINFOA, *LPSTARTUPINFOA;
+typedef struct tagPROCESS_INFORMATION {
+	HANDLE hProcess;
+	HANDLE hThread;
+	DWORD  dwProcessId;
+	DWORD  dwThreadId;
+} PROCESS_INFORMATION, *PPROCESS_INFORMATION, *LPPROCESS_INFORMATION;
 
 #define INFINITE 0xffffffffl
 #define INVALID_HANDLE_VALUE ((void *)(intptr_t)(-1))
@@ -617,6 +644,9 @@ DLL_IMPORT void WINAPI GetSystemTimeAsFileTime  (FILETIME *system_time_as_file_t
 DLL_IMPORT void WINAPI Sleep(DWORD milliseconds);
 DLL_IMPORT void WINAPI ExitProcess(UINT exit_code);
 
+DLL_IMPORT BOOL CreateProcessA(LPCSTR lpApplicationName, LPSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, 
+								BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCSTR lpCurrentDirectory, LPSTARTUPINFOA lpStartupInfo, 
+								LPPROCESS_INFORMATION lpProcessInformation);
 DLL_IMPORT BOOL WINAPI SetEnvironmentVariableA(char const *name, char const *value);
 
 #define WM_NULL                   0x0000

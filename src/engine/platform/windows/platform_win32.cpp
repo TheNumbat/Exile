@@ -102,6 +102,31 @@ platform_api platform_build_api() {
 	ret.set_clipboard 			= &win32_set_clipboard;
 	ret.recreate_window			= &win32_recreate_window;
 	ret.apply_window_settings 	= &win32_apply_window_settings;
+	ret.shell_exec 				= &win32_shell_exec;
+
+	return ret;
+}
+
+platform_error win32_shell_exec(string cmd) {
+
+	platform_error ret;
+
+	STARTUPINFOA si = {sizeof(STARTUPINFOA)};
+	PROCESS_INFORMATION pi = {};
+	if(CreateProcessA(null, cmd.c_str, null, null, TRUE, 0, null, null, &si, &pi) == 0) {
+		ret.good = false;
+		ret.error = GetLastError();
+		return ret;
+	}
+
+	if(WaitForSingleObject(pi.hProcess, INFINITE) == WAIT_FAILED) {
+		ret.good = false;
+		ret.error = GetLastError();
+		return ret;
+	}
+	
+	CloseHandle(pi.hProcess);
+	CloseHandle(pi.hThread);
 
 	return ret;
 }
