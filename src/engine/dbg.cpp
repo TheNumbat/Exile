@@ -543,7 +543,7 @@ void dbg_console::UI(platform_window* window) { PROF
 
 	if(ImGui::Button("Clear")) {
 		FORQ_BEGIN(it, lines) {
-			it->msg.destroy(alloc);
+			DESTROY_ARENA(&it->arena);
 		} FORQ_END(it, lines);
 		lines.clear();
 		scroll_bottom = true;
