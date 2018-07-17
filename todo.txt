@@ -3,16 +3,19 @@ Working To-Do:
 
 	-> FIX ALLOCATION PROFILING THREADING BUGS <-
 
-	serialization/deserialization
-	config format
-	user settings
-	profiler graphs & auto save unusually long frames
-
 	stars/sun/moon
 	directional/sun lighting
+		update vertex format
+		normals and UBOs for them
+		page swapping for normals and texture? maybe
 
-	lighting
+	serialization/deserialization
+	config format
+	user settings e.g. controls
+	profiler graphs & auto save unusually long frames
+
 	distance based fog
+	lighting
 	consolidate shaders?
 	framebuffer objects (msaa + effects)
 	shadow mapping
@@ -20,7 +23,8 @@ Working To-Do:
 
 	movement physics
 	world interaction
-	chunk paging
+	chunk paging and persistence
+	world generation framework
 
 	some good deps: iconFontHeaders, nativeFileDialog from dbartolini
 
@@ -38,15 +42,7 @@ Large-Scale Improvements | Changes for Future Projects
 	asset store can be more meta file + data files for hot/cold loading etc. Not sure if necessary though
 	use Vulkan
 
-
 Overall To-Do List:
-
-	chunk meshing
-		current vertex format [order in shader], struct is byte-order reversed on u32 boundary
-			0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000
-			yyyy yyyy yyyy aoao zzzz zzzz xxxx xxxx vvvv vvvv uuuu uuuu aoao tttt tttt tttt
-		Tradeoff compactness vs. detail - how do we do LOD and special multifaceted blocks?
-			do we want different vertex layouts for LOD????
 
 	other voxel structures
 		stb_voxel_render approach
