@@ -196,10 +196,16 @@ void setup_mesh_commands();
 	CALLBACK bool compat_mesh_##name(ogl_info* info);
 
 #define register_mesh(name) \
-	eng->ogl.add_command((u16)mesh_cmd::name, FPTR(run_mesh_##name), "shaders/" #name ".v"_, "shaders/" #name ".f"_, FPTR(uniforms_mesh_##name), FPTR(compat_mesh_##name));
+	eng->ogl.add_command((u16)mesh_cmd::name, FPTR(run_mesh_##name), FPTR(uniforms_mesh_##name), FPTR(compat_mesh_##name), "shaders/" #name ".v"_, "shaders/" #name ".f"_);
+
+#define register_mesh_g(name) \
+	eng->ogl.add_command((u16)mesh_cmd::name, FPTR(run_mesh_##name), FPTR(uniforms_mesh_##name), FPTR(compat_mesh_##name), "shaders/" #name ".v"_, "shaders/" #name ".f"_, "shaders/" #name ".g"_);
 
 #define register_mesh_ex(cmd, name, path) \
-	eng->ogl.add_command((u16)mesh_cmd::cmd, FPTR(run_mesh_##name), "shaders/" path #name ".v"_, "shaders/" path #name ".f"_, FPTR(uniforms_mesh_##name), FPTR(compat_mesh_##name));
+	eng->ogl.add_command((u16)mesh_cmd::cmd, FPTR(run_mesh_##name), FPTR(uniforms_mesh_##name), FPTR(compat_mesh_##name), "shaders/" path #name ".v"_, "shaders/" path #name ".f"_);
+
+#define register_mesh_ex_g(cmd, name, path) \
+	eng->ogl.add_command((u16)mesh_cmd::cmd, FPTR(run_mesh_##name), FPTR(uniforms_mesh_##name), FPTR(compat_mesh_##name), "shaders/" path #name ".v"_, "shaders/" path #name ".f"_, "shaders/" path #name ".g"_);
 
 decl_mesh(skydome);
 decl_mesh(cubemap);

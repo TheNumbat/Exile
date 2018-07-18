@@ -22,12 +22,11 @@ struct render_command; struct render_command_list;
 
 struct shader_program {
 	GLuint handle = 0;
-	shader_source vertex;
-	shader_source fragment;
+	shader_source vertex, geometry, fragment;
 	func_ptr<void, shader_program*, render_command*> send_uniforms;
 	// tessellation control, evaluation, geometry
 
-	static shader_program make(string vert, string frag, _FPTR* uniforms, allocator* a);
+	static shader_program make(string vert, string frag, string geom, _FPTR* uniforms, allocator* a);
 	void compile();
 	bool try_refresh();
 	void destroy();
@@ -294,7 +293,7 @@ struct ogl_manager {
 	void gl_begin_reload();
 
 	draw_context* select_ctx(u16 id);
-	void add_command(u16 id, _FPTR* run, string v, string f, _FPTR* uniforms, _FPTR* compat);
+	void add_command(u16 id, _FPTR* run, _FPTR* uniforms, _FPTR* compat, string v, string f, string g = {});
 
 	texture_id add_cubemap(asset_store* as, string name);
 	void push_tex_array(texture_id tex, asset_store* as, string name);

@@ -2,10 +2,15 @@
 Working To-Do:
 
 	-> FIX ALLOCATION PROFILING THREADING BUGS <-
+		also causes crash on shutdown after dynamic reload
+
+	chunk rendering update
+		geometry shader for quads -> render points of face data, emit quads
+		UBOs
+		normals
 
 	stars/sun/moon
 	directional/sun lighting
-		update vertex format
 		normals and UBOs for them
 		page swapping for normals and texture? maybe
 

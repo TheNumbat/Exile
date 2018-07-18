@@ -144,6 +144,7 @@ struct world {
 	void render_chunks();
 	void render_player();
 	void render_sky();
+	void render_thing();
 	void populate_local_area();
 
 	v3 raymarch(v3 origin, v3 dir, f32 max);

@@ -2,15 +2,16 @@
 void setup_mesh_commands() { PROF
 	
 	register_mesh(lines);
-	register_mesh(chunk);
 	register_mesh(cubemap);
 	register_mesh(skydome);
+	register_mesh(chunk);
 
 	register_mesh_ex(_2d_col, 2d_col, "mesh/");
 	register_mesh_ex(_2d_tex, 2d_tex, "mesh/");
 	register_mesh_ex(_2d_tex_col, 2d_tex_col, "mesh/");
-	register_mesh_ex(_3d_tex, 3d_tex, "mesh/");
 	register_mesh_ex(_3d_tex_instanced, 3d_tex_instanced, "mesh/");
+	
+	register_mesh_ex_g(_3d_tex, 3d_tex, "mesh/");
 }
 
 CALLBACK void uniforms_mesh_skydome(shader_program* prog, render_command* cmd) { PROF

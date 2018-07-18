@@ -105,4 +105,3 @@ template<typename T, typename... Targs>
 u32 _string_printf(string out, u32 idx, string fmt, bool size, T& value, Targs... args);
 u32 _string_printf(string out, u32 idx, string fmt, bool size = false);
 
-static const string empty_string = ""_;

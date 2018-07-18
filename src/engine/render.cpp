@@ -60,11 +60,15 @@ void shader_source::load() { PROF
 
 void shader_source::destroy() { PROF
 
-	source.destroy(alloc);
-	path.destroy(alloc);
+	if(source.c_str)
+		source.destroy(alloc);
+	if(path.c_str)
+		path.destroy(alloc);
 }
 
 bool shader_source::try_refresh() { PROF
+
+	if(!path.c_str) return false;
 
 	platform_file_attributes new_attrib;
 	
@@ -81,7 +85,7 @@ bool shader_source::try_refresh() { PROF
 	return false;
 }
 
-shader_program shader_program::make(string vert, string frag, _FPTR* uniforms, allocator* a) { PROF
+shader_program shader_program::make(string vert, string frag, string geom, _FPTR* uniforms, allocator* a) { PROF
 
 	shader_program ret;
 
@@ -90,6 +94,9 @@ shader_program shader_program::make(string vert, string frag, _FPTR* uniforms, a
 	ret.handle = glCreateProgram();
 	ret.send_uniforms.set(uniforms);
 
+	if(geom.c_str)
+		ret.geometry = shader_source::make(geom, a);
+
 	ret.compile();
 
 	return ret;
@@ -97,7 +104,9 @@ shader_program shader_program::make(string vert, string frag, _FPTR* uniforms, a
 
 void shader_program::compile() { PROF
 
-	GLuint h_vertex, h_fragment;
+	bool do_geometry = geometry.path.c_str != null; // NOTE(max): fix?
+
+	GLuint h_vertex = 0, h_fragment = 0, h_geometry = 0;
 
 	h_vertex = glCreateShader(gl_shader_type::vertex);
 	h_fragment = glCreateShader(gl_shader_type::fragment);
@@ -113,10 +122,24 @@ void shader_program::compile() { PROF
 
 	glAttachShader(handle, h_vertex);
 	glAttachShader(handle, h_fragment);
+
+	if(do_geometry) {
+		
+		h_geometry = glCreateShader(gl_shader_type::geometry);
+
+		glShaderSource(h_geometry, 1, &geometry.source.c_str, null);
+		glCompileShader(h_geometry);
+		glAttachShader(handle, h_geometry);
+	}
+
 	glLinkProgram(handle);
 
 	glDeleteShader(h_vertex);
 	glDeleteShader(h_fragment);
+
+	if(do_geometry) {
+		glDeleteShader(h_geometry);
+	}
 }
 
 bool shader_program::check_compile(string name, GLuint shader) { PROF
@@ -155,7 +178,7 @@ void shader_program::recreate() { PROF
 
 bool shader_program::try_refresh() { PROF
 
-	if(vertex.try_refresh() || fragment.try_refresh()) {
+	if(vertex.try_refresh() || fragment.try_refresh() || geometry.try_refresh()) {
 
 		gl_destroy();
 		recreate();
@@ -170,6 +193,7 @@ void shader_program::destroy() { PROF
 
 	vertex.destroy();
 	fragment.destroy();
+	geometry.destroy();
 
 	gl_destroy();
 }
@@ -251,7 +275,7 @@ ogl_manager ogl_manager::make(platform_window* win, allocator* a) { PROF
 	ret.info = ogl_info::make(ret.alloc);
 	LOG_DEBUG_F("GL %.% %"_, ret.info.major, ret.info.minor, ret.info.renderer);
 
-	ret.dbg_shader = shader_program::make("shaders/dbg.v"_,"shaders/dbg.f"_,FPTR(uniforms_dbg),a);
+	ret.dbg_shader = shader_program::make("shaders/dbg.v"_,"shaders/dbg.f"_, {}, FPTR(uniforms_dbg), a);
 
 	glBlendFunc(gl_blend_factor::one, gl_blend_factor::one_minus_src_alpha);
 	glDepthFunc(gl_depth_factor::lequal);
@@ -702,7 +726,7 @@ void texture::destroy(allocator* a) { PROF
 	gl_destroy();
 }
 
-void ogl_manager::add_command(u16 id, _FPTR* run, string v, string f, _FPTR* uniforms, _FPTR* compat) { PROF
+void ogl_manager::add_command(u16 id, _FPTR* run, _FPTR* uniforms, _FPTR* compat, string v, string f, string g) { PROF
 
 	if(commands.try_get(id)) {
 		LOG_ERR_F("Render command id % already in use!!!"_, id);
@@ -719,7 +743,7 @@ void ogl_manager::add_command(u16 id, _FPTR* run, string v, string f, _FPTR* uni
 	}
 
 	d.run.set(run);
-	d.shader = shader_program::make(v, f, uniforms, alloc);
+	d.shader = shader_program::make(v, f, g, uniforms, alloc);
 	LOG_DEBUG_F("Loaded shader from % and %"_, v, f);
 
 	commands.insert(id, d);
@@ -936,10 +960,10 @@ void debug_proc(gl_debug_source glsource, gl_debug_type gltype, GLuint id, gl_de
 
 	switch(severity) {
 	case gl_debug_severity::high:
-		LOG_ERR_F("HIGH OpenGL: % SOURCE: % TYPE: %"_, message, source, type);
+		// LOG_ERR_F("HIGH OpenGL: % SOURCE: % TYPE: %"_, message, source, type);
 		break;
 	case gl_debug_severity::medium:
-		LOG_WARN_F("MED OpenGL: % SOURCE: % TYPE: %"_, message, source, type);
+		// LOG_WARN_F("MED OpenGL: % SOURCE: % TYPE: %"_, message, source, type);
 		break;
 	case gl_debug_severity::low:
 		LOG_WARN_F("LOW OpenGL: % SOURCE: % TYPE: %"_, message, source, type);

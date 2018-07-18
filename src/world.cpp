@@ -226,6 +226,9 @@ void world::render() { PROF
 
 	render_chunks();
 	render_player();
+
+	render_thing();
+	
 	render_sky();
 }
 
@@ -247,6 +250,26 @@ void world::render_sky() { PROF
 	eng->ogl.execute_command_list(&rcl);
 
 	rcl.destroy();
+}
+
+void world::render_thing() { PROF 
+
+	render_command_list rcl = render_command_list::make();
+
+	mesh_3d_tex mesh; mesh.init();
+	mesh.push_cube({3.0f, 115.0f, 16.0f}, 1.0f);
+
+	render_command cmd = render_command::make((u16)mesh_cmd::_3d_tex, mesh.gpu);
+	cmd.texture0 = sky_texture;
+	cmd.view = p.camera.view();
+	cmd.proj = proj(p.camera.fov, (f32)eng->window.settings.w / (f32)eng->window.settings.h, 0.01f, 2000.0f);
+
+	rcl.add_command(cmd);
+
+	eng->ogl.execute_command_list(&rcl);
+
+	rcl.destroy();
+	mesh.destroy();
 }
 
 void world::render_chunks() { PROF
