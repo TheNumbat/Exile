@@ -35,9 +35,9 @@ enum class work : u8 {
 
 struct chunk {
 
-	static const i32 xsz = 31, ysz = 255, zsz = 31;
+	static const i32 xsz = 32, ysz = 512, zsz = 32;
 
-	static const i32 units_per_voxel = 256 / (xsz + 1);
+	static const i32 units_per_voxel = 256 / xsz;
 
 	chunk_pos pos;
 
@@ -59,6 +59,7 @@ struct chunk {
 	void destroy();
 
 	static i32 y_at(i32 x, i32 z);
+	static bool valid_q(v3 v_0, v3 v_1, v3 v_2, v3 v_3);
 	u8 ao_at(v3 vert);
 	block_type block_at(i32 x, i32 y, i32 z);
 	mesh_face build_face(block_type t, iv3 p, i32 dir);

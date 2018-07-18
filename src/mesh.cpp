@@ -357,7 +357,7 @@ CALLBACK void setup_mesh_chunk(gpu_object* obj) { PROF
 
 	glBindBuffer(gl_buf_target::array, obj->vbos[0]);
 
-	glVertexAttribIPointer(0, 2, gl_vert_attrib_type::unsigned_int, sizeof(chunk_vertex), (void*)0);
+	glVertexAttribIPointer(0, 3, gl_vert_attrib_type::unsigned_int, sizeof(chunk_vertex), (void*)0);
 	glEnableVertexAttribArray(0);
 	
 	glBindBuffer(gl_buf_target::element_array, obj->vbos[1]);
@@ -853,27 +853,28 @@ void mesh_3d_tex::push_cube(v3 pos, f32 len) {
 	dirty = true;
 }
 
-chunk_vertex chunk_vertex::from_vec(v3 v, v3 uv, bv4 ao) { PROF
+chunk_vertex chunk_vertex::from_vec(v3 v, v3 uv, bv4 ao, u8 n_idx) { PROF
 
-	LOG_DEBUG_ASSERT(v.x >= 0 && v.x < 256);
-	LOG_DEBUG_ASSERT(v.y >= 0 && v.y < 4096);
-	LOG_DEBUG_ASSERT(v.z >= 0 && v.z < 256);
-	LOG_DEBUG_ASSERT(uv.x >= 0 && uv.x < 256);
-	LOG_DEBUG_ASSERT(uv.y >= 0 && uv.y < 256);
-	LOG_DEBUG_ASSERT(uv.z >= 0 && uv.z < 1024);
+	LOG_DEBUG_ASSERT(v.x >= 0 && v.x < 256 && v.z >= 0 && v.z < 256 && v.y >= 0 && v.y < 4096 &&
+					 uv.x >= 0 && uv.x < 256 && uv.y >= 0 && uv.y < 256 && uv.z >= 0 && uv.z < 4096 &&
+					 ao.x >= 0 && ao.x < 4 && ao.y >= 0 && ao.y < 4 && ao.z >= 0 && ao.z < 4 && ao.w >= 0 && ao.w < 4);
 
 	chunk_vertex ret;
-	ret.x = (u8)v.x;
-	ret.z = (u8)v.z;
-	ret.y_ao |= (u16)v.y << 4;
-	ret.y_ao |= ao.x << 2;
-	ret.y_ao |= ao.y;
 
-	ret.u = (u8)uv.x;
 	ret.v = (u8)uv.y;
-	ret.ao_t = (u16)uv.z;
-	ret.ao_t |= (u16)ao.z << 14;
-	ret.ao_t |= (u16)ao.w << 12;
+	ret.u = (u8)uv.x;
+	ret.z = (u8)v.z;
+	ret.x = (u8)v.x;
+
+	ret.aoty |= (u8)ao.w << 0;
+	ret.aoty |= (u8)ao.z << 2;
+	ret.aoty |= (u8)ao.y << 4;
+	ret.aoty |= (u8)ao.x << 6;
+
+	ret.aoty |= (u16)uv.z << 8;
+	ret.aoty |= (u16)v.y  << 20;
+
+	ret.ln |= n_idx << 24;
 
 	return ret;
 }
@@ -931,14 +932,16 @@ void mesh_chunk::clear() { PROF
 	dirty = true;
 }
 
-void mesh_chunk::quad(v3 p1, v3 p2, v3 p3, v3 p4, v3 uv_ext, bv4 ao) { PROF
+void mesh_chunk::unit_quad(v3 p1, v3 p2, v3 p3, v3 p4, v3 uv_ext, bv4 ao, u8 n_idx) { PROF
 
 	u32 idx = vertices.size;
 
-	vertices.push(chunk_vertex::from_vec(p1 * (f32)chunk::units_per_voxel, v3(0.0f, 0.0f, uv_ext.z), ao));
-	vertices.push(chunk_vertex::from_vec(p2 * (f32)chunk::units_per_voxel, v3(uv_ext.x, 0.0f, uv_ext.z), ao));
-	vertices.push(chunk_vertex::from_vec(p3 * (f32)chunk::units_per_voxel, v3(0.0f, uv_ext.y, uv_ext.z), ao));
-	vertices.push(chunk_vertex::from_vec(p4 * (f32)chunk::units_per_voxel, v3(uv_ext.x, uv_ext.y, uv_ext.z), ao));
+	const f32 v = (f32)chunk::units_per_voxel;
+
+	vertices.push(chunk_vertex::from_vec(p1 * v, v3(0.0f, 0.0f, uv_ext.z), ao, n_idx));
+	vertices.push(chunk_vertex::from_vec(p2 * v, v3(uv_ext.x * v, 0.0f, uv_ext.z), ao, n_idx));
+	vertices.push(chunk_vertex::from_vec(p3 * v, v3(0.0f, uv_ext.y * v, uv_ext.z), ao, n_idx));
+	vertices.push(chunk_vertex::from_vec(p4 * v, v3(uv_ext.x * v, uv_ext.y * v, uv_ext.z), ao, n_idx));
 
 	elements.push(uv3(idx, idx + 1, idx + 2));
 	elements.push(uv3(idx + 3, idx + 2, idx + 1));
@@ -946,21 +949,21 @@ void mesh_chunk::quad(v3 p1, v3 p2, v3 p3, v3 p4, v3 uv_ext, bv4 ao) { PROF
 	dirty = true;
 }
 
-void mesh_chunk::cube(v3 pos, f32 len) { PROF
+void mesh_chunk::cube_no_norm(v3 pos, f32 len) { PROF
 
 	u32 idx = vertices.size;
 
 	f32 len2 = len / 2.0f;
 	pos += {len2, len2, len2};
 
-	vertices.push(chunk_vertex::from_vec(pos + v3( len2,  len2,  len2), v3(0,0,0), bv4()));
-	vertices.push(chunk_vertex::from_vec(pos + v3(-len2,  len2,  len2), v3(1,0,0), bv4()));
-	vertices.push(chunk_vertex::from_vec(pos + v3( len2, -len2,  len2), v3(0,1,0), bv4()));
-	vertices.push(chunk_vertex::from_vec(pos + v3( len2,  len2, -len2), v3(0,0,0), bv4()));
-	vertices.push(chunk_vertex::from_vec(pos + v3(-len2, -len2,  len2), v3(1,0,0), bv4()));
-	vertices.push(chunk_vertex::from_vec(pos + v3( len2, -len2, -len2), v3(0,1,0), bv4()));
-	vertices.push(chunk_vertex::from_vec(pos + v3(-len2,  len2, -len2), v3(1,0,0), bv4()));
-	vertices.push(chunk_vertex::from_vec(pos + v3(-len2, -len2, -len2), v3(1,1,0), bv4()));
+	vertices.push(chunk_vertex::from_vec(pos + v3( len2,  len2,  len2), v3(0,0,0), bv4(), 0));
+	vertices.push(chunk_vertex::from_vec(pos + v3(-len2,  len2,  len2), v3(1,0,0), bv4(), 0));
+	vertices.push(chunk_vertex::from_vec(pos + v3( len2, -len2,  len2), v3(0,1,0), bv4(), 0));
+	vertices.push(chunk_vertex::from_vec(pos + v3( len2,  len2, -len2), v3(0,0,0), bv4(), 0));
+	vertices.push(chunk_vertex::from_vec(pos + v3(-len2, -len2,  len2), v3(1,0,0), bv4(), 0));
+	vertices.push(chunk_vertex::from_vec(pos + v3( len2, -len2, -len2), v3(0,1,0), bv4(), 0));
+	vertices.push(chunk_vertex::from_vec(pos + v3(-len2,  len2, -len2), v3(1,0,0), bv4(), 0));
+	vertices.push(chunk_vertex::from_vec(pos + v3(-len2, -len2, -len2), v3(1,1,0), bv4(), 0));
 
 	elements.push(uv3(idx + 0, idx + 3, idx + 5));
 	elements.push(uv3(idx + 0, idx + 3, idx + 6));

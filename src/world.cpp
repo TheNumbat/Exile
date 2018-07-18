@@ -503,7 +503,7 @@ void chunk::destroy() { PROF
 i32 chunk::y_at(i32 x, i32 z) { PROF
 
 	f32 val = perlin((f32)x / 32.0f, 0, (f32)z / 32.0f, 0, 0, 0);
-	i32 height = (u32)(val * ysz / 2.0f + ysz / 2.0f);
+	i32 height = (i32)(val * ysz / 2.0f + ysz / 2.0f) / 2;
 
 	return height;
 }
@@ -627,6 +627,21 @@ bool mesh_face::can_merge(mesh_face f1, mesh_face f2, i32 dir) { PROF
 	return f1.type == f2.type && f1.ao == f2.ao;
 }
 
+bool chunk::valid_q(v3 v_0, v3 v_1, v3 v_2, v3 v_3) { PROF 
+	return v_0.x >= 0 && v_0.x < 32  &&
+		   v_0.y >= 0 && v_0.y < 512 &&
+		   v_0.z >= 0 && v_0.z < 32  &&
+		   v_1.x >= 0 && v_1.x < 32  &&
+		   v_1.y >= 0 && v_1.y < 512 &&
+		   v_1.z >= 0 && v_1.z < 32  &&
+		   v_2.x >= 0 && v_2.x < 32  &&
+		   v_2.y >= 0 && v_2.y < 512 &&
+		   v_2.z >= 0 && v_2.z < 32  &&
+		   v_3.x >= 0 && v_3.x < 32  &&
+		   v_3.y >= 0 && v_3.y < 512 &&
+		   v_3.z >= 0 && v_3.z < 32;
+}
+
 void chunk::build_data() { PROF
 
 	PUSH_PROFILE_PROF(false);
@@ -695,7 +710,7 @@ void chunk::build_data() { PROF
 						i32 width = 1, height = 1;
 
 						// Combine same faces in +u_2d
-						for(; u + width < max[u_2d]; width++) {
+						for(; u + width < max[u_2d] && u < 32; width++) {
 
 							iv3 w_pos = position;
 							w_pos[u_2d] += width;
@@ -707,7 +722,7 @@ void chunk::build_data() { PROF
 
 						// Combine all-same face row in +v_2d
 						bool done = false;
-						for(; v + height < max[v_2d]; height++) {
+						for(; v + height < max[v_2d] && v < 32; height++) {
 							for(i32 row_idx = 0; row_idx < width; row_idx++) {
 
 								iv3 wh_pos = position;
@@ -740,28 +755,32 @@ void chunk::build_data() { PROF
 						v3 v_1 = v_0 + width_offset;
 						v3 v_2 = v_0 + height_offset;
 						v3 v_3 = v_0 + width_offset + height_offset;
-						v3 wht = v3(width, height, (i32)single_type), hwt = v3(height, width, (i32)single_type);
+
+						v3 wht(width, height, (i32)single_type);
+						v3 hwt(height, width, (i32)single_type);
 						u8 ao_0 = ao_at(v_0), ao_1 = ao_at(v_1), ao_2 = ao_at(v_2), ao_3 = ao_at(v_3);
 
-						switch (i) {
-						case 0: // -X
-							new_mesh.quad(v_0, v_2, v_1, v_3, hwt, bv4(ao_0,ao_2,ao_1,ao_3));
-							break;
-						case 1: // -Y
-							new_mesh.quad(v_2, v_3, v_0, v_1, wht, bv4(ao_2,ao_3,ao_0,ao_1));
-							break;
-						case 2: // -Z
-							new_mesh.quad(v_2, v_3, v_0, v_1, wht, bv4(ao_2,ao_3,ao_0,ao_1));
-							break;
-						case 3: // +X
-							new_mesh.quad(v_2, v_0, v_3, v_1, hwt, bv4(ao_2,ao_0,ao_3,ao_1));
-							break;
-						case 4: // +Y
-							new_mesh.quad(v_0, v_1, v_2, v_3, wht, bv4(ao_0,ao_1,ao_2,ao_3));
-							break;
-						case 5: // +Z
-							new_mesh.quad(v_0, v_1, v_2, v_3, wht, bv4(ao_0,ao_1,ao_2,ao_3));
-							break;
+						if(valid_q(v_0, v_2, v_1, v_3)) {
+							switch (i) {
+							case 0: // -X
+								new_mesh.unit_quad(v_0, v_2, v_1, v_3, hwt, bv4(ao_0,ao_2,ao_1,ao_3), 0);
+								break;
+							case 1: // -Y
+								new_mesh.unit_quad(v_2, v_3, v_0, v_1, wht, bv4(ao_2,ao_3,ao_0,ao_1), 0);
+								break;
+							case 2: // -Z
+								new_mesh.unit_quad(v_2, v_3, v_0, v_1, wht, bv4(ao_2,ao_3,ao_0,ao_1), 0);
+								break;
+							case 3: // +X
+								new_mesh.unit_quad(v_2, v_0, v_3, v_1, hwt, bv4(ao_2,ao_0,ao_3,ao_1), 0);
+								break;
+							case 4: // +Y
+								new_mesh.unit_quad(v_0, v_1, v_2, v_3, wht, bv4(ao_0,ao_1,ao_2,ao_3), 0);
+								break;
+							case 5: // +Z
+								new_mesh.unit_quad(v_0, v_1, v_2, v_3, wht, bv4(ao_0,ao_1,ao_2,ao_3), 0);
+								break;
+							}
 						}
 
 						// Erase quad area in slice

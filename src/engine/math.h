@@ -107,6 +107,7 @@ iv3 operator*(iv3 l, iv3 r);
 bv4 operator*(bv4 l, bv4 r);
 v2 operator*(v2 l, f32 r);
 v3 operator*(v3 l, f32 r);
+v3 operator*(v3 l, i32 r);
 v4 operator*(v4 l, f32 r);
 uv2 operator*(uv2 l, u32 r);
 uv3 operator*(uv3 l, u32 r);
@@ -1009,6 +1010,9 @@ v2 operator*(v2 l, f32 r) {
 	return {l.x * r, l.y * r};
 }
 v3 operator*(v3 l, f32 r) {
+	return {l.x * r, l.y * r, l.z * r};
+}
+v3 operator*(v3 l, i32 r) {
 	return {l.x * r, l.y * r, l.z * r};
 }
 v4 operator*(v4 l, f32 r) {

@@ -11,16 +11,17 @@ enum class mesh_cmd : u16 {
 	skydome
 };
 
+#pragma pack(push, 1)
 struct chunk_vertex {
-	u8 x = 0, z = 0;
-	u16 y_ao = 0;	
+	
+	u8 v = 0, u = 0, z = 0, x = 0;
+	u32 aoty = 0;
+	u32 ln = 0;
 
-	u16 ao_t = 0;
-	u8 u = 0, v = 0;
-
-	static chunk_vertex from_vec(v3 v, v3 uv, bv4 ao);
+	static chunk_vertex from_vec(v3 v, v3 uv, bv4 ao, u8 n_idx);
 };
-static_assert(sizeof(chunk_vertex) == 8, "chunk_vertex size != 8");
+#pragma pack(pop)
+static_assert(sizeof(chunk_vertex) == 12, "chunk_vertex size != 12");
 
 struct mesh_chunk {
 
@@ -37,8 +38,8 @@ struct mesh_chunk {
 	void clear();
 	void swap_mesh(mesh_chunk other);
 
-	void quad(v3 p1, v3 p2, v3 p3, v3 p4, v3 uv_ext, bv4 ao);
-	void cube(v3 pos, f32 len);
+	void unit_quad(v3 p1, v3 p2, v3 p3, v3 p4, v3 uv_ext, bv4 ao, u8 n_idx);
+	void cube_no_norm(v3 pos, f32 len);
 };
 
 struct mesh_cubemap {
