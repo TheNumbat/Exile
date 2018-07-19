@@ -19,6 +19,7 @@ Working To-Do:
 	user settings e.g. controls
 	profiler graphs & auto save unusually long frames
 
+	chunk culling
 	distance based fog
 	lighting
 	consolidate shaders?

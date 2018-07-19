@@ -11,7 +11,7 @@ bool operator==(code_context l, code_context r) { PROF
 
 string code_context::file() { 
 	string f = path();
-	return f.substring(f.last_slash() + 1, f.len - 1);
+	return f.len > 1 ? f.substring(f.last_slash() + 1, f.len - 1) : f;
 }
 string code_context::function() { 
 	return string::from_c_str(c_function);
