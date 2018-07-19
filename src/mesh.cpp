@@ -247,7 +247,9 @@ CALLBACK void run_mesh_cubemap(render_command* cmd, gpu_object* gpu) { PROF
 CALLBACK void run_mesh_chunk(render_command* cmd, gpu_object* gpu) { PROF
 
 	mesh_chunk* m = (mesh_chunk*)gpu->data;
-	glDrawArrays(gl_draw_mode::points, 0, m->vertices.size);
+
+	u32 num_faces = cmd->num_tris ? cmd->num_tris : m->vertices.size;
+	glDrawArrays(gl_draw_mode::points, 0, num_faces);
 }
 
 CALLBACK void run_mesh_2d_col(render_command* cmd, gpu_object* gpu) { PROF

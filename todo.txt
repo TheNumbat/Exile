@@ -2,7 +2,6 @@
 Working To-Do:
 
 [1]	chunk rendering update
-		fix chunk free_cpu
 		calculate normal from quad in geometry shader
 		UBOs
 

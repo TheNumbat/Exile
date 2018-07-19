@@ -296,11 +296,12 @@ void world::render_chunks() { PROF
 
 			eng->platform->aquire_mutex(&c->swap_mut);
 			if(!c->mesh.dirty) {
-				// c->mesh.free_cpu();
+				c->mesh.free_cpu();
 			}
 			render_command cmd = render_command::make((u16)mesh_cmd::chunk, c->mesh.gpu);
 
 			cmd.texture0 = block_textures;
+			cmd.num_tris = c->mesh_faces;
 
 			v3 chunk_pos = v3((f32)current.x * chunk::xsz, (f32)current.y * chunk::ysz, (f32)current.z * chunk::zsz);
 			cmd.model = translate(chunk_pos - p.camera.pos);
@@ -779,6 +780,7 @@ void chunk::build_data() { PROF
 
 	eng->platform->aquire_mutex(&swap_mut);
 	mesh.swap_mesh(new_mesh);
+	mesh_faces = mesh.vertices.size;
 	eng->platform->release_mutex(&swap_mut);
 }
 

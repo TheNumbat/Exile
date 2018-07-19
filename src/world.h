@@ -47,6 +47,7 @@ struct chunk {
 	platform_mutex swap_mut;
 	atomic_enum<work> job_state;
 	mesh_chunk mesh;
+	u32 mesh_faces = 0;
 
 	allocator* alloc = null;
 
