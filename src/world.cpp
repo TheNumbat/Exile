@@ -226,9 +226,6 @@ void world::render() { PROF
 
 	render_chunks();
 	render_player();
-
-	render_thing();
-	
 	render_sky();
 }
 
@@ -250,26 +247,6 @@ void world::render_sky() { PROF
 	eng->ogl.execute_command_list(&rcl);
 
 	rcl.destroy();
-}
-
-void world::render_thing() { PROF 
-
-	render_command_list rcl = render_command_list::make();
-
-	mesh_3d_tex mesh; mesh.init();
-	mesh.push_cube({3.0f, 115.0f, 16.0f}, 1.0f);
-
-	render_command cmd = render_command::make((u16)mesh_cmd::_3d_tex, mesh.gpu);
-	cmd.texture0 = sky_texture;
-	cmd.view = p.camera.view();
-	cmd.proj = proj(p.camera.fov, (f32)eng->window.settings.w / (f32)eng->window.settings.h, 0.01f, 2000.0f);
-
-	rcl.add_command(cmd);
-
-	eng->ogl.execute_command_list(&rcl);
-
-	rcl.destroy();
-	mesh.destroy();
 }
 
 void world::render_chunks() { PROF
@@ -317,14 +294,12 @@ void world::render_chunks() { PROF
 				build_job();
 			}
 
-			if(!c->mesh.dirty) {
-				c->mesh.free_cpu();
-			}
-
 			eng->platform->aquire_mutex(&c->swap_mut);
+			if(!c->mesh.dirty) {
+				// c->mesh.free_cpu();
+			}
 			render_command cmd = render_command::make((u16)mesh_cmd::chunk, c->mesh.gpu);
 
-			cmd.num_tris = c->mesh_triangles;
 			cmd.texture0 = block_textures;
 
 			v3 chunk_pos = v3((f32)current.x * chunk::xsz, (f32)current.y * chunk::ysz, (f32)current.z * chunk::zsz);
@@ -733,7 +708,7 @@ void chunk::build_data() { PROF
 						i32 width = 1, height = 1;
 
 						// Combine same faces in +u_2d
-						for(; u + width < max[u_2d] && u < 32; width++) {
+						for(; u + width < max[u_2d] && width < 32; width++) {
 
 							iv3 w_pos = position;
 							w_pos[u_2d] += width;
@@ -745,7 +720,7 @@ void chunk::build_data() { PROF
 
 						// Combine all-same face row in +v_2d
 						bool done = false;
-						for(; v + height < max[v_2d] && v < 32; height++) {
+						for(; v + height < max[v_2d] && height < 32; height++) {
 							for(i32 row_idx = 0; row_idx < width; row_idx++) {
 
 								iv3 wh_pos = position;
@@ -779,32 +754,12 @@ void chunk::build_data() { PROF
 						v3 v_2 = v_0 + height_offset;
 						v3 v_3 = v_0 + width_offset + height_offset;
 
-						v3 wht(width, height, (i32)single_type);
-						v3 hwt(height, width, (i32)single_type);
+						v3 uvt(width - 1, height - 1, (i32)single_type);
 						u8 ao_0 = ao_at(v_0), ao_1 = ao_at(v_1), ao_2 = ao_at(v_2), ao_3 = ao_at(v_3);
 
-						if(valid_q(v_0, v_2, v_1, v_3)) {
-							switch (i) {
-							case 0: // -X
-								new_mesh.unit_quad(v_0, v_2, v_1, v_3, hwt, bv4(ao_0,ao_2,ao_1,ao_3), 0);
-								break;
-							case 1: // -Y
-								new_mesh.unit_quad(v_2, v_3, v_0, v_1, wht, bv4(ao_2,ao_3,ao_0,ao_1), 0);
-								break;
-							case 2: // -Z
-								new_mesh.unit_quad(v_2, v_3, v_0, v_1, wht, bv4(ao_2,ao_3,ao_0,ao_1), 0);
-								break;
-							case 3: // +X
-								new_mesh.unit_quad(v_2, v_0, v_3, v_1, hwt, bv4(ao_2,ao_0,ao_3,ao_1), 0);
-								break;
-							case 4: // +Y
-								new_mesh.unit_quad(v_0, v_1, v_2, v_3, wht, bv4(ao_0,ao_1,ao_2,ao_3), 0);
-								break;
-							case 5: // +Z
-								new_mesh.unit_quad(v_0, v_1, v_2, v_3, wht, bv4(ao_0,ao_1,ao_2,ao_3), 0);
-								break;
-							}
-						}
+						iv3 dim(u_2d, v_2d, ortho_2d);
+
+						new_mesh.face(position, uvt, bv4(ao_0, ao_1, ao_2, ao_3), dim, backface_offset > 0);
 
 						// Erase quad area in slice
 						for(i32 h = 0; h < height; h++)  {
@@ -824,7 +779,6 @@ void chunk::build_data() { PROF
 
 	eng->platform->aquire_mutex(&swap_mut);
 	mesh.swap_mesh(new_mesh);
-	mesh_triangles = mesh.elements.size;
 	eng->platform->release_mutex(&swap_mut);
 }
 

@@ -48,8 +48,6 @@ struct chunk {
 	atomic_enum<work> job_state;
 	mesh_chunk mesh;
 
-	u32 mesh_triangles = 0;
-
 	allocator* alloc = null;
 
 	void init(chunk_pos pos, allocator* a);
@@ -84,7 +82,7 @@ struct player {
 struct world_settings {
 
 	f32 gravity = 0.0f;
-	i32 view_distance = 1;
+	i32 view_distance = 4;
 	bool respect_cam = true;
 	
 	bool wireframe = false;
@@ -144,7 +142,6 @@ struct world {
 	void render_chunks();
 	void render_player();
 	void render_sky();
-	void render_thing();
 	void populate_local_area();
 
 	v3 raymarch(v3 origin, v3 dir, f32 max);

@@ -11,22 +11,19 @@ enum class mesh_cmd : u16 {
 	skydome
 };
 
-#pragma pack(push, 1)
-struct chunk_vertex {
+struct chunk_face {
 	
 	u8 v = 0, u = 0, z = 0, x = 0;
 	u32 aoty = 0;
-	u32 ln = 0;
+	u32 ld = 0;
 
-	static chunk_vertex from_vec(v3 v, v3 uv, bv4 ao, u8 n_idx);
+	static chunk_face make(v3 pos, v3 uv, bv4 ao, iv3 dims, bool b);
 };
-#pragma pack(pop)
-static_assert(sizeof(chunk_vertex) == 12, "chunk_vertex size != 12");
+static_assert(sizeof(chunk_face) == 12, "chunk_face size != 12");
 
 struct mesh_chunk {
 
-	vector<chunk_vertex> 	vertices;
-	vector<uv3> 			elements;
+	vector<chunk_face> 	vertices;
 
 	gpu_object_id gpu = -1;
 	bool dirty = false;
@@ -38,8 +35,7 @@ struct mesh_chunk {
 	void clear();
 	void swap_mesh(mesh_chunk other);
 
-	void unit_quad(v3 p1, v3 p2, v3 p3, v3 p4, v3 uv_ext, bv4 ao, u8 n_idx);
-	void cube_no_norm(v3 pos, f32 len);
+	void face(v3 p, v3 uv_ext, bv4 ao, iv3 dims, bool b);
 };
 
 struct mesh_cubemap {

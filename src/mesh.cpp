@@ -4,14 +4,13 @@ void setup_mesh_commands() { PROF
 	register_mesh(lines);
 	register_mesh(cubemap);
 	register_mesh(skydome);
-	register_mesh(chunk);
+	register_mesh_g(chunk);
 
 	register_mesh_ex(_2d_col, 2d_col, "mesh/");
 	register_mesh_ex(_2d_tex, 2d_tex, "mesh/");
+	register_mesh_ex(_3d_tex, 3d_tex, "mesh/");
 	register_mesh_ex(_2d_tex_col, 2d_tex_col, "mesh/");
 	register_mesh_ex(_3d_tex_instanced, 3d_tex_instanced, "mesh/");
-	
-	register_mesh_ex_g(_3d_tex, 3d_tex, "mesh/");
 }
 
 CALLBACK void uniforms_mesh_skydome(shader_program* prog, render_command* cmd) { PROF
@@ -127,10 +126,7 @@ CALLBACK void update_mesh_chunk(gpu_object* obj, void* data, bool force) { PROF
 	if(!force && !m->dirty) return;
 
 	glBindBuffer(gl_buf_target::array, obj->vbos[0]);
-	glBufferData(gl_buf_target::array, m->vertices.size * sizeof(chunk_vertex), m->vertices.size ? m->vertices.memory : null, gl_buf_usage::dynamic_draw);
-
-	glBindBuffer(gl_buf_target::element_array, obj->vbos[1]);
-	glBufferData(gl_buf_target::element_array, m->elements.size * sizeof(uv3), m->elements.size ? m->elements.memory : null, gl_buf_usage::dynamic_draw);
+	glBufferData(gl_buf_target::array, m->vertices.size * sizeof(chunk_face), m->vertices.size ? m->vertices.memory : null, gl_buf_usage::dynamic_draw);
 
 	m->dirty = false;
 }
@@ -251,9 +247,7 @@ CALLBACK void run_mesh_cubemap(render_command* cmd, gpu_object* gpu) { PROF
 CALLBACK void run_mesh_chunk(render_command* cmd, gpu_object* gpu) { PROF
 
 	mesh_chunk* m = (mesh_chunk*)gpu->data;
-
-	u32 num_tris = ((cmd->num_tris ? cmd->num_tris : m->elements.size) - cmd->start_tri) * 3;
-	glDrawElementsBaseVertex(gl_draw_mode::triangles, num_tris, gl_index_type::unsigned_int, (void*)(u64)(0), cmd->offset);
+	glDrawArrays(gl_draw_mode::points, 0, m->vertices.size);
 }
 
 CALLBACK void run_mesh_2d_col(render_command* cmd, gpu_object* gpu) { PROF
@@ -358,10 +352,8 @@ CALLBACK void setup_mesh_chunk(gpu_object* obj) { PROF
 
 	glBindBuffer(gl_buf_target::array, obj->vbos[0]);
 
-	glVertexAttribIPointer(0, 3, gl_vert_attrib_type::unsigned_int, sizeof(chunk_vertex), (void*)0);
+	glVertexAttribIPointer(0, 3, gl_vert_attrib_type::unsigned_int, sizeof(chunk_face), (void*)0);
 	glEnableVertexAttribArray(0);
-	
-	glBindBuffer(gl_buf_target::element_array, obj->vbos[1]);
 }
 
 CALLBACK void setup_mesh_2d_col(gpu_object* obj) { PROF
@@ -854,13 +846,14 @@ void mesh_3d_tex::push_cube(v3 pos, f32 len) {
 	dirty = true;
 }
 
-chunk_vertex chunk_vertex::from_vec(v3 v, v3 uv, bv4 ao, u8 n_idx) { PROF
+chunk_face chunk_face::make(v3 v, v3 uv, bv4 ao, iv3 dims, bool b) { PROF
 
 	LOG_DEBUG_ASSERT(v.x >= 0 && v.x < 256 && v.z >= 0 && v.z < 256 && v.y >= 0 && v.y < 4096 &&
 					 uv.x >= 0 && uv.x < 256 && uv.y >= 0 && uv.y < 256 && uv.z >= 0 && uv.z < 4096 &&
-					 ao.x >= 0 && ao.x < 4 && ao.y >= 0 && ao.y < 4 && ao.z >= 0 && ao.z < 4 && ao.w >= 0 && ao.w < 4);
+					 ao.x >= 0 && ao.x < 4 && ao.y >= 0 && ao.y < 4 && ao.z >= 0 && ao.z < 4 && ao.w >= 0 && ao.w < 4 &&
+					 dims.x >= 0 && dims.x < 3 && dims.y >= 0 && dims.y < 3 && dims.z >= 0 && dims.z < 3);
 
-	chunk_vertex ret;
+	chunk_face ret;
 
 	ret.v = (u8)uv.y;
 	ret.u = (u8)uv.x;
@@ -875,7 +868,10 @@ chunk_vertex chunk_vertex::from_vec(v3 v, v3 uv, bv4 ao, u8 n_idx) { PROF
 	ret.aoty |= (u16)uv.z << 8;
 	ret.aoty |= (u16)v.y  << 20;
 
-	ret.ln |= n_idx << 24;
+	ret.ld |= (u8)b << 24;
+	ret.ld |= (u8)dims.z << 26;
+	ret.ld |= (u8)dims.y << 28;
+	ret.ld |= (u8)dims.x << 30;
 
 	return ret;
 }
@@ -888,8 +884,7 @@ mesh_chunk mesh_chunk::make_cpu(u32 verts, allocator* alloc) { PROF
 
 	mesh_chunk ret;
 
-	ret.vertices = vector<chunk_vertex>::make(verts, alloc);
-	ret.elements = vector<uv3>::make(verts, alloc);
+	ret.vertices = vector<chunk_face>::make(verts, alloc);
 
 	return ret;
 }
@@ -902,10 +897,7 @@ void mesh_chunk::init_gpu() { PROF
 void mesh_chunk::swap_mesh(mesh_chunk other) { PROF
 
 	vertices.destroy();
-	elements.destroy();
-
 	vertices = other.vertices;
-	elements = other.elements;
 
 	dirty = true;
 }
@@ -913,7 +905,6 @@ void mesh_chunk::swap_mesh(mesh_chunk other) { PROF
 void mesh_chunk::destroy() { PROF
 
 	vertices.destroy();
-	elements.destroy();
 
 	eng->ogl.destroy_object(gpu);
 	gpu = -1;
@@ -922,61 +913,20 @@ void mesh_chunk::destroy() { PROF
 void mesh_chunk::free_cpu() { PROF
 
 	vertices.resize(0);
-	elements.resize(0);
 }
 
 void mesh_chunk::clear() { PROF
 
 	vertices.clear();
-	elements.clear();
 
 	dirty = true;
 }
 
-void mesh_chunk::unit_quad(v3 p1, v3 p2, v3 p3, v3 p4, v3 uv_ext, bv4 ao, u8 n_idx) { PROF
-
-	u32 idx = vertices.size;
+void mesh_chunk::face(v3 p, v3 uv_ext, bv4 ao, iv3 dims, bool b) { PROF
 
 	const f32 v = (f32)chunk::units_per_voxel;
 
-	vertices.push(chunk_vertex::from_vec(p1 * v, v3(0.0f, 0.0f, uv_ext.z), ao, n_idx));
-	vertices.push(chunk_vertex::from_vec(p2 * v, v3(uv_ext.x * v, 0.0f, uv_ext.z), ao, n_idx));
-	vertices.push(chunk_vertex::from_vec(p3 * v, v3(0.0f, uv_ext.y * v, uv_ext.z), ao, n_idx));
-	vertices.push(chunk_vertex::from_vec(p4 * v, v3(uv_ext.x * v, uv_ext.y * v, uv_ext.z), ao, n_idx));
-
-	elements.push(uv3(idx, idx + 1, idx + 2));
-	elements.push(uv3(idx + 3, idx + 2, idx + 1));
-
-	dirty = true;
-}
-
-void mesh_chunk::cube_no_norm(v3 pos, f32 len) { PROF
-
-	u32 idx = vertices.size;
-
-	f32 len2 = len / 2.0f;
-	pos += {len2, len2, len2};
-
-	vertices.push(chunk_vertex::from_vec(pos + v3( len2,  len2,  len2), v3(0,0,0), bv4(), 0));
-	vertices.push(chunk_vertex::from_vec(pos + v3(-len2,  len2,  len2), v3(1,0,0), bv4(), 0));
-	vertices.push(chunk_vertex::from_vec(pos + v3( len2, -len2,  len2), v3(0,1,0), bv4(), 0));
-	vertices.push(chunk_vertex::from_vec(pos + v3( len2,  len2, -len2), v3(0,0,0), bv4(), 0));
-	vertices.push(chunk_vertex::from_vec(pos + v3(-len2, -len2,  len2), v3(1,0,0), bv4(), 0));
-	vertices.push(chunk_vertex::from_vec(pos + v3( len2, -len2, -len2), v3(0,1,0), bv4(), 0));
-	vertices.push(chunk_vertex::from_vec(pos + v3(-len2,  len2, -len2), v3(1,0,0), bv4(), 0));
-	vertices.push(chunk_vertex::from_vec(pos + v3(-len2, -len2, -len2), v3(1,1,0), bv4(), 0));
-
-	elements.push(uv3(idx + 0, idx + 3, idx + 5));
-	elements.push(uv3(idx + 0, idx + 3, idx + 6));
-	elements.push(uv3(idx + 0, idx + 1, idx + 6));
-	elements.push(uv3(idx + 1, idx + 4, idx + 7));
-	elements.push(uv3(idx + 1, idx + 6, idx + 7));
-	elements.push(uv3(idx + 4, idx + 2, idx + 5));
-	elements.push(uv3(idx + 4, idx + 7, idx + 5));
-	elements.push(uv3(idx + 7, idx + 5, idx + 3));
-	elements.push(uv3(idx + 7, idx + 6, idx + 3));
-	elements.push(uv3(idx + 0, idx + 2, idx + 4));
-	elements.push(uv3(idx + 0, idx + 1, idx + 4));
+	vertices.push(chunk_face::make(p * v, v3(uv_ext.x * v, uv_ext.y * v, uv_ext.z), ao, dims, b));
 
 	dirty = true;
 }

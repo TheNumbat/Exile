@@ -129,6 +129,9 @@ void shader_program::compile() { PROF
 
 		glShaderSource(h_geometry, 1, &geometry.source.c_str, null);
 		glCompileShader(h_geometry);
+
+		check_compile(geometry.path, h_geometry);
+
 		glAttachShader(handle, h_geometry);
 	}
 
@@ -250,7 +253,11 @@ void ogl_manager::reload_texture_assets() { PROF
 void ogl_manager::try_reload_programs() { PROF
 	FORMAP(it, commands) {
 		if(it->value.shader.try_refresh()) {
-			LOG_DEBUG_F("Reloaded program % with files %, %"_, it->key, it->value.shader.vertex.path, it->value.shader.fragment.path);
+
+			if(it->value.shader.geometry.path)
+				LOG_DEBUG_F("Reloaded program % with files %, %, %"_, it->key, it->value.shader.vertex.path, it->value.shader.geometry.path, it->value.shader.fragment.path);
+			else
+				LOG_DEBUG_F("Reloaded program % with files %, %"_, it->key, it->value.shader.vertex.path, it->value.shader.fragment.path);
 		}
 	}
 	dbg_shader.try_refresh();
@@ -744,7 +751,11 @@ void ogl_manager::add_command(u16 id, _FPTR* run, _FPTR* uniforms, _FPTR* compat
 
 	d.run.set(run);
 	d.shader = shader_program::make(v, f, g, uniforms, alloc);
-	LOG_DEBUG_F("Loaded shader from % and %"_, v, f);
+	
+	if(g)
+		LOG_DEBUG_F("Loaded shader from %, %, %"_, v, g, f);
+	else 
+		LOG_DEBUG_F("Loaded shader from %, %"_, v, f);
 
 	commands.insert(id, d);
 	return;

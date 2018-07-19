@@ -5,14 +5,13 @@ Working To-Do:
 		also causes crash on shutdown after dynamic reload
 
 	chunk rendering update
-		geometry shader for quads -> render points of face data, emit quads
+		fix chunk free_cpu
+		calculate normal from quad in geometry shader - send in UV dimension data
 		UBOs
-		normals
 
-	stars/sun/moon
+	star-field at night, blend into skydome based on time
+	sun/moon objects
 	directional/sun lighting
-		normals and UBOs for them
-		page swapping for normals and texture? maybe
 
 	serialization/deserialization
 	config format
