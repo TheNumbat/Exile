@@ -4,6 +4,7 @@ Working To-Do:
 [1]	chunk rendering update
 		calculate normal from quad in geometry shader
 		UBOs
+		this is actually like 30% slower than everything per-vertex...RIP. However, it does use 4x less GPU memory...
 
 [2]	FIX ALLOCATION PROFILING THREADING BUGS
 		unmatched allocations/frees in log and world generation
@@ -32,8 +33,6 @@ Working To-Do:
 	chunk paging and persistence
 	world generation framework
 
-	some good deps: iconFontHeaders, nativeFileDialog from dbartolini
-
 Bugs:
 	allocation profiling is somewhat broken for asynchronous allocations: world & log
 	
@@ -49,17 +48,6 @@ Large-Scale Improvements | Changes for Future Projects
 	use Vulkan
 
 Overall To-Do List:
-
-	other voxel structures
-		stb_voxel_render approach
-			separate vertex/face data
-			vertex : 1 byte x 1 byte y 1 byte z 1 byte lighting (2b AO)
-			face : 2 byte texture, 1 byte normal/rotation
-		Geometry shader cube gen - more complicated, can be very fast, will experiment
-		Geometry shader gen from faces
-			why is this any better than the cube?
-			would this actually be good though? it would likely be similar to meshing but larger/less "vertices"
-			Calculate vertex stuff from uniform face data???
 
 	new build system with clang
 		make metaprogram a real compilation step, get rid of PROF
