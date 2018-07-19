@@ -1,17 +1,19 @@
 
 Working To-Do:
 
-	-> FIX ALLOCATION PROFILING THREADING BUGS <-
-		also causes crash on shutdown after dynamic reload
-
-	chunk rendering update
+[1]	chunk rendering update
 		fix chunk free_cpu
-		calculate normal from quad in geometry shader - send in UV dimension data
+		calculate normal from quad in geometry shader
 		UBOs
 
-	star-field at night, blend into skydome based on time
-	sun/moon objects
-	directional/sun lighting
+[2]	FIX ALLOCATION PROFILING THREADING BUGS
+		unmatched allocations/frees in log and world generation
+		causes crash on shutdown after dynamic reload
+
+[3]	Environment
+		star-field at night, blend into skydome based on time
+		sun/moon objects
+		directional/sun lighting
 
 	serialization/deserialization
 	config format
