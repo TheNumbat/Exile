@@ -35,6 +35,7 @@ flat in uvec3 g_vertex[];
 flat out uint f_t, f_flip;
 flat out vec4 f_ao, f_l;
 out vec2 f_uv;
+out vec3 f_n;
 
 void main() {
 
@@ -72,6 +73,8 @@ void main() {
 	vec3 pos1 = pos0; pos1[d0] += uv.x;
 	vec3 pos2 = pos0; pos2[d1] += uv.y;
 	vec3 pos3 = pos2; pos3[d0] += uv.x;
+
+	f_n = cross(pos1 - pos0, pos2 - pos0);
 
 	// Get per-vertex data
 

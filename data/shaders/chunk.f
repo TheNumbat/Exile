@@ -4,6 +4,7 @@
 flat in uint f_t, f_flip;
 flat in vec4 f_ao, f_l;
 in vec2 f_uv;
+in vec3 f_n;
 
 out vec4 color;
 
