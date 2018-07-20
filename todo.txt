@@ -2,9 +2,7 @@
 Working To-Do:
 
 [1]	chunk rendering update
-		calculate normal from quad in geometry shader
 		UBOs
-		this is actually like 30% slower than everything per-vertex...RIP. However, it does use 4x less GPU memory...
 
 [2]	FIX ALLOCATION PROFILING THREADING BUGS
 		unmatched allocations/frees in log and world generation

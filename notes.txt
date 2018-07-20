@@ -13,3 +13,5 @@ Vertex Format
 	Chunk is 32x32x512
 
 	Do we want to modify this for LOD?
+
+	The geometry shader approach is actually like 30% slower than everything per-vertex. However, it does use 4x less GPU memory...

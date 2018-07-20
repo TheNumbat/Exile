@@ -62,7 +62,7 @@ void main() {
 
 	// Get texture info
 
-	vec2 uv = vec2((face.x & u_mask) >> 8, face.x & v_mask) / units_per_voxel + vec2(1, 1);
+	vec2 uv = (vec2((face.x & u_mask) >> 8, face.x & v_mask) + vec2(1, 1)) / units_per_voxel;
 	f_t  = (face.y & t_mask) >> 8;
 
 	// Get vertex positions

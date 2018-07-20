@@ -755,7 +755,7 @@ void chunk::build_data() { PROF
 						v3 v_2 = v_0 + height_offset;
 						v3 v_3 = v_0 + width_offset + height_offset;
 
-						v3 uvt(width - 1, height - 1, (i32)single_type);
+						v3 uvt(width, height, (i32)single_type);
 						u8 ao_0 = ao_at(v_0), ao_1 = ao_at(v_1), ao_2 = ao_at(v_2), ao_3 = ao_at(v_3);
 
 						iv3 dim(u_2d, v_2d, ortho_2d);

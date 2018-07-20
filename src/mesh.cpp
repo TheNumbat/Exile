@@ -928,7 +928,7 @@ void mesh_chunk::face(v3 p, v3 uv_ext, bv4 ao, iv3 dims, bool b) { PROF
 
 	const f32 v = (f32)chunk::units_per_voxel;
 
-	vertices.push(chunk_face::make(p * v, v3(uv_ext.x * v, uv_ext.y * v, uv_ext.z), ao, dims, b));
+	vertices.push(chunk_face::make(p * v, v3(uv_ext.x * v - 1.0f, uv_ext.y * v - 1.0f, uv_ext.z), ao, dims, b));
 
 	dirty = true;
 }
