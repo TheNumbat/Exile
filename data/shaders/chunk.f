@@ -1,7 +1,7 @@
 
 #version 330 core
 
-flat in uint f_t, f_flip;
+flat in uint f_t;
 flat in vec4 f_ao;
 in vec2 f_uv;
 in vec3 f_n;
@@ -12,7 +12,7 @@ uniform sampler2DArray tex;
 
 void main() {
 
-	vec3 uvt = vec3(f_flip * f_uv + (1u - f_flip) * f_uv.yx, f_t);
+	vec3 uvt = vec3(f_uv, f_t);
 
 	vec4 sample = texture(tex, uvt);
 

@@ -1,12 +1,17 @@
 
 Vertex Format
 
-	Each face represented as a uvec3
+	Each face represented as a uvec4
 
 	u32                                     | u32                                     | u32
-	256|32    256|32    256       256       | 4096|512       4096           4 4  4 4  | 4 4  4 4  256       256
+	256|32    256|32    256       256       | 4096|512       4096           4 4  4 4  | 256       256       256       256
 	0000 0000 0000 0000 0000 0000 0000 0000 | 0000 0000 0000 0000 0000 0000 0000 0000 | 0000 0000 0000 0000 0000 0000 0000 0000
-	xxxx xxxx zzzz zzzz uuuu uuuu vvvv vvvv | yyyy yyyy yyyy tttt tttt tttt a0a1 a2a3 | udvd odbb uuuu uuuu vvvv vvvv 
+	xxxx xxxx zzzz zzzz uuuu uuuu vvvv vvvv | yyyy yyyy yyyy tttt tttt tttt a0a1 a2a3 | tttt tttt uuuu uuuu vvvv vvvv tttt tttt
+
+	u32                                    
+	
+	0000 0000 0000 0000 0000 0000 0000 0000
+	  bb 0000 0001 1111 1122 2222 2333 3333
 
 	Microblocks -> 8 units / voxel, meaning X/Y/Z/U/V are divided by 8, and UV patches can only be XZ sized (32x32)
 

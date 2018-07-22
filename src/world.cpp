@@ -757,12 +757,13 @@ void chunk::build_data() { PROF
 
 						const f32 units = (f32)chunk::units_per_voxel;
 
-						v2 uv0(width * units, 0.0f), uv1(0.0f, height * units);
-						bv4 ao(ao_at(v_0), ao_at(v_1), ao_at(v_2), ao_at(v_3));
+						u8 ao_0 = ao_at(v_0), ao_1 = ao_at(v_1), ao_2 = ao_at(v_2), ao_3 = ao_at(v_3);
 						i32 t = (i32)single_type;
-						iv3 dims(u_2d, v_2d, ortho_2d);
 
-						new_mesh.vertices.push(chunk_face::make(position * units, uv0, uv1, t, ao, dims, backface_offset > 0));
+						if(i == 0 || i == 3)
+							new_mesh.vertices.push(chunk_face::make(v_0 * units, height_offset * units, width_offset * units, t, bv4(ao_0,ao_2,ao_1,ao_3)));
+						else
+							new_mesh.vertices.push(chunk_face::make(v_0 * units, width_offset * units, height_offset * units, t, bv4(ao_0,ao_1,ao_2,ao_3)));
 
 						// Erase quad area in slice
 						for(i32 h = 0; h < height; h++)  {

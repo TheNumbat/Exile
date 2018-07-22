@@ -41,12 +41,12 @@ CALLBACK void uniforms_mesh_cubemap(shader_program* prog, render_command* cmd) {
 
 CALLBACK void uniforms_mesh_chunk(shader_program* prog, render_command* cmd) { PROF
 
-	GLint loc = glGetUniformLocation(prog->handle, "transform");
+	GLint mvploc = glGetUniformLocation(prog->handle, "mvp");
 	GLint szloc = glGetUniformLocation(prog->handle, "units_per_voxel");
 
-	m4 transform = cmd->proj * cmd->view * cmd->model;
+	m4 mvp = cmd->proj * cmd->view * cmd->model;
 
-	glUniformMatrix4fv(loc, 1, gl_bool::_false, transform.a);
+	glUniformMatrix4fv(mvploc, 1, gl_bool::_false, mvp.a);
 	glUniform1f(szloc, (f32)chunk::units_per_voxel);
 }
 
@@ -848,23 +848,22 @@ void mesh_3d_tex::push_cube(v3 pos, f32 len) {
 	dirty = true;
 }
 
-chunk_face chunk_face::make(v3 v, v2 uv0, v2 uv1, i32 t, bv4 ao, iv3 dims, bool b) { PROF
+chunk_face chunk_face::make(v3 v, v3 uv0, v3 uv1, i32 t, bv4 ao) { PROF
 
 	LOG_DEBUG_ASSERT(v.x >= 0 && v.x < 256);
 	LOG_DEBUG_ASSERT(v.z >= 0 && v.z < 256);
 	LOG_DEBUG_ASSERT(v.y >= 0 && v.y < 4096);
 	LOG_DEBUG_ASSERT(uv0.x >= 0 && uv0.x < 256);
 	LOG_DEBUG_ASSERT(uv0.y >= 0 && uv0.y < 256);
+	LOG_DEBUG_ASSERT(uv0.z >= 0 && uv0.z < 256);
 	LOG_DEBUG_ASSERT(uv1.x >= 0 && uv1.x < 256);
 	LOG_DEBUG_ASSERT(uv1.y >= 0 && uv1.y < 256);
+	LOG_DEBUG_ASSERT(uv1.z >= 0 && uv1.z < 256);
 	LOG_DEBUG_ASSERT(t >= 0 && t < 4096);
 	LOG_DEBUG_ASSERT(ao.x >= 0 && ao.x < 4);
 	LOG_DEBUG_ASSERT(ao.y >= 0 && ao.y < 4);
 	LOG_DEBUG_ASSERT(ao.z >= 0 && ao.z < 4);
 	LOG_DEBUG_ASSERT(ao.w >= 0 && ao.w < 4);
-	LOG_DEBUG_ASSERT(dims.x >= 0 && dims.x < 3);
-	LOG_DEBUG_ASSERT(dims.y >= 0 && dims.y < 3);
-	LOG_DEBUG_ASSERT(dims.z >= 0 && dims.z < 3);
 
 	chunk_face ret;
 
@@ -881,13 +880,10 @@ chunk_face chunk_face::make(v3 v, v2 uv0, v2 uv1, i32 t, bv4 ao, iv3 dims, bool 
 	ret.aoty |= (u16)t   << 8;
 	ret.aoty |= (u16)v.y << 20;
 
+	ret.t1 = (u8)uv1.z;
 	ret.v1 = (u8)uv1.y;
 	ret.u1 = (u8)uv1.x;
-
-	ret.dims |= (u8)b 	   << 0;
-	ret.dims |= (u8)dims.z << 2;
-	ret.dims |= (u8)dims.y << 4;
-	ret.dims |= (u8)dims.x << 6;
+	ret.t0 = (u8)uv0.z;
 
 	return ret;
 }
