@@ -112,6 +112,7 @@ v4 operator*(v4 l, f32 r);
 uv2 operator*(uv2 l, u32 r);
 uv3 operator*(uv3 l, u32 r);
 iv3 operator*(iv3 l, i32 r);
+v3 operator*(iv3 l, f32 r);
 bv4 operator*(bv4 l, u8 r);
 v2 operator*(f32 l, v2 r);
 v3 operator*(f32 l, v3 r);
@@ -238,6 +239,7 @@ union v2 {
 	f32& operator[](i32 idx) {return a[idx];}
 
 	v2() {}
+	v2(f32 _x) {x = _x; y = _x;}
 	v2(f32 _x, f32 _y) {x = _x; y = _y;}
 	v2(v2& v) {*this = v;}
 	v2(v2&& v) {*this = v;}
@@ -1025,6 +1027,9 @@ uv3 operator*(uv3 l, u32 r) {
 	return {l.x * r, l.y * r, l.z * r};
 }
 iv3 operator*(iv3 l, i32 r) {
+	return {l.x * r, l.y * r, l.z * r};
+}
+v3 operator*(iv3 l, f32 r) {
 	return {l.x * r, l.y * r, l.z * r};
 }
 bv4 operator*(bv4 l, u8 r) {

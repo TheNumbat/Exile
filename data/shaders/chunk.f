@@ -2,7 +2,7 @@
 #version 330 core
 
 flat in uint f_t, f_flip;
-flat in vec4 f_ao, f_l;
+flat in vec4 f_ao;
 in vec2 f_uv;
 in vec3 f_n;
 
@@ -21,4 +21,5 @@ void main() {
 	float ao = mix(ao0, ao1, fract(f_uv.y));
 
 	color = vec4(sample.rgb * ao, sample.a);
+	// color = vec4(f_n, 1.0f);
 }

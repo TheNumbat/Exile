@@ -709,7 +709,7 @@ void chunk::build_data() { PROF
 						i32 width = 1, height = 1;
 
 						// Combine same faces in +u_2d
-						for(; u + width < max[u_2d] && width < 32; width++) {
+						for(; u + width < max[u_2d] && width < 31; width++) {
 
 							iv3 w_pos = position;
 							w_pos[u_2d] += width;
@@ -721,7 +721,7 @@ void chunk::build_data() { PROF
 
 						// Combine all-same face row in +v_2d
 						bool done = false;
-						for(; v + height < max[v_2d] && height < 32; height++) {
+						for(; v + height < max[v_2d] && height < 31; height++) {
 							for(i32 row_idx = 0; row_idx < width; row_idx++) {
 
 								iv3 wh_pos = position;
@@ -755,12 +755,14 @@ void chunk::build_data() { PROF
 						v3 v_2 = v_0 + height_offset;
 						v3 v_3 = v_0 + width_offset + height_offset;
 
-						v3 uvt(width, height, (i32)single_type);
-						u8 ao_0 = ao_at(v_0), ao_1 = ao_at(v_1), ao_2 = ao_at(v_2), ao_3 = ao_at(v_3);
+						const f32 units = (f32)chunk::units_per_voxel;
 
-						iv3 dim(u_2d, v_2d, ortho_2d);
+						v2 uv0(width * units, 0.0f), uv1(0.0f, height * units);
+						bv4 ao(ao_at(v_0), ao_at(v_1), ao_at(v_2), ao_at(v_3));
+						i32 t = (i32)single_type;
+						iv3 dims(u_2d, v_2d, ortho_2d);
 
-						new_mesh.face(position, uvt, bv4(ao_0, ao_1, ao_2, ao_3), dim, backface_offset > 0);
+						new_mesh.vertices.push(chunk_face::make(position * units, uv0, uv1, t, ao, dims, backface_offset > 0));
 
 						// Erase quad area in slice
 						for(i32 h = 0; h < height; h++)  {
@@ -775,6 +777,8 @@ void chunk::build_data() { PROF
 			}
 		}
 	}
+
+	// new_mesh.vertices.push(chunk_face::make({24, 880, 128}, {8, 4}, {4, 8}, 2, {3, 3, 3, 3}, {0, 1, 2}, false));
 
 	POP_PROFILE_PROF();
 

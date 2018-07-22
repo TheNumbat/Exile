@@ -848,17 +848,28 @@ void mesh_3d_tex::push_cube(v3 pos, f32 len) {
 	dirty = true;
 }
 
-chunk_face chunk_face::make(v3 v, v3 uv, bv4 ao, iv3 dims, bool b) { PROF
+chunk_face chunk_face::make(v3 v, v2 uv0, v2 uv1, i32 t, bv4 ao, iv3 dims, bool b) { PROF
 
-	LOG_DEBUG_ASSERT(v.x >= 0 && v.x < 256 && v.z >= 0 && v.z < 256 && v.y >= 0 && v.y < 4096 &&
-					 uv.x >= 0 && uv.x < 256 && uv.y >= 0 && uv.y < 256 && uv.z >= 0 && uv.z < 4096 &&
-					 ao.x >= 0 && ao.x < 4 && ao.y >= 0 && ao.y < 4 && ao.z >= 0 && ao.z < 4 && ao.w >= 0 && ao.w < 4 &&
-					 dims.x >= 0 && dims.x < 3 && dims.y >= 0 && dims.y < 3 && dims.z >= 0 && dims.z < 3);
+	LOG_DEBUG_ASSERT(v.x >= 0 && v.x < 256);
+	LOG_DEBUG_ASSERT(v.z >= 0 && v.z < 256);
+	LOG_DEBUG_ASSERT(v.y >= 0 && v.y < 4096);
+	LOG_DEBUG_ASSERT(uv0.x >= 0 && uv0.x < 256);
+	LOG_DEBUG_ASSERT(uv0.y >= 0 && uv0.y < 256);
+	LOG_DEBUG_ASSERT(uv1.x >= 0 && uv1.x < 256);
+	LOG_DEBUG_ASSERT(uv1.y >= 0 && uv1.y < 256);
+	LOG_DEBUG_ASSERT(t >= 0 && t < 4096);
+	LOG_DEBUG_ASSERT(ao.x >= 0 && ao.x < 4);
+	LOG_DEBUG_ASSERT(ao.y >= 0 && ao.y < 4);
+	LOG_DEBUG_ASSERT(ao.z >= 0 && ao.z < 4);
+	LOG_DEBUG_ASSERT(ao.w >= 0 && ao.w < 4);
+	LOG_DEBUG_ASSERT(dims.x >= 0 && dims.x < 3);
+	LOG_DEBUG_ASSERT(dims.y >= 0 && dims.y < 3);
+	LOG_DEBUG_ASSERT(dims.z >= 0 && dims.z < 3);
 
 	chunk_face ret;
 
-	ret.v = (u8)uv.y;
-	ret.u = (u8)uv.x;
+	ret.v0 = (u8)uv0.y;
+	ret.u0 = (u8)uv0.x;
 	ret.z = (u8)v.z;
 	ret.x = (u8)v.x;
 
@@ -867,13 +878,16 @@ chunk_face chunk_face::make(v3 v, v3 uv, bv4 ao, iv3 dims, bool b) { PROF
 	ret.aoty |= (u8)ao.y << 4;
 	ret.aoty |= (u8)ao.x << 6;
 
-	ret.aoty |= (u16)uv.z << 8;
-	ret.aoty |= (u16)v.y  << 20;
+	ret.aoty |= (u16)t   << 8;
+	ret.aoty |= (u16)v.y << 20;
 
-	ret.ld |= (u8)b << 24;
-	ret.ld |= (u8)dims.z << 26;
-	ret.ld |= (u8)dims.y << 28;
-	ret.ld |= (u8)dims.x << 30;
+	ret.v1 = (u8)uv1.y;
+	ret.u1 = (u8)uv1.x;
+
+	ret.dims |= (u8)b 	   << 0;
+	ret.dims |= (u8)dims.z << 2;
+	ret.dims |= (u8)dims.y << 4;
+	ret.dims |= (u8)dims.x << 6;
 
 	return ret;
 }
@@ -920,15 +934,6 @@ void mesh_chunk::free_cpu() { PROF
 void mesh_chunk::clear() { PROF
 
 	vertices.clear();
-
-	dirty = true;
-}
-
-void mesh_chunk::face(v3 p, v3 uv_ext, bv4 ao, iv3 dims, bool b) { PROF
-
-	const f32 v = (f32)chunk::units_per_voxel;
-
-	vertices.push(chunk_face::make(p * v, v3(uv_ext.x * v - 1.0f, uv_ext.y * v - 1.0f, uv_ext.z), ao, dims, b));
 
 	dirty = true;
 }
