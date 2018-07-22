@@ -11,7 +11,7 @@ Vertex Format
 	u32                                    
 	
 	0000 0000 0000 0000 0000 0000 0000 0000
-	  bb 0000 0001 1111 1122 2222 2333 3333
+	ddbf 0000 0001 1111 1122 2222 2333 3333
 
 	Microblocks -> 8 units / voxel, meaning X/Y/Z/U/V are divided by 8, and UV patches can only be XZ sized (32x32)
 
@@ -20,3 +20,11 @@ Vertex Format
 	Do we want to modify this for LOD?
 
 	The geometry shader approach is actually like 30% slower than everything per-vertex. However, it does use 4x less GPU memory...
+
+
+
+00 0 0
+01 1 1
+10 2 -0
+11 3 -1
+

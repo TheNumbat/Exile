@@ -21,40 +21,51 @@ const uint u1_mask  = 0x00ff0000u;
 const uint v1_mask  = 0x0000ff00u;
 const uint t1_mask  = 0x000000ffu;
 
-const uint bf_mask 	= 0x30000000u;
-const uint l0_mask  = 0x00fc0000u;
-const uint l1_mask  = 0x0003f000u;
-const uint l2_mask  = 0x00000fc0u;
-const uint l3_mask  = 0x0000003fu;
+const uint bd_mask 	= 0xc0000000u;
+const uint ff_mask 	= 0x20000000u;
+const uint bf_mask 	= 0x10000000u;
+
+const uint l0_mask  = 0x00000000u;
+const uint l1_mask  = 0x00000000u;
+const uint l2_mask  = 0x00000000u;
+const uint l3_mask  = 0x00000000u;
 
 uniform float units_per_voxel;
 
 uniform mat4 mvp;
 uniform vec4 ao_values = vec4(0.75f, 0.825f, 0.9f, 1.0f);
 
-flat in uvec3 g_vertex[];
+flat in uvec4 g_vertex[];
 
-flat out uint f_t;
+flat out uint f_t, f_flip;
 flat out vec4 f_ao;
 out vec2 f_uv;
 out vec3 f_n;
 
 void main() {
 
-	uvec3 face = g_vertex[0];
+	uvec4 face = g_vertex[0];
+
+	uint bf_dim = (face.w & bd_mask) >> 30;
+		 f_flip = (face.w & ff_mask) >> 29;
+	uint bf0    = (face.w & bf_mask) >> 28;
+	uint bf1 	= 1u - bf0;
 
 	// Get texture info
 
-	vec3 uv0 = vec3((face.x & u0_mask) >> 8, face.x & v0_mask, (face.z & t0_mask) >> 24) / units_per_voxel;
-	vec3 uv1 = vec3((face.z & u1_mask) >> 16, (face.z & v1_mask) >> 8, face.z & t1_mask) / units_per_voxel;
+	vec3 uv0u = vec3((face.x & u0_mask) >> 8, face.x & v0_mask, (face.z & t0_mask) >> 24);
+	vec3 uv1u = vec3((face.z & u1_mask) >> 16, (face.z & v1_mask) >> 8, face.z & t1_mask);
 
-	f_n = cross(uv0, uv1);
+	vec3 uv0 = vec3(uv0u.x, uv0u.y, uv0u.z) / units_per_voxel;
+	vec3 uv1 = vec3(uv1u.x, uv1u.y, uv1u.z) / units_per_voxel;
+
+	f_n = bf0 == 1u ? cross(uv0, uv1) : cross(uv1, uv0);
 	f_t = (face.y & t_mask) >> 8;
 
 	// Get vertex positions
 
 	vec3 pos0 = vec3((face.x & x_mask) >> 24, (face.y & y_mask) >> 20, (face.x & z_mask) >> 16) / units_per_voxel;
-	// pos0[d2] += b0;
+	pos0[bf_dim] += bf0;
 
 	vec3 pos1 = pos0 + uv0;
 	vec3 pos2 = pos0 + uv1;
@@ -75,12 +86,12 @@ void main() {
 	f_uv = vec2(0, 0);
 	EmitVertex();
 
-	gl_Position = mvp * vec4(pos1, 1.0);
-	f_uv = vec2(uvx, 0.0);
+	gl_Position = mvp * vec4(bf0 * pos1 + bf1 * pos2, 1.0);
+	f_uv = vec2(bf0 * uvx, bf1 * uvy);
 	EmitVertex();
 	
-	gl_Position = mvp * vec4(pos2, 1.0);
-	f_uv = vec2(0.0, uvy);
+	gl_Position = mvp * vec4(bf1 * pos1 + bf0 * pos2, 1.0);
+	f_uv = vec2(bf1 * uvx, bf0 * uvy);
 	EmitVertex();
 	
 	gl_Position = mvp * vec4(pos3, 1.0);

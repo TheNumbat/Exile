@@ -35,7 +35,7 @@ enum class work : u8 {
 
 struct chunk {
 
-	static const i32 xsz = 31, ysz = 511, zsz = 31;
+	static const i32 xsz = 32, ysz = 512, zsz = 32;
 
 	static const i32 units_per_voxel = 8;
 
@@ -88,7 +88,7 @@ struct world_settings {
 	bool respect_cam = true;
 	
 	bool wireframe = false;
-	bool cull_backface = false;
+	bool cull_backface = true;
 	bool sample_shading = true;
 };
 

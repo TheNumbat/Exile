@@ -16,10 +16,11 @@ struct chunk_face {
 	u8 v0 = 0, u0 = 0, z = 0, x = 0;
 	u32 aoty = 0;
 	u8 t1 = 0, v1 = 0, u1 = 0, t0 = 0;
+	u32 lbf = 0;
 
-	static chunk_face make(v3 pos, v3 uv0, v3 uv1, i32 t, bv4 ao);
+	static chunk_face make(v3 pos, v3 uv0, v3 uv1, i32 t, bv4 ao, i32 dim, bool bf, bool flip);
 };
-static_assert(sizeof(chunk_face) == 12, "chunk_face size != 12");
+static_assert(sizeof(chunk_face) == 16, "chunk_face size != 16");
 
 struct mesh_chunk {
 

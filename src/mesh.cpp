@@ -354,7 +354,7 @@ CALLBACK void setup_mesh_chunk(gpu_object* obj) { PROF
 
 	glBindBuffer(gl_buf_target::array, obj->vbos[0]);
 
-	glVertexAttribIPointer(0, 3, gl_vert_attrib_type::unsigned_int, sizeof(chunk_face), (void*)0);
+	glVertexAttribIPointer(0, 4, gl_vert_attrib_type::unsigned_int, sizeof(chunk_face), (void*)0);
 	glEnableVertexAttribArray(0);
 }
 
@@ -848,7 +848,7 @@ void mesh_3d_tex::push_cube(v3 pos, f32 len) {
 	dirty = true;
 }
 
-chunk_face chunk_face::make(v3 v, v3 uv0, v3 uv1, i32 t, bv4 ao) { PROF
+chunk_face chunk_face::make(v3 v, v3 uv0, v3 uv1, i32 t, bv4 ao, i32 dim, bool bf, bool flip) { PROF
 
 	LOG_DEBUG_ASSERT(v.x >= 0 && v.x < 256);
 	LOG_DEBUG_ASSERT(v.z >= 0 && v.z < 256);
@@ -864,6 +864,7 @@ chunk_face chunk_face::make(v3 v, v3 uv0, v3 uv1, i32 t, bv4 ao) { PROF
 	LOG_DEBUG_ASSERT(ao.y >= 0 && ao.y < 4);
 	LOG_DEBUG_ASSERT(ao.z >= 0 && ao.z < 4);
 	LOG_DEBUG_ASSERT(ao.w >= 0 && ao.w < 4);
+	LOG_DEBUG_ASSERT(dim >= 0 && dim < 3);
 
 	chunk_face ret;
 
@@ -884,6 +885,10 @@ chunk_face chunk_face::make(v3 v, v3 uv0, v3 uv1, i32 t, bv4 ao) { PROF
 	ret.v1 = (u8)uv1.y;
 	ret.u1 = (u8)uv1.x;
 	ret.t0 = (u8)uv0.z;
+
+	ret.lbf |= (u8)dim  << 30;
+	ret.lbf |= (u8)flip << 29;
+	ret.lbf |= (u8)bf   << 28;
 
 	return ret;
 }

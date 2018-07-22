@@ -760,10 +760,9 @@ void chunk::build_data() { PROF
 						u8 ao_0 = ao_at(v_0), ao_1 = ao_at(v_1), ao_2 = ao_at(v_2), ao_3 = ao_at(v_3);
 						i32 t = (i32)single_type;
 
-						if(i == 0 || i == 3)
-							new_mesh.vertices.push(chunk_face::make(v_0 * units, height_offset * units, width_offset * units, t, bv4(ao_0,ao_2,ao_1,ao_3)));
-						else
-							new_mesh.vertices.push(chunk_face::make(v_0 * units, width_offset * units, height_offset * units, t, bv4(ao_0,ao_1,ao_2,ao_3)));
+						v3 uv0 = width_offset * units;
+						v3 uv1 = height_offset * units;
+						new_mesh.vertices.push(chunk_face::make(position * units, uv0, uv1, t, bv4(ao_0,ao_1,ao_2,ao_3), ortho_2d, backface_offset > 0, i != 0 && i != 3));
 
 						// Erase quad area in slice
 						for(i32 h = 0; h < height; h++)  {
@@ -779,7 +778,7 @@ void chunk::build_data() { PROF
 		}
 	}
 
-	// new_mesh.vertices.push(chunk_face::make({24, 880, 128}, {8, 4}, {4, 8}, 2, {3, 3, 3, 3}, {0, 1, 2}, false));
+	// new_mesh.vertices.push(chunk_face::make({24, 880, 128}, {0, 8, 0}, {8, 0, 8}, 2, {3, 3, 3, 3}, 0, false, false));
 
 	POP_PROFILE_PROF();
 
