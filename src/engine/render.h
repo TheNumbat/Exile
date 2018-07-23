@@ -298,6 +298,7 @@ struct ogl_manager {
 	texture_id add_cubemap(asset_store* as, string name);
 	void push_tex_array(texture_id tex, asset_store* as, string name);
 	texture_id begin_tex_array(iv3 dim, texture_wrap wrap = texture_wrap::repeat, bool pixelated = false, u32 offset = 0);
+	i32 get_layers(texture_id tex);
 
 	void destroy_texture(texture_id id);
 	texture* select_texture(u32 unit, texture_id id);

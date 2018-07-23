@@ -24,6 +24,8 @@ static func_ptr_state* global_func = null;
 template<typename T, typename... args>
 struct func_ptr {
 
+	func_ptr(_FPTR* d = null) {data = d;}
+
 	_FPTR* data = null;
 
 	T operator()(args... arg) {

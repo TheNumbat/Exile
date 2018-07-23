@@ -1,10 +1,22 @@
 
-enum class block_type : u8 {
-	air, 
+enum class block_type : u16 {
+	air,
 	bedrock,
 	stone,
+	path,
+
+	count
 };
-#define NUM_BLOCKS (TYPEINFO(block_type)->_enum.member_count)
+inline u32 hash(block_type key);
+
+struct block_meta {
+	block_type type;
+	bool merge_dirs[6]; // -x -y -z +x +y +z
+	i32 textures[6];
+	
+	bool custom_model;
+	func_ptr<void, mesh_chunk*, i32> model;
+};
 
 struct chunk_pos {
 	i32 x = 0, y = 0, z = 0;
@@ -23,7 +35,7 @@ struct mesh_face {
 	
 	static bool can_merge(mesh_face f1, mesh_face f2, i32 dir);
 
-	block_type type = block_type::air;
+	block_meta info;
 	bv4 ao;
 };
 
@@ -33,6 +45,7 @@ enum class work : u8 {
 	done
 };
 
+struct world;
 struct chunk {
 
 	static const i32 xsz = 31, ysz = 511, zsz = 31;
@@ -51,15 +64,15 @@ struct chunk {
 	u32 mesh_faces = 0;
 
 	allocator* alloc = null;
+	world* w = null;
 
-	void init(chunk_pos pos, allocator* a);
-	static chunk* make_new(chunk_pos pos, allocator* a);
+	void init(world* w, chunk_pos pos, allocator* a);
+	static chunk* make_new(world* w, chunk_pos pos, allocator* a);
 
 	void gen();
 	void destroy();
 
 	static i32 y_at(i32 x, i32 z);
-	static bool valid_q(v3 v_0, v3 v_1, v3 v_2, v3 v_3);
 	u8 ao_at(v3 vert);
 	block_type block_at(i32 x, i32 y, i32 z);
 	mesh_face build_face(block_type t, iv3 p, i32 dir);
@@ -119,6 +132,7 @@ struct world {
 	// NOTE(max): map to pointers to chunk so the map can transform while chunks are being operated on
 	// TODO(max): use a free-list allocator to allocate the chunks
 	map<chunk_pos, chunk*> chunks;
+	map<block_type, block_meta> block_info;
 
 	world_settings settings;
 	player p;
@@ -133,6 +147,7 @@ struct world {
 	world_time time;
 
 	void init(asset_store* store, allocator* a);
+	void init_blocks(asset_store* store);
 	void destroy();
 	void destroy_chunks();
 	void regenerate();

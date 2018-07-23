@@ -18,6 +18,7 @@ Working To-Do:
 	user settings e.g. controls
 	profiler graphs & auto save unusually long frames
 
+	multiple texture arrays for > 2048 textures
 	chunk culling
 	distance based fog
 	lighting

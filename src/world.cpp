@@ -25,6 +25,54 @@ CALLBACK void player_debug_ui(world* w) { PROF
 	ImGui::ViewAny("inter"_, intersection);
 }
 
+void world::init_blocks(asset_store* store) { PROF
+
+	block_info = map<block_type, block_meta>::make((u32)block_type::count, alloc);
+	block_textures = eng->ogl.begin_tex_array(iv3(32, 32, eng->ogl.info.max_texture_layers), texture_wrap::repeat, true, 1);
+
+	i32 tex_idx = eng->ogl.get_layers(block_textures);
+
+	block_info.insert(block_type::air,
+	{
+		block_type::air,
+		{false, false, false, false, false, false},
+		{tex_idx, tex_idx, tex_idx, tex_idx, tex_idx, tex_idx},
+		false
+	});
+	
+	tex_idx = eng->ogl.get_layers(block_textures);
+	eng->ogl.push_tex_array(block_textures, store, "bedrock"_);
+	block_info.insert(block_type::bedrock,
+	{
+		block_type::bedrock,
+		{true, true, true, true, true, true},
+		{tex_idx, tex_idx, tex_idx, tex_idx, tex_idx, tex_idx},
+		false
+	});
+
+	tex_idx = eng->ogl.get_layers(block_textures);
+	eng->ogl.push_tex_array(block_textures, store, "stone"_);
+	block_info.insert(block_type::stone,
+	{
+		block_type::stone,
+		{true, true, true, true, true, true},
+		{tex_idx, tex_idx, tex_idx, tex_idx, tex_idx, tex_idx},
+		false
+	});
+
+	tex_idx = eng->ogl.get_layers(block_textures);
+	eng->ogl.push_tex_array(block_textures, store, "path_side"_);
+	eng->ogl.push_tex_array(block_textures, store, "dirt"_);
+	eng->ogl.push_tex_array(block_textures, store, "path_top"_);
+	block_info.insert(block_type::path,
+	{
+		block_type::path,
+		{true, true, true, true, true, true},
+		{tex_idx, tex_idx + 1, tex_idx, tex_idx, tex_idx + 2, tex_idx},
+		false
+	});	
+}
+
 void world::init(asset_store* store, allocator* a) { PROF
 
 	alloc = a;
@@ -33,15 +81,13 @@ void world::init(asset_store* store, allocator* a) { PROF
 
 	LOG_INFO_F("units_per_voxel: %"_, chunk::units_per_voxel);
 	
+	init_blocks(store);
+
 	{
 		sky.init();
 		sky.push_dome({}, 1.0f, 64);
 		sky_texture = eng->ogl.add_texture(store, "sky"_, texture_wrap::mirror);
 		night_sky_texture = eng->ogl.add_texture(store, "night_sky"_);
-
-		block_textures = eng->ogl.begin_tex_array(iv3(32, 32, (i32)NUM_BLOCKS), texture_wrap::repeat, true, 1);
-		eng->ogl.push_tex_array(block_textures, store, "bedrock"_);
-		eng->ogl.push_tex_array(block_textures, store, "stone"_);
 	}
 
 	chunks = map<chunk_pos, chunk*>::make(512, a);
@@ -52,6 +98,7 @@ void world::init(asset_store* store, allocator* a) { PROF
 	thread_pool.start_all();
 
 	{
+		eng->dbg.store.add_val("ogl"_, &eng->ogl.info);
 		eng->dbg.store.add_var("world/settings"_, &settings);
 		eng->dbg.store.add_var("world/time"_, &time);
 		eng->dbg.store.add_ele("world/ui"_, FPTR(world_debug_ui), this);
@@ -84,6 +131,7 @@ void world::destroy() { PROF
 	thread_pool.stop_all();
 	thread_pool.destroy();
 	destroy_chunks();
+	block_info.destroy();
 }
 
 v3 world::raymarch(v3 origin, v3 max) { PROF
@@ -170,7 +218,7 @@ void world::populate_local_area() { PROF
 			
 			if(!chunks.try_get(current)) {
 				
-				chunk** c = chunks.insert(current, chunk::make_new(current, alloc));
+				chunk** c = chunks.insert(current, chunk::make_new(this, current, alloc));
 				
 				(*c)->job_state.set(work::in_flight);
 
@@ -285,7 +333,7 @@ void world::render_chunks() { PROF
 			};
 			
 			if(!ch) {
-				ch = chunks.insert(current, chunk::make_new(current, alloc));
+				ch = chunks.insert(current, chunk::make_new(this, current, alloc));
 				build_job();
 			}
 			chunk* c = *ch;
@@ -428,6 +476,11 @@ void world::update_player(u64 now) { PROF
 	p.last = now;
 }
 
+inline u32 hash(block_type key) { PROF
+
+	return hash((u16)key);
+}
+
 inline u32 hash(chunk_pos key) { PROF
 
 	return hash(key.x) ^ hash(key.y) ^ hash(key.z);
@@ -472,21 +525,22 @@ chunk_pos chunk_pos::operator-(chunk_pos other) { PROF
 	return ret;
 }
 
-void chunk::init(chunk_pos p, allocator* a) { PROF
+void chunk::init(world* _w, chunk_pos p, allocator* a) { PROF
 
+	w = _w;
 	pos = p;
 	alloc = a;
 	mesh.init_gpu();
 	eng->platform->create_mutex(&swap_mut, false);
 }
 
-chunk* chunk::make_new(chunk_pos p, allocator* a) { PROF
+chunk* chunk::make_new(world* w, chunk_pos p, allocator* a) { PROF
 
 	PUSH_ALLOC(a);
 
 	chunk* ret = NEW(chunk);
 
-	ret->init(p, a);
+	ret->init(w, p, a);
 
 	POP_ALLOC();
 
@@ -515,7 +569,10 @@ void chunk::gen() { PROF
 			u32 height = y_at(pos.x * xsz + x, pos.z * zsz + z);
 
 			blocks[x][z][0] = block_type::bedrock;
-			_memset(&blocks[x][z][1], height, (u8)block_type::stone);
+			for(u32 y = 1; y < height; y++) {
+				blocks[x][z][y] = block_type::stone;
+			}
+			blocks[x][z][height] = block_type::path;
 		}
 	}
 }
@@ -568,7 +625,11 @@ block_type chunk::block_at(i32 x, i32 y, i32 z) { PROF
 	if(x < 0 || x >= xsz || y >= ysz || z < 0 || z >= zsz) {
 
 		// TODO(max): if the neighboring chunk exists, get a block from it
-		return y_at(pos.x * xsz + x, pos.z * zsz + z) >= y ? block_type::stone : block_type::air; 
+		i32 h = y_at(pos.x * xsz + x, pos.z * zsz + z);
+
+		if(y < h) return block_type::stone;
+		if(y == h) return block_type::path;
+		return block_type::air; 
 	}
 
 	return blocks[x][z][y];
@@ -577,7 +638,7 @@ block_type chunk::block_at(i32 x, i32 y, i32 z) { PROF
 mesh_face chunk::build_face(block_type t, iv3 p, i32 dir) { PROF
 
 	mesh_face ret;
-	ret.type = t;
+	ret.info = *w->block_info.get(t);
 
 	switch(dir) {
 	case 0: {
@@ -623,22 +684,7 @@ mesh_face chunk::build_face(block_type t, iv3 p, i32 dir) { PROF
 
 bool mesh_face::can_merge(mesh_face f1, mesh_face f2, i32 dir) { PROF
 
-	return f1.type == f2.type && f1.ao == f2.ao;
-}
-
-bool chunk::valid_q(v3 v_0, v3 v_1, v3 v_2, v3 v_3) { PROF 
-	return v_0.x >= 0 && v_0.x < 32  &&
-		   v_0.y >= 0 && v_0.y < 512 &&
-		   v_0.z >= 0 && v_0.z < 32  &&
-		   v_1.x >= 0 && v_1.x < 32  &&
-		   v_1.y >= 0 && v_1.y < 512 &&
-		   v_1.z >= 0 && v_1.z < 32  &&
-		   v_2.x >= 0 && v_2.x < 32  &&
-		   v_2.y >= 0 && v_2.y < 512 &&
-		   v_2.z >= 0 && v_2.z < 32  &&
-		   v_3.x >= 0 && v_3.x < 32  &&
-		   v_3.y >= 0 && v_3.y < 512 &&
-		   v_3.z >= 0 && v_3.z < 32;
+	return f1.info.type == f2.info.type && f1.ao == f2.ao && f1.info.merge_dirs[dir];
 }
 
 void chunk::build_data() { PROF
@@ -665,7 +711,7 @@ void chunk::build_data() { PROF
 		// Iterate over orthogonal orthogonal to slice
 		iv3 position;
 		for(position[ortho_2d] = 0; position[ortho_2d] < max[ortho_2d]; position[ortho_2d]++) {
-
+ 	
 			// Iterate over 2D slice blocks to filter culled faces before greedy step
 			for(position[v_2d] = 0; position[v_2d] < max[v_2d]; position[v_2d]++) {
 				for(position[u_2d] = 0; position[u_2d] < max[u_2d]; position[u_2d]++) {
@@ -761,29 +807,31 @@ void chunk::build_data() { PROF
 						v_0 *= units; v_1 *= units; v_2 *= units; v_3 *= units;
 						wh *= units; hw *= units;
 
+						i32 tex = face_type.info.textures[i];
+
 						switch (i) {
 						case 0: // -X
-							new_mesh.quad(v_0, v_2, v_1, v_3, hw, (i32)single_type, bv4(ao_0,ao_2,ao_1,ao_3));
+							new_mesh.quad(v_0, v_2, v_1, v_3, hw, tex, bv4(ao_0,ao_2,ao_1,ao_3));
 							break;
 						case 1: // -Y
-							new_mesh.quad(v_2, v_3, v_0, v_1, wh, (i32)single_type, bv4(ao_2,ao_3,ao_0,ao_1));
+							new_mesh.quad(v_2, v_3, v_0, v_1, wh, tex, bv4(ao_2,ao_3,ao_0,ao_1));
 							break;
 						case 2: // -Z
-							new_mesh.quad(v_2, v_3, v_0, v_1, wh, (i32)single_type, bv4(ao_2,ao_3,ao_0,ao_1));
+							new_mesh.quad(v_1, v_0, v_3, v_2, wh, tex, bv4(ao_1,ao_0,ao_3,ao_2));
 							break;
 						case 3: // +X
-							new_mesh.quad(v_2, v_0, v_3, v_1, hw, (i32)single_type, bv4(ao_2,ao_0,ao_3,ao_1));
+							new_mesh.quad(v_2, v_0, v_3, v_1, hw, tex, bv4(ao_2,ao_0,ao_3,ao_1));
 							break;
 						case 4: // +Y
-							new_mesh.quad(v_0, v_1, v_2, v_3, wh, (i32)single_type, bv4(ao_0,ao_1,ao_2,ao_3));
+							new_mesh.quad(v_0, v_1, v_2, v_3, wh, tex, bv4(ao_0,ao_1,ao_2,ao_3));
 							break;
 						case 5: // +Z
-							new_mesh.quad(v_0, v_1, v_2, v_3, wh, (i32)single_type, bv4(ao_0,ao_1,ao_2,ao_3));
+							new_mesh.quad(v_0, v_1, v_2, v_3, wh, tex, bv4(ao_0,ao_1,ao_2,ao_3));
 							break;
 						}
 
 						// Erase quad area in slice
-						for(i32 h = 0; h < height; h++)  {
+						for(i32 h = 0; h < height; h++) {
 							_memset(&slice[slice_idx + h * max[u_2d]], sizeof(block_type) * width, 0);
 						}
 

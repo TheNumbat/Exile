@@ -11,6 +11,26 @@ image {
 	file : sky.png,
 }
 image {
+	name : slab_side,
+	file : slab_side.png,
+}
+image {
+	name : slab_top,
+	file : slab_top.png,
+}
+image {
+	name : dirt,
+	file : dirt.png,
+}
+image {
+	name : path_side,
+	file : path_side.png,
+}
+image {
+	name : path_top,
+	file : path_top.png,
+}
+image {
 	name : night_sky,
 	file : night_sky.png,
 }

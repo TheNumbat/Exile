@@ -430,6 +430,16 @@ texture_id ogl_manager::add_cubemap(asset_store* as, string name) {
 	return next_texture_id - 1;
 }
 
+i32 ogl_manager::get_layers(texture_id tex) { PROF 
+
+	texture* t = textures.try_get(tex);
+
+	LOG_DEBUG_ASSERT(t);
+	LOG_DEBUG_ASSERT(t->type == texture_type::array);
+
+	return t->array_info.current_layer;
+}
+
 texture_id ogl_manager::begin_tex_array(iv3 dim, texture_wrap wrap, bool pixelated, u32 offset) { PROF
 
 	texture t = texture::make_array(dim, offset, wrap, pixelated, alloc);
