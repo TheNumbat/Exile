@@ -126,7 +126,7 @@ CALLBACK void update_mesh_chunk(gpu_object* obj, void* data, bool force) { PROF
 	if(!force && !m->dirty) return;
 
 	glBindBuffer(gl_buf_target::array, obj->vbos[0]);
-	glBufferData(gl_buf_target::array, m->vertices.size * sizeof(chunk_face), m->vertices.size ? m->vertices.memory : null, gl_buf_usage::dynamic_draw);
+	glBufferData(gl_buf_target::array, m->vertices.size * sizeof(chunk_vert), m->vertices.size ? m->vertices.memory : null, gl_buf_usage::dynamic_draw);
 
 	m->dirty = false;
 }
@@ -249,7 +249,7 @@ CALLBACK void run_mesh_chunk(render_command* cmd, gpu_object* gpu) { PROF
 	mesh_chunk* m = (mesh_chunk*)gpu->data;
 
 	u32 num_faces = cmd->num_tris ? cmd->num_tris : m->vertices.size;
-	glDrawArrays(gl_draw_mode::points, 0, num_faces);
+	glDrawArrays(gl_draw_mode::points, 0, num_faces / 4);
 }
 
 CALLBACK void run_mesh_2d_col(render_command* cmd, gpu_object* gpu) { PROF
@@ -354,8 +354,10 @@ CALLBACK void setup_mesh_chunk(gpu_object* obj) { PROF
 
 	glBindBuffer(gl_buf_target::array, obj->vbos[0]);
 
-	glVertexAttribIPointer(0, 4, gl_vert_attrib_type::unsigned_int, sizeof(chunk_face), (void*)0);
+	glVertexAttribIPointer(0, 4, gl_vert_attrib_type::unsigned_int, 4 * sizeof(chunk_vert), (void*)(0 * sizeof(chunk_vert)));
+	glVertexAttribIPointer(1, 4, gl_vert_attrib_type::unsigned_int, 4 * sizeof(chunk_vert), (void*)(2 * sizeof(chunk_vert)));
 	glEnableVertexAttribArray(0);
+	glEnableVertexAttribArray(1);
 }
 
 CALLBACK void setup_mesh_2d_col(gpu_object* obj) { PROF
@@ -792,6 +794,7 @@ void mesh_3d_tex::push_dome(v3 center, f32 r, i32 divisions) { PROF
 		}
 
 		th += (PI32 * 2.0f) / divisions;
+		if(i == divisions - 1) th += 0.0001f;
 	}
 
 	for (int x = 0; x < divisions; x++) {
@@ -848,28 +851,23 @@ void mesh_3d_tex::push_cube(v3 pos, f32 len) {
 	dirty = true;
 }
 
-chunk_face chunk_face::make(v3 v, v3 uv0, v3 uv1, i32 t, bv4 ao, i32 dim, bool bf, bool flip) { PROF
+chunk_vert chunk_vert::make(v3 v, v2 uv, i32 t, bv4 ao) { PROF
 
 	LOG_DEBUG_ASSERT(v.x >= 0 && v.x < 256);
 	LOG_DEBUG_ASSERT(v.z >= 0 && v.z < 256);
 	LOG_DEBUG_ASSERT(v.y >= 0 && v.y < 4096);
-	LOG_DEBUG_ASSERT(uv0.x >= 0 && uv0.x < 256);
-	LOG_DEBUG_ASSERT(uv0.y >= 0 && uv0.y < 256);
-	LOG_DEBUG_ASSERT(uv0.z >= 0 && uv0.z < 256);
-	LOG_DEBUG_ASSERT(uv1.x >= 0 && uv1.x < 256);
-	LOG_DEBUG_ASSERT(uv1.y >= 0 && uv1.y < 256);
-	LOG_DEBUG_ASSERT(uv1.z >= 0 && uv1.z < 256);
+	LOG_DEBUG_ASSERT(uv.x >= 0 && uv.x < 256);
+	LOG_DEBUG_ASSERT(uv.y >= 0 && uv.y < 256);
 	LOG_DEBUG_ASSERT(t >= 0 && t < 4096);
 	LOG_DEBUG_ASSERT(ao.x >= 0 && ao.x < 4);
 	LOG_DEBUG_ASSERT(ao.y >= 0 && ao.y < 4);
 	LOG_DEBUG_ASSERT(ao.z >= 0 && ao.z < 4);
 	LOG_DEBUG_ASSERT(ao.w >= 0 && ao.w < 4);
-	LOG_DEBUG_ASSERT(dim >= 0 && dim < 3);
 
-	chunk_face ret;
+	chunk_vert ret = {};
 
-	ret.v0 = (u8)uv0.y;
-	ret.u0 = (u8)uv0.x;
+	ret.v = (u8)uv.y;
+	ret.u = (u8)uv.x;
 	ret.z = (u8)v.z;
 	ret.x = (u8)v.x;
 
@@ -880,15 +878,6 @@ chunk_face chunk_face::make(v3 v, v3 uv0, v3 uv1, i32 t, bv4 ao, i32 dim, bool b
 
 	ret.aoty |= (u16)t   << 8;
 	ret.aoty |= (u16)v.y << 20;
-
-	ret.t1 = (u8)uv1.z;
-	ret.v1 = (u8)uv1.y;
-	ret.u1 = (u8)uv1.x;
-	ret.t0 = (u8)uv0.z;
-
-	ret.lbf |= (u8)dim  << 30;
-	ret.lbf |= (u8)flip << 29;
-	ret.lbf |= (u8)bf   << 28;
 
 	return ret;
 }
@@ -901,7 +890,7 @@ mesh_chunk mesh_chunk::make_cpu(u32 verts, allocator* alloc) { PROF
 
 	mesh_chunk ret;
 
-	ret.vertices = vector<chunk_face>::make(verts, alloc);
+	ret.vertices = vector<chunk_vert>::make(verts, alloc);
 
 	return ret;
 }
@@ -935,6 +924,16 @@ void mesh_chunk::free_cpu() { PROF
 void mesh_chunk::clear() { PROF
 
 	vertices.clear();
+
+	dirty = true;
+}
+
+void mesh_chunk::quad(v3 v_0, v3 v_1, v3 v_2, v3 v_3, v2 uv, i32 t, bv4 ao) {
+
+	vertices.push(chunk_vert::make(v_0, v2(0.0f, 0.0f), t, ao));
+	vertices.push(chunk_vert::make(v_1, v2(uv.x, 0.0f), t, ao));
+	vertices.push(chunk_vert::make(v_2, v2(0.0f, uv.y), t, ao));
+	vertices.push(chunk_vert::make(v_3, v2(uv.x, uv.y), t, ao));
 
 	dirty = true;
 }

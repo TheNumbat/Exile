@@ -1,6 +1,23 @@
 
 Vertex Format
 
+	OK SO the geometry shader face generation implementation is not working out so well. I don't think the memory usage savings is
+	even worth the trouble, and this is performing worse than the triangles one anyway!
+
+===VERTICES===
+
+	0000 0000 0000 0000 0000 0000 0000 0000
+	xxxx xxxx zzzz zzzz vvvv vvvv uuuu uuuu
+
+	0000 0000 0000 0000 0000 0000 0000 0000
+	yyyy yyyy yyyy tttt tttt tttt aoao aoao
+
+// add later
+	0000 0000 0000 0000 0000 0000 0000 0000
+	llll llll llll llll llll llll llll llll 
+
+===FACE APPROACH===
+
 	Each face represented as a uvec4
 
 	u32                                     | u32                                     | u32

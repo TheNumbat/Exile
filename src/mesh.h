@@ -11,20 +11,18 @@ enum class mesh_cmd : u16 {
 	skydome
 };
 
-struct chunk_face {
-	
-	u8 v0 = 0, u0 = 0, z = 0, x = 0;
-	u32 aoty = 0;
-	u8 t1 = 0, v1 = 0, u1 = 0, t0 = 0;
-	u32 lbf = 0;
+struct chunk_vert {
 
-	static chunk_face make(v3 pos, v3 uv0, v3 uv1, i32 t, bv4 ao, i32 dim, bool bf, bool flip);
+	u8 v, u, z, x;
+	u32 aoty;
+
+	static chunk_vert make(v3 pos, v2 uv, i32 t, bv4 ao);
 };
-static_assert(sizeof(chunk_face) == 16, "chunk_face size != 16");
+static_assert(sizeof(chunk_vert) == 8, "chunk_vert size != 8");
 
 struct mesh_chunk {
 
-	vector<chunk_face> 	vertices;
+	vector<chunk_vert> vertices;
 
 	gpu_object_id gpu = -1;
 	bool dirty = false;
@@ -35,6 +33,8 @@ struct mesh_chunk {
 	void free_cpu();
 	void clear();
 	void swap_mesh(mesh_chunk other);
+
+	void quad(v3 v_0, v3 v_1, v3 v_2, v3 v_3, v2 uv, i32 t, bv4 ao);
 };
 
 struct mesh_cubemap {

@@ -241,6 +241,7 @@ union v2 {
 	v2() {}
 	v2(f32 _x) {x = _x; y = _x;}
 	v2(f32 _x, f32 _y) {x = _x; y = _y;}
+	v2(i32 _x, i32 _y) {x = (f32)_x; y = (f32)_y;}
 	v2(v2& v) {*this = v;}
 	v2(v2&& v) {*this = v;}
 	v2& operator=(v2& v) {x = v.x; y = v.y; return *this;}
