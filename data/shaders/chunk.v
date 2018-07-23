@@ -2,7 +2,6 @@
 #version 330 core
 
 layout (location = 0) in uvec4 v_v0;
-layout (location = 1) in uvec4 v_v1;
 
 uniform float units_per_voxel;
 
@@ -27,7 +26,7 @@ struct vert {
 	uint t;
 };
 
-flat out vert g_v0, g_v1, g_v2, g_v3;
+flat out vert g_v0, g_v1;
 
 vert unpack(uvec2 i) {
 
@@ -47,6 +46,4 @@ vert unpack(uvec2 i) {
 void main() {
 	g_v0 = unpack(v_v0.xy);
 	g_v1 = unpack(v_v0.zw);
-	g_v2 = unpack(v_v1.xy);
-	g_v3 = unpack(v_v1.zw);
 }

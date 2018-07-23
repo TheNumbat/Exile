@@ -249,7 +249,7 @@ CALLBACK void run_mesh_chunk(render_command* cmd, gpu_object* gpu) { PROF
 	mesh_chunk* m = (mesh_chunk*)gpu->data;
 
 	u32 num_faces = cmd->num_tris ? cmd->num_tris : m->vertices.size;
-	glDrawArrays(gl_draw_mode::points, 0, num_faces / 4);
+	glDrawArrays(gl_draw_mode::lines, 0, num_faces / 2);
 }
 
 CALLBACK void run_mesh_2d_col(render_command* cmd, gpu_object* gpu) { PROF
@@ -354,10 +354,8 @@ CALLBACK void setup_mesh_chunk(gpu_object* obj) { PROF
 
 	glBindBuffer(gl_buf_target::array, obj->vbos[0]);
 
-	glVertexAttribIPointer(0, 4, gl_vert_attrib_type::unsigned_int, 4 * sizeof(chunk_vert), (void*)(0 * sizeof(chunk_vert)));
-	glVertexAttribIPointer(1, 4, gl_vert_attrib_type::unsigned_int, 4 * sizeof(chunk_vert), (void*)(2 * sizeof(chunk_vert)));
+	glVertexAttribIPointer(0, 4, gl_vert_attrib_type::unsigned_int, 2 * sizeof(chunk_vert), (void*)(0));
 	glEnableVertexAttribArray(0);
-	glEnableVertexAttribArray(1);
 }
 
 CALLBACK void setup_mesh_2d_col(gpu_object* obj) { PROF

@@ -1,7 +1,7 @@
 
 #version 330 core
 
-layout (points) in;
+layout (lines) in;
 layout (triangle_strip, max_vertices = 4) out;
 
 uniform mat4 mvp;
@@ -18,7 +18,7 @@ struct vert {
 	uint t;
 };
 
-flat in vert g_v0[], g_v1[], g_v2[], g_v3[];
+flat in vert g_v0[], g_v1[];
 
 void send(vert v) {
 
@@ -33,8 +33,8 @@ void main() {
 
 	vert v0 = g_v0[0];
 	vert v1 = g_v1[0];
-	vert v2 = g_v2[0];
-	vert v3 = g_v3[0];
+	vert v2 = g_v0[1];
+	vert v3 = g_v1[1];
 
 	f_n = cross(v1.pos - v0.pos, v2.pos - v0.pos);
 	
