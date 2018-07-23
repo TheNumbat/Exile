@@ -72,7 +72,7 @@ void world::init_blocks(asset_store* store) { PROF
 		block_type::path,
 		{true, true, true, true, true, true},
 		{tex_idx, tex_idx + 1, tex_idx, tex_idx, tex_idx + 2, tex_idx},
-		{block_type::air, block_type::path, block_type::path, block_type::path, block_type::path, block_type::air},
+		{block_type::path, block_type::path, block_type::path, block_type::path, block_type::path, block_type::path},
 		true, false
 	});	
 
@@ -588,8 +588,8 @@ void chunk::gen() { PROF
 			for(u32 y = 1; y < height; y++) {
 				blocks[x][z][y] = block_type::stone;
 			}
-			for(u32 y = height; y < height + 2; y++) {
-				blocks[x][z][y] = block_type::stone_slab;
+			for(u32 y = height; y < height + 1; y++) {
+				blocks[x][z][y] = block_type::path;
 			}			
 		}
 	}
@@ -646,7 +646,7 @@ block_type chunk::block_at(i32 x, i32 y, i32 z) { PROF
 		i32 h = y_at(pos.x * xsz + x, pos.z * zsz + z);
 
 		if(y < h) return block_type::stone;
-		if(y >= h && y < h+2) return block_type::stone_slab;
+		if(y >= h && y < h + 1) return block_type::path;
 		return block_type::air; 
 	}
 
