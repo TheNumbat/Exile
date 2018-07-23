@@ -2,6 +2,10 @@
 Working To-Do:
 
 [1]	chunk rendering update
+		move computation into vertex shader
+		ambient occlusion with other block models
+		block registry system like render commands
+		speed up chunk build (hash map lookups)
 		UBOs
 
 [2]	FIX ALLOCATION PROFILING THREADING BUGS

@@ -37,6 +37,7 @@ void world::init_blocks(asset_store* store) { PROF
 		block_type::air,
 		{false, false, false, false, false, false},
 		{tex_idx, tex_idx, tex_idx, tex_idx, tex_idx, tex_idx},
+		{block_type::air, block_type::air, block_type::air, block_type::air, block_type::air, block_type::air},
 		false
 	});
 	
@@ -47,6 +48,7 @@ void world::init_blocks(asset_store* store) { PROF
 		block_type::bedrock,
 		{true, true, true, true, true, true},
 		{tex_idx, tex_idx, tex_idx, tex_idx, tex_idx, tex_idx},
+		{block_type::bedrock, block_type::bedrock, block_type::bedrock, block_type::bedrock, block_type::bedrock, block_type::bedrock},
 		false
 	});
 
@@ -57,6 +59,7 @@ void world::init_blocks(asset_store* store) { PROF
 		block_type::stone,
 		{true, true, true, true, true, true},
 		{tex_idx, tex_idx, tex_idx, tex_idx, tex_idx, tex_idx},
+		{block_type::stone, block_type::stone, block_type::stone, block_type::stone, block_type::stone, block_type::stone},
 		false
 	});
 
@@ -69,7 +72,20 @@ void world::init_blocks(asset_store* store) { PROF
 		block_type::path,
 		{true, true, true, true, true, true},
 		{tex_idx, tex_idx + 1, tex_idx, tex_idx, tex_idx + 2, tex_idx},
+		{block_type::air, block_type::path, block_type::path, block_type::path, block_type::path, block_type::air},
 		false
+	});	
+
+	tex_idx = eng->ogl.get_layers(block_textures);
+	eng->ogl.push_tex_array(block_textures, store, "slab_side"_);
+	eng->ogl.push_tex_array(block_textures, store, "slab_top"_);
+	block_info.insert(block_type::stone_slab,
+	{
+		block_type::stone_slab,
+		{false, true, false, false, false, false},
+		{tex_idx, tex_idx + 1, tex_idx, tex_idx, tex_idx + 1, tex_idx},
+		{block_type::air, block_type::stone_slab, block_type::stone_slab, block_type::stone_slab, block_type::stone_slab, block_type::air},
+		true, FPTR(slab_model)
 	});	
 }
 
@@ -478,7 +494,7 @@ void world::update_player(u64 now) { PROF
 
 inline u32 hash(block_type key) { PROF
 
-	return hash((u16)key);
+	return (u32)key;
 }
 
 inline u32 hash(chunk_pos key) { PROF
@@ -572,7 +588,9 @@ void chunk::gen() { PROF
 			for(u32 y = 1; y < height; y++) {
 				blocks[x][z][y] = block_type::stone;
 			}
-			blocks[x][z][height] = block_type::path;
+			for(u32 y = height; y < height + 2; y++) {
+				blocks[x][z][y] = block_type::stone_slab;
+			}			
 		}
 	}
 }
@@ -628,7 +646,7 @@ block_type chunk::block_at(i32 x, i32 y, i32 z) { PROF
 		i32 h = y_at(pos.x * xsz + x, pos.z * zsz + z);
 
 		if(y < h) return block_type::stone;
-		if(y == h) return block_type::path;
+		if(y >= h && y < h+2) return block_type::stone_slab;
 		return block_type::air; 
 	}
 
@@ -682,9 +700,72 @@ mesh_face chunk::build_face(block_type t, iv3 p, i32 dir) { PROF
 	return ret;
 }
 
-bool mesh_face::can_merge(mesh_face f1, mesh_face f2, i32 dir) { PROF
+bool mesh_face::can_merge(mesh_face f1, mesh_face f2, i32 dir, bool h) { PROF
 
-	return f1.info.type == f2.info.type && f1.ao == f2.ao && f1.info.merge_dirs[dir];
+	dir += h ? 3 : 0;
+	return f1.info.merge[dir] == f2.info.type && f1.info.type == f2.info.merge[dir] && f1.ao == f2.ao;
+}
+
+CALLBACK void slab_model(chunk* c, mesh_chunk* m, block_meta info, iv3 posi, i32 wi, i32 hi, i32 i) {
+
+	i32 ortho_2d = i % 3;
+	i32 u_2d = (i + 1) % 3;
+	i32 v_2d = (i + 2) % 3;
+	i32 backface_offset = i / 3 * 2 - 1;
+
+	f32 w = (f32)wi;
+	f32 h = (f32)hi;
+	v3 pos = posi;
+
+	if(u_2d == 1) {
+		w /= 2.0f;
+	} else if(v_2d == 1) {
+		h /= 2.0f;
+	} else if(i == 4) {
+		pos -= v3(0.0f, 0.5f, 0.0f);
+	}
+
+	v3 width_offset, height_offset;
+	width_offset[u_2d] = (f32)w;
+	height_offset[v_2d] = (f32)h;
+
+	v3 v_0 = pos;
+	if(backface_offset > 0) {
+		v_0[ortho_2d] += 1.0f;
+	}
+
+	v3 v_1 = v_0 + width_offset;
+	v3 v_2 = v_0 + height_offset;
+	v3 v_3 = v_2 + width_offset;
+	v2 wh = v2(w, h), hw = v2(h, w);
+	u8 ao_0 = c->ao_at(v_0), ao_1 = c->ao_at(v_1), ao_2 = c->ao_at(v_2), ao_3 = c->ao_at(v_3);
+
+	const f32 units = (f32)chunk::units_per_voxel;
+	v_0 *= units; v_1 *= units; v_2 *= units; v_3 *= units;
+	wh *= units; hw *= units;
+
+	i32 tex = info.textures[i];
+
+	switch (i) {
+	case 0: // -X
+		m->quad(v_0, v_2, v_1, v_3, hw, tex, bv4(ao_0,ao_2,ao_1,ao_3));
+		break;
+	case 1: // -Y
+		m->quad(v_2, v_3, v_0, v_1, wh, tex, bv4(ao_2,ao_3,ao_0,ao_1));
+		break;
+	case 2: // -Z
+		m->quad(v_1, v_0, v_3, v_2, wh, tex, bv4(ao_1,ao_0,ao_3,ao_2));
+		break;
+	case 3: // +X
+		m->quad(v_2, v_0, v_3, v_1, hw, tex, bv4(ao_2,ao_0,ao_3,ao_1));
+		break;
+	case 4: // +Y
+		m->quad(v_0, v_1, v_2, v_3, wh, tex, bv4(ao_0,ao_1,ao_2,ao_3));
+		break;
+	case 5: // +Z
+		m->quad(v_0, v_1, v_2, v_3, wh, tex, bv4(ao_0,ao_1,ao_2,ao_3));
+		break;
+	}
 }
 
 void chunk::build_data() { PROF
@@ -717,20 +798,23 @@ void chunk::build_data() { PROF
 				for(position[u_2d] = 0; position[u_2d] < max[u_2d]; position[u_2d]++) {
 
 					block_type block = blocks[position[0]][position[2]][position[1]];
+					block_meta info0 = *w->block_info.get(block);
+					
 					i32 slice_idx = position[u_2d] + position[v_2d] * max[u_2d];
 
-					// Only add the face to the slice if its opposing face is air
+					// Only add the face to the slice if its opposing face is not opaque
 					if(block != block_type::air) {
-
+						
 						iv3 backface = position;
 						backface[ortho_2d] += backface_offset;
 
 						block_type backface_block = block_at(backface[0],backface[1],backface[2]);
+						block_meta info1 = *w->block_info.get(backface_block);
 
-						if(backface_block != block_type::air) {
-							slice[slice_idx] = block_type::air;
-						} else {
+						if(!info0.opaque[i] || !info1.opaque[(i + 3) % 6]) {
 							slice[slice_idx] = block;
+						} else {
+							slice[slice_idx] = block_type::air;
 						}
 					} else {
 						slice[slice_idx] = block_type::air;
@@ -755,19 +839,19 @@ void chunk::build_data() { PROF
 						i32 width = 1, height = 1;
 
 						// Combine same faces in +u_2d
-						for(; u + width < max[u_2d]; width++) {
+						for(; u + width < max[u_2d] && width < 31; width++) {
 
 							iv3 w_pos = position;
 							w_pos[u_2d] += width;
 
 							mesh_face merge = build_face(slice[slice_idx + width], w_pos, i);
 
-							if(!mesh_face::can_merge(merge, face_type, i)) break;
+							if(!mesh_face::can_merge(merge, face_type, ortho_2d, false)) break;
 						}
 
 						// Combine all-same face row in +v_2d
 						bool done = false;
-						for(; v + height < max[v_2d]; height++) {
+						for(; v + height < max[v_2d] && height < 31; height++) {
 							for(i32 row_idx = 0; row_idx < width; row_idx++) {
 
 								iv3 wh_pos = position;
@@ -776,7 +860,7 @@ void chunk::build_data() { PROF
 
 								mesh_face merge = build_face(slice[slice_idx + row_idx + height * max[u_2d]], wh_pos, i);
 
-								if(!mesh_face::can_merge(merge, face_type, i)) {
+								if(!mesh_face::can_merge(merge, face_type, ortho_2d, true)) {
 									done = true;
 									break;
 								}
@@ -788,46 +872,52 @@ void chunk::build_data() { PROF
 
 						// Add quad (u,v,width,height) in 2D slice
 
-						v3 width_offset, height_offset;
-						width_offset[u_2d] = (f32)width;
-						height_offset[v_2d] = (f32)height;
+						if(face_type.info.custom_model) {
 
-						v3 v_0 = position;
-						if(backface_offset > 0) {
-							v_0[ortho_2d] += 1.0f;
-						}
+							face_type.info.model(this, &new_mesh, face_type.info, position, width, height, i);
 
-						v3 v_1 = v_0 + width_offset;
-						v3 v_2 = v_0 + height_offset;
-						v3 v_3 = v_2 + width_offset;
-						v2 wh = v2(width, height), hw = v2(height, width);
-						u8 ao_0 = ao_at(v_0), ao_1 = ao_at(v_1), ao_2 = ao_at(v_2), ao_3 = ao_at(v_3);
+						} else {
+							v3 width_offset, height_offset;
+							width_offset[u_2d] = (f32)width;
+							height_offset[v_2d] = (f32)height;
 
-						const f32 units = (f32)units_per_voxel;
-						v_0 *= units; v_1 *= units; v_2 *= units; v_3 *= units;
-						wh *= units; hw *= units;
+							v3 v_0 = position;
+							if(backface_offset > 0) {
+								v_0[ortho_2d] += 1.0f;
+							}
 
-						i32 tex = face_type.info.textures[i];
+							v3 v_1 = v_0 + width_offset;
+							v3 v_2 = v_0 + height_offset;
+							v3 v_3 = v_2 + width_offset;
+							v2 wh = v2(width, height), hw = v2(height, width);
+							u8 ao_0 = ao_at(v_0), ao_1 = ao_at(v_1), ao_2 = ao_at(v_2), ao_3 = ao_at(v_3);
 
-						switch (i) {
-						case 0: // -X
-							new_mesh.quad(v_0, v_2, v_1, v_3, hw, tex, bv4(ao_0,ao_2,ao_1,ao_3));
-							break;
-						case 1: // -Y
-							new_mesh.quad(v_2, v_3, v_0, v_1, wh, tex, bv4(ao_2,ao_3,ao_0,ao_1));
-							break;
-						case 2: // -Z
-							new_mesh.quad(v_1, v_0, v_3, v_2, wh, tex, bv4(ao_1,ao_0,ao_3,ao_2));
-							break;
-						case 3: // +X
-							new_mesh.quad(v_2, v_0, v_3, v_1, hw, tex, bv4(ao_2,ao_0,ao_3,ao_1));
-							break;
-						case 4: // +Y
-							new_mesh.quad(v_0, v_1, v_2, v_3, wh, tex, bv4(ao_0,ao_1,ao_2,ao_3));
-							break;
-						case 5: // +Z
-							new_mesh.quad(v_0, v_1, v_2, v_3, wh, tex, bv4(ao_0,ao_1,ao_2,ao_3));
-							break;
+							const f32 units = (f32)units_per_voxel;
+							v_0 *= units; v_1 *= units; v_2 *= units; v_3 *= units;
+							wh *= units; hw *= units;
+
+							i32 tex = face_type.info.textures[i];
+
+							switch (i) {
+							case 0: // -X
+								new_mesh.quad(v_0, v_2, v_1, v_3, hw, tex, bv4(ao_0,ao_2,ao_1,ao_3));
+								break;
+							case 1: // -Y
+								new_mesh.quad(v_2, v_3, v_0, v_1, wh, tex, bv4(ao_2,ao_3,ao_0,ao_1));
+								break;
+							case 2: // -Z
+								new_mesh.quad(v_1, v_0, v_3, v_2, wh, tex, bv4(ao_1,ao_0,ao_3,ao_2));
+								break;
+							case 3: // +X
+								new_mesh.quad(v_2, v_0, v_3, v_1, hw, tex, bv4(ao_2,ao_0,ao_3,ao_1));
+								break;
+							case 4: // +Y
+								new_mesh.quad(v_0, v_1, v_2, v_3, wh, tex, bv4(ao_0,ao_1,ao_2,ao_3));
+								break;
+							case 5: // +Z
+								new_mesh.quad(v_0, v_1, v_2, v_3, wh, tex, bv4(ao_0,ao_1,ao_2,ao_3));
+								break;
+							}
 						}
 
 						// Erase quad area in slice

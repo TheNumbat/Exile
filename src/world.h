@@ -4,18 +4,22 @@ enum class block_type : u16 {
 	bedrock,
 	stone,
 	path,
+	stone_slab,
 
 	count
 };
 inline u32 hash(block_type key);
 
+struct chunk;
 struct block_meta {
 	block_type type;
-	bool merge_dirs[6]; // -x -y -z +x +y +z
-	i32 textures[6];
 	
+	bool opaque[6]; // -x -y -z +x +y +z
+	i32 textures[6];
+	block_type merge[6];
+
 	bool custom_model;
-	func_ptr<void, mesh_chunk*, i32> model;
+	func_ptr<void, chunk*, mesh_chunk*, block_meta, iv3, i32, i32, i32> model;
 };
 
 struct chunk_pos {
@@ -33,7 +37,7 @@ inline u32 hash(chunk_pos key);
 
 struct mesh_face {
 	
-	static bool can_merge(mesh_face f1, mesh_face f2, i32 dir);
+	static bool can_merge(mesh_face f1, mesh_face f2, i32 dir, bool h);
 
 	block_meta info;
 	bv4 ao;
@@ -169,3 +173,5 @@ CALLBACK void world_debug_ui(world* w);
 CALLBACK void unlock_chunk(chunk* v);
 CALLBACK void cancel_build(chunk* param);
 float check_pirority(super_job* j, void* param);
+
+CALLBACK void slab_model(chunk* c, mesh_chunk* m, block_meta info, iv3 pos, i32 w, i32 h, i32 dir);
