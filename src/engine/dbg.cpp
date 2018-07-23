@@ -472,7 +472,7 @@ void dbg_console::UI(platform_window* window) { PROF
 					code_context* last = it->call_stack.get(it->call_stack.capacity - 1);
 					CHECKED(shell_exec, string::makef("subl_remote_open.bat %:%"_, last->path(), last->line));
 				}
-				if(ImGui::IsItemHovered()) {
+				if(ImGui::IsItemHovered() && it->lvl != log_level::console) {
 					ImGui::PopStyleColor();
 					ImGui::BeginTooltip();
 					ImGui::TextUnformatted(it->thread);

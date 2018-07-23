@@ -20,6 +20,8 @@ void main() {
 	float ao1 = mix(f_ao.z, f_ao.w, fract(f_uv.x));
 	float ao = mix(ao0, ao1, fract(f_uv.y));
 
+	vec3 n = normalize(f_n);
+
 	color = vec4(sample.rgb * ao, sample.a);
-	// color = vec4(abs(f_n), 1.0f);
+	// color = vec4(abs(n), 1.0f);
 }
