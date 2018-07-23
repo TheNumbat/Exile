@@ -2,7 +2,6 @@
 Working To-Do:
 
 [1]	chunk rendering update
-		ambient occlusion with other block models
 		block registry system like render commands
 		speed up chunk build (use flat array indexed by id instead of hash map)
 		UBOs

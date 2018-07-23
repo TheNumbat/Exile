@@ -18,6 +18,7 @@ struct block_meta {
 	i32 textures[6];
 	block_type merge[6];
 
+	bool does_ao;
 	bool custom_model;
 	func_ptr<void, chunk*, mesh_chunk*, block_meta, iv3, i32, i32, i32> model;
 };

@@ -38,7 +38,7 @@ void world::init_blocks(asset_store* store) { PROF
 		{false, false, false, false, false, false},
 		{tex_idx, tex_idx, tex_idx, tex_idx, tex_idx, tex_idx},
 		{block_type::air, block_type::air, block_type::air, block_type::air, block_type::air, block_type::air},
-		false
+		false, false
 	});
 	
 	tex_idx = eng->ogl.get_layers(block_textures);
@@ -49,7 +49,7 @@ void world::init_blocks(asset_store* store) { PROF
 		{true, true, true, true, true, true},
 		{tex_idx, tex_idx, tex_idx, tex_idx, tex_idx, tex_idx},
 		{block_type::bedrock, block_type::bedrock, block_type::bedrock, block_type::bedrock, block_type::bedrock, block_type::bedrock},
-		false
+		true, false
 	});
 
 	tex_idx = eng->ogl.get_layers(block_textures);
@@ -60,7 +60,7 @@ void world::init_blocks(asset_store* store) { PROF
 		{true, true, true, true, true, true},
 		{tex_idx, tex_idx, tex_idx, tex_idx, tex_idx, tex_idx},
 		{block_type::stone, block_type::stone, block_type::stone, block_type::stone, block_type::stone, block_type::stone},
-		false
+		true, false
 	});
 
 	tex_idx = eng->ogl.get_layers(block_textures);
@@ -73,7 +73,7 @@ void world::init_blocks(asset_store* store) { PROF
 		{true, true, true, true, true, true},
 		{tex_idx, tex_idx + 1, tex_idx, tex_idx, tex_idx + 2, tex_idx},
 		{block_type::air, block_type::path, block_type::path, block_type::path, block_type::path, block_type::air},
-		false
+		true, false
 	});	
 
 	tex_idx = eng->ogl.get_layers(block_textures);
@@ -85,7 +85,7 @@ void world::init_blocks(asset_store* store) { PROF
 		{false, true, false, false, false, false},
 		{tex_idx, tex_idx + 1, tex_idx, tex_idx, tex_idx + 1, tex_idx},
 		{block_type::air, block_type::stone_slab, block_type::stone_slab, block_type::stone_slab, block_type::stone_slab, block_type::air},
-		true, FPTR(slab_model)
+		false, true, FPTR(slab_model)
 	});	
 }
 
@@ -599,14 +599,14 @@ u8 chunk::ao_at(v3 vert) {
 
 	i32 x = (i32)vert.x, y = (i32)vert.y, z = (i32)vert.z;
 
-	bool top0 = block_at(x-1,y,z) != block_type::air;
-	bool top1 = block_at(x,y,z-1) != block_type::air;
-	bool top2 = block_at(x,y,z) != block_type::air;
-	bool top3 = block_at(x-1,y,z-1) != block_type::air;
-	bool bot0 = block_at(x-1,y-1,z) != block_type::air;
-	bool bot1 = block_at(x,y-1,z-1) != block_type::air;
-	bool bot2 = block_at(x,y-1,z) != block_type::air;
-	bool bot3 = block_at(x-1,y-1,z-1) != block_type::air;
+	bool top0 = w->block_info.get(block_at(x-1,y,z))->does_ao;
+	bool top1 = w->block_info.get(block_at(x,y,z-1))->does_ao;
+	bool top2 = w->block_info.get(block_at(x,y,z))->does_ao;
+	bool top3 = w->block_info.get(block_at(x-1,y,z-1))->does_ao;
+	bool bot0 = w->block_info.get(block_at(x-1,y-1,z))->does_ao;
+	bool bot1 = w->block_info.get(block_at(x,y-1,z-1))->does_ao;
+	bool bot2 = w->block_info.get(block_at(x,y-1,z))->does_ao;
+	bool bot3 = w->block_info.get(block_at(x-1,y-1,z-1))->does_ao;
 
 	bool side0, side1, corner;
 
