@@ -92,21 +92,11 @@ Overall To-Do List:
 		Do we want to use CaptureStackBackTrace instead of keeping the call stack ourself? Maybe...
 
 	log
-		colorful console output
 		keep & output statistics
-
-	UI
-		font swapping and regeneration on asset store reload
-		Debug Console / log stuff
-			swap between verbosity levels
-			tooltip call stack / file:line
-			commands (Lua API?)
-		subl_remote_open for profiler & logging
 
 	asset
 		define mods as asset packs
-		auto-reload asset stores
-			call asset.exe to re/build (do path stuff, platform_exec_cmd)
+		command to rebuild asset stores
 		more types of assets: 
 			Mod Definitions
 			Lua scripts
@@ -136,13 +126,12 @@ Overall To-Do List:
 	OpenGl
 		Shaders
 			preprocessor / shader assets
-			tessellation / geometry shaders
 		post-processing effects
 		HDR
 		AZDO
 			glNamed operations
 			glMapBuffer?
-			command lists -> translate from mine
+			NV command lists -> translate from mine
 			bindless textures / buffers
 		3D models & procedural animation
 			skeletal animation
