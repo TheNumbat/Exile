@@ -71,7 +71,8 @@ enum class gl_tex_param : GLenum {
 	wrap_t                 		= 0x2803,
 	wrap_r                 		= 0x8072,
 	border_color				= 0x1004,
-	swizzle_rgba				= 0x8E46
+	swizzle_rgba				= 0x8E46,
+	max_anisotropy 				= 0x84FE,
 };
 
 enum class gl_tex_format : GLint {
@@ -533,6 +534,7 @@ enum class gl_get : GLenum {
 	max_texture_image_units                   = 0x8872,
 	max_texture_lod_bias                      = 0x84FD,
 	max_texture_size                          = 0x0D33,
+	max_texture_max_anisotropy 				  = 0x84FF,
 	max_uniform_buffer_bindings               = 0x8A2F,
 	max_uniform_block_size                    = 0x8A30,
 	max_uniform_locations                     = 0x826E,

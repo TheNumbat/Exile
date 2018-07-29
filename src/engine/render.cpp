@@ -275,8 +275,8 @@ ogl_manager ogl_manager::make(platform_window* win, allocator* a) { PROF
 
 	ret.commands = map<u16, draw_context>::make(32, a);
 	
-	ret.settings = stack<ogl_settings>::make(4, a);
-	ret.settings.push(ogl_settings());
+	ret.command_settings = stack<cmd_settings>::make(4, a);
+	ret.command_settings.push(cmd_settings());
 
 	ret.load_global_funcs();
 	ret.info = ogl_info::make(ret.alloc);
@@ -380,14 +380,14 @@ void ogl_manager::destroy() { PROF
 	commands.destroy();
 	objects.destroy();
 	info.destroy();
-	settings.destroy();
+	command_settings.destroy();
 
 	check_leaked_handles();
 } 
 
 texture_id ogl_manager::add_texture_from_font(asset_store* as, string name, texture_wrap wrap, bool pixelated) { PROF
 
-	texture t = texture::make_rf(wrap, pixelated);
+	texture t = texture::make_rf(wrap, pixelated, settings.anisotropy);
 	t.id = next_texture_id;
 
 	t.rf_info.load(t.handle, as, name);
@@ -402,7 +402,7 @@ texture_id ogl_manager::add_texture_from_font(asset_store* as, string name, text
 
 texture_id ogl_manager::add_texture(asset_store* as, string name, texture_wrap wrap, bool pixelated) { PROF
 
-	texture t = texture::make_bmp(wrap, pixelated);
+	texture t = texture::make_bmp(wrap, pixelated, settings.anisotropy);
 	t.id = next_texture_id;
 
 	t.bmp_info.load(t.handle, as, name);
@@ -417,7 +417,7 @@ texture_id ogl_manager::add_texture(asset_store* as, string name, texture_wrap w
 
 texture_id ogl_manager::add_cubemap(asset_store* as, string name) {
 
-	texture t = texture::make_cube();
+	texture t = texture::make_cube(texture_wrap::repeat, false, settings.anisotropy);
 	t.id = next_texture_id;
 
 	t.cube_info.load_single(t.handle, as, name);
@@ -442,7 +442,7 @@ i32 ogl_manager::get_layers(texture_id tex) { PROF
 
 texture_id ogl_manager::begin_tex_array(iv3 dim, texture_wrap wrap, bool pixelated, u32 offset) { PROF
 
-	texture t = texture::make_array(dim, offset, wrap, pixelated, alloc);
+	texture t = texture::make_array(dim, offset, wrap, pixelated, settings.anisotropy, alloc);
 	t.id = next_texture_id;
 
 	textures.insert(next_texture_id, t);
@@ -501,7 +501,7 @@ void ogl_manager::select_textures(render_command* cmd) { PROF
 	select_texture(1, cmd->texture1);
 }
 
-texture texture::make_bmp(texture_wrap wrap, bool pixelated) { PROF
+texture texture::make_bmp(texture_wrap wrap, bool pixelated, f32 aniso) { PROF
 
 	texture ret;
 
@@ -509,6 +509,7 @@ texture texture::make_bmp(texture_wrap wrap, bool pixelated) { PROF
 	ret.gl_type = gl_tex_target::_2D;
 	ret.wrap = wrap;
 	ret.pixelated = pixelated;
+	ret.anisotropy = aniso;
 	glGenTextures(1, &ret.handle);
 
 	ret.set_params();
@@ -516,12 +517,16 @@ texture texture::make_bmp(texture_wrap wrap, bool pixelated) { PROF
 	return ret;
 }
 
-texture texture::make_cube() { PROF
+texture texture::make_cube(texture_wrap wrap, bool pixelated, f32 aniso) { PROF
 
 	texture ret;
 
 	ret.type = texture_type::cube;
 	ret.gl_type = gl_tex_target::cube_map;
+	ret.anisotropy = aniso;
+	ret.wrap = wrap;
+	ret.pixelated = pixelated;
+
 	glGenTextures(1, &ret.handle);
 
 	ret.set_params();
@@ -529,7 +534,7 @@ texture texture::make_cube() { PROF
 	return ret;	
 }
 
-texture texture::make_rf(texture_wrap wrap, bool pixelated) { PROF
+texture texture::make_rf(texture_wrap wrap, bool pixelated, f32 aniso) { PROF
 
 	texture ret;
 
@@ -537,6 +542,7 @@ texture texture::make_rf(texture_wrap wrap, bool pixelated) { PROF
 	ret.gl_type = gl_tex_target::_2D;
 	ret.wrap = wrap;
 	ret.pixelated = pixelated;
+	ret.anisotropy = aniso;
 	glGenTextures(1, &ret.handle);
 
 	ret.set_params();
@@ -544,7 +550,7 @@ texture texture::make_rf(texture_wrap wrap, bool pixelated) { PROF
 	return ret;
 }
 
-texture texture::make_array(iv3 dim, u32 offset, texture_wrap wrap, bool pixelated, allocator* a) { PROF
+texture texture::make_array(iv3 dim, u32 offset, texture_wrap wrap, bool pixelated, f32 aniso, allocator* a) { PROF
 
 	texture ret;
 
@@ -556,6 +562,7 @@ texture texture::make_array(iv3 dim, u32 offset, texture_wrap wrap, bool pixelat
 	ret.array_info.layer_offset = offset;
 	ret.array_info.current_layer = offset;
 	ret.array_info.assets = array<asset_pair>::make(dim.z, a);
+	ret.anisotropy = aniso;
 
 	glGenTextures(1, &ret.handle);
 
@@ -610,6 +617,10 @@ void texture::set_params() { PROF
 	} else {
 		glTexParameteri(gl_type, gl_tex_param::min_filter, (GLint)gl_tex_filter::linear_mipmap_linear);
 		glTexParameteri(gl_type, gl_tex_param::mag_filter, (GLint)gl_tex_filter::linear);
+	}
+
+	if(anisotropy) {
+		glTexParameterf(gl_type, gl_tex_param::max_anisotropy, anisotropy);
 	}
 
 	glBindTexture(gl_type, 0);
@@ -787,19 +798,19 @@ draw_context* ogl_manager::select_ctx(u16 id) { PROF
 	return d;
 }
 
-void ogl_manager::push_settings() { PROF
+void ogl_manager::_cmd_push_settings() { PROF
 
-	settings.push(ogl_settings());
+	command_settings.push(cmd_settings());
 }
 
-void ogl_manager::pop_settings() { PROF
+void ogl_manager::_cmd_pop_settings() { PROF
 
-	settings.pop();
+	command_settings.pop();
 }
 
-void ogl_manager::set_setting(render_setting setting, bool enable) { PROF
+void ogl_manager::_cmd_set_setting(render_setting setting, bool enable) { PROF
 
-	ogl_settings* set = settings.top();
+	cmd_settings* set = command_settings.top();
 
 	switch(setting) {
 	case render_setting::wireframe: set->polygon_line = enable; break;
@@ -815,9 +826,36 @@ void ogl_manager::set_setting(render_setting setting, bool enable) { PROF
 	}
 }
 
+CALLBACK void ogl_apply(void* e) { PROF
+
+	engine* eng = (engine*)e;
+	if(ImGui::Button("Apply Settings")) {
+
+		eng->ogl.apply_settings();
+	}
+}
+
 void ogl_manager::apply_settings() { PROF
 
-	ogl_settings* set = settings.top();
+	if(settings.anisotropy != prev_settings.anisotropy) {
+
+		if(settings.anisotropy < 1.0f) settings.anisotropy = 1.0f;
+		if(settings.anisotropy > info.max_anisotropy) settings.anisotropy = info.max_anisotropy;
+
+		FORMAP(it, textures) {
+			it->value.anisotropy = settings.anisotropy;
+			it->value.set_params();
+		}
+
+		LOG_DEBUG_F("Applied % anisotropy"_, settings.anisotropy);
+	}
+
+	prev_settings = settings;
+}
+
+void ogl_manager::_cmd_apply_settings() { PROF
+
+	cmd_settings* set = command_settings.top();
 
 	set->polygon_line 	? glPolygonMode(gl_poly::front_and_back, gl_poly_mode::line) : glPolygonMode(gl_poly::front_and_back, gl_poly_mode::fill);
 	set->depth_test 	? glEnable(gl_capability::depth_test) : glDisable(gl_capability::depth_test);
@@ -840,16 +878,16 @@ void ogl_manager::execute_command_list(render_command_list* rcl) { PROF
 
 		switch(cmd->cmd) {
 		case cmd_push_settings: {
-			push_settings();
+			_cmd_push_settings();
 		} break;
 		case cmd_pop_settings: {
-			pop_settings();
+			_cmd_pop_settings();
 		} break;
 		case cmd_setting: {
-			set_setting(cmd->setting, cmd->enable);
+			_cmd_set_setting(cmd->setting, cmd->enable);
 		} break;
 		default: {
-			cmd_set_settings(cmd);
+			_cmd_set_settings(cmd);
 
 			select_textures(cmd);
 			gpu_object* obj = select_object(cmd->object);
@@ -865,9 +903,9 @@ void ogl_manager::execute_command_list(render_command_list* rcl) { PROF
 	}
 }
 
-void ogl_manager::cmd_set_settings(render_command* cmd) { PROF
+void ogl_manager::_cmd_set_settings(render_command* cmd) { PROF
 
-	apply_settings();
+	_cmd_apply_settings();
 
 	ur2 viewport = cmd->viewport.to_u(), scissor = cmd->scissor.to_u();
 
@@ -1020,6 +1058,7 @@ ogl_info ogl_info::make(allocator* a) { PROF
 	glGetIntegerv(gl_get::minor_version, &ret.minor);
 	glGetIntegerv(gl_get::max_texture_size, &ret.max_texture_size);
 	glGetIntegerv(gl_get::max_array_texture_layers, &ret.max_texture_layers);	
+	glGetFloatv(gl_get::max_texture_max_anisotropy, &ret.max_anisotropy);
 
 	return ret;
 }

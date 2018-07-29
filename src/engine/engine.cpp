@@ -44,8 +44,6 @@ EXPORT engine* start_up(platform_api* api) {
 	LOG_INFO("Creating window..."_);
 	_memcpy("Exile", state->window.settings.c_title, 6);
 	CHECKED(create_window, &state->window);
-	state->dbg.store.add_var("window/settings"_, &state->window.settings);
-	state->dbg.store.add_ele("window/apply"_, FPTR(dbg_reup_window), state);
 
 	LOG_INFO("Setting up OpenGL..."_);
 	state->ogl_a = MAKE_PLATFORM_ALLOCATOR("ogl");
@@ -57,6 +55,14 @@ EXPORT engine* start_up(platform_api* api) {
 
 	LOG_INFO("Setting up game..."_);
 	state->game_state = start_up_game(state);
+
+	{
+		state->dbg.store.add_var("window/settings"_, &state->window.settings);
+		state->dbg.store.add_ele("window/apply"_, FPTR(dbg_reup_window), state);
+		state->dbg.store.add_val("ogl/info"_, &state->ogl.info);
+		state->dbg.store.add_var("ogl/settings"_, &state->ogl.settings);
+		state->dbg.store.add_ele("ogl/apply"_, FPTR(ogl_apply), state);
+	}
 
 	LOG_INFO("Done with startup!"_);
 

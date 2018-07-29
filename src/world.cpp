@@ -114,7 +114,6 @@ void world::init(asset_store* store, allocator* a) { PROF
 	thread_pool.start_all();
 
 	{
-		eng->dbg.store.add_val("ogl"_, &eng->ogl.info);
 		eng->dbg.store.add_var("world/settings"_, &settings);
 		eng->dbg.store.add_var("world/time"_, &time);
 		eng->dbg.store.add_ele("world/ui"_, FPTR(world_debug_ui), this);

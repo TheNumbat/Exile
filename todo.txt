@@ -5,6 +5,11 @@ Working To-Do:
 		block registry system like render commands
 		speed up chunk build (use flat array indexed by id instead of hash map)
 		UBOs
+		better graphics feature checks
+			mesh command requirements
+			anisotropy
+			sample shading
+			antialiasing
 
 [2]	FIX ALLOCATION PROFILING THREADING BUGS
 		unmatched allocations/frees in log and world generation
@@ -17,7 +22,7 @@ Working To-Do:
 
 	serialization/deserialization
 	config format
-	user settings e.g. controls
+	user settings e.g. controls, graphics
 	profiler graphs & auto save unusually long frames
 
 	multiple texture arrays for > 2048 textures

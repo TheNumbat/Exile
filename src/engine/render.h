@@ -90,6 +90,7 @@ struct texture {
 	gl_tex_target gl_type = gl_tex_target::_2D;
 	texture_wrap wrap     = texture_wrap::repeat;
 	bool pixelated        = false;
+	f32 anisotropy 		  = 1.0f;
 
 	union {	
 		texture_rf_info    rf_info;
@@ -104,10 +105,10 @@ struct texture {
 	texture(texture&& t) {_memcpy(&t, this, sizeof(texture));}
 	texture& operator=(texture& t) {_memcpy(&t, this, sizeof(texture)); return *this;}
 
-	static texture make_cube();
-	static texture make_rf(texture_wrap wrap, bool pixelated);
-	static texture make_bmp(texture_wrap wrap, bool pixelated);
-	static texture make_array(iv3 dim, u32 idx_offset, texture_wrap wrap, bool pixelated, allocator* a);
+	static texture make_cube(texture_wrap wrap, bool pixelated, f32 aniso);
+	static texture make_rf(texture_wrap wrap, bool pixelated, f32 aniso);
+	static texture make_bmp(texture_wrap wrap, bool pixelated, f32 aniso);
+	static texture make_array(iv3 dim, u32 idx_offset, texture_wrap wrap, bool pixelated, f32 aniso, allocator* a);
 	void destroy(allocator* a);
 	void gl_destroy();
 
@@ -123,6 +124,7 @@ struct ogl_info {
 
 	// some convenience
 	i32 max_texture_size = 0, max_texture_layers = 0;
+	f32 max_anisotropy = 0.0f;
 
 	static ogl_info make(allocator* a);
 	void destroy();
@@ -164,7 +166,7 @@ enum class render_setting : u8 {
 	write_depth
 };
 
-struct ogl_settings {
+struct cmd_settings {
 	bool polygon_line = false;
 	bool depth_test = true;
 	bool line_smooth = true;
@@ -174,6 +176,10 @@ struct ogl_settings {
 	bool multisample = true;
 	bool sample_shading = false;
 	bool depth_mask = true;
+};
+
+struct ogl_settings {
+	f32 anisotropy = 1.0f;
 };
 
 struct render_command {
@@ -258,14 +264,13 @@ struct ogl_manager {
 	static const u16 cmd_pop_settings = 2;
 	static const u16 cmd_setting = 3;
 
-	map<u16, draw_context> 	 commands;
+	map<u16, draw_context> commands;
 
 	map<texture_id, texture> textures;
 	map<gpu_object_id, gpu_object> objects;
 
-	asset_store* last_store = null;
-
-	stack<ogl_settings> settings;
+	ogl_settings 		settings, prev_settings;
+	stack<cmd_settings> command_settings;
 
 	shader_program dbg_shader;
 	ogl_info info;
@@ -279,10 +284,13 @@ struct ogl_manager {
 	static ogl_manager make(platform_window* win, allocator* a);
 	void destroy();
 
-	void pop_settings();
-	void push_settings();
 	void apply_settings();
-	void set_setting(render_setting setting, bool enable);
+
+	void _cmd_pop_settings();
+	void _cmd_push_settings();
+	void _cmd_apply_settings();
+	void _cmd_set_setting(render_setting setting, bool enable);
+	void _cmd_set_settings(render_command* cmd);
 
 	void load_global_funcs();
 	void try_reload_programs();
@@ -314,9 +322,9 @@ struct ogl_manager {
 
 	void dbg_render_texture_fullscreen(texture_id id);
 	void execute_command_list(render_command_list* rcl);
-
-	void cmd_set_settings(render_command* cmd);
 };
+
+CALLBACK void ogl_apply(void* eng);
 
 CALLBACK void uniforms_dbg(shader_program* prog, render_command* rc, render_command_list* rcl) {};
 void debug_proc(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userPointer);
