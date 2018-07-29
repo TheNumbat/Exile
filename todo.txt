@@ -2,8 +2,6 @@
 Working To-Do:
 
 [1]	chunk rendering update
-		block registry system like render commands
-		speed up chunk build (use flat array indexed by id instead of hash map)
 		UBOs
 		better graphics feature checks
 			mesh command requirements

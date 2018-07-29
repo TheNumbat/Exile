@@ -1,25 +1,21 @@
 
-enum class block_type : u16 {
-	air,
-	bedrock,
-	stone,
-	path,
-	stone_slab,
-
-	count
-};
-inline u32 hash(block_type key);
+#pragma once
 
 struct chunk;
+
+block_type block_air = 0;
+
 struct block_meta {
 	block_type type;
-	
+
 	bool opaque[6]; // -x -y -z +x +y +z
 	i32 textures[6];
 	block_type merge[6];
 
+	bool renders;
 	bool does_ao;
 	bool custom_model;
+	
 	func_ptr<void, chunk*, mesh_chunk*, block_meta, iv3, i32, i32, i32> model;
 };
 
@@ -137,7 +133,7 @@ struct world {
 	// NOTE(max): map to pointers to chunk so the map can transform while chunks are being operated on
 	// TODO(max): use a free-list allocator to allocate the chunks
 	map<chunk_pos, chunk*> chunks;
-	map<block_type, block_meta> block_info;
+	vector<block_meta> block_info;
 
 	world_settings settings;
 	player p;
@@ -151,8 +147,11 @@ struct world {
 
 	world_time time;
 
+	block_type next_block_type = 0;
+
 	void init(asset_store* store, allocator* a);
-	void init_blocks(asset_store* store);
+	block_meta* add_block();
+
 	void destroy();
 	void destroy_chunks();
 	void regenerate();

@@ -1,4 +1,6 @@
 
+#pragma once
+
 enum class mesh_cmd : u16 {
 	_2d_col = 16,
 	_2d_tex,

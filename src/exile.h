@@ -1,4 +1,6 @@
 
+#pragma once
+
 struct exile {
 
 	evt_state_machine controls;

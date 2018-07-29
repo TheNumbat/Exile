@@ -25,70 +25,6 @@ CALLBACK void player_debug_ui(world* w) { PROF
 	ImGui::ViewAny("inter"_, intersection);
 }
 
-void world::init_blocks(asset_store* store) { PROF
-
-	block_info = map<block_type, block_meta>::make((u32)block_type::count, alloc);
-	block_textures = eng->ogl.begin_tex_array(iv3(32, 32, eng->ogl.info.max_texture_layers), texture_wrap::repeat, true, 1);
-
-	i32 tex_idx = eng->ogl.get_layers(block_textures);
-
-	block_info.insert(block_type::air,
-	{
-		block_type::air,
-		{false, false, false, false, false, false},
-		{tex_idx, tex_idx, tex_idx, tex_idx, tex_idx, tex_idx},
-		{block_type::air, block_type::air, block_type::air, block_type::air, block_type::air, block_type::air},
-		false, false
-	});
-	
-	tex_idx = eng->ogl.get_layers(block_textures);
-	eng->ogl.push_tex_array(block_textures, store, "bedrock"_);
-	block_info.insert(block_type::bedrock,
-	{
-		block_type::bedrock,
-		{true, true, true, true, true, true},
-		{tex_idx, tex_idx, tex_idx, tex_idx, tex_idx, tex_idx},
-		{block_type::bedrock, block_type::bedrock, block_type::bedrock, block_type::bedrock, block_type::bedrock, block_type::bedrock},
-		true, false
-	});
-
-	tex_idx = eng->ogl.get_layers(block_textures);
-	eng->ogl.push_tex_array(block_textures, store, "stone"_);
-	block_info.insert(block_type::stone,
-	{
-		block_type::stone,
-		{true, true, true, true, true, true},
-		{tex_idx, tex_idx, tex_idx, tex_idx, tex_idx, tex_idx},
-		{block_type::stone, block_type::stone, block_type::stone, block_type::stone, block_type::stone, block_type::stone},
-		true, false
-	});
-
-	tex_idx = eng->ogl.get_layers(block_textures);
-	eng->ogl.push_tex_array(block_textures, store, "path_side"_);
-	eng->ogl.push_tex_array(block_textures, store, "dirt"_);
-	eng->ogl.push_tex_array(block_textures, store, "path_top"_);
-	block_info.insert(block_type::path,
-	{
-		block_type::path,
-		{true, true, true, true, true, true},
-		{tex_idx, tex_idx + 1, tex_idx, tex_idx, tex_idx + 2, tex_idx},
-		{block_type::path, block_type::path, block_type::path, block_type::path, block_type::path, block_type::path},
-		true, false
-	});	
-
-	tex_idx = eng->ogl.get_layers(block_textures);
-	eng->ogl.push_tex_array(block_textures, store, "slab_side"_);
-	eng->ogl.push_tex_array(block_textures, store, "slab_top"_);
-	block_info.insert(block_type::stone_slab,
-	{
-		block_type::stone_slab,
-		{false, true, false, false, false, false},
-		{tex_idx, tex_idx + 1, tex_idx, tex_idx, tex_idx + 1, tex_idx},
-		{block_type::air, block_type::stone_slab, block_type::stone_slab, block_type::stone_slab, block_type::stone_slab, block_type::air},
-		false, true, FPTR(slab_model)
-	});	
-}
-
 void world::init(asset_store* store, allocator* a) { PROF
 
 	alloc = a;
@@ -97,7 +33,13 @@ void world::init(asset_store* store, allocator* a) { PROF
 
 	LOG_INFO_F("units_per_voxel: %"_, chunk::units_per_voxel);
 	
-	init_blocks(store);
+	{
+		block_info = vector<block_meta>::make(8192, alloc);
+		block_textures = eng->ogl.begin_tex_array(iv3(32, 32, eng->ogl.info.max_texture_layers), texture_wrap::repeat, true, 1);
+		add_block(); // air
+
+		init_blocks(this, store);
+	}
 
 	{
 		sky.init();
@@ -106,12 +48,12 @@ void world::init(asset_store* store, allocator* a) { PROF
 		night_sky_texture = eng->ogl.add_texture(store, "night_sky"_);
 	}
 
-	chunks = map<chunk_pos, chunk*>::make(512, a);
-
-	LOG_DEBUG_F("% logical cores % physical cores"_, global_api->get_num_cpus(), global_api->get_phys_cpus());
-
-	thread_pool = threadpool::make(a, eng->platform->get_phys_cpus() - 1);
-	thread_pool.start_all();
+	{
+		LOG_DEBUG_F("% logical cores % physical cores"_, global_api->get_num_cpus(), global_api->get_phys_cpus());
+		chunks = map<chunk_pos, chunk*>::make(512, a);
+		thread_pool = threadpool::make(a, eng->platform->get_phys_cpus() - 1);
+		thread_pool.start_all();
+	}
 
 	{
 		eng->dbg.store.add_var("world/settings"_, &settings);
@@ -125,8 +67,10 @@ void world::init(asset_store* store, allocator* a) { PROF
 		eng->dbg.store.add_ele("player/inter"_, FPTR(player_debug_ui), this);
 	}
 
-	time.last_update = global_api->get_perfcount();
-	time.absolute = global_api->get_perfcount();
+	{
+		time.last_update = global_api->get_perfcount();
+		time.absolute = global_api->get_perfcount();
+	}
 }
 
 void world::destroy_chunks() { PROF 
@@ -147,6 +91,21 @@ void world::destroy() { PROF
 	thread_pool.destroy();
 	destroy_chunks();
 	block_info.destroy();
+}
+
+block_meta* world::add_block() {
+
+	block_type id = next_block_type;
+	
+	next_block_type++;
+	if(next_block_type >= block_info.capacity) {
+		block_info.grow();
+	}
+
+	block_meta* ret = block_info.get(id);
+	ret->type = id;
+
+	return ret;
 }
 
 v3 world::raymarch(v3 origin, v3 max) { PROF
@@ -171,7 +130,7 @@ v3 world::raymarch(v3 pos3, v3 dir3, f32 max) { PROF
 		v4 current = pos + dir * progress;
 		iv3 current_vox = current;
 
-		if(c->block_at(current_vox.x % chunk::xsz, current_vox.y % chunk::ysz, current_vox.z % chunk::zsz) != block_type::air) {
+		if(c->block_at(current_vox.x % chunk::xsz, current_vox.y % chunk::ysz, current_vox.z % chunk::zsz) != block_air) {
 			return current.xyz;
 		}
 		
@@ -491,11 +450,6 @@ void world::update_player(u64 now) { PROF
 	p.last = now;
 }
 
-inline u32 hash(block_type key) { PROF
-
-	return (u32)key;
-}
-
 inline u32 hash(chunk_pos key) { PROF
 
 	return hash(key.x) ^ hash(key.y) ^ hash(key.z);
@@ -583,12 +537,12 @@ void chunk::gen() { PROF
 
 			u32 height = y_at(pos.x * xsz + x, pos.z * zsz + z);
 
-			blocks[x][z][0] = block_type::bedrock;
+			blocks[x][z][0] = block_bedrock;
 			for(u32 y = 1; y < height; y++) {
-				blocks[x][z][y] = block_type::stone;
+				blocks[x][z][y] = block_stone;
 			}
 			for(u32 y = height; y < height + 1; y++) {
-				blocks[x][z][y] = block_type::path;
+				blocks[x][z][y] = block_path;
 			}			
 		}
 	}
@@ -637,16 +591,16 @@ u8 chunk::ao_at(v3 vert) {
 
 block_type chunk::block_at(i32 x, i32 y, i32 z) { PROF
 
-	if(y < 0) return block_type::air;
+	if(y < 0) return block_air;
 
 	if(x < 0 || x >= xsz || y >= ysz || z < 0 || z >= zsz) {
 
 		// TODO(max): if the neighboring chunk exists, get a block from it
 		i32 h = y_at(pos.x * xsz + x, pos.z * zsz + z);
 
-		if(y < h) return block_type::stone;
-		if(y >= h && y < h + 1) return block_type::path;
-		return block_type::air; 
+		if(y < h) return block_stone;
+		if(y >= h && y < h + 1) return block_path;
+		return block_air; 
 	}
 
 	return blocks[x][z][y];
@@ -802,7 +756,7 @@ void chunk::build_data() { PROF
 					i32 slice_idx = position[u_2d] + position[v_2d] * max[u_2d];
 
 					// Only add the face to the slice if its opposing face is not opaque
-					if(block != block_type::air) {
+					if(info0.renders) {
 						
 						iv3 backface = position;
 						backface[ortho_2d] += backface_offset;
@@ -810,13 +764,13 @@ void chunk::build_data() { PROF
 						block_type backface_block = block_at(backface[0],backface[1],backface[2]);
 						block_meta info1 = *w->block_info.get(backface_block);
 
-						if(!info0.opaque[i] || !info1.opaque[(i + 3) % 6]) {
+						if(!info1.renders || !info0.opaque[i] || !info1.opaque[(i + 3) % 6]) {
 							slice[slice_idx] = block;
 						} else {
-							slice[slice_idx] = block_type::air;
+							slice[slice_idx] = block_air;
 						}
 					} else {
-						slice[slice_idx] = block_type::air;
+						slice[slice_idx] = block_air;
 					}
 				}
 			}
@@ -831,7 +785,7 @@ void chunk::build_data() { PROF
 
 					block_type single_type = slice[slice_idx];
 					
-					if(single_type != block_type::air) {
+					if(single_type != block_air) {
 
 						mesh_face face_type = build_face(single_type, position, i);
 
