@@ -148,15 +148,11 @@ void log_manager::print_header(log_out* output) { PROF
 
 void log_manager::print_footer(log_out* output) { PROF
 
-	PUSH_ALLOC(alloc) {
-
-		if(output->type == log_out_type::html) {
+	if(output->type == log_out_type::html) {
 			
-			output->file.write((void*)log_html_footer.c_str, log_html_footer.len - 1);
-			output->file.flush();
-		}
-
-	} POP_ALLOC();
+		output->file.write((void*)log_html_footer.c_str, log_html_footer.len - 1);
+		output->file.flush();
+	}
 }
 
 template<typename... Targs> 

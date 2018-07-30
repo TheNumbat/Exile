@@ -108,11 +108,6 @@ CALLBACK void uniforms_mesh_3d_tex_instanced(shader_program* prog, render_comman
 	glUniformMatrix4fv(loc, 1, gl_bool::_false, transform.a);
 }
 
-CALLBACK void update_mesh_skydome(gpu_object* obj, void* data, bool force) { PROF
-
-	update_mesh_3d_tex(obj, data, force);
-}
-
 CALLBACK void update_mesh_cubemap(gpu_object* obj, void* data, bool force) { PROF
 
 	mesh_cubemap* m = (mesh_cubemap*)data;
@@ -339,11 +334,6 @@ CALLBACK bool compat_mesh_lines(ogl_info* info) { PROF
 
 CALLBACK bool compat_mesh_3d_tex_instanced(ogl_info* info) { PROF
 	return info->check_version(3, 3);
-}
-
-CALLBACK void setup_mesh_skydome(gpu_object* obj) { PROF
-
-	setup_mesh_3d_tex(obj);
 }
 
 CALLBACK void setup_mesh_cubemap(gpu_object* obj) { PROF

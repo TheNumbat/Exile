@@ -543,7 +543,7 @@ void chunk::gen() { PROF
 				blocks[x][z][y] = block_stone;
 			}
 			for(u32 y = height; y < height + 1; y++) {
-				blocks[x][z][y] = block_path;
+				blocks[x][z][y] = block_stone_slab;
 			}			
 		}
 	}
@@ -601,7 +601,7 @@ block_type chunk::block_at(i32 x, i32 y, i32 z) { PROF
 		i32 h = y_at(pos.x * xsz + x, pos.z * zsz + z);
 
 		if(y < h) return block_stone;
-		if(y >= h && y < h + 1) return block_path;
+		if(y >= h && y < h + 1) return block_stone_slab;
 		return block_air; 
 	}
 
@@ -766,7 +766,7 @@ void chunk::build_data() { PROF
 						block_type backface_block = block_at(backface[0],backface[1],backface[2]);
 						block_meta info1 = *w->block_info.get(backface_block);
 
-						if(!info1.renders || !info0.opaque[i] || !info1.opaque[(i + 3) % 6]) {
+						if(!info1.renders || !info1.opaque[(i + 3) % 6]) {
 							slice[slice_idx] = block;
 						} else {
 							slice[slice_idx] = block_air;

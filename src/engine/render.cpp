@@ -177,6 +177,11 @@ void shader_program::recreate() { PROF
 
 	handle = glCreateProgram();
 	compile();
+
+	if(geometry.path)
+		LOG_DEBUG_F("Recreated program % with files %, %, %"_, handle, vertex.path, geometry.path, fragment.path);
+	else
+		LOG_DEBUG_F("Recreated program % with files %, %"_, handle, vertex.path, fragment.path);
 }
 
 bool shader_program::try_refresh() { PROF
@@ -306,6 +311,8 @@ void gpu_object::recreate() { PROF
 	glBindVertexArray(vao);
 	setup(this);
 	update(this, data, true);
+
+	LOG_DEBUG_F("Recreated gpu object %"_, id);
 }
 
 void gpu_object::destroy() { PROF
@@ -720,6 +727,8 @@ void texture::recreate() { PROF
 	glGenTextures(1, &handle);
 	set_params();
 	reload_data();
+
+	LOG_DEBUG_F("Recreated texture %"_, id);
 }
 
 void texture::reload_data() {

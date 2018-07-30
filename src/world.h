@@ -97,7 +97,7 @@ struct player {
 struct world_settings {
 
 	f32 gravity = 0.0f;
-	i32 view_distance = 4;
+	i32 view_distance = 0;
 	bool respect_cam = true;
 	
 	bool wireframe = false;
