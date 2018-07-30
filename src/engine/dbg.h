@@ -337,8 +337,6 @@ struct dbg_manager {
 	dbg_profiler profiler;
 	dbg_value_store store;
 
-///////////////////////////////////////////////////////////////////////////////
-
 	void init(allocator* alloc);
 	void destroy();
 	void destroy_prof();

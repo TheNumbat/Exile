@@ -175,12 +175,17 @@ void dbg_profiler::print_remaining() { PROF
 
 	alloc_profile totals = get_totals();
 	
-	LOG_INFO_F("% allocations remaining at debug shutdown"_, totals.num_allocs - totals.num_frees);
+	LOG_INFO_F("% allocations remaining"_, totals.num_allocs - totals.num_frees);
+
+	global_api->aquire_mutex(&alloc_map_mut);
 	FORMAP(it, alloc_stats) {
+		global_api->aquire_mutex(&it->value->mut);
 		FORMAP(a, it->value->current_set) {
 			LOG_DEBUG_F("\t% bytes in % @ %:%"_, a->value.size, it->key.name(), a->value.last_loc.file(), a->value.last_loc.line);
 		}
+		global_api->release_mutex(&it->value->mut);
 	}
+	global_api->release_mutex(&alloc_map_mut);
 }
 
 void dbg_manager::destroy_prof() { PROF
@@ -596,11 +601,11 @@ void dbg_profiler::UI(platform_window* window) { PROF
 	if(ImGui::TreeNodeEx("Allocation Stats"_, ImGuiTreeNodeFlags_Framed)) {
 
 		alloc_profile totals = get_totals();
-		ImGui::Text(string::makef("Total size: %, total allocs: %, total frees: %"_, totals.current_size, totals.num_allocs, totals.num_frees));
+		ImGui::Text(string::makef("Total size: %, total allocs: %, total frees: %, total reallocs: %"_, totals.current_size, totals.num_allocs, totals.num_frees, totals.num_reallocs));
 
 		FORMAP(it, alloc_stats) {
 			global_api->aquire_mutex(&it->value->mut);
-			if(ImGui::TreeNode(string::makef("%: size: %, allocs: %, frees: %"_, it->key.name(), it->value->current_size, it->value->num_allocs, it->value->num_frees))) {
+			if(ImGui::TreeNode(string::makef("%: size: %, allocs: %, frees: %, reallocs: %"_, it->key.name(), it->value->current_size, it->value->num_allocs, it->value->num_frees, it->value->num_reallocs))) {
 
 				vector<addr_info> allocs = vector<addr_info>::make(it->value->current_set.size);
 				FORMAP(a, it->value->current_set) {
@@ -1011,10 +1016,6 @@ void dbg_profiler::process_alloc_msg(dbg_msg* msg) { PROF
 		profile->current_size -= msg->reallocate.from_bytes;
 		profile->total_freed += msg->reallocate.from_bytes;
 
-		if(from_info->size == 0) {
-			profile->current_set.erase(msg->reallocate.from);
-		}
-
 		to_info->last_loc = msg->context;
 		to_info->size += msg->reallocate.to_bytes;
 
@@ -1024,6 +1025,9 @@ void dbg_profiler::process_alloc_msg(dbg_msg* msg) { PROF
 
 		if(to_info->size == 0) {
 			profile->current_set.erase(msg->reallocate.to);
+		}
+		if(to_info != from_info && from_info->size == 0) {
+			profile->current_set.erase(msg->reallocate.from);
 		}
 
 	} break;

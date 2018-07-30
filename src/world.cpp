@@ -549,7 +549,7 @@ void chunk::gen() { PROF
 	}
 }
 
-u8 chunk::ao_at(v3 vert) { 
+u8 chunk::ao_at(v3 vert) { PROF
 
 	i32 x = (i32)vert.x, y = (i32)vert.y, z = (i32)vert.z;
 
@@ -593,6 +593,7 @@ u8 chunk::ao_at(v3 vert) {
 block_type chunk::block_at(i32 x, i32 y, i32 z) { PROF
 
 	if(y < 0) return block_air;
+	if(y == 0) return block_bedrock;
 
 	if(x < 0 || x >= xsz || y >= ysz || z < 0 || z >= zsz) {
 

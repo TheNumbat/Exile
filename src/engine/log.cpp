@@ -334,7 +334,7 @@ i32 log_proc(void* data_) {
 	this_thread_data.profiling = true;
 	this_thread_data.timing_override = false;
 	global_dbg->profiler.register_thread(1);
-
+		
 	while(data->running) {
 
 		global_api->wait_semaphore(data->logging_semaphore, -1);
