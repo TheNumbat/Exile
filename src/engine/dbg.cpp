@@ -64,14 +64,22 @@ void dbg_console::add_command(string input, _FPTR* func, void* param) { PROF
 	commands.insert(name, cmd);
 }
 
-CALLBACK void console_cmd_clear(string, void* data) {
+CALLBACK void console_cmd_clear(string, void* data) { PROF
 
 	dbg_console* console = (dbg_console*)data;
+	console->clear();
+}
 
-	FORQ_BEGIN(it, console->lines) {
-		it->msg.destroy(console->alloc);
-	} FORQ_END(it, console->lines);
-	console->lines.clear();
+void dbg_console::clear() { PROF
+
+	FORQ_BEGIN(it, lines) {
+		if(it->lvl == log_level::console) {
+			it->msg.destroy(alloc);
+		} else {
+			DESTROY_ARENA(&it->arena);
+		}
+	} FORQ_END(it, lines);
+	lines.clear();
 }
 
 void dbg_console::init(allocator* a) { PROF
@@ -104,9 +112,7 @@ void dbg_console::destroy() { PROF
 	}
 	history.destroy();
 
-	FORQ_BEGIN(it, lines) {
-		DESTROY_ARENA(&it->arena);
-	} FORQ_END(it, lines);
+	clear();
 	lines.destroy();
 	global_api->destroy_mutex(&lines_mut);
 }
@@ -543,10 +549,7 @@ void dbg_console::UI(platform_window* window) { PROF
 	ImGui::NextColumn();
 
 	if(ImGui::Button("Clear")) {
-		FORQ_BEGIN(it, lines) {
-			DESTROY_ARENA(&it->arena);
-		} FORQ_END(it, lines);
-		lines.clear();
+		clear();
 		scroll_bottom = true;
 	}
 	ImGui::SameLine();

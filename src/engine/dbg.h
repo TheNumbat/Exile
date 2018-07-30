@@ -319,6 +319,7 @@ struct dbg_console {
 
 	void UI(platform_window* window);
 	void on_text_edit(ImGuiTextEditCallbackData* data);
+	void clear();
 	
 	void exec_command(string cmd);
 	void add_console_msg(string msg);
