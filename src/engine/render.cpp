@@ -1135,6 +1135,7 @@ void ogl_manager::load_global_funcs() { PROF
 	GL_LOAD(glTexSubImage3D);
 	GL_LOAD(glUniform1f);
 	GL_LOAD(glUniform1i);
+	GL_LOAD(glUniform4fv);
 	GL_LOAD(glBindSampler);
 
 	GL_LOAD(glGetStringi);

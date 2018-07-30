@@ -159,6 +159,8 @@ arena_allocator make_arena_allocator(string name, u64 size, allocator* backing, 
 	ret.reallocate_.set(FPTR(arena_reallocate));
 
 	ret.memory = ret.backing->allocate_(size, 0, ret.backing, context);
+	
+	LOG_DEBUG_ASSERT(name.len < ALLOC_NAME_LEN);
 	_memcpy(name.c_str, ret.c_name, name.len);
 
 	return ret;

@@ -50,7 +50,6 @@ struct world;
 struct chunk {
 
 	static const i32 xsz = 31, ysz = 511, zsz = 31;
-
 	static const i32 units_per_voxel = 8;
 
 	chunk_pos pos;
@@ -104,6 +103,8 @@ struct world_settings {
 	bool wireframe = false;
 	bool cull_backface = true;
 	bool sample_shading = true;
+
+	v4 ao_curve = v4(0.75f, 0.825f, 0.9f, 1.0f);
 };
 
 struct world_time {

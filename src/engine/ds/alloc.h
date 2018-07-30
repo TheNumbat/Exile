@@ -1,7 +1,7 @@
 
 #pragma once
 
-#define ALLOC_NAME_LEN 25
+#define ALLOC_NAME_LEN 16
 
 struct allocator {
 	func_ptr<void*,u64,u64,allocator*,code_context>				allocate_;

@@ -324,6 +324,7 @@ void world::render_chunks() { PROF
 
 			cmd.texture0 = block_textures;
 			cmd.num_tris = c->mesh_faces;
+			cmd.uniform_info = &settings;
 
 			v3 chunk_pos = v3((f32)current.x * chunk::xsz, (f32)current.y * chunk::ysz, (f32)current.z * chunk::zsz);
 			cmd.model = translate(chunk_pos - p.camera.pos);

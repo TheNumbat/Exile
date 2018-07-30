@@ -42,12 +42,16 @@ CALLBACK void uniforms_mesh_cubemap(shader_program* prog, render_command* cmd) {
 CALLBACK void uniforms_mesh_chunk(shader_program* prog, render_command* cmd) { PROF
 
 	GLint mvploc = glGetUniformLocation(prog->handle, "mvp");
-	GLint szloc = glGetUniformLocation(prog->handle, "units_per_voxel");
+	GLint szloc  = glGetUniformLocation(prog->handle, "units_per_voxel");
+	GLint aoloc  = glGetUniformLocation(prog->handle, "ao_curve");
 
 	m4 mvp = cmd->proj * cmd->view * cmd->model;
 
+	world_settings* set = (world_settings*)cmd->uniform_info;
+
 	glUniformMatrix4fv(mvploc, 1, gl_bool::_false, mvp.a);
 	glUniform1f(szloc, (f32)chunk::units_per_voxel);
+	glUniform4fv(aoloc, 1, set->ao_curve.a);
 }
 
 CALLBACK void uniforms_mesh_2d_col(shader_program* prog, render_command* cmd) { PROF

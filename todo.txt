@@ -1,19 +1,11 @@
 
 Working To-Do:
 
-[1]	chunk rendering update
-		UBOs
-		better graphics feature checks
-			mesh command requirements
-			anisotropy
-			sample shading
-			antialiasing
-
-[2]	FIX ALLOCATION PROFILING THREADING BUGS
+[1]	FIX ALLOCATION PROFILING THREADING BUGS
 		unmatched allocations/frees in log and world generation
 		causes crash on shutdown after dynamic reload
 
-[3]	Environment
+[2]	Environment
 		star-field at night, blend into skydome based on time
 		sun/moon objects
 		directional/sun lighting
@@ -36,6 +28,12 @@ Working To-Do:
 	world interaction
 	chunk paging and persistence
 	world generation framework
+
+	better graphics feature checks
+		mesh command requirements
+		anisotropy
+		sample shading
+		antialiasing
 
 Bugs:
 	allocation profiling is somewhat broken for asynchronous allocations: world & log

@@ -253,7 +253,7 @@ struct dbg_profiler {
 
 	void collate();
 	void collate_allocs();
-	void collate_threads();
+	void collate_timings();
 
 	void fixdown_self_timings(profile_node* node);
 	void process_frame_alloc_msg(frame_profile* frame, dbg_msg* msg);

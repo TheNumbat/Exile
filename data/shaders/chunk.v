@@ -3,9 +3,8 @@
 
 layout (location = 0) in uvec4 v_v0;
 
+uniform vec4 ao_curve;
 uniform float units_per_voxel;
-
-uniform vec4 ao_values = vec4(0.75f, 0.825f, 0.9f, 1.0f);
 
 const uint x_mask   = 0xff000000u;
 const uint z_mask   = 0x00ff0000u;
@@ -35,10 +34,10 @@ vert unpack(uvec2 i) {
 	o.pos   = vec3((i.x & x_mask) >> 24, (i.y & y_mask) >> 20, (i.x & z_mask) >> 16) / units_per_voxel;
 	o.uv    = vec2((i.x & u_mask) >> 8, i.x & v_mask) / units_per_voxel;
 	o.t     = (i.y & t_mask) >> 8;
-	o.ao[0] = ao_values[(i.y & ao0_mask) >> 6];
-	o.ao[1] = ao_values[(i.y & ao1_mask) >> 4];
-	o.ao[2] = ao_values[(i.y & ao2_mask) >> 2];
-	o.ao[3] = ao_values[(i.y & ao3_mask)];
+	o.ao[0] = ao_curve[(i.y & ao0_mask) >> 6];
+	o.ao[1] = ao_curve[(i.y & ao1_mask) >> 4];
+	o.ao[2] = ao_curve[(i.y & ao2_mask) >> 2];
+	o.ao[3] = ao_curve[(i.y & ao3_mask)];
 
 	return o;
 }

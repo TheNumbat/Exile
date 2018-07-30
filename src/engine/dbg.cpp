@@ -596,6 +596,7 @@ void dbg_profiler::UI(platform_window* window) { PROF
 		ImGui::Text(string::makef("Total size: %, total allocs: %, total frees: %"_, totals.current_size, totals.num_allocs, totals.num_frees));
 
 		FORMAP(it, alloc_stats) {
+			global_api->aquire_mutex(&it->value->mut);
 			if(ImGui::TreeNode(string::makef("%: size: %, allocs: %, frees: %"_, it->key.name(), it->value->current_size, it->value->num_allocs, it->value->num_frees))) {
 
 				vector<addr_info> allocs = vector<addr_info>::make(it->value->current_set.size);
@@ -612,6 +613,7 @@ void dbg_profiler::UI(platform_window* window) { PROF
 				allocs.destroy();
 				ImGui::TreePop();
 			}
+			global_api->release_mutex(&it->value->mut);
 		}
 
 		ImGui::TreePop();
@@ -762,9 +764,11 @@ void dbg_profiler::collate() { PROF
 	PUSH_PROFILE(false) {
 		
 		collate_allocs();
-		collate_threads();
+		collate_timings();
 
 	} POP_PROFILE();
+
+	this_thread_data.dbg_queue.clear();
 }
 
 void dbg_profiler::collate_allocs() { PROF
@@ -778,7 +782,7 @@ void dbg_profiler::collate_allocs() { PROF
 	} FORQ_END(msg, this_thread_data.dbg_queue);
 }
 
-void dbg_profiler::collate_threads() { PROF
+void dbg_profiler::collate_timings() { PROF
 
 	bool got_a_frame = false;
 	u64 frame_perf_start = 0;
@@ -898,8 +902,6 @@ void dbg_profiler::collate_threads() { PROF
 	} FORQ_END(msg, this_thread_data.dbg_queue);
 
 	global_api->release_mutex(&thread->mut);
-
-	this_thread_data.dbg_queue.clear();
 }
 
 alloc_profile alloc_profile::make(allocator* alloc) { PROF
