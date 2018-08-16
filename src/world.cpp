@@ -601,7 +601,7 @@ block_type chunk::block_at(i32 x, i32 y, i32 z) { PROF
 		i32 h = y_at(pos.x * xsz + x, pos.z * zsz + z);
 
 		if(y < h) return block_stone;
-		if(y >= h && y < h + 1) return block_stone_slab;
+		if(y == h) return block_stone_slab;
 		return block_air; 
 	}
 
@@ -672,14 +672,6 @@ CALLBACK void slab_model(chunk* c, mesh_chunk* m, block_meta info, iv3 posi, i32
 	f32 h = (f32)hi;
 	v3 pos = posi;
 
-	if(u_2d == 1) {
-		w /= 2.0f;
-	} else if(v_2d == 1) {
-		h /= 2.0f;
-	} else if(i == 4) {
-		pos -= v3(0.0f, 0.5f, 0.0f);
-	}
-
 	v3 width_offset, height_offset;
 	width_offset[u_2d] = (f32)w;
 	height_offset[v_2d] = (f32)h;
@@ -692,8 +684,24 @@ CALLBACK void slab_model(chunk* c, mesh_chunk* m, block_meta info, iv3 posi, i32
 	v3 v_1 = v_0 + width_offset;
 	v3 v_2 = v_0 + height_offset;
 	v3 v_3 = v_2 + width_offset;
-	v2 wh = v2(w, h), hw = v2(h, w);
+
 	u8 ao_0 = c->ao_at(v_0), ao_1 = c->ao_at(v_1), ao_2 = c->ao_at(v_2), ao_3 = c->ao_at(v_3);
+
+	if(u_2d == 1) {
+		w /= 2.0f;
+	} else if(v_2d == 1) {
+		h /= 2.0f;
+	} else if(i == 4) {
+		v_0 -= v3(0.0f, 0.5f, 0.0f);
+	}
+
+	width_offset[u_2d] = (f32)w;
+	height_offset[v_2d] = (f32)h;
+	v_1 = v_0 + width_offset;
+	v_2 = v_0 + height_offset;
+	v_3 = v_2 + width_offset;
+
+	v2 wh = v2(w, h), hw = v2(h, w);
 
 	const f32 units = (f32)chunk::units_per_voxel;
 	v_0 *= units; v_1 *= units; v_2 *= units; v_3 *= units;
