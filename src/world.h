@@ -141,7 +141,7 @@ struct world {
 
 	threadpool thread_pool;
 	allocator* alloc = null;
-
+	
 	texture_id block_textures = -1;
 	texture_id sky_texture = -1, night_sky_texture = -1;
 	mesh_3d_tex sky;

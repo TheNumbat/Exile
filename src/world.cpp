@@ -42,7 +42,7 @@ void world::init(asset_store* store, allocator* a) { PROF
 	}
 
 	{
-		sky.init();
+		sky.init(alloc);
 		sky.push_dome({}, 1.0f, 64);
 		sky_texture = eng->ogl.add_texture(store, "sky"_, texture_wrap::mirror);
 		night_sky_texture = eng->ogl.add_texture(store, "night_sky"_);
@@ -351,7 +351,8 @@ void world::render_player() { PROF
 
 	render_command_list rcl = render_command_list::make();
 
-	{
+	if(cam.mode == camera_mode::third) {
+
 		mesh_lines lines; lines.init();
 
 		lines.push(cam.pos + cam.front, cam.pos + cam.reach * cam.front, colorf(0,0,1,1), colorf(0,1,0,1));

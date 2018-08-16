@@ -3,7 +3,6 @@ Working To-Do:
 
 [1]	Bug fixing
 		log allocation profiling threading
-		skydome fails on gl reload
 
 [2]	Environment
 		star-field at night, blend into skydome based on time
