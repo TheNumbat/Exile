@@ -1283,7 +1283,7 @@ void render_command_list::sort() { PROF
 	commands.stable_sort();
 }
 
-void render_camera::update() {
+void render_camera::update() { PROF
 	front.x = cos(RADIANS(pitch)) * cos(RADIANS(yaw));
 	front.y = sin(RADIANS(pitch));
 	front.z = sin(RADIANS(yaw)) * cos(RADIANS(pitch));
@@ -1292,7 +1292,7 @@ void render_camera::update() {
 	up = norm(cross(right, front));
 }
 
-void render_camera::move(i32 dx, i32 dy, f32 sens) {
+void render_camera::move(i32 dx, i32 dy, f32 sens) { PROF
 	
 	yaw   += dx * sens;
 	pitch -= dy * sens;
@@ -1306,7 +1306,7 @@ void render_camera::move(i32 dx, i32 dy, f32 sens) {
 	update();
 }
 
-m4 render_camera::view() {
+m4 render_camera::view() { PROF
 
 	switch(mode) {
 	case camera_mode::first: {
@@ -1320,21 +1320,30 @@ m4 render_camera::view() {
 	return m4::I;
 }
 
-m4 render_camera::view_no_translate() {
+m4 render_camera::offset() { PROF 
+
+	if(mode == camera_mode::third) {
+		return translate(2.0f * front - offset3rd);
+	}
+
+	return m4::I;
+}
+
+m4 render_camera::view_no_translate() { PROF
 
 	switch(mode) {
 	case camera_mode::first: {
 		return lookAt({}, front, up);
 	} break;
 	case camera_mode::third: {
-		return lookAt({}, reach * front - offset3rd, up);
+		return lookAt({}, reach * front - (-2.0f * front + offset3rd), up);
 	} break;
 	}
 
 	return m4::I;
 }
 
-m4 render_camera::view_pos_origin() {
+m4 render_camera::view_pos_origin() { PROF
 
 	switch(mode) {
 	case camera_mode::first: {
@@ -1348,7 +1357,7 @@ m4 render_camera::view_pos_origin() {
 	return m4::I;
 }
 
-void render_camera::reset() {
+void render_camera::reset() { PROF
 
 	pos = {};
 	pitch = 0.0f; yaw = -45.0f; fov = 60.0f;

@@ -45,7 +45,6 @@ void world::init(asset_store* store, allocator* a) { PROF
 		sky.init(alloc);
 		sky.push_dome({}, 1.0f, 64);
 		sky_texture = eng->ogl.add_texture(store, "sky"_, texture_wrap::mirror);
-		night_sky_texture = eng->ogl.add_texture(store, "night_sky"_);
 	}
 
 	{
@@ -239,7 +238,7 @@ void player::reset() { PROF
 
 	camera.reset();
 	camera.pos = {3.0f, 115.0f, 16.0f};
-	speed = 5.0f;
+	speed = 30.0f;
 	velocity = v3();
 	last = global_api->get_perfcount();
 }
@@ -259,7 +258,6 @@ void world::render_sky() { PROF
 
 	cmd.uniform_info = &time;
 	cmd.texture0 = sky_texture;
-	cmd.texture1 = night_sky_texture;
 
 	cmd.view = p.camera.view_no_translate();
 	cmd.proj = proj(p.camera.fov, (f32)eng->window.settings.w / (f32)eng->window.settings.h, 0.01f, 2000.0f);
@@ -297,6 +295,7 @@ void world::render_chunks() { PROF
 				(*ch)->job_state.set(work::in_flight);
 
 				thread_pool.queue_job([](void* p) -> void {
+
 					chunk* c = (chunk*)p;
 
 					c->gen();
@@ -323,8 +322,9 @@ void world::render_chunks() { PROF
 			render_command cmd = render_command::make((u16)mesh_cmd::chunk, c->mesh.gpu);
 
 			cmd.texture0 = block_textures;
+			cmd.texture1 = sky_texture;
 			cmd.num_tris = c->mesh_faces;
-			cmd.uniform_info = &settings;
+			cmd.uniform_info = this;
 
 			v3 chunk_pos = v3((f32)current.x * chunk::xsz, (f32)current.y * chunk::ysz, (f32)current.z * chunk::zsz);
 			cmd.model = translate(chunk_pos - p.camera.pos);

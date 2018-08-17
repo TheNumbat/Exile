@@ -2,8 +2,7 @@
 Working To-Do:
 
 [1]	Environment
-		sun/moon objects
-		star-field at night, blend into skydome based on time
+		sun/moon objects + stars at night
 		directional/sun lighting
 
 	serialization/deserialization

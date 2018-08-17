@@ -84,7 +84,7 @@ struct player {
 
 	render_camera camera;
 
-	f32 speed = 5.0f;
+	f32 speed = 30.0f;
 	v3  velocity;
 	u64 last = 0;
 
@@ -103,6 +103,9 @@ struct world_settings {
 	bool wireframe = false;
 	bool cull_backface = true;
 	bool sample_shading = true;
+
+	bool block_ao = true;
+	bool dist_fog = true;
 
 	v4 ao_curve = v4(0.75f, 0.825f, 0.9f, 1.0f);
 };
@@ -143,7 +146,7 @@ struct world {
 	allocator* alloc = null;
 	
 	texture_id block_textures = -1;
-	texture_id sky_texture = -1, night_sky_texture = -1;
+	texture_id sky_texture = -1;
 	mesh_3d_tex sky;
 
 	world_time time;

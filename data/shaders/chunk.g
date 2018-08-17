@@ -5,11 +5,13 @@ layout (lines) in;
 layout (triangle_strip, max_vertices = 4) out;
 
 uniform mat4 mvp;
+uniform mat4 m;
 
 flat out uint f_t;
 flat out vec4 f_ao;
 out vec2 f_uv;
 out vec3 f_n;
+out float f_ah;
 
 struct vert {
 	vec3 pos;
@@ -26,6 +28,10 @@ void send(vert v) {
 	f_uv = v.uv;
 	f_ao = v.ao;
 	f_t = v.t;
+	
+	vec3 pos = (m * vec4(v.pos, 1.0)).xyz;
+	f_ah = 0.5f * (pos.y / length(pos)) + 0.5f;
+	
 	EmitVertex();
 }
 

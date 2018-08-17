@@ -93,9 +93,7 @@ EXPORT bool main_loop(engine* state) {
 
 	CHECKED(swap_buffers, &state->window);
 
-#ifndef RELEASE
 	state->ogl.try_reload_programs();
-#endif
 
 	if(state->apply_window_settings) {
 		if(global_api->apply_window_settings(&state->window)) {

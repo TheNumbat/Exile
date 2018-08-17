@@ -20,12 +20,10 @@ CALLBACK void uniforms_mesh_skydome(shader_program* prog, render_command* cmd) {
 	GLint tloc = glGetUniformLocation(prog->handle, "transform");
 	GLint dloc = glGetUniformLocation(prog->handle, "day_01");
 	GLint sloc = glGetUniformLocation(prog->handle, "sky");
-	GLint nsloc = glGetUniformLocation(prog->handle, "night_sky");
 
 	m4 transform = cmd->proj * cmd->view * cmd->model;
 
 	glUniform1i(sloc, 0);
-	glUniform1i(nsloc, 1);
 	glUniform1f(dloc, time->day_01());
 	glUniformMatrix4fv(tloc, 1, gl_bool::_false, transform.a);
 }
@@ -41,17 +39,27 @@ CALLBACK void uniforms_mesh_cubemap(shader_program* prog, render_command* cmd) {
 
 CALLBACK void uniforms_mesh_chunk(shader_program* prog, render_command* cmd) { PROF
 
-	GLint mvploc = glGetUniformLocation(prog->handle, "mvp");
-	GLint szloc  = glGetUniformLocation(prog->handle, "units_per_voxel");
-	GLint aoloc  = glGetUniformLocation(prog->handle, "ao_curve");
-
+	world* w = (world*)cmd->uniform_info;
+	world_settings* set = &w->settings;
+	world_time* time = &w->time;
+	
 	m4 mvp = cmd->proj * cmd->view * cmd->model;
+	m4 mv = w->p.camera.offset() * cmd->model;
 
-	world_settings* set = (world_settings*)cmd->uniform_info;
+	glUniform1i(glGetUniformLocation(prog->handle, "blocks_tex"), 0);
+	glUniform1i(glGetUniformLocation(prog->handle, "sky_tex"), 1);
 
-	glUniformMatrix4fv(mvploc, 1, gl_bool::_false, mvp.a);
-	glUniform1f(szloc, (f32)chunk::units_per_voxel);
-	glUniform4fv(aoloc, 1, set->ao_curve.a);
+	glUniform1i(glGetUniformLocation(prog->handle, "do_ao"), set->block_ao);
+	glUniform1i(glGetUniformLocation(prog->handle, "do_fog"), set->dist_fog);
+
+	glUniform1f(glGetUniformLocation(prog->handle, "day_01"), time->day_01());
+	glUniform1f(glGetUniformLocation(prog->handle, "units_per_voxel"), (f32)chunk::units_per_voxel);
+	glUniform1f(glGetUniformLocation(prog->handle, "render_distance"), (f32)set->view_distance * chunk::xsz);
+	
+	glUniform4fv(glGetUniformLocation(prog->handle, "ao_curve"), 1, set->ao_curve.a);
+
+	glUniformMatrix4fv(glGetUniformLocation(prog->handle, "mvp"), 1, gl_bool::_false, mvp.a);
+	glUniformMatrix4fv(glGetUniformLocation(prog->handle, "m"), 1, gl_bool::_false, mv.a);
 }
 
 CALLBACK void uniforms_mesh_2d_col(shader_program* prog, render_command* cmd) { PROF
