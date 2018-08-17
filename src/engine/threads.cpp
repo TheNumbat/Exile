@@ -223,7 +223,7 @@ i32 worker(void* data_) {
 	worker_param* data = (worker_param*)data_;
 
 	begin_thread("worker %"_, data->alloc, global_api->this_thread_id());
-	this_thread_data.profiling = false;
+	this_thread_data.timing_override = false;
 	global_dbg->profiler.register_thread(10);
 	
 	LOG_DEBUG("Starting worker thread"_);
@@ -237,7 +237,7 @@ i32 worker(void* data_) {
 #else
 		while(data->job_queue->try_pop(&current_job)) {
 #endif
-			PUSH_PROFILE(true) {
+			PUSH_PROFILE_PROF(true) {
 
 				BEGIN_FRAME();
 
@@ -255,11 +255,12 @@ i32 worker(void* data_) {
 				} POP_PROFILE_PROF();
 				
 				END_FRAME();
-			} POP_PROFILE();
+			} POP_PROFILE_PROF();
 		}
 	} while(data->online);
 
 	LOG_DEBUG("Ending worker thread"_);
+	global_dbg->profiler.collate();
 	end_thread();
 
 	return 0;

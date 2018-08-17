@@ -1,12 +1,9 @@
 
 Working To-Do:
 
-[1]	Bug fixing
-		log allocation profiling threading
-
-[2]	Environment
-		star-field at night, blend into skydome based on time
+[1]	Environment
 		sun/moon objects
+		star-field at night, blend into skydome based on time
 		directional/sun lighting
 
 	serialization/deserialization
