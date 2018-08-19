@@ -11,7 +11,7 @@ flat out uint f_t;
 flat out vec4 f_ao;
 out vec2 f_uv;
 out vec3 f_n;
-out float f_ah;
+out float f_ah, f_d;
 
 struct vert {
 	vec3 pos;
@@ -31,6 +31,7 @@ void send(vert v) {
 	
 	vec3 pos = (m * vec4(v.pos, 1.0)).xyz;
 	f_ah = 0.5f * (pos.y / length(pos)) + 0.5f;
+	f_d = length(pos);
 	
 	EmitVertex();
 }

@@ -5,7 +5,7 @@ flat in uint f_t;
 flat in vec4 f_ao;
 in vec2 f_uv;
 in vec3 f_n;
-in float f_ah;
+in float f_ah, f_d;
 
 out vec4 out_color;
 
@@ -39,8 +39,7 @@ void main() {
 
 	if(do_fog) {
 
-		float fog_dist = gl_FragCoord.z / gl_FragCoord.w;
-		float fog_factor = clamp(fog_dist / (1.5f * render_distance), 0.0f, 1.0f);
+		float fog_factor = clamp(f_d / (1.25f * render_distance), 0.0f, 1.0f);
 
 		vec3 sky_color = texture(sky_tex, vec2(day_01, f_ah)).rgb;
 
