@@ -31,7 +31,7 @@ void send(vert v) {
 	
 	vec3 pos = (m * vec4(v.pos, 1.0)).xyz;
 	f_ah = 0.5f * (pos.y / length(pos)) + 0.5f;
-	f_d = length(pos);
+	f_d = length(pos.xz);
 	
 	EmitVertex();
 }

@@ -2,7 +2,7 @@
 /* debug options
 
 #define BOUNDS_CHECK 			// check access on array_get/vector_get
-	
+
 #define BLOCK_OR_EXIT_ON_ERROR	// __debugbreak in debugger or exit() on log_level::error | log_level::fatal always does this
 	
 #define PROFILE					// do function enter/exit profiling
