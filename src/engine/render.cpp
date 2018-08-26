@@ -1101,6 +1101,7 @@ void ogl_manager::load_global_funcs() { PROF
 	GL_IS_LOAD(glIsProgramPipeline);
 	GL_IS_LOAD(glIsQuery);
 
+	GL_LOAD(glDrawArraysInstanced);
 	GL_LOAD(glMinSampleShading);
 	GL_LOAD(glBlendEquation);
 	GL_LOAD(glDebugMessageCallback);

@@ -4,7 +4,7 @@ void setup_mesh_commands() { PROF
 	register_mesh(lines);
 	register_mesh(cubemap);
 	register_mesh(skydome);
-	register_mesh_g(chunk);
+	register_mesh(chunk);
 
 	register_mesh_ex(_2d_col, 2d_col, "mesh/");
 	register_mesh_ex(_2d_tex, 2d_tex, "mesh/");
@@ -227,7 +227,7 @@ CALLBACK void update_mesh_3d_tex_instanced(gpu_object* obj, void* d, bool force)
 
 	mesh_3d_tex_instance_data* data = (mesh_3d_tex_instance_data*)d;
 	mesh_3d_tex* m = data->parent;
-	
+
 	gpu_object* par_obj = eng->ogl.get_object(m->gpu);
 
 	par_obj->update(par_obj, m, force);
@@ -241,7 +241,7 @@ CALLBACK void update_mesh_3d_tex_instanced(gpu_object* obj, void* d, bool force)
 	data->dirty = false;
 }
 
-CALLBACK void run_mesh_skydome(render_command* cmd, gpu_object* gpu) { PROF
+CALLBACK void run_mesh_skydome(render_command* cmd, gpu_object* gpu) { PROF	
 
 	run_mesh_3d_tex(cmd, gpu);
 }
@@ -256,7 +256,7 @@ CALLBACK void run_mesh_chunk(render_command* cmd, gpu_object* gpu) { PROF
 	mesh_chunk* m = (mesh_chunk*)gpu->data;
 
 	u32 num_faces = cmd->num_tris ? cmd->num_tris : m->vertices.size;
-	glDrawArrays(gl_draw_mode::lines, 0, num_faces / 2);
+	glDrawArraysInstanced(gl_draw_mode::triangle_strip, 0, 4, num_faces / 4);
 }
 
 CALLBACK void run_mesh_2d_col(render_command* cmd, gpu_object* gpu) { PROF
@@ -356,8 +356,12 @@ CALLBACK void setup_mesh_chunk(gpu_object* obj) { PROF
 
 	glBindBuffer(gl_buf_target::array, obj->vbos[0]);
 
-	glVertexAttribIPointer(0, 4, gl_vert_attrib_type::unsigned_int, 2 * sizeof(chunk_vert), (void*)(0));
+	glVertexAttribIPointer(0, 4, gl_vert_attrib_type::unsigned_int, 4 * sizeof(chunk_vert), (void*)(0));
+	glVertexAttribIPointer(1, 4, gl_vert_attrib_type::unsigned_int, 4 * sizeof(chunk_vert), (void*)(2 * sizeof(chunk_vert)));
+	glVertexAttribDivisor(0, 1);
+	glVertexAttribDivisor(1, 1);
 	glEnableVertexAttribArray(0);
+	glEnableVertexAttribArray(1);
 }
 
 CALLBACK void setup_mesh_2d_col(gpu_object* obj) { PROF

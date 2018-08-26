@@ -760,6 +760,7 @@ typedef void (*glGetIntegeri_v_t)(gl_get name, GLuint idx, GLint* data);
 typedef void (*glGetInteger64i_v_t)(gl_get name, GLuint idx, GLint64* data);
 typedef const GLubyte* (*glGetStringi_t)(gl_info name, GLuint idx);
 
+typedef void (*glDrawArraysInstanced_t)(gl_draw_mode mode, GLint first, GLsizei count, GLsizei primcount);
 typedef void (*glDrawElementsInstanced_t)(gl_draw_mode mode, GLsizei count,	gl_index_type type,	const void *indices, GLsizei primcount);
 typedef void (*glDrawElementsInstancedBaseVertex_t)(gl_draw_mode mode, GLsizei count, gl_index_type type, GLvoid *indices, GLsizei primcount, GLint basevertex);
 typedef void (*glVertexAttribDivisor_t)(GLuint index, GLuint divisor);
@@ -832,6 +833,7 @@ glGetFloati_v_t     glGetFloati_v;
 glGetIntegeri_v_t   glGetIntegeri_v;
 glGetInteger64i_v_t glGetInteger64i_v;
 
+glDrawArraysInstanced_t 			glDrawArraysInstanced;
 glDrawElementsInstanced_t 			glDrawElementsInstanced;
 glDrawElementsInstancedBaseVertex_t glDrawElementsInstancedBaseVertex;
 glVertexAttribDivisor_t				glVertexAttribDivisor;
