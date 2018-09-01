@@ -370,7 +370,7 @@ union v4 {
 
 	v4() {}
 	v4(f32 _v) {packed = _mm_set_ps(_v, _v, _v, _v);}
-	v4(v3 _v, f32 _w) {packed = _mm_set_ps(_v.x, _v.y, _v.z, _w);}
+	v4(v3 _v, f32 _w) {packed = _mm_set_ps(_w, _v.z, _v.y, _v.x);}
 	v4(f32 _x, f32 _y, f32 _z, f32 _w) {packed = _mm_set_ps(_w, _z, _y, _x);}
 	v4(__m128 p) {packed = p;}
 	v4(v4& v) {*this = v;}
