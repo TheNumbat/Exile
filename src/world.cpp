@@ -241,10 +241,10 @@ void player::reset() { PROF
 
 void world::render() { PROF
 
+	env.render(&p, &time);
+
 	render_chunks();
 	render_player();
-	
-	env.render(&p, &time);
 }
 
 void world_environment::init(asset_store* store, allocator* a) {
@@ -267,23 +267,26 @@ void world_environment::render(player* p, world_time* t) { PROF
 
 	render_command_list rcl = render_command_list::make();
 
-	render_command cmd = render_command::make((u16)mesh_cmd::skydome, sky.gpu);
+	{
+		render_command cmd = render_command::make((u16)mesh_cmd::skydome, sky.gpu);
 
-	cmd.uniform_info = t;
-	cmd.texture0 = sky_texture;
+		cmd.uniform_info = t;
+		cmd.texture0 = sky_texture;
 
-	cmd.view = p->camera.view_no_translate();
-	cmd.proj = proj(p->camera.fov, (f32)eng->window.settings.w / (f32)eng->window.settings.h, 0.01f, 2000.0f);
+		cmd.view = p->camera.view_no_translate();
+		cmd.proj = proj(p->camera.fov, (f32)eng->window.settings.w / (f32)eng->window.settings.h, 0.01f, 2000.0f);
 
-	rcl.add_command(cmd);
+		rcl.add_command(cmd);
+	}
+	{
+		render_command cmd = render_command::make((u16)mesh_cmd::pointcloud, stars.gpu);
 
-	cmd = render_command::make((u16)mesh_cmd::pointcloud, stars.gpu);
+		cmd.uniform_info = t;
+		cmd.view = p->camera.view_no_translate();
+		cmd.proj = proj(p->camera.fov, (f32)eng->window.settings.w / (f32)eng->window.settings.h, 0.01f, 2000.0f);
 
-	cmd.uniform_info = t;
-	cmd.view = p->camera.view_no_translate();
-	cmd.proj = proj(p->camera.fov, (f32)eng->window.settings.w / (f32)eng->window.settings.h, 0.01f, 2000.0f);
-
-	rcl.add_command(cmd);
+		rcl.add_command(cmd);
+	}
 
 	eng->ogl.execute_command_list(&rcl);
 

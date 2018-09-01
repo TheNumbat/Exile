@@ -37,14 +37,17 @@ void main() {
 		color *= ao;
 	}
 
+	float fog_a = 1.0f;
+
 	if(do_fog) {
 
-		float fog_factor = pow(clamp(f_d / render_distance, 0.0f, 1.0f), 2);
+		float fog_factor = pow(clamp(f_d / render_distance - 0.05f, 0.0f, 1.0f), 2);
+		fog_a = 2.0f * sqrt(1.0f - fog_factor);
 
 		vec3 sky_color = texture(sky_tex, vec2(day_01, f_ah)).rgb;
 
 		color = mix(color, sky_color, fog_factor);
 	}
 
-	out_color = vec4(color, sample.a);
+	out_color = vec4(color, sample.a * fog_a);
 }
