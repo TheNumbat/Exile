@@ -2,6 +2,7 @@
 template<typename... Targs>
 void _begin_thread(string fmt, allocator* alloc, code_context start, Targs... args) {
 
+
 	make_type_table(alloc);
 	this_thread_data.alloc_stack = stack<allocator*>::make(8, alloc);
 
@@ -9,6 +10,8 @@ void _begin_thread(string fmt, allocator* alloc, code_context start, Targs... ar
 
 	this_thread_data.start_context = start;
 	this_thread_data.name = string::makef(fmt, alloc, args...);
+
+	rand_init(hash(this_thread_data.name));
 
 	this_thread_data.scratch_arena = MAKE_ARENA("scratch"_, MEGABYTES(32), alloc);
 	PUSH_ALLOC(&this_thread_data.scratch_arena);

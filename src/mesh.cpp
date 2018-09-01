@@ -5,12 +5,28 @@ void setup_mesh_commands() { PROF
 	register_mesh(cubemap);
 	register_mesh(skydome);
 	register_mesh(chunk);
+	register_mesh(pointcloud);
 
 	register_mesh_ex(_2d_col, 2d_col, "mesh/");
 	register_mesh_ex(_2d_tex, 2d_tex, "mesh/");
 	register_mesh_ex(_3d_tex, 3d_tex, "mesh/");
 	register_mesh_ex(_2d_tex_col, 2d_tex_col, "mesh/");
 	register_mesh_ex(_3d_tex_instanced, 3d_tex_instanced, "mesh/");
+}
+
+CALLBACK void uniforms_mesh_pointcloud(shader_program* prog, render_command* cmd) { PROF
+
+	world_time* time = (world_time*)cmd->uniform_info;
+
+	GLint tloc = glGetUniformLocation(prog->handle, "transform");
+	GLint dloc = glGetUniformLocation(prog->handle, "day_01");
+	GLint sloc = glGetUniformLocation(prog->handle, "tex");
+
+	m4 transform = cmd->proj * cmd->view * cmd->model;
+
+	glUniform1i(sloc, 0);
+	glUniform1f(dloc, time->day_01());
+	glUniformMatrix4fv(tloc, 1, gl_bool::_false, transform.a);
 }
 
 CALLBACK void uniforms_mesh_skydome(shader_program* prog, render_command* cmd) { PROF
@@ -114,6 +130,17 @@ CALLBACK void uniforms_mesh_3d_tex_instanced(shader_program* prog, render_comman
 	m4 transform = cmd->proj * cmd->view * cmd->model;
 
 	glUniformMatrix4fv(loc, 1, gl_bool::_false, transform.a);
+}
+
+CALLBACK void update_mesh_pointcloud(gpu_object* obj, void* data, bool force) { PROF
+
+	mesh_pointcloud* m = (mesh_pointcloud*)data;
+	if(!force && !m->dirty) return;
+
+	glBindBuffer(gl_buf_target::array, obj->vbos[0]);
+	glBufferData(gl_buf_target::array, m->vertices.size * sizeof(v3), m->vertices.size ? m->vertices.memory : null, gl_buf_usage::dynamic_draw);
+
+	m->dirty = false;
 }
 
 CALLBACK void update_mesh_cubemap(gpu_object* obj, void* data, bool force) { PROF
@@ -241,6 +268,14 @@ CALLBACK void update_mesh_3d_tex_instanced(gpu_object* obj, void* d, bool force)
 	data->dirty = false;
 }
 
+CALLBACK void run_mesh_pointcloud(render_command* cmd, gpu_object* gpu) { PROF
+
+	mesh_pointcloud* m = (mesh_pointcloud*)gpu->data;
+
+	u32 num_pts = cmd->num_tris ? cmd->num_tris : m->vertices.size;
+	glDrawArrays(gl_draw_mode::points, 0, num_pts);
+}
+
 CALLBACK void run_mesh_skydome(render_command* cmd, gpu_object* gpu) { PROF	
 
 	run_mesh_3d_tex(cmd, gpu);
@@ -308,6 +343,11 @@ CALLBACK void run_mesh_3d_tex_instanced(render_command* cmd, gpu_object* gpu) { 
 	glDrawElementsInstancedBaseVertex(gl_draw_mode::triangles, num_tris, gl_index_type::unsigned_int, (void*)(u64)(0), data->instances, cmd->offset);
 }
 
+// TODO(max): actually do these
+CALLBACK bool compat_mesh_pointcloud(ogl_info* info) { PROF
+	return info->check_version(3, 2);
+}
+
 CALLBACK bool compat_mesh_skydome(ogl_info* info) { PROF
 	return info->check_version(3, 2);
 }
@@ -342,6 +382,14 @@ CALLBACK bool compat_mesh_lines(ogl_info* info) { PROF
 
 CALLBACK bool compat_mesh_3d_tex_instanced(ogl_info* info) { PROF
 	return info->check_version(3, 3);
+}
+
+CALLBACK void setup_mesh_pointcloud(gpu_object* obj) { PROF
+
+	glBindBuffer(gl_buf_target::array, obj->vbos[0]);
+
+	glVertexAttribPointer(0, 3, gl_vert_attrib_type::_float, gl_bool::_false, sizeof(v3), (void*)0);
+	glEnableVertexAttribArray(0);
 }
 
 CALLBACK void setup_mesh_cubemap(gpu_object* obj) { PROF
@@ -461,6 +509,27 @@ CALLBACK void setup_mesh_lines(gpu_object* obj) { PROF
 	glEnableVertexAttribArray(1);
 	
 	glBindVertexArray(0);
+}
+
+void mesh_pointcloud::init(allocator* alloc) {
+
+	if(!alloc) alloc = CURRENT_ALLOC();
+
+	vertices = vector<v3>::make(32, alloc);
+	gpu = eng->ogl.add_object(FPTR(setup_mesh_pointcloud), FPTR(update_mesh_pointcloud), this);	
+}
+
+void mesh_pointcloud::destroy() {
+
+	vertices.destroy();
+
+	eng->ogl.destroy_object(gpu);
+}
+
+void mesh_pointcloud::push(v3 p) {
+
+	vertices.push(p);
+	dirty = true;
 }
 
 void mesh_cubemap::init() {
@@ -774,6 +843,23 @@ f32 mesh_2d_tex_col::push_text_line(asset* font, string text_utf8, v2 pos, f32 p
 
 	dirty = true;
 	return scale * font->raster_font.linedist;
+}
+
+void mesh_pointcloud::push_points(v3 center, f32 r, i32 points, f32 jitter) { PROF
+
+	for(i32 i = 0; i < points; i++) {
+		
+		f32 y = randf() * 2.0f - 1.0f;
+		f32 ph = acos(y);
+		f32 th = randf() * 2.0f * PI32;
+	
+		f32 ct = cos(th), st = sin(th), sp = sin(ph);
+		v3 point = v3(r * ct * sp, r * y, r * st * sp) + jitter * rand_unit();
+
+		vertices.push(point);
+	}
+
+	dirty = true;
 }
 
 // Concept from https://github.com/fogleman/Craft

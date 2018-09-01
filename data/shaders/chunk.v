@@ -76,5 +76,6 @@ void main() {
 	f_t = v.t;
 	
 	f_ah = 0.5f * (m_pos.y / length(m_pos)) + 0.5f;
+	
 	f_d = length(m_pos.xz);
 }

@@ -8,6 +8,7 @@ enum class mesh_cmd : u16 {
 	_3d_tex,
 	_3d_tex_instanced,
 	lines,
+	pointcloud,
 	cubemap,
 	chunk,
 	skydome
@@ -97,6 +98,19 @@ struct mesh_lines {
 	void destroy();
 
 	void push(v3 p1, v3 p2, colorf c1 = colorf(0,0,0,1), colorf c2 = colorf(0,0,0,1));
+};
+
+struct mesh_pointcloud {
+	vector<v3> vertices;
+	
+	gpu_object_id gpu = -1;
+	bool dirty = false;
+
+	void init(allocator* alloc = null);
+	void destroy();
+
+	void push_points(v3 center, f32 r, i32 divisions, f32 jitter);
+	void push(v3 p);
 };
 
 struct mesh_2d_col {
@@ -213,3 +227,4 @@ decl_mesh(2d_tex_col);
 decl_mesh(3d_tex);
 decl_mesh(3d_tex_instanced);
 decl_mesh(lines);
+decl_mesh(pointcloud);

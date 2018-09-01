@@ -128,6 +128,19 @@ struct world_time {
 	f32 day_01();
 };
 
+struct world_environment {
+
+	texture_id sky_texture = -1;
+	mesh_3d_tex sky;
+
+	mesh_pointcloud stars;
+
+	void init(asset_store* store, allocator* a);
+	void destroy();
+
+	void render(player* p, world_time* t);
+};
+
 struct world {
 	
 	// TODO(max): how do we really want to do storage here?
@@ -146,12 +159,10 @@ struct world {
 	allocator* alloc = null;
 	
 	texture_id block_textures = -1;
-	texture_id sky_texture = -1;
-	mesh_3d_tex sky;
+	block_type next_block_type = 0;
 
 	world_time time;
-
-	block_type next_block_type = 0;
+	world_environment env;
 
 	void init(asset_store* store, allocator* a);
 	block_meta* add_block();

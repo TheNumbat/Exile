@@ -32,6 +32,8 @@ void world::init(asset_store* store, allocator* a) { PROF
 	p.reset();
 
 	LOG_INFO_F("units_per_voxel: %"_, chunk::units_per_voxel);
+
+	env.init(store, a);
 	
 	{
 		block_info = vector<block_meta>::make(8192, alloc);
@@ -39,12 +41,6 @@ void world::init(asset_store* store, allocator* a) { PROF
 		add_block(); // air
 
 		init_blocks(this, store);
-	}
-
-	{
-		sky.init(alloc);
-		sky.push_dome({}, 1.0f, 64);
-		sky_texture = eng->ogl.add_texture(store, "sky"_, texture_wrap::mirror);
 	}
 
 	{
@@ -85,7 +81,7 @@ void world::destroy_chunks() { PROF
 
 void world::destroy() { PROF
 
-	sky.destroy();
+	env.destroy();
 	thread_pool.stop_all();
 	thread_pool.destroy();
 	destroy_chunks();
@@ -247,20 +243,45 @@ void world::render() { PROF
 
 	render_chunks();
 	render_player();
-	render_sky();
+	
+	env.render(&p, &time);
 }
 
-void world::render_sky() { PROF 
+void world_environment::init(asset_store* store, allocator* a) {
+
+	sky.init(a);
+	sky.push_dome({}, 1.0f, 64);
+	sky_texture = eng->ogl.add_texture(store, "sky"_, texture_wrap::mirror);
+
+	stars.init(a);
+	stars.push_points({}, 1.0f, 5000, 0.1f);
+}
+
+void world_environment::destroy() {
+
+	sky.destroy();
+	stars.destroy();
+}
+
+void world_environment::render(player* p, world_time* t) { PROF 
 
 	render_command_list rcl = render_command_list::make();
 
 	render_command cmd = render_command::make((u16)mesh_cmd::skydome, sky.gpu);
 
-	cmd.uniform_info = &time;
+	cmd.uniform_info = t;
 	cmd.texture0 = sky_texture;
 
-	cmd.view = p.camera.view_no_translate();
-	cmd.proj = proj(p.camera.fov, (f32)eng->window.settings.w / (f32)eng->window.settings.h, 0.01f, 2000.0f);
+	cmd.view = p->camera.view_no_translate();
+	cmd.proj = proj(p->camera.fov, (f32)eng->window.settings.w / (f32)eng->window.settings.h, 0.01f, 2000.0f);
+
+	rcl.add_command(cmd);
+
+	cmd = render_command::make((u16)mesh_cmd::pointcloud, stars.gpu);
+
+	cmd.uniform_info = t;
+	cmd.view = p->camera.view_no_translate();
+	cmd.proj = proj(p->camera.fov, (f32)eng->window.settings.w / (f32)eng->window.settings.h, 0.01f, 2000.0f);
 
 	rcl.add_command(cmd);
 
@@ -322,7 +343,7 @@ void world::render_chunks() { PROF
 			render_command cmd = render_command::make((u16)mesh_cmd::chunk, c->mesh.gpu);
 
 			cmd.texture0 = block_textures;
-			cmd.texture1 = sky_texture;
+			cmd.texture1 = env.sky_texture;
 			cmd.num_tris = c->mesh_faces;
 			cmd.uniform_info = this;
 
