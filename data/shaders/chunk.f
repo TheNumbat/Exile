@@ -42,7 +42,7 @@ void main() {
 	if(do_fog) {
 
 		float fog_factor = pow(clamp(f_d / render_distance - 0.05f, 0.0f, 1.0f), 2);
-		fog_a = 2.0f * sqrt(1.0f - fog_factor);
+		// fog_a = 2.0f * sqrt(1.0f - fog_factor);
 
 		vec3 sky_color = texture(sky_tex, vec2(day_01, f_ah)).rgb;
 

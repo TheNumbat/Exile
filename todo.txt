@@ -2,7 +2,7 @@
 Working To-Do:
 
 [1]	Environment
-		sun/moon objects + stars at night
+		sun/moon objects 
 		directional/sun lighting
 
 	serialization/deserialization
