@@ -787,6 +787,7 @@ typedef GLint (*glGetUniformLocation_t)(GLuint program, const GLchar *name);
 typedef GLint (*glGetAttribLocation_t)(GLuint program, 	const GLchar *name);
 typedef void (*glUniformMatrix4fv_t)(GLint location, GLsizei count, gl_bool transpose, const GLfloat *value);
 typedef void (*glUniform1f_t)(GLint location, GLfloat f);
+typedef void (*glUniform2f_t)(GLint location, GLfloat f0, GLfloat f1);
 typedef void (*glUniform1i_t)(GLint location, GLint i);
 typedef void (*glUniform4fv_t)(GLint location, GLsizei count, const GLfloat *value);
 
@@ -860,6 +861,7 @@ glGetUniformLocation_t 		glGetUniformLocation;
 glGetAttribLocation_t		glGetAttribLocation;
 glUniformMatrix4fv_t   		glUniformMatrix4fv;
 glUniform1f_t				glUniform1f;
+glUniform2f_t				glUniform2f;
 glUniform1i_t				glUniform1i;
 glUniform4fv_t 				glUniform4fv;
 

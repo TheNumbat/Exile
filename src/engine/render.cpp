@@ -831,6 +831,7 @@ void ogl_manager::_cmd_set_setting(render_setting setting, bool enable) { PROF
 	case render_setting::msaa: set->multisample = enable; break;
 	case render_setting::aa_shading: set->sample_shading = enable; break;
 	case render_setting::write_depth: set->depth_mask = enable; break;
+	case render_setting::point_size: set->point_size = enable; break;
 	default: break;
 	}
 }
@@ -874,6 +875,7 @@ void ogl_manager::_cmd_apply_settings() { PROF
 	set->cull_backface 	? glEnable(gl_capability::cull_face) : glDisable(gl_capability::cull_face);
 	set->multisample 	? glEnable(gl_capability::multisample) : glDisable(gl_capability::multisample);
 	set->sample_shading	? glEnable(gl_capability::sample_shading) : glDisable(gl_capability::sample_shading);
+	set->point_size		? glEnable(gl_capability::program_point_size) : glDisable(gl_capability::program_point_size);
 	set->depth_mask 	? glDepthMask(gl_bool::_true) : glDepthMask(gl_bool::_false);
 
 	if(set->sample_shading && info.check_version(4,0)) {
@@ -1147,6 +1149,7 @@ void ogl_manager::load_global_funcs() { PROF
 	GL_LOAD(glUniform1i);
 	GL_LOAD(glUniform4fv);
 	GL_LOAD(glBindSampler);
+	GL_LOAD(glUniform2f);
 
 	GL_LOAD(glGetStringi);
 	GL_LOAD(glGetInteger64v);

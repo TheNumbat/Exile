@@ -163,7 +163,8 @@ enum class render_setting : u8 {
 	cull,
 	msaa,
 	aa_shading,
-	write_depth
+	write_depth,
+	point_size
 };
 
 struct cmd_settings {
@@ -176,6 +177,7 @@ struct cmd_settings {
 	bool multisample = true;
 	bool sample_shading = false;
 	bool depth_mask = true;
+	bool point_size = false;
 };
 
 struct ogl_settings {

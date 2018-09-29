@@ -55,6 +55,7 @@ u32 next_pow_two(u32 val);
 f32 perlin(f32 x, f32 y, f32 z, i32 x_wrap, i32 y_wrap, i32 z_wrap);
 f32 perlin_grad(i32 hash, f32 x, f32 y, f32 z);
 
+v3 _abs(v3 v);
 v4 _sqrt(v4 v);
 v4 _abs(v4 v);
 v4 _round(v4 v);
@@ -757,6 +758,9 @@ v4 step(v4 l, v4 r) {
 }
 v4 fract(v4 v) {
 	return {_mm_sub_ps(v.packed, _mm_round_ps(v.packed, _MM_FROUND_TRUNC))};
+}
+v3 _abs(v3 v) {
+	return {_abs(v.x),_abs(v.y),_abs(v.z)};
 }
 v4 _abs(v4 v) {
 	// for some reason there is no _mm_abs_ps()

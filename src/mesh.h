@@ -101,7 +101,7 @@ struct mesh_lines {
 };
 
 struct mesh_pointcloud {
-	vector<v3> vertices;
+	vector<v4> vertices;
 	
 	gpu_object_id gpu = -1;
 	bool dirty = false;
@@ -110,7 +110,7 @@ struct mesh_pointcloud {
 	void destroy();
 
 	void push_points(v3 center, f32 r, i32 divisions, f32 jitter);
-	void push(v3 p);
+	void push(v3 p, f32 s);
 };
 
 struct mesh_2d_col {

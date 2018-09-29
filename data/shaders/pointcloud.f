@@ -5,8 +5,7 @@ uniform sampler2D tex;
 
 uniform float day_01;
 
-in float f_sz;
-
+in vec4 f_info;
 out vec4 color;
 
 void main() {

@@ -279,6 +279,8 @@ void world_environment::render(player* p, world_time* t) { PROF
 		rcl.add_command(cmd);
 	}
 	{
+		rcl.set_setting(render_setting::point_size, true);
+
 		render_command cmd = render_command::make((u16)mesh_cmd::pointcloud, stars.gpu);
 
 		cmd.uniform_info = t;

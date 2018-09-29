@@ -138,7 +138,7 @@ CALLBACK void update_mesh_pointcloud(gpu_object* obj, void* data, bool force) { 
 	if(!force && !m->dirty) return;
 
 	glBindBuffer(gl_buf_target::array, obj->vbos[0]);
-	glBufferData(gl_buf_target::array, m->vertices.size * sizeof(v3), m->vertices.size ? m->vertices.memory : null, gl_buf_usage::dynamic_draw);
+	glBufferData(gl_buf_target::array, m->vertices.size * sizeof(v4), m->vertices.size ? m->vertices.memory : null, gl_buf_usage::dynamic_draw);
 
 	m->dirty = false;
 }
@@ -388,7 +388,7 @@ CALLBACK void setup_mesh_pointcloud(gpu_object* obj) { PROF
 
 	glBindBuffer(gl_buf_target::array, obj->vbos[0]);
 
-	glVertexAttribPointer(0, 3, gl_vert_attrib_type::_float, gl_bool::_false, sizeof(v3), (void*)0);
+	glVertexAttribPointer(0, 4, gl_vert_attrib_type::_float, gl_bool::_false, sizeof(v4), (void*)0);
 	glEnableVertexAttribArray(0);
 }
 
@@ -515,7 +515,7 @@ void mesh_pointcloud::init(allocator* alloc) {
 
 	if(!alloc) alloc = CURRENT_ALLOC();
 
-	vertices = vector<v3>::make(32, alloc);
+	vertices = vector<v4>::make(32, alloc);
 	gpu = eng->ogl.add_object(FPTR(setup_mesh_pointcloud), FPTR(update_mesh_pointcloud), this);	
 }
 
@@ -526,9 +526,9 @@ void mesh_pointcloud::destroy() {
 	eng->ogl.destroy_object(gpu);
 }
 
-void mesh_pointcloud::push(v3 p) {
+void mesh_pointcloud::push(v3 p, f32 s) {
 
-	vertices.push(p);
+	vertices.push(v4(p, s));
 	dirty = true;
 }
 
@@ -856,7 +856,7 @@ void mesh_pointcloud::push_points(v3 center, f32 r, i32 points, f32 jitter) { PR
 		f32 ct = cos(th), st = sin(th), sp = sin(ph);
 		v3 point = v3(r * ct * sp, r * y, r * st * sp) + jitter * rand_unit();
 
-		vertices.push(point);
+		vertices.push(v4(point, 2.0f * abs(randf())));
 	}
 
 	dirty = true;
