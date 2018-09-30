@@ -11,5 +11,5 @@ void main() {
 	vec4 pos = transform * vec4(v_pos.xyz, 1.0);
 	
 	gl_Position = pos.xyww;
-	gl_PointSize = abs(v_pos.w * sin((day_01 + v_pos.w) * 5.0f * 31.4159f));
+	gl_PointSize = abs(v_pos.w * sin((day_01 + v_pos.w) * 50.0f * 3.14159f));
 }
