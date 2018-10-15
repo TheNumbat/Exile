@@ -12,7 +12,6 @@ Working To-Do:
 
 	multiple texture arrays for > 2048 textures
 	chunk culling
-	distance based fog
 	lighting
 	consolidate shaders?
 	framebuffer objects (msaa + effects)

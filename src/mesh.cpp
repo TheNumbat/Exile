@@ -6,6 +6,7 @@ void setup_mesh_commands() { PROF
 	register_mesh(skydome);
 	register_mesh(chunk);
 	register_mesh(pointcloud);
+	register_mesh(skyfar);
 
 	register_mesh_ex(_2d_col, 2d_col, "mesh/");
 	register_mesh_ex(_2d_tex, 2d_tex, "mesh/");
@@ -14,19 +15,14 @@ void setup_mesh_commands() { PROF
 	register_mesh_ex(_3d_tex_instanced, 3d_tex_instanced, "mesh/");
 }
 
+CALLBACK void uniforms_mesh_skyfar(shader_program* prog, render_command* cmd) { PROF
+	
+	uniforms_mesh_skydome(prog, cmd);
+}
+
 CALLBACK void uniforms_mesh_pointcloud(shader_program* prog, render_command* cmd) { PROF
 
-	world_time* time = (world_time*)cmd->uniform_info;
-
-	GLint tloc = glGetUniformLocation(prog->handle, "transform");
-	GLint dloc = glGetUniformLocation(prog->handle, "day_01");
-	GLint sloc = glGetUniformLocation(prog->handle, "tex");
-
-	m4 transform = cmd->proj * cmd->view * cmd->model;
-
-	glUniform1i(sloc, 0);
-	glUniform1f(dloc, time->day_01());
-	glUniformMatrix4fv(tloc, 1, gl_bool::_false, transform.a);
+	uniforms_mesh_skydome(prog, cmd);
 }
 
 CALLBACK void uniforms_mesh_skydome(shader_program* prog, render_command* cmd) { PROF
@@ -35,7 +31,7 @@ CALLBACK void uniforms_mesh_skydome(shader_program* prog, render_command* cmd) {
 
 	GLint tloc = glGetUniformLocation(prog->handle, "transform");
 	GLint dloc = glGetUniformLocation(prog->handle, "day_01");
-	GLint sloc = glGetUniformLocation(prog->handle, "sky");
+	GLint sloc = glGetUniformLocation(prog->handle, "tex");
 
 	m4 transform = cmd->proj * cmd->view * cmd->model;
 
@@ -268,6 +264,11 @@ CALLBACK void update_mesh_3d_tex_instanced(gpu_object* obj, void* d, bool force)
 	data->dirty = false;
 }
 
+CALLBACK void run_mesh_skyfar(render_command* cmd, gpu_object* gpu) { PROF
+
+	run_mesh_3d_tex(cmd, gpu);
+}
+
 CALLBACK void run_mesh_pointcloud(render_command* cmd, gpu_object* gpu) { PROF
 
 	mesh_pointcloud* m = (mesh_pointcloud*)gpu->data;
@@ -344,6 +345,10 @@ CALLBACK void run_mesh_3d_tex_instanced(render_command* cmd, gpu_object* gpu) { 
 }
 
 // TODO(max): actually do these
+CALLBACK bool compat_mesh_skyfar(ogl_info* info) { PROF
+	return info->check_version(3, 2);
+}
+
 CALLBACK bool compat_mesh_pointcloud(ogl_info* info) { PROF
 	return info->check_version(3, 2);
 }

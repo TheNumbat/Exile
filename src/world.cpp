@@ -253,6 +253,9 @@ void world_environment::init(asset_store* store, allocator* a) {
 	sky.push_dome({}, 1.0f, 64);
 	sky_texture = eng->ogl.add_texture(store, "sky"_, texture_wrap::mirror);
 
+	sun_moon.init(a);
+	env_texture = eng->ogl.add_texture(store, "env"_);
+
 	stars.init(a);
 	stars.push_points({}, 1.0f, 5000, 0.1f);
 }
@@ -267,6 +270,7 @@ void world_environment::render(player* p, world_time* t) { PROF
 
 	render_command_list rcl = render_command_list::make();
 
+	m4 mproj = proj(p->camera.fov, (f32)eng->window.settings.w / (f32)eng->window.settings.h, 0.01f, 2000.0f);
 	{
 		render_command cmd = render_command::make((u16)mesh_cmd::skydome, sky.gpu);
 
@@ -274,7 +278,7 @@ void world_environment::render(player* p, world_time* t) { PROF
 		cmd.texture0 = sky_texture;
 
 		cmd.view = p->camera.view_no_translate();
-		cmd.proj = proj(p->camera.fov, (f32)eng->window.settings.w / (f32)eng->window.settings.h, 0.01f, 2000.0f);
+		cmd.proj = mproj;
 
 		rcl.add_command(cmd);
 	}
@@ -285,7 +289,18 @@ void world_environment::render(player* p, world_time* t) { PROF
 
 		cmd.uniform_info = t;
 		cmd.view = p->camera.view_no_translate();
-		cmd.proj = proj(p->camera.fov, (f32)eng->window.settings.w / (f32)eng->window.settings.h, 0.01f, 2000.0f);
+		cmd.proj = mproj;
+
+		rcl.add_command(cmd);
+	}
+	{
+		render_command cmd = render_command::make((u16)mesh_cmd::skyfar, sun_moon.gpu);
+
+		cmd.uniform_info = t;
+		cmd.texture0 = env_texture;
+
+		cmd.view = p->camera.view_no_translate();
+		cmd.proj = mproj;
 
 		rcl.add_command(cmd);
 	}

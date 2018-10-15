@@ -130,15 +130,17 @@ struct world_time {
 
 struct world_environment {
 
-	texture_id sky_texture = -1;
+	texture_id sky_texture = -1, env_texture = -1;
 	
 	mesh_3d_tex sky;
+	mesh_3d_tex sun_moon;
 	mesh_pointcloud stars;
 
 	void init(asset_store* store, allocator* a);
 	void destroy();
 
 	void render(player* p, world_time* t);
+	void build_sun_moon(f32 day_01);
 };
 
 struct world {

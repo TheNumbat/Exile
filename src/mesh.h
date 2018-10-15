@@ -11,7 +11,8 @@ enum class mesh_cmd : u16 {
 	pointcloud,
 	cubemap,
 	chunk,
-	skydome
+	skydome,
+	skyfar
 };
 
 struct chunk_vert {
@@ -218,6 +219,7 @@ void setup_mesh_commands();
 #define register_mesh_ex_g(cmd, name, path) \
 	eng->ogl.add_command((u16)mesh_cmd::cmd, FPTR(run_mesh_##name), FPTR(uniforms_mesh_##name), FPTR(compat_mesh_##name), "shaders/" path #name ".v"_, "shaders/" path #name ".f"_, "shaders/" path #name ".g"_);
 
+decl_mesh(skyfar);
 decl_mesh(skydome);
 decl_mesh(cubemap);
 decl_mesh(chunk);
