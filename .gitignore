@@ -1,5 +1,8 @@
 .vscode
 build/
+.vs/
+x64/
+Debug/
 bin/*.db
 bin/.vs
 bin/*.opendb
