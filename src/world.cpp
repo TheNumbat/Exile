@@ -568,8 +568,9 @@ void chunk::destroy() { PROF
 
 i32 chunk::y_at(i32 x, i32 z) { PROF
 
+	f32 y_max = 512;
 	f32 val = perlin((f32)x / 32.0f, 0, (f32)z / 32.0f, 0, 0, 0);
-	i32 height = (i32)(val * ysz / 2.0f + ysz / 2.0f) / 2;
+	i32 height = (i32)(val * y_max / 2.0f + y_max / 2.0f) / 2;
 
 	return height;
 }
@@ -944,7 +945,7 @@ void chunk::build_data() { PROF
 
 	eng->platform->aquire_mutex(&swap_mut);
 	mesh.swap_mesh(new_mesh);
-	mesh_faces = mesh.vertices.size;
+	mesh_faces = mesh.quads.size;
 	eng->platform->release_mutex(&swap_mut);
 }
 

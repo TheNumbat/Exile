@@ -156,7 +156,7 @@ CALLBACK void update_mesh_chunk(gpu_object* obj, void* data, bool force) { PROF
 	if(!force && !m->dirty) return;
 
 	glBindBuffer(gl_buf_target::array, obj->vbos[0]);
-	glBufferData(gl_buf_target::array, m->vertices.size * sizeof(chunk_vert), m->vertices.size ? m->vertices.memory : null, gl_buf_usage::dynamic_draw);
+	glBufferData(gl_buf_target::array, m->quads.size * sizeof(chunk_quad), m->quads.size ? m->quads.memory : null, gl_buf_usage::dynamic_draw);
 
 	m->dirty = false;
 }
@@ -291,8 +291,8 @@ CALLBACK void run_mesh_chunk(render_command* cmd, gpu_object* gpu) { PROF
 
 	mesh_chunk* m = (mesh_chunk*)gpu->data;
 
-	u32 num_faces = cmd->num_tris ? cmd->num_tris : m->vertices.size;
-	glDrawArraysInstanced(gl_draw_mode::triangle_strip, 0, 4, num_faces / 4);
+	u32 num_faces = cmd->num_tris ? cmd->num_tris : m->quads.size;
+	glDrawArraysInstanced(gl_draw_mode::triangle_strip, 0, 4, num_faces);
 }
 
 CALLBACK void run_mesh_2d_col(render_command* cmd, gpu_object* gpu) { PROF
@@ -409,8 +409,8 @@ CALLBACK void setup_mesh_chunk(gpu_object* obj) { PROF
 
 	glBindBuffer(gl_buf_target::array, obj->vbos[0]);
 
-	glVertexAttribIPointer(0, 4, gl_vert_attrib_type::unsigned_int, 4 * sizeof(chunk_vert), (void*)(0));
-	glVertexAttribIPointer(1, 4, gl_vert_attrib_type::unsigned_int, 4 * sizeof(chunk_vert), (void*)(2 * sizeof(chunk_vert)));
+	glVertexAttribIPointer(0, 4, gl_vert_attrib_type::unsigned_int, sizeof(chunk_quad), (void*)(0));
+	glVertexAttribIPointer(1, 4, gl_vert_attrib_type::unsigned_int, sizeof(chunk_quad), (void*)(16));
 	glVertexAttribDivisor(0, 1);
 	glVertexAttribDivisor(1, 1);
 	glEnableVertexAttribArray(0);
@@ -946,37 +946,6 @@ void mesh_3d_tex::push_cube(v3 pos, f32 len) {
 	dirty = true;
 }
 
-chunk_vert chunk_vert::make(v3 v, v2 uv, i32 t, bv4 ao) { PROF
-
-	LOG_DEBUG_ASSERT(v.x >= 0 && v.x < 256);
-	LOG_DEBUG_ASSERT(v.z >= 0 && v.z < 256);
-	LOG_DEBUG_ASSERT(v.y >= 0 && v.y < 4096);
-	LOG_DEBUG_ASSERT(uv.x >= 0 && uv.x < 256);
-	LOG_DEBUG_ASSERT(uv.y >= 0 && uv.y < 256);
-	LOG_DEBUG_ASSERT(t >= 0 && t < 4096);
-	LOG_DEBUG_ASSERT(ao.x >= 0 && ao.x < 4);
-	LOG_DEBUG_ASSERT(ao.y >= 0 && ao.y < 4);
-	LOG_DEBUG_ASSERT(ao.z >= 0 && ao.z < 4);
-	LOG_DEBUG_ASSERT(ao.w >= 0 && ao.w < 4);
-
-	chunk_vert ret = {};
-
-	ret.v = (u8)uv.y;
-	ret.u = (u8)uv.x;
-	ret.z = (u8)v.z;
-	ret.x = (u8)v.x;
-
-	ret.aoty |= (u8)ao.w << 0;
-	ret.aoty |= (u8)ao.z << 2;
-	ret.aoty |= (u8)ao.y << 4;
-	ret.aoty |= (u8)ao.x << 6;
-
-	ret.aoty |= (u16)t   << 8;
-	ret.aoty |= (u16)v.y << 20;
-
-	return ret;
-}
-
 mesh_chunk mesh_chunk::make_cpu(u32 verts, allocator* alloc) { PROF
 
 	if(alloc == null) {
@@ -985,7 +954,7 @@ mesh_chunk mesh_chunk::make_cpu(u32 verts, allocator* alloc) { PROF
 
 	mesh_chunk ret;
 
-	ret.vertices = vector<chunk_vert>::make(verts, alloc);
+	ret.quads = vector<chunk_quad>::make(verts, alloc);
 
 	return ret;
 }
@@ -997,15 +966,15 @@ void mesh_chunk::init_gpu() { PROF
 
 void mesh_chunk::swap_mesh(mesh_chunk other) { PROF
 
-	vertices.destroy();
-	vertices = other.vertices;
+	quads.destroy();
+	quads = other.quads;
 
 	dirty = true;
 }
 
 void mesh_chunk::destroy() { PROF
 
-	vertices.destroy();
+	quads.destroy();
 
 	eng->ogl.destroy_object(gpu);
 	gpu = -1;
@@ -1013,22 +982,68 @@ void mesh_chunk::destroy() { PROF
 
 void mesh_chunk::free_cpu() { PROF
 
-	vertices.resize(0);
+	quads.resize(0);
 }
 
 void mesh_chunk::clear() { PROF
 
-	vertices.clear();
+	quads.clear();
 
 	dirty = true;
 }
 
 void mesh_chunk::quad(v3 v_0, v3 v_1, v3 v_2, v3 v_3, v2 uv, i32 t, bv4 ao) {
 
-	vertices.push(chunk_vert::make(v_0, v2(0.0f, 0.0f), t, ao));
-	vertices.push(chunk_vert::make(v_1, v2(uv.x, 0.0f), t, ao));
-	vertices.push(chunk_vert::make(v_2, v2(0.0f, uv.y), t, ao));
-	vertices.push(chunk_vert::make(v_3, v2(uv.x, uv.y), t, ao));
+	chunk_quad q;
 
+	LOG_DEBUG_ASSERT(
+		0 <= v_0.x && v_0.x <= 255 && 
+		0 <= v_0.y && v_0.y <= 65535 &&
+		0 <= v_0.z && v_0.z <= 255 && 
+
+		0 <= v_1.x && v_1.x <= 255 && 
+		0 <= v_1.y && v_1.y <= 65535 &&
+		0 <= v_1.z && v_1.z <= 255 && 
+
+		0 <= v_2.x && v_2.x <= 255 && 
+		0 <= v_2.y && v_2.y <= 65535 &&
+		0 <= v_2.z && v_2.z <= 255 && 
+
+		0 <= v_3.x && v_3.x <= 255 && 
+		0 <= v_3.y && v_3.y <= 65535 &&
+		0 <= v_3.z && v_3.z <= 255 && 
+
+		0 <= uv.x && uv.x <= 255 && 
+		0 <= uv.y && uv.y <= 255 && 
+
+		0 <= t && t <= 65535 &&
+
+		0 <= ao.x && ao.x <= 3 &&
+		0 <= ao.y && ao.y <= 3 &&
+		0 <= ao.z && ao.z <= 3 &&
+		0 <= ao.w && ao.w <= 3
+	);
+
+	q.x_0 = (u8)v_0.x; q.y_0 = (u16)v_0.y; q.z_0 = (u8)v_0.z;
+	q.x_1 = (u8)v_1.x; q.y_1 = (u16)v_1.y; q.z_1 = (u8)v_1.z;
+	q.x_2 = (u8)v_2.x; q.y_2 = (u16)v_2.y; q.z_2 = (u8)v_2.z;
+	q.x_3 = (u8)v_3.x; q.y_3 = (u16)v_3.y; q.z_3 = (u8)v_3.z;
+
+	v2 uv_0(0.0f, 0.0f);
+	v2 uv_1(uv.x, 0.0f);
+	v2 uv_2(0.0f, uv.y);
+	v2 uv_3(uv.x, uv.y);
+
+	q.u_0 = (u8)uv_0.x; q.v_0 = (u8)uv_0.y;
+	q.u_1 = (u8)uv_1.x; q.v_1 = (u8)uv_1.y;
+	q.u_2 = (u8)uv_2.x; q.v_2 = (u8)uv_2.y;
+	q.u_3 = (u8)uv_3.x; q.v_3 = (u8)uv_3.y;
+
+	q.t = (u16)t;
+	q.ao |= (u8)ao.w; q.ao |= (u8)ao.z << 2; q.ao |= (u8)ao.y << 4; q.ao |= (u8)ao.x << 6; 
+
+	q.l3 = 0; q.l2 = 0; q.l1 = 0; q.l0 = 0; 
+
+	quads.push(q);
 	dirty = true;
 }

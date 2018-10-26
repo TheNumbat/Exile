@@ -15,18 +15,23 @@ enum class mesh_cmd : u16 {
 	skyfar
 };
 
-struct chunk_vert {
+struct chunk_quad {
 
-	u8 v, u, z, x;
-	u32 aoty;
+	u8 v_0, u_0, z_0, x_0;
+	u8 v_1, u_1, z_1, x_1;
+	u8 v_2, u_2, z_2, x_2;
+	u8 v_3, u_3, z_3, x_3;
 
-	static chunk_vert make(v3 pos, v2 uv, i32 t, bv4 ao);
+	u16 y_1, y_0, y_3, y_2;
+
+	u16 ao, t;
+	u8 l3, l2, l1, l0;
 };
-static_assert(sizeof(chunk_vert) == 8, "chunk_vert size != 8");
+static_assert(sizeof(chunk_quad) == 32, "chunk_quad size != 32");
 
 struct mesh_chunk {
 
-	vector<chunk_vert> vertices;
+	vector<chunk_quad> quads;
 
 	gpu_object_id gpu = -1;
 	bool dirty = false;

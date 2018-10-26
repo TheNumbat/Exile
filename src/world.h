@@ -49,7 +49,7 @@ enum class work : u8 {
 struct world;
 struct chunk {
 
-	static const i32 xsz = 31, ysz = 511, zsz = 31;
+	static const i32 xsz = 31, ysz = 1024, zsz = 31;
 	static const i32 units_per_voxel = 8;
 
 	chunk_pos pos;

@@ -4,17 +4,44 @@ Vertex Format
 	OK SO the geometry shader face generation implementation is not working out so well. I don't think the memory usage savings is
 	even worth the trouble, and this is performing worse than the triangles one anyway!
 
-===VERTICES===
+===QUADS===
+
+	v0
 
 	0000 0000 0000 0000 0000 0000 0000 0000
 	xxxx xxxx zzzz zzzz vvvv vvvv uuuu uuuu
 
-	0000 0000 0000 0000 0000 0000 0000 0000
-	yyyy yyyy yyyy tttt tttt tttt aoao aoao
+	v1
 
-// add later
 	0000 0000 0000 0000 0000 0000 0000 0000
-	llll llll llll llll llll llll llll llll 
+	xxxx xxxx zzzz zzzz vvvv vvvv uuuu uuuu
+
+	v2
+
+	0000 0000 0000 0000 0000 0000 0000 0000
+	xxxx xxxx zzzz zzzz vvvv vvvv uuuu uuuu
+
+	v3
+
+	0000 0000 0000 0000 0000 0000 0000 0000
+	xxxx xxxx zzzz zzzz vvvv vvvv uuuu uuuu
+
+	y
+
+	0000 0000 0000 0000 0000 0000 0000 0000
+	yyyy yyyy yyyy yyyy yyyy yyyy yyyy yyyy
+
+	0000 0000 0000 0000 0000 0000 0000 0000
+	yyyy yyyy yyyy yyyy yyyy yyyy yyyy yyyy
+
+	q
+
+	0000 0000 0000 0000 0000 0000 0000 0000
+	tttt tttt tttt tttt aoao aoao 
+
+	0000 0000 0000 0000 0000 0000 0000 0000
+	l0l0 l0l0 l1l1 l1l1 l2l2 l2l2 l3l3 l3l3 
+
 
 ===FACE APPROACH===
 

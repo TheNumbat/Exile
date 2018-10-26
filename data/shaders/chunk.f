@@ -3,6 +3,7 @@
 
 flat in uint f_t;
 flat in vec4 f_ao;
+flat in vec4 f_l;
 in vec2 f_uv;
 in vec3 f_n;
 in float f_ah, f_d;
