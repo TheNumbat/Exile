@@ -264,6 +264,7 @@ void world_environment::destroy() {
 
 	sky.destroy();
 	stars.destroy();
+	sun_moon.destroy();
 }
 
 void world_environment::render(player* p, world_time* t) { PROF 

@@ -14,7 +14,7 @@
 #define FAST_CLOSE 				// don't wait for the thread pool to finish its work before shutting down (breaks hot reloading)
 */
 	
-// #define RELEASE // turn off everything for a true release build
+#define RELEASE // turn off everything for a true release build
 #define FAST_CLOSE
 
 #include "engine/compile.h"
