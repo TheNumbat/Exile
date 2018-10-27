@@ -10,13 +10,13 @@ struct block_meta {
 
 	bool opaque[6]; // -x -y -z +x +y +z
 	i32 textures[6];
-	block_type merge[6];
+	bool merge[6];
 
 	bool renders;
 	bool does_ao;
 	bool custom_model;
 	
-	func_ptr<void, chunk*, mesh_chunk*, block_meta, iv3, i32, i32, i32> model;
+	func_ptr<void, mesh_chunk*, block_meta, i32, v3, v2, bv4> model;
 };
 
 struct chunk_pos {
@@ -191,4 +191,4 @@ CALLBACK void unlock_chunk(chunk* v);
 CALLBACK void cancel_build(chunk* param);
 float check_pirority(super_job* j, void* param);
 
-CALLBACK void slab_model(chunk* c, mesh_chunk* m, block_meta info, iv3 pos, i32 w, i32 h, i32 dir);
+CALLBACK void slab_model(mesh_chunk* m, block_meta i, i32 dir, v3 v, v2 wh, bv4 ao);

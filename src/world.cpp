@@ -702,48 +702,30 @@ mesh_face chunk::build_face(block_type t, iv3 p, i32 dir) { PROF
 bool mesh_face::can_merge(mesh_face f1, mesh_face f2, i32 dir, bool h) { PROF
 
 	dir += h ? 3 : 0;
-	return f1.info.merge[dir] == f2.info.type && f1.info.type == f2.info.merge[dir] && f1.ao == f2.ao;
+	return f1.info.type == f2.info.type && f1.info.merge[dir] && f2.info.merge[dir] && f1.ao == f2.ao;
 }
 
-CALLBACK void slab_model(chunk* c, mesh_chunk* m, block_meta info, iv3 posi, i32 wi, i32 hi, i32 i) {
+CALLBACK void slab_model(mesh_chunk* m, block_meta info, i32 dir, v3 v_0, v2 ex, bv4 ao) {
 
-	i32 ortho_2d = i % 3;
-	i32 u_2d = (i + 1) % 3;
-	i32 v_2d = (i + 2) % 3;
-	i32 backface_offset = i / 3 * 2 - 1;
+	i32 u_2d = (dir + 1) % 3;
+	i32 v_2d = (dir + 2) % 3;
 
-	f32 w = (f32)wi;
-	f32 h = (f32)hi;
-	v3 pos = posi;
-
-	v3 width_offset, height_offset;
-	width_offset[u_2d] = (f32)w;
-	height_offset[v_2d] = (f32)h;
-
-	v3 v_0 = pos;
-	if(backface_offset > 0) {
-		v_0[ortho_2d] += 1.0f;
-	}
-
-	v3 v_1 = v_0 + width_offset;
-	v3 v_2 = v_0 + height_offset;
-	v3 v_3 = v_2 + width_offset;
-
-	u8 ao_0 = c->ao_at(v_0), ao_1 = c->ao_at(v_1), ao_2 = c->ao_at(v_2), ao_3 = c->ao_at(v_3);
+	f32 w = ex.x, h = ex.y;
 
 	if(u_2d == 1) {
 		w /= 2.0f;
 	} else if(v_2d == 1) {
 		h /= 2.0f;
-	} else if(i == 4) {
+	} else if(dir == 4) {
 		v_0 -= v3(0.0f, 0.5f, 0.0f);
 	}
 
-	width_offset[u_2d] = (f32)w;
-	height_offset[v_2d] = (f32)h;
-	v_1 = v_0 + width_offset;
-	v_2 = v_0 + height_offset;
-	v_3 = v_2 + width_offset;
+	v3 woff, hoff;
+	woff[u_2d] = (f32)w;
+	hoff[v_2d] = (f32)h;
+	v3 v_1 = v_0 + woff;
+	v3 v_2 = v_0 + hoff;
+	v3 v_3 = v_2 + woff;
 
 	v2 wh = v2(w, h), hw = v2(h, w);
 
@@ -751,26 +733,26 @@ CALLBACK void slab_model(chunk* c, mesh_chunk* m, block_meta info, iv3 posi, i32
 	v_0 *= units; v_1 *= units; v_2 *= units; v_3 *= units;
 	wh *= units; hw *= units;
 
-	i32 tex = info.textures[i];
+	i32 tex = info.textures[dir];
 
-	switch (i) {
+	switch (dir) {
 	case 0: // -X
-		m->quad(v_0, v_2, v_1, v_3, hw, tex, bv4(ao_0,ao_2,ao_1,ao_3));
+		m->quad(v_0, v_2, v_1, v_3, hw, tex, bv4(ao.x,ao.z,ao.y,ao.w));
 		break;
 	case 1: // -Y
-		m->quad(v_2, v_3, v_0, v_1, wh, tex, bv4(ao_2,ao_3,ao_0,ao_1));
+		m->quad(v_2, v_3, v_0, v_1, wh, tex, bv4(ao.z,ao.w,ao.x,ao.y));
 		break;
 	case 2: // -Z
-		m->quad(v_1, v_0, v_3, v_2, wh, tex, bv4(ao_1,ao_0,ao_3,ao_2));
+		m->quad(v_1, v_0, v_3, v_2, wh, tex, bv4(ao.y,ao.x,ao.w,ao.z));
 		break;
 	case 3: // +X
-		m->quad(v_2, v_0, v_3, v_1, hw, tex, bv4(ao_2,ao_0,ao_3,ao_1));
+		m->quad(v_2, v_0, v_3, v_1, hw, tex, bv4(ao.z,ao.x,ao.w,ao.y));
 		break;
 	case 4: // +Y
-		m->quad(v_0, v_1, v_2, v_3, wh, tex, bv4(ao_0,ao_1,ao_2,ao_3));
+		m->quad(v_0, v_1, v_2, v_3, wh, tex, bv4(ao.x,ao.y,ao.z,ao.w));
 		break;
 	case 5: // +Z
-		m->quad(v_0, v_1, v_2, v_3, wh, tex, bv4(ao_0,ao_1,ao_2,ao_3));
+		m->quad(v_0, v_1, v_2, v_3, wh, tex, bv4(ao.x,ao.y,ao.z,ao.w));
 		break;
 	}
 }
@@ -879,31 +861,32 @@ void chunk::build_data() { PROF
 
 						// Add quad (u,v,width,height) in 2D slice
 
+						v3 width_offset, height_offset;
+						width_offset[u_2d] = (f32)width;
+						height_offset[v_2d] = (f32)height;
+
+						v3 v_0 = position;
+						if(backface_offset > 0) {
+							v_0[ortho_2d] += 1.0f;
+						}
+
+						v3 v_1 = v_0 + width_offset;
+						v3 v_2 = v_0 + height_offset;
+						v3 v_3 = v_2 + width_offset;
+						v2 wh = v2(width, height), hw = v2(height, width);
+						u8 ao_0 = ao_at(v_0), ao_1 = ao_at(v_1), ao_2 = ao_at(v_2), ao_3 = ao_at(v_3);
+
+						const f32 units = (f32)units_per_voxel;
+						v_0 *= units; v_1 *= units; v_2 *= units; v_3 *= units;
+						wh *= units; hw *= units;
+
+						i32 tex = face_type.info.textures[i];
+
 						if(face_type.info.custom_model) {
 
-							face_type.info.model(this, &new_mesh, face_type.info, position, width, height, i);
+							face_type.info.model(&new_mesh, face_type.info, i, v_0 / units, v2(width, height), bv4(ao_0,ao_1,ao_2,ao_3));
 
 						} else {
-							v3 width_offset, height_offset;
-							width_offset[u_2d] = (f32)width;
-							height_offset[v_2d] = (f32)height;
-
-							v3 v_0 = position;
-							if(backface_offset > 0) {
-								v_0[ortho_2d] += 1.0f;
-							}
-
-							v3 v_1 = v_0 + width_offset;
-							v3 v_2 = v_0 + height_offset;
-							v3 v_3 = v_2 + width_offset;
-							v2 wh = v2(width, height), hw = v2(height, width);
-							u8 ao_0 = ao_at(v_0), ao_1 = ao_at(v_1), ao_2 = ao_at(v_2), ao_3 = ao_at(v_3);
-
-							const f32 units = (f32)units_per_voxel;
-							v_0 *= units; v_1 *= units; v_2 *= units; v_3 *= units;
-							wh *= units; hw *= units;
-
-							i32 tex = face_type.info.textures[i];
 
 							switch (i) {
 							case 0: // -X

@@ -13,7 +13,7 @@ void init_blocks(world* w, asset_store* store) {
 		block_bedrock,
 		{true, true, true, true, true, true},
 		{tex_idx, tex_idx, tex_idx, tex_idx, tex_idx, tex_idx},
-		{block_bedrock, block_bedrock, block_bedrock, block_bedrock, block_bedrock, block_bedrock},
+		{true, true, true, true, true, true},
 		true, true, false
 	};
 
@@ -27,7 +27,7 @@ void init_blocks(world* w, asset_store* store) {
 		block_stone,
 		{true, true, true, true, true, true},
 		{tex_idx, tex_idx, tex_idx, tex_idx, tex_idx, tex_idx},
-		{block_stone, block_stone, block_stone, block_stone, block_stone, block_stone},
+		{true, true, true, true, true, true},
 		true, true, false
 	};
 
@@ -43,7 +43,7 @@ void init_blocks(world* w, asset_store* store) {
 		block_path,
 		{true, true, true, true, true, true},
 		{tex_idx, tex_idx + 1, tex_idx, tex_idx, tex_idx + 2, tex_idx},
-		{block_path, block_path, block_path, block_path, block_path, block_path},
+		{true, true, true, true, true, true},
 		true, true, false
 	};	
 
@@ -58,7 +58,7 @@ void init_blocks(world* w, asset_store* store) {
 		block_stone_slab,
 		{false, true, false, false, false, false},
 		{tex_idx, tex_idx + 1, tex_idx, tex_idx, tex_idx + 1, tex_idx},
-		{0, block_stone_slab, block_stone_slab, block_stone_slab, block_stone_slab, 0},
+		{0, true, true, true, true, 0},
 		true, false, true, FPTR(slab_model)
 	};	
 }
