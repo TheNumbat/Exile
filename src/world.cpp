@@ -586,8 +586,11 @@ void chunk::gen() { PROF
 			for(u32 y = 1; y < height; y++) {
 				blocks[x][z][y] = block_stone;
 			}
-			for(u32 y = height; y < height + 1; y++) {
-				blocks[x][z][y] = block_stone_slab;
+
+			if(x % 8 == 0 && z % 8 == 0) {
+				blocks[x][z][height] = block_torch;
+			} else {
+				blocks[x][z][height] = block_stone_slab;
 			}			
 		}
 	}
@@ -705,58 +708,6 @@ bool mesh_face::can_merge(mesh_face f1, mesh_face f2, i32 dir, bool h) { PROF
 	return f1.info.type == f2.info.type && f1.info.merge[dir] && f2.info.merge[dir] && f1.ao == f2.ao;
 }
 
-CALLBACK void slab_model(mesh_chunk* m, block_meta info, i32 dir, v3 v_0, v2 ex, bv4 ao) {
-
-	i32 u_2d = (dir + 1) % 3;
-	i32 v_2d = (dir + 2) % 3;
-
-	f32 w = ex.x, h = ex.y;
-
-	if(u_2d == 1) {
-		w /= 2.0f;
-	} else if(v_2d == 1) {
-		h /= 2.0f;
-	} else if(dir == 4) {
-		v_0 -= v3(0.0f, 0.5f, 0.0f);
-	}
-
-	v3 woff, hoff;
-	woff[u_2d] = (f32)w;
-	hoff[v_2d] = (f32)h;
-	v3 v_1 = v_0 + woff;
-	v3 v_2 = v_0 + hoff;
-	v3 v_3 = v_2 + woff;
-
-	v2 wh = v2(w, h), hw = v2(h, w);
-
-	const f32 units = (f32)chunk::units_per_voxel;
-	v_0 *= units; v_1 *= units; v_2 *= units; v_3 *= units;
-	wh *= units; hw *= units;
-
-	i32 tex = info.textures[dir];
-
-	switch (dir) {
-	case 0: // -X
-		m->quad(v_0, v_2, v_1, v_3, hw, tex, bv4(ao.x,ao.z,ao.y,ao.w));
-		break;
-	case 1: // -Y
-		m->quad(v_2, v_3, v_0, v_1, wh, tex, bv4(ao.z,ao.w,ao.x,ao.y));
-		break;
-	case 2: // -Z
-		m->quad(v_1, v_0, v_3, v_2, wh, tex, bv4(ao.y,ao.x,ao.w,ao.z));
-		break;
-	case 3: // +X
-		m->quad(v_2, v_0, v_3, v_1, hw, tex, bv4(ao.z,ao.x,ao.w,ao.y));
-		break;
-	case 4: // +Y
-		m->quad(v_0, v_1, v_2, v_3, wh, tex, bv4(ao.x,ao.y,ao.z,ao.w));
-		break;
-	case 5: // +Z
-		m->quad(v_0, v_1, v_2, v_3, wh, tex, bv4(ao.x,ao.y,ao.z,ao.w));
-		break;
-	}
-}
-
 void chunk::build_data() { PROF
 
 	PUSH_PROFILE_PROF(false);
@@ -800,7 +751,7 @@ void chunk::build_data() { PROF
 						block_type backface_block = block_at(backface[0],backface[1],backface[2]);
 						block_meta info1 = *w->block_info.get(backface_block);
 
-						if(!info1.renders || !info1.opaque[(i + 3) % 6]) {
+						if(!info0.opaque[(i + 3) % 6] || !info1.renders || !info1.opaque[(i + 3) % 6]) {
 							slice[slice_idx] = block;
 						} else {
 							slice[slice_idx] = block_air;
@@ -933,3 +884,132 @@ void chunk::build_data() { PROF
 }
 
 
+
+CALLBACK void slab_model(mesh_chunk* m, block_meta info, i32 dir, v3 v_0, v2 ex, bv4 ao) {
+
+	i32 u_2d = (dir + 1) % 3;
+	i32 v_2d = (dir + 2) % 3;
+
+	f32 w = ex.x, h = ex.y;
+
+	if(u_2d == 1) {
+		w /= 2.0f;
+	} else if(v_2d == 1) {
+		h /= 2.0f;
+	} else if(dir == 4) {
+		v_0 -= v3(0.0f, 0.5f, 0.0f);
+	}
+
+	v3 woff, hoff;
+	woff[u_2d] = (f32)w;
+	hoff[v_2d] = (f32)h;
+	v3 v_1 = v_0 + woff;
+	v3 v_2 = v_0 + hoff;
+	v3 v_3 = v_2 + woff;
+
+	v2 wh = v2(w, h), hw = v2(h, w);
+
+	const f32 units = (f32)chunk::units_per_voxel;
+	v_0 *= units; v_1 *= units; v_2 *= units; v_3 *= units;
+	wh *= units; hw *= units;
+
+	i32 tex = info.textures[dir];
+
+	switch (dir) {
+	case 0: // -X
+		m->quad(v_0, v_2, v_1, v_3, hw, tex, bv4(ao.x,ao.z,ao.y,ao.w));
+		break;
+	case 1: // -Y
+		m->quad(v_2, v_3, v_0, v_1, wh, tex, bv4(ao.z,ao.w,ao.x,ao.y));
+		break;
+	case 2: // -Z
+		m->quad(v_1, v_0, v_3, v_2, wh, tex, bv4(ao.y,ao.x,ao.w,ao.z));
+		break;
+	case 3: // +X
+		m->quad(v_2, v_0, v_3, v_1, hw, tex, bv4(ao.z,ao.x,ao.w,ao.y));
+		break;
+	case 4: // +Y
+		m->quad(v_0, v_1, v_2, v_3, wh, tex, bv4(ao.x,ao.y,ao.z,ao.w));
+		break;
+	case 5: // +Z
+		m->quad(v_0, v_1, v_2, v_3, wh, tex, bv4(ao.x,ao.y,ao.z,ao.w));
+		break;
+	}
+}
+
+CALLBACK void torch_model(mesh_chunk* m, block_meta info, i32 dir, v3 v_0, v2 ex, bv4 ao) {
+	
+	i32 o_2d = dir % 3;
+	i32 u_2d = (dir + 1) % 3;
+	i32 v_2d = (dir + 2) % 3;
+
+	f32 w = ex.x, h = ex.y;
+
+	if(o_2d == 1) {
+		w /= 8.0f;
+		h /= 8.0f;
+	} else if(o_2d == 2) {
+		w /= 8.0f;
+		h /= 1.5f;
+	} else {
+		w /= 1.5f;
+		h /= 8.0f;
+	}
+
+	switch (dir) {
+	case 0: // -X
+		v_0 += v3(0.4375f, 0.0f, 0.4375f);
+		break;
+	case 1: // -Y
+		v_0 += v3(0.4375f, 0.0f, 0.4375f);
+		break;
+	case 2: // -Z
+		v_0 += v3(0.4375f, 0.0f, 0.4375f);
+		break;
+	case 3: // +X
+		v_0 += v3(-0.4375f, 0.0f, 0.4375f);
+		break;
+	case 4: // +Y
+		v_0 += v3(0.4375f, -0.375f, 0.4375f);
+		break;
+	case 5: // +Z
+		v_0 += v3(0.4375f, 0.0f, -0.4375f);
+		break;
+	}
+
+	v3 woff, hoff;
+	woff[u_2d] = (f32)w;
+	hoff[v_2d] = (f32)h;
+	v3 v_1 = v_0 + woff;
+	v3 v_2 = v_0 + hoff;
+	v3 v_3 = v_2 + woff;
+
+	v2 wh = v2(w, h), hw = v2(h, w);
+
+	const f32 units = (f32)chunk::units_per_voxel;
+	v_0 *= units; v_1 *= units; v_2 *= units; v_3 *= units;
+	wh *= units; hw *= units;
+
+	i32 tex = info.textures[dir];
+
+	switch (dir) {
+	case 0: // -X
+		m->quad(v_0, v_2, v_1, v_3, hw, tex, bv4(ao.x,ao.z,ao.y,ao.w));
+		break;
+	case 1: // -Y
+		m->quad(v_2, v_3, v_0, v_1, wh, tex, bv4(ao.z,ao.w,ao.x,ao.y));
+		break;
+	case 2: // -Z
+		m->quad(v_1, v_0, v_3, v_2, wh, tex, bv4(ao.y,ao.x,ao.w,ao.z));
+		break;
+	case 3: // +X
+		m->quad(v_2, v_0, v_3, v_1, hw, tex, bv4(ao.z,ao.x,ao.w,ao.y));
+		break;
+	case 4: // +Y
+		m->quad(v_0, v_1, v_2, v_3, wh, tex, bv4(ao.x,ao.y,ao.z,ao.w));
+		break;
+	case 5: // +Z
+		m->quad(v_0, v_1, v_2, v_3, wh, tex, bv4(ao.x,ao.y,ao.z,ao.w));
+		break;
+	}
+}

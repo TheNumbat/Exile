@@ -31,6 +31,18 @@ image {
 	file : path_top.png,
 }
 image {
+	name : torch_side,
+	file : torch_side.png,
+}
+image {
+	name : torch_top,
+	file : torch_top.png,
+}
+image {
+	name : torch_bot,
+	file : torch_bot.png,
+}
+image {
 	name : env,
 	file : night_sky.png,
 }

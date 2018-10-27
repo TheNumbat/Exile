@@ -58,7 +58,22 @@ void init_blocks(world* w, asset_store* store) {
 		block_stone_slab,
 		{false, true, false, false, false, false},
 		{tex_idx, tex_idx + 1, tex_idx, tex_idx, tex_idx + 1, tex_idx},
-		{0, true, true, true, true, 0},
+		{false, true, true, true, true, false},
 		true, false, true, FPTR(slab_model)
+	};	
+
+	tex_idx = eng->ogl.get_layers(tex);
+	eng->ogl.push_tex_array(tex, store, "torch_side"_);
+	eng->ogl.push_tex_array(tex, store, "torch_bot"_);
+	eng->ogl.push_tex_array(tex, store, "torch_top"_);
+
+	block_meta* torch = w->add_block();
+	block_torch = torch->type;
+	*torch = {
+		block_torch,
+		{false, false, false, false, false, false},
+		{tex_idx, tex_idx + 1, tex_idx, tex_idx, tex_idx + 2, tex_idx},
+		{false, false, false, false, false, false},
+		true, false, true, FPTR(torch_model)
 	};	
 }

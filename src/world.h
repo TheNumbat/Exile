@@ -192,3 +192,4 @@ CALLBACK void cancel_build(chunk* param);
 float check_pirority(super_job* j, void* param);
 
 CALLBACK void slab_model(mesh_chunk* m, block_meta i, i32 dir, v3 v, v2 wh, bv4 ao);
+CALLBACK void torch_model(mesh_chunk* m, block_meta i, i32 dir, v3 v, v2 wh, bv4 ao);
