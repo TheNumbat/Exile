@@ -17,17 +17,15 @@ enum class mesh_cmd : u16 {
 
 struct chunk_quad {
 
-	u8 v_0, u_0, z_0, x_0;
-	u8 v_1, u_1, z_1, x_1;
-	u8 v_2, u_2, z_2, x_2;
-	u8 v_3, u_3, z_3, x_3;
-
-	u16 y_1, y_0, y_3, y_2;
+	u8  z_1, x_1, z_0, x_0;
+	u8  z_3, x_3, z_2, x_2;
+	u32 uy01;
+	u32 vy23;
 
 	u16 ao, t;
 	u8 l3, l2, l1, l0;
 };
-static_assert(sizeof(chunk_quad) == 32, "chunk_quad size != 32");
+static_assert(sizeof(chunk_quad) == 24, "chunk_quad size != 24");
 
 struct mesh_chunk {
 

@@ -410,7 +410,7 @@ CALLBACK void setup_mesh_chunk(gpu_object* obj) { PROF
 	glBindBuffer(gl_buf_target::array, obj->vbos[0]);
 
 	glVertexAttribIPointer(0, 4, gl_vert_attrib_type::unsigned_int, sizeof(chunk_quad), (void*)(0));
-	glVertexAttribIPointer(1, 4, gl_vert_attrib_type::unsigned_int, sizeof(chunk_quad), (void*)(16));
+	glVertexAttribIPointer(1, 2, gl_vert_attrib_type::unsigned_int, sizeof(chunk_quad), (void*)(16));
 	glVertexAttribDivisor(0, 1);
 	glVertexAttribDivisor(1, 1);
 	glEnableVertexAttribArray(0);
@@ -994,23 +994,23 @@ void mesh_chunk::clear() { PROF
 
 void mesh_chunk::quad(v3 v_0, v3 v_1, v3 v_2, v3 v_3, v2 uv, i32 t, bv4 ao) {
 
-	chunk_quad q;
+	chunk_quad q = {};
 
 	LOG_DEBUG_ASSERT(
 		0 <= v_0.x && v_0.x <= 255 && 
-		0 <= v_0.y && v_0.y <= 65535 &&
+		0 <= v_0.y && v_0.y <= 4096 &&
 		0 <= v_0.z && v_0.z <= 255 && 
 
 		0 <= v_1.x && v_1.x <= 255 && 
-		0 <= v_1.y && v_1.y <= 65535 &&
+		0 <= v_1.y && v_1.y <= 4096 &&
 		0 <= v_1.z && v_1.z <= 255 && 
 
 		0 <= v_2.x && v_2.x <= 255 && 
-		0 <= v_2.y && v_2.y <= 65535 &&
+		0 <= v_2.y && v_2.y <= 4096 &&
 		0 <= v_2.z && v_2.z <= 255 && 
 
 		0 <= v_3.x && v_3.x <= 255 && 
-		0 <= v_3.y && v_3.y <= 65535 &&
+		0 <= v_3.y && v_3.y <= 4096 &&
 		0 <= v_3.z && v_3.z <= 255 && 
 
 		0 <= uv.x && uv.x <= 255 && 
@@ -1024,20 +1024,15 @@ void mesh_chunk::quad(v3 v_0, v3 v_1, v3 v_2, v3 v_3, v2 uv, i32 t, bv4 ao) {
 		0 <= ao.w && ao.w <= 3
 	);
 
-	q.x_0 = (u8)v_0.x; q.y_0 = (u16)v_0.y; q.z_0 = (u8)v_0.z;
-	q.x_1 = (u8)v_1.x; q.y_1 = (u16)v_1.y; q.z_1 = (u8)v_1.z;
-	q.x_2 = (u8)v_2.x; q.y_2 = (u16)v_2.y; q.z_2 = (u8)v_2.z;
-	q.x_3 = (u8)v_3.x; q.y_3 = (u16)v_3.y; q.z_3 = (u8)v_3.z;
+	q.x_0 = (u8)v_0.x; q.z_0 = (u8)v_0.z;
+	q.x_1 = (u8)v_1.x; q.z_1 = (u8)v_1.z;
+	q.x_2 = (u8)v_2.x; q.z_2 = (u8)v_2.z;
+	q.x_3 = (u8)v_3.x; q.z_3 = (u8)v_3.z;
 
-	v2 uv_0(0.0f, 0.0f);
-	v2 uv_1(uv.x, 0.0f);
-	v2 uv_2(0.0f, uv.y);
-	v2 uv_3(uv.x, uv.y);
+	q.uy01 |= (u32)v_0.y << 20; q.uy01 |= (u32)v_1.y << 8;
+	q.vy23 |= (u32)v_2.y << 20; q.vy23 |= (u32)v_3.y << 8;
 
-	q.u_0 = (u8)uv_0.x; q.v_0 = (u8)uv_0.y;
-	q.u_1 = (u8)uv_1.x; q.v_1 = (u8)uv_1.y;
-	q.u_2 = (u8)uv_2.x; q.v_2 = (u8)uv_2.y;
-	q.u_3 = (u8)uv_3.x; q.v_3 = (u8)uv_3.y;
+	q.uy01 |= (u8)uv.x; q.vy23 |= (u8)uv.y;
 
 	q.t = (u16)t;
 	q.ao |= (u8)ao.w; q.ao |= (u8)ao.z << 2; q.ao |= (u8)ao.y << 4; q.ao |= (u8)ao.x << 6; 

@@ -6,41 +6,25 @@ Vertex Format
 
 ===QUADS===
 
-	v0
+	0000 0000 0000 0000 0000 0000 0000 0000
+	xxxx xxxx zzzz zzzz xxxx xxxx zzzz zzzz
 
 	0000 0000 0000 0000 0000 0000 0000 0000
-	xxxx xxxx zzzz zzzz vvvv vvvv uuuu uuuu
-
-	v1
+	xxxx xxxx zzzz zzzz xxxx xxxx zzzz zzzz
 
 	0000 0000 0000 0000 0000 0000 0000 0000
-	xxxx xxxx zzzz zzzz vvvv vvvv uuuu uuuu
-
-	v2
+	yyyy yyyy yyyy yyyy yyyy yyyy uuuu uuuu
 
 	0000 0000 0000 0000 0000 0000 0000 0000
-	xxxx xxxx zzzz zzzz vvvv vvvv uuuu uuuu
-
-	v3
-
-	0000 0000 0000 0000 0000 0000 0000 0000
-	xxxx xxxx zzzz zzzz vvvv vvvv uuuu uuuu
-
-	y
-
-	0000 0000 0000 0000 0000 0000 0000 0000
-	yyyy yyyy yyyy yyyy yyyy yyyy yyyy yyyy
-
-	0000 0000 0000 0000 0000 0000 0000 0000
-	yyyy yyyy yyyy yyyy yyyy yyyy yyyy yyyy
+	yyyy yyyy yyyy yyyy yyyy yyyy vvvv vvvv
 
 	q
 
 	0000 0000 0000 0000 0000 0000 0000 0000
-	tttt tttt tttt tttt aoao aoao 
+	tttt tttt tttt tttt           aoao aoao
 
 	0000 0000 0000 0000 0000 0000 0000 0000
-	l0l0 l0l0 l1l1 l1l1 l2l2 l2l2 l3l3 l3l3 
+	l0l0 l0l0 l1l1 l1l1 l2l2 l2l2 l3l3 l3l3
 
 
 ===FACE APPROACH===
