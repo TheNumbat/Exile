@@ -46,6 +46,12 @@ enum class work : u8 {
 	done
 };
 
+struct NOREFLECT block_lightval {
+	u8 s : 4;
+	u8 l : 4;
+};
+static_assert(sizeof(block_lightval) == 1 , "sizeof(block_lightval) != 1");
+
 struct world;
 struct chunk {
 
@@ -56,6 +62,7 @@ struct chunk {
 
 	// NOTE(max): x z y
 	block_type blocks[xsz][zsz][ysz] = {};
+	// block_lightval light[xsz][zsz][ysz] = {};
 	
 	platform_mutex swap_mut;
 	atomic_enum<work> job_state;

@@ -1,7 +1,9 @@
 # Exile
 Handmade-style voxel engine &amp; game.  
 
-Objective is to create a featureful low-level programming environment & voxel game engine with minimal libraries, to dig into and perfect critical and noncritical systems, and to create a modded-minecraft-like game on top of the engine.
+[Blog](https://thenumbat.github.io/)
+
+Objective is to create a featureful low-level programming environment & voxel game engine with minimal libraries, to dig into and perfect its systems, and to create a modded-minecraft-like game on top of the engine.
 
 Goals:
    - High quality graphics (lighting, render distance, fast movement, large worlds)
@@ -17,14 +19,14 @@ Goals:
   - Win32/Unix APIs
   - SSE4.2
 - Assets:
-  - Sean Barret's media processing libraries
+  - STB media libraries
   - C++14/STL
 - Metaprogram:
   - libclang for C++ parsing
   - C++14/STL
 
 ### Screenshots
-![shot1](https://i.imgur.com/XTCpRhr.png)
+![shot1](https://i.imgur.com/mUqnzkU.png)
 
 ### Current Features
 
@@ -42,6 +44,7 @@ See todo.txt for plans.
   - Stack
   - Vector
   - Strings
+  - Thread pool and futures
   - Reflection
     - Type info 
     - Serialization
@@ -59,19 +62,22 @@ See todo.txt for plans.
 - Engine
   - Assets
     - Images
-    - Font atlases
+    - Fonts, font atlases
   - Debugging
     - Debug message system
     - Profiler
       - Time
       - Calls
       - Allocations
+      - Worker threads
+    - Debug console and command system
+    - Debug runtime variable interface
   - Input
     - Event parsing
     - Context state machines
   - Interface
-    - [depreciated] custom immediate mode GUI system
     - Dear ImGui implementation and reflection add-ons
+    - [depreciated] Custom immediate mode GUI system
   - Log
     - Thread safe log formatting and output
     - HTML and custom output
@@ -80,6 +86,7 @@ See todo.txt for plans.
     - Shaders
     - Meshes
     - Command lists
+    - State management
     - OpenGL setup
   - Async
     - Atomics
@@ -87,9 +94,12 @@ See todo.txt for plans.
     - Futures
 - Game
   - World generation
-  - Voxel meshing
+  - Time
+  - Block data and setup
+  - Voxel terrain meshing and rendering
+  - Sky and star rendering
   - Movement
-  - Threading
+  - Threaded terrain generation
 - Meta
   - Metaprogram to generate reflection data
   - Asset bulider to generate asset packs
