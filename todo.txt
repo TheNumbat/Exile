@@ -3,31 +3,30 @@ Working To-Do:
 
 [1]	Environment
 		sun/moon objects 
-		directional/sun lighting
+		voxel lighting; sunlight and torches
+		deferred rendering; dynamic lights 
 
-	serialization/deserialization
 	config format
-	user settings e.g. controls, graphics
-	profiler graphs & auto save unusually long frames
+		data serialization/deserialization
+	user settings interface
+		controls, graphics
+	profiler graphs 
+		auto save unusually long frames
 
 	multiple texture arrays for > 2048 textures
 	chunk culling
-	lighting
-	consolidate shaders?
-	framebuffer objects (msaa + effects)
-	shadow mapping
-	normal mapping
+		CPU bounds vs. occlusion query
+	graphics work
+		consolidate shaders
+		framebuffer objects (msaa + effects)
+		shadow mapping
+		normal mapping
+		better graphics feature checks
 
-	movement physics
 	world interaction
-	chunk paging and persistence
-	world generation framework
-
-	better graphics feature checks
-		mesh command requirements
-		anisotropy
-		sample shading
-		antialiasing
+		movement physics
+		chunk paging and persistence
+		world generation framework
 
 Bugs:
 	SDL layer resets the cursor to pointer on every mouse move
