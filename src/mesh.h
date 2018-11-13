@@ -41,7 +41,7 @@ struct mesh_chunk {
 	void clear();
 	void swap_mesh(mesh_chunk other);
 
-	void quad(v3 v_0, v3 v_1, v3 v_2, v3 v_3, v2 uv, i32 t, bv4 ao);
+	void quad(v3 v_0, v3 v_1, v3 v_2, v3 v_3, v2 uv, i32 t, bv4 ao, bv4 l);
 };
 
 struct mesh_cubemap {

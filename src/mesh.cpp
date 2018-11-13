@@ -992,7 +992,7 @@ void mesh_chunk::clear() { PROF
 	dirty = true;
 }
 
-void mesh_chunk::quad(v3 v_0, v3 v_1, v3 v_2, v3 v_3, v2 uv, i32 t, bv4 ao) {
+void mesh_chunk::quad(v3 v_0, v3 v_1, v3 v_2, v3 v_3, v2 uv, i32 t, bv4 ao, bv4 l) {
 
 	chunk_quad q = {};
 
@@ -1037,7 +1037,7 @@ void mesh_chunk::quad(v3 v_0, v3 v_1, v3 v_2, v3 v_3, v2 uv, i32 t, bv4 ao) {
 	q.t = (u16)t;
 	q.ao |= (u8)ao.w; q.ao |= (u8)ao.z << 2; q.ao |= (u8)ao.y << 4; q.ao |= (u8)ao.x << 6; 
 
-	q.l3 = 0; q.l2 = 0; q.l1 = 0; q.l0 = 0; 
+	q.l3 = l.w; q.l2 = l.z; q.l1 = l.y; q.l0 = l.x; 
 
 	quads.push(q);
 	dirty = true;

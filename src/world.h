@@ -16,7 +16,7 @@ struct block_meta {
 	bool does_ao;
 	bool custom_model;
 	
-	func_ptr<void, mesh_chunk*, block_meta, i32, v3, v2, bv4> model;
+	func_ptr<void, mesh_chunk*, block_meta, i32, v3, v2, bv4, bv4> model;
 };
 
 struct chunk_pos {
@@ -62,7 +62,7 @@ struct chunk {
 
 	// NOTE(max): x z y
 	block_type blocks[xsz][zsz][ysz] = {};
-	// block_lightval light[xsz][zsz][ysz] = {};
+	block_lightval light[xsz][zsz][ysz] = {};
 	
 	platform_mutex swap_mut;
 	atomic_enum<work> job_state;
@@ -78,9 +78,15 @@ struct chunk {
 
 	void gen();
 	void destroy();
+	
+	void place_light(iv3 pos);
+	void rem_light(iv3 pos);
 
 	static i32 y_at(i32 x, i32 z);
+	
 	u8 ao_at(v3 vert);
+	u8 l_at(v3 vert);
+	
 	block_type block_at(i32 x, i32 y, i32 z);
 	mesh_face build_face(block_type t, iv3 p, i32 dir);
 
@@ -198,5 +204,5 @@ CALLBACK void unlock_chunk(chunk* v);
 CALLBACK void cancel_build(chunk* param);
 float check_pirority(super_job* j, void* param);
 
-CALLBACK void slab_model(mesh_chunk* m, block_meta i, i32 dir, v3 v, v2 wh, bv4 ao);
-CALLBACK void torch_model(mesh_chunk* m, block_meta i, i32 dir, v3 v, v2 wh, bv4 ao);
+CALLBACK void slab_model(mesh_chunk* m, block_meta i, i32 dir, v3 v, v2 wh, bv4 ao, bv4 l);
+CALLBACK void torch_model(mesh_chunk* m, block_meta i, i32 dir, v3 v, v2 wh, bv4 ao, bv4 l);

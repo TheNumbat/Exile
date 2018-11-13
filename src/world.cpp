@@ -182,7 +182,7 @@ void world::populate_local_area() { PROF
 	for(i32 x = -settings.view_distance; x <= settings.view_distance; x++) {
 		for(i32 z = -settings.view_distance; z <= settings.view_distance; z++) {
 
-			chunk_pos current = camera + chunk_pos(x,0,z);
+			chunk_pos current = settings.respect_cam ? camera + chunk_pos(x,0,z) : chunk_pos(x,0,z);
 			current.y = 0;
 			
 			if(!chunks.try_get(current)) {
@@ -313,6 +313,8 @@ void world_environment::render(player* p, world_time* t) { PROF
 
 void world::render_chunks() { PROF
 
+	populate_local_area();
+
 	render_command_list rcl = render_command_list::make();
 	thread_pool.renew_priorities(check_pirority, this);
 
@@ -332,30 +334,30 @@ void world::render_chunks() { PROF
 			current.y = 0;
 			chunk** ch = chunks.try_get(current);
 
-			auto build_job = [&]() {
+			// auto build_job = [&]() {
 
-				(*ch)->job_state.set(work::in_flight);
+			// 	(*ch)->job_state.set(work::in_flight);
 
-				thread_pool.queue_job([](void* p) -> void {
+			// 	thread_pool.queue_job([](void* p) -> void {
 
-					chunk* c = (chunk*)p;
+			// 		chunk* c = (chunk*)p;
 
-					c->gen();
-					c->build_data();
-					c->job_state.set(work::done);
+			// 		c->gen();
+			// 		c->build_data();
+			// 		c->job_state.set(work::done);
 
-				}, *ch, 1.0f / lensq(current.center_xz() - p.camera.pos), FPTR(cancel_build));
-			};
+			// 	}, *ch, 1.0f / lensq(current.center_xz() - p.camera.pos), FPTR(cancel_build));
+			// };
 			
-			if(!ch) {
-				ch = chunks.insert(current, chunk::make_new(this, current, alloc));
-				build_job();
-			}
+			// if(!ch) {
+			// 	ch = chunks.insert(current, chunk::make_new(this, current, alloc));
+			// 	build_job();
+			// }
 			chunk* c = *ch;
 
-			if(c->job_state.get() == work::none) {
-				build_job();
-			}
+			// if(c->job_state.get() == work::none) {
+			// 	build_job();
+			// }
 
 			eng->platform->aquire_mutex(&c->swap_mut);
 			if(!c->mesh.dirty) {
@@ -547,6 +549,14 @@ void chunk::init(world* _w, chunk_pos p, allocator* a) { PROF
 	eng->platform->create_mutex(&swap_mut, false);
 }
 
+void chunk::place_light(iv3 l) { PROF
+
+}
+
+void chunk::rem_light(iv3 l) { PROF
+
+}
+
 chunk* chunk::make_new(world* w, chunk_pos p, allocator* a) { PROF
 
 	PUSH_ALLOC(a);
@@ -594,6 +604,19 @@ void chunk::gen() { PROF
 			}			
 		}
 	}
+}
+
+u8 chunk::l_at(v3 vert) { PROF
+
+	i32 x = (i32)vert.x, y = (i32)vert.y, z = (i32)vert.z;
+
+	if(x < 0 || x >= xsz || y < 0 || y >= ysz || z < 0 || z >= zsz) {
+
+		// TODO(max): if the neighboring chunk exists, get a block from it
+		return 0; 
+	}
+
+	return *(u8*)&light[x][z][y];
 }
 
 u8 chunk::ao_at(v3 vert) { PROF
@@ -826,6 +849,7 @@ void chunk::build_data() { PROF
 						v3 v_3 = v_2 + width_offset;
 						v2 wh = v2(width, height), hw = v2(height, width);
 						u8 ao_0 = ao_at(v_0), ao_1 = ao_at(v_1), ao_2 = ao_at(v_2), ao_3 = ao_at(v_3);
+						u8 l_0 = l_at(v_0), l_1 = l_at(v_1), l_2 = l_at(v_2), l_3 = l_at(v_3);
 
 						const f32 units = (f32)units_per_voxel;
 						v_0 *= units; v_1 *= units; v_2 *= units; v_3 *= units;
@@ -835,28 +859,28 @@ void chunk::build_data() { PROF
 
 						if(face_type.info.custom_model) {
 
-							face_type.info.model(&new_mesh, face_type.info, i, v_0 / units, v2(width, height), bv4(ao_0,ao_1,ao_2,ao_3));
+							face_type.info.model(&new_mesh, face_type.info, i, v_0 / units, v2(width, height), bv4(ao_0,ao_1,ao_2,ao_3), bv4(l_0,l_1,l_2,l_3));
 
 						} else {
 
 							switch (i) {
 							case 0: // -X
-								new_mesh.quad(v_0, v_2, v_1, v_3, hw, tex, bv4(ao_0,ao_2,ao_1,ao_3));
+								new_mesh.quad(v_0, v_2, v_1, v_3, hw, tex, bv4(ao_0,ao_2,ao_1,ao_3), bv4(l_0,l_2,l_1,l_3));
 								break;
 							case 1: // -Y
-								new_mesh.quad(v_2, v_3, v_0, v_1, wh, tex, bv4(ao_2,ao_3,ao_0,ao_1));
+								new_mesh.quad(v_2, v_3, v_0, v_1, wh, tex, bv4(ao_2,ao_3,ao_0,ao_1), bv4(l_2,l_3,l_0,l_1));
 								break;
 							case 2: // -Z
-								new_mesh.quad(v_1, v_0, v_3, v_2, wh, tex, bv4(ao_1,ao_0,ao_3,ao_2));
+								new_mesh.quad(v_1, v_0, v_3, v_2, wh, tex, bv4(ao_1,ao_0,ao_3,ao_2), bv4(l_1,l_0,l_3,l_2));
 								break;
 							case 3: // +X
-								new_mesh.quad(v_2, v_0, v_3, v_1, hw, tex, bv4(ao_2,ao_0,ao_3,ao_1));
+								new_mesh.quad(v_2, v_0, v_3, v_1, hw, tex, bv4(ao_2,ao_0,ao_3,ao_1), bv4(l_2,l_0,l_3,l_1));
 								break;
 							case 4: // +Y
-								new_mesh.quad(v_0, v_1, v_2, v_3, wh, tex, bv4(ao_0,ao_1,ao_2,ao_3));
+								new_mesh.quad(v_0, v_1, v_2, v_3, wh, tex, bv4(ao_0,ao_1,ao_2,ao_3), bv4(l_0,l_1,l_2,l_3));
 								break;
 							case 5: // +Z
-								new_mesh.quad(v_0, v_1, v_2, v_3, wh, tex, bv4(ao_0,ao_1,ao_2,ao_3));
+								new_mesh.quad(v_0, v_1, v_2, v_3, wh, tex, bv4(ao_0,ao_1,ao_2,ao_3), bv4(l_0,l_1,l_2,l_3));
 								break;
 							}
 						}
@@ -885,7 +909,7 @@ void chunk::build_data() { PROF
 
 
 
-CALLBACK void slab_model(mesh_chunk* m, block_meta info, i32 dir, v3 v_0, v2 ex, bv4 ao) {
+CALLBACK void slab_model(mesh_chunk* m, block_meta info, i32 dir, v3 v_0, v2 ex, bv4 ao, bv4 l) {
 
 	i32 u_2d = (dir + 1) % 3;
 	i32 v_2d = (dir + 2) % 3;
@@ -917,27 +941,27 @@ CALLBACK void slab_model(mesh_chunk* m, block_meta info, i32 dir, v3 v_0, v2 ex,
 
 	switch (dir) {
 	case 0: // -X
-		m->quad(v_0, v_2, v_1, v_3, hw, tex, bv4(ao.x,ao.z,ao.y,ao.w));
+		m->quad(v_0, v_2, v_1, v_3, hw, tex, bv4(ao.x,ao.z,ao.y,ao.w), bv4(l.x,l.z,l.y,l.w));
 		break;
 	case 1: // -Y
-		m->quad(v_2, v_3, v_0, v_1, wh, tex, bv4(ao.z,ao.w,ao.x,ao.y));
+		m->quad(v_2, v_3, v_0, v_1, wh, tex, bv4(ao.z,ao.w,ao.x,ao.y), bv4(l.z,l.w,l.x,l.y));
 		break;
 	case 2: // -Z
-		m->quad(v_1, v_0, v_3, v_2, wh, tex, bv4(ao.y,ao.x,ao.w,ao.z));
+		m->quad(v_1, v_0, v_3, v_2, wh, tex, bv4(ao.y,ao.x,ao.w,ao.z), bv4(l.y,l.x,l.w,l.z));
 		break;
 	case 3: // +X
-		m->quad(v_2, v_0, v_3, v_1, hw, tex, bv4(ao.z,ao.x,ao.w,ao.y));
+		m->quad(v_2, v_0, v_3, v_1, hw, tex, bv4(ao.z,ao.x,ao.w,ao.y), bv4(l.z,l.x,l.w,l.y));
 		break;
 	case 4: // +Y
-		m->quad(v_0, v_1, v_2, v_3, wh, tex, bv4(ao.x,ao.y,ao.z,ao.w));
+		m->quad(v_0, v_1, v_2, v_3, wh, tex, bv4(ao.x,ao.y,ao.z,ao.w), bv4(l.x,l.y,l.z,l.w));
 		break;
 	case 5: // +Z
-		m->quad(v_0, v_1, v_2, v_3, wh, tex, bv4(ao.x,ao.y,ao.z,ao.w));
+		m->quad(v_0, v_1, v_2, v_3, wh, tex, bv4(ao.x,ao.y,ao.z,ao.w), bv4(l.x,l.y,l.z,l.w));
 		break;
 	}
 }
 
-CALLBACK void torch_model(mesh_chunk* m, block_meta info, i32 dir, v3 v_0, v2 ex, bv4 ao) {
+CALLBACK void torch_model(mesh_chunk* m, block_meta info, i32 dir, v3 v_0, v2 ex, bv4 ao, bv4 l) {
 	
 	i32 o_2d = dir % 3;
 	i32 u_2d = (dir + 1) % 3;
@@ -994,22 +1018,22 @@ CALLBACK void torch_model(mesh_chunk* m, block_meta info, i32 dir, v3 v_0, v2 ex
 
 	switch (dir) {
 	case 0: // -X
-		m->quad(v_0, v_2, v_1, v_3, hw, tex, bv4(ao.x,ao.z,ao.y,ao.w));
+		m->quad(v_0, v_2, v_1, v_3, hw, tex, bv4(ao.x,ao.z,ao.y,ao.w), bv4(l.x,l.z,l.y,l.w));
 		break;
 	case 1: // -Y
-		m->quad(v_2, v_3, v_0, v_1, wh, tex, bv4(ao.z,ao.w,ao.x,ao.y));
+		m->quad(v_2, v_3, v_0, v_1, wh, tex, bv4(ao.z,ao.w,ao.x,ao.y), bv4(l.z,l.w,l.x,l.y));
 		break;
 	case 2: // -Z
-		m->quad(v_1, v_0, v_3, v_2, wh, tex, bv4(ao.y,ao.x,ao.w,ao.z));
+		m->quad(v_1, v_0, v_3, v_2, wh, tex, bv4(ao.y,ao.x,ao.w,ao.z), bv4(l.y,l.x,l.w,l.z));
 		break;
 	case 3: // +X
-		m->quad(v_2, v_0, v_3, v_1, hw, tex, bv4(ao.z,ao.x,ao.w,ao.y));
+		m->quad(v_2, v_0, v_3, v_1, hw, tex, bv4(ao.z,ao.x,ao.w,ao.y), bv4(l.z,l.x,l.w,l.y));
 		break;
 	case 4: // +Y
-		m->quad(v_0, v_1, v_2, v_3, wh, tex, bv4(ao.x,ao.y,ao.z,ao.w));
+		m->quad(v_0, v_1, v_2, v_3, wh, tex, bv4(ao.x,ao.y,ao.z,ao.w), bv4(l.x,l.y,l.z,l.w));
 		break;
 	case 5: // +Z
-		m->quad(v_0, v_1, v_2, v_3, wh, tex, bv4(ao.x,ao.y,ao.z,ao.w));
+		m->quad(v_0, v_1, v_2, v_3, wh, tex, bv4(ao.x,ao.y,ao.z,ao.w), bv4(l.x,l.y,l.z,l.w));
 		break;
 	}
 }

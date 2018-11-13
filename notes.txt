@@ -1,10 +1,7 @@
 
 Vertex Format
 
-	OK SO the geometry shader face generation implementation is not working out so well. I don't think the memory usage savings is
-	even worth the trouble, and this is performing worse than the triangles one anyway!
-
-===QUADS===
+	Quads
 
 	0000 0000 0000 0000 0000 0000 0000 0000
 	xxxx xxxx zzzz zzzz xxxx xxxx zzzz zzzz
@@ -18,7 +15,7 @@ Vertex Format
 	0000 0000 0000 0000 0000 0000 0000 0000
 	yyyy yyyy yyyy yyyy yyyy yyyy vvvv vvvv
 
-	q
+	+q
 
 	0000 0000 0000 0000 0000 0000 0000 0000
 	tttt tttt tttt tttt           aoao aoao
@@ -26,6 +23,9 @@ Vertex Format
 	0000 0000 0000 0000 0000 0000 0000 0000
 	l0l0 l0l0 l1l1 l1l1 l2l2 l2l2 l3l3 l3l3
 
+
+
+old -
 
 ===FACE APPROACH===
 
@@ -48,11 +48,3 @@ Vertex Format
 	Do we want to modify this for LOD?
 
 	The geometry shader approach is actually like 30% slower than everything per-vertex. However, it does use 4x less GPU memory...
-
-
-
-00 0 0
-01 1 1
-10 2 -0
-11 3 -1
-
