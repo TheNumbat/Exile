@@ -332,32 +332,7 @@ void world::render_chunks() { PROF
 
 			chunk_pos current = settings.respect_cam ? camera + chunk_pos(x,0,z) : chunk_pos(x,0,z);
 			current.y = 0;
-			chunk** ch = chunks.try_get(current);
-
-			// auto build_job = [&]() {
-
-			// 	(*ch)->job_state.set(work::in_flight);
-
-			// 	thread_pool.queue_job([](void* p) -> void {
-
-			// 		chunk* c = (chunk*)p;
-
-			// 		c->gen();
-			// 		c->build_data();
-			// 		c->job_state.set(work::done);
-
-			// 	}, *ch, 1.0f / lensq(current.center_xz() - p.camera.pos), FPTR(cancel_build));
-			// };
-			
-			// if(!ch) {
-			// 	ch = chunks.insert(current, chunk::make_new(this, current, alloc));
-			// 	build_job();
-			// }
-			chunk* c = *ch;
-
-			// if(c->job_state.get() == work::none) {
-			// 	build_job();
-			// }
+			chunk* c = *chunks.try_get(current);;
 
 			eng->platform->aquire_mutex(&c->swap_mut);
 			if(!c->mesh.dirty) {
@@ -551,10 +526,28 @@ void chunk::init(world* _w, chunk_pos p, allocator* a) { PROF
 
 void chunk::place_light(iv3 l) { PROF
 
+	light[l.x][l.z][l.y].l = 15;
+	light[l.x + 1][l.z][l.y].l = 15;
+	light[l.x][l.z + 1][l.y].l = 15;
+	light[l.x + 1][l.z + 1][l.y].l = 15;
+
+	light[l.x][l.z][l.y + 1].l = 15;
+	light[l.x + 1][l.z][l.y + 1].l = 15;
+	light[l.x][l.z + 1][l.y + 1].l = 15;
+	light[l.x + 1][l.z + 1][l.y + 1].l = 15;
 }
 
 void chunk::rem_light(iv3 l) { PROF
 
+	light[l.x][l.z][l.y].l = 0;
+	light[l.x + 1][l.z][l.y].l = 0;
+	light[l.x][l.z + 1][l.y].l = 0;
+	light[l.x + 1][l.z + 1][l.y].l = 0;
+
+	light[l.x][l.z][l.y + 1].l = 0;
+	light[l.x + 1][l.z][l.y + 1].l = 0;
+	light[l.x][l.z + 1][l.y + 1].l = 0;
+	light[l.x + 1][l.z + 1][l.y + 1].l = 0;
 }
 
 chunk* chunk::make_new(world* w, chunk_pos p, allocator* a) { PROF
@@ -599,6 +592,7 @@ void chunk::gen() { PROF
 
 			if(x % 8 == 0 && z % 8 == 0) {
 				blocks[x][z][height] = block_torch;
+				place_light(iv3(x, height, z));
 			} else {
 				blocks[x][z][height] = block_stone_slab;
 			}			
@@ -685,40 +679,40 @@ mesh_face chunk::build_face(block_type t, iv3 p, i32 dir) { PROF
 
 	switch(dir) {
 	case 0: {
-		ret.ao[0] = ao_at(p);
-		ret.ao[1] = ao_at(p + v3(0,1,0));
-		ret.ao[2] = ao_at(p + v3(0,0,1));
-		ret.ao[3] = ao_at(p + v3(0,1,1));
+		ret.ao[0] = ao_at(p); ret.l[0] = l_at(p);
+		ret.ao[1] = ao_at(p + v3(0,1,0)); ret.l[1] = l_at(p + v3(0,1,0));
+		ret.ao[2] = ao_at(p + v3(0,0,1)); ret.l[2] = l_at(p + v3(0,0,1));
+		ret.ao[3] = ao_at(p + v3(0,1,1)); ret.l[3] = l_at(p + v3(0,1,1));
 	} break;
 	case 1: {
-		ret.ao[0] = ao_at(p);
-		ret.ao[1] = ao_at(p + v3(1,0,0));
-		ret.ao[2] = ao_at(p + v3(0,0,1));
-		ret.ao[3] = ao_at(p + v3(1,0,1));
+		ret.ao[0] = ao_at(p); ret.l[0] = l_at(p);
+		ret.ao[1] = ao_at(p + v3(1,0,0)); ret.l[1] = l_at(p + v3(1,0,0));
+		ret.ao[2] = ao_at(p + v3(0,0,1)); ret.l[2] = l_at(p + v3(0,0,1));
+		ret.ao[3] = ao_at(p + v3(1,0,1)); ret.l[3] = l_at(p + v3(1,0,1));
 	} break;
 	case 2: {
-		ret.ao[0] = ao_at(p);
-		ret.ao[1] = ao_at(p + v3(1,0,0));
-		ret.ao[2] = ao_at(p + v3(0,1,0));
-		ret.ao[3] = ao_at(p + v3(1,1,0));
+		ret.ao[0] = ao_at(p); ret.l[0] = l_at(p);
+		ret.ao[1] = ao_at(p + v3(1,0,0)); ret.l[1] = l_at(p + v3(1,0,0));
+		ret.ao[2] = ao_at(p + v3(0,1,0)); ret.l[2] = l_at(p + v3(0,1,0));
+		ret.ao[3] = ao_at(p + v3(1,1,0)); ret.l[3] = l_at(p + v3(1,1,0));
 	} break;
 	case 3: {
-		ret.ao[0] = ao_at(p + v3(1,0,0));
-		ret.ao[1] = ao_at(p + v3(1,1,0));
-		ret.ao[2] = ao_at(p + v3(1,0,1));
-		ret.ao[3] = ao_at(p + v3(1,1,1));
+		ret.ao[0] = ao_at(p + v3(1,0,0)); ret.l[0] = l_at(p + v3(1,0,0));
+		ret.ao[1] = ao_at(p + v3(1,1,0)); ret.l[1] = l_at(p + v3(1,1,0));
+		ret.ao[2] = ao_at(p + v3(1,0,1)); ret.l[2] = l_at(p + v3(1,0,1));
+		ret.ao[3] = ao_at(p + v3(1,1,1)); ret.l[3] = l_at(p + v3(1,1,1));
 	} break;
 	case 4: {
-		ret.ao[0] = ao_at(p + v3(0,1,0));
-		ret.ao[1] = ao_at(p + v3(1,1,0));
-		ret.ao[2] = ao_at(p + v3(0,1,1));
-		ret.ao[3] = ao_at(p + v3(1,1,1));
+		ret.ao[0] = ao_at(p + v3(0,1,0)); ret.l[0] = l_at(p + v3(0,1,0));
+		ret.ao[1] = ao_at(p + v3(1,1,0)); ret.l[1] = l_at(p + v3(1,1,0));
+		ret.ao[2] = ao_at(p + v3(0,1,1)); ret.l[2] = l_at(p + v3(0,1,1));
+		ret.ao[3] = ao_at(p + v3(1,1,1)); ret.l[3] = l_at(p + v3(1,1,1));
 	} break;
 	case 5: {
-		ret.ao[0] = ao_at(p + v3(0,0,1));
-		ret.ao[1] = ao_at(p + v3(1,0,1));
-		ret.ao[2] = ao_at(p + v3(0,1,1));
-		ret.ao[3] = ao_at(p + v3(1,1,1));
+		ret.ao[0] = ao_at(p + v3(0,0,1)); ret.l[0] = l_at(p + v3(0,0,1));
+		ret.ao[1] = ao_at(p + v3(1,0,1)); ret.l[1] = l_at(p + v3(1,0,1));
+		ret.ao[2] = ao_at(p + v3(0,1,1)); ret.l[2] = l_at(p + v3(0,1,1));
+		ret.ao[3] = ao_at(p + v3(1,1,1)); ret.l[3] = l_at(p + v3(1,1,1));
 	} break;
 	}
 
@@ -728,7 +722,7 @@ mesh_face chunk::build_face(block_type t, iv3 p, i32 dir) { PROF
 bool mesh_face::can_merge(mesh_face f1, mesh_face f2, i32 dir, bool h) { PROF
 
 	dir += h ? 3 : 0;
-	return f1.info.type == f2.info.type && f1.info.merge[dir] && f2.info.merge[dir] && f1.ao == f2.ao;
+	return f1.info.type == f2.info.type && f1.info.merge[dir] && f2.info.merge[dir] && f1.ao == f2.ao && f1.l == f2.l;
 }
 
 void chunk::build_data() { PROF

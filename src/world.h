@@ -37,7 +37,7 @@ struct mesh_face {
 	static bool can_merge(mesh_face f1, mesh_face f2, i32 dir, bool h);
 
 	block_meta info;
-	bv4 ao;
+	bv4 ao, l;
 };
 
 enum class work : u8 {
@@ -47,8 +47,8 @@ enum class work : u8 {
 };
 
 struct NOREFLECT block_lightval {
-	u8 s : 4;
 	u8 l : 4;
+	u8 s : 4;
 };
 static_assert(sizeof(block_lightval) == 1 , "sizeof(block_lightval) != 1");
 
@@ -119,6 +119,9 @@ struct world_settings {
 
 	bool block_ao = true;
 	bool dist_fog = true;
+	bool block_light = true;
+
+	float ambient_factor = 0.1f;
 
 	v4 ao_curve = v4(0.75f, 0.825f, 0.9f, 1.0f);
 };

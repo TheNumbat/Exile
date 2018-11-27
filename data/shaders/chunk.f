@@ -15,9 +15,11 @@ uniform sampler2D sky_tex;
 
 uniform bool do_fog;
 uniform bool do_ao;
+uniform bool do_light;
 
 uniform float render_distance;
 uniform float day_01;
+uniform float ambient;
 
 void main() {
 
@@ -44,6 +46,15 @@ void main() {
 		vec3 sky_color = texture(sky_tex, vec2(day_01, f_ah)).rgb;
 
 		color = mix(color, sky_color, fog_factor);
+	}
+
+	if(do_light) {
+
+		float l0 = mix(f_l.x, f_l.y, fract(f_uv.x));
+		float l1 = mix(f_l.z, f_l.w, fract(f_uv.x));
+		float l = mix(l0, l1, fract(f_uv.y));
+
+		color *= clamp(ambient + l / 15.0f, 0.0f, 1.0f);
 	}
 
 	out_color = vec4(color, sample.a);

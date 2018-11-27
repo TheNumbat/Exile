@@ -17,7 +17,7 @@ Working To-Do:
 
 	multiple texture arrays for > 2048 textures
 	chunk culling
-		CPU bounds vs. occlusion query
+		CPU bounds vs. occlusion query#
 	graphics work
 		consolidate shaders
 		framebuffer objects (msaa + effects)
