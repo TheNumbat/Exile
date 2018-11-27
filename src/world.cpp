@@ -198,7 +198,7 @@ void world::populate_local_area() { PROF
 					c->build_data();
 					c->job_state.set(work::done);
 
-				}, *c, 1.0f / lensq(current.center_xz() - p.camera.pos));
+				}, *c, 1.0f / lensq(current.center_xz() - p.camera.pos), FPTR(cancel_build));
 			}
 		}
 	}
