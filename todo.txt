@@ -6,7 +6,10 @@ Working To-Do:
 [1]	World
 		sun/moon objects 
 		chunk frontier - one more over render must be generated and lit to mesh the closer ones 
+			
 			this limits light radius to chunk size?
+			have to separate generate -> light -> mesh
+
 		voxel lighting; sunlight and torches
 		deferred rendering; dynamic lights
 

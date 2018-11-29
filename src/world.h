@@ -40,17 +40,21 @@ struct mesh_face {
 	bv4 ao, l;
 };
 
-enum class work : u8 {
-	none,
-	in_flight,
-	done
-};
-
 struct NOREFLECT block_lightval {
 	u8 l : 4;
 	u8 s : 4;
 };
 static_assert(sizeof(block_lightval) == 1 , "sizeof(block_lightval) != 1");
+
+enum class chunk_stage : u8 {
+	none,
+	generating,
+	generated,
+	lighting,
+	lit,
+	meshing,
+	meshed
+};
 
 struct world;
 struct chunk {
@@ -65,18 +69,22 @@ struct chunk {
 	block_lightval light[xsz][zsz][ysz] = {};
 	
 	platform_mutex swap_mut;
-	atomic_enum<work> job_state;
+
+	atomic_enum<chunk_stage> state;
 	
 	mesh_chunk mesh;
 	u32 mesh_faces = 0;
 
 	allocator* alloc = null;
 	world* w = null;
+	chunk* neighbors[4] = {}; // x+ x- z+ z-
 
 	void init(world* w, chunk_pos pos, allocator* a);
 	static chunk* make_new(world* w, chunk_pos pos, allocator* a);
 
-	void gen();
+	void do_gen();
+	void do_light();
+	void do_mesh();
 	void destroy();
 	
 	void place_light(iv3 pos);
@@ -89,8 +97,6 @@ struct chunk {
 	
 	block_type block_at(i32 x, i32 y, i32 z);
 	mesh_face build_face(block_type t, iv3 p, i32 dir);
-
-	void build_data();
 };
 
 struct player {
@@ -110,7 +116,7 @@ struct player {
 struct world_settings {
 
 	f32 gravity = 0.0f;
-	i32 view_distance = 6;
+	i32 view_distance = 2;
 	bool respect_cam = true;
 	
 	bool wireframe = false;
@@ -196,7 +202,11 @@ struct world {
 	void render_chunks();
 	void render_player();
 	void render_sky();
-	void populate_local_area();
+	
+	void local_populate();
+	void local_generate();
+	void local_light();
+	void local_mesh();
 
 	v3 raymarch(v3 origin, v3 dir, f32 max);
 	v3 raymarch(v3 origin, v3 max);
@@ -204,8 +214,11 @@ struct world {
 
 CALLBACK void world_debug_ui(world* w);
 CALLBACK void unlock_chunk(chunk* v);
-CALLBACK void cancel_build(chunk* param);
 float check_pirority(super_job* j, void* param);
+
+CALLBACK void cancel_gen(chunk* param);
+CALLBACK void cancel_light(chunk* param);
+CALLBACK void cancel_mesh(chunk* param);
 
 CALLBACK void slab_model(mesh_chunk* m, block_meta i, i32 dir, v3 v, v2 wh, bv4 ao, bv4 l);
 CALLBACK void torch_model(mesh_chunk* m, block_meta i, i32 dir, v3 v, v2 wh, bv4 ao, bv4 l);

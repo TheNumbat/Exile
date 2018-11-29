@@ -37,7 +37,7 @@ void main() {
 		float l1 = mix(f_l.z, f_l.w, fract(f_uv.x));
 		float l = mix(l0, l1, fract(f_uv.y));
 
-		color *= clamp(ambient + l / 15.0f, 0.0f, 1.0f);
+		color *= clamp(ambient + l, 0.0f, 1.0f);
 	}
 	
 	if(do_ao) {

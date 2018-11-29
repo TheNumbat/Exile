@@ -176,7 +176,7 @@ void world::update(u64 now) { PROF
 	update_player(now);
 }
 
-void world::populate_local_area() { PROF
+void world::local_populate() { PROF
 
 	chunk_pos camera = chunk_pos::from_abs(p.camera.pos);
 	for(i32 x = -settings.view_distance; x <= settings.view_distance; x++) {
@@ -187,18 +187,92 @@ void world::populate_local_area() { PROF
 			
 			if(!chunks.try_get(current)) {
 				
-				chunk** c = chunks.insert(current, chunk::make_new(this, current, alloc));
+				chunk* c = chunk::make_new(this, current, alloc);
+				chunks.insert(current, c);
+
+				chunk** xn = chunks.try_get(current - chunk_pos(1,0,0));
+				if (xn) { (*xn)->neighbors[0] = c; c->neighbors[1] = *xn; }
+				chunk** xp = chunks.try_get(current + chunk_pos(1,0,0));
+				if(xp) { (*xp)->neighbors[1] = c; c->neighbors[0] = *xp; }
+				chunk** zn = chunks.try_get(current - chunk_pos(0,0,1));
+				if(zn) { (*zn)->neighbors[2] = c; c->neighbors[3] = *zn; }
+				chunk** zp = chunks.try_get(current + chunk_pos(0,0,1));
+				if(zp) { (*zp)->neighbors[3] = c; c->neighbors[2] = *xp; }
+			}
+		}
+	}
+}
+
+void world::local_generate() { PROF
+
+	chunk_pos camera = chunk_pos::from_abs(p.camera.pos);
+	for(i32 x = -settings.view_distance; x <= settings.view_distance; x++) {
+		for(i32 z = -settings.view_distance; z <= settings.view_distance; z++) {
+
+			chunk_pos current = settings.respect_cam ? camera + chunk_pos(x,0,z) : chunk_pos(x,0,z);
+			current.y = 0;
+			
+			chunk* c = *chunks.get(current);
+			
+			if(c->state.get() == chunk_stage::none) {
 				
-				(*c)->job_state.set(work::in_flight);
+				c->state.set(chunk_stage::generating);
 
 				thread_pool.queue_job([](void* p) -> void {
 					chunk* c = (chunk*)p;
+					c->do_gen();
+					c->state.set(chunk_stage::generated);
+				}, c, 1.0f / lensq(current.center_xz() - p.camera.pos), FPTR(cancel_gen));
+			}
+		}
+	}
+}
 
-					c->gen();
-					c->build_data();
-					c->job_state.set(work::done);
+void world::local_light() { PROF
 
-				}, *c, 1.0f / lensq(current.center_xz() - p.camera.pos), FPTR(cancel_build));
+	chunk_pos camera = chunk_pos::from_abs(p.camera.pos);
+	for(i32 x = -settings.view_distance; x <= settings.view_distance; x++) {
+		for(i32 z = -settings.view_distance; z <= settings.view_distance; z++) {
+
+			chunk_pos current = settings.respect_cam ? camera + chunk_pos(x,0,z) : chunk_pos(x,0,z);
+			current.y = 0;
+			
+			chunk* c = *chunks.get(current);
+			
+			if(c->state.get() == chunk_stage::generated) {
+				
+				c->state.set(chunk_stage::lighting);
+
+				thread_pool.queue_job([](void* p) -> void {
+					chunk* c = (chunk*)p;
+					c->do_light();
+					c->state.set(chunk_stage::lit);
+				}, c, 100.0f + 1.0f / lensq(current.center_xz() - p.camera.pos), FPTR(cancel_light));
+			}
+		}
+	}
+}
+
+void world::local_mesh() { PROF
+
+	chunk_pos camera = chunk_pos::from_abs(p.camera.pos);
+	for(i32 x = -settings.view_distance; x <= settings.view_distance; x++) {
+		for(i32 z = -settings.view_distance; z <= settings.view_distance; z++) {
+
+			chunk_pos current = settings.respect_cam ? camera + chunk_pos(x,0,z) : chunk_pos(x,0,z);
+			current.y = 0;
+			
+			chunk* c = *chunks.get(current);
+			
+			if(c->state.get() == chunk_stage::lit) {
+				
+				c->state.set(chunk_stage::meshing);
+
+				thread_pool.queue_job([](void* p) -> void {
+					chunk* c = (chunk*)p;
+					c->do_mesh();
+					c->state.set(chunk_stage::meshed);
+				}, c, 200.0f + 1.0f / lensq(current.center_xz() - p.camera.pos), FPTR(cancel_mesh));
 			}
 		}
 	}
@@ -222,12 +296,17 @@ float check_pirority(super_job* j, void* param) {
 		return -FLT_MAX;
 	}
 
-	return 1.0f / lensq(center - p->camera.pos);
+	return j->priority;
 }
 
-CALLBACK void cancel_build(chunk* c) {
-
-	c->job_state.set(work::none);
+CALLBACK void cancel_gen(chunk* c) {
+	c->state.set(chunk_stage::none);
+}
+CALLBACK void cancel_light(chunk* c) {
+	c->state.set(chunk_stage::generated);
+}
+CALLBACK void cancel_mesh(chunk* c) {
+	c->state.set(chunk_stage::lit);
 }
 
 void player::reset() { PROF
@@ -313,7 +392,10 @@ void world_environment::render(player* p, world_time* t) { PROF
 
 void world::render_chunks() { PROF
 
-	populate_local_area();
+	local_populate();
+	local_generate();
+	local_light();
+	local_mesh();
 
 	render_command_list rcl = render_command_list::make();
 	thread_pool.renew_priorities(check_pirority, this);
@@ -578,7 +660,9 @@ i32 chunk::y_at(i32 x, i32 z) { PROF
 	return height;
 }
 
-void chunk::gen() { PROF
+void chunk::do_gen() { PROF
+
+	LOG_DEBUG_F("Generating chunk %"_, pos);
 
 	for(u32 x = 0; x < xsz; x++) {
 		for(u32 z = 0; z < zsz; z++) {
@@ -592,12 +676,16 @@ void chunk::gen() { PROF
 
 			if(x % 8 == 0 && z % 8 == 0) {
 				blocks[x][z][height] = block_torch;
-				place_light(iv3(x, height, z));
 			} else {
 				blocks[x][z][height] = block_stone_slab;
 			}			
 		}
 	}
+}
+
+void chunk::do_light() { PROF
+
+	LOG_DEBUG_F("Lighting chunk %"_, pos);
 }
 
 u8 chunk::l_at(v3 vert) { PROF
@@ -725,7 +813,9 @@ bool mesh_face::can_merge(mesh_face f1, mesh_face f2, i32 dir, bool h) { PROF
 	return f1.info.type == f2.info.type && f1.info.merge[dir] && f2.info.merge[dir] && f1.ao == f2.ao && f1.l == f2.l;
 }
 
-void chunk::build_data() { PROF
+void chunk::do_mesh() { PROF
+
+	LOG_DEBUG_F("Meshing chunk %"_, pos);
 
 	PUSH_PROFILE_PROF(false);
 

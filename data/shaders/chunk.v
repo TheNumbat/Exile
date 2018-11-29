@@ -86,6 +86,7 @@ quad q_unpack() {
 	q.l[1] = (q_data.y & l1_mask) >> 16;
 	q.l[2] = (q_data.y & l2_mask) >> 8;
 	q.l[3] = (q_data.y & l3_mask);
+	q.l /= 15.0f;
 	
 	q.uv[0] = (v_data.z & u_mask) / units_per_voxel;
 	q.uv[1] = (v_data.w & v_mask) / units_per_voxel;
