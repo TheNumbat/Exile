@@ -3,8 +3,10 @@ Working To-Do:
 
 	Something is strange about imgui mouse input
 
-[1]	Environment
+[1]	World
 		sun/moon objects 
+		chunk frontier - one more over render must be generated and lit to mesh the closer ones 
+			this limits light radius to chunk size?
 		voxel lighting; sunlight and torches
 		deferred rendering; dynamic lights
 
