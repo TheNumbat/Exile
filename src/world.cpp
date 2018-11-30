@@ -197,7 +197,7 @@ void world::local_populate() { PROF
 				chunk** zn = chunks.try_get(current - chunk_pos(0,0,1));
 				if(zn) { (*zn)->neighbors[2] = c; c->neighbors[3] = *zn; }
 				chunk** zp = chunks.try_get(current + chunk_pos(0,0,1));
-				if(zp) { (*zp)->neighbors[3] = c; c->neighbors[2] = *xp; }
+				if(zp) { (*zp)->neighbors[3] = c; c->neighbors[2] = *zp; }
 			}
 		}
 	}
