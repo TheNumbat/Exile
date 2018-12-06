@@ -59,14 +59,14 @@ enum class chunk_stage : u8 {
 struct world;
 struct chunk {
 
-	static const i32 xsz = 31, ysz = 511, zsz = 31;
+	static const i32 wid = 31, hei = 511;
 	static const i32 units_per_voxel = 8;
 
 	chunk_pos pos;
 
 	// NOTE(max): x z y
-	block_type blocks[xsz][zsz][ysz] = {};
-	block_lightval light[xsz][zsz][ysz] = {};
+	block_type blocks[wid][wid][hei] = {};
+	block_lightval light[wid][wid][hei] = {};
 	
 	platform_mutex swap_mut;
 
@@ -77,7 +77,7 @@ struct chunk {
 
 	allocator* alloc = null;
 	world* w = null;
-	chunk* neighbors[4] = {}; // x+ x- z+ z-
+	chunk* neighbors[8] = {}; // x+ x- z+ z- x+z+ x+z- x-z+ x-z-
 
 	void init(world* w, chunk_pos pos, allocator* a);
 	static chunk* make_new(world* w, chunk_pos pos, allocator* a);
@@ -117,6 +117,7 @@ struct world_settings {
 
 	f32 gravity = 0.0f;
 	i32 view_distance = 2;
+	i32 light_propogation = 31;
 	bool respect_cam = true;
 	
 	bool wireframe = false;

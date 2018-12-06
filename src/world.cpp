@@ -125,7 +125,7 @@ v3 world::raymarch(v3 pos3, v3 dir3, f32 max) { PROF
 		v4 current = pos + dir * progress;
 		iv3 current_vox = current;
 
-		if(c->block_at(current_vox.x % chunk::xsz, current_vox.y % chunk::ysz, current_vox.z % chunk::zsz) != block_air) {
+		if(c->block_at(current_vox.x % chunk::wid, current_vox.y % chunk::hei, current_vox.z % chunk::wid) != block_air) {
 			return current.xyz;
 		}
 		
@@ -179,8 +179,8 @@ void world::update(u64 now) { PROF
 void world::local_populate() { PROF
 
 	chunk_pos camera = chunk_pos::from_abs(p.camera.pos);
-	for(i32 x = -settings.view_distance; x <= settings.view_distance; x++) {
-		for(i32 z = -settings.view_distance; z <= settings.view_distance; z++) {
+	for(i32 x = -settings.view_distance - 2; x <= settings.view_distance + 2; x++) {
+		for(i32 z = -settings.view_distance - 2; z <= settings.view_distance + 2; z++) {
 
 			chunk_pos current = settings.respect_cam ? camera + chunk_pos(x,0,z) : chunk_pos(x,0,z);
 			current.y = 0;
@@ -198,6 +198,15 @@ void world::local_populate() { PROF
 				if(zn) { (*zn)->neighbors[2] = c; c->neighbors[3] = *zn; }
 				chunk** zp = chunks.try_get(current + chunk_pos(0,0,1));
 				if(zp) { (*zp)->neighbors[3] = c; c->neighbors[2] = *zp; }
+
+				chunk** xnzn = chunks.try_get(current - chunk_pos(1,0,1));
+				if (xnzn) { (*xnzn)->neighbors[4] = c; c->neighbors[7] = *xnzn; }
+				chunk** xnzp = chunks.try_get(current - chunk_pos(1,0,-1));
+				if (xnzp) { (*xnzp)->neighbors[5] = c; c->neighbors[6] = *xnzp; }
+				chunk** xpzn = chunks.try_get(current + chunk_pos(1,0,-1));
+				if (xpzn) { (*xpzn)->neighbors[6] = c; c->neighbors[5] = *xpzn; }
+				chunk** xpzp = chunks.try_get(current + chunk_pos(1,0,1));
+				if (xpzp) { (*xpzp)->neighbors[7] = c; c->neighbors[4] = *xpzp; }
 			}
 		}
 	}
@@ -206,8 +215,8 @@ void world::local_populate() { PROF
 void world::local_generate() { PROF
 
 	chunk_pos camera = chunk_pos::from_abs(p.camera.pos);
-	for(i32 x = -settings.view_distance; x <= settings.view_distance; x++) {
-		for(i32 z = -settings.view_distance; z <= settings.view_distance; z++) {
+	for(i32 x = -settings.view_distance - 2; x <= settings.view_distance + 2; x++) {
+		for(i32 z = -settings.view_distance - 2; z <= settings.view_distance + 2; z++) {
 
 			chunk_pos current = settings.respect_cam ? camera + chunk_pos(x,0,z) : chunk_pos(x,0,z);
 			current.y = 0;
@@ -231,8 +240,8 @@ void world::local_generate() { PROF
 void world::local_light() { PROF
 
 	chunk_pos camera = chunk_pos::from_abs(p.camera.pos);
-	for(i32 x = -settings.view_distance; x <= settings.view_distance; x++) {
-		for(i32 z = -settings.view_distance; z <= settings.view_distance; z++) {
+	for(i32 x = -settings.view_distance - settings.light_propogation / chunk::wid; x <= settings.view_distance + settings.light_propogation / chunk::wid; x++) {
+		for(i32 z = -settings.view_distance - settings.light_propogation / chunk::wid; z <= settings.view_distance + settings.light_propogation / chunk::wid; z++) {
 
 			chunk_pos current = settings.respect_cam ? camera + chunk_pos(x,0,z) : chunk_pos(x,0,z);
 			current.y = 0;
@@ -241,6 +250,15 @@ void world::local_light() { PROF
 			
 			if(c->state.get() == chunk_stage::generated) {
 				
+				bool ready = true;
+				for(i32 i = 0; i < 8; i++) {
+					if(!c->neighbors[i] || c->neighbors[i]->state.get() < chunk_stage::generated) {
+						ready = false;
+						break;
+					}
+				}
+				if(!ready) continue;
+
 				c->state.set(chunk_stage::lighting);
 
 				thread_pool.queue_job([](void* p) -> void {
@@ -266,6 +284,15 @@ void world::local_mesh() { PROF
 			
 			if(c->state.get() == chunk_stage::lit) {
 				
+				bool ready = true;
+				for(i32 i = 0; i < 8; i++) {
+					if(!c->neighbors[i] || c->neighbors[i]->state.get() < chunk_stage::lit) {
+						ready = false;
+						break;
+					}
+				}
+				if(!ready) continue;
+
 				c->state.set(chunk_stage::meshing);
 
 				thread_pool.queue_job([](void* p) -> void {
@@ -291,8 +318,8 @@ float check_pirority(super_job* j, void* param) {
 
 	v3 center = c->pos.center_xz();
 
-	if(abs(center.x - p->camera.pos.x) > (f32)(w->settings.view_distance + 1) * chunk::xsz ||
-	   abs(center.z - p->camera.pos.z) > (f32)(w->settings.view_distance + 1) * chunk::zsz) {
+	if(abs(center.x - p->camera.pos.x) > (f32)(w->settings.view_distance + 1) * chunk::wid ||
+	   abs(center.z - p->camera.pos.z) > (f32)(w->settings.view_distance + 1) * chunk::wid) {
 		return -FLT_MAX;
 	}
 
@@ -427,7 +454,7 @@ void world::render_chunks() { PROF
 			cmd.num_tris = c->mesh_faces;
 			cmd.uniform_info = this;
 
-			v3 chunk_pos = v3((f32)current.x * chunk::xsz, (f32)current.y * chunk::ysz, (f32)current.z * chunk::zsz);
+			v3 chunk_pos = v3((f32)current.x * chunk::wid, (f32)current.y * chunk::hei, (f32)current.z * chunk::wid);
 			cmd.model = translate(chunk_pos - p.camera.pos);
 
 			cmd.callback.set(FPTR(unlock_chunk));
@@ -570,15 +597,15 @@ bool operator==(chunk_pos l, chunk_pos r) { PROF
 chunk_pos chunk_pos::from_abs(v3 pos) { PROF
 
 	chunk_pos ret;
-	ret.x = (i32)(pos.x / chunk::xsz) - (pos.x < 0 ? 1 : 0);
-	ret.y = (i32)(pos.y / chunk::ysz) - (pos.y < 0 ? 1 : 0);
-	ret.z = (i32)(pos.z / chunk::zsz) - (pos.z < 0 ? 1 : 0);
+	ret.x = (i32)(pos.x / chunk::wid) - (pos.x < 0 ? 1 : 0);
+	ret.y = (i32)(pos.y / chunk::hei) - (pos.y < 0 ? 1 : 0);
+	ret.z = (i32)(pos.z / chunk::wid) - (pos.z < 0 ? 1 : 0);
 	return ret;
 }
 
 v3 chunk_pos::center_xz() { PROF
 
-	return v3(x * chunk::xsz + chunk::xsz / 2.0f, 0.0f, z * chunk::zsz + chunk::zsz / 2.0f);
+	return v3(x * chunk::wid + chunk::wid / 2.0f, 0.0f, z * chunk::wid + chunk::wid / 2.0f);
 }
 
 chunk_pos chunk_pos::operator+(chunk_pos other) { PROF
@@ -664,10 +691,10 @@ void chunk::do_gen() { PROF
 
 	LOG_DEBUG_F("Generating chunk %"_, pos);
 
-	for(u32 x = 0; x < xsz; x++) {
-		for(u32 z = 0; z < zsz; z++) {
+	for(u32 x = 0; x < wid; x++) {
+		for(u32 z = 0; z < wid; z++) {
 
-			u32 height = y_at(pos.x * xsz + x, pos.z * zsz + z);
+			u32 height = y_at(pos.x * wid + x, pos.z * wid + z);
 
 			blocks[x][z][0] = block_bedrock;
 			for(u32 y = 1; y < height; y++) {
@@ -692,10 +719,20 @@ u8 chunk::l_at(v3 vert) { PROF
 
 	i32 x = (i32)vert.x, y = (i32)vert.y, z = (i32)vert.z;
 
-	if(x < 0 || x >= xsz || y < 0 || y >= ysz || z < 0 || z >= zsz) {
+	if(x < 0 || x >= wid || y < 0 || y >= hei || z < 0 || z >= wid) {
 
-		// TODO(max): if the neighboring chunk exists, get a block from it
-		return 0; 
+		chunk_pos offset(x / wid - (x < 0 ? 1 : 0), 0, z / wid - (z < 0 ? 1 : 0));
+		//TODO(max): calculate the offset based on actual position
+		if(offset.x == 1 && offset.z == 0) return neighbors[0] ? neighbors[0]->l_at(v3(x - wid, y, z)) : 0;
+		if(offset.x == -1 && offset.z == 0) return neighbors[1] ? neighbors[1]->l_at(v3(x + wid, y, z)) : 0;
+		if(offset.x == 0 && offset.z == 1) return neighbors[2] ? neighbors[2]->l_at(v3(x, y, z - wid)) : 0;
+		if(offset.x == 0 && offset.z == -1) return neighbors[3] ? neighbors[3]->l_at(v3(x, y, z + wid)) : 0;
+
+		if(offset.x == 1 && offset.z == 1) return neighbors[4] ? neighbors[4]->l_at(v3(x - wid, y, z - wid)) : 0;
+		if(offset.x == 1 && offset.z == -1) return neighbors[5] ? neighbors[5]->l_at(v3(x - wid, y, z + wid)) : 0;
+		if(offset.x == -1 && offset.z == 1) return neighbors[6] ? neighbors[6]->l_at(v3(x + wid, y, z - wid)) : 0;
+		if(offset.x == -1 && offset.z == -1) return neighbors[7] ? neighbors[7]->l_at(v3(x + wid, y, z + wid)) : 0;
+		return 0;
 	}
 
 	return *(u8*)&light[x][z][y];
@@ -744,17 +781,23 @@ u8 chunk::ao_at(v3 vert) { PROF
 
 block_type chunk::block_at(i32 x, i32 y, i32 z) { PROF
 
-	if(y < 0) return block_air;
+	if(y < 0 || y >= hei) return block_air;
 	if(y == 0) return block_bedrock;
 
-	if(x < 0 || x >= xsz || y >= ysz || z < 0 || z >= zsz) {
+	if(x < 0 || x >= wid || z < 0 || z >= wid) {
 
-		// TODO(max): if the neighboring chunk exists, get a block from it
-		i32 h = y_at(pos.x * xsz + x, pos.z * zsz + z);
+		chunk_pos offset(x / wid - (x < 0 ? 1 : 0), 0, z / wid - (z < 0 ? 1 : 0));
+		//TODO(max): calculate the offset based on actual position
+		if(offset.x == 1 && offset.z == 0) return neighbors[0] ? neighbors[0]->block_at(x - wid, y, z) : block_air;
+		if(offset.x == -1 && offset.z == 0) return neighbors[1] ? neighbors[1]->block_at(x + wid, y, z) : block_air;
+		if(offset.x == 0 && offset.z == 1) return neighbors[2] ? neighbors[2]->block_at(x, y, z - wid) : block_air;
+		if(offset.x == 0 && offset.z == -1) return neighbors[3] ? neighbors[3]->block_at(x, y, z + wid) : block_air;
 
-		if(y < h) return block_stone;
-		if(y == h) return block_stone_slab;
-		return block_air; 
+		if(offset.x == 1 && offset.z == 1) return neighbors[4] ? neighbors[4]->block_at(x - wid, y, z - wid) : block_air;
+		if(offset.x == 1 && offset.z == -1) return neighbors[5] ? neighbors[5]->block_at(x - wid, y, z + wid) : block_air;
+		if(offset.x == -1 && offset.z == 1) return neighbors[6] ? neighbors[6]->block_at(x + wid, y, z - wid) : block_air;
+		if(offset.x == -1 && offset.z == -1) return neighbors[7] ? neighbors[7]->block_at(x + wid, y, z + wid) : block_air;
+		return block_air;
 	}
 
 	return blocks[x][z][y];
@@ -822,9 +865,9 @@ void chunk::do_mesh() { PROF
 	mesh_chunk new_mesh = mesh_chunk::make_cpu(1024, alloc);
 
 	// Array to hold 2D block slice (sized for largest slice)
-	block_type slice[xsz * ysz];
+	block_type slice[wid * hei];
 
-	iv3 max = {xsz, ysz, zsz};
+	iv3 max = {wid, hei, wid};
 
 	//  0  1  2  3  4  5 
 	// -x -y -z +x +y +z

@@ -1,4 +1,10 @@
 
+Chunk Staging
+
+	populated -> generated -> lit[sync neighbors] -> meshed[sync neighbors]
+
+	Do we combine lighting/meshing steps? Yes
+
 Vertex Format
 
 	Quads
