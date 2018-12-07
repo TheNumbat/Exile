@@ -636,7 +636,17 @@ void dbg_profiler::UI(platform_window* window) { PROF
 	ImGui::MapCombo("Select Thread"_, threads, &selected_thread);
 	threads.destroy();
 
-	thread_profile* thread = *thread_stats.get(selected_thread);
+	thread_profile** stat = thread_stats.try_get(selected_thread);
+	if(!stat) {
+		FORMAP(it, thread_stats) {
+			stat = &it->value;
+			selected_thread = it->key;
+			break;
+		}
+	}
+	LOG_ASSERT(stat);
+
+	thread_profile* thread = *stat;
 	global_api->release_mutex(&stats_map_mut);
 	
 	global_api->aquire_mutex(&thread->mut);
@@ -741,6 +751,23 @@ void dbg_profiler::register_thread(u32 frames) { PROF
 
 	global_api->aquire_mutex(&stats_map_mut);
 	thread_stats.insert(global_api->this_thread_id(), thread);
+	global_api->release_mutex(&stats_map_mut);
+}
+
+void dbg_profiler::unregister_thread() { PROF
+
+	if(!thread_stats.contents.memory) return; // TODO(max): 4head
+
+	global_api->aquire_mutex(&stats_map_mut);
+
+	thread_profile** stat = thread_stats.try_get(global_api->this_thread_id());
+	if(!stat) return;
+	thread_profile* thread = *stat;
+
+	thread->destroy();
+	PUSH_ALLOC(alloc); {free(thread, sizeof(thread_profile));} POP_ALLOC();
+
+	thread_stats.erase(global_api->this_thread_id());
 	global_api->release_mutex(&stats_map_mut);
 }
 

@@ -23,8 +23,8 @@ void end_thread() {
 
 	DESTROY_ARENA(&this_thread_data.scratch_arena);
 
+	global_dbg->profiler.unregister_thread();
 	this_thread_data.profiling = false;
-	
 	this_thread_data.dbg_queue.destroy();
  	
 	this_thread_data.name.destroy(this_thread_data.alloc_stack.contents.alloc);

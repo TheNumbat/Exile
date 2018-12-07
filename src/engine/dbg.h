@@ -245,6 +245,7 @@ struct dbg_profiler {
 	void destroy();
 
 	void register_thread(u32 frames);
+	void unregister_thread();
 
 	void UI(platform_window* window);
 	void recurse(vector<profile_node*> list);
