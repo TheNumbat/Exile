@@ -15,7 +15,7 @@
 */
 	
 // #define RELEASE // turn off everything for a true release build
-#define FAST_CLOSE
+// #define FAST_CLOSE
 
 #include "engine/compile.h"
 engine* eng = null;

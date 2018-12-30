@@ -994,7 +994,7 @@ void mesh_chunk::clear() { PROF
 	dirty = true;
 }
 
-void mesh_chunk::quad(v3 v_0, v3 v_1, v3 v_2, v3 v_3, v2 uv, i32 t, bv4 ao, bv4 l) {
+void mesh_chunk::quad(iv3 v_0, iv3 v_1, iv3 v_2, iv3 v_3, iv2 uv, i32 t, bv4 ao, bv4 l) {
 
 	chunk_quad q = {};
 

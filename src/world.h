@@ -16,7 +16,7 @@ struct block_meta {
 	bool does_ao;
 	bool custom_model;
 	
-	func_ptr<void, mesh_chunk*, block_meta, i32, v3, v2, bv4, bv4> model;
+	func_ptr<void, mesh_chunk*, block_meta, i32, iv3, iv2, bv4, bv4> model;
 };
 
 struct chunk_pos {
@@ -40,20 +40,41 @@ struct mesh_face {
 	bv4 ao, l;
 };
 
-struct NOREFLECT block_lightval {
-	u8 l : 4;
-	u8 s : 4;
+struct NOREFLECT block_light {
+	// TODO(max): sunlight
+	u8 l;
 };
-static_assert(sizeof(block_lightval) == 1 , "sizeof(block_lightval) != 1");
 
 enum class chunk_stage : u8 {
 	none,
 	generating,
-	generated,
 	lighting,
 	lit,
 	meshing,
 	meshed
+};
+
+enum class light_update : u8 {
+	none,
+	add,
+	remove
+};
+
+struct light_work {
+	light_update type;
+	
+	iv3 pos;
+	i32 intensity = 0;
+};
+
+struct chunk;
+
+struct block_node {
+	iv3 pos;
+	chunk* owner = null;
+
+	block_type get_type();
+	block_light get_l();
 };
 
 struct world;
@@ -66,18 +87,20 @@ struct chunk {
 
 	// NOTE(max): x z y
 	block_type blocks[wid][wid][hei] = {};
-	block_lightval light[wid][wid][hei] = {};
-	
-	platform_mutex swap_mut;
+	block_light light[wid][wid][hei] = {};
 
 	atomic_enum<chunk_stage> state;
+	locking_queue<light_work> lighting_updates;	
 	
+	platform_mutex swap_mut;
 	mesh_chunk mesh;
 	u32 mesh_faces = 0;
 
-	allocator* alloc = null;
 	world* w = null;
 	chunk* neighbors[8] = {}; // x+ x- z+ z- x+z+ x+z- x-z+ x-z-
+
+	allocator* alloc = null;
+
 
 	void init(world* w, chunk_pos pos, allocator* a);
 	static chunk* make_new(world* w, chunk_pos pos, allocator* a);
@@ -87,15 +110,16 @@ struct chunk {
 	void do_mesh();
 	void destroy();
 	
-	void place_light(iv3 pos);
-	void rem_light(iv3 pos);
+	void place_light(iv3 pos, i32 intensity);
+	void rem_light(iv3 pos, i32 intensity);
 
 	static i32 y_at(i32 x, i32 z);
 	
-	u8 ao_at(v3 vert);
-	u8 l_at(v3 vert);
+	u8 ao_at(iv3 block);
+	block_light l_at(iv3 block);
+	block_type block_at(iv3 block);
+	block_node canonical_block(iv3 block);
 	
-	block_type block_at(i32 x, i32 y, i32 z);
 	mesh_face build_face(block_type t, iv3 p, i32 dir);
 };
 
@@ -116,16 +140,16 @@ struct player {
 struct world_settings {
 
 	f32 gravity = 0.0f;
-	i32 view_distance = 2;
-	i32 light_propogation = 31;
-	bool respect_cam = true;
+	i32 view_distance = 1;
+	i32 max_light_propogation = 1;
+	bool respect_cam = false;
 	
 	bool wireframe = false;
 	bool cull_backface = true;
 	bool sample_shading = true;
 
 	bool block_ao = true;
-	bool dist_fog = true;
+	bool dist_fog = false;
 	bool block_light = true;
 
 	float ambient_factor = 0.1f;
@@ -221,5 +245,5 @@ CALLBACK void cancel_gen(chunk* param);
 CALLBACK void cancel_light(chunk* param);
 CALLBACK void cancel_mesh(chunk* param);
 
-CALLBACK void slab_model(mesh_chunk* m, block_meta i, i32 dir, v3 v, v2 wh, bv4 ao, bv4 l);
-CALLBACK void torch_model(mesh_chunk* m, block_meta i, i32 dir, v3 v, v2 wh, bv4 ao, bv4 l);
+CALLBACK void slab_model(mesh_chunk* m, block_meta i, i32 dir, iv3 v, iv2 wh, bv4 ao, bv4 l);
+CALLBACK void torch_model(mesh_chunk* m, block_meta i, i32 dir, iv3 v, iv2 wh, bv4 ao, bv4 l);

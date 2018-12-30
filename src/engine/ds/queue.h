@@ -52,4 +52,5 @@ struct locking_queue : public queue<T> {
 	T* push(T value);
 	T wait_pop();
 	bool try_pop(T* out);
+	bool empty();
 };

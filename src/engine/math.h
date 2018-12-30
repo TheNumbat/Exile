@@ -232,6 +232,30 @@ v3 	 rand_unit();
 // hence, it's easier to just make separate types. (even for color, etc.)
 // it also works to strongly-typedef everything
 
+union iv2 {
+	struct {
+		i32 x, y;
+	};
+	i32 a[2] = {};
+
+	void operator+=(iv2 v) {x += v.x; y += v.y;}
+	void operator-=(iv2 v) {x -= v.x; y -= v.y;}
+	void operator*=(iv2 v) {x *= v.x; y *= v.y;}
+	void operator/=(iv2 v) {x /= v.x; y /= v.y;}
+	void operator*=(i32 s) {x *= s; y *= s;}
+	void operator/=(i32 s) {x /= s; y /= s;}
+	i32& operator[](i32 idx) {return a[idx];}
+
+	iv2() {}
+	iv2(i32 _x) {x = _x; y = _x;}
+	iv2(i32 _x, i32 _y) {x = _x; y = _y;}
+	iv2(iv2& v) {*this = v;}
+	iv2(iv2&& v) {*this = v;}
+	iv2& operator=(iv2& v) {x = v.x; y = v.y; return *this;}
+	iv2& operator=(iv2&& v) {x = v.x; y = v.y; return *this;}
+};
+static_assert(sizeof(iv2) == 8, "sizeof(iv2) != 8");
+
 union v2 {
 	struct {
 		f32 x, y;
@@ -245,6 +269,7 @@ union v2 {
 	void operator*=(f32 s) {x *= s; y *= s;}
 	void operator/=(f32 s) {x /= s; y /= s;}
 	f32& operator[](i32 idx) {return a[idx];}
+	iv2 to_i() {return iv2((i32)_round(x), (i32)_round(y));}
 
 	v2() {}
 	v2(f32 _x) {x = _x; y = _x;}
@@ -280,6 +305,28 @@ union uv2 {
 };
 static_assert(sizeof(uv2) == 8, "sizeof(uv2) != 8");
 
+union v3;
+union iv3 {
+	struct {
+		i32 x, y, z;
+	};
+	i32 a[3] = {};
+
+	void operator+=(iv3 v) {x += v.x; y += v.y; z += v.z;}
+	void operator-=(iv3 v) {x -= v.x; y -= v.y; z -= v.z;}
+	void operator*=(i32 s) {x *= s; y *= s; z *= s;}
+	i32& operator[](i32 idx) {return a[idx];}
+	v3 to_f();
+
+	iv3() {}
+	iv3(i32 _x, i32 _y, i32 _z) {x = _x; y = _y; z = _z;}
+	iv3(iv3& v) {*this = v;}
+	iv3(iv3&& v) {*this = v;}
+	iv3& operator=(iv3& v) {x = v.x; y = v.y; z = v.z; return *this;}
+	iv3& operator=(iv3&& v) {x = v.x; y = v.y; z = v.z; return *this;}
+};
+static_assert(sizeof(iv3) == 12, "sizeof(iv3) != 12");
+
 union v3 {
 	struct {
 		f32 x, y, z;
@@ -295,6 +342,7 @@ union v3 {
 	f32& operator[](i32 idx) {return a[idx];}
 	v3 operator-() {return {-x,-y,-z};}
 	operator bool() {return x || y || z;}
+	iv3 to_i() {return iv3((i32)_round(x), (i32)_round(y), (i32)_round(z));}
 
 	v3() {}
 	v3(f32 _x) {x = _x; y = _x; z = _x;}
@@ -306,6 +354,8 @@ union v3 {
 	v3& operator=(v3&& v) {x = v.x; y = v.y; z = v.z; return *this;}
 };
 static_assert(sizeof(v3) == 12, "sizeof(v3) != 12");
+
+v3 iv3::to_f() {return v3(x, y, z);}
 
 union uv3 {
 	struct {
@@ -325,26 +375,6 @@ union uv3 {
 	uv3& operator=(uv3&& v) {x = v.x; y = v.y; z = v.z; return *this;}
 };
 static_assert(sizeof(uv3) == 12, "sizeof(uv3) != 12");
-
-union iv3 {
-	struct {
-		i32 x, y, z;
-	};
-	i32 a[3] = {};
-
-	void operator+=(iv3 v) {x += v.x; y += v.y; z += v.z;}
-	void operator-=(iv3 v) {x -= v.x; y -= v.y; z -= v.z;}
-	i32& operator[](i32 idx) {return a[idx];}
-	operator v3() {return v3(x, y, z);}
-
-	iv3() {}
-	iv3(i32 _x, i32 _y, i32 _z) {x = _x; y = _y; z = _z;}
-	iv3(iv3& v) {*this = v;}
-	iv3(iv3&& v) {*this = v;}
-	iv3& operator=(iv3& v) {x = v.x; y = v.y; z = v.z; return *this;}
-	iv3& operator=(iv3&& v) {x = v.x; y = v.y; z = v.z; return *this;}
-};
-static_assert(sizeof(iv3) == 12, "sizeof(iv3) != 12");
 
 union v4 {
 	struct {

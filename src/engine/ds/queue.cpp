@@ -252,3 +252,11 @@ bool locking_queue<T>::try_pop(T* out) { PROF
 	global_api->release_mutex(&mut);
 	return ret;
 }
+
+template<typename T>
+bool locking_queue<T>::empty() { PROF
+	global_api->aquire_mutex(&mut);
+	bool ret = queue<T>::empty();
+	global_api->release_mutex(&mut);
+	return ret;
+}
