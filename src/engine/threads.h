@@ -37,7 +37,8 @@ template<typename T>
 using job_work = T(*)(void*);
 
 struct super_job {
-	float priority 		= 0.0f;
+	i32 priority_class  = 0;
+	f32 priority 		= 0.0f;
 	void* data 	  		= null;
 	u64 my_size			= 0;
 	func_ptr<void,void*> cancel;
@@ -87,13 +88,13 @@ struct threadpool {
 	static threadpool make(allocator* a, i32 num_threads_ = 0);
 	void destroy();
 	
-	template<typename T> void queue_job(future<T>* fut, job_work<T> work, void* data = null, float prirority = 0.0f, _FPTR* cancel = null);
-	void queue_job(job_work<void> work, void* data = null, float prirority = 0.0f, _FPTR* cancel = null);
+	template<typename T> void queue_job(future<T>* fut, job_work<T> work, void* data = null, f32 prirority = 0.0f, i32 priority_class = 0, _FPTR* cancel = null);
+	void queue_job(job_work<void> work, void* data = null, f32 prirority = 0.0f, i32 priority_class = 0, _FPTR* cancel = null);
 	
 	void stop_all();
 	void start_all();
 
-	void renew_priorities(float (*eval)(super_job*,void*), void* param);
+	void renew_priorities(f32 (*eval)(super_job*,void*), void* param);
 };
 
 i32 worker(void* data_);

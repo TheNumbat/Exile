@@ -12,7 +12,8 @@ E atomic_enum<E>::get() {
 }
 
 bool gt(super_job* l, super_job* r) { PROF
-	return l->priority > r->priority;
+	if(l->priority_class == r->priority_class) return l->priority > r->priority;
+	return l->priority_class > r->priority_class;
 }
 
 template<typename T>
@@ -87,13 +88,13 @@ void threadpool::destroy() { PROF
 	CHECKED(destroy_semaphore, &jobs_semaphore);
 }
 
-void threadpool::renew_priorities(float (*eval)(super_job*, void*), void* param) { PROF
+void threadpool::renew_priorities(f32 (*eval)(super_job*, void*), void* param) { PROF
 
 	jobs.renew(eval, param);
 }
 
 template<>
-void heap<super_job*,gt>::renew(float (*eval)(super_job*, void*), void* param) { PROF
+void heap<super_job*,gt>::renew(f32 (*eval)(super_job*, void*), void* param) { PROF
 
 	heap<super_job*,gt> h = heap<super_job*,gt>::make(capacity);
 
@@ -123,12 +124,13 @@ void heap<super_job*,gt>::renew(float (*eval)(super_job*, void*), void* param) {
 }
 
 template<typename T>
-void threadpool::queue_job(future<T>* fut, job_work<T> work, void* data, float priority, _FPTR* cancel) { PROF
+void threadpool::queue_job(future<T>* fut, job_work<T> work, void* data, f32 priority, i32 priority_class, _FPTR* cancel) { PROF
 
 	PUSH_ALLOC(alloc);
 
 	job<T>* j = NEW(job<T>);
 	j->priority = priority;
+	j->priority_class = priority_class;
 	j->future = fut;
 	j->work = work;
 	j->data = data;
@@ -148,12 +150,13 @@ void threadpool::queue_job(future<T>* fut, job_work<T> work, void* data, float p
 #endif
 }
 
-void threadpool::queue_job(job_work<void> work, void* data, float priority, _FPTR* cancel) {
+void threadpool::queue_job(job_work<void> work, void* data, f32 priority, i32 priority_class, _FPTR* cancel) {
 
 	PUSH_ALLOC(alloc);
 
 	job<void>* j = NEW(job<void>);
 	j->priority = priority;
+	j->priority_class = priority_class;
 	j->work = work;
 	j->data = data;
 	j->cancel.set(cancel);

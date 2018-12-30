@@ -237,7 +237,7 @@ void world::local_generate() { PROF
 					chunk* c = (chunk*)p;
 					c->do_gen();
 					c->state.set(chunk_stage::lit);
-				}, c, 200.0f + 1.0f / lensq(current.center_xz() - p.camera.pos), FPTR(cancel_gen));
+				}, c, 1.0f / lensq(current.center_xz() - p.camera.pos), 2, FPTR(cancel_gen));
 			}
 		}
 	}
@@ -279,7 +279,7 @@ void world::local_light() { PROF
 					chunk* c = (chunk*)p;
 					c->do_light();
 					c->state.set(chunk_stage::lit);
-				}, c, 100.0f + 1.0f / lensq(current.center_xz() - p.camera.pos), FPTR(cancel_light));
+				}, c, 1.0f / lensq(current.center_xz() - p.camera.pos), 1, FPTR(cancel_light));
 			}
 		}
 	}
@@ -313,7 +313,7 @@ void world::local_mesh() { PROF
 					chunk* c = (chunk*)p;
 					c->do_mesh();
 					c->state.set(chunk_stage::meshed);
-				}, c, 1.0f / lensq(current.center_xz() - p.camera.pos), FPTR(cancel_mesh));
+				}, c, 1.0f / lensq(current.center_xz() - p.camera.pos), 0, FPTR(cancel_mesh));
 			}
 		}
 	}
@@ -337,7 +337,7 @@ float check_pirority(super_job* j, void* param) {
 		return -FLT_MAX;
 	}
 
-	return j->priority;
+	return 1.0f / lensq(center - p->camera.pos);
 }
 
 CALLBACK void cancel_gen(chunk* c) {
@@ -712,7 +712,7 @@ void chunk::do_gen() { PROF
 				blocks[x][z][y] = block_stone;
 			}
 
-			if(x % 31 == 0 && z % 31 == 0) {
+			if(x % 8 == 0 && z % 8 == 0) {
 				blocks[x][z][height] = block_torch;
 				place_light(iv3(x, height, z), 15);
 			} else {
@@ -726,6 +726,8 @@ void chunk::do_light() { PROF
 
 	LOG_DEBUG_F("Lighting chunk %"_, pos);
 
+	PUSH_PROFILE_PROF(false);
+
 	light_work work;
 	while(lighting_updates.try_pop(&work)) {
 
@@ -737,7 +739,7 @@ void chunk::do_light() { PROF
 			}
 			first.l = (u8)work.intensity;
 
-			queue<block_node> q = queue<block_node>::make(512, &this_thread_data.scratch_arena);
+			queue<block_node> q = queue<block_node>::make(2048, &this_thread_data.scratch_arena);
 
 			block_node begin;
 			begin.pos = work.pos;
@@ -755,23 +757,32 @@ void chunk::do_light() { PROF
 					
 					iv3 neighbor = cur.pos + directions[i];
 					block_node node = cur.owner->canonical_block(neighbor);
+
+					if(!node.owner) continue;
+
 					block_type block = node.get_type();
 
-					if(!w->block_info.get(block)->opaque[(i + 3) % 6] && node.get_l().l + 2 <= current_light) {
+					if(!node.flag && node.get_l().l + 2 <= current_light) {
+
+						if(w->block_info.get(block)->opaque[(i + 3) % 6]) {
+							node.flag = true;
+						}
 
 						node.owner->light[node.pos.x][node.pos.z][node.pos.y].l = current_light - 1;
 						q.push(node);
+
+						light_work t; t.type = light_update::trigger;
+						node.owner->lighting_updates.push(t);
 					}
 				}
 			}
-
-			LOG_INFO_F("%"_, q.capacity);
 
 		} else if(work.type == light_update::remove) {
 			
 		}
 	}
 
+	POP_PROFILE_PROF();
 	RESET_ARENA(&this_thread_data.scratch_arena);
 }
 
@@ -1082,8 +1093,16 @@ void chunk::do_mesh() { PROF
 						iv3 v_2 = v_0 + height_offset;
 						iv3 v_3 = v_2 + width_offset;
 						iv2 wh(width, height), hw(height, width);
+						
 						u8 ao_0 = ao_at(v_0), ao_1 = ao_at(v_1), ao_2 = ao_at(v_2), ao_3 = ao_at(v_3);
-						u8 l_0 = l_at(v_0).l, l_1 = l_at(v_1).l, l_2 = l_at(v_2).l, l_3 = l_at(v_3).l;
+						
+						u8 l_0, l_1, l_2, l_3;
+						if(w->settings.smooth_light) {
+							l_0 = l_at(v_0).l; l_1 = l_at(v_1).l; l_2 = l_at(v_2).l; l_3 = l_at(v_3).l;
+						} else {
+							l_0 = l_at(v_0).l;
+							l_3 = l_2 = l_1 = l_0;
+						}
 
 						v_0 *= units_per_voxel; v_1 *= units_per_voxel; v_2 *= units_per_voxel; v_3 *= units_per_voxel;
 						wh *= units_per_voxel; hw *= units_per_voxel;

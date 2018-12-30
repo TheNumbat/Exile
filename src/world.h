@@ -57,7 +57,8 @@ enum class chunk_stage : u8 {
 enum class light_update : u8 {
 	none,
 	add,
-	remove
+	remove,
+	trigger
 };
 
 struct light_work {
@@ -71,6 +72,7 @@ struct chunk;
 
 struct block_node {
 	iv3 pos;
+	bool flag = false;
 	chunk* owner = null;
 
 	block_type get_type();
@@ -150,7 +152,9 @@ struct world_settings {
 
 	bool block_ao = true;
 	bool dist_fog = false;
+	
 	bool block_light = true;
+	bool smooth_light = true;
 
 	float ambient_factor = 0.1f;
 
