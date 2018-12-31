@@ -2,7 +2,9 @@
 Working To-Do:
 
 [1]	World
-		sunlight and torches
+		light removal
+		block updates
+		sunlight 
 		deferred rendering; dynamic lights
 		sun/moon objects 
 
