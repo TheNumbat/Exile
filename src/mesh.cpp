@@ -64,6 +64,7 @@ CALLBACK void uniforms_mesh_chunk(shader_program* prog, render_command* cmd) {
 	glUniform1i(glGetUniformLocation(prog->handle, "do_ao"), set->block_ao);
 	glUniform1i(glGetUniformLocation(prog->handle, "do_fog"), set->dist_fog);
 	glUniform1i(glGetUniformLocation(prog->handle, "do_light"), set->block_light);
+	glUniform1i(glGetUniformLocation(prog->handle, "smooth_light"), set->smooth_light);
 
 	glUniform1f(glGetUniformLocation(prog->handle, "day_01"), time->day_01());
 	glUniform1f(glGetUniformLocation(prog->handle, "ambient"), set->ambient_factor);

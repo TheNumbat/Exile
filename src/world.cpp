@@ -769,8 +769,10 @@ void chunk::do_light() { PROF_FUNC
 						node.owner->light[node.pos.x][node.pos.z][node.pos.y].l = current_light - 1;
 						q.push(node);
 
-						light_work t; t.type = light_update::trigger;
-						node.owner->lighting_updates.push(t);
+						if(node.owner->lighting_updates.empty()) {
+							light_work t; t.type = light_update::trigger;
+							node.owner->lighting_updates.push(t);
+						}
 					}
 				}
 			}
@@ -859,7 +861,7 @@ block_node chunk::canonical_block(iv3 block) {
 	return same;
 }
 
-block_light chunk::l_at(iv3 block) { 
+block_light chunk::l_at(iv3 block) {
 
 	block_node node = canonical_block(block);	
 
@@ -1092,18 +1094,12 @@ void chunk::do_mesh() { PROF_FUNC
 						iv3 v_2 = v_0 + height_offset;
 						iv3 v_3 = v_2 + width_offset;
 						iv2 wh(width, height), hw(height, width);
-						
+						 	
 						u8 l_0, l_1, l_2, l_3;
 						u8 ao_0, ao_1, ao_2, ao_3;
 						{PROF_SCOPE("ao + l"_);
 							ao_0 = ao_at(v_0); ao_1 = ao_at(v_1); ao_2 = ao_at(v_2); ao_3 = ao_at(v_3);
-							
-							if(w->settings.smooth_light) {
-								l_0 = l_at(v_0).l; l_1 = l_at(v_1).l; l_2 = l_at(v_2).l; l_3 = l_at(v_3).l;
-							} else {
-								l_0 = l_at(v_0).l;
-								l_3 = l_2 = l_1 = l_0;
-							}
+							l_0 = l_at(v_0).l; l_1 = l_at(v_1).l; l_2 = l_at(v_2).l; l_3 = l_at(v_3).l;
 						}
 
 						v_0 *= units_per_voxel; v_1 *= units_per_voxel; v_2 *= units_per_voxel; v_3 *= units_per_voxel;

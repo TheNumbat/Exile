@@ -16,6 +16,7 @@ uniform sampler2D sky_tex;
 uniform bool do_fog;
 uniform bool do_ao;
 uniform bool do_light;
+uniform bool smooth_light;
 
 uniform float render_distance;
 uniform float day_01;
@@ -33,11 +34,18 @@ void main() {
 
 	if(do_light) {
 
-		float l0 = mix(f_l.x, f_l.y, fract(f_uv.x));
-		float l1 = mix(f_l.z, f_l.w, fract(f_uv.x));
-		float l = mix(l0, l1, fract(f_uv.y));
+		if(smooth_light) {
 
-		color *= clamp(ambient + l, 0.0f, 1.0f);
+			float l0 = mix(f_l.x, f_l.y, fract(f_uv.x));
+			float l1 = mix(f_l.z, f_l.w, fract(f_uv.x));
+			float l = mix(l0, l1, fract(f_uv.y));
+
+			color *= clamp(ambient + l, 0.0f, 1.0f);
+
+		} else {
+
+			color *= clamp(ambient + (f_l.x + f_l.y + f_l.z + f_l.w) / 4, 0.0f, 1.0f);			
+		}
 	}
 	
 	if(do_ao) {
