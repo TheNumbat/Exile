@@ -2,7 +2,7 @@
 
 #pragma once
 
-#define MAX_CALL_STACK_DEPTH 	256
+#define MAX_CONTEXT_DEPTH 16
 
 struct thread_data {
 	stack<allocator*> alloc_stack;
@@ -11,8 +11,9 @@ struct thread_data {
 	code_context start_context;
 	bool startup = true;
 
-	code_context call_stack[MAX_CALL_STACK_DEPTH] = {};
-	u32 call_stack_depth = 0;
+	// NOTE(max): only does log context now
+	string context_stack[MAX_CONTEXT_DEPTH] = {};
+	u32 context_depth = 0;
 
 	queue<dbg_msg> dbg_queue;
 	arena_allocator scratch_arena;

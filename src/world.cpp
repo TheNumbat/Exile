@@ -975,7 +975,7 @@ void chunk::do_mesh() { PROF_FUNC
 
 	LOG_DEBUG_F("Meshing chunk %"_, pos);
 
-	mesh_chunk new_mesh = mesh_chunk::make_cpu(1024, alloc);
+	mesh_chunk new_mesh = mesh_chunk::make_cpu(8192, alloc);
 
 	// Array to hold 2D block slice (sized for largest slice)
 	block_type slice[wid * hei];
@@ -996,31 +996,33 @@ void chunk::do_mesh() { PROF_FUNC
 		iv3 position;
 		for(position[ortho_2d] = 0; position[ortho_2d] < max[ortho_2d]; position[ortho_2d]++) {
  	
-			// Iterate over 2D slice blocks to filter culled faces before greedy step
-			for(position[v_2d] = 0; position[v_2d] < max[v_2d]; position[v_2d]++) {
-				for(position[u_2d] = 0; position[u_2d] < max[u_2d]; position[u_2d]++) {
+ 			{PROF_SCOPE("2D Slice"_);
+				// Iterate over 2D slice blocks to filter culled faces before greedy step
+				for(position[v_2d] = 0; position[v_2d] < max[v_2d]; position[v_2d]++) {
+					for(position[u_2d] = 0; position[u_2d] < max[u_2d]; position[u_2d]++) {
 
-					block_type block = blocks[position[0]][position[2]][position[1]];
-					block_meta info0 = *w->block_info.get(block);
-					
-					i32 slice_idx = position[u_2d] + position[v_2d] * max[u_2d];
-
-					// Only add the face to the slice if its opposing face is not opaque
-					if(info0.renders) {
+						block_type block = blocks[position[0]][position[2]][position[1]];
+						block_meta* info0 = w->block_info.get(block);
 						
-						iv3 backface = position;
-						backface[ortho_2d] += backface_offset;
+						i32 slice_idx = position[u_2d] + position[v_2d] * max[u_2d];
 
-						block_type backface_block = block_at(backface);
-						block_meta info1 = *w->block_info.get(backface_block);
+						// Only add the face to the slice if its opposing face is not opaque
+						if(info0->renders) {
+							
+							iv3 backface = position;
+							backface[ortho_2d] += backface_offset;
 
-						if(!info0.opaque[(i + 3) % 6] || !info1.renders || !info1.opaque[(i + 3) % 6]) {
-							slice[slice_idx] = block;
+							block_type backface_block = block_at(backface);
+							block_meta* info1 = w->block_info.get(backface_block);
+
+							if(!info0->opaque[(i + 3) % 6] || !info1->renders || !info1->opaque[(i + 3) % 6]) {
+								slice[slice_idx] = block;
+							} else {
+								slice[slice_idx] = block_air;
+							}
 						} else {
 							slice[slice_idx] = block_air;
 						}
-					} else {
-						slice[slice_idx] = block_air;
 					}
 				}
 			}
@@ -1041,35 +1043,37 @@ void chunk::do_mesh() { PROF_FUNC
 
 						i32 width = 1, height = 1;
 
-						// Combine same faces in +u_2d
-						for(; u + width < max[u_2d] && width < 31; width++) {
+						{PROF_SCOPE("Merge"_);
+							// Combine same faces in +u_2d
+							for(; u + width < max[u_2d] && width < 31; width++) {
 
-							iv3 w_pos = position;
-							w_pos[u_2d] += width;
+								iv3 w_pos = position;
+								w_pos[u_2d] += width;
 
-							mesh_face merge = build_face(slice[slice_idx + width], w_pos, i);
+								mesh_face merge = build_face(slice[slice_idx + width], w_pos, i);
 
-							if(!mesh_face::can_merge(merge, face_type, ortho_2d, false)) break;
-						}
+								if(!mesh_face::can_merge(merge, face_type, ortho_2d, false)) break;
+							}
 
-						// Combine all-same face row in +v_2d
-						bool done = false;
-						for(; v + height < max[v_2d] && height < 31; height++) {
-							for(i32 row_idx = 0; row_idx < width; row_idx++) {
+							// Combine all-same face row in +v_2d
+							bool done = false;
+							for(; v + height < max[v_2d] && height < 31; height++) {
+								for(i32 row_idx = 0; row_idx < width; row_idx++) {
 
-								iv3 wh_pos = position;
-								wh_pos[u_2d] += row_idx;
-								wh_pos[v_2d] +=  height;
+									iv3 wh_pos = position;
+									wh_pos[u_2d] += row_idx;
+									wh_pos[v_2d] +=  height;
 
-								mesh_face merge = build_face(slice[slice_idx + row_idx + height * max[u_2d]], wh_pos, i);
+									mesh_face merge = build_face(slice[slice_idx + row_idx + height * max[u_2d]], wh_pos, i);
 
-								if(!mesh_face::can_merge(merge, face_type, ortho_2d, true)) {
-									done = true;
+									if(!mesh_face::can_merge(merge, face_type, ortho_2d, true)) {
+										done = true;
+										break;
+									}
+								}
+								if(done) {
 									break;
 								}
-							}
-							if(done) {
-								break;
 							}
 						}
 
@@ -1089,14 +1093,17 @@ void chunk::do_mesh() { PROF_FUNC
 						iv3 v_3 = v_2 + width_offset;
 						iv2 wh(width, height), hw(height, width);
 						
-						u8 ao_0 = ao_at(v_0), ao_1 = ao_at(v_1), ao_2 = ao_at(v_2), ao_3 = ao_at(v_3);
-						
 						u8 l_0, l_1, l_2, l_3;
-						if(w->settings.smooth_light) {
-							l_0 = l_at(v_0).l; l_1 = l_at(v_1).l; l_2 = l_at(v_2).l; l_3 = l_at(v_3).l;
-						} else {
-							l_0 = l_at(v_0).l;
-							l_3 = l_2 = l_1 = l_0;
+						u8 ao_0, ao_1, ao_2, ao_3;
+						{PROF_SCOPE("ao + l"_);
+							ao_0 = ao_at(v_0); ao_1 = ao_at(v_1); ao_2 = ao_at(v_2); ao_3 = ao_at(v_3);
+							
+							if(w->settings.smooth_light) {
+								l_0 = l_at(v_0).l; l_1 = l_at(v_1).l; l_2 = l_at(v_2).l; l_3 = l_at(v_3).l;
+							} else {
+								l_0 = l_at(v_0).l;
+								l_3 = l_2 = l_1 = l_0;
+							}
 						}
 
 						v_0 *= units_per_voxel; v_1 *= units_per_voxel; v_2 *= units_per_voxel; v_3 *= units_per_voxel;
@@ -1105,7 +1112,7 @@ void chunk::do_mesh() { PROF_FUNC
 						i32 tex = face_type.info.textures[i];
 
 						{PROF_SCOPE("Model"_);
-						
+
 							if(face_type.info.custom_model) {
 
 								face_type.info.model(&new_mesh, face_type.info, i, v_0 / units_per_voxel, iv2(width, height), bv4(ao_0,ao_1,ao_2,ao_3), bv4(l_0,l_1,l_2,l_3));

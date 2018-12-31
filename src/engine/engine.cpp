@@ -12,18 +12,18 @@ EXPORT engine* start_up(platform_api* api) {
 
 	setup_fptrs();
 
-	state->basic_a = MAKE_PLATFORM_ALLOCATOR("basic");
+	state->basic_a = MAKE_PLATFORM_ALLOCATOR("basic"_);
 
 	begin_thread("main"_, &state->basic_a);
 
-	state->dbg_a = MAKE_PLATFORM_ALLOCATOR("dbg");
+	state->dbg_a = MAKE_PLATFORM_ALLOCATOR("dbg"_);
 	state->dbg.init(&state->dbg_a);
 	state->dbg.profiler.register_thread(180);
 
 	BEGIN_FRAME();
 
 	{ PROF_SCOPE("Init Log"_);
-		state->log_a = MAKE_PLATFORM_ALLOCATOR("log");
+		state->log_a = MAKE_PLATFORM_ALLOCATOR("log"_);
 		state->log = log_manager::make(&state->log_a);
 		state->dbg.console.setup_log(&state->log);
 
@@ -33,6 +33,7 @@ EXPORT engine* start_up(platform_api* api) {
 		state->log.add_stdout(log_level::debug);
 	}
 
+	LOG_PUSH_CONTEXT("startup"_);
 	LOG_INFO("Beginning startup..."_);
 
 	{ PROF_SCOPE("Start Log"_);
@@ -42,7 +43,7 @@ EXPORT engine* start_up(platform_api* api) {
 
 	{ PROF_SCOPE("Init Events"_);
 		LOG_INFO("Setting up events..."_);
-		state->evt_a = MAKE_PLATFORM_ALLOCATOR("event");
+		state->evt_a = MAKE_PLATFORM_ALLOCATOR("event"_);
 		state->evt = evt_manager::make(&state->evt_a);
 		state->evt.start();
 	}
@@ -55,13 +56,13 @@ EXPORT engine* start_up(platform_api* api) {
 
 	{ PROF_SCOPE("Init OpenGL"_);
 		LOG_INFO("Setting up OpenGL..."_);
-		state->ogl_a = MAKE_PLATFORM_ALLOCATOR("ogl");
+		state->ogl_a = MAKE_PLATFORM_ALLOCATOR("ogl"_);
 		state->ogl = ogl_manager::make(&state->window, &state->ogl_a);
 	}
 
 	{ PROF_SCOPE("Init ImGui"_);
 		LOG_INFO("Setting up IMGUI..."_);
-		state->imgui_a = MAKE_PLATFORM_ALLOCATOR("imgui");
+		state->imgui_a = MAKE_PLATFORM_ALLOCATOR("imgui"_);
 		state->imgui = imgui_manager::make(&state->window, &state->imgui_a);
 	}
 
@@ -79,6 +80,7 @@ EXPORT engine* start_up(platform_api* api) {
 	}
 
 	LOG_INFO("Done with startup!"_);
+	LOG_POP_CONTEXT();
 
 	END_FRAME();
 
@@ -90,8 +92,12 @@ EXPORT bool main_loop(engine* state) {
 
 	BEGIN_FRAME();
 
-	glClearColor(0.8f, 0.8f, 0.8f, 1.0f);
-	glClear((GLbitfield)gl_clear::color_buffer_bit | (GLbitfield)gl_clear::depth_buffer_bit);
+	{PROF_SCOPE("Main Loop"_);
+
+	{PROF_SCOPE("GL Clear"_);
+		glClearColor(0.8f, 0.8f, 0.8f, 1.0f);
+		glClear((GLbitfield)gl_clear::color_buffer_bit | (GLbitfield)gl_clear::depth_buffer_bit);
+	}
 
 	state->evt.run_events(state); 
 
@@ -105,24 +111,31 @@ EXPORT bool main_loop(engine* state) {
 
 	RESET_ARENA(&this_thread_data.scratch_arena);
 
+	{PROF_SCOPE("Swap Buffers"_);
 	CHECKED(swap_buffers, &state->window);
+	}
 
-	state->ogl.try_reload_programs();
+#ifndef RELEASE
+	{PROF_SCOPE("Reload Checks"_);
+		state->ogl.try_reload_programs();
 
-	if(state->apply_window_settings) {
-		if(global_api->apply_window_settings(&state->window)) {
+		if(state->apply_window_settings) {
+			if(global_api->apply_window_settings(&state->window)) {
 
-			state->imgui.gl_destroy();
-			state->ogl.gl_begin_reload();
+				state->imgui.gl_destroy();
+				state->ogl.gl_begin_reload();
 
-			global_api->recreate_window(&state->window);
-		
-			state->ogl.gl_end_reload();
-			state->imgui.gl_load();
+				global_api->recreate_window(&state->window);
+			
+				state->ogl.gl_end_reload();
+				state->imgui.gl_load();
 
-			gl_reload_game(state->game_state);
+				gl_reload_game(state->game_state);
+			}
+			state->apply_window_settings = false;
 		}
-		state->apply_window_settings = false;
+	}
+#endif
 	}
 
 	END_FRAME();
@@ -181,6 +194,7 @@ EXPORT void on_reload(platform_api* api, engine* state) {
 	state->func_state.reload_all();
 
 	begin_thread("main"_, &state->basic_a);
+	state->dbg.profiler.register_thread(180);
 
 	state->ogl.load_global_funcs();
 	state->imgui.reload();

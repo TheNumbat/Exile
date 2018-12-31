@@ -286,7 +286,8 @@ struct console_msg {
 	log_level lvl = log_level::console;
 	
 	string thread;
-	array<code_context> call_stack;
+	array<string> context_stack;
+	code_context publisher;
 	
 	string msg;
 	arena_allocator arena;

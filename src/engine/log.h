@@ -26,7 +26,7 @@ struct log_message {
 	string msg;
 	log_level level = log_level::debug;
 	
-	array<code_context> call_stack; // snapshot
+	array<string> context_stack; // snapshot
 	string thread_name;
 
 	code_context publisher;
@@ -87,7 +87,7 @@ struct log_manager {
 	void start(); // begin logging thread - call from one thread
 	void stop();  // end logging thread - call from one thread
 
-	void push_context(string context, code_context fake);
+	void push_context(string context);
 	void pop_context();
 
 	void add_file(platform_file file, log_level level, log_out_type type = log_out_type::plaintext, bool flush = false); // call from one thread before starting
@@ -102,8 +102,7 @@ struct log_manager {
 	void msg(string msg, log_level level, code_context context);
 };
 
-#define LOG_PUSH_CONTEXT(str) global_log->push_context(str, CONTEXT); 
-#define LOG_PUSH_CONTEXT_L(str) global_log->push_context(str##_, CONTEXT); 
+#define LOG_PUSH_CONTEXT(str) global_log->push_context(str); 
 #define LOG_POP_CONTEXT() global_log->pop_context();
 
 #define LOG_INFO(m) 	global_log->msg(m, log_level::info,  CONTEXT);

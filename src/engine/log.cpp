@@ -68,18 +68,16 @@ void log_manager::destroy() {
 	alloc = null;
 }
 
-void log_manager::push_context(string context, code_context fake) { 
+void log_manager::push_context(string context) { 
 
-	_memcpy(context.c_str, fake.c_function, context.len);
-
-	LOG_DEBUG_ASSERT(this_thread_data.call_stack_depth < MAX_CALL_STACK_DEPTH);
-	this_thread_data.call_stack[this_thread_data.call_stack_depth++] = fake;
+	LOG_DEBUG_ASSERT(this_thread_data.context_depth < MAX_CONTEXT_DEPTH);
+	this_thread_data.context_stack[this_thread_data.context_depth++] = context;
 }
 
 void log_manager::pop_context() { 
 
-	LOG_DEBUG_ASSERT(this_thread_data.call_stack_depth > 0);
-	this_thread_data.call_stack_depth--;
+	LOG_DEBUG_ASSERT(this_thread_data.context_depth > 0);
+	this_thread_data.context_depth--;
 }
 
 void log_manager::add_file(platform_file file, log_level level, log_out_type type, bool flush) { 
@@ -130,7 +128,7 @@ void log_manager::print_header(log_out* output) {
 		
 		if(output->type == log_out_type::plaintext) {
 			
-			string header = string::makef("%-8 [%-36] [%-20] [%-5] %-2\n"_, "time"_, "thread/context"_, "file:line"_, "level"_, "message"_);
+			string header = string::makef("%-8 [%-16] [%-20] [%-5] %-2\n"_, "time"_, "thread/context"_, "file:line"_, "level"_, "message"_);
 
 			output->file.write((void*)header.c_str, header.len - 1);
 			output->file.flush();
@@ -161,7 +159,7 @@ void log_manager::msgf(string fmt, log_level level, code_context context, Targs.
 	log_message lmsg;
 
 	u32 msg_len = size_stringf(fmt, args...);
-	u32 arena_size = msg_len + this_thread_data.name.len + this_thread_data.call_stack_depth * sizeof(code_context);
+	u32 arena_size = msg_len + this_thread_data.name.len + this_thread_data.context_depth * sizeof(string);
 	
 	arena_allocator arena = MAKE_ARENA("msg"_, arena_size, alloc);
 
@@ -172,9 +170,9 @@ void log_manager::msgf(string fmt, log_level level, code_context context, Targs.
 		lmsg.publisher = context;
 		lmsg.level = level;
 
-		lmsg.call_stack = array<code_context>::make_memory(this_thread_data.call_stack_depth, malloc(sizeof(code_context) * this_thread_data.call_stack_depth));
+		lmsg.context_stack = array<string>::make_memory(this_thread_data.context_depth, malloc(sizeof(string) * this_thread_data.context_depth));
 		lmsg.thread_name = string::make_copy(this_thread_data.name);
-		_memcpy(this_thread_data.call_stack, lmsg.call_stack.memory, sizeof(code_context) * this_thread_data.call_stack_depth);
+		_memcpy(this_thread_data.context_stack, lmsg.context_stack.memory, sizeof(string) * this_thread_data.context_depth);
 
 		lmsg.arena = arena;
 		message_queue.push(lmsg);
@@ -204,7 +202,7 @@ void log_manager::msg(string msg, log_level level, code_context context) {
 
 	log_message lmsg;
 
-	u32 arena_size = msg.len + this_thread_data.name.len + this_thread_data.call_stack_depth * sizeof(code_context);
+	u32 arena_size = msg.len + this_thread_data.name.len + this_thread_data.context_depth * sizeof(string);
 	
 	arena_allocator arena = MAKE_ARENA("msg"_, arena_size, alloc);
 
@@ -214,9 +212,9 @@ void log_manager::msg(string msg, log_level level, code_context context) {
 		lmsg.publisher = context;
 		lmsg.level = level;
 
-		lmsg.call_stack = array<code_context>::make_memory(this_thread_data.call_stack_depth, malloc(sizeof(code_context) * this_thread_data.call_stack_depth));
+		lmsg.context_stack = array<string>::make_memory(this_thread_data.context_depth, malloc(sizeof(string) * this_thread_data.context_depth));
 		lmsg.thread_name = string::make_copy(this_thread_data.name);
-		_memcpy(this_thread_data.call_stack, lmsg.call_stack.memory, sizeof(code_context) * this_thread_data.call_stack_depth);
+		_memcpy(this_thread_data.context_stack, lmsg.context_stack.memory, sizeof(string) * this_thread_data.context_depth);
 		
 		lmsg.arena = arena;
 		message_queue.push(lmsg);
@@ -245,8 +243,8 @@ void log_manager::msg(string msg, log_level level, code_context context) {
 string log_message::fmt_call_stack() { 
 
 	string cstack = string::make_cat(thread_name, "/"_);
-	for(u32 j = 0; j < call_stack.capacity; j++) {
-		string temp = string::make_cat_v(3, cstack, call_stack.get(j)->function(), "/"_);
+	for(u32 j = 0; j < context_stack.capacity; j++) {
+		string temp = string::make_cat_v(3, cstack, *context_stack.get(j), "/"_);
 		cstack.destroy();
 		cstack = temp;
 	}
@@ -303,7 +301,7 @@ string fmt_msg(log_message* msg, log_out_type type) {
 
 	if(type == log_out_type::plaintext) {
 
-		output = string::makef("%-8 [%-36] [%-20] [%] %\n"_, time, cstack, file_line, clevel, msg->msg);
+		output = string::makef("%-8 [%-16] [%-20] [%] %\n"_, time, cstack, file_line, clevel, msg->msg);
 
 	} else if(type == log_out_type::html) {
 

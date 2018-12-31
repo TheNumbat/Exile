@@ -1,7 +1,7 @@
 
 void exile::init() { PROF_FUNC
 
-	alloc = MAKE_PLATFORM_ALLOCATOR("world");
+	alloc = MAKE_PLATFORM_ALLOCATOR("world"_);
 
 	store = asset_store::make(&alloc);
 	store.load("assets/game.asset"_);

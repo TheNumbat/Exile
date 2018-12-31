@@ -23,7 +23,7 @@ struct allocator {
 #define POP_ALLOC() 	this_thread_data.alloc_stack.pop();
 #define CURRENT_ALLOC()	(*this_thread_data.alloc_stack.top())
 
-#define MAKE_PLATFORM_ALLOCATOR(n) make_platform_allocator(n##_, CONTEXT)
+#define MAKE_PLATFORM_ALLOCATOR(n) make_platform_allocator(n, CONTEXT)
 
 #define MAKE_ARENA(n, size, a) make_arena_allocator(n, size, a, CONTEXT) 
 #define MAKE_ARENA_FROM_CONTEXT(n, size) make_arena_allocator(n, size, CURRENT_ALLOC(), CONTEXT) 

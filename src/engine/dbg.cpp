@@ -2,9 +2,6 @@
 
 #ifdef PROFILE
 func_scope::func_scope(code_context context, string name) {
-	LOG_DEBUG_ASSERT(this_thread_data.call_stack_depth < MAX_CALL_STACK_DEPTH);
-
-	this_thread_data.call_stack[this_thread_data.call_stack_depth++] = context;
 
 	dbg_msg m;
 	m.type = dbg_msg_type::enter_func;
@@ -15,7 +12,6 @@ func_scope::func_scope(code_context context, string name) {
 }
 
 func_scope::~func_scope() {
-	this_thread_data.call_stack_depth--;
 
 	dbg_msg m;
 	m.type = dbg_msg_type::exit_func;
@@ -505,16 +501,15 @@ void dbg_console::UI(platform_window* window) { PROF_FUNC
 
 				ImGui::PushStyleColor(ImGuiCol_Text, col);
 				ImGui::Text("[%s] ", level.c_str);
-				if(ImGui::IsItemClicked() && it->call_stack.capacity) {
-					code_context* last = it->call_stack.get(it->call_stack.capacity - 1);
-					CHECKED(shell_exec, string::makef("subl_remote_open.bat %:%"_, last->path(), last->line));
+				if(ImGui::IsItemClicked() && it->context_stack.capacity) {
+					CHECKED(shell_exec, string::makef("subl_remote_open.bat %:%"_, it->publisher.path(), it->publisher.line));
 				}
 				if(ImGui::IsItemHovered() && it->lvl != log_level::console) {
 					ImGui::PopStyleColor();
 					ImGui::BeginTooltip();
 					ImGui::TextUnformatted(it->thread);
-					FORARR(loc, it->call_stack) {
-						ImGui::TextUnformatted(loc->c_function);
+					FORARR(loc, it->context_stack) {
+						ImGui::TextUnformatted(*loc);
 					}
 					ImGui::EndTooltip();
 					ImGui::PushStyleColor(ImGuiCol_Text, col);
@@ -1253,7 +1248,8 @@ CALLBACK void dbg_add_log(log_message* msg, void* param) {
 	
 	m->msg = string::make_copy(msg->msg, &m->arena);
 	m->thread = string::make_copy(msg->thread_name, &m->arena);
-	m->call_stack = array<code_context>::make_copy(&msg->call_stack, &m->arena);
+	m->context_stack = array<string>::make_copy(&msg->context_stack, &m->arena);
+	m->publisher = msg->publisher;
 
 	global_api->release_mutex(&console->lines_mut);
 }

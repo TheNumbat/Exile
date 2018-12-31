@@ -34,7 +34,7 @@ struct mesh_chunk {
 	gpu_object_id gpu = -1;
 	bool dirty = false;
 
-	static mesh_chunk make_cpu(u32 verts = 16384, allocator* alloc = null);
+	static mesh_chunk make_cpu(u32 verts = 4096, allocator* alloc = null);
 	void init_gpu();
 	void destroy();
 	void free_cpu();
