@@ -34,10 +34,6 @@ u32 string::parse_u32(u32 idx, u32* used) {
 
 u32 string::write(u32 idx, string ins, bool size) { 
 
-#ifdef MORE_
-	
-#endif
-
 	if(ins.len == 0) return idx;
 	if(!size) _memcpy(ins.c_str, c_str + idx, ins.len - 1);
 	return idx + ins.len - 1;
@@ -902,9 +898,6 @@ u32 string::get_next_codepoint(u32* index) {
 #else
 // adapted from http://www.json.org/JSON_checker/utf8_decode.c
 u32 string::get_next_codepoint(u32* index) { 
-#ifdef MORE_
-	
-#endif
 
 	char first, second, third, fourth;
 	u32  codepoint, idx = *index;

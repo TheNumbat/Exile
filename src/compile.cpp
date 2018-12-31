@@ -5,7 +5,7 @@
 
 #define BLOCK_OR_EXIT_ON_ERROR	// __debugbreak in debugger or exit() on log_level::error | log_level::fatal always does this
 	
-#define ILE					// do function enter/exit iling
+#define PROFILE					// do function enter/exit profiling
 	
 #define ZERO_ARENA				// memset arena allocator store to zero on reset
 

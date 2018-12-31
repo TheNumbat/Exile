@@ -247,10 +247,6 @@ T& vector<T>::operator[](u32 idx) {
 template<typename T>
 inline T* vector<T>::get(u32 idx) { 
 
-#ifdef MORE_
-	
-#endif
-
 #ifdef BOUNDS_CHECK
 	if(memory && idx >= 0 && idx < capacity) {
 		return memory + idx;
@@ -350,10 +346,6 @@ vector<T> vector<T>::make_copy(vector<T> source) {
 
 template<typename T>
 T* vector<T>::push(T value) { 
-
-#ifdef MORE_
-	
-#endif
 
 	if(size == capacity) {
 

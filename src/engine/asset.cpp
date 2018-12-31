@@ -39,10 +39,6 @@ asset* asset_store::get(string name) {
 
 glyph_data _asset_raster_font::get_glyph(u32 codepoint) { 
 
-#ifdef MORE_
-	
-#endif
-
 	u32 low = 0, high = glyphs.capacity;
 
 	// binary search

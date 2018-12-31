@@ -202,10 +202,6 @@ locking_queue<T> locking_queue<T>::make(u32 capacity) {
 template<typename T>
 T* queue<T>::get(u32 idx) { 
 
-#ifdef MORE_
-	
-#endif
-
 #ifdef BOUNDS_CHECK
 	LOG_ASSERT(start != UINT32_MAX);
 	if(memory && idx >= 0 && idx < capacity) {

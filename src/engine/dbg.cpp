@@ -27,7 +27,7 @@ dbg_profiler dbg_profiler::make(allocator* alloc) {
 
 	ret.alloc = alloc;
 
-	ret.thread_stats = map<platform_thread_id, thread_ile*>::make(global_api->get_num_cpus(), alloc);
+	ret.thread_stats = map<platform_thread_id, thread_profile*>::make(global_api->get_num_cpus(), alloc);
 	ret.alloc_stats  = map<allocator, alloc_profile*>::make(32, alloc);
 
 	ret.selected_thread = global_api->this_thread_id();
@@ -43,7 +43,7 @@ void dbg_profiler::destroy() {
 
 	FORMAP(it, thread_stats) {
 		it->value->destroy();
-		free(it->value, sizeof(thread_ile));
+		free(it->value, sizeof(thread_profile));
 	}
 	thread_stats.destroy();
 	global_api->destroy_mutex(&stats_map_mut);
@@ -172,7 +172,7 @@ void frame_profile::destroy() {
 	allocations.destroy();
 }
 
-void thread_ile::destroy() { 
+void thread_profile::destroy() { 
 
 	FORQ_BEGIN(f, frames) {
 		
@@ -216,19 +216,19 @@ void dbg_manager::destroy_prof() {
 
 void dbg_profiler::recurse(vector<profile_node*> list) { 
 
-	switch(_sort) {
-	case _sort_type::none: break;
-	case _sort_type::name: {
-		list.stable_sort(_sort_name);
+	switch(prof_sort) {
+	case prof_sort_type::none: break;
+	case prof_sort_type::name: {
+		list.stable_sort(prof_sort_name);
 	} break;
-	case _sort_type::heir: {
-		list.stable_sort(_sort_heir);
+	case prof_sort_type::heir: {
+		list.stable_sort(prof_sort_heir);
 	} break;
-	case _sort_type::self: {
-		list.stable_sort(_sort_self);
+	case prof_sort_type::self: {
+		list.stable_sort(prof_sort_self);
 	} break;
-	case _sort_type::calls: {
-		list.stable_sort(_sort_calls);
+	case prof_sort_type::calls: {
+		list.stable_sort(prof_sort_calls);
 	} break;
 	}
 
@@ -657,7 +657,7 @@ void dbg_profiler::UI(platform_window* window) { PROF_FUNC
 	ImGui::MapCombo("Select Thread"_, threads, &selected_thread);
 	threads.destroy();
 
-	thread_ile** stat = thread_stats.try_get(selected_thread);
+	thread_profile** stat = thread_stats.try_get(selected_thread);
 	if(!stat) {
 		FORMAP(it, thread_stats) {
 			stat = &it->value;
@@ -667,7 +667,7 @@ void dbg_profiler::UI(platform_window* window) { PROF_FUNC
 	}
 	LOG_ASSERT(stat);
 
-	thread_ile* thread = *stat;
+	thread_profile* thread = *stat;
 	global_api->release_mutex(&stats_map_mut);
 	
 	global_api->aquire_mutex(&thread->mut);
@@ -686,7 +686,7 @@ void dbg_profiler::UI(platform_window* window) { PROF_FUNC
 		
 		if(ImGui::TreeNodeEx("Profile"_, ImGuiTreeNodeFlags_DefaultOpen)) {
 
-			ImGui::EnumCombo("Sort By: "_, &_sort);
+			ImGui::EnumCombo("Sort By: "_, &prof_sort);
 
 			ImGui::Columns(4);
 			ImGui::SetColumnWidth(0, 300);
@@ -762,7 +762,7 @@ void dbg_profiler::register_thread(u32 frames) {
 
 	PUSH_ALLOC(alloc);
 
-	thread_ile* thread = NEW(thread_ile);
+	thread_profile* thread = NEW(thread_profile);
 	thread->frame_buf_size = frames;
 	thread->frames = queue<frame_profile>::make(frames, alloc);
 	thread->name = this_thread_data.name;
@@ -781,12 +781,12 @@ void dbg_profiler::unregister_thread() {
 
 	global_api->aquire_mutex(&stats_map_mut);
 
-	thread_ile** stat = thread_stats.try_get(global_api->this_thread_id());
+	thread_profile** stat = thread_stats.try_get(global_api->this_thread_id());
 	if(!stat) return;
-	thread_ile* thread = *stat;
+	thread_profile* thread = *stat;
 
 	thread->destroy();
-	PUSH_ALLOC(alloc); {free(thread, sizeof(thread_ile));} POP_ALLOC();
+	PUSH_ALLOC(alloc); {free(thread, sizeof(thread_profile));} POP_ALLOC();
 
 	thread_stats.erase(global_api->this_thread_id());
 	global_api->release_mutex(&stats_map_mut);
@@ -840,7 +840,7 @@ void dbg_profiler::collate_timings() {
 	u64 frame_perf_start = 0;
 
 	global_api->aquire_mutex(&stats_map_mut);
-	thread_ile* thread = *thread_stats.get(global_api->this_thread_id());
+	thread_profile* thread = *thread_stats.get(global_api->this_thread_id());
 	global_api->release_mutex(&stats_map_mut);
 
 	global_api->aquire_mutex(&thread->mut);
@@ -1298,22 +1298,22 @@ void dbg_value::destroy(allocator* alloc) {
 	} 
 }
 
-bool _sort_name(profile_node* l, profile_node* r) {
+bool prof_sort_name(profile_node* l, profile_node* r) {
 
 	return l->context.function() <= r->context.function();
 }
 
-bool _sort_heir(profile_node* l, profile_node* r) {
+bool prof_sort_heir(profile_node* l, profile_node* r) {
 
 	return r->heir <= l->heir;
 }
 
-bool _sort_self(profile_node* l, profile_node* r) {
+bool prof_sort_self(profile_node* l, profile_node* r) {
 
 	return r->self <= l->self;
 }
 
-bool _sort_calls(profile_node* l, profile_node* r) {
+bool prof_sort_calls(profile_node* l, profile_node* r) {
 
 	return r->calls <= l->calls;
 }

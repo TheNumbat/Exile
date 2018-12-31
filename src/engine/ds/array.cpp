@@ -70,10 +70,6 @@ array<T> array<T>::make_memory(u32 capacity, void* memory) {
 template<typename T>
 inline T* array<T>::get(u32 idx) { 
 
-#ifdef MORE_
-	
-#endif
-
 #ifdef BOUNDS_CHECK
 	if(memory && idx >= 0 && idx < capacity) {
 

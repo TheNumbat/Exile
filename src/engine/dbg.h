@@ -173,7 +173,7 @@ struct alloc_profile {
 	void destroy();
 };
 
-struct thread_ile {
+struct thread_profile {
 
 	string name;
 	queue<frame_profile> frames;
@@ -183,11 +183,11 @@ struct thread_ile {
 	i32 selected_frame = 1;
 	bool in_frame = false;
 
-	static thread_ile make();
+	static thread_profile make();
 	void destroy();
 };
 
-enum class _sort_type : u8 {
+enum class prof_sort_type : u8 {
 	none,
 	name,
 	heir,
@@ -231,13 +231,13 @@ struct dbg_value {
 struct dbg_profiler {
 
 	bool frame_pause = true;
-	_sort_type _sort = _sort_type::heir;
+	prof_sort_type prof_sort = prof_sort_type::heir;
 
 	platform_thread_id selected_thread;
 	f32 last_frame_time = 0.0f;
 
 	platform_mutex stats_map_mut;
-	map<platform_thread_id, thread_ile*> thread_stats;
+	map<platform_thread_id, thread_profile*> thread_stats;
 	
 	platform_mutex alloc_map_mut;
 	map<allocator, alloc_profile*> alloc_stats;
@@ -357,8 +357,8 @@ CALLBACK void dbg_reup_window(void* eng);
 CALLBACK void dbg_add_log(log_message* msg, void*);
 CALLBACK void console_cmd_clear(string, void* data);
 
-bool _sort_name(profile_node* l, profile_node* r);
-bool _sort_heir(profile_node* l, profile_node* r);
-bool _sort_self(profile_node* l, profile_node* r);
-bool _sort_calls(profile_node* l, profile_node* r);
+bool prof_sort_name(profile_node* l, profile_node* r);
+bool prof_sort_heir(profile_node* l, profile_node* r);
+bool prof_sort_self(profile_node* l, profile_node* r);
+bool prof_sort_calls(profile_node* l, profile_node* r);
 bool operator<=(addr_info l, addr_info r);
