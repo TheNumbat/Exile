@@ -13,6 +13,7 @@ EXPORT engine* start_up(platform_api* api) {
 	setup_fptrs();
 
 	state->basic_a = MAKE_PLATFORM_ALLOCATOR("basic");
+	state->basic_a.debug = false;
 
 	begin_thread("main"_, &state->basic_a);
 
@@ -22,41 +23,55 @@ EXPORT engine* start_up(platform_api* api) {
 
 	BEGIN_FRAME();
 
-	state->log_a = MAKE_PLATFORM_ALLOCATOR("log");
-	state->log = log_manager::make(&state->log_a);
-	state->dbg.console.setup_log(&state->log);
+	{ PROF_SCOPE("Init Log"_);
+		state->log_a = MAKE_PLATFORM_ALLOCATOR("log");
+		state->log = log_manager::make(&state->log_a);
+		state->dbg.console.setup_log(&state->log);
 
-	platform_file log_all_file;
-	CHECKED(create_file, &log_all_file, "log_all.html"_, platform_file_open_op::cleared);
-	state->log.add_file(log_all_file, log_level::alloc, log_out_type::html);
-	state->log.add_stdout(log_level::debug);
+		platform_file log_all_file;
+		CHECKED(create_file, &log_all_file, "log_all.html"_, platform_file_open_op::cleared);
+		state->log.add_file(log_all_file, log_level::alloc, log_out_type::html);
+		state->log.add_stdout(log_level::debug);
+	}
 
 	LOG_INFO("Beginning startup..."_);
 
-	LOG_INFO("Starting logger..."_);
-	state->log.start();
+	{ PROF_SCOPE("Start Log"_);
+		LOG_INFO("Starting logger..."_);
+		state->log.start();
+	}
 
-	LOG_INFO("Setting up events..."_);
-	state->evt_a = MAKE_PLATFORM_ALLOCATOR("event");
-	state->evt = evt_manager::make(&state->evt_a);
-	state->evt.start();
+	{ PROF_SCOPE("Init Events"_);
+		LOG_INFO("Setting up events..."_);
+		state->evt_a = MAKE_PLATFORM_ALLOCATOR("event");
+		state->evt = evt_manager::make(&state->evt_a);
+		state->evt.start();
+	}
 
-	LOG_INFO("Creating window..."_);
-	_memcpy("Exile", state->window.settings.c_title, 6);
-	CHECKED(create_window, &state->window);
+	{ PROF_SCOPE("Init Window"_);
+		LOG_INFO("Creating window..."_);
+		_memcpy("Exile", state->window.settings.c_title, 6);
+		CHECKED(create_window, &state->window);
+	}
 
-	LOG_INFO("Setting up OpenGL..."_);
-	state->ogl_a = MAKE_PLATFORM_ALLOCATOR("ogl");
-	state->ogl = ogl_manager::make(&state->window, &state->ogl_a);
+	{ PROF_SCOPE("Init OpenGL"_);
+		LOG_INFO("Setting up OpenGL..."_);
+		state->ogl_a = MAKE_PLATFORM_ALLOCATOR("ogl");
+		state->ogl = ogl_manager::make(&state->window, &state->ogl_a);
+	}
 
-	LOG_INFO("Setting up IMGUI..."_);
-	state->imgui_a = MAKE_PLATFORM_ALLOCATOR("imgui");
-	state->imgui = imgui_manager::make(&state->window, &state->imgui_a);
+	{ PROF_SCOPE("Init ImGui"_);
+		LOG_INFO("Setting up IMGUI..."_);
+		state->imgui_a = MAKE_PLATFORM_ALLOCATOR("imgui");
+		state->imgui = imgui_manager::make(&state->window, &state->imgui_a);
+	}
 
-	LOG_INFO("Setting up game..."_);
-	state->game_state = start_up_game(state);
+	{ PROF_SCOPE("Init Game"_);
+		LOG_INFO("Setting up game..."_);
+		state->game_state = start_up_game(state);
+	}
 
-	{
+	{ PROF_SCOPE("Debug Settings"_);
 		state->dbg.store.add_var("window/settings"_, &state->window.settings);
 		state->dbg.store.add_ele("window/apply"_, FPTR(dbg_reup_window), state);
 		state->dbg.store.add_val("ogl/info"_, &state->ogl.info);
@@ -80,7 +95,7 @@ EXPORT bool main_loop(engine* state) {
 	glClear((GLbitfield)gl_clear::color_buffer_bit | (GLbitfield)gl_clear::depth_buffer_bit);
 
 	state->evt.run_events(state); 
-		
+
 	state->imgui.begin_frame(&state->window);
 	
 	run_game(state->game_state);
@@ -141,6 +156,7 @@ EXPORT void shut_down(engine* state) {
 	state->dbg.destroy();
 
 	LOG_DEBUG("Done with shutdown!"_);
+	END_FRAME();
 
 	state->log.stop();
 	state->log.destroy();

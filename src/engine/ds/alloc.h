@@ -10,7 +10,7 @@ struct allocator {
 
 	code_context context;
 
-	bool track_sizes = true;
+	bool track_sizes = true, debug = true;
 	char c_name[ALLOC_NAME_LEN] = {};
 	string name();
 };
@@ -89,7 +89,6 @@ CALLBACK void  pool_free(void*, u64, allocator*, code_context); // does nothing
 
 inline void _memcpy(void* source, void* dest, u64 size);
 void _memset(void* mem, u64 size, u8 val);
-void _memcpy_ctx(void* source, void* dest, u64 size);
 
 bool operator==(allocator l, allocator r);
 inline u32 hash(allocator a);

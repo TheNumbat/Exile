@@ -1,6 +1,6 @@
 
 
-asset_store asset_store::make(allocator* a) { PROF
+asset_store asset_store::make(allocator* a) { 
 
 	asset_store ret;
 
@@ -10,7 +10,7 @@ asset_store asset_store::make(allocator* a) { PROF
 	return ret;
 }
 
-void asset_store::destroy() { PROF
+void asset_store::destroy() { 
 
 	path.destroy(alloc);
 	assets.destroy();
@@ -25,7 +25,7 @@ void asset_store::destroy() { PROF
 	}
 }
 
-asset* asset_store::get(string name) { PROF
+asset* asset_store::get(string name) { 
 
 	asset* a = assets.try_get(name);
 
@@ -39,8 +39,8 @@ asset* asset_store::get(string name) { PROF
 
 glyph_data _asset_raster_font::get_glyph(u32 codepoint) { 
 
-#ifdef MORE_PROF
-	PROF
+#ifdef MORE_
+	
 #endif
 
 	u32 low = 0, high = glyphs.capacity;
@@ -69,7 +69,7 @@ glyph_data _asset_raster_font::get_glyph(u32 codepoint) {
 	}
 }
 
-glyph_data asset_store::get_glyph(string font_asset_name, u32 codepoint) { PROF
+glyph_data asset_store::get_glyph(string font_asset_name, u32 codepoint) { 
 
 	asset* a = get(font_asset_name);
 
@@ -78,7 +78,7 @@ glyph_data asset_store::get_glyph(string font_asset_name, u32 codepoint) { PROF
 	return a->raster_font.get_glyph(codepoint);
 }
 
-bool asset_store::try_reload() { PROF
+bool asset_store::try_reload() { 
 
 	platform_file_attributes new_attrib;
 	
@@ -105,7 +105,7 @@ bool asset_store::try_reload() { PROF
 	return false;
 }
 
-void asset_store::load(string file) { PROF
+void asset_store::load(string file) { 
 
 	platform_file store_file;
 

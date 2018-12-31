@@ -5,7 +5,7 @@
 
 #define BLOCK_OR_EXIT_ON_ERROR	// __debugbreak in debugger or exit() on log_level::error | log_level::fatal always does this
 	
-#define PROFILE					// do function enter/exit profiling
+#define ILE					// do function enter/exit iling
 	
 #define ZERO_ARENA				// memset arena allocator store to zero on reset
 
@@ -14,8 +14,8 @@
 #define FAST_CLOSE 				// don't wait for the thread pool to finish its work before shutting down (breaks hot reloading)
 */
 	
-#define RELEASE // turn off everything for a true release build
-#define FAST_CLOSE
+// #define RELEASE // turn off everything for a true release build
+// #define FAST_CLOSE
 
 #include "engine/compile.h"
 engine* eng = null;

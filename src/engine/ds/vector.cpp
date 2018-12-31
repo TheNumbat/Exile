@@ -1,16 +1,16 @@
 
 template<typename T> 
-void vector<T>::clear() { PROF
+void vector<T>::clear() { 
 	size = 0;
 }
 
 template<typename T>
-void vector<T>::zero() { PROF
+void vector<T>::zero() { 
 	_memset(memory, capacity * sizeof(T), 0);
 }
 
 template<typename T>
-T* vector<T>::find(T val) { PROF
+T* vector<T>::find(T val) { 
 
 	T* ret = null;
 	FORVEC(it, *this) {
@@ -24,7 +24,7 @@ T* vector<T>::find(T val) { PROF
 }
 
 template<typename T>
-void vector<T>::erase(T val) { PROF
+void vector<T>::erase(T val) { 
 
 	FORVEC(it, *this) {
 		if(*it == val) {
@@ -35,7 +35,7 @@ void vector<T>::erase(T val) { PROF
 }
 
 template<typename T>
-u32 vector<T>::partition(u32 low, u32 high) { PROF
+u32 vector<T>::partition(u32 low, u32 high) { 
 
 	u32 pivot = low;
 	for (u32 i = low + 1; i <= high; i++) {
@@ -58,7 +58,7 @@ u32 vector<T>::partition(u32 low, u32 high) { PROF
 }
 
 template<typename T>
-u32 vector<T>::partition(bool (*less)(T,T), u32 low, u32 high) { PROF
+u32 vector<T>::partition(bool (*less)(T,T), u32 low, u32 high) { 
 
 	u32 pivot = low;
 	for (u32 i = low + 1; i <= high; i++) {
@@ -81,7 +81,7 @@ u32 vector<T>::partition(bool (*less)(T,T), u32 low, u32 high) { PROF
 }
 
 template<typename T> 
-void vector<T>::sort(u32 low, u32 high, bool first) { PROF
+void vector<T>::sort(u32 low, u32 high, bool first) { 
 		
 	if (!size) return;
 
@@ -98,7 +98,7 @@ void vector<T>::sort(u32 low, u32 high, bool first) { PROF
 }
 
 template<typename T>
-void vector<T>::sort(bool (*less)(T,T), u32 low, u32 high, bool first) { PROF
+void vector<T>::sort(bool (*less)(T,T), u32 low, u32 high, bool first) { 
 
 	if (!size) return;
 
@@ -115,7 +115,7 @@ void vector<T>::sort(bool (*less)(T,T), u32 low, u32 high, bool first) { PROF
 }
 
 template<typename T>
-void vector<T>::merge(u32 min, u32 mid, u32 max) { PROF
+void vector<T>::merge(u32 min, u32 mid, u32 max) { 
 
 	u32 i = min, j = mid + 1, k = 0;
 	vector<T> temp = make(max - min + 1);
@@ -142,7 +142,7 @@ void vector<T>::merge(u32 min, u32 mid, u32 max) { PROF
 }
 
 template<typename T> 
-void vector<T>::mergesort(u32 min, u32 max) { PROF
+void vector<T>::mergesort(u32 min, u32 max) { 
 
 	if(min < max) {
 		u32 mid = (min + max) / 2;
@@ -155,14 +155,14 @@ void vector<T>::mergesort(u32 min, u32 max) { PROF
 }
 
 template<typename T>
-void vector<T>::stable_sort() { PROF
+void vector<T>::stable_sort() { 
 
 	if(size == 0) return;
 	mergesort(0, size - 1);
 }
 
 template<typename T>
-void vector<T>::merge(bool (*leq)(T,T), u32 min, u32 mid, u32 max) { PROF
+void vector<T>::merge(bool (*leq)(T,T), u32 min, u32 mid, u32 max) { 
 
 	u32 i = min, j = mid + 1, k = 0;
 	vector<T> temp = make(max - min + 1);
@@ -189,7 +189,7 @@ void vector<T>::merge(bool (*leq)(T,T), u32 min, u32 mid, u32 max) { PROF
 }
 
 template<typename T> 
-void vector<T>::mergesort(bool (*leq)(T,T), u32 min, u32 max) { PROF
+void vector<T>::mergesort(bool (*leq)(T,T), u32 min, u32 max) { 
 
 	if(min < max) {
 		u32 mid = (min + max) / 2;
@@ -202,14 +202,14 @@ void vector<T>::mergesort(bool (*leq)(T,T), u32 min, u32 max) { PROF
 }
 
 template<typename T>
-void vector<T>::stable_sort(bool (*leq)(T,T)) { PROF
+void vector<T>::stable_sort(bool (*leq)(T,T)) { 
 
 	if(size == 0) return;
 	mergesort(leq, 0, size - 1);
 }
 
 template<typename T>
-vector<T> vector<T>::make_copy(vector<T> source, allocator* a) { PROF
+vector<T> vector<T>::make_copy(vector<T> source, allocator* a) { 
 
 	vector<T> ret = vector<T>::make(source.capacity, a);
 
@@ -224,7 +224,7 @@ vector<T> vector<T>::make_copy(vector<T> source, allocator* a) { PROF
 }
 
 template<typename T>
-vector<T> vector<T>::make_copy_trim(vector<T> source, allocator* a) { PROF
+vector<T> vector<T>::make_copy_trim(vector<T> source, allocator* a) { 
 
 	vector<T> ret = vector<T>::make(source.size, a);
 
@@ -247,8 +247,8 @@ T& vector<T>::operator[](u32 idx) {
 template<typename T>
 inline T* vector<T>::get(u32 idx) { 
 
-#ifdef MORE_PROF
-	PROF
+#ifdef MORE_
+	
 #endif
 
 #ifdef BOUNDS_CHECK
@@ -265,13 +265,13 @@ inline T* vector<T>::get(u32 idx) {
 }
 
 template<typename T>
-void vector<T>::grow() { PROF
+void vector<T>::grow() { 
 	
 	resize(capacity > 0 ? 2 * capacity : 8);
 }
 
 template<typename T>
-void vector<T>::destroy() { PROF
+void vector<T>::destroy() { 
 
 	if(memory) {
 
@@ -284,7 +284,7 @@ void vector<T>::destroy() { PROF
 }
 
 template<typename T>
-vector<T> vector<T>::make(u32 capacity, allocator* a) { PROF
+vector<T> vector<T>::make(u32 capacity, allocator* a) { 
 
 	vector<T> ret;
 
@@ -295,7 +295,7 @@ vector<T> vector<T>::make(u32 capacity, allocator* a) { PROF
 }
 
 template<typename T>
-vector<T> vector<T>::make(u32 capacity) { PROF
+vector<T> vector<T>::make(u32 capacity) { 
 
 	vector<T> ret;
 
@@ -306,7 +306,7 @@ vector<T> vector<T>::make(u32 capacity) { PROF
 }
 
 template<typename T>
-void vector<T>::resize(u32 new_capacity) { PROF
+void vector<T>::resize(u32 new_capacity) { 
 
 	if(new_capacity == 0) {
 		if(memory) {
@@ -334,7 +334,7 @@ void vector<T>::resize(u32 new_capacity) { PROF
 }
 
 template<typename T>
-vector<T> vector<T>::make_copy(vector<T> source) { PROF
+vector<T> vector<T>::make_copy(vector<T> source) { 
 
 	vector<T> ret = vector<T>::make(source.capacity, source.alloc);
 
@@ -351,8 +351,8 @@ vector<T> vector<T>::make_copy(vector<T> source) { PROF
 template<typename T>
 T* vector<T>::push(T value) { 
 
-#ifdef MORE_PROF
-	PROF
+#ifdef MORE_
+	
 #endif
 
 	if(size == capacity) {
@@ -368,7 +368,7 @@ T* vector<T>::push(T value) {
 
 
 template<typename T>
-void vector<T>::pop() { PROF 
+void vector<T>::pop() {  
 
 	if(size > 0) {
 		size--;
@@ -376,7 +376,7 @@ void vector<T>::pop() { PROF
 }
 
 template<typename T>
-T* vector<T>::front() { PROF 
+T* vector<T>::front() {  
 
 	if(size > 0) {
 		return memory;
@@ -387,7 +387,7 @@ T* vector<T>::front() { PROF
 }
 
 template<typename T>
-T* vector<T>::back() { PROF 
+T* vector<T>::back() {  
 
 	if(size) {
 		
@@ -399,7 +399,7 @@ T* vector<T>::back() { PROF
 }
 
 template<typename T>
-void vector<T>::erase(u32 index, u32 num) { PROF
+void vector<T>::erase(u32 index, u32 num) { 
 
 #ifdef BOUNDS_CHECK
 	if(size >= num) {
@@ -424,12 +424,12 @@ void vector<T>::erase(u32 index, u32 num) { PROF
 }
 
 template<typename T>
-void vector<T>::pop_front() { PROF
+void vector<T>::pop_front() { 
 
 	erase(0);
 }
 
 template<typename T>
-bool vector<T>::empty() { PROF
+bool vector<T>::empty() { 
 	return size == 0;
 }

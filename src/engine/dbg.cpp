@@ -1,11 +1,37 @@
 
-dbg_profiler dbg_profiler::make(allocator* alloc) { PROF
+
+#ifdef PROFILE
+func_scope::func_scope(code_context context, string name) {
+	LOG_DEBUG_ASSERT(this_thread_data.call_stack_depth < MAX_CALL_STACK_DEPTH);
+
+	this_thread_data.call_stack[this_thread_data.call_stack_depth++] = context;
+
+	dbg_msg m;
+	m.type = dbg_msg_type::enter_func;
+	m.context = context;
+	if(name.c_str) _memcpy(name.c_str, m.context.c_function, name.len);
+	
+	POST_MSG(m);
+}
+
+func_scope::~func_scope() {
+	this_thread_data.call_stack_depth--;
+
+	dbg_msg m;
+	m.type = dbg_msg_type::exit_func;
+
+	POST_MSG(m);
+}
+#endif
+
+
+dbg_profiler dbg_profiler::make(allocator* alloc) { 
 
 	dbg_profiler ret;
 
 	ret.alloc = alloc;
 
-	ret.thread_stats = map<platform_thread_id, thread_profile*>::make(global_api->get_num_cpus(), alloc);
+	ret.thread_stats = map<platform_thread_id, thread_ile*>::make(global_api->get_num_cpus(), alloc);
 	ret.alloc_stats  = map<allocator, alloc_profile*>::make(32, alloc);
 
 	ret.selected_thread = global_api->this_thread_id();
@@ -15,13 +41,13 @@ dbg_profiler dbg_profiler::make(allocator* alloc) { PROF
 	return ret;
 }
 
-void dbg_profiler::destroy() { PROF
+void dbg_profiler::destroy() { 
 
 	PUSH_ALLOC(alloc);
 
 	FORMAP(it, thread_stats) {
 		it->value->destroy();
-		free(it->value, sizeof(thread_profile));
+		free(it->value, sizeof(thread_ile));
 	}
 	thread_stats.destroy();
 	global_api->destroy_mutex(&stats_map_mut);
@@ -36,7 +62,7 @@ void dbg_profiler::destroy() { PROF
 	POP_ALLOC();
 }
 
-dbg_value_store dbg_value_store::make(allocator* alloc) { PROF
+dbg_value_store dbg_value_store::make(allocator* alloc) { 
 
 	dbg_value_store ret;
 
@@ -46,12 +72,12 @@ dbg_value_store dbg_value_store::make(allocator* alloc) { PROF
 	return ret;
 }
 
-void dbg_value_store::destroy() { PROF
+void dbg_value_store::destroy() { 
 
 	value_store.destroy(alloc);
 }
 
-void dbg_console::add_command(string input, _FPTR* func, void* param) { PROF
+void dbg_console::add_command(string input, _FPTR* func, void* param) { 
 
 	console_cmd cmd;
 	cmd.func.set(func);
@@ -64,13 +90,13 @@ void dbg_console::add_command(string input, _FPTR* func, void* param) { PROF
 	commands.insert(name, cmd);
 }
 
-CALLBACK void console_cmd_clear(string, void* data) { PROF
+CALLBACK void console_cmd_clear(string, void* data) { 
 
 	dbg_console* console = (dbg_console*)data;
 	console->clear();
 }
 
-void dbg_console::clear() { PROF
+void dbg_console::clear() { 
 
 	FORQ_BEGIN(it, lines) {
 		if(it->lvl == log_level::console) {
@@ -82,7 +108,7 @@ void dbg_console::clear() { PROF
 	lines.clear();
 }
 
-void dbg_console::init(allocator* a) { PROF
+void dbg_console::init(allocator* a) { 
 
 	alloc = a;
 
@@ -96,7 +122,7 @@ void dbg_console::init(allocator* a) { PROF
 	global_api->create_mutex(&lines_mut, false);
 }
 
-void dbg_console::destroy() { PROF
+void dbg_console::destroy() { 
 
 	// imgui pls
 	filter.Filters.~ImVector<ImGuiTextFilter::TextRange>();
@@ -117,31 +143,31 @@ void dbg_console::destroy() { PROF
 	global_api->destroy_mutex(&lines_mut);
 }
 
-void dbg_manager::init(allocator* alloc) { PROF
+void dbg_manager::init(allocator* alloc) { 
 
 	console.init(alloc);
 	store = dbg_value_store::make(alloc);
 	profiler = dbg_profiler::make(alloc);
 }
 
-void dbg_manager::toggle_profile() { PROF
+void dbg_manager::toggle_profile() { 
 	show_profile = !show_profile;
 }
 
-void dbg_manager::toggle_vars() { PROF
+void dbg_manager::toggle_vars() { 
 	show_vars = !show_vars;
 }
 
-void dbg_manager::toggle_console() { PROF
+void dbg_manager::toggle_console() { 
 	show_console = !show_console;
 }
 
-void alloc_frame_profile::destroy() { PROF
+void alloc_frame_profile::destroy() { 
 
 	allocs.destroy();
 }
 
-void frame_profile::destroy() { PROF
+void frame_profile::destroy() { 
 	
 	DESTROY_POOL(&pool);
 	FORMAP(a, allocations) {
@@ -150,7 +176,7 @@ void frame_profile::destroy() { PROF
 	allocations.destroy();
 }
 
-void thread_profile::destroy() { PROF
+void thread_ile::destroy() { 
 
 	FORQ_BEGIN(f, frames) {
 		
@@ -162,7 +188,7 @@ void thread_profile::destroy() { PROF
 	global_api->destroy_mutex(&mut);
 }
 
-void dbg_manager::destroy() { PROF
+void dbg_manager::destroy() { 
 
 	store.destroy();
 	console.destroy();
@@ -171,7 +197,7 @@ void dbg_manager::destroy() { PROF
 	profiler.print_remaining();
 }
 
-void dbg_profiler::print_remaining() { PROF
+void dbg_profiler::print_remaining() { 
 
 	alloc_profile totals = get_totals();
 	
@@ -188,25 +214,25 @@ void dbg_profiler::print_remaining() { PROF
 	global_api->release_mutex(&alloc_map_mut);
 }
 
-void dbg_manager::destroy_prof() { PROF
+void dbg_manager::destroy_prof() { 
 	profiler.destroy();
 }
 
-void dbg_profiler::recurse(vector<profile_node*> list) { PROF
+void dbg_profiler::recurse(vector<profile_node*> list) { 
 
-	switch(prof_sort) {
-	case prof_sort_type::none: break;
-	case prof_sort_type::name: {
-		list.stable_sort(prof_sort_name);
+	switch(_sort) {
+	case _sort_type::none: break;
+	case _sort_type::name: {
+		list.stable_sort(_sort_name);
 	} break;
-	case prof_sort_type::heir: {
-		list.stable_sort(prof_sort_heir);
+	case _sort_type::heir: {
+		list.stable_sort(_sort_heir);
 	} break;
-	case prof_sort_type::self: {
-		list.stable_sort(prof_sort_self);
+	case _sort_type::self: {
+		list.stable_sort(_sort_self);
 	} break;
-	case prof_sort_type::calls: {
-		list.stable_sort(prof_sort_calls);
+	case _sort_type::calls: {
+		list.stable_sort(_sort_calls);
 	} break;
 	}
 
@@ -245,12 +271,12 @@ void dbg_profiler::recurse(vector<profile_node*> list) { PROF
 	}
 }
 
-bool operator<=(addr_info l, addr_info r) { PROF 
+bool operator<=(addr_info l, addr_info r) {  
 
 	return r.size <= l.size;
 }
 
-alloc_profile dbg_profiler::get_totals() { PROF
+alloc_profile dbg_profiler::get_totals() { 
 
 	alloc_profile ret;
 
@@ -268,7 +294,7 @@ alloc_profile dbg_profiler::get_totals() { PROF
 	return ret;
 }
 
-void dbg_manager::UI(platform_window* window) { PROF
+void dbg_manager::UI(platform_window* window) { PROF_FUNC
 
 	if(!show_ui) return;
 
@@ -280,7 +306,7 @@ void dbg_manager::UI(platform_window* window) { PROF
 		console.UI(window);
 }
 
-void dbg_value_store::recurse(map<string, dbg_value> store) { PROF
+void dbg_value_store::recurse(map<string, dbg_value> store) { 
 
 	FORMAP(it, store) {
 		switch(it->value.type) {
@@ -303,21 +329,21 @@ void dbg_value_store::recurse(map<string, dbg_value> store) { PROF
 	}
 }
 
-void dbg_value_store::UI(platform_window* window) { PROF
+void dbg_value_store::UI(platform_window* window) { PROF_FUNC
 
 	ImGui::Begin("Debug Vars", null, ImGuiWindowFlags_AlwaysAutoResize);
 	recurse(value_store.sec.children);
 	ImGui::End();
 }
 
-i32 dbg_console_text_edit(ImGuiTextEditCallbackData* data) { PROF
+i32 dbg_console_text_edit(ImGuiTextEditCallbackData* data) { 
 
 	dbg_console* console = (dbg_console*)data->UserData;
 	console->on_text_edit(data);
 	return 0;
 }
 
-void dbg_console::on_text_edit(ImGuiTextEditCallbackData* data) { PROF
+void dbg_console::on_text_edit(ImGuiTextEditCallbackData* data) { 
 
 	switch(data->EventFlag) {
 	case ImGuiInputTextFlags_CallbackCompletion: {
@@ -408,14 +434,14 @@ void dbg_console::on_text_edit(ImGuiTextEditCallbackData* data) { PROF
 	}
 }
 
-void dbg_console::add_console_msg(string line) { PROF
+void dbg_console::add_console_msg(string line) { 
 
 	console_msg msg;
 	msg.msg = string::make_copy(line, alloc);
 	lines.push(msg);
 }
 
-void dbg_console::exec_command(string input) { PROF 
+void dbg_console::exec_command(string input) {  
 
 	string name = input.first_word_no_term();
 	if(!name.len) return;
@@ -441,7 +467,7 @@ void dbg_console::exec_command(string input) { PROF
 	cmd->func(input.trim_first_word(), cmd->param);
 }
 
-void dbg_console::UI(platform_window* window) { PROF
+void dbg_console::UI(platform_window* window) { PROF_FUNC
 
 	f32 w, h;
 	i32 win_w, win_h;
@@ -589,7 +615,7 @@ void dbg_console::UI(platform_window* window) { PROF
 	}
 }
 
-void dbg_profiler::UI(platform_window* window) { PROF
+void dbg_profiler::UI(platform_window* window) { PROF_FUNC
 
 	ImGui::SetNextWindowSize({800, 600}, ImGuiCond_Once);
 	ImGui::Begin("Profile"_, null, ImGuiWindowFlags_NoSavedSettings);
@@ -636,7 +662,7 @@ void dbg_profiler::UI(platform_window* window) { PROF
 	ImGui::MapCombo("Select Thread"_, threads, &selected_thread);
 	threads.destroy();
 
-	thread_profile** stat = thread_stats.try_get(selected_thread);
+	thread_ile** stat = thread_stats.try_get(selected_thread);
 	if(!stat) {
 		FORMAP(it, thread_stats) {
 			stat = &it->value;
@@ -646,7 +672,7 @@ void dbg_profiler::UI(platform_window* window) { PROF
 	}
 	LOG_ASSERT(stat);
 
-	thread_profile* thread = *stat;
+	thread_ile* thread = *stat;
 	global_api->release_mutex(&stats_map_mut);
 	
 	global_api->aquire_mutex(&thread->mut);
@@ -665,7 +691,7 @@ void dbg_profiler::UI(platform_window* window) { PROF
 		
 		if(ImGui::TreeNodeEx("Profile"_, ImGuiTreeNodeFlags_DefaultOpen)) {
 
-			ImGui::EnumCombo("Sort By: "_, &prof_sort);
+			ImGui::EnumCombo("Sort By: "_, &_sort);
 
 			ImGui::Columns(4);
 			ImGui::SetColumnWidth(0, 300);
@@ -719,7 +745,7 @@ void dbg_profiler::UI(platform_window* window) { PROF
 	ImGui::End();
 }
 
-void dbg_console::shutdown_log(log_manager* log) { PROF
+void dbg_console::shutdown_log(log_manager* log) { 
 	log_out dbg_log;
 	dbg_log.level = log_level::debug;
 	dbg_log.type = log_out_type::custom;
@@ -728,7 +754,7 @@ void dbg_console::shutdown_log(log_manager* log) { PROF
 	log->rem_custom_output(dbg_log);
 }
 
-void dbg_console::setup_log(log_manager* log) { PROF
+void dbg_console::setup_log(log_manager* log) { 
 	log_out dbg_log;
 	dbg_log.level = log_level::debug;
 	dbg_log.type = log_out_type::custom;
@@ -737,11 +763,11 @@ void dbg_console::setup_log(log_manager* log) { PROF
 	log->add_custom_output(dbg_log);
 }
 
-void dbg_profiler::register_thread(u32 frames) { PROF
+void dbg_profiler::register_thread(u32 frames) { 
 
 	PUSH_ALLOC(alloc);
 
-	thread_profile* thread = NEW(thread_profile);
+	thread_ile* thread = NEW(thread_ile);
 	thread->frame_buf_size = frames;
 	thread->frames = queue<frame_profile>::make(frames, alloc);
 	thread->name = this_thread_data.name;
@@ -754,24 +780,24 @@ void dbg_profiler::register_thread(u32 frames) { PROF
 	global_api->release_mutex(&stats_map_mut);
 }
 
-void dbg_profiler::unregister_thread() { PROF
+void dbg_profiler::unregister_thread() { 
 
 	if(!thread_stats.contents.memory) return; // TODO(max): 4head
 
 	global_api->aquire_mutex(&stats_map_mut);
 
-	thread_profile** stat = thread_stats.try_get(global_api->this_thread_id());
+	thread_ile** stat = thread_stats.try_get(global_api->this_thread_id());
 	if(!stat) return;
-	thread_profile* thread = *stat;
+	thread_ile* thread = *stat;
 
 	thread->destroy();
-	PUSH_ALLOC(alloc); {free(thread, sizeof(thread_profile));} POP_ALLOC();
+	PUSH_ALLOC(alloc); {free(thread, sizeof(thread_ile));} POP_ALLOC();
 
 	thread_stats.erase(global_api->this_thread_id());
 	global_api->release_mutex(&stats_map_mut);
 }
 
-void frame_profile::setup(string name, allocator* alloc, clock time, u64 p, u32 num) { PROF
+void frame_profile::setup(string name, allocator* alloc, clock time, u64 p, u32 num) { 
 
 	pool = MAKE_POOL(name, KILOBYTES(8), alloc, false);
 	heads = vector<profile_node*>::make(2, &pool);
@@ -781,7 +807,7 @@ void frame_profile::setup(string name, allocator* alloc, clock time, u64 p, u32 
 	number = num;
 }
 
-alloc_frame_profile alloc_frame_profile::make(allocator* alloc) { PROF
+alloc_frame_profile alloc_frame_profile::make(allocator* alloc) { 
 
 	alloc_frame_profile ret;
 	
@@ -790,23 +816,19 @@ alloc_frame_profile alloc_frame_profile::make(allocator* alloc) { PROF
 	return ret;
 }
 
-bool operator>(dbg_msg& l, dbg_msg& r) { PROF
+bool operator>(dbg_msg& l, dbg_msg& r) { 
 	return l.time < r.time;
 }
 
-void dbg_profiler::collate() { PROF
+void dbg_profiler::collate() { 
 	
-	PUSH_PROFILE(false) {
-		
-		collate_allocs();
-		collate_timings();
-
-	} POP_PROFILE();
+	collate_allocs();
+	collate_timings();
 
 	this_thread_data.dbg_queue.clear();
 }
 
-void dbg_profiler::collate_allocs() { PROF
+void dbg_profiler::collate_allocs() { 
 
 	FORQ_BEGIN(msg, this_thread_data.dbg_queue) {
 
@@ -817,13 +839,13 @@ void dbg_profiler::collate_allocs() { PROF
 	} FORQ_END(msg, this_thread_data.dbg_queue);
 }
 
-void dbg_profiler::collate_timings() { PROF
+void dbg_profiler::collate_timings() { 
 
 	bool got_a_frame = false;
 	u64 frame_perf_start = 0;
 
 	global_api->aquire_mutex(&stats_map_mut);
-	thread_profile* thread = *thread_stats.get(global_api->this_thread_id());
+	thread_ile* thread = *thread_stats.get(global_api->this_thread_id());
 	global_api->release_mutex(&stats_map_mut);
 
 	global_api->aquire_mutex(&thread->mut);
@@ -939,7 +961,7 @@ void dbg_profiler::collate_timings() { PROF
 	global_api->release_mutex(&thread->mut);
 }
 
-alloc_profile alloc_profile::make(allocator* alloc) { PROF
+alloc_profile alloc_profile::make(allocator* alloc) { 
 
 	alloc_profile ret;
 
@@ -949,7 +971,7 @@ alloc_profile alloc_profile::make(allocator* alloc) { PROF
 	return ret;
 }
 
-alloc_profile* alloc_profile::make_new(allocator* alloc) { PROF
+alloc_profile* alloc_profile::make_new(allocator* alloc) { 
 
 	PUSH_ALLOC(alloc);
 
@@ -963,13 +985,13 @@ alloc_profile* alloc_profile::make_new(allocator* alloc) { PROF
 	return ret;
 }
 
-void alloc_profile::destroy() { PROF
+void alloc_profile::destroy() { 
 
 	current_set.destroy();
 	global_api->destroy_mutex(&mut);
 }
 
-void dbg_profiler::process_frame_alloc_msg(frame_profile* frame, dbg_msg* msg) { PROF
+void dbg_profiler::process_frame_alloc_msg(frame_profile* frame, dbg_msg* msg) { 
 
 	allocator a;
 	switch(msg->type) {
@@ -978,16 +1000,16 @@ void dbg_profiler::process_frame_alloc_msg(frame_profile* frame, dbg_msg* msg) {
 	case dbg_msg_type::free: 		a = msg->free.alloc; break;
 	}
 
-	alloc_frame_profile* fprofile = frame->allocations.try_get(a);
+	alloc_frame_profile* file = frame->allocations.try_get(a);
 
-	if(!fprofile) {
+	if(!file) {
 
-		fprofile = frame->allocations.insert(a, alloc_frame_profile::make(alloc));
+		file = frame->allocations.insert(a, alloc_frame_profile::make(alloc));
 	}
-	fprofile->allocs.push(*msg);
+	file->allocs.push(*msg);
 }
 
-void dbg_profiler::process_alloc_msg(dbg_msg* msg) { PROF
+void dbg_profiler::process_alloc_msg(dbg_msg* msg) { 
 
 	allocator a;
 	switch(msg->type) {
@@ -1001,87 +1023,87 @@ void dbg_profiler::process_alloc_msg(dbg_msg* msg) { PROF
 	if(!p) {
 		p = alloc_stats.insert(a, alloc_profile::make_new(alloc));
 	}
-	alloc_profile* profile = *p;
+	alloc_profile* ile = *p;
 	global_api->release_mutex(&alloc_map_mut);
 
-	global_api->aquire_mutex(&profile->mut);
+	global_api->aquire_mutex(&ile->mut);
 	switch(msg->type) {
 	case dbg_msg_type::allocate: {
 
-		addr_info* info = profile->current_set.try_get(msg->allocate.to);
+		addr_info* info = ile->current_set.try_get(msg->allocate.to);
 		if(!info) {
-			info = profile->current_set.insert(msg->allocate.to, addr_info());
+			info = ile->current_set.insert(msg->allocate.to, addr_info());
 		}
 
 		info->last_loc = msg->context;
 		info->size += msg->allocate.bytes;
 
-		profile->current_size += msg->allocate.bytes;
-		profile->total_allocated += msg->allocate.bytes;
-		profile->num_allocs++;
+		ile->current_size += msg->allocate.bytes;
+		ile->total_allocated += msg->allocate.bytes;
+		ile->num_allocs++;
 
 		if(info->size == 0) {
-			profile->current_set.erase(msg->allocate.to);
+			ile->current_set.erase(msg->allocate.to);
 		}
 
 	} break;
 	case dbg_msg_type::reallocate: {
 
-		addr_info* from_info = profile->current_set.try_get(msg->reallocate.from);
+		addr_info* from_info = ile->current_set.try_get(msg->reallocate.from);
 		if(!from_info) {
-			from_info = profile->current_set.insert(msg->reallocate.from, addr_info());
+			from_info = ile->current_set.insert(msg->reallocate.from, addr_info());
 		}
-		addr_info* to_info = profile->current_set.try_get(msg->reallocate.to);
+		addr_info* to_info = ile->current_set.try_get(msg->reallocate.to);
 		if(!to_info) {
-			to_info = profile->current_set.insert(msg->reallocate.to, addr_info());
-			from_info = profile->current_set.get(msg->reallocate.from);
+			to_info = ile->current_set.insert(msg->reallocate.to, addr_info());
+			from_info = ile->current_set.get(msg->reallocate.from);
 		}
 
 		from_info->last_loc = msg->context;
 		from_info->size -= msg->reallocate.from_bytes;
 
-		profile->current_size -= msg->reallocate.from_bytes;
-		profile->total_freed += msg->reallocate.from_bytes;
+		ile->current_size -= msg->reallocate.from_bytes;
+		ile->total_freed += msg->reallocate.from_bytes;
 
 		to_info->last_loc = msg->context;
 		to_info->size += msg->reallocate.to_bytes;
 
-		profile->current_size += msg->reallocate.to_bytes;
-		profile->total_allocated += msg->reallocate.to_bytes;
-		profile->num_reallocs++;
+		ile->current_size += msg->reallocate.to_bytes;
+		ile->total_allocated += msg->reallocate.to_bytes;
+		ile->num_reallocs++;
 
 		if(to_info->size == 0) {
-			profile->current_set.erase(msg->reallocate.to);
+			ile->current_set.erase(msg->reallocate.to);
 		}
 		if(to_info != from_info && from_info->size == 0) {
-			profile->current_set.erase(msg->reallocate.from);
+			ile->current_set.erase(msg->reallocate.from);
 		}
 
 	} break;
 	case dbg_msg_type::free: {
 
-		addr_info* info = profile->current_set.try_get(msg->free.from);
+		addr_info* info = ile->current_set.try_get(msg->free.from);
 		if(!info) {
-			info = profile->current_set.insert(msg->free.from, addr_info());
+			info = ile->current_set.insert(msg->free.from, addr_info());
 		}
 
 		info->last_loc = msg->context;
 		info->size -= msg->free.bytes;
 
-		profile->current_size -= msg->free.bytes;
-		profile->total_freed += msg->free.bytes;
-		profile->num_frees++;
+		ile->current_size -= msg->free.bytes;
+		ile->total_freed += msg->free.bytes;
+		ile->num_frees++;
 
 		if(info->size == 0) {
-			profile->current_set.erase(msg->free.from);
+			ile->current_set.erase(msg->free.from);
 		}
 		
 	} break;
 	}
-	global_api->release_mutex(&profile->mut);
+	global_api->release_mutex(&ile->mut);
 }
 
-void dbg_profiler::fixdown_self_timings(profile_node* node) { PROF
+void dbg_profiler::fixdown_self_timings(profile_node* node) { 
 
 	clock children = 0;
 	FORVEC(it, node->children) {
@@ -1092,7 +1114,7 @@ void dbg_profiler::fixdown_self_timings(profile_node* node) { PROF
 	node->self = node->heir - children;
 }
 
-void dbg_value_store::add_ele(string path, _FPTR* callback, void* param) { PROF
+void dbg_value_store::add_ele(string path, _FPTR* callback, void* param) { 
 
 	dbg_value* value = &value_store;
 	path.len--;
@@ -1119,7 +1141,7 @@ void dbg_value_store::add_ele(string path, _FPTR* callback, void* param) { PROF
 }
 
 template<typename T>
-void dbg_value_store::add_val(string path, T* val) { PROF
+void dbg_value_store::add_val(string path, T* val) { 
 
 	dbg_value* value = &value_store;
 	path.len--;
@@ -1146,7 +1168,7 @@ void dbg_value_store::add_val(string path, T* val) { PROF
 }
 
 template<typename T>
-void dbg_value_store::add_var(string path, T* val) { PROF
+void dbg_value_store::add_var(string path, T* val) { 
 
 	dbg_value* value = &value_store;
 	path.len--;
@@ -1173,7 +1195,7 @@ void dbg_value_store::add_var(string path, T* val) { PROF
 }
 
 template<typename T>
-T dbg_value_store::get_var(string path) { PROF
+T dbg_value_store::get_var(string path) { 
 
 	dbg_value* value = &value_store;
 	path.len--;
@@ -1200,7 +1222,7 @@ T dbg_value_store::get_var(string path) { PROF
 	return *(T*)value->value;
 }
 
-CALLBACK void dbg_reup_window(void* e) { PROF
+CALLBACK void dbg_reup_window(void* e) { 
 
 	engine* eng = (engine*)e;
 	if(ImGui::Button("Apply Settings")) {
@@ -1209,7 +1231,7 @@ CALLBACK void dbg_reup_window(void* e) { PROF
 	}
 }
 
-CALLBACK void dbg_add_log(log_message* msg, void* param) { PROF
+CALLBACK void dbg_add_log(log_message* msg, void* param) { 
 
 	dbg_console* console = (dbg_console*)param;
 
@@ -1236,7 +1258,7 @@ CALLBACK void dbg_add_log(log_message* msg, void* param) { PROF
 	global_api->release_mutex(&console->lines_mut);
 }
 
-dbg_value dbg_value::make_sec(allocator* alloc) { PROF
+dbg_value dbg_value::make_sec(allocator* alloc) { 
 
 	dbg_value ret;
 	ret.type = dbg_value_class::section;
@@ -1244,7 +1266,7 @@ dbg_value dbg_value::make_sec(allocator* alloc) { PROF
 	return ret;
 }
 
-dbg_value dbg_value::make_view(any a) { PROF
+dbg_value dbg_value::make_view(any a) { 
 
 	dbg_value ret;
 	ret.type = dbg_value_class::view;
@@ -1252,7 +1274,7 @@ dbg_value dbg_value::make_view(any a) { PROF
 	return ret;
 }
 
-dbg_value dbg_value::make_edit(any a) { PROF
+dbg_value dbg_value::make_edit(any a) { 
 
 	dbg_value ret;
 	ret.type = dbg_value_class::edit;
@@ -1260,7 +1282,7 @@ dbg_value dbg_value::make_edit(any a) { PROF
 	return ret;
 }
 
-dbg_value dbg_value::make_cal(_FPTR* c, void* p) { PROF
+dbg_value dbg_value::make_cal(_FPTR* c, void* p) { 
 
 	dbg_value ret;
 	ret.type = dbg_value_class::callback;
@@ -1280,41 +1302,22 @@ void dbg_value::destroy(allocator* alloc) {
 	} 
 }
 
-bool prof_sort_name(profile_node* l, profile_node* r) {
+bool _sort_name(profile_node* l, profile_node* r) {
 
 	return l->context.function() <= r->context.function();
 }
 
-bool prof_sort_heir(profile_node* l, profile_node* r) {
+bool _sort_heir(profile_node* l, profile_node* r) {
 
 	return r->heir <= l->heir;
 }
 
-bool prof_sort_self(profile_node* l, profile_node* r) {
+bool _sort_self(profile_node* l, profile_node* r) {
 
 	return r->self <= l->self;
 }
 
-bool prof_sort_calls(profile_node* l, profile_node* r) {
+bool _sort_calls(profile_node* l, profile_node* r) {
 
 	return r->calls <= l->calls;
-}
-
-void _prof_sec(string name, code_context context) { 
-	if(this_thread_data.profiling) {
-		dbg_msg m;
-		m.type = dbg_msg_type::enter_func;
-		m.context = context;
-		_memcpy_ctx(name.c_str, m.context.c_function, name.len);
-	
-		POST_MSG(m);
-	}
-}
-
-void _prof_sec_end() { 
-	if(this_thread_data.profiling) {
-		dbg_msg m;
-		m.type = dbg_msg_type::exit_func;
-		POST_MSG(m);
-	}
 }

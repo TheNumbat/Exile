@@ -18,7 +18,7 @@ string operator "" _(const char* str, size_t s) {
 	return ret;
 }
 
-u32 string::parse_u32(u32 idx, u32* used) { PROF
+u32 string::parse_u32(u32 idx, u32* used) { 
 
 	u32 accum = 0;
 	char* place = c_str + idx;
@@ -34,8 +34,8 @@ u32 string::parse_u32(u32 idx, u32* used) { PROF
 
 u32 string::write(u32 idx, string ins, bool size) { 
 
-#ifdef MORE_PROF
-	PROF
+#ifdef MORE_
+	
 #endif
 
 	if(ins.len == 0) return idx;
@@ -43,26 +43,26 @@ u32 string::write(u32 idx, string ins, bool size) {
 	return idx + ins.len - 1;
 }
 
-u32 string::write(u32 idx, char ins, bool size) { PROF
+u32 string::write(u32 idx, char ins, bool size) { 
 
 	if(!size) c_str[idx] = ins;
 	return idx + 1;
 }
 
 template<typename... Targs>
-void string::writef(string fmt, Targs... args) { PROF
+void string::writef(string fmt, Targs... args) { 
 	u32 idx = _string_printf(*this, 0, fmt, false, args...);
 	c_str[idx++] = 0;
 }
 
 template<typename... Targs>
-u32 size_stringf(string fmt, Targs... args) { PROF
+u32 size_stringf(string fmt, Targs... args) { 
 	string tmp;
 	return _string_printf(tmp, 0, fmt, true, args...) + 1;
 }
 
 template<typename... Targs> 
-string string::makef(u32 len, string fmt, Targs... args) { PROF
+string string::makef(u32 len, string fmt, Targs... args) { 
 
 	string ret;
 	ret 	= string::make(len);
@@ -78,7 +78,7 @@ string string::makef(u32 len, string fmt, Targs... args) { PROF
 }
 
 template<typename... Targs>
-string string::makef(string fmt, Targs... args) { PROF
+string string::makef(string fmt, Targs... args) { 
 
 	string ret;
 	u32 len = size_stringf(fmt, args...);
@@ -95,7 +95,7 @@ string string::makef(string fmt, Targs... args) { PROF
 }
 
 template<typename... Targs>
-string string::makef(string fmt, allocator* a, Targs... args) { PROF
+string string::makef(string fmt, allocator* a, Targs... args) { 
 
 	string ret;
 	u32 len = size_stringf(fmt, args...);
@@ -112,23 +112,23 @@ string string::makef(string fmt, allocator* a, Targs... args) { PROF
 }
 
 template<typename T, typename... Targs> 
-inline T& get_pack_first(T& val, Targs... args) { PROF
+inline T& get_pack_first(T& val, Targs... args) { 
 	return val;
 }
-inline u32 get_pack_first() { PROF
+inline u32 get_pack_first() { 
 	return 0;
 }
 
 template<typename T, typename... Targs>
-inline u32 _string_printf_fwd(string out, u32 idx, string fmt, bool size, T val, Targs... args) { PROF
+inline u32 _string_printf_fwd(string out, u32 idx, string fmt, bool size, T val, Targs... args) { 
 	return _string_printf(out, idx, fmt, size, args...);
 }
-inline u32 _string_printf_fwd(string out, u32 idx, string fmt, bool size) { PROF
+inline u32 _string_printf_fwd(string out, u32 idx, string fmt, bool size) { 
 	return _string_printf(out, idx, fmt, size);
 }
 
 template<typename T, typename... Targs>
-u32 _string_printf(string out, u32 idx, string fmt, bool size, T& value, Targs... args) { PROF
+u32 _string_printf(string out, u32 idx, string fmt, bool size, T& value, Targs... args) { 
 
 	// TODO(max): this function is a garbage fire
 
@@ -259,7 +259,7 @@ u32 _string_printf(string out, u32 idx, string fmt, bool size, T& value, Targs..
 	}
 	return idx;
 }
-u32 _string_printf(string out, u32 idx, string fmt, bool size) { PROF
+u32 _string_printf(string out, u32 idx, string fmt, bool size) { 
 	for(u32 i = 0; i < fmt.len - 1; i++) {
 		if(fmt.c_str[i] == '%') {
 			if(fmt.c_str[i + 1] == '%') {
@@ -279,7 +279,7 @@ u32 _string_printf(string out, u32 idx, string fmt, bool size) { PROF
 	return idx;
 }
 
-u32 string::write_type(u32 idx, void* val, _type_info* info, bool size) { PROF
+u32 string::write_type(u32 idx, void* val, _type_info* info, bool size) { 
 	if(info == null) {
 		idx = write(idx, "UNDEF"_, size);
 		return idx;
@@ -330,19 +330,19 @@ u32 string::write_type(u32 idx, void* val, _type_info* info, bool size) { PROF
 	return idx;
 }
 
-u32 string::write_array(u32 idx, void* val, _type_info* info, bool size) { PROF
+u32 string::write_array(u32 idx, void* val, _type_info* info, bool size) { 
 
 	// NOTE(max): assumes binary compatibility with vector T* first member then u32 size
 	return write_vector(idx, val, info, size);
 }
 
-u32 string::write_heap(u32 idx, void* val, _type_info* info, bool size) { PROF
+u32 string::write_heap(u32 idx, void* val, _type_info* info, bool size) { 
 
 	// NOTE(max): assumes binary compatibility with vector T* first member then u32 size
 	return write_vector(idx, val, info, size);
 }
 
-u32 string::write_queue(u32 idx, void* val, _type_info* info, bool size) { PROF
+u32 string::write_queue(u32 idx, void* val, _type_info* info, bool size) { 
 
 	idx = write(idx, info->name, size);
 
@@ -379,7 +379,7 @@ u32 string::write_queue(u32 idx, void* val, _type_info* info, bool size) { PROF
 	return idx;	
 }
 
-u32 string::write_vector(u32 idx, void* val, _type_info* info, bool size) { PROF
+u32 string::write_vector(u32 idx, void* val, _type_info* info, bool size) { 
 
 	idx = write(idx, info->name, size);
 
@@ -411,7 +411,7 @@ u32 string::write_vector(u32 idx, void* val, _type_info* info, bool size) { PROF
 	return idx;
 }
 
-u32 string::write_map(u32 idx, void* val, _type_info* info, bool size) { PROF
+u32 string::write_map(u32 idx, void* val, _type_info* info, bool size) { 
 
 	_type_info* vec_info = TYPEINFO_H(info->_struct.member_types[0]);
 	u8* vec = (u8*)val + info->_struct.member_offsets[0];
@@ -464,7 +464,7 @@ u32 string::write_map(u32 idx, void* val, _type_info* info, bool size) { PROF
 	return idx;
 }
 
-u32 string::write_static_array(u32 idx, void* val, _type_info* info, bool size) { PROF 
+u32 string::write_static_array(u32 idx, void* val, _type_info* info, bool size) {  
 	
 	_type_info* of = TYPEINFO_H(info->_array.of);
 
@@ -494,7 +494,7 @@ u32 string::write_static_array(u32 idx, void* val, _type_info* info, bool size) 
 	return idx;
 }
 
-u32 string::write_ptr(u32 idx, void* val, _type_info* info, bool size) { PROF 
+u32 string::write_ptr(u32 idx, void* val, _type_info* info, bool size) {  
 	idx = write(idx,"*{"_, size);
 	if (info->_ptr.to == 0) {
 		idx = write(idx, "UNDEF|"_, size);
@@ -532,7 +532,7 @@ constexpr u32 const_hash(const char* str) {
 
 #pragma warning(push)
 #pragma warning(disable : 4307)
-u32 string::write_struct(u32 idx, void* val, _type_info* info, bool size) { PROF
+u32 string::write_struct(u32 idx, void* val, _type_info* info, bool size) { 
 
 	u32 name = const_hash(info->name.c_str);
 
@@ -599,7 +599,7 @@ u32 string::write_struct(u32 idx, void* val, _type_info* info, bool size) { PROF
 }
 #pragma warning(pop)
 
-u32 string::write_any_struct(u32 idx, void* val, _type_info* info, bool size) { PROF 
+u32 string::write_any_struct(u32 idx, void* val, _type_info* info, bool size) {  
 	idx = write(idx, info->name, size);
 	idx = write(idx, "{"_, size);
 	for(u32 j = 0; j < info->_struct.member_count; j++) {
@@ -629,7 +629,7 @@ u32 string::write_any_struct(u32 idx, void* val, _type_info* info, bool size) { 
 	return idx;
 }
 
-u32 string::write_u64(u32 idx, u8 base, u64 val, bool size, u32 min_len) { PROF
+u32 string::write_u64(u32 idx, u8 base, u64 val, bool size, u32 min_len) { 
 
 	u8 digit = 0, digits = 0;
 	u32 start = idx;
@@ -665,7 +665,7 @@ u32 string::write_u64(u32 idx, u8 base, u64 val, bool size, u32 min_len) { PROF
 	return idx;
 }
 
-u32 string::write_int(u32 idx, u8 base, void* val, _type_info* info, bool size) { PROF
+u32 string::write_int(u32 idx, u8 base, void* val, _type_info* info, bool size) { 
 	
 	switch(info->size) {
 	case 1: {
@@ -727,7 +727,7 @@ u32 string::write_int(u32 idx, u8 base, void* val, _type_info* info, bool size) 
 	}
 }
 
-u32 string::write_float(u32 idx, u8 precision, void* val, _type_info* info, bool size) { PROF
+u32 string::write_float(u32 idx, u8 precision, void* val, _type_info* info, bool size) { 
 	
 	// this does not respect precision, but it's fine for this purpose
 
@@ -760,7 +760,7 @@ u32 string::write_float(u32 idx, u8 precision, void* val, _type_info* info, bool
 	return idx;
 }
 
-u32 string::write_enum(u32 idx, void* val, _type_info* info, bool size) { PROF
+u32 string::write_enum(u32 idx, void* val, _type_info* info, bool size) { 
 
 	_type_info* base = TYPEINFO_H(info->_enum.base_type);
 
@@ -778,7 +778,7 @@ u32 string::write_enum(u32 idx, void* val, _type_info* info, bool size) { PROF
 }
 
 template<typename... Targs>
-string make_stringf_a(allocator* a, string fmt, Targs... args) { PROF
+string make_stringf_a(allocator* a, string fmt, Targs... args) { 
 
 	string ret;
 	u32 len = size_stringf(fmt, args...);
@@ -791,17 +791,17 @@ string make_stringf_a(allocator* a, string fmt, Targs... args) { PROF
 	return ret;
 }
 
-inline bool operator==(string first, const char* second) { PROF
+inline bool operator==(string first, const char* second) { 
 
 	return first == string::literal(second);
 }
 
-inline bool operator==(const char* first, string second) { PROF
+inline bool operator==(const char* first, string second) { 
 
 	return string::literal(first) == second;
 }
 
-bool operator==(string first, string second) { PROF
+bool operator==(string first, string second) { 
 
 	if(first.len != second.len) {
 		return false;
@@ -816,11 +816,11 @@ bool operator==(string first, string second) { PROF
 	return true;
 }
 
-bool strcmp(string first, string second) { PROF
+bool strcmp(string first, string second) { 
 	return first == second;
 }
 
-bool operator<=(string first, string second) { PROF
+bool operator<=(string first, string second) { 
 
 	if(first == second) return true;
 
@@ -835,7 +835,7 @@ bool operator<=(string first, string second) { PROF
 	return true;
 }
 
-inline u32 hash(string one, string two) { PROF
+inline u32 hash(string one, string two) { 
 
     u32 hash = 5381;
 
@@ -849,7 +849,7 @@ inline u32 hash(string one, string two) { PROF
 }
 
 // from http://www.cse.yorku.ca/~oz/hash.html
-inline u32 hash(string str) { PROF
+inline u32 hash(string str) { 
 
     u32 hash = 5381;
 
@@ -902,8 +902,8 @@ u32 string::get_next_codepoint(u32* index) {
 #else
 // adapted from http://www.json.org/JSON_checker/utf8_decode.c
 u32 string::get_next_codepoint(u32* index) { 
-#ifdef MORE_PROF
-	PROF
+#ifdef MORE_
+	
 #endif
 
 	char first, second, third, fourth;
@@ -969,7 +969,7 @@ u32 string::get_next_codepoint(u32* index) {
 }
 #endif
 
-string string::make_copy(string src, allocator* a) { PROF
+string string::make_copy(string src, allocator* a) { 
 
 	string ret = string::make(src.len, a);
 
@@ -982,7 +982,7 @@ string string::make_copy(string src, allocator* a) { PROF
 	return ret;
 }
 
-string string::make_copy_plt(string src) { PROF
+string string::make_copy_plt(string src) { 
 
 	string ret; 
 	ret.len = src.len;
@@ -1030,7 +1030,7 @@ i32 string::last_slash() {
 	return -1;
 }
 
-string string::trim_no_term() { PROF
+string string::trim_no_term() { 
 
 	u32 beg = 0, end = len - 2;
 	for(; beg < len && whitespace(c_str[beg]); beg++);
@@ -1039,7 +1039,7 @@ string string::trim_no_term() { PROF
 	return substring(beg, end + 1);
 }
 
-void string::destroy(allocator* a) { PROF
+void string::destroy(allocator* a) { 
 
 	a->free_(c_str, cap, a, CONTEXT);
 
@@ -1059,7 +1059,7 @@ char uppercase(char c) {
 	return c;
 }
 
-bool string::starts_with_insensitive(string prefix) { PROF
+bool string::starts_with_insensitive(string prefix) { 
 
 	for(u32 i = 0; i < prefix.len; i++) {
 		if(uppercase(c_str[i]) != uppercase(prefix.c_str[i])) return false;
@@ -1067,7 +1067,7 @@ bool string::starts_with_insensitive(string prefix) { PROF
 	return true;
 }
 
-string string::first_word_no_term() { PROF
+string string::first_word_no_term() { 
 
 	u32 i = 0;
 	for(; i < len; i++)
@@ -1079,7 +1079,7 @@ string string::first_word_no_term() { PROF
 	return substring(0, i > 0 ? i - 1 : 0);
 }
 
-string string::trim_first_word() { PROF
+string string::trim_first_word() { 
 
 	u32 i = 0;
 	for(; i < len; i++)
@@ -1120,7 +1120,7 @@ string string::from_c_str(char* c_str) {
 	return ret;
 }
 
-string string::make_from_c_str(char* c_str) { PROF
+string string::make_from_c_str(char* c_str) { 
 
 	u32 len;
 	for(len = 0; c_str[len] != '\0'; len++);
@@ -1136,7 +1136,7 @@ string string::make_from_c_str(char* c_str) { PROF
 	return ret;
 }
 
-void string::destroy() { PROF
+void string::destroy() { 
 
 	free(c_str, cap);
 
@@ -1146,7 +1146,7 @@ void string::destroy() { PROF
 }
 
 
-string string::make(u32 cap, allocator* a) { PROF
+string string::make(u32 cap, allocator* a) { 
 
 	string ret;
 
@@ -1156,7 +1156,7 @@ string string::make(u32 cap, allocator* a) { PROF
 	return ret;
 }
 
-string string::make(u32 cap) { PROF
+string string::make(u32 cap) { 
 
 	string ret;
 
@@ -1166,7 +1166,7 @@ string string::make(u32 cap) { PROF
 	return ret;
 }
 
-string string::make_copy(string src) { PROF
+string string::make_copy(string src) { 
 
 	string ret = string::make(src.len);
 
@@ -1180,7 +1180,7 @@ string string::make_copy(string src) { PROF
 }
 
 // end exclusive
-string string::make_substring(string str, u32 start, u32 end) { PROF
+string string::make_substring(string str, u32 start, u32 end) { 
 
 	string ret = string::make(end - start + 1);
 
@@ -1195,7 +1195,7 @@ string string::make_substring(string str, u32 start, u32 end) { PROF
 	return ret;
 }
 
-string string::make_cat_v(i32 num_strs, ...) { PROF
+string string::make_cat_v(i32 num_strs, ...) { 
 
 	va_list args;
 	va_start(args, num_strs);
@@ -1236,7 +1236,7 @@ string string::make_cat_v(i32 num_strs, ...) { PROF
 	return ret;
 }
 
-string string::make_cat(string first, string second) { PROF
+string string::make_cat(string first, string second) { 
 
 	string ret = string::make(first.len + second.len - 1);
 

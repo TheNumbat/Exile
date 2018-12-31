@@ -355,8 +355,6 @@ union v3 {
 };
 static_assert(sizeof(v3) == 12, "sizeof(v3) != 12");
 
-v3 iv3::to_f() {return v3(x, y, z);}
-
 union uv3 {
 	struct {
 		u32 x, y, z;
@@ -542,6 +540,8 @@ const color BLUE  = color(0, 0, 255, 255);
 
 // IMPL
 #ifndef MATH_NO_IMPLEMENTATIONS
+
+v3 iv3::to_f() {return v3(x, y, z);}
 
 m4 m4::zero = {{0,0,0,0},{0,0,0,0},{0,0,0,0},{0,0,0,0}};
 m4 m4::I 	= {{1,0,0,0},{0,1,0,0},{0,0,1,0},{0,0,0,1}};

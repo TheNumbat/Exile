@@ -1,6 +1,6 @@
 
 template<typename T>
-void queue<T>::destroy() { PROF
+void queue<T>::destroy() { 
 
 	if(memory) {
 
@@ -14,14 +14,14 @@ void queue<T>::destroy() { PROF
 }
 
 template<typename T>
-void queue<T>::clear() { PROF
+void queue<T>::clear() { 
 
 	start = UINT32_MAX;
 	end = 0;
 }
 
 template<typename T>
-queue<T> queue<T>::make(u32 capacity, allocator* a) { PROF
+queue<T> queue<T>::make(u32 capacity, allocator* a) { 
 
 	queue<T> ret;
 
@@ -37,13 +37,13 @@ queue<T> queue<T>::make(u32 capacity, allocator* a) { PROF
 }
 
 template<typename T>
-queue<T> queue<T>::make(u32 capacity) { PROF
+queue<T> queue<T>::make(u32 capacity) { 
 
 	return queue<T>::make(capacity, CURRENT_ALLOC());
 }
 
 template<typename T>
-u32 queue<T>::len() { PROF
+u32 queue<T>::len() { 
 	if(start == UINT32_MAX) return 0;
 	i64 ret = (i64)end - (i64)start;
 	if(ret <= 0) ret += capacity;
@@ -51,7 +51,7 @@ u32 queue<T>::len() { PROF
 }
 
 template<typename T>
-void queue<T>::grow() { PROF
+void queue<T>::grow() { 
 	
 	u32 new_capacity = 2 * capacity;
 	if(!new_capacity) new_capacity = 8;
@@ -81,7 +81,7 @@ void queue<T>::grow() { PROF
 }
 
 template<typename T>
-T* queue<T>::push(T value) { PROF
+T* queue<T>::push(T value) { 
 
 	u32 size = len();
 	if(size == 0) {
@@ -103,7 +103,7 @@ bool queue<T>::full() {
 }
 
 template<typename T>
-T queue<T>::push_overwrite(T value) { PROF
+T queue<T>::push_overwrite(T value) { 
 
 	T ret;
 	if(len() == capacity) {
@@ -116,7 +116,7 @@ T queue<T>::push_overwrite(T value) { PROF
 }
 
 template<typename T>
-T queue<T>::pop() { PROF
+T queue<T>::pop() { 
 
 	if(len() > 0) {
 		
@@ -133,7 +133,7 @@ T queue<T>::pop() { PROF
 }
 
 template<typename T>
-bool queue<T>::try_pop(T* out) { PROF
+bool queue<T>::try_pop(T* out) { 
 
 	if(len() > 0) {
 	
@@ -145,7 +145,7 @@ bool queue<T>::try_pop(T* out) { PROF
 }
 
 template<typename T>
-T* queue<T>::back() { PROF
+T* queue<T>::back() { 
 
 	if(len() > 0) {
 
@@ -158,7 +158,7 @@ T* queue<T>::back() { PROF
 }
 
 template<typename T>
-T* queue<T>::front() { PROF
+T* queue<T>::front() { 
 
 	if(len() > 0) {
 
@@ -170,12 +170,12 @@ T* queue<T>::front() { PROF
 }
 
 template<typename T>
-bool queue<T>::empty() { PROF
+bool queue<T>::empty() { 
 	return len() == 0;
 }
 
 template<typename T>
-locking_queue<T> locking_queue<T>::make(u32 capacity, allocator* a) { PROF
+locking_queue<T> locking_queue<T>::make(u32 capacity, allocator* a) { 
 
 	locking_queue<T> ret;
 
@@ -194,7 +194,7 @@ locking_queue<T> locking_queue<T>::make(u32 capacity, allocator* a) { PROF
 }
 
 template<typename T>
-locking_queue<T> locking_queue<T>::make(u32 capacity) { PROF
+locking_queue<T> locking_queue<T>::make(u32 capacity) { 
 
 	return locking_queue<T>::make(capacity, CURRENT_ALLOC());
 }
@@ -202,8 +202,8 @@ locking_queue<T> locking_queue<T>::make(u32 capacity) { PROF
 template<typename T>
 T* queue<T>::get(u32 idx) { 
 
-#ifdef MORE_PROF
-	PROF
+#ifdef MORE_
+	
 #endif
 
 #ifdef BOUNDS_CHECK
@@ -221,7 +221,7 @@ T* queue<T>::get(u32 idx) {
 }
 
 template<typename T>
-void locking_queue<T>::destroy() { PROF
+void locking_queue<T>::destroy() { 
 
 	queue<T>::destroy();
 	global_api->destroy_mutex(&mut);
@@ -229,7 +229,7 @@ void locking_queue<T>::destroy() { PROF
 }
 
 template<typename T>
-T* locking_queue<T>::push(T value) { PROF
+T* locking_queue<T>::push(T value) { 
 	global_api->aquire_mutex(&mut);
 	T* ret = queue<T>::push(value);
 	global_api->release_mutex(&mut);
@@ -238,7 +238,7 @@ T* locking_queue<T>::push(T value) { PROF
 }
 
 template<typename T>
-T locking_queue<T>::wait_pop() { PROF
+T locking_queue<T>::wait_pop() { 
 	global_api->wait_semaphore(&sem, -1);
 	T ret;
 	try_pop(&ret);
@@ -246,7 +246,7 @@ T locking_queue<T>::wait_pop() { PROF
 }
 
 template<typename T>
-bool locking_queue<T>::try_pop(T* out) { PROF
+bool locking_queue<T>::try_pop(T* out) { 
 	global_api->aquire_mutex(&mut);
 	bool ret = queue<T>::try_pop(out);
 	global_api->release_mutex(&mut);
@@ -254,7 +254,7 @@ bool locking_queue<T>::try_pop(T* out) { PROF
 }
 
 template<typename T>
-bool locking_queue<T>::empty() { PROF
+bool locking_queue<T>::empty() { 
 	global_api->aquire_mutex(&mut);
 	bool ret = queue<T>::empty();
 	global_api->release_mutex(&mut);

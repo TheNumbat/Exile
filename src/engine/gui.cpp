@@ -1,15 +1,15 @@
 
-inline u32 hash(guiid id) { PROF
+inline u32 hash(guiid id) { 
 
 	u32 h = hash(id.name);
 	return h ^ id.base;
 }
 
-bool operator==(guiid l, guiid r) { PROF
+bool operator==(guiid l, guiid r) { 
 	return l.base == r.base && l.name == r.name;
 }
 
-CALLBACK bool gui_evt_handle(void* param, platform_event evt) { PROF
+CALLBACK bool gui_evt_handle(void* param, platform_event evt) { 
 	
 	gui_input_state* input = (gui_input_state*)param;
 
@@ -55,7 +55,7 @@ CALLBACK bool gui_evt_handle(void* param, platform_event evt) { PROF
 	return false;
 }
 
-gui_window gui_window::make(r2 first_size, f32 first_alpha, u16 flags, allocator* alloc) { PROF
+gui_window gui_window::make(r2 first_size, f32 first_alpha, u16 flags, allocator* alloc) { 
 
 	gui_window ret;
 
@@ -83,7 +83,7 @@ gui_window gui_window::make(r2 first_size, f32 first_alpha, u16 flags, allocator
 	return ret;
 }
 
-void gui_window::reset() { PROF
+void gui_window::reset() { 
 
 	r2 content = get_real_content();
 
@@ -107,7 +107,7 @@ void gui_window::reset() { PROF
 	text_mesh.clear();
 }
 
-void gui_window::destroy() { PROF
+void gui_window::destroy() { 
 
 	FORMAP(st, state_data) {
 		st->key.name.destroy(alloc);
@@ -120,25 +120,25 @@ void gui_window::destroy() { PROF
 	state_data.destroy();
 }
 
-void gui_manager::register_events(evt_manager* evt) { PROF
+void gui_manager::register_events(evt_manager* evt) { 
 
 	handler_id = evt->add_handler(FPTR(gui_evt_handle), &input);
 }
 
-void gui_manager::unregister_events(evt_manager* evt) { PROF
+void gui_manager::unregister_events(evt_manager* evt) { 
 
 	evt->rem_handler(handler_id);
 	handler_id = 0;
 }
 
-gui_state_data* gui_window::add_state(guiid id, gui_state_data state) { PROF
+gui_state_data* gui_window::add_state(guiid id, gui_state_data state) { 
 
 	guiid cp = id;
 	cp.name = string::make_copy(cp.name, alloc);
 	return state_data.insert(cp, state);
 }
 
-gui_manager gui_manager::make(allocator* alloc, platform_window* win) { PROF
+gui_manager gui_manager::make(allocator* alloc, platform_window* win) { 
 
 	gui_manager ret;
 
@@ -151,7 +151,7 @@ gui_manager gui_manager::make(allocator* alloc, platform_window* win) { PROF
 	return ret;
 }
 
-void gui_manager::destroy() { PROF
+void gui_manager::destroy() { 
 
 	FORMAP(it, windows) {
 		it->key.name.destroy(alloc);
@@ -162,7 +162,7 @@ void gui_manager::destroy() { PROF
 	fonts.destroy();
 }
 
-void gui_manager::reload_fonts(ogl_manager* ogl) { PROF
+void gui_manager::reload_fonts(ogl_manager* ogl) { 
 
 	FORVEC(it, fonts) {
 
@@ -175,7 +175,7 @@ void gui_manager::reload_fonts(ogl_manager* ogl) { PROF
 	}
 }
 
-void gui_manager::add_font(ogl_manager* ogl, string asset_name, asset_store* store, bool mono) { PROF
+void gui_manager::add_font(ogl_manager* ogl, string asset_name, asset_store* store, bool mono) { 
 
 	asset* font = store->get(asset_name);
 
@@ -190,7 +190,7 @@ void gui_manager::add_font(ogl_manager* ogl, string asset_name, asset_store* sto
 	fonts.push(f);
 }
 
-gui_font* gui_select_best_font_scale() { PROF
+gui_font* gui_select_best_font_scale() { 
 
 	gui_font* f = null;
 
@@ -207,14 +207,14 @@ gui_font* gui_select_best_font_scale() { PROF
 	return f;
 }
 
-gui_window* gui_manager::add_window(guiid id, gui_window data) { PROF
+gui_window* gui_manager::add_window(guiid id, gui_window data) { 
 
 	guiid cp = id;
 	cp.name = string::make_copy(cp.name, alloc);
 	return windows.insert(cp, data);	
 }
 
-void gui_manager::begin_frame() { PROF
+void gui_manager::begin_frame() { 
 
 	ggui = this;
 	style.font_size = fonts.front()->font->font.point; // evil
@@ -224,7 +224,7 @@ void gui_manager::begin_frame() { PROF
 	}
 }
 
-void gui_manager::end_frame(platform_window* win, ogl_manager* ogl) { PROF
+void gui_manager::end_frame(platform_window* win, ogl_manager* ogl) { 
 
 	if(!input.lclick && !input.rclick && !input.mclick && !input.ldbl) {
 		if(active != gui_active_state::captured) {
@@ -275,12 +275,12 @@ void gui_manager::end_frame(platform_window* win, ogl_manager* ogl) { PROF
 	}
 }
 
-bool gui_manager::any_active() { PROF
+bool gui_manager::any_active() { 
 
 	return active == gui_active_state::active || active == gui_active_state::captured;
 }
 
-void gui_window::clamp_scroll() { PROF
+void gui_window::clamp_scroll() { 
 
 	r2 content = get_real_content();
 
@@ -290,13 +290,13 @@ void gui_window::clamp_scroll() { PROF
 	if(scroll_pos.y > 0.0f) scroll_pos.y = 0.0f;
 }
 
-r2 gui_window::get_real_content() { PROF
+r2 gui_window::get_real_content() { 
 
 	r2 r = get_real_body();
 	return r2(r.xy + ggui->style.win_margin.xy, r.wh - ggui->style.win_margin.xy - ggui->style.win_margin.zw);
 }
 
-r2 gui_window::get_real_top() { PROF
+r2 gui_window::get_real_top() { 
 
 	f32 carrot_x_diff = ggui->style.carrot_size.x + ggui->style.carrot_padding.x;
 	r2 real_rect = get_real();
@@ -304,7 +304,7 @@ r2 gui_window::get_real_top() { PROF
 	return r2(real_rect.xy, v2(real_rect.w - carrot_x_diff, ggui->style.font_size + ggui->style.title_padding));
 }
 
-r2 gui_window::get_real_body() { PROF
+r2 gui_window::get_real_body() { 
 
 	r2 real_rect = get_real();
 	r2 body = r2(real_rect.x, real_rect.y + ggui->style.font_size + ggui->style.title_padding, real_rect.w, real_rect.h - ggui->style.font_size + ggui->style.title_padding);
@@ -315,7 +315,7 @@ r2 gui_window::get_real_body() { PROF
 	return body;
 }
 
-void gui_window::update_input() { PROF
+void gui_window::update_input() { 
 	
 	r2 real_rect = get_real();
 	if(input == win_input_state::resizing) {
@@ -353,15 +353,15 @@ void gui_window::update_input() { PROF
 	}
 }
 
-bool gui_window::visible(r2 r) { PROF
+bool gui_window::visible(r2 r) { 
 	return intersect(get_real_content(), r);
 }
 
-r2 gui_window::get_real() { PROF
+r2 gui_window::get_real() { 
 	return rect;
 }
 
-v2 gui_window_dim() { PROF
+v2 gui_window_dim() { 
 	return v2((f32)ggui->window->w, (f32)ggui->window->h);
 }
 
@@ -369,11 +369,11 @@ r2 gui_window::get_title() {
 	return r2(rect.xy, v2(rect.w, ggui->style.font_size + ggui->style.title_padding));
 }
 
-void gui_set_offset(v2 offset) { PROF
+void gui_set_offset(v2 offset) { 
 	ggui->current->cursor = ggui->current->rect.xy + offset;
 }
 
-void gui_add_offset(v2 offset, gui_cursor_mode override_mode) { PROF
+void gui_add_offset(v2 offset, gui_cursor_mode override_mode) { 
 	
 	gui_cursor_mode mode = override_mode == gui_cursor_mode::none ? ggui->current->cursor_mode : override_mode;
 	v2 old = ggui->current->cursor;
@@ -393,18 +393,18 @@ void gui_add_offset(v2 offset, gui_cursor_mode override_mode) { PROF
 	ggui->current->last_offset = offset;
 }
 
-void gui_push_id(u32 id) { PROF
+void gui_push_id(u32 id) { 
 
 	u32 base = *ggui->current->id_hash_stack.top();
 	ggui->current->id_hash_stack.push(base ^ hash(id));
 }
 
-void gui_pop_id() { PROF
+void gui_pop_id() { 
 
 	ggui->current->id_hash_stack.pop();
 }
 
-bool gui_in_win() { PROF
+bool gui_in_win() { 
 	FORMAP(it, ggui->windows) {
 		if(it->value.active_last_frame && &it->value != ggui->current && it->value.z > ggui->current->z) {
 			if(inside(it->value.full_size ? it->value.rect : it->value.get_title(), ggui->input.mousepos)) {
@@ -417,7 +417,7 @@ bool gui_in_win() { PROF
 	return inside(rect, ggui->input.mousepos);
 }
 
-bool gui_begin(string name, r2 size, gui_window_flags flags, f32 first_alpha) { PROF
+bool gui_begin(string name, r2 size, gui_window_flags flags, f32 first_alpha) { 
 
 	guiid id;
 	id.name = name;
@@ -547,39 +547,39 @@ bool gui_begin(string name, r2 size, gui_window_flags flags, f32 first_alpha) { 
 	return window->active_this_frame;
 }
 
-void gui_push_id(string id) { PROF
+void gui_push_id(string id) { 
 
 	gui_push_id(hash(id));
 }
 
-void gui_end() { PROF
+void gui_end() { 
 	ggui->current = null;
 }
 
-void gui_indent() { PROF
+void gui_indent() { 
 
 	gui_add_offset(v2(ggui->style.indent_size, 0.0f), gui_cursor_mode::x);
 	ggui->current->indent_level++;
 }
 
-void gui_unindent() { PROF
+void gui_unindent() { 
 
 	gui_add_offset(v2(-ggui->style.indent_size, 0.0f), gui_cursor_mode::x);
 	ggui->current->indent_level--;
 }
 
-u32 gui_indent_level() { PROF
+u32 gui_indent_level() { 
 	return ggui->current->indent_level;
 }
 
-void gui_same_line() { PROF
+void gui_same_line() { 
 
 	ggui->current->cursor.y -= ggui->current->last_offset.y;
 	ggui->current->cursor.x += ggui->current->last_offset.x;
 	ggui->current->last_offset = v2(0.0f, 0.0f);
 }
 
-void gui_left_cursor() { PROF
+void gui_left_cursor() { 
 
 	gui_window* win = ggui->current;
 
@@ -589,7 +589,7 @@ void gui_left_cursor() { PROF
 	win->cursor.x += ggui->current->indent_level * ggui->style.indent_size;
 }
 
-bool gui_checkbox(string name, bool* data) { PROF
+bool gui_checkbox(string name, bool* data) { 
 
 	gui_window* win = ggui->current;
 	if(!win->full_size) return *data;
@@ -625,7 +625,7 @@ bool gui_checkbox(string name, bool* data) { PROF
 	return *data;
 }
 
-i32 gui_int_slider(string text, i32* data, i32 low, i32 high) { PROF
+i32 gui_int_slider(string text, i32* data, i32 low, i32 high) { 
 
 	gui_window* win = ggui->current;
 	if(!win->full_size) return false;
@@ -692,7 +692,7 @@ i32 gui_int_slider(string text, i32* data, i32 low, i32 high) { PROF
 }
 
 template<typename V>
-void gui_combo(string name, map<string,V> options, V* data) { PROF
+void gui_combo(string name, map<string,V> options, V* data) { 
 
 	if(gui_node(name, null)) {
 
@@ -712,7 +712,7 @@ void gui_combo(string name, map<string,V> options, V* data) { PROF
 	}
 }
 
-bool gui_carrot_toggle(string name, bool initial, bool* toggleme) { PROF
+bool gui_carrot_toggle(string name, bool initial, bool* toggleme) { 
 
 	gui_window* win = ggui->current;
 	if(!win->full_size) return initial;
@@ -762,7 +762,7 @@ bool gui_carrot_toggle(string name, bool initial, bool* toggleme) { PROF
 	return data->b;
 }
 
-void _carrot_toggle_background(bool* data) { PROF
+void _carrot_toggle_background(bool* data) { 
 
 	gui_window* win = ggui->current;
 
@@ -790,7 +790,7 @@ void _carrot_toggle_background(bool* data) { PROF
 	}
 }
 
-void render_carrot(gui_window* win, v2 pos, bool active) { PROF
+void render_carrot(gui_window* win, v2 pos, bool active) { 
 
 	f32 size = ggui->style.carrot_size.x;
 
@@ -801,7 +801,7 @@ void render_carrot(gui_window* win, v2 pos, bool active) { PROF
 	}
 }
 
-void render_slider(gui_window* win, r2 rect, i32 rel, i32 max) { PROF
+void render_slider(gui_window* win, r2 rect, i32 rel, i32 max) { 
 
 
 	color out = color(ggui->style.win_scroll_back, 255);
@@ -819,7 +819,7 @@ void render_slider(gui_window* win, r2 rect, i32 rel, i32 max) { PROF
 	win->shape_mesh.push_rect(bar, in);
 }
 
-void render_checkbox(gui_window* win, r2 pos, bool active) { PROF
+void render_checkbox(gui_window* win, r2 pos, bool active) { 
 
 	color out = color(ggui->style.win_scroll_back, 255);
 	color in  = color(ggui->style.win_scroll_bar, 255);
@@ -835,7 +835,7 @@ void render_checkbox(gui_window* win, r2 pos, bool active) { PROF
 }
 
 template<typename E>
-void gui_enum_buttons(string name, E* val) { PROF
+void gui_enum_buttons(string name, E* val) { 
 
 	gui_window* win = ggui->current;
 	if(!win->full_size) return;
@@ -867,7 +867,7 @@ void gui_enum_buttons(string name, E* val) { PROF
 	gui_left_cursor();
 }
 
-bool gui_button(string text) { PROF
+bool gui_button(string text) { 
 
 	gui_window* win = ggui->current;
 	if(!win->full_size) return false;
@@ -900,7 +900,7 @@ bool gui_button(string text) { PROF
 	return ret;
 }
 
-bool gui_node(string text, bool* store) { PROF 
+bool gui_node(string text, bool* store) {  
 
 	gui_window* win = ggui->current;
 	if(!win->full_size) return false;
@@ -953,7 +953,7 @@ bool gui_node(string text, bool* store) { PROF
 	return *data;
 }
 
-void gui_text(string text) { PROF
+void gui_text(string text) { 
 
 	gui_window* win = ggui->current;
 	if(!win->full_size) return;
@@ -979,7 +979,7 @@ void gui_text(string text) { PROF
 	win->text_mesh.push_text_line(win->font->font, text, pos, point, c);
 }
 
-void render_windowhead(gui_window* win) { PROF
+void render_windowhead(gui_window* win) { 
 	
 	r2 r = win->get_real();
 	f32 pt = ggui->style.font_size + ggui->style.title_padding;
@@ -988,7 +988,7 @@ void render_windowhead(gui_window* win) { PROF
 	win->background_mesh.push_rect(render, color(ggui->style.win_top, 255));
 }
 
-void render_title(gui_window* win, v2 pos, string title) { PROF
+void render_title(gui_window* win, v2 pos, string title) { 
 
 	u32 vidx = win->text_mesh.vertices.size;
 	u32 eidx = win->text_mesh.elements.size;
@@ -999,7 +999,7 @@ void render_title(gui_window* win, v2 pos, string title) { PROF
 	win->title_elements = win->text_mesh.elements.size - eidx;
 }
 
-void render_windowbody(gui_window* win) { PROF
+void render_windowbody(gui_window* win) { 
 
 	r2 c = win->get_real_content();
 	r2 r = win->get_real();

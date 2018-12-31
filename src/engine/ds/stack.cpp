@@ -1,12 +1,12 @@
 
 template<typename T>
-void stack<T>::destroy() { PROF
+void stack<T>::destroy() { 
 
 	contents.destroy();
 }
 
 template<typename T>
-stack<T> stack<T>::make_copy(stack<T> src, allocator* a) { PROF
+stack<T> stack<T>::make_copy(stack<T> src, allocator* a) { 
 
 	stack<T> ret;
 
@@ -16,7 +16,7 @@ stack<T> stack<T>::make_copy(stack<T> src, allocator* a) { PROF
 }
 
 template<typename T>
-stack<T> stack<T>::make_copy_trim(stack<T> src, allocator* a) { PROF
+stack<T> stack<T>::make_copy_trim(stack<T> src, allocator* a) { 
 
 	stack<T> ret;
 
@@ -26,7 +26,7 @@ stack<T> stack<T>::make_copy_trim(stack<T> src, allocator* a) { PROF
 }
 
 template<typename T>
-stack<T> stack<T>::make(u32 capacity, allocator* a) { PROF
+stack<T> stack<T>::make(u32 capacity, allocator* a) { 
 
 	stack<T> ret;
 
@@ -36,7 +36,7 @@ stack<T> stack<T>::make(u32 capacity, allocator* a) { PROF
 }
 
 template<typename T> 
-stack<T> stack<T>::make_copy(stack<T> src) { PROF
+stack<T> stack<T>::make_copy(stack<T> src) { 
 	
 	stack<T> ret;
 
@@ -46,7 +46,7 @@ stack<T> stack<T>::make_copy(stack<T> src) { PROF
 }
 
 template<typename T>
-stack<T> stack<T>::make(u32 capacity) { PROF
+stack<T> stack<T>::make(u32 capacity) { 
 
 	stack<T> ret;
 
@@ -56,19 +56,19 @@ stack<T> stack<T>::make(u32 capacity) { PROF
 }
 
 template<typename T>
-void stack<T>::clear() { PROF
+void stack<T>::clear() { 
 
 	contents.clear();
 }
 
 template<typename T>
-void stack<T>::push(T value) { PROF
+void stack<T>::push(T value) { 
 
 	contents.push(value);
 }
 
 template<typename T>
-T stack<T>::pop() { PROF
+T stack<T>::pop() { 
 
 	if(contents.size > 0) {
 		
@@ -85,7 +85,7 @@ T stack<T>::pop() { PROF
 }
 
 template<typename T>
-T* stack<T>::top() { PROF
+T* stack<T>::top() { 
 
 	if(contents.size > 0) {
 
@@ -97,12 +97,12 @@ T* stack<T>::top() { PROF
 }
 
 template<typename T>
-bool stack<T>::empty() { PROF
+bool stack<T>::empty() { 
 	return vector_empty(&contents);
 }
 
 template<typename T>
-bool stack<T>::try_pop(T* out) { PROF
+bool stack<T>::try_pop(T* out) { 
 	
 	if(!empty()) {
 		
@@ -114,7 +114,7 @@ bool stack<T>::try_pop(T* out) { PROF
 }
 
 template<typename T>
-locking_stack<T> locking_stack<T>::make(u32 capacity, allocator* a) { PROF
+locking_stack<T> locking_stack<T>::make(u32 capacity, allocator* a) { 
 
 	locking_stack<T> ret;
 	ret.contents = vector<T>::make(capacity, a);
@@ -125,13 +125,13 @@ locking_stack<T> locking_stack<T>::make(u32 capacity, allocator* a) { PROF
 }
 
 template<typename T>
-locking_stack<T> locking_stack<T>::make(u32 capacity) { PROF
+locking_stack<T> locking_stack<T>::make(u32 capacity) { 
 
 	return locking_stack<T>::make(capacity, CURRENT_ALLOC());
 }
 
 template<typename T>
-void locking_stack<T>::destroy() { PROF
+void locking_stack<T>::destroy() { 
 
 	stack<T>::destroy();
 	global_api->destroy_mutex(&mut);
@@ -139,7 +139,7 @@ void locking_stack<T>::destroy() { PROF
 }
 
 template<typename T>
-T* locking_stack<T>::push(T value) { PROF
+T* locking_stack<T>::push(T value) { 
 
 	global_api->aquire_mutex(&mut, -1);
 	T* ret = stack<T>::push(value);
@@ -149,7 +149,7 @@ T* locking_stack<T>::push(T value) { PROF
 }
 
 template<typename T>
-T locking_stack<T>::wait_pop() { PROF
+T locking_stack<T>::wait_pop() { 
 
 	global_api->wait_semaphore(&sem, -1);
 	T ret;
@@ -158,7 +158,7 @@ T locking_stack<T>::wait_pop() { PROF
 }
 
 template<typename T>
-bool locking_stack<T>::try_pop(T* out) { PROF
+bool locking_stack<T>::try_pop(T* out) { 
 
 	global_api->aquire_mutex(&mut, -1);
 	bool ret = stack<T>::try_pop(out);

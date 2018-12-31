@@ -1,5 +1,5 @@
 
-void exile::init() { PROF
+void exile::init() { PROF_FUNC
 
 	alloc = MAKE_PLATFORM_ALLOCATOR("world");
 
@@ -27,12 +27,12 @@ void exile::init() { PROF
 	}
 }
 
-void exile::gl_reload() { PROF
+void exile::gl_reload() { 
 
 	w.regenerate();	
 }
 
-void exile::update() { PROF
+void exile::update() { PROF_FUNC
 
 	u64 now = eng->platform->get_perfcount();
 
@@ -46,7 +46,7 @@ void exile::update() { PROF
 #endif
 }
 
-void exile::render() { PROF
+void exile::render() { PROF_FUNC
 
 	const ImGuiWindowFlags flags = ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_AlwaysAutoResize;
 	if(!eng->dbg.show_ui) {
@@ -59,7 +59,7 @@ void exile::render() { PROF
 		ImGui::SetNextWindowPos({0.0f, 0.0f});
 		ImGui::Begin("Help"_, null, flags);
 		ImGui::Text("GRAVE : hide debug UI");
-		ImGui::Text("P : toggle profiler");
+		ImGui::Text("P : toggle iler");
 		ImGui::Text("O : toggle debug vars");
 		ImGui::End();
 	}
@@ -67,7 +67,7 @@ void exile::render() { PROF
 	w.render();
 }
 
-void exile::destroy() { PROF
+void exile::destroy() { 
 
 	eng->evt.rem_handler(default_evt);
 
@@ -77,7 +77,7 @@ void exile::destroy() { PROF
 	controls.destroy();
 }
 
-CALLBACK bool default_evt_handle(void* param, platform_event evt) { PROF
+CALLBACK bool default_evt_handle(void* param, platform_event evt) { 
 
 	if(evt.type == platform_event_type::key) {
 		if(evt.key.flags & (u16)platform_keyflag::press) {
@@ -99,7 +99,7 @@ CALLBACK bool default_evt_handle(void* param, platform_event evt) { PROF
 	return false;
 }
 
-CALLBACK void camera_to_ui(void* param) { PROF
+CALLBACK void camera_to_ui(void* param) { 
 
 	eng->platform->release_mouse(&eng->window);
 	eng->dbg.show_ui = true;
@@ -108,7 +108,7 @@ CALLBACK void camera_to_ui(void* param) { PROF
 	p->enable = false;
 }
 
-CALLBACK void ui_to_camera(void* param) { PROF
+CALLBACK void ui_to_camera(void* param) { 
 
 	eng->platform->capture_mouse(&eng->window);
 	eng->dbg.show_ui = false;
@@ -117,7 +117,7 @@ CALLBACK void ui_to_camera(void* param) { PROF
 	p->enable = true;
 }
 
-CALLBACK bool camera_evt_handle(void* param, platform_event evt) { PROF
+CALLBACK bool camera_evt_handle(void* param, platform_event evt) { 
 
 	exile* game = (exile*)param;
 	player& p = game->w.p;
@@ -160,7 +160,7 @@ CALLBACK bool camera_evt_handle(void* param, platform_event evt) { PROF
 	return false;
 }
 
-CALLBACK bool ui_evt_handle(void* param, platform_event evt) { PROF
+CALLBACK bool ui_evt_handle(void* param, platform_event evt) { 
 
 	exile* game = (exile*)param;
 

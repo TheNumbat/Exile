@@ -11,7 +11,7 @@ E atomic_enum<E>::get() {
 	return (E)value;
 }
 
-bool gt(super_job* l, super_job* r) { PROF
+bool gt(super_job* l, super_job* r) { 
 	if(l->priority_class == r->priority_class) return l->priority > r->priority;
 	return l->priority_class > r->priority_class;
 }
@@ -50,12 +50,12 @@ void future<T>::set(T v) {
 	CHECKED(signal_semaphore, &sem, 1);
 }
 
-threadpool threadpool::make(i32 num_threads_) { PROF
+threadpool threadpool::make(i32 num_threads_) { 
 
 	return make(CURRENT_ALLOC(), num_threads_);
 }
 
-threadpool threadpool::make(allocator* a, i32 num_threads_) { PROF
+threadpool threadpool::make(allocator* a, i32 num_threads_) { 
 
 	threadpool ret;
 
@@ -71,7 +71,7 @@ threadpool threadpool::make(allocator* a, i32 num_threads_) { PROF
 	return ret;
 }
 
-void threadpool::destroy() { PROF
+void threadpool::destroy() { 
 
 	stop_all();
 
@@ -88,13 +88,13 @@ void threadpool::destroy() { PROF
 	CHECKED(destroy_semaphore, &jobs_semaphore);
 }
 
-void threadpool::renew_priorities(f32 (*eval)(super_job*, void*), void* param) { PROF
+void threadpool::renew_priorities(f32 (*eval)(super_job*, void*), void* param) { 
 
 	jobs.renew(eval, param);
 }
 
 template<>
-void heap<super_job*,gt>::renew(f32 (*eval)(super_job*, void*), void* param) { PROF
+void heap<super_job*,gt>::renew(f32 (*eval)(super_job*, void*), void* param) { 
 
 	heap<super_job*,gt> h = heap<super_job*,gt>::make(capacity);
 
@@ -124,7 +124,7 @@ void heap<super_job*,gt>::renew(f32 (*eval)(super_job*, void*), void* param) { P
 }
 
 template<typename T>
-void threadpool::queue_job(future<T>* fut, job_work<T> work, void* data, f32 priority, i32 priority_class, _FPTR* cancel) { PROF
+void threadpool::queue_job(future<T>* fut, job_work<T> work, void* data, f32 priority, i32 priority_class, _FPTR* cancel) { 
 
 	PUSH_ALLOC(alloc);
 
@@ -175,7 +175,7 @@ void threadpool::queue_job(job_work<void> work, void* data, f32 priority, i32 pr
 #endif
 }
 
-void threadpool::stop_all() { PROF
+void threadpool::stop_all() { 
 
 	if(online) {
 	
@@ -203,7 +203,7 @@ void threadpool::stop_all() { PROF
 	jobs.clear();
 } 
 
-void threadpool::start_all() { PROF
+void threadpool::start_all() { 
 
 	if(!online) {
 	
@@ -226,7 +226,6 @@ i32 worker(void* data_) {
 	worker_param* data = (worker_param*)data_;
 
 	begin_thread("worker %"_, data->alloc, global_api->this_thread_id());
-	this_thread_data.timing_override = false;
 	global_dbg->profiler.register_thread(10);
 	
 	LOG_DEBUG("Starting worker thread"_);
@@ -240,25 +239,20 @@ i32 worker(void* data_) {
 #else
 		while(data->job_queue->try_pop(&current_job)) {
 #endif
-			PUSH_PROFILE_PROF(true) {
+			BEGIN_FRAME();
 
-				BEGIN_FRAME();
+			current_job->do_work();
 
-				current_job->do_work();
+			PUSH_ALLOC(data->alloc) {
+				free(current_job, current_job->my_size);
+			} POP_ALLOC();
 
-				PUSH_PROFILE_PROF(false) {
-					PUSH_ALLOC(data->alloc) {
-						free(current_job, current_job->my_size);
-					} POP_ALLOC();
-
-					platform_event a;
-					a.type 		 = platform_event_type::async;
-					a.async.type = platform_async_type::user;
-					global_api->queue_event(a);
-				} POP_PROFILE_PROF();
-				
-				END_FRAME();
-			} POP_PROFILE_PROF();
+			platform_event a;
+			a.type 		 = platform_event_type::async;
+			a.async.type = platform_async_type::user;
+			global_api->queue_event(a);
+			
+			END_FRAME();
 		}
 	} while(data->online);
 

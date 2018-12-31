@@ -1,25 +1,27 @@
 
 #pragma once
 
-// TODO(max): should this be an actual stack?
-#define PUSH_PROFILE(enable) bool __prof = this_thread_data.profiling; this_thread_data.profiling = enable;
-#define POP_PROFILE() {this_thread_data.profiling = __prof;}
-// TODO(max): this is a bit evil
-#define PUSH_PROFILE_PROF(enable) bool __pprof = this_thread_data.timing_override; this_thread_data.timing_override = enable;
-#define POP_PROFILE_PROF() {this_thread_data.timing_override = __pprof;}
-
 #ifdef _MSC_VER
-#define POST_MSG(m) {PUSH_PROFILE(false) {(m).time = __rdtsc(); this_thread_data.dbg_queue.push(m);} POP_PROFILE();}
+#define POST_MSG(m) {(m).time = __rdtsc(); this_thread_data.dbg_queue.push(m);}
 #else
 #error "Fix this"
 #endif
 
-#ifdef PROFILE
-#define PROF_SEC(n) 	_prof_sec(n, CONTEXT);
-#define PROF_SEC_END() 	_prof_sec_end();
-#else
-#define PROF_SEC(n)
-#define PROF_SEC_END() 
+#ifndef __clang__
+	#ifdef PROFILE
+	
+	struct func_scope {
+		func_scope(code_context context, string name = {});
+		~func_scope();
+	};
+	#define PROF_FUNC 	  func_scope __f(CONTEXT);
+	#define PROF_SCOPE(n) func_scope __s(CONTEXT, n);
+
+	#else
+
+	#define PROF_FUNC
+	#define PROF_SCOPE(n)
+	#endif
 #endif
 
 #define BEGIN_FRAME() { \
@@ -170,7 +172,7 @@ struct alloc_profile {
 	void destroy();
 };
 
-struct thread_profile {
+struct thread_ile {
 
 	string name;
 	queue<frame_profile> frames;
@@ -180,11 +182,11 @@ struct thread_profile {
 	i32 selected_frame = 1;
 	bool in_frame = false;
 
-	static thread_profile make();
+	static thread_ile make();
 	void destroy();
 };
 
-enum class prof_sort_type : u8 {
+enum class _sort_type : u8 {
 	none,
 	name,
 	heir,
@@ -228,13 +230,13 @@ struct dbg_value {
 struct dbg_profiler {
 
 	bool frame_pause = true;
-	prof_sort_type prof_sort = prof_sort_type::heir;
+	_sort_type _sort = _sort_type::heir;
 
 	platform_thread_id selected_thread;
 	f32 last_frame_time = 0.0f;
 
 	platform_mutex stats_map_mut;
-	map<platform_thread_id, thread_profile*> thread_stats;
+	map<platform_thread_id, thread_ile*> thread_stats;
 	
 	platform_mutex alloc_map_mut;
 	map<allocator, alloc_profile*> alloc_stats;
@@ -349,15 +351,12 @@ struct dbg_manager {
 	void toggle_console();
 };
 
-void _prof_sec(string name, code_context context);
-void _prof_sec_end();
-
 CALLBACK void dbg_reup_window(void* eng);
 CALLBACK void dbg_add_log(log_message* msg, void*);
 CALLBACK void console_cmd_clear(string, void* data);
 
-bool prof_sort_name(profile_node* l, profile_node* r);
-bool prof_sort_heir(profile_node* l, profile_node* r);
-bool prof_sort_self(profile_node* l, profile_node* r);
-bool prof_sort_calls(profile_node* l, profile_node* r);
+bool _sort_name(profile_node* l, profile_node* r);
+bool _sort_heir(profile_node* l, profile_node* r);
+bool _sort_self(profile_node* l, profile_node* r);
+bool _sort_calls(profile_node* l, profile_node* r);
 bool operator<=(addr_info l, addr_info r);

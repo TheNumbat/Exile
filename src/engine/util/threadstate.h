@@ -9,13 +9,11 @@ struct thread_data {
 	
 	string name;
 	code_context start_context;
+	bool startup = true;
 
 	code_context call_stack[MAX_CALL_STACK_DEPTH] = {};
 	u32 call_stack_depth = 0;
 
-	bool profiling = false;
-	bool timing_override = true;
-	
 	queue<dbg_msg> dbg_queue;
 	arena_allocator scratch_arena;
 };

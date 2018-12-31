@@ -1,5 +1,5 @@
 
-CALLBACK void world_debug_ui(world* w) { PROF
+CALLBACK void world_debug_ui(world* w) { 
 
 	if(ImGui::SmallButton("Regenerate"_)) {
 		w->regenerate();
@@ -11,7 +11,7 @@ CALLBACK void world_debug_ui(world* w) { PROF
 	}
 }
 
-void world::regenerate() { PROF
+void world::regenerate() { 
 
 	thread_pool.stop_all();
 	destroy_chunks();
@@ -19,13 +19,13 @@ void world::regenerate() { PROF
 	thread_pool.start_all();
 }
 
-CALLBACK void player_debug_ui(world* w) { PROF
+CALLBACK void player_debug_ui(world* w) { 
 
 	v3 intersection = w->raymarch(w->p.camera.pos, w->p.camera.front, w->p.camera.reach);
 	ImGui::ViewAny("inter"_, intersection);
 }
 
-void world::init(asset_store* store, allocator* a) { PROF
+void world::init(asset_store* store, allocator* a) { PROF_FUNC
 
 	alloc = a;
 
@@ -68,7 +68,7 @@ void world::init(asset_store* store, allocator* a) { PROF
 	}
 }
 
-void world::destroy_chunks() { PROF 
+void world::destroy_chunks() {  
 
 	FORMAP(it, chunks) {
 		it->value->destroy();
@@ -79,7 +79,7 @@ void world::destroy_chunks() { PROF
 	chunks.destroy();
 }
 
-void world::destroy() { PROF
+void world::destroy() { 
 
 	env.destroy();
 	thread_pool.stop_all();
@@ -103,11 +103,11 @@ block_meta* world::add_block() {
 	return ret;
 }
 
-v3 world::raymarch(v3 origin, v3 max) { PROF
+v3 world::raymarch(v3 origin, v3 max) { 
 	return raymarch(origin, max, len(max));
 }
 
-v3 world::raymarch(v3 pos3, v3 dir3, f32 max) { PROF
+v3 world::raymarch(v3 pos3, v3 dir3, f32 max) { 
 
 	if (max == 0.0f) return pos3;
 
@@ -136,12 +136,12 @@ v3 world::raymarch(v3 pos3, v3 dir3, f32 max) { PROF
 	return pos.xyz + dir.xyz * max;
 }
 
-f32 world_time::day_01() { PROF 
+f32 world_time::day_01() {  
 
 	return (hour + (minute / 60.0f)) / 24.0f;
 }
 
-void world_time::update(u64 now) { PROF 
+void world_time::update(u64 now) { PROF_FUNC
 
 	if(enable) {
 
@@ -170,13 +170,13 @@ void world_time::update(u64 now) { PROF
 	last_update = now;
 }
 
-void world::update(u64 now) { PROF
+void world::update(u64 now) { PROF_FUNC
 
 	time.update(now);
 	update_player(now);
 }
 
-void world::local_populate() { PROF
+void world::local_populate() { 
 
 	i32 min = -settings.view_distance - settings.max_light_propogation - 1;
 	i32 max = settings.view_distance + settings.max_light_propogation + 1;
@@ -215,7 +215,7 @@ void world::local_populate() { PROF
 	}
 }
 
-void world::local_generate() { PROF
+void world::local_generate() { 
 
 	i32 min = -settings.view_distance - settings.max_light_propogation - 1;
 	i32 max = settings.view_distance + settings.max_light_propogation + 1;
@@ -243,7 +243,7 @@ void world::local_generate() { PROF
 	}
 }
 
-void world::local_light() { PROF
+void world::local_light() { 
 
 	i32 min = -settings.view_distance;
 	i32 max = settings.view_distance;
@@ -285,7 +285,7 @@ void world::local_light() { PROF
 	}
 }
 
-void world::local_mesh() { PROF
+void world::local_mesh() { 
 
 	chunk_pos camera = chunk_pos::from_abs(p.camera.pos);
 	for(i32 x = -settings.view_distance; x <= settings.view_distance; x++) {
@@ -319,7 +319,7 @@ void world::local_mesh() { PROF
 	}
 }
 
-CALLBACK void unlock_chunk(chunk* c) { PROF
+CALLBACK void unlock_chunk(chunk* c) { 
 
 	eng->platform->release_mutex(&c->swap_mut);
 }
@@ -350,7 +350,7 @@ CALLBACK void cancel_mesh(chunk* c) {
 	c->state.set(chunk_stage::lit);
 }
 
-void player::reset() { PROF
+void player::reset() { 
 
 	camera.reset();
 	camera.pos = {3.0f, 115.0f, 16.0f};
@@ -359,7 +359,7 @@ void player::reset() { PROF
 	last = global_api->get_perfcount();
 }
 
-void world::render() { PROF
+void world::render() { PROF_FUNC
 
 	env.render(&p, &time);
 
@@ -367,7 +367,7 @@ void world::render() { PROF
 	render_player();
 }
 
-void world_environment::init(asset_store* store, allocator* a) {
+void world_environment::init(asset_store* store, allocator* a) { PROF_FUNC
 
 	sky.init(a);
 	sky.push_dome({}, 1.0f, 64);
@@ -387,7 +387,7 @@ void world_environment::destroy() {
 	sun_moon.destroy();
 }
 
-void world_environment::render(player* p, world_time* t) { PROF 
+void world_environment::render(player* p, world_time* t) { PROF_FUNC
 
 	render_command_list rcl = render_command_list::make();
 
@@ -431,7 +431,7 @@ void world_environment::render(player* p, world_time* t) { PROF
 	rcl.destroy();
 }
 
-void world::render_chunks() { PROF
+void world::render_chunks() { PROF_FUNC
 
 	local_populate();
 	local_generate();
@@ -487,7 +487,7 @@ void world::render_chunks() { PROF
 	rcl.destroy();
 }
 
-void world::render_player() { PROF
+void world::render_player() { PROF_FUNC
 
 	render_camera& cam = p.camera;
 
@@ -539,7 +539,7 @@ void world::render_player() { PROF
 	rcl.destroy();
 }
 
-void world::update_player(u64 now) { PROF
+void world::update_player(u64 now) { PROF_FUNC
 
 	render_camera& cam = p.camera;
 
@@ -594,7 +594,7 @@ void world::update_player(u64 now) { PROF
 	p.last = now;
 }
 
-inline u32 hash(chunk_pos key) { PROF
+inline u32 hash(chunk_pos key) { 
 
 	return hash(key.x) ^ hash(key.y) ^ hash(key.z);
 }
@@ -603,12 +603,12 @@ chunk_pos::chunk_pos(i32 _x, i32 _y, i32 _z) {
 	x = _x; y = _y; z = _z;
 }
 
-bool operator==(chunk_pos l, chunk_pos r) { PROF
+bool operator==(chunk_pos l, chunk_pos r) { 
 
 	return l.x == r.x && l.y == r.y && l.z == r.z;
 }
 
-chunk_pos chunk_pos::from_abs(v3 pos) { PROF
+chunk_pos chunk_pos::from_abs(v3 pos) { 
 
 	chunk_pos ret;
 	ret.x = (i32)(pos.x / chunk::wid) - (pos.x < 0 ? 1 : 0);
@@ -617,12 +617,12 @@ chunk_pos chunk_pos::from_abs(v3 pos) { PROF
 	return ret;
 }
 
-v3 chunk_pos::center_xz() { PROF
+v3 chunk_pos::center_xz() { 
 
 	return v3(x * chunk::wid + chunk::wid / 2.0f, 0.0f, z * chunk::wid + chunk::wid / 2.0f);
 }
 
-chunk_pos chunk_pos::operator+(chunk_pos other) { PROF
+chunk_pos chunk_pos::operator+(chunk_pos other) { 
 	chunk_pos ret;
 	ret.x = x + other.x;
 	ret.y = y + other.y;
@@ -630,7 +630,7 @@ chunk_pos chunk_pos::operator+(chunk_pos other) { PROF
 	return ret;
 }
 
-chunk_pos chunk_pos::operator-(chunk_pos other) { PROF
+chunk_pos chunk_pos::operator-(chunk_pos other) { 
 	chunk_pos ret;
 	ret.x = x - other.x;
 	ret.y = y - other.y;
@@ -638,7 +638,7 @@ chunk_pos chunk_pos::operator-(chunk_pos other) { PROF
 	return ret;
 }
 
-void chunk::init(world* _w, chunk_pos p, allocator* a) { PROF
+void chunk::init(world* _w, chunk_pos p, allocator* a) { 
 
 	w = _w;
 	pos = p;
@@ -649,7 +649,7 @@ void chunk::init(world* _w, chunk_pos p, allocator* a) { PROF
 	lighting_updates = locking_queue<light_work>::make(4, alloc);
 }
 
-void chunk::place_light(iv3 p, i32 i) { PROF
+void chunk::place_light(iv3 p, i32 i) { 
 
 	light_work u;
 	u.type = light_update::add;
@@ -659,7 +659,7 @@ void chunk::place_light(iv3 p, i32 i) { PROF
 	lighting_updates.push(u);
 }
 
-void chunk::rem_light(iv3 p, i32 i) { PROF
+void chunk::rem_light(iv3 p, i32 i) { 
 
 	light_work u;
 	u.type = light_update::remove;
@@ -669,7 +669,7 @@ void chunk::rem_light(iv3 p, i32 i) { PROF
 	lighting_updates.push(u);
 }
 
-chunk* chunk::make_new(world* w, chunk_pos p, allocator* a) { PROF
+chunk* chunk::make_new(world* w, chunk_pos p, allocator* a) { 
 
 	PUSH_ALLOC(a);
 
@@ -682,14 +682,14 @@ chunk* chunk::make_new(world* w, chunk_pos p, allocator* a) { PROF
 	return ret;
 }
 
-void chunk::destroy() { PROF
+void chunk::destroy() { 
 
 	lighting_updates.destroy();
 	mesh.destroy();
 	eng->platform->destroy_mutex(&swap_mut);
 }
 
-i32 chunk::y_at(i32 x, i32 z) { PROF
+i32 chunk::y_at(i32 x, i32 z) { 
 
 	f32 y_max = 512;
 	f32 val = perlin((f32)x / 32.0f, 0, (f32)z / 32.0f, 0, 0, 0);
@@ -698,7 +698,7 @@ i32 chunk::y_at(i32 x, i32 z) { PROF
 	return height;
 }
 
-void chunk::do_gen() { PROF
+void chunk::do_gen() { PROF_FUNC
 
 	LOG_DEBUG_F("Generating chunk %"_, pos);
 
@@ -722,11 +722,9 @@ void chunk::do_gen() { PROF
 	}
 }
 
-void chunk::do_light() { PROF
+void chunk::do_light() { PROF_FUNC
 
 	LOG_DEBUG_F("Lighting chunk %"_, pos);
-
-	PUSH_PROFILE_PROF(false);
 
 	light_work work;
 	while(lighting_updates.try_pop(&work)) {
@@ -782,23 +780,22 @@ void chunk::do_light() { PROF
 		}
 	}
 
-	POP_PROFILE_PROF();
 	RESET_ARENA(&this_thread_data.scratch_arena);
 }
 
-block_type block_node::get_type() { PROF
+block_type block_node::get_type() { 
 
 	if (!owner) return block_air;
 	return owner->blocks[pos.x][pos.z][pos.y];
 }
 
-block_light block_node::get_l() { PROF
+block_light block_node::get_l() { 
 
 	if (!owner) return {};
 	return owner->light[pos.x][pos.z][pos.y];
 }
 
-block_node chunk::canonical_block(iv3 block) { PROF
+block_node chunk::canonical_block(iv3 block) { 
 
 	i32 x = block.x, y = block.y, z = block.z;
 
@@ -862,7 +859,7 @@ block_node chunk::canonical_block(iv3 block) { PROF
 	return same;
 }
 
-block_light chunk::l_at(iv3 block) { PROF
+block_light chunk::l_at(iv3 block) { 
 
 	block_node node = canonical_block(block);	
 
@@ -871,7 +868,7 @@ block_light chunk::l_at(iv3 block) { PROF
 	return node.owner->light[node.pos.x][node.pos.z][node.pos.y];
 }
 
-u8 chunk::ao_at(iv3 block) { PROF
+u8 chunk::ao_at(iv3 block) { 
 
 	i32 x = block.x, y = block.y, z = block.z;
 
@@ -912,7 +909,7 @@ u8 chunk::ao_at(iv3 block) { PROF
 	return 3 - side0 - side1 - corner;
 }
 
-block_type chunk::block_at(iv3 block) { PROF
+block_type chunk::block_at(iv3 block) { 
 
 	block_node node = canonical_block(block);	
 
@@ -921,7 +918,7 @@ block_type chunk::block_at(iv3 block) { PROF
 	return node.owner->blocks[node.pos.x][node.pos.z][node.pos.y];
 }
 
-mesh_face chunk::build_face(block_type t, iv3 p, i32 dir) { PROF
+mesh_face chunk::build_face(block_type t, iv3 p, i32 dir) { 
 
 	mesh_face ret;
 	ret.info = *w->block_info.get(t);
@@ -968,17 +965,15 @@ mesh_face chunk::build_face(block_type t, iv3 p, i32 dir) { PROF
 	return ret;
 }
 
-bool mesh_face::can_merge(mesh_face f1, mesh_face f2, i32 dir, bool h) { PROF
+bool mesh_face::can_merge(mesh_face f1, mesh_face f2, i32 dir, bool h) { 
 
 	dir += h ? 3 : 0;
 	return f1.info.type == f2.info.type && f1.ao == f2.ao && f1.l == f2.l && f1.info.merge[dir] && f2.info.merge[dir];
 }
 
-void chunk::do_mesh() { PROF
+void chunk::do_mesh() { PROF_FUNC
 
 	LOG_DEBUG_F("Meshing chunk %"_, pos);
-
-	PUSH_PROFILE_PROF(false);
 
 	mesh_chunk new_mesh = mesh_chunk::make_cpu(1024, alloc);
 
@@ -1150,8 +1145,6 @@ void chunk::do_mesh() { PROF
 			}
 		}
 	}
-
-	POP_PROFILE_PROF();
 
 	eng->platform->aquire_mutex(&swap_mut);
 	mesh.swap_mesh(new_mesh);

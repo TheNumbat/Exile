@@ -1,5 +1,5 @@
 
-log_manager log_manager::make(allocator* a) { PROF
+log_manager log_manager::make(allocator* a) { 
 
 	log_manager ret;
 
@@ -14,7 +14,7 @@ log_manager log_manager::make(allocator* a) { PROF
 	return ret;
 }
 
-void log_manager::start() { PROF
+void log_manager::start() { 
 
 	thread_param.out 				= &out;
 	thread_param.message_queue 		= &message_queue;
@@ -27,7 +27,7 @@ void log_manager::start() { PROF
 	CHECKED(create_thread, &logging_thread, &log_proc, &thread_param, false);
 }
 
-void log_manager::stop() { PROF
+void log_manager::stop() { 
 
 	thread_param.running = false;
 
@@ -43,7 +43,7 @@ void log_manager::stop() { PROF
 	thread_param.output_mut 		= null;
 }
 
-void log_manager::destroy() { PROF
+void log_manager::destroy() { 
 
 	if(thread_param.running) {
 		stop();
@@ -68,7 +68,7 @@ void log_manager::destroy() { PROF
 	alloc = null;
 }
 
-void log_manager::push_context(string context, code_context fake) { PROF_NOCS
+void log_manager::push_context(string context, code_context fake) { 
 
 	_memcpy(context.c_str, fake.c_function, context.len);
 
@@ -76,13 +76,13 @@ void log_manager::push_context(string context, code_context fake) { PROF_NOCS
 	this_thread_data.call_stack[this_thread_data.call_stack_depth++] = fake;
 }
 
-void log_manager::pop_context() { PROF_NOCS
+void log_manager::pop_context() { 
 
 	LOG_DEBUG_ASSERT(this_thread_data.call_stack_depth > 0);
 	this_thread_data.call_stack_depth--;
 }
 
-void log_manager::add_file(platform_file file, log_level level, log_out_type type, bool flush) { PROF
+void log_manager::add_file(platform_file file, log_level level, log_out_type type, bool flush) { 
 
 	log_out lout;
 	lout.type = type;
@@ -94,7 +94,7 @@ void log_manager::add_file(platform_file file, log_level level, log_out_type typ
 	out.push(lout);
 }
 
-void log_manager::add_stdout(log_level level, log_out_type type) { PROF
+void log_manager::add_stdout(log_level level, log_out_type type) { 
 
 	log_out lout;
 	lout.type = log_out_type::plaintext;
@@ -106,7 +106,7 @@ void log_manager::add_stdout(log_level level, log_out_type type) { PROF
 	out.push(lout);
 }
 
-void log_manager::add_custom_output(log_out output) { PROF
+void log_manager::add_custom_output(log_out output) { 
 
 	if(output.type != log_out_type::custom) {
 		print_header(&output);
@@ -117,14 +117,14 @@ void log_manager::add_custom_output(log_out output) { PROF
 	global_api->release_mutex(&output_mut);
 }
 
-void log_manager::rem_custom_output(log_out output) { PROF
+void log_manager::rem_custom_output(log_out output) { 
 
 	global_api->aquire_mutex(&output_mut);
 	out.erase(output);
 	global_api->release_mutex(&output_mut);
 }
 
-void log_manager::print_header(log_out* output) { PROF
+void log_manager::print_header(log_out* output) { 
 
 	PUSH_ALLOC(alloc) {
 		
@@ -146,7 +146,7 @@ void log_manager::print_header(log_out* output) { PROF
 	} POP_ALLOC();
 }
 
-void log_manager::print_footer(log_out* output) { PROF
+void log_manager::print_footer(log_out* output) { 
 
 	if(output->type == log_out_type::html) {
 			
@@ -156,7 +156,7 @@ void log_manager::print_footer(log_out* output) { PROF
 }
 
 template<typename... Targs> 
-void log_manager::msgf(string fmt, log_level level, code_context context, Targs... args) { PROF_NOCS
+void log_manager::msgf(string fmt, log_level level, code_context context, Targs... args) { 
 
 	log_message lmsg;
 
@@ -200,7 +200,7 @@ void log_manager::msgf(string fmt, log_level level, code_context context, Targs.
 	} POP_ALLOC();
 }
 
-void log_manager::msg(string msg, log_level level, code_context context) { PROF_NOCS
+void log_manager::msg(string msg, log_level level, code_context context) { 
 
 	log_message lmsg;
 
@@ -242,7 +242,7 @@ void log_manager::msg(string msg, log_level level, code_context context) { PROF_
 	} POP_ALLOC();
 }
 
-string log_message::fmt_call_stack() { PROF
+string log_message::fmt_call_stack() { 
 
 	string cstack = string::make_cat(thread_name, "/"_);
 	for(u32 j = 0; j < call_stack.capacity; j++) {
@@ -254,12 +254,12 @@ string log_message::fmt_call_stack() { PROF
 	return cstack;
 }
 
-string log_message::fmt_file_line() { PROF
+string log_message::fmt_file_line() { 
 
 	return string::makef("%:%"_, publisher.file(), publisher.line);
 }
 
-string log_message::fmt_level() { PROF
+string log_message::fmt_level() { 
 
 	string str;
 	switch(level) {
@@ -292,7 +292,7 @@ string log_message::fmt_level() { PROF
 	return str;
 }
 
-string fmt_msg(log_message* msg, log_out_type type) { PROF
+string fmt_msg(log_message* msg, log_out_type type) { 
 
 	string time = global_api->time_string();
 	string cstack = msg->fmt_call_stack();
@@ -327,8 +327,6 @@ i32 log_proc(void* data_) {
 	log_thread_param* data = (log_thread_param*)data_;	
 
 	begin_thread("log"_, data->alloc);
-	this_thread_data.profiling = true;
-	this_thread_data.timing_override = false;
 	global_dbg->profiler.register_thread(1);
 		
 	while(data->running) {

@@ -1,12 +1,12 @@
 
 template<typename T> 
-u32 array<T>::len() { PROF
+u32 array<T>::len() { 
 
 	return capacity;
 }
 
 template<typename T>
-array<T> array<T>::make_copy(array<T>* src, allocator* a) { PROF
+array<T> array<T>::make_copy(array<T>* src, allocator* a) { 
 
 	array<T> ret = array<T>::make(src->capacity, a);
 	_memcpy(src->memory, ret.memory, src->capacity * sizeof(T));
@@ -15,7 +15,7 @@ array<T> array<T>::make_copy(array<T>* src, allocator* a) { PROF
 }
 
 template<typename T>
-void array<T>::destroy() { PROF
+void array<T>::destroy() { 
 
 	if(alloc && memory) {
 
@@ -27,7 +27,7 @@ void array<T>::destroy() { PROF
 }
 
 template<typename T>
-array<T> array<T>::make(u32 capacity, allocator* a) { PROF
+array<T> array<T>::make(u32 capacity, allocator* a) { 
 
 	array<T> ret;
 
@@ -47,7 +47,7 @@ array<T> array<T>::make(u32 capacity, allocator* a) { PROF
 }
 
 template<typename T>
-array<T> array<T>::make(u32 capacity) { PROF
+array<T> array<T>::make(u32 capacity) { 
 
 	array<T> ret;
 
@@ -57,7 +57,7 @@ array<T> array<T>::make(u32 capacity) { PROF
 }
 
 template<typename T>
-array<T> array<T>::make_memory(u32 capacity, void* memory) { PROF
+array<T> array<T>::make_memory(u32 capacity, void* memory) { 
 
 	array<T> ret;
 
@@ -70,8 +70,8 @@ array<T> array<T>::make_memory(u32 capacity, void* memory) { PROF
 template<typename T>
 inline T* array<T>::get(u32 idx) { 
 
-#ifdef MORE_PROF
-	PROF
+#ifdef MORE_
+	
 #endif
 
 #ifdef BOUNDS_CHECK

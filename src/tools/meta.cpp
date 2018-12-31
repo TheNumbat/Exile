@@ -357,7 +357,7 @@ CXChildVisitResult do_parse(CXCursor c) {
 void output_pre(ofstream& fout) {
 	fout << endl << "#define STRING2(...) #__VA_ARGS__##_" << endl
 		 << "#define STRING(...) STRING2(__VA_ARGS__)" << endl
-		 << "void make_meta_info() { PROF" << endl << endl;
+		 << "void make_meta_info() { PROF_FUNC " << endl << endl;
 }
 
 void output_post(ofstream& fout) {

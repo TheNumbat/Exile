@@ -1739,7 +1739,7 @@ platform_error win32_create_window(platform_window* window) {
 		(i32)wgl_context::major_version_arb, 	4,
 		(i32)wgl_context::minor_version_arb, 	6,
 		(i32)wgl_context::flags_arb, 			(i32)wgl_context::forward_compatible_bit_arb,
-		(i32)wgl_context::profile_mask_arb, 	(i32)wgl_context::core_profile_bit_arb,
+		(i32)wgl_context::ile_mask_arb, 	(i32)wgl_context::core_ile_bit_arb,
 		0
 	};
 

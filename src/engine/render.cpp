@@ -1,5 +1,5 @@
 
-v2 size_text(asset* font, string text_utf8, f32 point) { PROF
+v2 size_text(asset* font, string text_utf8, f32 point) { 
 
 	v2 ret;
 
@@ -19,7 +19,7 @@ v2 size_text(asset* font, string text_utf8, f32 point) { PROF
 	return ret;
 }
 
-shader_source shader_source::make(string path, allocator* a) { PROF
+shader_source shader_source::make(string path, allocator* a) { 
 
 	shader_source ret;
 
@@ -31,7 +31,7 @@ shader_source shader_source::make(string path, allocator* a) { PROF
 	return ret;
 }
 
-void shader_source::load() { PROF
+void shader_source::load() { 
 
 	platform_file source_file;
 
@@ -58,7 +58,7 @@ void shader_source::load() { PROF
 	CHECKED(get_file_attributes, &last_attrib, path);
 }
 
-void shader_source::destroy() { PROF
+void shader_source::destroy() { 
 
 	if(source.c_str)
 		source.destroy(alloc);
@@ -66,7 +66,7 @@ void shader_source::destroy() { PROF
 		path.destroy(alloc);
 }
 
-bool shader_source::try_refresh() { PROF
+bool shader_source::try_refresh() { 
 
 	if(!path.c_str) return false;
 
@@ -85,7 +85,7 @@ bool shader_source::try_refresh() { PROF
 	return false;
 }
 
-shader_program shader_program::make(string vert, string frag, string geom, _FPTR* uniforms, allocator* a) { PROF
+shader_program shader_program::make(string vert, string frag, string geom, _FPTR* uniforms, allocator* a) { 
 
 	shader_program ret;
 
@@ -102,7 +102,7 @@ shader_program shader_program::make(string vert, string frag, string geom, _FPTR
 	return ret;
 }
 
-void shader_program::compile() { PROF
+void shader_program::compile() { 
 
 	bool do_geometry = geometry.path.c_str != null; // NOTE(max): fix?
 
@@ -145,7 +145,7 @@ void shader_program::compile() { PROF
 	}
 }
 
-bool shader_program::check_compile(string name, GLuint shader) { PROF
+bool shader_program::check_compile(string name, GLuint shader) { 
 
 	GLint isCompiled = 0;
 	glGetShaderiv(shader, gl_shader_param::compile_status, &isCompiled);
@@ -166,14 +166,14 @@ bool shader_program::check_compile(string name, GLuint shader) { PROF
 	return true;
 }
 
-void shader_program::gl_destroy() { PROF 
+void shader_program::gl_destroy() {  
 
 	glUseProgram(0);
 	glDeleteProgram(handle);
 	handle = 0;
 }
 
-void shader_program::recreate() { PROF 
+void shader_program::recreate() {  
 
 	handle = glCreateProgram();
 	compile();
@@ -184,7 +184,7 @@ void shader_program::recreate() { PROF
 		LOG_DEBUG_F("Recreated program % with files %, %"_, handle, vertex.path, fragment.path);
 }
 
-bool shader_program::try_refresh() { PROF
+bool shader_program::try_refresh() { 
 
 	if(vertex.try_refresh() || fragment.try_refresh() || geometry.try_refresh()) {
 
@@ -197,7 +197,7 @@ bool shader_program::try_refresh() { PROF
 	return false;
 }
 
-void shader_program::destroy() { PROF
+void shader_program::destroy() { 
 
 	vertex.destroy();
 	fragment.destroy();
@@ -206,7 +206,7 @@ void shader_program::destroy() { PROF
 	gl_destroy();
 }
 
-void ogl_manager::gl_begin_reload() { PROF
+void ogl_manager::gl_begin_reload() { 
 
 	FORMAP(it, objects) {
 		it->value.destroy();
@@ -223,7 +223,7 @@ void ogl_manager::gl_begin_reload() { PROF
 	check_leaked_handles();
 }
 
-void ogl_manager::gl_end_reload() { PROF
+void ogl_manager::gl_end_reload() { 
 
 	load_global_funcs();
 	info = ogl_info::make(alloc);
@@ -248,14 +248,14 @@ void ogl_manager::gl_end_reload() { PROF
 	glDepthFunc(gl_depth_factor::lequal);
 }
 
-void ogl_manager::reload_texture_assets() { PROF
+void ogl_manager::reload_texture_assets() { 
 
 	FORMAP(it, textures) {
 		it->value.reload_data();
 	}
 }
 
-void ogl_manager::try_reload_programs() { PROF
+void ogl_manager::try_reload_programs() { 
 	FORMAP(it, commands) {
 		if(it->value.shader.try_refresh()) {
 
@@ -268,7 +268,7 @@ void ogl_manager::try_reload_programs() { PROF
 	dbg_shader.try_refresh();
 }
 
-ogl_manager ogl_manager::make(platform_window* win, allocator* a) { PROF
+ogl_manager ogl_manager::make(platform_window* win, allocator* a) { 
 
 	ogl_manager ret;
 
@@ -295,7 +295,7 @@ ogl_manager ogl_manager::make(platform_window* win, allocator* a) { PROF
 	return ret;
 }
 
-gpu_object gpu_object::make() { PROF
+gpu_object gpu_object::make() { 
 
 	gpu_object ret;
 	glGenVertexArrays(1, &ret.vao);
@@ -303,7 +303,7 @@ gpu_object gpu_object::make() { PROF
 	return ret;
 }
  
-void gpu_object::recreate() { PROF
+void gpu_object::recreate() { 
 
 	glGenVertexArrays(1, &vao);
 	glGenBuffers(5, vbos);
@@ -315,13 +315,13 @@ void gpu_object::recreate() { PROF
 	LOG_DEBUG_F("Recreated gpu object %"_, id);
 }
 
-void gpu_object::destroy() { PROF
+void gpu_object::destroy() { 
 
 	glDeleteBuffers(5, vbos);
 	glDeleteVertexArrays(1, &vao);
 }
 
-gpu_object_id ogl_manager::add_object(_FPTR* setup, _FPTR* update, void* cpu_data) { PROF
+gpu_object_id ogl_manager::add_object(_FPTR* setup, _FPTR* update, void* cpu_data) { 
 
 	gpu_object obj = gpu_object::make();
 	
@@ -339,7 +339,7 @@ gpu_object_id ogl_manager::add_object(_FPTR* setup, _FPTR* update, void* cpu_dat
 	return next_gpu_id - 1;
 }
 
-void ogl_manager::destroy_object(gpu_object_id id) { PROF
+void ogl_manager::destroy_object(gpu_object_id id) { 
 
 	gpu_object* obj = objects.try_get(id);
 	LOG_DEBUG_ASSERT(obj);
@@ -350,11 +350,11 @@ void ogl_manager::destroy_object(gpu_object_id id) { PROF
 	}
 }
 
-gpu_object* ogl_manager::get_object(gpu_object_id id) { PROF
+gpu_object* ogl_manager::get_object(gpu_object_id id) { 
 	return objects.try_get(id);
 }
 
-gpu_object* ogl_manager::select_object(gpu_object_id id) { PROF
+gpu_object* ogl_manager::select_object(gpu_object_id id) { 
 
 	gpu_object* obj = objects.try_get(id);
 
@@ -370,7 +370,7 @@ gpu_object* ogl_manager::select_object(gpu_object_id id) { PROF
 }
 
 
-void ogl_manager::destroy() { PROF
+void ogl_manager::destroy() { 
 
 	FORMAP(it, commands) {
 		it->value.shader.destroy();
@@ -392,7 +392,7 @@ void ogl_manager::destroy() { PROF
 	check_leaked_handles();
 } 
 
-texture_id ogl_manager::add_texture_from_font(asset_store* as, string name, texture_wrap wrap, bool pixelated) { PROF
+texture_id ogl_manager::add_texture_from_font(asset_store* as, string name, texture_wrap wrap, bool pixelated) { 
 
 	texture t = texture::make_rf(wrap, pixelated, settings.anisotropy);
 	t.id = next_texture_id;
@@ -407,7 +407,7 @@ texture_id ogl_manager::add_texture_from_font(asset_store* as, string name, text
 	return next_texture_id - 1;
 }
 
-texture_id ogl_manager::add_texture(asset_store* as, string name, texture_wrap wrap, bool pixelated) { PROF
+texture_id ogl_manager::add_texture(asset_store* as, string name, texture_wrap wrap, bool pixelated) { 
 
 	texture t = texture::make_bmp(wrap, pixelated, settings.anisotropy);
 	t.id = next_texture_id;
@@ -437,7 +437,7 @@ texture_id ogl_manager::add_cubemap(asset_store* as, string name) {
 	return next_texture_id - 1;
 }
 
-i32 ogl_manager::get_layers(texture_id tex) { PROF 
+i32 ogl_manager::get_layers(texture_id tex) {  
 
 	texture* t = textures.try_get(tex);
 
@@ -447,7 +447,7 @@ i32 ogl_manager::get_layers(texture_id tex) { PROF
 	return t->array_info.current_layer;
 }
 
-texture_id ogl_manager::begin_tex_array(iv3 dim, texture_wrap wrap, bool pixelated, u32 offset) { PROF
+texture_id ogl_manager::begin_tex_array(iv3 dim, texture_wrap wrap, bool pixelated, u32 offset) { 
 
 	texture t = texture::make_array(dim, offset, wrap, pixelated, settings.anisotropy, alloc);
 	t.id = next_texture_id;
@@ -460,7 +460,7 @@ texture_id ogl_manager::begin_tex_array(iv3 dim, texture_wrap wrap, bool pixelat
 	return next_texture_id - 1;
 }
 
-void ogl_manager::push_tex_array(texture_id tex, asset_store* as, string name) { PROF
+void ogl_manager::push_tex_array(texture_id tex, asset_store* as, string name) { 
 
 	texture* t = textures.try_get(tex);
 
@@ -472,7 +472,7 @@ void ogl_manager::push_tex_array(texture_id tex, asset_store* as, string name) {
 	return;
 }
 
-void ogl_manager::destroy_texture(texture_id id) { PROF
+void ogl_manager::destroy_texture(texture_id id) { 
 
 	texture* t = textures.try_get(id);
 
@@ -486,7 +486,7 @@ void ogl_manager::destroy_texture(texture_id id) { PROF
 	textures.erase(id);
 }
 
-texture* ogl_manager::select_texture(u32 unit, texture_id id) { PROF 
+texture* ogl_manager::select_texture(u32 unit, texture_id id) {  
 
 	if(id == -1) return null;
 
@@ -502,13 +502,13 @@ texture* ogl_manager::select_texture(u32 unit, texture_id id) { PROF
 	return t;
 }
 
-void ogl_manager::select_textures(render_command* cmd) { PROF
+void ogl_manager::select_textures(render_command* cmd) { 
 
 	select_texture(0, cmd->texture0);
 	select_texture(1, cmd->texture1);
 }
 
-texture texture::make_bmp(texture_wrap wrap, bool pixelated, f32 aniso) { PROF
+texture texture::make_bmp(texture_wrap wrap, bool pixelated, f32 aniso) { 
 
 	texture ret;
 
@@ -524,7 +524,7 @@ texture texture::make_bmp(texture_wrap wrap, bool pixelated, f32 aniso) { PROF
 	return ret;
 }
 
-texture texture::make_cube(texture_wrap wrap, bool pixelated, f32 aniso) { PROF
+texture texture::make_cube(texture_wrap wrap, bool pixelated, f32 aniso) { 
 
 	texture ret;
 
@@ -541,7 +541,7 @@ texture texture::make_cube(texture_wrap wrap, bool pixelated, f32 aniso) { PROF
 	return ret;	
 }
 
-texture texture::make_rf(texture_wrap wrap, bool pixelated, f32 aniso) { PROF
+texture texture::make_rf(texture_wrap wrap, bool pixelated, f32 aniso) { 
 
 	texture ret;
 
@@ -557,7 +557,7 @@ texture texture::make_rf(texture_wrap wrap, bool pixelated, f32 aniso) { PROF
 	return ret;
 }
 
-texture texture::make_array(iv3 dim, u32 offset, texture_wrap wrap, bool pixelated, f32 aniso, allocator* a) { PROF
+texture texture::make_array(iv3 dim, u32 offset, texture_wrap wrap, bool pixelated, f32 aniso, allocator* a) { 
 
 	texture ret;
 
@@ -578,7 +578,7 @@ texture texture::make_array(iv3 dim, u32 offset, texture_wrap wrap, bool pixelat
 	return ret;
 }
 
-void texture::set_params() { PROF
+void texture::set_params() { 
 
 	glBindTexture(gl_type, handle);
 
@@ -633,7 +633,7 @@ void texture::set_params() { PROF
 	glBindTexture(gl_type, 0);
 }
 
-void texture_cube_info::load_single(GLuint handle, asset_store* store, string name) { PROF 
+void texture_cube_info::load_single(GLuint handle, asset_store* store, string name) {  
 
 	asset* a = store->get(name);
 
@@ -657,7 +657,7 @@ void texture_cube_info::load_single(GLuint handle, asset_store* store, string na
 	glBindTexture(gl_tex_target::cube_map, 0);
 }
 
-void texture_rf_info::load(GLuint handle, asset_store* as, string name) { PROF
+void texture_rf_info::load(GLuint handle, asset_store* as, string name) { 
 
 	asset* a = as->get(name);
 
@@ -678,7 +678,7 @@ void texture_rf_info::load(GLuint handle, asset_store* as, string name) { PROF
 	glBindTexture(gl_tex_target::_2D, 0);
 }
 
-void texture_bmp_info::load(GLuint handle, asset_store* as, string name) { PROF
+void texture_bmp_info::load(GLuint handle, asset_store* as, string name) { 
 
 	asset* a = as->get(name);
 	
@@ -717,12 +717,12 @@ void texture_array_info::push(GLuint handle, asset_store* as, string name) {
 	glBindTexture(gl_tex_target::_2D_array, 0);
 }
 
-void texture::gl_destroy() { PROF
+void texture::gl_destroy() { 
 	
 	glDeleteTextures(1, &handle);
 }
 
-void texture::recreate() { PROF
+void texture::recreate() { 
 
 	glGenTextures(1, &handle);
 	set_params();
@@ -754,7 +754,7 @@ void texture::reload_data() {
 	}
 }
 
-void texture::destroy(allocator* a) { PROF
+void texture::destroy(allocator* a) { 
 
 	if(type == texture_type::array) {
 		array_info.assets.destroy();
@@ -763,7 +763,7 @@ void texture::destroy(allocator* a) { PROF
 	gl_destroy();
 }
 
-void ogl_manager::add_command(u16 id, _FPTR* run, _FPTR* uniforms, _FPTR* compat, string v, string f, string g) { PROF
+void ogl_manager::add_command(u16 id, _FPTR* run, _FPTR* uniforms, _FPTR* compat, string v, string f, string g) { 
 
 	if(commands.try_get(id)) {
 		LOG_ERR_F("Render command id % already in use!!!"_, id);
@@ -791,7 +791,7 @@ void ogl_manager::add_command(u16 id, _FPTR* run, _FPTR* uniforms, _FPTR* compat
 	return;
 }
 
-draw_context* ogl_manager::select_ctx(u16 id) { PROF
+draw_context* ogl_manager::select_ctx(u16 id) { 
 
 	draw_context* d = commands.try_get(id);
 
@@ -800,24 +800,24 @@ draw_context* ogl_manager::select_ctx(u16 id) { PROF
 		return null;
 	}
 
-	PROF_SEC("glUseProgram"_);
-	glUseProgram(d->shader.handle);
-	PROF_SEC_END();
+	{ PROF_SCOPE("glUseProgram"_);
+		glUseProgram(d->shader.handle);
+	}
 	
 	return d;
 }
 
-void ogl_manager::_cmd_push_settings() { PROF
+void ogl_manager::_cmd_push_settings() { 
 
 	command_settings.push(cmd_settings());
 }
 
-void ogl_manager::_cmd_pop_settings() { PROF
+void ogl_manager::_cmd_pop_settings() { 
 
 	command_settings.pop();
 }
 
-void ogl_manager::_cmd_set_setting(render_setting setting, bool enable) { PROF
+void ogl_manager::_cmd_set_setting(render_setting setting, bool enable) { 
 
 	cmd_settings* set = command_settings.top();
 
@@ -836,7 +836,7 @@ void ogl_manager::_cmd_set_setting(render_setting setting, bool enable) { PROF
 	}
 }
 
-CALLBACK void ogl_apply(void* e) { PROF
+CALLBACK void ogl_apply(void* e) { 
 
 	engine* eng = (engine*)e;
 	if(ImGui::Button("Apply Settings")) {
@@ -845,7 +845,7 @@ CALLBACK void ogl_apply(void* e) { PROF
 	}
 }
 
-void ogl_manager::apply_settings() { PROF
+void ogl_manager::apply_settings() { 
 
 	if(settings.anisotropy != prev_settings.anisotropy) {
 
@@ -863,7 +863,7 @@ void ogl_manager::apply_settings() { PROF
 	prev_settings = settings;
 }
 
-void ogl_manager::_cmd_apply_settings() { PROF
+void ogl_manager::_cmd_apply_settings() { 
 
 	cmd_settings* set = command_settings.top();
 
@@ -883,7 +883,7 @@ void ogl_manager::_cmd_apply_settings() { PROF
 	}
 }
 
-void ogl_manager::execute_command_list(render_command_list* rcl) { PROF
+void ogl_manager::execute_command_list(render_command_list* rcl) { 
 
 	FORVEC(cmd, rcl->commands) {
 
@@ -914,7 +914,7 @@ void ogl_manager::execute_command_list(render_command_list* rcl) { PROF
 	}
 }
 
-void ogl_manager::_cmd_set_settings(render_command* cmd) { PROF
+void ogl_manager::_cmd_set_settings(render_command* cmd) { 
 
 	_cmd_apply_settings();
 
@@ -931,7 +931,7 @@ void ogl_manager::_cmd_set_settings(render_command* cmd) { PROF
 		glScissor(0, 0, win->settings.w, win->settings.h);
 }
 
-void ogl_manager::dbg_render_texture_fullscreen(texture_id id) { PROF
+void ogl_manager::dbg_render_texture_fullscreen(texture_id id) { 
 
 	f32 data[] = {
 		-1.0f, -1.0f,	0.0f, 0.0f,
@@ -1044,7 +1044,7 @@ void debug_proc(gl_debug_source glsource, gl_debug_type gltype, GLuint id, gl_de
 	}
 }
 
-ogl_info ogl_info::make(allocator* a) { PROF
+ogl_info ogl_info::make(allocator* a) { 
 
 	ogl_info ret;
 
@@ -1074,19 +1074,19 @@ ogl_info ogl_info::make(allocator* a) { PROF
 	return ret;
 }
 
-void ogl_info::destroy() { PROF
+void ogl_info::destroy() { 
 
 	extensions.destroy();
 }
 
-bool ogl_info::check_version(i32 maj, i32 min) { PROF
+bool ogl_info::check_version(i32 maj, i32 min) { 
 
 	if(major > maj) return true;
 	if(major == maj && minor >= min) return true;
 	return false; 
 }
 
-void ogl_manager::load_global_funcs() { PROF
+void ogl_manager::load_global_funcs() { 
 
 	#define GL_IS_LOAD(name) name = (glIs_t)global_api->get_glproc(#name##_); \
 							 if(!name) LOG_WARN_F("Failed to load GL function %"_, #name##_);
@@ -1215,7 +1215,7 @@ render_command render_command::make(u16 type) {
 	return ret;
 }
 
-render_command render_command::make(u16 type, render_setting setting, bool enable) { PROF
+render_command render_command::make(u16 type, render_setting setting, bool enable) { 
 
 	render_command ret;
 	ret.cmd = type;
@@ -1224,7 +1224,7 @@ render_command render_command::make(u16 type, render_setting setting, bool enabl
 	return ret;
 }
 
-render_command render_command::make(u16 id, gpu_object_id gpu, u32 key) { PROF
+render_command render_command::make(u16 id, gpu_object_id gpu, u32 key) { 
 
 	render_command ret;
 	ret.object = gpu;
@@ -1233,11 +1233,11 @@ render_command render_command::make(u16 id, gpu_object_id gpu, u32 key) { PROF
 	return ret;
 }
 
-bool operator<=(render_command& first, render_command& second) { PROF
+bool operator<=(render_command& first, render_command& second) { 
 	return first.sort_key <= second.sort_key;
 }
 
-render_command_list render_command_list::make(allocator* alloc, u32 cmds) { PROF
+render_command_list render_command_list::make(allocator* alloc, u32 cmds) { 
 
 	if(alloc == null) {
 		alloc = CURRENT_ALLOC();
@@ -1251,12 +1251,12 @@ render_command_list render_command_list::make(allocator* alloc, u32 cmds) { PROF
 	return ret;
 }
 
-void render_command_list::clear() { PROF
+void render_command_list::clear() { 
 
 	commands.clear();
 }
 
-void render_command_list::destroy() { PROF
+void render_command_list::destroy() { 
 
 	commands.destroy();
 	alloc = null;
@@ -1277,17 +1277,17 @@ void render_command_list::set_setting(render_setting setting, bool enable) {
 	add_command(render_command::make(ogl_manager::cmd_setting, setting, enable));
 }
 
-void render_command_list::add_command(render_command rc) { PROF
+void render_command_list::add_command(render_command rc) { 
 
 	commands.push(rc);
 }
 
-void render_command_list::sort() { PROF
+void render_command_list::sort() { 
 
 	commands.stable_sort();
 }
 
-void render_camera::update() { PROF
+void render_camera::update() { 
 	front.x = cos(RADIANS(pitch)) * cos(RADIANS(yaw));
 	front.y = sin(RADIANS(pitch));
 	front.z = sin(RADIANS(yaw)) * cos(RADIANS(pitch));
@@ -1296,7 +1296,7 @@ void render_camera::update() { PROF
 	up = norm(cross(right, front));
 }
 
-void render_camera::move(i32 dx, i32 dy, f32 sens) { PROF
+void render_camera::move(i32 dx, i32 dy, f32 sens) { 
 	
 	yaw   += dx * sens;
 	pitch -= dy * sens;
@@ -1310,7 +1310,7 @@ void render_camera::move(i32 dx, i32 dy, f32 sens) { PROF
 	update();
 }
 
-m4 render_camera::view() { PROF
+m4 render_camera::view() { 
 
 	switch(mode) {
 	case camera_mode::first: {
@@ -1324,7 +1324,7 @@ m4 render_camera::view() { PROF
 	return m4::I;
 }
 
-m4 render_camera::offset() { PROF 
+m4 render_camera::offset() {  
 
 	if(mode == camera_mode::third) {
 		return translate(2.0f * front - offset3rd);
@@ -1333,7 +1333,7 @@ m4 render_camera::offset() { PROF
 	return m4::I;
 }
 
-m4 render_camera::view_no_translate() { PROF
+m4 render_camera::view_no_translate() { 
 
 	switch(mode) {
 	case camera_mode::first: {
@@ -1347,7 +1347,7 @@ m4 render_camera::view_no_translate() { PROF
 	return m4::I;
 }
 
-m4 render_camera::view_pos_origin() { PROF
+m4 render_camera::view_pos_origin() { 
 
 	switch(mode) {
 	case camera_mode::first: {
@@ -1361,7 +1361,7 @@ m4 render_camera::view_pos_origin() { PROF
 	return m4::I;
 }
 
-void render_camera::reset() { PROF
+void render_camera::reset() { 
 
 	pos = {};
 	pitch = 0.0f; yaw = -45.0f; fov = 60.0f;

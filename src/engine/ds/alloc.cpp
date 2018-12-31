@@ -1,61 +1,59 @@
 
-inline u32 hash(allocator a) { PROF
+inline u32 hash(allocator a) { 
 
 	return hash(a.name());
 }
 
-bool operator==(allocator l, allocator r) { PROF
+bool operator==(allocator l, allocator r) { 
 
 	return l.context == r.context;
 }
 
-string allocator::name() { PROF
+string allocator::name() { 
 	return string::from_c_str(c_name);
 }
 
-CALLBACK void* platform_allocate(u64 bytes, u64 align, allocator* this_, code_context context) { PROF
+CALLBACK void* platform_allocate(u64 bytes, u64 align, allocator* this_, code_context context) { 
 
 	void* mem = global_api->heap_alloc(bytes);
 
 	LOG_DEBUG_ASSERT(mem != null);
 
 #ifdef PROFILE
-	if(this_thread_data.profiling) {
-		dbg_msg m;
-		m.type = dbg_msg_type::allocate;
-		m.context = context;
-		m.allocate.to = mem;
-		m.allocate.bytes = this_->track_sizes ? bytes : 0;
-		m.allocate.alloc = *this_;
+	if(!this_->debug || this_thread_data.startup) return mem;
 
-		POST_MSG(m);
-	}
+	dbg_msg m;
+	m.type = dbg_msg_type::allocate;
+	m.context = context;
+	m.allocate.to = mem;
+	m.allocate.bytes = this_->track_sizes ? bytes : 0;
+	m.allocate.alloc = *this_;
+	POST_MSG(m);
 #endif 
 
 	return mem;
 }
 
-CALLBACK void platform_free(void* mem, u64 sz, allocator* this_, code_context context) { PROF
+CALLBACK void platform_free(void* mem, u64 sz, allocator* this_, code_context context) { 
 
 	LOG_DEBUG_ASSERT(mem != null);
 
 	global_api->heap_free(mem);
 
 #ifdef PROFILE
-	if(this_thread_data.profiling) {
-		dbg_msg m;
-		m.type = dbg_msg_type::free;
-		m.context = context;
-		m.free.from = mem;
-		m.free.alloc = *this_;
-		m.free.bytes = this_->track_sizes ? sz : 0;
+	if(!this_->debug ||this_thread_data.startup) return;
 
-		POST_MSG(m);
-	}
+	dbg_msg m;
+	m.type = dbg_msg_type::free;
+	m.context = context;
+	m.free.from = mem;
+	m.free.alloc = *this_;
+	m.free.bytes = this_->track_sizes ? sz : 0;
+	POST_MSG(m);
 #endif 
 }
 
-CALLBACK void* platform_reallocate(void* mem, u64 sz, u64 bytes, u64 align, allocator* this_, code_context context) { PROF
+CALLBACK void* platform_reallocate(void* mem, u64 sz, u64 bytes, u64 align, allocator* this_, code_context context) { 
 
 	LOG_DEBUG_ASSERT(mem != null);
 
@@ -64,24 +62,23 @@ CALLBACK void* platform_reallocate(void* mem, u64 sz, u64 bytes, u64 align, allo
 	LOG_DEBUG_ASSERT(ret != null);
 
 #ifdef PROFILE
-	if(this_thread_data.profiling) {
-		dbg_msg m;
-		m.type = dbg_msg_type::reallocate;
-		m.context = context;
-		m.reallocate.to_bytes = this_->track_sizes ? bytes : 0;
-		m.reallocate.from_bytes = this_->track_sizes ? sz : 0;
-		m.reallocate.to = ret;
-		m.reallocate.from = mem;
-		m.reallocate.alloc = *this_;
+	if(!this_->debug ||this_thread_data.startup) return ret;
 
-		POST_MSG(m);
-	}
+	dbg_msg m;
+	m.type = dbg_msg_type::reallocate;
+	m.context = context;
+	m.reallocate.to_bytes = this_->track_sizes ? bytes : 0;
+	m.reallocate.from_bytes = this_->track_sizes ? sz : 0;
+	m.reallocate.to = ret;
+	m.reallocate.from = mem;
+	m.reallocate.alloc = *this_;
+	POST_MSG(m);
 #endif 
 
 	return ret;
 }
 
-inline platform_allocator make_platform_allocator(string name, code_context context) { PROF
+inline platform_allocator make_platform_allocator(string name, code_context context) { 
 
 	platform_allocator ret;
 	
@@ -96,7 +93,7 @@ inline platform_allocator make_platform_allocator(string name, code_context cont
 	return ret;
 }
 
-CALLBACK void* arena_allocate(u64 bytes, u64 align, allocator* this_, code_context context) { PROF
+CALLBACK void* arena_allocate(u64 bytes, u64 align, allocator* this_, code_context context) { 
 		
 	arena_allocator* this__ = (arena_allocator*)this_;
 
@@ -120,14 +117,14 @@ CALLBACK void* arena_allocate(u64 bytes, u64 align, allocator* this_, code_conte
 
 CALLBACK void arena_free(void*, u64, allocator*, code_context context) {}
 
-CALLBACK void* arena_reallocate(void* mem, u64 sz, u64 bytes, u64 align, allocator* this_, code_context context) { PROF
+CALLBACK void* arena_reallocate(void* mem, u64 sz, u64 bytes, u64 align, allocator* this_, code_context context) { 
 
 	void* ret = arena_allocate(bytes, align, this_, context);
 	_memcpy(mem, ret, sz);
 	return ret;
 }
 
-void arena_reset(arena_allocator* a, code_context context) { PROF
+void arena_reset(arena_allocator* a, code_context context) { 
 
 	a->used = 0;
 
@@ -136,7 +133,7 @@ void arena_reset(arena_allocator* a, code_context context) { PROF
 #endif
 }
 
-inline void arena_destroy(arena_allocator* a, code_context context) { PROF
+inline void arena_destroy(arena_allocator* a, code_context context) { 
 
 	LOG_DEBUG_ASSERT(a->memory != null);
 	if(a->memory) {
@@ -144,7 +141,7 @@ inline void arena_destroy(arena_allocator* a, code_context context) { PROF
 	}
 }
 
-arena_allocator make_arena_allocator(string name, u64 size, allocator* backing, code_context context) { PROF
+arena_allocator make_arena_allocator(string name, u64 size, allocator* backing, code_context context) { 
 
 	arena_allocator ret;
 
@@ -241,12 +238,7 @@ pool_allocator make_pool_allocator(string name, u64 page_size, allocator* backin
 	return ret;
 }
 
-inline void _memcpy(void* source, void* dest, u64 size) { PROF
-
-	_memcpy_ctx(source, dest, size);
-}	
-
-void _memcpy_ctx(void* source, void* dest, u64 size) {
+void _memcpy(void* source, void* dest, u64 size) {
 
 #ifdef _MSC_VER
 	__movsb((u8*)dest, (u8*)source, size);
@@ -262,7 +254,7 @@ void _memcpy_ctx(void* source, void* dest, u64 size) {
 #endif
 }
 
-void _memset(void* mem, u64 size, u8 val) { PROF
+void _memset(void* mem, u64 size, u8 val) { 
 
 #ifdef _MSC_VER
 

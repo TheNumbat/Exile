@@ -14,7 +14,7 @@ namespace ImGui {
 	}
 
 	template<typename E>
-	void EnumCombo(string label, E* val, ImGuiComboFlags flags) { PROF
+	void EnumCombo(string label, E* val, ImGuiComboFlags flags) { 
 
 		_type_info* info = TYPEINFO(E);
 		LOG_DEBUG_ASSERT(info->type_type == Type::_enum);
@@ -22,7 +22,7 @@ namespace ImGui {
 		EnumCombo_T(label, val, info, flags);
 	}
 
-	void EnumCombo_T(string label, void* val, _type_info* info, ImGuiComboFlags flags) { PROF
+	void EnumCombo_T(string label, void* val, _type_info* info, ImGuiComboFlags flags) { 
 
 		_type_info* base = TYPEINFO_H(info->_enum.base_type);
 		i64 ival = int_as_i64(val, base);
@@ -43,7 +43,7 @@ namespace ImGui {
 	}
 
 	template<typename V>
-	void MapCombo(string label, map<string,V> options, V* val, ImGuiComboFlags flags) { PROF
+	void MapCombo(string label, map<string,V> options, V* val, ImGuiComboFlags flags) { 
 
 		string preview;
 		FORMAP(it, options) {
@@ -68,13 +68,13 @@ namespace ImGui {
 	}
 
 	template<typename S>
-	void ViewAny(string label, S val, bool open) { PROF
+	void ViewAny(string label, S val, bool open) { 
 
 		View_T(label, &val, TYPEINFO(S), open);
 	}
 
 	template<typename S>
-	void EditAny(string label, S* val, bool open) { PROF
+	void EditAny(string label, S* val, bool open) { 
 
 		Edit_T(label, val, TYPEINFO(S), open);
 	}
@@ -84,7 +84,7 @@ namespace ImGui {
 	    return *str ? (u32)(*str) + 33 * const_hash(str + 1) : 5381;
 	}
 
-	void View_T(string label, void* val, _type_info* info, bool open) { PROF
+	void View_T(string label, void* val, _type_info* info, bool open) { 
 
 		if(info->type_type != Type::_array && info->type_type != Type::_struct) {
 			Text("%s", label.c_str); SameLine();
@@ -191,7 +191,7 @@ namespace ImGui {
 		}
 	}
 
-	void Edit_T(string label, void* val, _type_info* info, bool open) { PROF
+	void Edit_T(string label, void* val, _type_info* info, bool open) { 
 
 		switch(info->type_type) {
 		case Type::_int: {
@@ -296,13 +296,13 @@ namespace ImGui {
 	}
 }
 
-void* imgui_alloc(u64 size, void* data) { PROF
+void* imgui_alloc(u64 size, void* data) { 
 
 	allocator* a = (allocator*)data;
 	return a->allocate_(size, 0, a, CONTEXT);
 }
 
-void imgui_free(void* mem, void* data) { PROF
+void imgui_free(void* mem, void* data) { 
 
 	if (mem) {
 		allocator* a = (allocator*)data;
@@ -310,17 +310,17 @@ void imgui_free(void* mem, void* data) { PROF
 	}
 }
 
-const char* imgui_get_clipboard(void* data) { PROF
+const char* imgui_get_clipboard(void* data) { 
 
 	return global_api->get_clipboard().c_str;
 }
 
-void imgui_set_clipboard(void* data, const char* text_utf8) { PROF
+void imgui_set_clipboard(void* data, const char* text_utf8) { 
 
 	global_api->set_clipboard(string::literal(text_utf8));
 }
 
-imgui_manager imgui_manager::make(platform_window* window, allocator* a) { PROF
+imgui_manager imgui_manager::make(platform_window* window, allocator* a) { 
 
 	imgui_manager ret;
 
@@ -440,14 +440,14 @@ void imgui_manager::gl_load() {
 	load_font();
 }
 
-void imgui_manager::set_font(string name, f32 size, asset_store* store) { PROF
+void imgui_manager::set_font(string name, f32 size, asset_store* store) { 
 
 	font_asset_name = name;
 	font_size = size;
 	load_font(store);
 }
 
-void imgui_manager::load_font(asset_store* store) { PROF
+void imgui_manager::load_font(asset_store* store) { 
 
 	if(!store) store = last_store;
 	else last_store = store;
@@ -490,7 +490,7 @@ void imgui_manager::load_font(asset_store* store) { PROF
 	io.Fonts->TexID = (void*)(u64)gl_info.font_texture;
 }
 
-void imgui_manager::destroy() { PROF
+void imgui_manager::destroy() { 
 
 	gl_destroy();
 
@@ -498,13 +498,13 @@ void imgui_manager::destroy() { PROF
 	context = null;
 }
 
-void imgui_manager::reload() { PROF
+void imgui_manager::reload() { 
 
 	ImGui::SetAllocatorFunctions(imgui_alloc, imgui_free, alloc);
 	ImGui::SetCurrentContext(context);
 }
 
-void imgui_manager::process_event(platform_event evt) { PROF
+void imgui_manager::process_event(platform_event evt) { 
 
 	ImGuiIO& io = ImGui::GetIO();
 
@@ -538,7 +538,7 @@ void imgui_manager::process_event(platform_event evt) { PROF
 	}
 }
 
-void imgui_manager::begin_frame(platform_window* window) { PROF
+void imgui_manager::begin_frame(platform_window* window) { PROF_FUNC
 
 	ImGuiIO& io = ImGui::GetIO();
 
@@ -575,7 +575,7 @@ void imgui_manager::begin_frame(platform_window* window) { PROF
 	ImGui::NewFrame();
 }
 
-void imgui_manager::end_frame() { PROF
+void imgui_manager::end_frame() { PROF_FUNC
 
 	ImGui::Render();
 

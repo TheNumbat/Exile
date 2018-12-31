@@ -1,5 +1,5 @@
 
-evt_manager evt_manager::make(allocator* a) { PROF
+evt_manager evt_manager::make(allocator* a) { 
 	
 	evt_manager ret;
 
@@ -9,19 +9,19 @@ evt_manager evt_manager::make(allocator* a) { PROF
 	return ret;
 }
 
-void evt_manager::start() { PROF
+void evt_manager::start() { 
 
 	global_api->set_queue_callback(&event_enqueue, &event_queue);
 }
 
-void evt_manager::destroy() { PROF
+void evt_manager::destroy() { 
 
 	event_queue.destroy();
 	handlers.destroy();
 	global_api->set_queue_callback(null, null);
 }
 
-void evt_manager::run_events(engine* state) { PROF
+void evt_manager::run_events(engine* state) { PROF_FUNC
 
 	global_api->pump_events(&state->window);
 
@@ -54,7 +54,7 @@ void evt_manager::run_events(engine* state) { PROF
 	}
 }
 
-evt_handler_id evt_manager::add_handler(_FPTR* handler, void* param) { PROF
+evt_handler_id evt_manager::add_handler(_FPTR* handler, void* param) { 
 
 	evt_handler h;
 	h.handle.set(handler);
@@ -65,25 +65,25 @@ evt_handler_id evt_manager::add_handler(_FPTR* handler, void* param) { PROF
 	return next_id - 1;
 }
 
-evt_handler_id evt_manager::add_handler(evt_handler handler) { PROF
+evt_handler_id evt_manager::add_handler(evt_handler handler) { 
 
 	handlers.insert(next_id++, handler);
 
 	return next_id - 1;
 }
 
-void evt_manager::rem_handler(evt_handler_id id) { PROF
+void evt_manager::rem_handler(evt_handler_id id) { 
 
 	handlers.erase(id);
 }
 
-void event_enqueue(void* data, platform_event evt) { PROF
+void event_enqueue(void* data, platform_event evt) { 
 
 	locking_queue<platform_event>* q = (locking_queue<platform_event>*)data;
 	q->push(evt);
 }
 
-evt_state_machine evt_state_machine::make(evt_manager* mgr, allocator* a) { PROF
+evt_state_machine evt_state_machine::make(evt_manager* mgr, allocator* a) { 
 
 	evt_state_machine ret;
 
@@ -94,7 +94,7 @@ evt_state_machine evt_state_machine::make(evt_manager* mgr, allocator* a) { PROF
 	return ret;
 }
 
-void evt_state_machine::destroy() { PROF
+void evt_state_machine::destroy() { 
 
 	if(active_id) {
 		mgr->rem_handler(active_id);
@@ -105,7 +105,7 @@ void evt_state_machine::destroy() { PROF
 	transitions.destroy();
 }
 
-evt_state_id evt_state_machine::add_state(_FPTR* handler, void* param) { PROF
+evt_state_id evt_state_machine::add_state(_FPTR* handler, void* param) { 
 
 	evt_handler h;
 	h.handle.set(handler);
@@ -116,7 +116,7 @@ evt_state_id evt_state_machine::add_state(_FPTR* handler, void* param) { PROF
 	return next_id - 1;
 }
 
-void evt_state_machine::rem_state(evt_state_id id) { PROF
+void evt_state_machine::rem_state(evt_state_id id) { 
 
 	if(active_state == id) {
 		mgr->rem_handler(active_id);
@@ -133,7 +133,7 @@ void evt_state_machine::rem_state(evt_state_id id) { PROF
 	}
 }
 
-void evt_state_machine::set_state(evt_state_id id) { PROF
+void evt_state_machine::set_state(evt_state_id id) { 
 
 	if(active_id) {
 		mgr->rem_handler(active_id);
@@ -147,7 +147,7 @@ void evt_state_machine::set_state(evt_state_id id) { PROF
 	active_id = mgr->add_handler(*h);
 }
 
-void evt_state_machine::transition(evt_state_id to) { PROF
+void evt_state_machine::transition(evt_state_id to) { 
 
 	evt_id_transition trans;
 	trans.from = active_state;
@@ -162,7 +162,7 @@ void evt_state_machine::transition(evt_state_id to) { PROF
 	set_state(to);
 }
 
-void evt_state_machine::add_transition(evt_state_id from, evt_state_id to, _FPTR* func, void* param) { PROF
+void evt_state_machine::add_transition(evt_state_id from, evt_state_id to, _FPTR* func, void* param) { 
 
 	evt_id_transition trans = {from, to};
 	evt_transition_callback callback;
@@ -174,10 +174,10 @@ void evt_state_machine::add_transition(evt_state_id from, evt_state_id to, _FPTR
 	transitions.insert(trans, callback);
 }
 
-u32 hash(evt_id_transition trans) { PROF
+u32 hash(evt_id_transition trans) { 
 	return hash(trans.from) ^ hash(trans.to);
 }
 
-bool operator==(evt_id_transition l, evt_id_transition r) { PROF
+bool operator==(evt_id_transition l, evt_id_transition r) { 
 	return l.from == r.from && l.to == r.to;
 }

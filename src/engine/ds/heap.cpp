@@ -1,6 +1,6 @@
 
 template<typename T, bool(comp)(T,T)>
-heap<T,comp> heap<T,comp>::make(u32 capacity, allocator* alloc) { PROF
+heap<T,comp> heap<T,comp>::make(u32 capacity, allocator* alloc) { 
 
 	heap<T,comp> ret;
 	ret.capacity = capacity;
@@ -17,7 +17,7 @@ heap<T,comp> heap<T,comp>::make(u32 capacity, allocator* alloc) { PROF
 }	
 
 template<typename T, bool(comp)(T,T)>
-void heap<T,comp>::destroy() { PROF
+void heap<T,comp>::destroy() { 
 
 	if(memory) {
 		alloc->free_(memory, capacity * sizeof(T), alloc, CONTEXT); 
@@ -28,20 +28,20 @@ void heap<T,comp>::destroy() { PROF
 }
 
 template<typename T, bool(comp)(T,T)>
-void heap<T,comp>::clear() { PROF
+void heap<T,comp>::clear() { 
 
 	size = 0;
 }
 
 template<typename T, bool(comp)(T,T)>
-void heap<T,comp>::grow() { PROF
+void heap<T,comp>::grow() { 
 
 	memory = (T*)alloc->reallocate_(memory, capacity * sizeof(T), 2 * capacity * sizeof(T), alignof(T), alloc, CONTEXT);
 	capacity *= 2;
 }
 
 template<typename T, bool(comp)(T,T)>
-void heap<T,comp>::push(T value) { PROF
+void heap<T,comp>::push(T value) { 
 
 	if(size == capacity) {
 		grow();
@@ -54,7 +54,7 @@ void heap<T,comp>::push(T value) { PROF
 }
 
 template<typename T, bool(comp)(T,T)>
-T heap<T,comp>::pop() { PROF
+T heap<T,comp>::pop() { 
 
 	LOG_DEBUG_ASSERT(size > 0);
 	
@@ -71,7 +71,7 @@ T heap<T,comp>::pop() { PROF
 }
 
 template<typename T, bool(comp)(T,T)>
-bool heap<T,comp>::try_pop(T* out) { PROF
+bool heap<T,comp>::try_pop(T* out) { 
 
 	if(!empty()) {
 
@@ -83,13 +83,13 @@ bool heap<T,comp>::try_pop(T* out) { PROF
 }
 
 template<typename T, bool(comp)(T,T)>
-bool heap<T,comp>::empty() { PROF
+bool heap<T,comp>::empty() { 
 
 	return size == 0;
 }
 
 template<typename T, bool(comp)(T,T)>
-void heap<T,comp>::reheap_up(u32 node) { PROF
+void heap<T,comp>::reheap_up(u32 node) { 
 
 	if (!node) return;
 
@@ -105,7 +105,7 @@ void heap<T,comp>::reheap_up(u32 node) { PROF
 }
 
 template<typename T, bool(comp)(T,T)>
-void heap<T,comp>::reheap_down(u32 root) { PROF
+void heap<T,comp>::reheap_down(u32 root) { 
 
 	T val = memory[root];
 
@@ -142,7 +142,7 @@ void heap<T,comp>::reheap_down(u32 root) { PROF
 }
 
 template<typename T, bool(comp)(T,T)>
-locking_heap<T,comp> locking_heap<T,comp>::make(u32 capacity, allocator* alloc) { PROF
+locking_heap<T,comp> locking_heap<T,comp>::make(u32 capacity, allocator* alloc) { 
 
 	locking_heap<T,comp> ret;
 	ret.capacity = capacity;
@@ -161,7 +161,7 @@ locking_heap<T,comp> locking_heap<T,comp>::make(u32 capacity, allocator* alloc) 
 }
 
 template<typename T, bool(comp)(T,T)>
-void locking_heap<T,comp>::destroy() { PROF
+void locking_heap<T,comp>::destroy() { 
 
 	heap<T,comp>::destroy();
 	global_api->destroy_mutex(&mut);
@@ -169,7 +169,7 @@ void locking_heap<T,comp>::destroy() { PROF
 }
 
 template<typename T, bool(comp)(T,T)>
-void locking_heap<T,comp>::push(T value) { PROF
+void locking_heap<T,comp>::push(T value) { 
 
 	global_api->aquire_mutex(&mut);
 	heap<T,comp>::push(value);
@@ -178,7 +178,7 @@ void locking_heap<T,comp>::push(T value) { PROF
 }
 
 template<typename T, bool(comp)(T,T)>
-T locking_heap<T,comp>::wait_pop() { PROF
+T locking_heap<T,comp>::wait_pop() { 
 
 	global_api->wait_semaphore(&sem, -1);
 	T ret;
@@ -187,7 +187,7 @@ T locking_heap<T,comp>::wait_pop() { PROF
 }
 
 template<typename T, bool(comp)(T,T)>
-bool locking_heap<T,comp>::try_pop(T* out) { PROF
+bool locking_heap<T,comp>::try_pop(T* out) { 
 
 	global_api->aquire_mutex(&mut);
 	bool ret = heap<T,comp>::try_pop(out);
@@ -196,7 +196,7 @@ bool locking_heap<T,comp>::try_pop(T* out) { PROF
 }
 
 template<typename T, bool(comp)(T,T)>
-void locking_heap<T,comp>::renew(float (*eval)(T,void*), void* param) { PROF
+void locking_heap<T,comp>::renew(float (*eval)(T,void*), void* param) { 
 
 	global_api->aquire_mutex(&mut);
 	heap<T,comp>::renew(eval, param);

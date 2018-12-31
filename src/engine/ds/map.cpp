@@ -1,5 +1,5 @@
 
-inline u32 hash(u32 key) { PROF
+inline u32 hash(u32 key) { 
 
     key = (key ^ 61) ^ (key >> 16);
     key = key + (key << 3);
@@ -10,7 +10,7 @@ inline u32 hash(u32 key) { PROF
     return key;
 }
 
-inline u32 hash(u64 key) { PROF
+inline u32 hash(u64 key) { 
 
 	// return (u32)(key >> 32 ^ key);
 
@@ -24,35 +24,35 @@ inline u32 hash(u64 key) { PROF
 	return key >> 32;
 }
 
-inline u32 hash(void* key) { PROF
+inline u32 hash(void* key) { 
 
 	// NOTE(max): this better be compiled as 64 bit lol
 	return hash(*(u64*)&key);
 }
 
-inline u32 hash(i32 key) { PROF
+inline u32 hash(i32 key) { 
 
 	return hash(*(u32*)&key);
 }
 
-inline u32 hash(u8 key) { PROF
+inline u32 hash(u8 key) { 
 
 	return hash((u32)key);
 }
 
-inline u32 hash(u16 key) { PROF
+inline u32 hash(u16 key) { 
 
 	return hash((u32)key);
 }
 
 template<typename K, typename V, u32(*hash_func)(K) = hash>
-map<K,V,hash_func> map<K,V,hash_func>::make(u32 capacity) { PROF
+map<K,V,hash_func> map<K,V,hash_func>::make(u32 capacity) { 
 	
 	return map<K,V,hash_func>::make(capacity, CURRENT_ALLOC());
 }
 
 template<typename K, typename V, u32(*hash_func)(K) = hash>
-map<K,V,hash_func> map<K,V,hash_func>::make(u32 capacity, allocator* a) { PROF
+map<K,V,hash_func> map<K,V,hash_func>::make(u32 capacity, allocator* a) { 
 	
 	map<K,V,hash_func> ret;
 
@@ -65,7 +65,7 @@ map<K,V,hash_func> map<K,V,hash_func>::make(u32 capacity, allocator* a) { PROF
 }
 
 template<typename K, typename V, u32(*hash_func)(K) = hash>
-void map<K,V,hash_func>::destroy() { PROF
+void map<K,V,hash_func>::destroy() { 
 	
 	contents.destroy();
 
@@ -74,7 +74,7 @@ void map<K,V,hash_func>::destroy() { PROF
 }
 
 template<typename K, typename V, u32(*hash_func)(K) = hash>
-void map<K,V,hash_func>::clear() { PROF
+void map<K,V,hash_func>::clear() { 
 	
 	FORVECCAP(it, contents) {
 		ELEMENT_CLEAR_OCCUPIED(*it);
@@ -86,7 +86,7 @@ void map<K,V,hash_func>::clear() { PROF
 }
 
 template<typename K, typename V, u32(*hash_func)(K) = hash>
-void map<K,V,hash_func>::grow_rehash() { PROF	
+void map<K,V,hash_func>::grow_rehash() { 	
 	
 	vector<map_element<K,V>> temp = vector<map_element<K,V>>::make_copy(contents);
 
@@ -106,7 +106,7 @@ void map<K,V,hash_func>::grow_rehash() { PROF
 }
 
 template<typename K, typename V, u32(*hash_func)(K) = hash> 
-void map<K,V,hash_func>::trim_rehash() { PROF
+void map<K,V,hash_func>::trim_rehash() { 
 
 	vector<map_element<K,V>> temp = vector<map_element<K,V>>::make_copy(contents);
 
@@ -126,7 +126,7 @@ void map<K,V,hash_func>::trim_rehash() { PROF
 }
 
 template<typename K, typename V, u32(*hash_func)(K) = hash>
-V* map<K,V,hash_func>::insert(K key, V value, bool grow_if_needed) { PROF
+V* map<K,V,hash_func>::insert(K key, V value, bool grow_if_needed) { 
 	
 	if(size >= contents.capacity * MAP_MAX_LOAD_FACTOR) {
 
@@ -194,7 +194,7 @@ V* map<K,V,hash_func>::insert(K key, V value, bool grow_if_needed) { PROF
 }
 
 template<typename K, typename V, u32(*hash_func)(K) = hash>
-V* map<K,V,hash_func>::insert_if_unique(K key, V value, bool grow_if_needed) { PROF
+V* map<K,V,hash_func>::insert_if_unique(K key, V value, bool grow_if_needed) { 
 	
 	V* result = try_get(key);
 	
@@ -207,7 +207,7 @@ V* map<K,V,hash_func>::insert_if_unique(K key, V value, bool grow_if_needed) { P
 }
 
 template<typename K, typename V, u32(*hash_func)(K) = hash>
-V* map<K,V,hash_func>::get(K key) { PROF
+V* map<K,V,hash_func>::get(K key) { 
 
 	V* result = try_get(key);
 	LOG_ASSERT(result != null);
@@ -216,7 +216,7 @@ V* map<K,V,hash_func>::get(K key) { PROF
 }
 
 template<typename K, typename V, u32(*hash_func)(K) = hash>
-V* map<K,V,hash_func>::try_get(K key) { PROF	// can return null
+V* map<K,V,hash_func>::try_get(K key) { 	// can return null
 
 	if (size == 0) {
 		return null;
@@ -248,7 +248,7 @@ V* map<K,V,hash_func>::try_get(K key) { PROF	// can return null
 }
 
 template<typename K, typename V, u32(*hash_func)(K) = hash>
-bool map<K,V,hash_func>::try_erase(K key) { PROF
+bool map<K,V,hash_func>::try_erase(K key) { 
 	
 	u32 hash_bucket;
 
@@ -279,7 +279,7 @@ bool map<K,V,hash_func>::try_erase(K key) { PROF
 }
 
 template<typename K, typename V, u32(*hash_func)(K) = hash>
-void map<K,V,hash_func>::erase(K key) { PROF
+void map<K,V,hash_func>::erase(K key) { 
 
 	LOG_ASSERT(try_erase(key));
 }

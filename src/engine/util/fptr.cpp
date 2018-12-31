@@ -1,11 +1,11 @@
 
-void func_ptr_state::reload_all() { PROF
+void func_ptr_state::reload_all() { 
 	for(u32 i = 0; i < num_ptrs; i++) {
 		CHECKED(get_proc_address, &all_ptrs[i].func, this_dll, all_ptrs[i].name);
 	}
 }
 
-_FPTR* FPTR_STR(string name) { PROF
+_FPTR* FPTR_STR(string name) { 
 
 	void* func = null;
 	CHECKED(get_proc_address, &func, global_func->this_dll, name);
@@ -15,7 +15,7 @@ _FPTR* FPTR_STR(string name) { PROF
 	return _fptr(func, name);	
 }
 
-_FPTR* _fptr(void* func, string name) { PROF
+_FPTR* _fptr(void* func, string name) { 
 
 	for(u32 i = 0; i < global_func->num_ptrs; i++) {
 		if(global_func->all_ptrs[i].func == func)  {
@@ -35,13 +35,13 @@ _FPTR* _fptr(void* func, string name) { PROF
 	return &global_func->all_ptrs[idx];
 }
 
-void cleanup_fptrs() { PROF
+void cleanup_fptrs() { 
 	for(u32 i = 0; i < global_func->num_ptrs; i++) {
 		global_func->all_ptrs[i].name.destroy_plt();
 	}
 	global_api->destroy_mutex(&global_func->mut);
 }
 
-void setup_fptrs() { PROF
+void setup_fptrs() { 
 	global_api->create_mutex(&global_func->mut, false);
 }

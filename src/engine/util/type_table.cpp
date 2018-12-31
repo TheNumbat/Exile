@@ -103,12 +103,12 @@ f64 float_as_f64(void* val, _type_info* info) {
 }
 
 template<typename E>
-string enum_to_string(E val) { PROF
+string enum_to_string(E val) { 
 
 	return enum_to_string((i64)val, TYPEINFO(E));
 }
 
-string enum_to_string(i64 val, _type_info* info) { PROF
+string enum_to_string(i64 val, _type_info* info) { 
 
 	string name;
 
@@ -138,7 +138,7 @@ string enum_to_string(i64 val, _type_info* info) { PROF
 	return name;
 }
 
-void make_type_table(allocator* alloc) { PROF
+void make_type_table(allocator* alloc) { 
 
 	type_table = map<type_id,_type_info>::make(1024, alloc);
 
