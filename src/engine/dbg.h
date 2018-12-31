@@ -3,7 +3,7 @@
 
 // TODO(max): this is kind of evil
 #ifdef _MSC_VER
-#define POST_MSG(m) {(m).time = __rdtsc(); this_thread_data.startup = true; this_thread_data.dbg_queue.push(m); this_thread_data.startup = false;}
+#define POST_MSG(m) {(m).time = __rdtsc(); bool prev = this_thread_data.startup; this_thread_data.startup = true; this_thread_data.dbg_queue.push(m); this_thread_data.startup = prev;}
 #else
 #error "Fix this"
 #endif
