@@ -20,7 +20,7 @@ CALLBACK void* platform_allocate(u64 bytes, u64 align, allocator* this_, code_co
 	LOG_DEBUG_ASSERT(mem != null);
 
 #ifdef PROFILE
-	if(!this_->debug || this_thread_data.startup) return mem;
+	if(this_thread_data.startup) return mem;
 
 	dbg_msg m;
 	m.type = dbg_msg_type::allocate;
@@ -41,7 +41,7 @@ CALLBACK void platform_free(void* mem, u64 sz, allocator* this_, code_context co
 	global_api->heap_free(mem);
 
 #ifdef PROFILE
-	if(!this_->debug ||this_thread_data.startup) return;
+	if(this_thread_data.startup) return;
 
 	dbg_msg m;
 	m.type = dbg_msg_type::free;
@@ -62,7 +62,7 @@ CALLBACK void* platform_reallocate(void* mem, u64 sz, u64 bytes, u64 align, allo
 	LOG_DEBUG_ASSERT(ret != null);
 
 #ifdef PROFILE
-	if(!this_->debug ||this_thread_data.startup) return ret;
+	if(this_thread_data.startup) return ret;
 
 	dbg_msg m;
 	m.type = dbg_msg_type::reallocate;

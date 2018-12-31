@@ -1,8 +1,9 @@
 
 #pragma once
 
+// TODO(max): this is kind of evil
 #ifdef _MSC_VER
-#define POST_MSG(m) {(m).time = __rdtsc(); this_thread_data.dbg_queue.push(m);}
+#define POST_MSG(m) {(m).time = __rdtsc(); this_thread_data.startup = true; this_thread_data.dbg_queue.push(m); this_thread_data.startup = false;}
 #else
 #error "Fix this"
 #endif

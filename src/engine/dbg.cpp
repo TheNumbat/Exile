@@ -244,9 +244,9 @@ void dbg_profiler::recurse(vector<profile_node*> list) {
 		if(node->children.size) {
 			bool enabled = ImGui::TreeNode(node->context.c_function);
 			ImGui::NextColumn();
-			ImGui::Text("%d", node->heir);
+			ImGui::Text("%f", node->heir / (f32)global_api->get_perfcount_freq());
 			ImGui::NextColumn();
-			ImGui::Text("%d", node->self);
+			ImGui::Text("%f", node->self / (f32)global_api->get_perfcount_freq());
 			ImGui::NextColumn();
 			ImGui::Text("%d", node->calls);
 			ImGui::NextColumn();
@@ -259,9 +259,9 @@ void dbg_profiler::recurse(vector<profile_node*> list) {
 			ImGui::Text(node->context.c_function);
 			ImGui::Unindent();
 			ImGui::NextColumn();
-			ImGui::Text("%d", node->heir);
+			ImGui::Text("%f", node->heir / (f32)global_api->get_perfcount_freq());
 			ImGui::NextColumn();
-			ImGui::Text("%d", node->self);
+			ImGui::Text("%f", node->self / (f32)global_api->get_perfcount_freq());
 			ImGui::NextColumn();
 			ImGui::Text("%d", node->calls);
 			ImGui::NextColumn();

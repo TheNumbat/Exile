@@ -10,7 +10,7 @@ struct allocator {
 
 	code_context context;
 
-	bool track_sizes = true, debug = true;
+	bool track_sizes = true;
 	char c_name[ALLOC_NAME_LEN] = {};
 	string name();
 };

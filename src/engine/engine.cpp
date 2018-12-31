@@ -13,7 +13,6 @@ EXPORT engine* start_up(platform_api* api) {
 	setup_fptrs();
 
 	state->basic_a = MAKE_PLATFORM_ALLOCATOR("basic");
-	state->basic_a.debug = false;
 
 	begin_thread("main"_, &state->basic_a);
 
