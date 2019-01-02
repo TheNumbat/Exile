@@ -715,6 +715,7 @@ void chunk::do_gen() { PROF_FUNC
 			if(x % 8 == 0 && z % 8 == 0) {
 				blocks[x][z][height] = block_torch;
 				place_light(iv3(x, height, z), 15);
+				rem_light(iv3(x, height, z), 15);
 			} else {
 				blocks[x][z][height] = block_stone_slab;
 			}
@@ -758,9 +759,9 @@ void chunk::do_light() { PROF_FUNC
 					block_node node = cur.owner->canonical_block(neighbor);
 
 					if(!node.owner) continue;
-					if(cur.propogate_light(w, i) && node.get_l().l + 2 <= current_light) {
+					if(node.get_l().l < current_light - 1 && cur.propogate_light(w, i)) {
 
-						node.owner->light[node.pos.x][node.pos.z][node.pos.y].l = current_light - 1;
+						node.set_l(current_light - 1);
 						q.push(node);
 
 						if(node.owner->lighting_updates.empty()) {
@@ -791,18 +792,41 @@ void chunk::do_light() { PROF_FUNC
 			while(!q.empty()) {
 
 				light_rem_node cur = q.pop();
-				// u8 current_light = cur.val;
+				u8 current_light = cur.val;
+				LOG_ASSERT(current_light != 0);
 
 				for(i32 i = 0; i < 6; i++) {
 					
 					iv3 neighbor = cur.pos + directions[i];
 					block_node node = cur.owner->canonical_block(neighbor);
+					block_light nval = node.get_l();
+
+					if(nval.l != 0 && nval.l < current_light) {
+						node.set_l(0);
+						light_rem_node new_node;
+						new_node.pos = node.pos;
+						new_node.owner = node.owner;
+						new_node.val = nval.l;
+						q.push(new_node);
+
+						if(node.owner->lighting_updates.empty()) {
+							light_work t; t.type = light_update::trigger;
+							node.owner->lighting_updates.push(t);
+						}
+					} else if(nval.l >= current_light) {
+						light_work fill;
+						fill.type = light_update::add;
+						fill.pos = node.pos;
+						fill.intensity = nval.l;
+
+						node.owner->lighting_updates.push(fill);
+					}
 				}
 			}
 		}
-	}
 
-	RESET_ARENA(&this_thread_data.scratch_arena);
+		RESET_ARENA(&this_thread_data.scratch_arena);
+	}
 }
 
 void block_node::set_l(u8 intensity) {
