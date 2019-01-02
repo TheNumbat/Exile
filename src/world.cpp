@@ -649,7 +649,7 @@ void chunk::init(world* _w, chunk_pos p, allocator* a) {
 	lighting_updates = locking_queue<light_work>::make(4, alloc);
 }
 
-void chunk::place_light(iv3 p, i32 i) { 
+void chunk::place_light(iv3 p, u8 i) { 
 
 	light_work u;
 	u.type = light_update::add;
@@ -659,7 +659,7 @@ void chunk::place_light(iv3 p, i32 i) {
 	lighting_updates.push(u);
 }
 
-void chunk::rem_light(iv3 p, i32 i) { 
+void chunk::rem_light(iv3 p, u8 i) { 
 
 	light_work u;
 	u.type = light_update::remove;
@@ -726,16 +726,18 @@ void chunk::do_light() { PROF_FUNC
 
 	LOG_DEBUG_F("Lighting chunk %"_, pos);
 
+	static iv3 directions[] = {{-1, 0, 0}, {0, -1, 0}, {0, 0, -1}, {1, 0, 0}, {0, 1, 0}, {0, 0, 1}};
+
 	light_work work;
 	while(lighting_updates.try_pop(&work)) {
 
 		if(work.type == light_update::add) {
 
 			block_light& first = light[work.pos.x][work.pos.z][work.pos.y];
-			if(first.l >= (u8)work.intensity) {
+			if(first.l >= work.intensity) {
 				continue;
 			}
-			first.l = (u8)work.intensity;
+			first.l = work.intensity;
 
 			queue<block_node> q = queue<block_node>::make(2048, &this_thread_data.scratch_arena);
 
@@ -750,21 +752,13 @@ void chunk::do_light() { PROF_FUNC
 				block_node cur = q.pop();
 				u8 current_light = cur.owner->l_at(cur.pos).l;
 
-				iv3 directions[] = {{-1, 0, 0}, {0, -1, 0}, {0, 0, -1}, {1, 0, 0}, {0, 1, 0}, {0, 0, 1}};
 				for(i32 i = 0; i < 6; i++) {
 					
 					iv3 neighbor = cur.pos + directions[i];
 					block_node node = cur.owner->canonical_block(neighbor);
 
 					if(!node.owner) continue;
-
-					block_type block = node.get_type();
-
-					if(!node.flag && node.get_l().l + 2 <= current_light) {
-
-						if(w->block_info.get(block)->opaque[(i + 3) % 6]) {
-							node.flag = true;
-						}
+					if(cur.propogate_light(w, i) && node.get_l().l + 2 <= current_light) {
 
 						node.owner->light[node.pos.x][node.pos.z][node.pos.y].l = current_light - 1;
 						q.push(node);
@@ -778,11 +772,43 @@ void chunk::do_light() { PROF_FUNC
 			}
 
 		} else if(work.type == light_update::remove) {
-			
+		
+			block_light& first = light[work.pos.x][work.pos.z][work.pos.y];
+			if(first.l == 0) {
+				continue;
+			}
+
+			queue<light_rem_node> q = queue<light_rem_node>::make(2048, &this_thread_data.scratch_arena);
+
+			light_rem_node begin;
+			begin.pos = work.pos;
+			begin.owner = this;
+			begin.val = first.l;
+			first.l = 0;
+
+			q.push(begin);
+
+			while(!q.empty()) {
+
+				light_rem_node cur = q.pop();
+				// u8 current_light = cur.val;
+
+				for(i32 i = 0; i < 6; i++) {
+					
+					iv3 neighbor = cur.pos + directions[i];
+					block_node node = cur.owner->canonical_block(neighbor);
+				}
+			}
 		}
 	}
 
 	RESET_ARENA(&this_thread_data.scratch_arena);
+}
+
+void block_node::set_l(u8 intensity) {
+
+	if(owner)
+		owner->light[pos.x][pos.z][pos.y].l = intensity;
 }
 
 block_type block_node::get_type() { 
@@ -795,6 +821,53 @@ block_light block_node::get_l() {
 
 	if (!owner) return {};
 	return owner->light[pos.x][pos.z][pos.y];
+}
+
+bool block_node::propogate_light(world* w, i32 dir) { 
+
+	i32 x = pos.x, y = pos.y, z = pos.z;
+
+	switch(dir) {
+	case 0: {
+		return !w->block_info.get(owner->block_at(iv3(x,y,z)))->opaque[3] ||
+			   !w->block_info.get(owner->block_at(iv3(x,y-1,z)))->opaque[3] ||
+			   !w->block_info.get(owner->block_at(iv3(x,y,z-1)))->opaque[3] ||
+			   !w->block_info.get(owner->block_at(iv3(x,y-1,z-1)))->opaque[3];
+	} break;
+	case 2: {
+		return !w->block_info.get(owner->block_at(iv3(x,y-1,z)))->opaque[4] ||
+			   !w->block_info.get(owner->block_at(iv3(x-1,y-1,z)))->opaque[4] ||
+			   !w->block_info.get(owner->block_at(iv3(x,y-1,z-1)))->opaque[4] ||
+			   !w->block_info.get(owner->block_at(iv3(x-1,y-1,z-1)))->opaque[4];
+	case 1: {
+		return !w->block_info.get(owner->block_at(iv3(x,y,z)))->opaque[5] ||
+			   !w->block_info.get(owner->block_at(iv3(x-1,y,z)))->opaque[5] ||
+			   !w->block_info.get(owner->block_at(iv3(x,y-1,z)))->opaque[5] ||
+			   !w->block_info.get(owner->block_at(iv3(x-1,y-1,z)))->opaque[5];
+	} break;
+	} break;
+	case 3: {
+		return !w->block_info.get(owner->block_at(iv3(x,y,z)))->opaque[0] ||
+			   !w->block_info.get(owner->block_at(iv3(x,y-1,z)))->opaque[0] ||
+			   !w->block_info.get(owner->block_at(iv3(x,y,z-1)))->opaque[0] ||
+			   !w->block_info.get(owner->block_at(iv3(x,y-1,z-1)))->opaque[0];
+	} break;
+	case 4: {
+		return !w->block_info.get(owner->block_at(iv3(x,y,z)))->opaque[1] ||
+			   !w->block_info.get(owner->block_at(iv3(x-1,y,z)))->opaque[1] ||
+			   !w->block_info.get(owner->block_at(iv3(x,y,z-1)))->opaque[1] ||
+			   !w->block_info.get(owner->block_at(iv3(x-1,y,z-1)))->opaque[1];
+	} break;
+	case 5: {
+		return !w->block_info.get(owner->block_at(iv3(x,y,z)))->opaque[2] ||
+			   !w->block_info.get(owner->block_at(iv3(x-1,y,z)))->opaque[2] ||
+			   !w->block_info.get(owner->block_at(iv3(x,y-1,z)))->opaque[2] ||
+			   !w->block_info.get(owner->block_at(iv3(x-1,y-1,z)))->opaque[2];
+	} break;
+	}
+
+	INVALID_PATH;
+	return false;
 }
 
 block_node chunk::canonical_block(iv3 block) { 

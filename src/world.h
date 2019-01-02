@@ -65,18 +65,26 @@ struct light_work {
 	light_update type;
 	
 	iv3 pos;
-	i32 intensity = 0;
+	u8 intensity = 0;
 };
 
 struct chunk;
 
+// these are all basically the same but whatever
 struct block_node {
 	iv3 pos;
-	bool flag = false;
 	chunk* owner = null;
 
 	block_type get_type();
 	block_light get_l();
+	void set_l(u8 intensity);
+	bool propogate_light(world* w, i32 dir);
+};
+
+struct light_rem_node {
+	u8 val = 0;
+	iv3 pos;
+	chunk* owner = null;
 };
 
 struct world;
@@ -112,8 +120,8 @@ struct chunk {
 	void do_mesh();
 	void destroy();
 	
-	void place_light(iv3 pos, i32 intensity);
-	void rem_light(iv3 pos, i32 intensity);
+	void place_light(iv3 pos, u8 intensity);
+	void rem_light(iv3 pos, u8 intensity);
 
 	static i32 y_at(i32 x, i32 z);
 	
