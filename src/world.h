@@ -3,10 +3,19 @@
 
 struct chunk;
 
-block_type block_air = 0;
+enum class block_id : u16 {
+	air = 0,
+	bedrock,
+	stone,
+	path,
+	stone_slab,
+	torch,
+
+	total_blocks
+};
 
 struct block_meta {
-	block_type type;
+	block_id type;
 
 	bool opaque[6]; // -x -y -z +x +y +z
 	i32 textures[6];
@@ -69,13 +78,14 @@ struct light_work {
 };
 
 struct chunk;
+struct world;
 
 // these are all basically the same but whatever
 struct block_node {
 	iv3 pos;
 	chunk* owner = null;
 
-	block_type get_type();
+	block_id get_type();
 	block_light get_l();
 	void set_l(u8 intensity);
 	bool propogate_light(world* w, i32 dir);
@@ -87,7 +97,6 @@ struct light_rem_node {
 	chunk* owner = null;
 };
 
-struct world;
 struct chunk {
 
 	static const i32 wid = 31, hei = 511;
@@ -96,7 +105,7 @@ struct chunk {
 	chunk_pos pos;
 
 	// NOTE(max): x z y
-	block_type blocks[wid][wid][hei] = {};
+	block_id blocks[wid][wid][hei] = {};
 	block_light light[wid][wid][hei] = {};
 
 	atomic_enum<chunk_stage> state;
@@ -127,10 +136,10 @@ struct chunk {
 	
 	u8 ao_at(iv3 block);
 	block_light l_at(iv3 block);
-	block_type block_at(iv3 block);
+	block_id block_at(iv3 block);
 	block_node canonical_block(iv3 block);
 	
-	mesh_face build_face(block_type t, iv3 p, i32 dir);
+	mesh_face build_face(block_id t, iv3 p, i32 dir);
 };
 
 struct player {
@@ -212,6 +221,7 @@ struct world {
 	// NOTE(max): map to pointers to chunk so the map can transform while chunks are being operated on
 	// TODO(max): use a free-list allocator to allocate the chunks
 	map<chunk_pos, chunk*> chunks;
+
 	vector<block_meta> block_info;
 
 	world_settings settings;
@@ -221,13 +231,13 @@ struct world {
 	allocator* alloc = null;
 	
 	texture_id block_textures = -1;
-	block_type next_block_type = 0;
 
 	world_time time;
 	world_environment env;
 
 	void init(asset_store* store, allocator* a);
-	block_meta* add_block();
+	void init_blocks(asset_store* store);
+	block_meta* get_info(block_id id);
 
 	void destroy();
 	void destroy_chunks();

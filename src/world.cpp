@@ -34,14 +34,7 @@ void world::init(asset_store* store, allocator* a) { PROF_FUNC
 	LOG_INFO_F("units_per_voxel: %"_, chunk::units_per_voxel);
 
 	env.init(store, a);
-	
-	{
-		block_info = vector<block_meta>::make(8192, alloc);
-		block_textures = eng->ogl.begin_tex_array(iv3(32, 32, eng->ogl.info.max_texture_layers), texture_wrap::repeat, true, 1);
-		add_block(); // air
-
-		init_blocks(this, store);
-	}
+	init_blocks(store);
 
 	{
 		LOG_DEBUG_F("% logical cores % physical cores"_, global_api->get_num_cpus(), global_api->get_phys_cpus());
@@ -88,21 +81,6 @@ void world::destroy() {
 	block_info.destroy();
 }
 
-block_meta* world::add_block() {
-
-	block_type id = next_block_type;
-	
-	next_block_type++;
-	if(next_block_type >= block_info.capacity) {
-		block_info.grow();
-	}
-
-	block_meta* ret = block_info.get(id);
-	ret->type = id;
-
-	return ret;
-}
-
 v3 world::raymarch(v3 origin, v3 max) { 
 	return raymarch(origin, max, len(max));
 }
@@ -125,7 +103,7 @@ v3 world::raymarch(v3 pos3, v3 dir3, f32 max) {
 		v4 current = pos + dir * progress;
 		iv3 current_vox = current;
 
-		if(c->block_at(iv3(current_vox.x % chunk::wid, current_vox.y % chunk::hei, current_vox.z % chunk::wid)) != block_air) {
+		if(c->block_at(iv3(current_vox.x % chunk::wid, current_vox.y % chunk::hei, current_vox.z % chunk::wid)) != block_id::air) {
 			return current.xyz;
 		}
 		
@@ -377,6 +355,11 @@ block_node world::world_to_canonical(iv3 pos) {
 	chunk** c = chunks.try_get(cpos);
 	ret.owner = c ? *c : null;
 	return ret;
+}
+
+block_meta* world::get_info(block_id id) {
+
+	return block_info.get((u32)id);
 }
 
 void world::place_light(iv3 pos, u8 intensity) {
@@ -691,6 +674,7 @@ void chunk::init(world* _w, chunk_pos p, allocator* a) {
 	alloc = a;
 
 	mesh.init_gpu();
+	
 	eng->platform->create_mutex(&swap_mut, false);
 	lighting_updates = locking_queue<light_work>::make(4, alloc);
 }
@@ -752,12 +736,17 @@ void chunk::do_gen() { PROF_FUNC
 
 			u32 height = y_at(pos.x * wid + x, pos.z * wid + z);
 
-			blocks[x][z][0] = block_bedrock;
+			blocks[x][z][0] = w->block_id::bedrock;
 			for(u32 y = 1; y < height; y++) {
-				blocks[x][z][y] = block_stone;
+				blocks[x][z][y] = w->block_id::stone;
 			}
 
-			// blocks[x][z][height] = block_stone_slab;
+			if(x % 16 == 0 && z % 16 == 0) {
+				blocks[x][z][height] = w->block_id::torch;
+				place_light(iv3(x, height, z), 15);
+			} else {
+				blocks[x][z][height] = w->block_id::stone_slab;
+			}
 		}
 	}
 }
@@ -870,9 +859,9 @@ void block_node::set_l(u8 intensity) {
 		owner->light[pos.x][pos.z][pos.y].l = intensity;
 }
 
-block_type block_node::get_type() { 
+block_id block_node::get_type() { 
 
-	if (!owner) return block_air;
+	if (!owner) return block_id::air;
 	return owner->blocks[pos.x][pos.z][pos.y];
 }
 
@@ -888,40 +877,40 @@ bool block_node::propogate_light(world* w, i32 dir) {
 
 	switch(dir) {
 	case 0: {
-		return !w->block_info.get(owner->block_at(iv3(x-1,y,z)))->opaque[3] ||
-			   !w->block_info.get(owner->block_at(iv3(x-1,y-1,z)))->opaque[3] ||
-			   !w->block_info.get(owner->block_at(iv3(x-1,y,z-1)))->opaque[3] ||
-			   !w->block_info.get(owner->block_at(iv3(x-1,y-1,z-1)))->opaque[3];
+		return !w->get_info(owner->block_at(iv3(x-1,y,z)))->opaque[3] ||
+			   !w->get_info(owner->block_at(iv3(x-1,y-1,z)))->opaque[3] ||
+			   !w->get_info(owner->block_at(iv3(x-1,y,z-1)))->opaque[3] ||
+			   !w->get_info(owner->block_at(iv3(x-1,y-1,z-1)))->opaque[3];
 	} break;
 	case 1: {
-		return !w->block_info.get(owner->block_at(iv3(x,y-1,z)))->opaque[4] ||
-			   !w->block_info.get(owner->block_at(iv3(x-1,y-1,z)))->opaque[4] ||
-			   !w->block_info.get(owner->block_at(iv3(x,y-1,z-1)))->opaque[4] ||
-			   !w->block_info.get(owner->block_at(iv3(x-1,y-1,z-1)))->opaque[4];
+		return !w->get_info(owner->block_at(iv3(x,y-1,z)))->opaque[4] ||
+			   !w->get_info(owner->block_at(iv3(x-1,y-1,z)))->opaque[4] ||
+			   !w->get_info(owner->block_at(iv3(x,y-1,z-1)))->opaque[4] ||
+			   !w->get_info(owner->block_at(iv3(x-1,y-1,z-1)))->opaque[4];
 	} break;
 	case 2: {
-		return !w->block_info.get(owner->block_at(iv3(x,y,z-1)))->opaque[5] ||
-			   !w->block_info.get(owner->block_at(iv3(x-1,y,z-1)))->opaque[5] ||
-			   !w->block_info.get(owner->block_at(iv3(x,y-1,z-1)))->opaque[5] ||
-			   !w->block_info.get(owner->block_at(iv3(x-1,y-1,z-1)))->opaque[5];
+		return !w->get_info(owner->block_at(iv3(x,y,z-1)))->opaque[5] ||
+			   !w->get_info(owner->block_at(iv3(x-1,y,z-1)))->opaque[5] ||
+			   !w->get_info(owner->block_at(iv3(x,y-1,z-1)))->opaque[5] ||
+			   !w->get_info(owner->block_at(iv3(x-1,y-1,z-1)))->opaque[5];
 	} break;
 	case 3: {
-		return !w->block_info.get(owner->block_at(iv3(x,y,z)))->opaque[0] ||
-			   !w->block_info.get(owner->block_at(iv3(x,y-1,z)))->opaque[0] ||
-			   !w->block_info.get(owner->block_at(iv3(x,y,z-1)))->opaque[0] ||
-			   !w->block_info.get(owner->block_at(iv3(x,y-1,z-1)))->opaque[0];
+		return !w->get_info(owner->block_at(iv3(x,y,z)))->opaque[0] ||
+			   !w->get_info(owner->block_at(iv3(x,y-1,z)))->opaque[0] ||
+			   !w->get_info(owner->block_at(iv3(x,y,z-1)))->opaque[0] ||
+			   !w->get_info(owner->block_at(iv3(x,y-1,z-1)))->opaque[0];
 	} break;
 	case 4: {
-		return !w->block_info.get(owner->block_at(iv3(x,y,z)))->opaque[1] ||
-			   !w->block_info.get(owner->block_at(iv3(x-1,y,z)))->opaque[1] ||
-			   !w->block_info.get(owner->block_at(iv3(x,y,z-1)))->opaque[1] ||
-			   !w->block_info.get(owner->block_at(iv3(x-1,y,z-1)))->opaque[1];
+		return !w->get_info(owner->block_at(iv3(x,y,z)))->opaque[1] ||
+			   !w->get_info(owner->block_at(iv3(x-1,y,z)))->opaque[1] ||
+			   !w->get_info(owner->block_at(iv3(x,y,z-1)))->opaque[1] ||
+			   !w->get_info(owner->block_at(iv3(x-1,y,z-1)))->opaque[1];
 	} break;
 	case 5: {
-		return !w->block_info.get(owner->block_at(iv3(x,y,z)))->opaque[2] ||
-			   !w->block_info.get(owner->block_at(iv3(x-1,y,z)))->opaque[2] ||
-			   !w->block_info.get(owner->block_at(iv3(x,y-1,z)))->opaque[2] ||
-			   !w->block_info.get(owner->block_at(iv3(x-1,y-1,z)))->opaque[2];
+		return !w->get_info(owner->block_at(iv3(x,y,z)))->opaque[2] ||
+			   !w->get_info(owner->block_at(iv3(x-1,y,z)))->opaque[2] ||
+			   !w->get_info(owner->block_at(iv3(x,y-1,z)))->opaque[2] ||
+			   !w->get_info(owner->block_at(iv3(x-1,y-1,z)))->opaque[2];
 	} break;
 	}
 
@@ -1006,14 +995,14 @@ u8 chunk::ao_at(iv3 block) {
 
 	i32 x = block.x, y = block.y, z = block.z;
 
-	bool top0 = w->block_info.get(block_at(iv3(x-1,y,z)))->does_ao;
-	bool top1 = w->block_info.get(block_at(iv3(x,y,z-1)))->does_ao;
-	bool top2 = w->block_info.get(block_at(iv3(x,y,z)))->does_ao;
-	bool top3 = w->block_info.get(block_at(iv3(x-1,y,z-1)))->does_ao;
-	bool bot0 = w->block_info.get(block_at(iv3(x-1,y-1,z)))->does_ao;
-	bool bot1 = w->block_info.get(block_at(iv3(x,y-1,z-1)))->does_ao;
-	bool bot2 = w->block_info.get(block_at(iv3(x,y-1,z)))->does_ao;
-	bool bot3 = w->block_info.get(block_at(iv3(x-1,y-1,z-1)))->does_ao;
+	bool top0 = w->get_info(block_at(iv3(x-1,y,z)))->does_ao;
+	bool top1 = w->get_info(block_at(iv3(x,y,z-1)))->does_ao;
+	bool top2 = w->get_info(block_at(iv3(x,y,z)))->does_ao;
+	bool top3 = w->get_info(block_at(iv3(x-1,y,z-1)))->does_ao;
+	bool bot0 = w->get_info(block_at(iv3(x-1,y-1,z)))->does_ao;
+	bool bot1 = w->get_info(block_at(iv3(x,y-1,z-1)))->does_ao;
+	bool bot2 = w->get_info(block_at(iv3(x,y-1,z)))->does_ao;
+	bool bot3 = w->get_info(block_at(iv3(x-1,y-1,z-1)))->does_ao;
 
 	bool side0, side1, corner;
 
@@ -1043,19 +1032,19 @@ u8 chunk::ao_at(iv3 block) {
 	return 3 - side0 - side1 - corner;
 }
 
-block_type chunk::block_at(iv3 block) { 
+block_id chunk::block_at(iv3 block) { 
 
 	block_node node = canonical_block(block);	
 
-	if(!node.owner) return block_air;
+	if(!node.owner) return block_id::air;
 
 	return node.owner->blocks[node.pos.x][node.pos.z][node.pos.y];
 }
 
-mesh_face chunk::build_face(block_type t, iv3 p, i32 dir) { 
+mesh_face chunk::build_face(block_id t, iv3 p, i32 dir) { 
 
 	mesh_face ret;
-	ret.info = *w->block_info.get(t);
+	ret.info = *w->get_info(t);
 
 	switch(dir) {
 	case 0: {
@@ -1114,7 +1103,7 @@ void chunk::do_mesh() { PROF_FUNC
 	mesh_chunk new_mesh = mesh_chunk::make_cpu(8192, alloc);
 
 	// Array to hold 2D block slice (sized for largest slice)
-	block_type slice[wid * hei];
+	block_id slice[wid * hei];
 
 	iv3 max = {wid, hei, wid};
 
@@ -1137,8 +1126,8 @@ void chunk::do_mesh() { PROF_FUNC
 				for(position[v_2d] = 0; position[v_2d] < max[v_2d]; position[v_2d]++) {
 					for(position[u_2d] = 0; position[u_2d] < max[u_2d]; position[u_2d]++) {
 
-						block_type block = blocks[position[0]][position[2]][position[1]];
-						block_meta* info0 = w->block_info.get(block);
+						block_id block = blocks[position[0]][position[2]][position[1]];
+						block_meta* info0 = w->get_info(block);
 						
 						i32 slice_idx = position[u_2d] + position[v_2d] * max[u_2d];
 
@@ -1148,16 +1137,16 @@ void chunk::do_mesh() { PROF_FUNC
 							iv3 backface = position;
 							backface[ortho_2d] += backface_offset;
 
-							block_type backface_block = block_at(backface);
-							block_meta* info1 = w->block_info.get(backface_block);
+							block_id backface_block = block_at(backface);
+							block_meta* info1 = w->get_info(backface_block);
 
 							if(!info0->opaque[(i + 3) % 6] || !info1->renders || !info1->opaque[(i + 3) % 6]) {
 								slice[slice_idx] = block;
 							} else {
-								slice[slice_idx] = block_air;
+								slice[slice_idx] = block_id::air;
 							}
 						} else {
-							slice[slice_idx] = block_air;
+							slice[slice_idx] = block_id::air;
 						}
 					}
 				}
@@ -1171,9 +1160,9 @@ void chunk::do_mesh() { PROF_FUNC
 					position[v_2d] = v;
 					i32 slice_idx = u + v * max[u_2d];
 
-					block_type single_type = slice[slice_idx];
+					block_id single_type = slice[slice_idx];
 					
-					if(single_type != block_air) {
+					if(single_type != block_id::air) {
 
 						mesh_face face_type = build_face(single_type, position, i);
 
@@ -1274,7 +1263,7 @@ void chunk::do_mesh() { PROF_FUNC
 
 						// Erase quad area in slice
 						for(i32 h = 0; h < height; h++) {
-							_memset(&slice[slice_idx + h * max[u_2d]], sizeof(block_type) * width, 0);
+							_memset(&slice[slice_idx + h * max[u_2d]], sizeof(block_id) * width, 0);
 						}
 
 						u += width;
@@ -1425,3 +1414,83 @@ CALLBACK void torch_model(mesh_chunk* m, block_meta info, i32 dir, iv3 v__0, iv2
 		break;
 	}
 }
+
+void world::init_blocks(asset_store* store) {
+
+	block_info = vector<block_meta>::make((u32)block_id::total_blocks, alloc);
+	block_textures = eng->ogl.begin_tex_array(iv3(32, 32, eng->ogl.info.max_texture_layers), texture_wrap::repeat, true, 1);
+
+	texture_id tex = block_textures;
+	i32 tex_idx = eng->ogl.get_layers(tex);
+	
+
+	tex_idx = eng->ogl.get_layers(tex);
+	eng->ogl.push_tex_array(tex, store, "bedrock"_);
+
+	block_meta* bedrock = get_info(block_id::bedrock);
+	*bedrock = {
+		block_id::bedrock,
+		{true, true, true, true, true, true},
+		{tex_idx, tex_idx, tex_idx, tex_idx, tex_idx, tex_idx},
+		{true, true, true, true, true, true},
+		true, true, false
+	};
+
+
+	tex_idx = eng->ogl.get_layers(tex);
+	eng->ogl.push_tex_array(tex, store, "stone"_);
+
+	block_meta* stone = get_info(block_id::stone);
+	*stone = {
+		block_id::stone,
+		{true, true, true, true, true, true},
+		{tex_idx, tex_idx, tex_idx, tex_idx, tex_idx, tex_idx},
+		{true, true, true, true, true, true},
+		true, true, false
+	};
+
+
+	tex_idx = eng->ogl.get_layers(tex);
+	eng->ogl.push_tex_array(tex, store, "path_side"_);
+	eng->ogl.push_tex_array(tex, store, "dirt"_);
+	eng->ogl.push_tex_array(tex, store, "path_top"_);
+	
+	block_meta* path = get_info(block_id::path);
+	*path = {
+		block_id::path,
+		{true, true, true, true, true, true},
+		{tex_idx, tex_idx + 1, tex_idx, tex_idx, tex_idx + 2, tex_idx},
+		{true, true, true, true, true, true},
+		true, true, false
+	};	
+
+
+	tex_idx = eng->ogl.get_layers(tex);
+	eng->ogl.push_tex_array(tex, store, "slab_side"_);
+	eng->ogl.push_tex_array(tex, store, "slab_top"_);
+
+	block_meta* stone_slab = get_info(block_id::stone_slab);
+	*stone_slab = {
+		block_id::stone_slab,
+		{false, true, false, false, false, false},
+		{tex_idx, tex_idx + 1, tex_idx, tex_idx, tex_idx + 1, tex_idx},
+		{false, true, true, true, true, false},
+		true, false, true, FPTR(slab_model)
+	};	
+
+
+	tex_idx = eng->ogl.get_layers(tex);
+	eng->ogl.push_tex_array(tex, store, "torch_side"_);
+	eng->ogl.push_tex_array(tex, store, "torch_bot"_);
+	eng->ogl.push_tex_array(tex, store, "torch_top"_);
+
+	block_meta* torch = get_info(block_id::torch);
+	*torch = {
+		block_id::torch,
+		{false, false, false, false, false, false},
+		{tex_idx, tex_idx + 1, tex_idx, tex_idx, tex_idx + 2, tex_idx},
+		{false, false, false, false, false, false},
+		true, false, true, FPTR(torch_model)
+	};	
+}
+

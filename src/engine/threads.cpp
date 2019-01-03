@@ -197,6 +197,8 @@ void threadpool::stop_all() {
 
 	PUSH_ALLOC(alloc);
 	FORHEAP_LINEAR(it, jobs) {
+		if((*it)->cancel)
+				(*it)->cancel((*it)->data);
 		free(*it, (*it)->my_size);
 	}
 	POP_ALLOC();

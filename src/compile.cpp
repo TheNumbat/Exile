@@ -21,12 +21,10 @@
 engine* eng = null;
 
 #include "mesh.h"
-#include "blocks.h"
 #include "world.h"
 #include "console.h"
 #include "exile.h"
 
-#include "blocks.cpp"
 #include "console.cpp"
 #include "mesh.cpp"
 #include "world.cpp"

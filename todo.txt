@@ -1,8 +1,6 @@
 
 Working To-Do:
 
-	Fix world regen & allocation stuff on code reload
-
 [1]	World
 		block updates
 		sunlight

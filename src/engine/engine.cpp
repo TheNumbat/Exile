@@ -164,7 +164,7 @@ EXPORT void shut_down(engine* state) {
 	state->evt.destroy();
 
 	LOG_DEBUG("Destroying debug system"_);
-	state->dbg.console.shutdown_log(&state->log);	
+	state->dbg.console.shutdown_log(&state->log);
 	state->dbg.destroy();
 
 	LOG_DEBUG("Done with shutdown!"_);
