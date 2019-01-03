@@ -59,7 +59,7 @@ void exile::render() { PROF_FUNC
 		ImGui::SetNextWindowPos({0.0f, 0.0f});
 		ImGui::Begin("Help"_, null, flags);
 		ImGui::Text("GRAVE : hide debug UI");
-		ImGui::Text("P : toggle iler");
+		ImGui::Text("P : toggle profiler");
 		ImGui::Text("O : toggle debug vars");
 		ImGui::End();
 	}

@@ -507,9 +507,10 @@ void world::render_chunks() { PROF_FUNC
 
 	rcl.pop_settings();
 
+	mesh_lines lines; 
 	if(settings.draw_chunk_corners) {
 		
-		mesh_lines lines; lines.init();
+		lines.init();
 
 		for(i32 x = -settings.view_distance; x <= settings.view_distance + 1; x++) {
 			for(i32 z = -settings.view_distance; z <= settings.view_distance + 1; z++) {
@@ -756,7 +757,7 @@ void chunk::do_gen() { PROF_FUNC
 				blocks[x][z][y] = block_stone;
 			}
 
-			blocks[x][z][height] = block_stone_slab;
+			// blocks[x][z][height] = block_stone_slab;
 		}
 	}
 }
@@ -772,11 +773,7 @@ void chunk::do_light() { PROF_FUNC
 
 		if(work.type == light_update::add) {
 
-			block_light& first = light[work.pos.x][work.pos.z][work.pos.y];
-			if(first.l >= work.intensity) {
-				continue;
-			}
-			first.l = work.intensity;
+			light[work.pos.x][work.pos.z][work.pos.y].l = work.intensity;
 
 			queue<block_node> q = queue<block_node>::make(2048, &this_thread_data.scratch_arena);
 
@@ -891,22 +888,22 @@ bool block_node::propogate_light(world* w, i32 dir) {
 
 	switch(dir) {
 	case 0: {
-		return !w->block_info.get(owner->block_at(iv3(x,y,z)))->opaque[3] ||
-			   !w->block_info.get(owner->block_at(iv3(x,y-1,z)))->opaque[3] ||
-			   !w->block_info.get(owner->block_at(iv3(x,y,z-1)))->opaque[3] ||
-			   !w->block_info.get(owner->block_at(iv3(x,y-1,z-1)))->opaque[3];
+		return !w->block_info.get(owner->block_at(iv3(x-1,y,z)))->opaque[3] ||
+			   !w->block_info.get(owner->block_at(iv3(x-1,y-1,z)))->opaque[3] ||
+			   !w->block_info.get(owner->block_at(iv3(x-1,y,z-1)))->opaque[3] ||
+			   !w->block_info.get(owner->block_at(iv3(x-1,y-1,z-1)))->opaque[3];
 	} break;
-	case 2: {
+	case 1: {
 		return !w->block_info.get(owner->block_at(iv3(x,y-1,z)))->opaque[4] ||
 			   !w->block_info.get(owner->block_at(iv3(x-1,y-1,z)))->opaque[4] ||
 			   !w->block_info.get(owner->block_at(iv3(x,y-1,z-1)))->opaque[4] ||
 			   !w->block_info.get(owner->block_at(iv3(x-1,y-1,z-1)))->opaque[4];
-	case 1: {
-		return !w->block_info.get(owner->block_at(iv3(x,y,z)))->opaque[5] ||
-			   !w->block_info.get(owner->block_at(iv3(x-1,y,z)))->opaque[5] ||
-			   !w->block_info.get(owner->block_at(iv3(x,y-1,z)))->opaque[5] ||
-			   !w->block_info.get(owner->block_at(iv3(x-1,y-1,z)))->opaque[5];
 	} break;
+	case 2: {
+		return !w->block_info.get(owner->block_at(iv3(x,y,z-1)))->opaque[5] ||
+			   !w->block_info.get(owner->block_at(iv3(x-1,y,z-1)))->opaque[5] ||
+			   !w->block_info.get(owner->block_at(iv3(x,y-1,z-1)))->opaque[5] ||
+			   !w->block_info.get(owner->block_at(iv3(x-1,y-1,z-1)))->opaque[5];
 	} break;
 	case 3: {
 		return !w->block_info.get(owner->block_at(iv3(x,y,z)))->opaque[0] ||
