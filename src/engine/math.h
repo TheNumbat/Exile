@@ -214,7 +214,7 @@ m4 operator*(m4 l, f32 r);
 m4 operator/(m4 l, f32 r);
 m4 transpose(m4 m);
 m4 ortho(f32 l, f32 r, f32 b, f32 t, f32 n, f32 f);
-m4 proj(f32 fov, f32 ar, f32 n, f32 f);
+m4 project(f32 fov, f32 ar, f32 n, f32 f);
 m4 translate(v3 v);
 m4 rotate(f32 a, v3 axis);
 m4 scale(v3 s);
@@ -1360,7 +1360,7 @@ m4 ortho(f32 l, f32 r, f32 b, f32 t, f32 n, f32 f) {
     ret[3][2] = - n / (f - n);
     return ret;
 }
-m4 proj(f32 fov, f32 ar, f32 n, f32 f) {
+m4 project(f32 fov, f32 ar, f32 n, f32 f) {
 	m4 ret;
     f32 to2 = _tan(RADIANS(fov) / 2.0f);
     ret[0][0] = 1.0f / (to2 * ar);

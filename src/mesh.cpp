@@ -560,6 +560,11 @@ void mesh_lines::init(allocator* alloc) {
 	gpu = eng->ogl.add_object(FPTR(setup_mesh_lines), FPTR(update_mesh_lines), this);
 }
 
+void mesh_lines::push(v3 p1, v3 p2, colorf c) {
+
+	push(p1, p2, c, c);
+}
+
 void mesh_lines::push(v3 p1, v3 p2, colorf c1, colorf c2) { 
 
 	vertices.push(p1);
@@ -577,6 +582,9 @@ void mesh_lines::destroy() {
 
 	eng->ogl.destroy_object(gpu);
 	gpu = -1;
+}
+CALLBACK void destroy_lines(mesh_lines* m) {
+	m->destroy();
 }
 
 void mesh_3d_tex_instance_data::init(mesh_3d_tex* par, u32 i, allocator* alloc) { 
@@ -630,6 +638,10 @@ void mesh_2d_col::destroy() {
 
 	eng->ogl.destroy_object(gpu);
 	gpu = -1;
+}
+
+CALLBACK void destroy_2d_col(mesh_2d_col* m) {
+	m->destroy();
 }
 
 void mesh_2d_col::clear() { 

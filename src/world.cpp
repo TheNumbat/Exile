@@ -367,6 +367,30 @@ void world::render() { PROF_FUNC
 	render_player();
 }
 
+block_node world::world_to_canonical(iv3 pos) {
+
+	chunk_pos cpos(pos.x / chunk::wid - (pos.x < 0 ? 1 : 0), 0, pos.z / chunk::wid - (pos.z < 0 ? 1 : 0));
+
+	block_node ret;
+	ret.pos = iv3(pos.x % chunk::wid, pos.y, pos.z % chunk::wid);
+
+	chunk** c = chunks.try_get(cpos);
+	ret.owner = c ? *c : null;
+	return ret;
+}
+
+void world::place_light(iv3 pos, u8 intensity) {
+
+	block_node local = world_to_canonical(pos);
+	local.owner->place_light(local.pos, intensity);
+}
+
+void world::rem_light(iv3 pos) {
+
+	block_node local = world_to_canonical(pos);
+	local.owner->rem_light(local.pos);
+}
+
 void world_environment::init(asset_store* store, allocator* a) { PROF_FUNC
 
 	sky.init(a);
@@ -391,7 +415,7 @@ void world_environment::render(player* p, world_time* t) { PROF_FUNC
 
 	render_command_list rcl = render_command_list::make();
 
-	m4 mproj = proj(p->camera.fov, (f32)eng->window.settings.w / (f32)eng->window.settings.h, 0.01f, 2000.0f);
+	m4 mproj = p->camera.proj((f32)eng->window.settings.w / (f32)eng->window.settings.h);
 	{
 		render_command cmd = render_command::make((u16)mesh_cmd::skydome, sky.gpu);
 
@@ -471,17 +495,40 @@ void world::render_chunks() { PROF_FUNC
 			v3 chunk_pos = v3((f32)current.x * chunk::wid, (f32)current.y * chunk::hei, (f32)current.z * chunk::wid);
 			cmd.model = translate(chunk_pos - p.camera.pos);
 
-			cmd.callback.set(FPTR(unlock_chunk));
+			cmd.callback = FPTR(unlock_chunk);
 			cmd.param = c;
 
 			cmd.view = p.camera.view_pos_origin();
-			cmd.proj = proj(p.camera.fov, (f32)eng->window.settings.w / (f32)eng->window.settings.h, 0.01f, 2000.0f);
+			cmd.proj = p.camera.proj((f32)eng->window.settings.w / (f32)eng->window.settings.h);
 
 			rcl.add_command(cmd);
 		}
 	}
 
 	rcl.pop_settings();
+
+	if(settings.draw_chunk_corners) {
+		
+		mesh_lines lines; lines.init();
+
+		for(i32 x = -settings.view_distance; x <= settings.view_distance + 1; x++) {
+			for(i32 z = -settings.view_distance; z <= settings.view_distance + 1; z++) {
+
+				chunk_pos current = settings.respect_cam ? camera + chunk_pos(x,0,z) : chunk_pos(x,0,z);
+
+				f32 fx = (f32)current.x * chunk::wid;
+				f32 fz = (f32)current.z * chunk::wid;
+				lines.push(v3(fx, 0.0f, fz), v3(fx, (f32)chunk::hei, fz), colorf(1,0,0,1));
+			}
+		}
+
+		render_command cmd = render_command::make((u16)mesh_cmd::lines, lines.gpu);
+		cmd.view = p.camera.view();
+		cmd.proj = p.camera.proj((f32)eng->window.settings.w / (f32)eng->window.settings.h);
+		cmd.callback = FPTR(destroy_lines);
+		cmd.param = &lines;
+		rcl.add_command(cmd);
+	}
 
 	eng->ogl.execute_command_list(&rcl);
 	rcl.destroy();
@@ -493,10 +540,10 @@ void world::render_player() { PROF_FUNC
 
 	render_command_list rcl = render_command_list::make();
 
+	mesh_lines lines; 
 	if(cam.mode == camera_mode::third) {
 
-		mesh_lines lines; lines.init();
-
+		lines.init();
 		lines.push(cam.pos + cam.front, cam.pos + cam.reach * cam.front, colorf(0,0,1,1), colorf(0,1,0,1));
 		lines.push(cam.pos, cam.pos + cam.front, colorf(1,0,0,1), colorf(0,0,1,1));
 
@@ -507,19 +554,16 @@ void world::render_player() { PROF_FUNC
 		render_command cmd = render_command::make((u16)mesh_cmd::lines, lines.gpu);
 
 		cmd.view = cam.view();
-		cmd.proj = proj(cam.fov, (f32)eng->window.settings.w / (f32)eng->window.settings.h, 0.01f, 2000.0f);
+		cmd.proj = cam.proj((f32)eng->window.settings.w / (f32)eng->window.settings.h);
+		cmd.callback = FPTR(destroy_lines);
+		cmd.param = &lines;
 		rcl.add_command(cmd);
-
-		eng->ogl.execute_command_list(&rcl);
-		lines.destroy();
 	}
 
-	rcl.clear();
-
+	mesh_2d_col crosshair;
 	{
+		crosshair.init();
 		f32 w = (f32)eng->window.settings.w, h = (f32)eng->window.settings.h;
-
-		mesh_2d_col crosshair; crosshair.init();
 
 		crosshair.push_rect(r2(w / 2.0f - 5.0f, h / 2.0f - 1.0f, 10.0f, 2.0f), WHITE);
 		crosshair.push_rect(r2(w / 2.0f - 1.0f, h / 2.0f - 5.0f, 2.0f, 10.0f), WHITE);
@@ -527,15 +571,16 @@ void world::render_player() { PROF_FUNC
 		render_command cmd = render_command::make((u16)mesh_cmd::_2d_col, crosshair.gpu);
 		cmd.proj = ortho(0, w, h, 0, -1, 1);
 
+		cmd.callback = FPTR(destroy_2d_col);
+		cmd.param = &crosshair;
+
 		rcl.push_settings();
 		rcl.set_setting(render_setting::depth_test, false);
-		rcl.pop_settings();
 		rcl.add_command(cmd);
-
-		eng->ogl.execute_command_list(&rcl);
-		crosshair.destroy();
+		rcl.pop_settings();
 	}
 
+	eng->ogl.execute_command_list(&rcl);
 	rcl.destroy();
 }
 
@@ -659,12 +704,11 @@ void chunk::place_light(iv3 p, u8 i) {
 	lighting_updates.push(u);
 }
 
-void chunk::rem_light(iv3 p, u8 i) { 
+void chunk::rem_light(iv3 p) { 
 
 	light_work u;
 	u.type = light_update::remove;
 	u.pos = p;
-	u.intensity = i;
 
 	lighting_updates.push(u);
 }
@@ -712,13 +756,7 @@ void chunk::do_gen() { PROF_FUNC
 				blocks[x][z][y] = block_stone;
 			}
 
-			if(x % 8 == 0 && z % 8 == 0) {
-				blocks[x][z][height] = block_torch;
-				place_light(iv3(x, height, z), 15);
-				rem_light(iv3(x, height, z), 15);
-			} else {
-				blocks[x][z][height] = block_stone_slab;
-			}
+			blocks[x][z][height] = block_stone_slab;
 		}
 	}
 }
@@ -1071,6 +1109,8 @@ bool mesh_face::can_merge(mesh_face f1, mesh_face f2, i32 dir, bool h) {
 }
 
 void chunk::do_mesh() { PROF_FUNC
+
+	// TODO(max): optimize this function
 
 	LOG_DEBUG_F("Meshing chunk %"_, pos);
 

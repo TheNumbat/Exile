@@ -101,8 +101,10 @@ struct mesh_lines {
 	void init(allocator* alloc = null);
 	void destroy();
 
-	void push(v3 p1, v3 p2, colorf c1 = colorf(0,0,0,1), colorf c2 = colorf(0,0,0,1));
+	void push(v3 p1, v3 p2, colorf c1, colorf c2);
+	void push(v3 p1, v3 p2, colorf c);
 };
+CALLBACK void destroy_lines(mesh_lines* m);
 
 struct mesh_pointcloud {
 	vector<v4> vertices;
@@ -134,6 +136,7 @@ struct mesh_2d_col {
 	void push_rect(r2 rect, color c);
 	void push_cutrect(r2 r, f32 round, color c);
 };
+CALLBACK void destroy_2d_col(mesh_2d_col* m);
 
 struct mesh_2d_tex {
 	vector<v2>		vertices;	// x y 

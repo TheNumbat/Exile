@@ -1,6 +1,9 @@
 
 #pragma once
 
-void setup_console_commands();
+struct exile;
+void setup_console_commands(exile* e);
 
-CALLBACK void console_cmd_ext(string, void* e);
+CALLBACK void console_exit(string, void* e);
+CALLBACK void console_place_light(string, void* w);
+CALLBACK void console_rem_light(string, void* w);

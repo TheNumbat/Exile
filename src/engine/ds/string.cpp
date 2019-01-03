@@ -22,6 +22,12 @@ u32 string::parse_u32(u32 idx, u32* used) {
 
 	u32 accum = 0;
 	char* place = c_str + idx;
+
+	while(whitespace(*place)) {
+		place++;
+		if(used) (*used)++;
+	}
+
 	while(*place >= '0' && *place <= '9') {
 		accum *= 10;
 		accum += *place - '0';

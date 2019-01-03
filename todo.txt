@@ -4,7 +4,7 @@ Working To-Do:
 [1]	World
 		light removal
 		block updates
-		sunlight 
+		sunlight
 		deferred rendering; dynamic lights
 		sun/moon objects 
 

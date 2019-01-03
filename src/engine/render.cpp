@@ -901,16 +901,20 @@ void ogl_manager::execute_command_list(render_command_list* rcl) {
 			_cmd_set_settings(cmd);
 
 			select_textures(cmd);
+			
 			gpu_object* obj = select_object(cmd->object);
 
 			draw_context* d = select_ctx(cmd->cmd);
 
 			d->shader.send_uniforms(&d->shader, cmd);
 			d->run(cmd, obj);
+
 		} break;
 		}
 
-		if(cmd->callback) cmd->callback(cmd->param);
+		if(cmd->callback) {
+			cmd->callback(cmd->param);
+		}
 	}
 }
 
@@ -1308,6 +1312,11 @@ void render_camera::move(i32 dx, i32 dy, f32 sens) {
 	else if (pitch < -89.0f) pitch = -89.0f;
 
 	update();
+}
+
+m4 render_camera::proj(f32 ar) {
+
+	return project(fov, ar, 0.1f, 2000.0f);
 }
 
 m4 render_camera::view() { 

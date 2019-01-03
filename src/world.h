@@ -121,7 +121,7 @@ struct chunk {
 	void destroy();
 	
 	void place_light(iv3 pos, u8 intensity);
-	void rem_light(iv3 pos, u8 intensity);
+	void rem_light(iv3 pos);
 
 	static i32 y_at(i32 x, i32 z);
 	
@@ -157,6 +157,7 @@ struct world_settings {
 	bool wireframe = false;
 	bool cull_backface = true;
 	bool sample_shading = true;
+	bool draw_chunk_corners = false;
 
 	bool block_ao = true;
 	bool dist_fog = false;
@@ -244,6 +245,11 @@ struct world {
 	void local_generate();
 	void local_light();
 	void local_mesh();
+
+	void place_light(iv3 pos, u8 intensity);
+	void rem_light(iv3 pos);
+
+	block_node world_to_canonical(iv3 pos);
 
 	v3 raymarch(v3 origin, v3 dir, f32 max);
 	v3 raymarch(v3 origin, v3 max);
