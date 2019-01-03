@@ -214,6 +214,7 @@ EXPORT void on_unload(engine* state) {
 	unload_game(state, state->game_state);
 
 	state->log.stop();
-	
+	state->dbg.profiler.collate();
+
 	end_thread();
 }

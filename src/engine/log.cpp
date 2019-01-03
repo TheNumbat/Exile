@@ -344,6 +344,8 @@ i32 log_proc(void* data_) {
 			it->file.flush();
 		}
 	}
+
+	global_dbg->profiler.collate();
 	end_thread();
 
 	return 0;

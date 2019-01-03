@@ -760,6 +760,8 @@ void dbg_console::setup_log(log_manager* log) {
 
 void dbg_profiler::register_thread(u32 frames) { 
 
+	this_thread_data.startup = true;
+
 	PUSH_ALLOC(alloc);
 
 	thread_profile* thread = NEW(thread_profile);
@@ -770,6 +772,8 @@ void dbg_profiler::register_thread(u32 frames) {
 
 	POP_ALLOC();
 
+	this_thread_data.startup = false;
+
 	global_api->aquire_mutex(&stats_map_mut);
 	thread_stats.insert(global_api->this_thread_id(), thread);
 	global_api->release_mutex(&stats_map_mut);
@@ -777,7 +781,7 @@ void dbg_profiler::register_thread(u32 frames) {
 
 void dbg_profiler::unregister_thread() { 
 
-	if(!thread_stats.contents.memory) return; // TODO(max): 4head
+	if(!thread_stats.contents.memory) return; 
 
 	global_api->aquire_mutex(&stats_map_mut);
 

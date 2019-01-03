@@ -4,7 +4,6 @@ Working To-Do:
 	Fix world regen & allocation stuff on code reload
 
 [1]	World
-		light removal
 		block updates
 		sunlight
 		deferred rendering; dynamic lights
