@@ -16,6 +16,7 @@ Working To-Do:
 		
 		chunk culling / visibility query
 		normal mapping
+		HRD / bloom / god rays / better fog
 
 	data serialization/deserialization
 	user settings interface
