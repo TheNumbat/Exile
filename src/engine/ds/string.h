@@ -43,6 +43,7 @@ struct NOREFLECT string { // no-reflect because hard-coded
 
 	// parsing stuff
 	u32 get_next_codepoint(u32* index);
+	i32 parse_i32(u32 idx = 0, u32* used = null);
 	u32 parse_u32(u32 idx = 0, u32* used = null);
 
 	string substring(u32 start, u32 end); 	// uses same memory
@@ -52,7 +53,8 @@ struct NOREFLECT string { // no-reflect because hard-coded
 	string first_word_no_term();
 	string trim_first_word();
 	bool starts_with_insensitive(string prefix);
-	string trim_no_term();
+	string trim_new_term();
+	string trim_copy();
 
 	template<typename... Targs> void writef(string fmt, Targs... args);
 

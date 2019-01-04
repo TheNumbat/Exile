@@ -249,7 +249,7 @@ struct render_camera {
 	v3 offset3rd = v3(0, 1, 0);
 	f32 reach = 5.0f;
 
-	camera_mode mode = camera_mode::third;
+	camera_mode mode = camera_mode::first;
 
 	void update();
 	void reset();

@@ -548,7 +548,8 @@ void dbg_console::UI(platform_window* window) { PROF_FUNC
 	if(ImGui::InputText("Input", input_buffer, 1024, ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CallbackCharFilter | 
 						ImGuiInputTextFlags_CallbackCompletion | ImGuiInputTextFlags_CallbackHistory, &dbg_console_text_edit, this)) {
 		
-		string input = string::from_c_str(input_buffer).trim_no_term();
+		string input = string::from_c_str(input_buffer).trim_new_term();
+
 		if (input.len) {
 		    candidates.clear();
 		    exec_command(input);

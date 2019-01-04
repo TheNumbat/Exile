@@ -18,6 +18,38 @@ string operator "" _(const char* str, size_t s) {
 	return ret;
 }
 
+i32 string::parse_i32(u32 idx, u32* used) { 
+
+	i32 accum = 0;
+	char* place = c_str + idx;
+
+	while(whitespace(*place)) {
+		place++;
+		if(used) (*used)++;
+	}
+
+	bool neg = false;
+	if(*place == '-') {
+		neg = true;
+		place++;
+		if (used) (*used)++;
+	}
+
+	while(whitespace(*place)) {
+		place++;
+		if(used) (*used)++;
+	}
+
+	while(*place >= '0' && *place <= '9') {
+		accum *= 10;
+		accum += *place - '0';
+		place++;
+		if(used) (*used)++;
+	}
+
+	return neg ? -accum : accum;
+}
+
 u32 string::parse_u32(u32 idx, u32* used) { 
 
 	u32 accum = 0;
@@ -1029,13 +1061,32 @@ i32 string::last_slash() {
 	return -1;
 }
 
-string string::trim_no_term() { 
+string string::trim_copy() {
 
 	u32 beg = 0, end = len - 2;
 	for(; beg < len && whitespace(c_str[beg]); beg++);
 	for(; end >= 0 && whitespace(c_str[end]); end--);
 
-	return substring(beg, end + 1);
+	u32 l = end - beg + 1;
+	
+	string ret = string::make(l);
+	ret.len = l;	
+	_memcpy(c_str + beg, ret.c_str, l);
+
+	return ret;
+}
+
+string string::trim_new_term() { 
+
+	if(len == 1) return *this;
+
+	u32 beg = 0, end = len - 2;
+	for(; beg < len && whitespace(c_str[beg]); beg++);
+	for(; end >= 0 && whitespace(c_str[end]); end--);
+
+	string ret = substring(beg, end + 1);
+	ret.c_str[ret.len - 1] = '\0';
+	return ret;
 }
 
 void string::destroy(allocator* a) { 

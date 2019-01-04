@@ -1,33 +1,32 @@
 
 Working To-Do:
 
-[1]	World
-		block updates
+[1]	World & Rendering
+		light updates for set block
 		sunlight
-		deferred rendering; dynamic lights
-		sun/moon objects 
 
-	config format
-		data serialization/deserialization
+		deferred rendering
+		gamma correction
+		
+		dynamic lights
+		dynamic shadows
+		
+		sunlight shadows
+		sun/moon objects 
+		
+		chunk culling / visibility query
+		normal mapping
+
+	data serialization/deserialization
 	user settings interface
-		controls, graphics
-	profiler graphs 
-		auto save unusually long frames
 
 	multiple texture arrays for > 2048 textures
-	chunk culling
-		CPU bounds vs. occlusion query#
-	graphics work
-		consolidate shaders
-		framebuffer objects (msaa + effects)
-		shadow mapping
-		normal mapping
-		better graphics feature checks
+	consolidate shaders
+	better graphics feature checks
 
-	world interaction
-		movement physics
-		chunk paging and persistence
-		world generation framework
+	movement physics
+	chunk paging and persistence
+	world generation framework
 
 Bugs:
 	SDL layer resets the cursor to pointer on every mouse move
@@ -35,7 +34,6 @@ Bugs:
 Large-Scale Improvements | Changes for Future Projects
 	rewrite metaprogram for robustness, possibly as a library/outputting a data format
 		don't output through pointers? maybe
-	don't use ::make pattern so much, use .init for not straight POD types
 	less callbacks? good, but also not really, they're quite useful. I wish closures didn't need STL and they didn't heap allocate
 	probably don't use the futures pattern for the thread pool, go back to event loop
 	asset store can be more meta file + data files for hot/cold loading etc. Not sure if necessary though
@@ -61,9 +59,6 @@ Overall To-Do List:
 		free list (one-size pool re-using arenas)
 		alignment is not respected in default heap_alloc 
 		stack allocations (_malloca? can't easily platform-abstract this...) where possible
-
-	async
-		pause/resume job? ~closures~ how do we do this when job != thread?
 
 	meta
 		range tags on struct members for GUI editing (sliders)

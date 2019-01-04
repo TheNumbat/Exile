@@ -124,6 +124,7 @@ struct _get_type_info<T*> {
 void make_meta_info();
 void make_type_table(allocator* alloc);
 
+template<typename E> E string_to_enum(string name);
 template<typename E> string enum_to_string(E val);
 string enum_to_string(i64 val, _type_info* info);
 

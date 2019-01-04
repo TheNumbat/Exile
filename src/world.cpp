@@ -103,7 +103,7 @@ v3 world::raymarch(v3 pos3, v3 dir3, f32 max) {
 		v4 current = pos + dir * progress;
 		iv3 current_vox = current;
 
-		if(c->block_at(iv3(current_vox.x % chunk::wid, current_vox.y % chunk::hei, current_vox.z % chunk::wid)) != block_id::air) {
+		if(c->block_at(iv3(current_vox.x % chunk::wid, current_vox.y % chunk::hei, current_vox.z % chunk::wid)) != block_id::none) {
 			return current.xyz;
 		}
 		
@@ -332,7 +332,7 @@ void player::reset() {
 
 	camera.reset();
 	camera.pos = {3.0f, 115.0f, 16.0f};
-	speed = 30.0f;
+	speed = 5.0f;
 	velocity = v3();
 	last = global_api->get_perfcount();
 }
@@ -350,7 +350,7 @@ block_node world::world_to_canonical(iv3 pos) {
 	chunk_pos cpos(pos.x / chunk::wid - (pos.x < 0 ? 1 : 0), 0, pos.z / chunk::wid - (pos.z < 0 ? 1 : 0));
 
 	block_node ret;
-	ret.pos = iv3(pos.x % chunk::wid, pos.y, pos.z % chunk::wid);
+	ret.pos = iv3(pos.x % chunk::wid + (pos.x < 0 ? chunk::wid : 0), pos.y, pos.z % chunk::wid + (pos.z-1 < 0 ? chunk::wid : 0));
 
 	chunk** c = chunks.try_get(cpos);
 	ret.owner = c ? *c : null;
@@ -360,6 +360,12 @@ block_node world::world_to_canonical(iv3 pos) {
 block_meta* world::get_info(block_id id) {
 
 	return block_info.get((u32)id);
+}
+
+void world::set_block(iv3 pos, block_id id) {
+
+	block_node local = world_to_canonical(pos);
+	local.owner->set_block(local.pos, id);
 }
 
 void world::place_light(iv3 pos, u8 intensity) {
@@ -679,6 +685,16 @@ void chunk::init(world* _w, chunk_pos p, allocator* a) {
 	lighting_updates = locking_queue<light_work>::make(4, alloc);
 }
 
+void chunk::set_block(iv3 p, block_id id) {
+
+	light_work u;
+	u.type = light_update::block;
+	u.pos = p;
+	u.id = id;
+
+	lighting_updates.push(u);
+}
+
 void chunk::place_light(iv3 p, u8 i) { 
 
 	light_work u;
@@ -743,7 +759,7 @@ void chunk::do_gen() { PROF_FUNC
 
 			if(x % 16 == 0 && z % 16 == 0) {
 				blocks[x][z][height] = w->block_id::torch;
-				place_light(iv3(x, height, z), 15);
+				place_light(iv3(x, height, z), 16);
 			} else {
 				blocks[x][z][height] = w->block_id::stone_slab;
 			}
@@ -760,7 +776,24 @@ void chunk::do_light() { PROF_FUNC
 	light_work work;
 	while(lighting_updates.try_pop(&work)) {
 
-		if(work.type == light_update::add) {
+		if(work.type == light_update::block) {
+
+			blocks[work.pos.x][work.pos.z][work.pos.y] = work.id;
+
+			block_meta* info = w->get_info(work.id);
+
+			// light_work rem;
+			// rem.type = light_update::remove;
+			// rem.pos = work.pos;
+			// lighting_updates.push(rem);
+
+			// light_work add;
+			// add.type = light_update::add;
+			// add.pos = work.pos;
+			// add.intensity = light[work.pos.x][work.pos.z][work.pos.y].l;
+			// lighting_updates.push(add);
+
+		} else if(work.type == light_update::add) {
 
 			light[work.pos.x][work.pos.z][work.pos.y].l = work.intensity;
 
@@ -861,7 +894,7 @@ void block_node::set_l(u8 intensity) {
 
 block_id block_node::get_type() { 
 
-	if (!owner) return block_id::air;
+	if (!owner) return block_id::none;
 	return owner->blocks[pos.x][pos.z][pos.y];
 }
 
@@ -938,38 +971,31 @@ block_node chunk::canonical_block(iv3 block) {
 			same.owner = neighbors[0]; 
 			same.pos = iv3(x - wid, y, z);
 			return same;
-		}
-		if(offset.x == -1 && offset.z == 0 && neighbors[1]) {
+		} else if(offset.x == -1 && offset.z == 0 && neighbors[1]) {
 			same.owner = neighbors[1]; 
 			same.pos = iv3(x + wid, y, z);
 			return same;
-		}
-		if(offset.x == 0 && offset.z == 1 && neighbors[2]) {
+		} else if(offset.x == 0 && offset.z == 1 && neighbors[2]) {
 			same.owner = neighbors[2]; 
 			same.pos = iv3(x, y, z - wid);
 			return same;
-		}
-		if(offset.x == 0 && offset.z == -1 && neighbors[3]) {
+		} else if(offset.x == 0 && offset.z == -1 && neighbors[3]) {
 			same.owner = neighbors[3]; 
 			same.pos = iv3(x, y, z + wid);
 			return same;
-		}
-		if(offset.x == 1 && offset.z == 1 && neighbors[4]) {
+		} else if(offset.x == 1 && offset.z == 1 && neighbors[4]) {
 			same.owner = neighbors[4]; 
 			same.pos = iv3(x - wid, y, z - wid);
 			return same;
-		}
-		if(offset.x == 1 && offset.z == -1 && neighbors[5]) {
+		} else if(offset.x == 1 && offset.z == -1 && neighbors[5]) {
 			same.owner = neighbors[5]; 
 			same.pos = iv3(x - wid, y, z + wid);
 			return same;
-		}
-		if(offset.x == -1 && offset.z == 1 && neighbors[6]) {
+		} else if(offset.x == -1 && offset.z == 1 && neighbors[6]) {
 			same.owner = neighbors[6]; 
 			same.pos = iv3(x + wid, y, z - wid);
 			return same;
-		}
-		if(offset.x == -1 && offset.z == -1 && neighbors[7]) {
+		} else if(offset.x == -1 && offset.z == -1 && neighbors[7]) {
 			same.owner = neighbors[7]; 
 			same.pos = iv3(x + wid, y, z + wid);
 			return same;
@@ -1000,9 +1026,6 @@ u8 chunk::ao_at(iv3 block) {
 	bool top2 = w->get_info(block_at(iv3(x,y,z)))->does_ao;
 	bool top3 = w->get_info(block_at(iv3(x-1,y,z-1)))->does_ao;
 	bool bot0 = w->get_info(block_at(iv3(x-1,y-1,z)))->does_ao;
-	bool bot1 = w->get_info(block_at(iv3(x,y-1,z-1)))->does_ao;
-	bool bot2 = w->get_info(block_at(iv3(x,y-1,z)))->does_ao;
-	bool bot3 = w->get_info(block_at(iv3(x-1,y-1,z-1)))->does_ao;
 
 	bool side0, side1, corner;
 
@@ -1010,21 +1033,35 @@ u8 chunk::ao_at(iv3 block) {
 		side0 = top2;
 		side1 = top3;
 		corner = top1;
-	} else if(!top1 && bot1) {
+	} else {
+
+	bool bot1 = w->get_info(block_at(iv3(x,y-1,z-1)))->does_ao;
+
+	if(!top1 && bot1) {
 		side0 = top2;
 		side1 = top3;
 		corner = top0;
-	} else if(!top2 && bot2) {
+	} else {
+	
+	bool bot2 = w->get_info(block_at(iv3(x,y-1,z)))->does_ao;
+
+	if(!top2 && bot2) {
 		side0 = top0;
 		side1 = top1;
 		corner = top3;
-	} else if(!top3 && bot3) {
+	} else {
+	
+	bool bot3 = w->get_info(block_at(iv3(x-1,y-1,z-1)))->does_ao;
+
+	if(!top3 && bot3) {
 		side0 = top0;
 		side1 = top1;
 		corner = top2;
 	} else {
+
 		return 3;
-	}
+
+	}}}}
 
 	if(side0 && side1) {
 		return 0;
@@ -1036,7 +1073,7 @@ block_id chunk::block_at(iv3 block) {
 
 	block_node node = canonical_block(block);	
 
-	if(!node.owner) return block_id::air;
+	if(!node.owner) return block_id::none;
 
 	return node.owner->blocks[node.pos.x][node.pos.z][node.pos.y];
 }
@@ -1117,7 +1154,7 @@ void chunk::do_mesh() { PROF_FUNC
 		i32 v_2d = (i + 2) % 3;
 		i32 backface_offset = i / 3 * 2 - 1;
 
-		// Iterate over orthogonal orthogonal to slice
+		// Iterate over orthogonal slice
 		iv3 position;
 		for(position[ortho_2d] = 0; position[ortho_2d] < max[ortho_2d]; position[ortho_2d]++) {
  	
@@ -1140,13 +1177,13 @@ void chunk::do_mesh() { PROF_FUNC
 							block_id backface_block = block_at(backface);
 							block_meta* info1 = w->get_info(backface_block);
 
-							if(!info0->opaque[(i + 3) % 6] || !info1->renders || !info1->opaque[(i + 3) % 6]) {
+							if(!info0->opaque[i] || !info1->renders || !info1->opaque[(i + 3) % 6]) {
 								slice[slice_idx] = block;
 							} else {
-								slice[slice_idx] = block_id::air;
+								slice[slice_idx] = block_id::none;
 							}
 						} else {
-							slice[slice_idx] = block_id::air;
+							slice[slice_idx] = block_id::none;
 						}
 					}
 				}
@@ -1162,7 +1199,7 @@ void chunk::do_mesh() { PROF_FUNC
 
 					block_id single_type = slice[slice_idx];
 					
-					if(single_type != block_id::air) {
+					if(single_type != block_id::none) {
 
 						mesh_face face_type = build_face(single_type, position, i);
 

@@ -4,7 +4,7 @@
 struct chunk;
 
 enum class block_id : u16 {
-	air = 0,
+	none,
 	bedrock,
 	stone,
 	path,
@@ -67,6 +67,7 @@ enum class light_update : u8 {
 	none,
 	add,
 	remove,
+	block,
 	trigger
 };
 
@@ -74,7 +75,10 @@ struct light_work {
 	light_update type;
 	
 	iv3 pos;
-	u8 intensity = 0;
+	union {
+		u8 intensity;
+		block_id id;
+	};
 };
 
 struct chunk;
@@ -131,6 +135,7 @@ struct chunk {
 	
 	void place_light(iv3 pos, u8 intensity);
 	void rem_light(iv3 pos);
+	void set_block(iv3 pos, block_id id);
 
 	static i32 y_at(i32 x, i32 z);
 	
@@ -146,7 +151,7 @@ struct player {
 
 	render_camera camera;
 
-	f32 speed = 30.0f;
+	f32 speed = 5.0f;
 	v3  velocity;
 	u64 last = 0;
 
@@ -163,6 +168,7 @@ struct world_settings {
 	i32 max_light_propogation = 1;
 	bool respect_cam = false;
 	
+	f32 gamma = 2.2f;
 	bool wireframe = false;
 	bool cull_backface = true;
 	bool sample_shading = true;
@@ -258,6 +264,7 @@ struct world {
 
 	void place_light(iv3 pos, u8 intensity);
 	void rem_light(iv3 pos);
+	void set_block(iv3 pos, block_id id);
 
 	block_node world_to_canonical(iv3 pos);
 
