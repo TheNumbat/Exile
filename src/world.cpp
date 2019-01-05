@@ -1018,11 +1018,20 @@ void chunk::do_light() { PROF_FUNC
 
 			for(i32 x = 0; x < wid; x++) {
 				for(i32 z = 0; z < wid; z++) {
-						light_work add;
-						add.type = light_update::add_sun;
-						add.pos = iv3(x,hei,z);
-						add.intensity = 15;
-						lighting_updates.push(add);
+					for(i32 y = hei - 1; y >= 0; y--) {
+
+						block_meta* info = w->get_info(block_at(iv3(x,y,z)));
+						if(!info->opaque[4]) {
+							light[x][z][y].s = 15;
+						} else {
+							light_work add;
+							add.type = light_update::add_sun;
+							add.pos = iv3(x,y,z);
+							add.intensity = 15;
+							light_add_sun(add);
+							break;
+						}
+					}
 				}
 			}
 
