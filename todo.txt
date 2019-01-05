@@ -2,7 +2,6 @@
 Working To-Do:
 
 [1]	World & Rendering
-		light updates for set block
 		sunlight
 
 		deferred rendering
@@ -16,7 +15,7 @@ Working To-Do:
 		
 		chunk culling / visibility query
 		normal mapping
-		HRD / bloom / god rays / better fog
+		HDR / bloom / god rays / better fog
 
 	data serialization/deserialization
 	user settings interface

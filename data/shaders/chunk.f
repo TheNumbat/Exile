@@ -1,7 +1,7 @@
 
 #version 330 core
 
-flat in uint f_t;
+flat in uint f_t, f_ql;
 flat in vec4 f_ao;
 flat in vec4 f_l;
 in vec2 f_uv;
@@ -44,7 +44,7 @@ void main() {
 
 		} else {
 
-			color *= clamp(ambient + (f_l.x + f_l.y + f_l.z + f_l.w) / 4, 0.0f, 1.0f);			
+			color *= clamp(ambient + (float(f_ql) / 16.0f), 0.0f, 1.0f);
 		}
 	}
 	

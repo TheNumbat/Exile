@@ -25,7 +25,7 @@ struct block_meta {
 	bool does_ao;
 	bool custom_model;
 	
-	func_ptr<void, mesh_chunk*, block_meta, i32, iv3, iv2, bv4, bv4> model;
+	func_ptr<void, mesh_chunk*, block_meta, i32, iv3, iv2, bv4, u8, bv4> model;
 };
 
 struct chunk_pos {
@@ -92,7 +92,7 @@ struct block_node {
 	block_id get_type();
 	block_light get_l();
 	void set_l(u8 intensity);
-	bool propogate_light(world* w, i32 dir);
+	bool propogate_light_through_vert(world* w, i32 dir);
 };
 
 struct light_rem_node {
@@ -139,7 +139,8 @@ struct chunk {
 
 	static i32 y_at(i32 x, i32 z);
 	
-	u8 ao_at(iv3 block);
+	u8 ao_at_vert(iv3 vert);
+	u8 l_at_vert(iv3 vert);
 	block_light l_at(iv3 block);
 	block_id block_at(iv3 block);
 	block_node canonical_block(iv3 block);
@@ -164,9 +165,9 @@ struct player {
 struct world_settings {
 
 	f32 gravity = 0.0f;
-	i32 view_distance = 1;
+	i32 view_distance = 4;
 	i32 max_light_propogation = 1;
-	bool respect_cam = false;
+	bool respect_cam = true;
 	
 	f32 gamma = 2.2f;
 	bool wireframe = false;
@@ -174,7 +175,7 @@ struct world_settings {
 	bool sample_shading = true;
 	bool draw_chunk_corners = false;
 
-	bool block_ao = true;
+	bool extra_ao = false;
 	bool dist_fog = false;
 	
 	bool block_light = true;
@@ -280,5 +281,5 @@ CALLBACK void cancel_gen(chunk* param);
 CALLBACK void cancel_light(chunk* param);
 CALLBACK void cancel_mesh(chunk* param);
 
-CALLBACK void slab_model(mesh_chunk* m, block_meta i, i32 dir, iv3 v, iv2 wh, bv4 ao, bv4 l);
-CALLBACK void torch_model(mesh_chunk* m, block_meta i, i32 dir, iv3 v, iv2 wh, bv4 ao, bv4 l);
+CALLBACK void slab_model(mesh_chunk* m, block_meta i, i32 dir, iv3 v, iv2 wh, bv4 ao, u8 ql, bv4 l);
+CALLBACK void torch_model(mesh_chunk* m, block_meta i, i32 dir, iv3 v, iv2 wh, bv4 ao, u8 ql, bv4 l);

@@ -22,7 +22,7 @@ struct chunk_quad {
 	u32 uy01;
 	u32 vy23;
 
-	u16 ao, t;
+	u16 aol, t;
 	u8 l3, l2, l1, l0;
 };
 static_assert(sizeof(chunk_quad) == 24, "chunk_quad size != 24");
@@ -41,7 +41,7 @@ struct mesh_chunk {
 	void clear();
 	void swap_mesh(mesh_chunk other);
 
-	void quad(iv3 v_0, iv3 v_1, iv3 v_2, iv3 v_3, iv2 uv, i32 t, bv4 ao, bv4 l);
+	void quad(iv3 v_0, iv3 v_1, iv3 v_2, iv3 v_3, iv2 uv, i32 t, bv4 ao, u8 ql, bv4 l);
 };
 
 struct mesh_cubemap {

@@ -61,7 +61,7 @@ CALLBACK void uniforms_mesh_chunk(shader_program* prog, render_command* cmd) {
 	glUniform1i(glGetUniformLocation(prog->handle, "blocks_tex"), 0);
 	glUniform1i(glGetUniformLocation(prog->handle, "sky_tex"), 1);
 
-	glUniform1i(glGetUniformLocation(prog->handle, "do_ao"), set->block_ao);
+	glUniform1i(glGetUniformLocation(prog->handle, "do_ao"), set->extra_ao);
 	glUniform1i(glGetUniformLocation(prog->handle, "do_fog"), set->dist_fog);
 	glUniform1i(glGetUniformLocation(prog->handle, "do_light"), set->block_light);
 	glUniform1i(glGetUniformLocation(prog->handle, "smooth_light"), set->smooth_light);
@@ -1007,7 +1007,7 @@ void mesh_chunk::clear() {
 	dirty = true;
 }
 
-void mesh_chunk::quad(iv3 v_0, iv3 v_1, iv3 v_2, iv3 v_3, iv2 uv, i32 t, bv4 ao, bv4 l) {
+void mesh_chunk::quad(iv3 v_0, iv3 v_1, iv3 v_2, iv3 v_3, iv2 uv, i32 t, bv4 ao, u8 ql, bv4 l) {
 
 	chunk_quad q = {};
 
@@ -1032,6 +1032,7 @@ void mesh_chunk::quad(iv3 v_0, iv3 v_1, iv3 v_2, iv3 v_3, iv2 uv, i32 t, bv4 ao,
 		0 <= uv.y && uv.y <= 255 && 
 
 		0 <= t && t <= 65535 &&
+		0 <= ql && ql <= 32 &&
 
 		0 <= ao.x && ao.x <= 3 &&
 		0 <= ao.y && ao.y <= 3 &&
@@ -1050,7 +1051,8 @@ void mesh_chunk::quad(iv3 v_0, iv3 v_1, iv3 v_2, iv3 v_3, iv2 uv, i32 t, bv4 ao,
 	q.uy01 |= (u8)uv.x; q.vy23 |= (u8)uv.y;
 
 	q.t = (u16)t;
-	q.ao |= (u8)ao.w; q.ao |= (u8)ao.z << 2; q.ao |= (u8)ao.y << 4; q.ao |= (u8)ao.x << 6; 
+	q.aol |= (u16)ql << 8;
+	q.aol |= (u8)ao.w; q.aol |= (u8)ao.z << 2; q.aol |= (u8)ao.y << 4; q.aol |= (u8)ao.x << 6; 
 
 	q.l3 = l.w; q.l2 = l.z; q.l1 = l.y; q.l0 = l.x; 
 

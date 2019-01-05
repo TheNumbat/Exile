@@ -35,6 +35,7 @@ const uvec2 z_mask  = uvec2(0x00ff0000u, 0x000000ffu);
 const uvec2 z_shift = uvec2(16, 0);
 
 const uint t_mask   = 0xffff0000u;
+const uint ql_mask  = 0x0000ff00u;
 const uint ao0_mask = 0x000000c0u;
 const uint ao1_mask = 0x00000030u;
 const uint ao2_mask = 0x0000000cu;
@@ -45,7 +46,7 @@ const uint l1_mask  = 0x00ff0000u;
 const uint l2_mask  = 0x0000ff00u;
 const uint l3_mask  = 0x000000ffu;
 
-flat out uint f_t;
+flat out uint f_t, f_ql;
 flat out vec4 f_ao;
 flat out vec4 f_l;
 out vec2 f_uv;
@@ -59,6 +60,7 @@ struct vert {
 
 struct quad {
 	uint t;
+	uint ql;
 	vec4 ao;
 	vec4 l;
 	vec2 uv;
@@ -82,12 +84,12 @@ quad q_unpack() {
 	q.ao[1] = ao_curve[(q_data.x & ao1_mask) >> 4];
 	q.ao[2] = ao_curve[(q_data.x & ao2_mask) >> 2];
 	q.ao[3] = ao_curve[(q_data.x & ao3_mask)];
+	q.ql = (q_data.x & ql_mask) >> 8;
 	q.l[0] = (q_data.y & l0_mask) >> 24;
 	q.l[1] = (q_data.y & l1_mask) >> 16;
 	q.l[2] = (q_data.y & l2_mask) >> 8;
 	q.l[3] = (q_data.y & l3_mask);
-	q.l /= 15.0f;
-	
+	q.l /= 128.0f;
 	q.uv[0] = (v_data.z & u_mask) / units_per_voxel;
 	q.uv[1] = (v_data.w & v_mask) / units_per_voxel;
 
@@ -98,8 +100,8 @@ void main() {
 
 	// Unpack
 
-	int idx0 = gl_VertexID / 2;
-	int idx1 = gl_VertexID % 2;
+	int idx0 = gl_VertexID >> 1;
+	int idx1 = gl_VertexID & 1;
 
 	quad q = q_unpack();
 
@@ -119,6 +121,7 @@ void main() {
 	
 	f_t = q.t;
 	f_l = q.l;
+	f_ql = q.ql;
 	f_ao = q.ao;
 	
 	f_ah = 0.5f * (m_pos.y / length(m_pos)) + 0.5f;
