@@ -49,8 +49,10 @@ void main() {
 
 		} else {
 
-			float l = max(float(f_ql) / 15.0f, float(f_qs) / 15.0f * day_factor);
-			color *= clamp(ambient + l, 0.0f, 1.0f);
+			float t = float(f_ql) / 15.0f;
+			float s = float(f_qs) / 15.0f * day_factor;
+
+			color *= clamp(ambient + max(t,s), 0.0f, 1.0f);
 
 			float ao0 = mix(f_ao.x, f_ao.y, fract(f_uv.x));
 			float ao1 = mix(f_ao.z, f_ao.w, fract(f_uv.x));

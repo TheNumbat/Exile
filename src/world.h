@@ -157,6 +157,7 @@ struct chunk {
 	void light_add(light_work work);
 	void light_remove(light_work work);
 	void light_add_sun(light_work work);
+	void light_rem_sun(light_work work);
 
 	mesh_face build_face(block_id t, iv3 p, i32 dir);
 };

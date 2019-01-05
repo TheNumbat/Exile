@@ -803,6 +803,61 @@ void chunk::do_gen() { PROF_FUNC
 	lighting_updates.push(sun);
 }
 
+void chunk::light_rem_sun(light_work work) { PROF_FUNC
+
+	block_light& first = light[work.pos.x][work.pos.z][work.pos.y];
+	if(first.s == 0) {
+		return;
+	}
+
+	queue<light_rem_node> q = queue<light_rem_node>::make(2048, &this_thread_data.scratch_arena);
+
+	light_rem_node begin;
+	begin.pos = work.pos;
+	begin.owner = this;
+	begin.val = first.s;
+	first.s = 0;
+
+	q.push(begin);
+
+	while(!q.empty()) {
+
+		light_rem_node cur = q.pop();
+		u8 current_light = cur.val;
+		LOG_ASSERT(current_light != 0);
+
+		for(i32 i = 0; i < 6; i++) {
+
+			iv3 neighbor = cur.pos + g_directions[i];
+			block_node node = cur.owner->canonical_block(neighbor);
+			block_light nval = node.get_l();
+
+			u8 test = current_light + (i == 1 ? 1 : 0);
+			if(nval.s != 0 && nval.s < test) {
+				node.set_s(0);
+				light_rem_node new_node;
+				new_node.pos = node.pos;
+				new_node.owner = node.owner;
+				new_node.val = nval.s;
+				q.push(new_node);
+
+				if(node.owner->lighting_updates.empty()) {
+					light_work t; t.type = light_update::trigger;
+					node.owner->lighting_updates.push(t);
+				}
+			} else if(nval.s >= test) {
+				light_work fill;
+				fill.type = light_update::add_sun;
+				fill.pos = node.pos;
+				fill.intensity = nval.s;
+				node.owner->lighting_updates.push(fill);
+			}
+		}
+	}
+
+	RESET_ARENA(&this_thread_data.scratch_arena);
+}
+
 void chunk::light_add_sun(light_work work) { PROF_FUNC
 
 	light[work.pos.x][work.pos.z][work.pos.y].s = work.intensity;
@@ -825,9 +880,11 @@ void chunk::light_add_sun(light_work work) { PROF_FUNC
 			block_node node = cur.owner->canonical_block(neighbor);
 
 			if(!node.owner) continue;
-			if(node.get_l().s < current_light - 1 && !w->get_info(node.get_type())->opaque[(i + 3) % 6]) {
 
-				node.set_s(current_light - 1);
+			u8 test = current_light - (i == 1 ? 0 : 1);
+			if(node.get_l().s < test && !w->get_info(node.get_type())->opaque[(i + 3) % 6]) {
+
+				node.set_s(test);
 				q.push(node);
 
 				if(node.owner->lighting_updates.empty()) {
@@ -955,24 +1012,17 @@ void chunk::do_light() { PROF_FUNC
 
 		} else if(work.type == light_update::remove_sun) {
 
+			light_rem_sun(work);
+
 		} else if(work.type == light_update::gen_sun) {
 
 			for(i32 x = 0; x < wid; x++) {
 				for(i32 z = 0; z < wid; z++) {
-					for(i32 y = hei; y >= 0; y--) {
-
-						block_meta* info = w->get_info(block_at(iv3(x, y, z)));
-						if(!info->opaque[4]) {
-							light[x][z][y].s = 15;
-						} else {
-							light_work add;
-							add.type = light_update::add_sun;
-							add.pos = iv3(x,y,z);
-							add.intensity = 15;
-							lighting_updates.push(add);
-							break;
-						}
-					}
+						light_work add;
+						add.type = light_update::add_sun;
+						add.pos = iv3(x,hei,z);
+						add.intensity = 15;
+						lighting_updates.push(add);
 				}
 			}
 
@@ -982,6 +1032,10 @@ void chunk::do_light() { PROF_FUNC
 
 			light_work rem;
 			rem.type = light_update::remove;
+			rem.pos = work.pos;
+			lighting_updates.push(rem);
+
+			rem.type = light_update::remove_sun;
 			rem.pos = work.pos;
 			lighting_updates.push(rem);
 
