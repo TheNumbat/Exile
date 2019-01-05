@@ -362,22 +362,45 @@ block_meta* world::get_info(block_id id) {
 	return block_info.get((u32)id);
 }
 
+void world::player_break_block() {
+
+	v3 intersection = raymarch(p.camera.pos, p.camera.front, p.camera.reach);
+
+	if(intersection != p.camera.pos + p.camera.front * p.camera.reach) {
+		
+		set_block(intersection.to_i_t(), block_id::none);		
+	}
+}
+
+void world::player_place_block() {
+
+	v3 intersection = raymarch(p.camera.pos, p.camera.front, p.camera.reach);
+
+	if(intersection != p.camera.pos + p.camera.front * p.camera.reach) {
+		
+		set_block(intersection.to_i_t(), block_id::stone);		
+	}
+}
+
 void world::set_block(iv3 pos, block_id id) {
 
 	block_node local = world_to_canonical(pos);
-	local.owner->set_block(local.pos, id);
+	if(local.owner)
+		local.owner->set_block(local.pos, id);
 }
 
 void world::place_light(iv3 pos, u8 intensity) {
 
 	block_node local = world_to_canonical(pos);
-	local.owner->place_light(local.pos, intensity);
+	if(local.owner)
+		local.owner->place_light(local.pos, intensity);
 }
 
 void world::rem_light(iv3 pos) {
 
 	block_node local = world_to_canonical(pos);
-	local.owner->rem_light(local.pos);
+	if(local.owner)
+		local.owner->rem_light(local.pos);
 }
 
 void world_environment::init(asset_store* store, allocator* a) { PROF_FUNC
@@ -784,6 +807,15 @@ void chunk::do_light() { PROF_FUNC
 			rem.type = light_update::remove;
 			rem.pos = work.pos;
 			lighting_updates.push(rem);
+
+			for(i32 i = 0; i < 6; i++) {
+				iv3 neighbor = work.pos + directions[i];
+				block_node node = canonical_block(neighbor);
+				if(node.owner->lighting_updates.empty()) {
+					light_work t; t.type = light_update::trigger;
+					node.owner->lighting_updates.push(t);
+				}
+			}
 
 		} else if(work.type == light_update::add) {
 

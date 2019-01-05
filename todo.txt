@@ -4,6 +4,9 @@ Working To-Do:
 [1]	World & Rendering
 		sunlight
 
+		fix place/break block
+		fix waiting for new neighbor meshes
+
 		deferred rendering
 		gamma correction
 		

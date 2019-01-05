@@ -343,6 +343,7 @@ union v3 {
 	v3 operator-() {return {-x,-y,-z};}
 	operator bool() {return x || y || z;}
 	iv3 to_i() {return iv3((i32)_round(x), (i32)_round(y), (i32)_round(z));}
+	iv3 to_i_t() {return iv3((i32)x, (i32)y, (i32)z) - iv3(x < 0 ? 1 : 0, y < 0 ? 1 : 0, z < 0 ? 1 : 0);}
 
 	v3() {}
 	v3(f32 _x) {x = _x; y = _x; z = _x;}

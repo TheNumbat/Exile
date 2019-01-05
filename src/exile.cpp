@@ -147,6 +147,17 @@ CALLBACK bool camera_evt_handle(void* param, platform_event evt) {
 
 			return true;
 		}
+
+		else if(evt.mouse.flags & (u16)platform_mouseflag::press) {
+
+			if(evt.mouse.flags & (u16)platform_mouseflag::lclick) {
+				game->w.player_break_block();
+			} else if(evt.mouse.flags & (u16)platform_mouseflag::rclick) {
+				game->w.player_place_block();
+			}
+
+			return true;
+		}
 	}
 
 	else if(evt.type == platform_event_type::window) {

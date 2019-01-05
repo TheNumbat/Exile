@@ -267,6 +267,9 @@ struct world {
 	void rem_light(iv3 pos);
 	void set_block(iv3 pos, block_id id);
 
+	void player_break_block();
+	void player_place_block();
+
 	block_node world_to_canonical(iv3 pos);
 
 	v3 raymarch(v3 origin, v3 dir, f32 max);

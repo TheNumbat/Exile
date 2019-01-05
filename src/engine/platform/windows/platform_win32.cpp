@@ -1459,8 +1459,64 @@ LRESULT WINCALLBACK window_proc(HWND handle, UINT msg, WPARAM wParam, LPARAM lPa
 
 			evt.mouse.x = (i16)raw.mouse.lLastX;
 			evt.mouse.y = (i16)raw.mouse.lLastY;
-
 			global_enqueue(global_enqueue_param, evt);
+
+			if(raw.mouse.usButtonFlags & RI_MOUSE_LEFT_BUTTON_UP) {
+				evt.mouse.flags = (u16)platform_mouseflag::release;
+				evt.mouse.flags |= (u16)platform_mouseflag::lclick;
+				global_enqueue(global_enqueue_param, evt);				
+			}
+			if(raw.mouse.usButtonFlags & RI_MOUSE_RIGHT_BUTTON_UP) {
+				evt.mouse.flags = (u16)platform_mouseflag::release;
+				evt.mouse.flags |= (u16)platform_mouseflag::rclick;
+				global_enqueue(global_enqueue_param, evt);				
+			}
+			if(raw.mouse.usButtonFlags & RI_MOUSE_MIDDLE_BUTTON_UP) {
+				evt.mouse.flags = (u16)platform_mouseflag::release;
+				evt.mouse.flags |= (u16)platform_mouseflag::mclick;
+				global_enqueue(global_enqueue_param, evt);				
+			}
+			if(raw.mouse.usButtonFlags & RI_MOUSE_BUTTON_4_UP) {
+				evt.mouse.flags = (u16)platform_mouseflag::release;
+				evt.mouse.flags |= (u16)platform_mouseflag::x1click;
+				global_enqueue(global_enqueue_param, evt);				
+			}
+			if(raw.mouse.usButtonFlags & RI_MOUSE_BUTTON_5_UP) {
+				evt.mouse.flags = (u16)platform_mouseflag::release;
+				evt.mouse.flags |= (u16)platform_mouseflag::x2click;
+				global_enqueue(global_enqueue_param, evt);				
+			}
+			if(raw.mouse.usButtonFlags & RI_MOUSE_LEFT_BUTTON_DOWN) {
+				evt.mouse.flags = (u16)platform_mouseflag::press;
+				evt.mouse.flags |= (u16)platform_mouseflag::lclick;
+				global_enqueue(global_enqueue_param, evt);				
+			}
+			if(raw.mouse.usButtonFlags & RI_MOUSE_RIGHT_BUTTON_DOWN) {
+				evt.mouse.flags = (u16)platform_mouseflag::press;
+				evt.mouse.flags |= (u16)platform_mouseflag::rclick;
+				global_enqueue(global_enqueue_param, evt);				
+			}
+			if(raw.mouse.usButtonFlags & RI_MOUSE_MIDDLE_BUTTON_DOWN) {
+				evt.mouse.flags = (u16)platform_mouseflag::press;
+				evt.mouse.flags |= (u16)platform_mouseflag::mclick;
+				global_enqueue(global_enqueue_param, evt);				
+			}
+			if(raw.mouse.usButtonFlags & RI_MOUSE_BUTTON_4_DOWN) {
+				evt.mouse.flags = (u16)platform_mouseflag::press;
+				evt.mouse.flags |= (u16)platform_mouseflag::x1click;
+				global_enqueue(global_enqueue_param, evt);				
+			}
+			if(raw.mouse.usButtonFlags & RI_MOUSE_BUTTON_5_DOWN) {
+				evt.mouse.flags = (u16)platform_mouseflag::press;
+				evt.mouse.flags |= (u16)platform_mouseflag::x2click;
+				global_enqueue(global_enqueue_param, evt);				
+			}
+			if(raw.mouse.usButtonFlags & RI_MOUSE_WHEEL) {
+				evt.mouse.flags = (u16)platform_mouseflag::wheel;
+				evt.mouse.w = (i8)raw.mouse.usButtonData;
+				global_enqueue(global_enqueue_param, evt);
+			}
+
 			return 0;
 		}
 
