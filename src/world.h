@@ -21,6 +21,7 @@ struct block_meta {
 	i32 textures[6];
 	bool merge[6];
 
+	u8 emit_light;
 	bool renders;
 	bool does_ao;
 	bool custom_model;
@@ -50,9 +51,10 @@ struct mesh_face {
 };
 
 struct NOREFLECT block_light {
-	// TODO(max): sunlight
-	u8 l;
+	u8 t; // 0..255 for large world light propagation. gets clamped to 0..15 in renderer
+	u8 s; // 0..15
 };
+static_assert(sizeof(block_light) == 2, "sizeof(block_light) != 2!");
 
 enum class chunk_stage : u8 {
 	none,
@@ -68,6 +70,9 @@ enum class light_update : u8 {
 	add,
 	remove,
 	block,
+	gen_sun,
+	add_sun,
+	remove_sun,
 	trigger
 };
 
@@ -92,6 +97,7 @@ struct block_node {
 	block_id get_type();
 	block_light get_l();
 	void set_l(u8 intensity);
+	void set_s(u8 intensity);
 	bool propogate_light_through_vert(world* w, i32 dir);
 };
 
@@ -101,8 +107,10 @@ struct light_rem_node {
 	chunk* owner = null;
 };
 
+static iv3 g_directions[] = {{-1, 0, 0}, {0, -1, 0}, {0, 0, -1}, {1, 0, 0}, {0, 1, 0}, {0, 0, 1}};
 struct chunk {
 
+	// TODO(max): 16 units / voxel + cubic chunks
 	static const i32 wid = 31, hei = 511;
 	static const i32 units_per_voxel = 8;
 
@@ -141,10 +149,15 @@ struct chunk {
 	
 	u8 ao_at_vert(iv3 vert);
 	u8 l_at_vert(iv3 vert);
+	
 	block_light l_at(iv3 block);
 	block_id block_at(iv3 block);
 	block_node canonical_block(iv3 block);
 	
+	void light_add(light_work work);
+	void light_remove(light_work work);
+	void light_add_sun(light_work work);
+
 	mesh_face build_face(block_id t, iv3 p, i32 dir);
 };
 
@@ -175,7 +188,6 @@ struct world_settings {
 	bool sample_shading = true;
 	bool draw_chunk_corners = false;
 
-	bool extra_ao = false;
 	bool dist_fog = false;
 	
 	bool block_light = true;

@@ -61,7 +61,6 @@ CALLBACK void uniforms_mesh_chunk(shader_program* prog, render_command* cmd) {
 	glUniform1i(glGetUniformLocation(prog->handle, "blocks_tex"), 0);
 	glUniform1i(glGetUniformLocation(prog->handle, "sky_tex"), 1);
 
-	glUniform1i(glGetUniformLocation(prog->handle, "do_ao"), set->extra_ao);
 	glUniform1i(glGetUniformLocation(prog->handle, "do_fog"), set->dist_fog);
 	glUniform1i(glGetUniformLocation(prog->handle, "do_light"), set->block_light);
 	glUniform1i(glGetUniformLocation(prog->handle, "smooth_light"), set->smooth_light);
@@ -1012,32 +1011,31 @@ void mesh_chunk::quad(iv3 v_0, iv3 v_1, iv3 v_2, iv3 v_3, iv2 uv, i32 t, bv4 ao,
 	chunk_quad q = {};
 
 	LOG_DEBUG_ASSERT(
-		0 <= v_0.x && v_0.x <= 255 && 
-		0 <= v_0.y && v_0.y <= 4096 &&
-		0 <= v_0.z && v_0.z <= 255 && 
+		0 <= v_0.x && v_0.x < 256 && 
+		0 <= v_0.y && v_0.y < 4096 &&
+		0 <= v_0.z && v_0.z < 256 && 
 
-		0 <= v_1.x && v_1.x <= 255 && 
-		0 <= v_1.y && v_1.y <= 4096 &&
-		0 <= v_1.z && v_1.z <= 255 && 
+		0 <= v_1.x && v_1.x < 256 && 
+		0 <= v_1.y && v_1.y < 4096 &&
+		0 <= v_1.z && v_1.z < 256 && 
 
-		0 <= v_2.x && v_2.x <= 255 && 
-		0 <= v_2.y && v_2.y <= 4096 &&
-		0 <= v_2.z && v_2.z <= 255 && 
+		0 <= v_2.x && v_2.x < 256 && 
+		0 <= v_2.y && v_2.y < 4096 &&
+		0 <= v_2.z && v_2.z < 256 && 
 
-		0 <= v_3.x && v_3.x <= 255 && 
-		0 <= v_3.y && v_3.y <= 4096 &&
-		0 <= v_3.z && v_3.z <= 255 && 
+		0 <= v_3.x && v_3.x < 256 && 
+		0 <= v_3.y && v_3.y < 4096 &&
+		0 <= v_3.z && v_3.z < 256 && 
 
-		0 <= uv.x && uv.x <= 255 && 
-		0 <= uv.y && uv.y <= 255 && 
+		0 <= uv.x && uv.x < 256 && 
+		0 <= uv.y && uv.y < 256 && 
 
-		0 <= t && t <= 65535 &&
-		0 <= ql && ql <= 32 &&
+		0 <= t && t < 65536 &&
 
-		0 <= ao.x && ao.x <= 3 &&
-		0 <= ao.y && ao.y <= 3 &&
-		0 <= ao.z && ao.z <= 3 &&
-		0 <= ao.w && ao.w <= 3
+		0 <= ao.x && ao.x < 4 &&
+		0 <= ao.y && ao.y < 4 &&
+		0 <= ao.z && ao.z < 4 &&
+		0 <= ao.w && ao.w < 4
 	);
 
 	q.x_0 = (u8)v_0.x; q.z_0 = (u8)v_0.z;

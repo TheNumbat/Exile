@@ -1,9 +1,9 @@
 
 #version 330 core
 
-flat in uint f_t, f_ql;
+flat in uint f_t, f_ql, f_qs;
 flat in vec4 f_ao;
-flat in vec4 f_l;
+flat in vec4 f_l, f_s;
 in vec2 f_uv;
 in vec3 f_n;
 in float f_ah, f_d;
@@ -14,7 +14,6 @@ uniform sampler2DArray blocks_tex;
 uniform sampler2D sky_tex;
 
 uniform bool do_fog;
-uniform bool do_ao;
 uniform bool do_light;
 uniform bool smooth_light;
 
@@ -34,27 +33,31 @@ void main() {
 
 	if(do_light) {
 
+		float day_factor = 1.0f - (smoothstep(0.3f, 0.15f, day_01) + smoothstep(0.75f, 0.9f, day_01));
+
 		if(smooth_light) {
 
-			float l0 = mix(f_l.x, f_l.y, fract(f_uv.x));
-			float l1 = mix(f_l.z, f_l.w, fract(f_uv.x));
-			float l = mix(l0, l1, fract(f_uv.y));
+			float t0 = mix(f_l.x, f_l.y, fract(f_uv.x));
+			float t1 = mix(f_l.z, f_l.w, fract(f_uv.x));
+			float t = mix(t0, t1, fract(f_uv.y));
 
-			color *= clamp(ambient + l, 0.0f, 1.0f);
+			float s0 = mix(f_s.x, f_s.y, fract(f_uv.x));
+			float s1 = mix(f_s.z, f_s.w, fract(f_uv.x));
+			float s = mix(s0, s1, fract(f_uv.y)) * day_factor;
+
+			color *= clamp(ambient + max(t,s), 0.0f, 1.0f);
 
 		} else {
 
-			color *= clamp(ambient + (float(f_ql) / 16.0f), 0.0f, 1.0f);
+			float l = max(float(f_ql) / 15.0f, float(f_qs) / 15.0f * day_factor);
+			color *= clamp(ambient + l, 0.0f, 1.0f);
+
+			float ao0 = mix(f_ao.x, f_ao.y, fract(f_uv.x));
+			float ao1 = mix(f_ao.z, f_ao.w, fract(f_uv.x));
+			float ao = mix(ao0, ao1, fract(f_uv.y));
+
+			color *= ao;
 		}
-	}
-	
-	if(do_ao) {
-
-		float ao0 = mix(f_ao.x, f_ao.y, fract(f_uv.x));
-		float ao1 = mix(f_ao.z, f_ao.w, fract(f_uv.x));
-		float ao = mix(ao0, ao1, fract(f_uv.y));
-
-		color *= ao;
 	}
 
 	if(do_fog) {

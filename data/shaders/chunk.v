@@ -35,20 +35,26 @@ const uvec2 z_mask  = uvec2(0x00ff0000u, 0x000000ffu);
 const uvec2 z_shift = uvec2(16, 0);
 
 const uint t_mask   = 0xffff0000u;
-const uint ql_mask  = 0x0000ff00u;
+const uint qs_mask  = 0x0000f000u;
+const uint ql_mask  = 0x00000f00u;
 const uint ao0_mask = 0x000000c0u;
 const uint ao1_mask = 0x00000030u;
 const uint ao2_mask = 0x0000000cu;
 const uint ao3_mask = 0x00000003u;
 
-const uint l0_mask  = 0xff000000u;
-const uint l1_mask  = 0x00ff0000u;
-const uint l2_mask  = 0x0000ff00u;
-const uint l3_mask  = 0x000000ffu;
+const uint l0_mask  = 0x0f000000u;
+const uint l1_mask  = 0x000f0000u;
+const uint l2_mask  = 0x00000f00u;
+const uint l3_mask  = 0x0000000fu;
 
-flat out uint f_t, f_ql;
+const uint s0_mask  = 0xf0000000u;
+const uint s1_mask  = 0x00f00000u;
+const uint s2_mask  = 0x0000f000u;
+const uint s3_mask  = 0x000000f0u;
+
+flat out uint f_t, f_ql, f_qs;
 flat out vec4 f_ao;
-flat out vec4 f_l;
+flat out vec4 f_l, f_s;
 out vec2 f_uv;
 out vec3 f_n;
 out float f_ah, f_d;
@@ -61,8 +67,10 @@ struct vert {
 struct quad {
 	uint t;
 	uint ql;
+	uint qs;
 	vec4 ao;
 	vec4 l;
+	vec4 s;
 	vec2 uv;
 };
 
@@ -84,12 +92,22 @@ quad q_unpack() {
 	q.ao[1] = ao_curve[(q_data.x & ao1_mask) >> 4];
 	q.ao[2] = ao_curve[(q_data.x & ao2_mask) >> 2];
 	q.ao[3] = ao_curve[(q_data.x & ao3_mask)];
+	
 	q.ql = (q_data.x & ql_mask) >> 8;
+	q.qs = (q_data.x & qs_mask) >> 12;
+	
 	q.l[0] = (q_data.y & l0_mask) >> 24;
 	q.l[1] = (q_data.y & l1_mask) >> 16;
 	q.l[2] = (q_data.y & l2_mask) >> 8;
 	q.l[3] = (q_data.y & l3_mask);
-	q.l /= 128.0f;
+	q.l /= 16.0f;
+
+	q.s[0] = (q_data.y & s0_mask) >> 28;
+	q.s[1] = (q_data.y & s1_mask) >> 20;
+	q.s[2] = (q_data.y & s2_mask) >> 12;
+	q.s[3] = (q_data.y & s3_mask) >> 4;
+	q.s /= 16.0f;
+	
 	q.uv[0] = (v_data.z & u_mask) / units_per_voxel;
 	q.uv[1] = (v_data.w & v_mask) / units_per_voxel;
 
@@ -121,7 +139,9 @@ void main() {
 	
 	f_t = q.t;
 	f_l = q.l;
+	f_s = q.s;
 	f_ql = q.ql;
+	f_qs = q.qs;
 	f_ao = q.ao;
 	
 	f_ah = 0.5f * (m_pos.y / length(m_pos)) + 0.5f;

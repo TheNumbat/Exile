@@ -23,7 +23,7 @@ CALLBACK void console_place_light(string p, void* w_) {
 		pos += used;
 	}
 
-	w->place_light(iv3(vals[0],vals[1],vals[2]), (u8)vals[3]);
+		w->place_light(iv3(vals[0],vals[1],vals[2]), (u8)vals[3]);
 }
 
 CALLBACK void console_rem_light(string p, void* w_) {
@@ -59,7 +59,4 @@ CALLBACK void console_set_block(string p, void* w_) {
 	iv3 block(vals[0],vals[1],vals[2]);
 
 	w->set_block(block, id);
-	if(id == block_id::torch) {
-		w->place_light(block, 16);
-	}
 }

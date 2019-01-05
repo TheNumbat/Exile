@@ -154,7 +154,7 @@ void world::update(u64 now) { PROF_FUNC
 	update_player(now);
 }
 
-void world::local_populate() { 
+void world::local_populate() { PROF_FUNC
 
 	i32 min = -settings.view_distance - settings.max_light_propogation - 1;
 	i32 max = settings.view_distance + settings.max_light_propogation + 1;
@@ -193,7 +193,7 @@ void world::local_populate() {
 	}
 }
 
-void world::local_generate() { 
+void world::local_generate() { PROF_FUNC
 
 	i32 min = -settings.view_distance - settings.max_light_propogation - 1;
 	i32 max = settings.view_distance + settings.max_light_propogation + 1;
@@ -221,7 +221,7 @@ void world::local_generate() {
 	}
 }
 
-void world::local_light() { 
+void world::local_light() { PROF_FUNC
 
 	i32 min = -settings.view_distance;
 	i32 max = settings.view_distance;
@@ -263,7 +263,7 @@ void world::local_light() {
 	}
 }
 
-void world::local_mesh() { 
+void world::local_mesh() { PROF_FUNC
 
 	chunk_pos camera = chunk_pos::from_abs(p.camera.pos);
 	for(i32 x = -settings.view_distance; x <= settings.view_distance; x++) {
@@ -485,6 +485,8 @@ void world::render_chunks() { PROF_FUNC
 	if(settings.sample_shading)
 		rcl.set_setting(render_setting::aa_shading, true);
 
+	{PROF_SCOPE("Build Render List"_);
+
 	chunk_pos camera = chunk_pos::from_abs(p.camera.pos);
 	for(i32 x = -settings.view_distance; x <= settings.view_distance; x++) {
 		for(i32 z = -settings.view_distance; z <= settings.view_distance; z++) {
@@ -541,6 +543,7 @@ void world::render_chunks() { PROF_FUNC
 		cmd.callback = FPTR(destroy_lines);
 		cmd.param = &lines;
 		rcl.add_command(cmd);
+	}
 	}
 
 	eng->ogl.execute_command_list(&rcl);
@@ -714,8 +717,14 @@ void chunk::set_block(iv3 p, block_id id) {
 	u.type = light_update::block;
 	u.pos = p;
 	u.id = id;
-
 	lighting_updates.push(u);
+
+	block_meta* info = w->get_info(id);
+	if(info->emit_light > 0) {
+		u.type = light_update::add;
+		u.intensity = info->emit_light;
+		lighting_updates.push(u);
+	}
 }
 
 void chunk::place_light(iv3 p, u8 i) { 
@@ -788,18 +797,186 @@ void chunk::do_gen() { PROF_FUNC
 			}
 		}
 	}
+
+	light_work sun;
+	sun.type = light_update::gen_sun;
+	lighting_updates.push(sun);
+}
+
+void chunk::light_add_sun(light_work work) { PROF_FUNC
+
+	light[work.pos.x][work.pos.z][work.pos.y].s = work.intensity;
+
+	queue<block_node> q = queue<block_node>::make(2048, &this_thread_data.scratch_arena);
+
+	block_node begin;
+	begin.pos = work.pos;
+	begin.owner = this;
+	q.push(begin);
+
+	while(!q.empty()) {
+
+		block_node cur = q.pop();
+		u8 current_light = cur.owner->l_at(cur.pos).s;
+
+		for(i32 i = 0; i < 6; i++) {
+			
+			iv3 neighbor = cur.pos + g_directions[i];
+			block_node node = cur.owner->canonical_block(neighbor);
+
+			if(!node.owner) continue;
+			if(node.get_l().s < current_light - 1 && !w->get_info(node.get_type())->opaque[(i + 3) % 6]) {
+
+				node.set_s(current_light - 1);
+				q.push(node);
+
+				if(node.owner->lighting_updates.empty()) {
+					light_work t; t.type = light_update::trigger;
+					node.owner->lighting_updates.push(t);
+				}
+			}
+		}
+	}
+
+	RESET_ARENA(&this_thread_data.scratch_arena);
+}
+
+void chunk::light_add(light_work work) { PROF_FUNC
+
+	light[work.pos.x][work.pos.z][work.pos.y].t = work.intensity;
+
+	queue<block_node> q = queue<block_node>::make(2048, &this_thread_data.scratch_arena);
+
+	block_node begin;
+	begin.pos = work.pos;
+	begin.owner = this;
+	q.push(begin);
+
+	while(!q.empty()) {
+
+		block_node cur = q.pop();
+		u8 current_light = cur.owner->l_at(cur.pos).t;
+
+		for(i32 i = 0; i < 6; i++) {
+			
+			iv3 neighbor = cur.pos + g_directions[i];
+			block_node node = cur.owner->canonical_block(neighbor);
+
+			if(!node.owner) continue;
+			if(node.get_l().t < current_light - 1 && !w->get_info(node.get_type())->opaque[(i + 3) % 6]) {
+
+				node.set_l(current_light - 1);
+				q.push(node);
+
+				if(node.owner->lighting_updates.empty()) {
+					light_work t; t.type = light_update::trigger;
+					node.owner->lighting_updates.push(t);
+				}
+			}
+		}
+	}
+
+	RESET_ARENA(&this_thread_data.scratch_arena);
+}
+
+void chunk::light_remove(light_work work) { PROF_FUNC
+
+	block_light& first = light[work.pos.x][work.pos.z][work.pos.y];
+	if(first.t == 0) {
+		return;
+	}
+
+	queue<light_rem_node> q = queue<light_rem_node>::make(2048, &this_thread_data.scratch_arena);
+
+	light_rem_node begin;
+	begin.pos = work.pos;
+	begin.owner = this;
+	begin.val = first.t;
+	first.t = 0;
+
+	q.push(begin);
+
+	while(!q.empty()) {
+
+		light_rem_node cur = q.pop();
+		u8 current_light = cur.val;
+		LOG_ASSERT(current_light != 0);
+
+		for(i32 i = 0; i < 6; i++) {
+			
+			iv3 neighbor = cur.pos + g_directions[i];
+			block_node node = cur.owner->canonical_block(neighbor);
+			block_light nval = node.get_l();
+
+			if(nval.t != 0 && nval.t < current_light) {
+				node.set_l(0);
+				light_rem_node new_node;
+				new_node.pos = node.pos;
+				new_node.owner = node.owner;
+				new_node.val = nval.t;
+				q.push(new_node);
+
+				if(node.owner->lighting_updates.empty()) {
+					light_work t; t.type = light_update::trigger;
+					node.owner->lighting_updates.push(t);
+				}
+			} else if(nval.t >= current_light) {
+				light_work fill;
+				fill.type = light_update::add;
+				fill.pos = node.pos;
+				fill.intensity = nval.t;
+				node.owner->lighting_updates.push(fill);
+			} else { 
+				u8 emit = w->get_info(node.get_type())->emit_light;
+				if(emit > 0) {
+					light_work fill;
+					fill.type = light_update::add;
+					fill.pos = node.pos;
+					fill.intensity = emit;
+					node.owner->lighting_updates.push(fill);
+				}
+			}
+		}
+	}
+
+	RESET_ARENA(&this_thread_data.scratch_arena);
 }
 
 void chunk::do_light() { PROF_FUNC
 
 	LOG_DEBUG_F("Lighting chunk %"_, pos);
 
-	static iv3 directions[] = {{-1, 0, 0}, {0, -1, 0}, {0, 0, -1}, {1, 0, 0}, {0, 1, 0}, {0, 0, 1}};
-
 	light_work work;
 	while(lighting_updates.try_pop(&work)) {
 
-		if(work.type == light_update::block) {
+		if(work.type == light_update::add_sun) {
+	
+			light_add_sun(work);
+
+		} else if(work.type == light_update::remove_sun) {
+
+		} else if(work.type == light_update::gen_sun) {
+
+			for(i32 x = 0; x < wid; x++) {
+				for(i32 z = 0; z < wid; z++) {
+					for(i32 y = hei; y >= 0; y--) {
+
+						block_meta* info = w->get_info(block_at(iv3(x, y, z)));
+						if(!info->opaque[4]) {
+							light[x][z][y].s = 15;
+						} else {
+							light_work add;
+							add.type = light_update::add_sun;
+							add.pos = iv3(x,y,z);
+							add.intensity = 15;
+							lighting_updates.push(add);
+							break;
+						}
+					}
+				}
+			}
+
+		} else if(work.type == light_update::block) {
 
 			blocks[work.pos.x][work.pos.z][work.pos.y] = work.id;
 
@@ -809,7 +986,7 @@ void chunk::do_light() { PROF_FUNC
 			lighting_updates.push(rem);
 
 			for(i32 i = 0; i < 6; i++) {
-				iv3 neighbor = work.pos + directions[i];
+				iv3 neighbor = work.pos + g_directions[i];
 				block_node node = canonical_block(neighbor);
 				if(node.owner->lighting_updates.empty()) {
 					light_work t; t.type = light_update::trigger;
@@ -819,100 +996,25 @@ void chunk::do_light() { PROF_FUNC
 
 		} else if(work.type == light_update::add) {
 
-			light[work.pos.x][work.pos.z][work.pos.y].l = work.intensity;
-
-			queue<block_node> q = queue<block_node>::make(2048, &this_thread_data.scratch_arena);
-
-			block_node begin;
-			begin.pos = work.pos;
-			begin.owner = this;
-			q.push(begin);
-
-			while(!q.empty()) {
-
-				block_node cur = q.pop();
-				u8 current_light = cur.owner->l_at(cur.pos).l;
-
-				for(i32 i = 0; i < 6; i++) {
-					
-					iv3 neighbor = cur.pos + directions[i];
-					block_node node = cur.owner->canonical_block(neighbor);
-
-					if(!node.owner) continue;
-					if(node.get_l().l < current_light - 1 && !w->get_info(node.get_type())->opaque[(i + 3) % 6]) {
-
-						node.set_l(current_light - 1);
-						q.push(node);
-
-						if(node.owner->lighting_updates.empty()) {
-							light_work t; t.type = light_update::trigger;
-							node.owner->lighting_updates.push(t);
-						}
-					}
-				}
-			}
+			light_add(work);
 
 		} else if(work.type == light_update::remove) {
 		
-			block_light& first = light[work.pos.x][work.pos.z][work.pos.y];
-			if(first.l == 0) {
-				continue;
-			}
-
-			queue<light_rem_node> q = queue<light_rem_node>::make(2048, &this_thread_data.scratch_arena);
-
-			light_rem_node begin;
-			begin.pos = work.pos;
-			begin.owner = this;
-			begin.val = first.l;
-			first.l = 0;
-
-			q.push(begin);
-
-			while(!q.empty()) {
-
-				light_rem_node cur = q.pop();
-				u8 current_light = cur.val;
-				LOG_ASSERT(current_light != 0);
-
-				for(i32 i = 0; i < 6; i++) {
-					
-					iv3 neighbor = cur.pos + directions[i];
-					block_node node = cur.owner->canonical_block(neighbor);
-					block_light nval = node.get_l();
-
-					if(nval.l != 0 && nval.l < current_light) {
-						node.set_l(0);
-						light_rem_node new_node;
-						new_node.pos = node.pos;
-						new_node.owner = node.owner;
-						new_node.val = nval.l;
-						q.push(new_node);
-
-						if(node.owner->lighting_updates.empty()) {
-							light_work t; t.type = light_update::trigger;
-							node.owner->lighting_updates.push(t);
-						}
-					} else if(nval.l >= current_light) {
-						light_work fill;
-						fill.type = light_update::add;
-						fill.pos = node.pos;
-						fill.intensity = nval.l;
-
-						node.owner->lighting_updates.push(fill);
-					}
-				}
-			}
+			light_remove(work);
 		}
-
-		RESET_ARENA(&this_thread_data.scratch_arena);
 	}
 }
 
 void block_node::set_l(u8 intensity) {
 
 	if(owner)
-		owner->light[pos.x][pos.z][pos.y].l = intensity;
+		owner->light[pos.x][pos.z][pos.y].t = intensity;
+}
+
+void block_node::set_s(u8 intensity) {
+
+	if(owner)
+		owner->light[pos.x][pos.z][pos.y].s = intensity;	
 }
 
 block_id block_node::get_type() { 
@@ -1040,18 +1142,39 @@ block_light chunk::l_at(iv3 block) {
 	return node.owner->light[node.pos.x][node.pos.z][node.pos.y];
 }
 
-u8 chunk::l_at_vert(iv3 block) {
+u8 chunk::l_at_vert(iv3 vert) {
 
-	u8 accum = l_at(block).l;
-	accum += l_at(block + iv3(-1,0,0)).l;
-	accum += l_at(block + iv3(0,0,-1)).l;
-	accum += l_at(block + iv3(-1,0,-1)).l;
-	accum += l_at(block + iv3(0,-1,0)).l;
-	accum += l_at(block + iv3(-1,-1,0)).l;
-	accum += l_at(block + iv3(0,-1,-1)).l;
-	accum += l_at(block + iv3(-1,-1,-1)).l;
+	block_light b0 = l_at(vert);
+	u16 taccum = b0.t;
+	u16 saccum = b0.s;
 
-	return accum;
+	block_light b1 = l_at(vert + iv3(-1,0,0));
+	taccum += b1.t;
+	saccum += b1.s;
+	block_light b2 = l_at(vert + iv3(0,0,-1));
+	taccum += b2.t;
+	saccum += b2.s;
+	block_light b3 = l_at(vert + iv3(-1,0,-1));
+	taccum += b3.t;
+	saccum += b3.s;
+	block_light b4 = l_at(vert + iv3(0,-1,0));
+	taccum += b4.t;
+	saccum += b4.s;
+	block_light b5 = l_at(vert + iv3(-1,-1,0));
+	taccum += b5.t;
+	saccum += b5.s;
+	block_light b6 = l_at(vert + iv3(0,-1,-1));
+	taccum += b6.t;
+	saccum += b6.s;
+	block_light b7 = l_at(vert + iv3(-1,-1,-1));
+	taccum += b7.t;
+	saccum += b7.s;
+
+	u16 t = (taccum / 8) + (taccum % 8 > 3 ? 1 : 0);
+	u8 ut = t >= 15 ? 15 : (u8)t;
+	u8 us = (u8)((saccum / 8) + (saccum % 8 > 3 ? 1 : 0));
+
+	return (us << 4) | ut;
 }
 
 u8 chunk::ao_at_vert(iv3 vert) { 
@@ -1302,7 +1425,10 @@ void chunk::do_mesh() { PROF_FUNC
 
 							iv3 facing = v_0;
 							if(i < 3) facing[ortho_2d] -= 1;
-							l = l_at(facing).l;
+							block_light face_light = l_at(facing);
+							l = face_light.t;
+							l = l >= 15 ? 15 : l;
+							l |= face_light.s << 4;
 						}
 
 						v_0 *= units_per_voxel; v_1 *= units_per_voxel; v_2 *= units_per_voxel; v_3 *= units_per_voxel;
@@ -1513,7 +1639,7 @@ void world::init_blocks(asset_store* store) {
 		{true, true, true, true, true, true},
 		{tex_idx, tex_idx, tex_idx, tex_idx, tex_idx, tex_idx},
 		{true, true, true, true, true, true},
-		true, true, false
+		0, true, true, false
 	};
 
 
@@ -1526,7 +1652,7 @@ void world::init_blocks(asset_store* store) {
 		{true, true, true, true, true, true},
 		{tex_idx, tex_idx, tex_idx, tex_idx, tex_idx, tex_idx},
 		{true, true, true, true, true, true},
-		true, true, false
+		0, true, true, false
 	};
 
 
@@ -1541,7 +1667,7 @@ void world::init_blocks(asset_store* store) {
 		{true, true, true, true, true, true},
 		{tex_idx, tex_idx + 1, tex_idx, tex_idx, tex_idx + 2, tex_idx},
 		{true, true, true, true, true, true},
-		true, true, false
+		0, true, true, false
 	};	
 
 
@@ -1555,7 +1681,7 @@ void world::init_blocks(asset_store* store) {
 		{false, true, false, false, false, false},
 		{tex_idx, tex_idx + 1, tex_idx, tex_idx, tex_idx + 1, tex_idx},
 		{false, true, true, true, true, false},
-		true, false, true, FPTR(slab_model)
+		0, true, false, true, FPTR(slab_model)
 	};	
 
 
@@ -1570,7 +1696,7 @@ void world::init_blocks(asset_store* store) {
 		{false, false, false, false, false, false},
 		{tex_idx, tex_idx + 1, tex_idx, tex_idx, tex_idx + 2, tex_idx},
 		{false, false, false, false, false, false},
-		true, false, true, FPTR(torch_model)
+		16, true, false, true, FPTR(torch_model)
 	};	
 }
 
