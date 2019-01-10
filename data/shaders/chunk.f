@@ -54,11 +54,11 @@ void main() {
 
 			color *= clamp(ambient + max(t,s), 0.0f, 1.0f);
 
-			float ao0 = mix(f_ao.x, f_ao.y, fract(f_uv.x));
-			float ao1 = mix(f_ao.z, f_ao.w, fract(f_uv.x));
-			float ao = mix(ao0, ao1, fract(f_uv.y));
+			// float ao0 = mix(f_ao.x, f_ao.y, fract(f_uv.x));
+			// float ao1 = mix(f_ao.z, f_ao.w, fract(f_uv.x));
+			// float ao = mix(ao0, ao1, fract(f_uv.y));
 
-			color *= ao;
+			// color *= ao;
 		}
 	}
 

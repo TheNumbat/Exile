@@ -26,7 +26,7 @@ struct block_meta {
 	bool does_ao;
 	bool custom_model;
 	
-	func_ptr<void, mesh_chunk*, block_meta, i32, iv3, iv2, bv4, u8, bv4> model;
+	func_ptr<void, mesh_chunk*, block_meta, i32, iv3, iv2, u8, bv4> model;
 };
 
 struct chunk_pos {
@@ -44,15 +44,17 @@ inline u32 hash(chunk_pos key);
 
 struct mesh_face {
 	
-	static bool can_merge(mesh_face f1, mesh_face f2, i32 dir, bool h);
+	static bool can_merge(mesh_face f1, mesh_face f2, i32 dir);
 
 	block_meta info;
-	bv4 ao, l;
+	bv4 l;
 };
 
 struct NOREFLECT block_light {
 	u8 t; // 0..255 for large world light propagation. gets clamped to 0..15 in renderer
 	u8 s; // 0..15
+
+	u8 to_u8();
 };
 static_assert(sizeof(block_light) == 2, "sizeof(block_light) != 2!");
 
@@ -196,7 +198,7 @@ struct world_settings {
 
 	float ambient_factor = 0.1f;
 
-	v4 ao_curve = v4(0.75f, 0.825f, 0.9f, 1.0f);
+	// v4 ao_curve = v4(0.75f, 0.825f, 0.9f, 1.0f);
 };
 
 struct world_time {
@@ -297,5 +299,5 @@ CALLBACK void cancel_gen(chunk* param);
 CALLBACK void cancel_light(chunk* param);
 CALLBACK void cancel_mesh(chunk* param);
 
-CALLBACK void slab_model(mesh_chunk* m, block_meta i, i32 dir, iv3 v, iv2 wh, bv4 ao, u8 ql, bv4 l);
-CALLBACK void torch_model(mesh_chunk* m, block_meta i, i32 dir, iv3 v, iv2 wh, bv4 ao, u8 ql, bv4 l);
+CALLBACK void slab_model(mesh_chunk* m, block_meta i, i32 dir, iv3 v, iv2 wh, u8 ql, bv4 l);
+CALLBACK void torch_model(mesh_chunk* m, block_meta i, i32 dir, iv3 v, iv2 wh, u8 ql, bv4 l);

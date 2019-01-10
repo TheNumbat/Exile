@@ -806,9 +806,6 @@ void chunk::do_gen() { PROF_FUNC
 void chunk::light_rem_sun(light_work work) { PROF_FUNC
 
 	block_light& first = light[work.pos.x][work.pos.z][work.pos.y];
-	if(first.s == 0) {
-		return;
-	}
 
 	queue<light_rem_node> q = queue<light_rem_node>::make(2048, &this_thread_data.scratch_arena);
 
@@ -824,7 +821,6 @@ void chunk::light_rem_sun(light_work work) { PROF_FUNC
 
 		light_rem_node cur = q.pop();
 		u8 current_light = cur.val;
-		LOG_ASSERT(current_light != 0);
 
 		for(i32 i = 0; i < 6; i++) {
 
@@ -845,7 +841,7 @@ void chunk::light_rem_sun(light_work work) { PROF_FUNC
 					light_work t; t.type = light_update::trigger;
 					node.owner->lighting_updates.push(t);
 				}
-			} else if(nval.s >= test) {
+			} else if(nval.s != 0 && nval.s >= test) {
 				light_work fill;
 				fill.type = light_update::add_sun;
 				fill.pos = node.pos;
@@ -939,9 +935,6 @@ void chunk::light_add(light_work work) { PROF_FUNC
 void chunk::light_remove(light_work work) { PROF_FUNC
 
 	block_light& first = light[work.pos.x][work.pos.z][work.pos.y];
-	if(first.t == 0) {
-		return;
-	}
 
 	queue<light_rem_node> q = queue<light_rem_node>::make(2048, &this_thread_data.scratch_arena);
 
@@ -957,7 +950,6 @@ void chunk::light_remove(light_work work) { PROF_FUNC
 
 		light_rem_node cur = q.pop();
 		u8 current_light = cur.val;
-		LOG_ASSERT(current_light != 0);
 
 		for(i32 i = 0; i < 6; i++) {
 			
@@ -1088,7 +1080,14 @@ block_id block_node::get_type() {
 
 block_light block_node::get_l() { 
 
+	if(pos.y >= chunk::hei) {
+		block_light l;
+		l.s = 15;
+		return l;
+	}
+
 	if (!owner) return {};
+	
 	return owner->light[pos.x][pos.z][pos.y];
 }
 
@@ -1205,6 +1204,11 @@ block_light chunk::l_at(iv3 block) {
 	return node.owner->light[node.pos.x][node.pos.z][node.pos.y];
 }
 
+u8 block_light::to_u8() {
+
+	return (s << 4) | (t >= 15 ? 15 : t);
+}
+
 u8 chunk::l_at_vert(iv3 vert) {
 
 	block_light b0 = l_at(vert);
@@ -1233,14 +1237,16 @@ u8 chunk::l_at_vert(iv3 vert) {
 	taccum += b7.t;
 	saccum += b7.s;
 
-	u16 t = (taccum / 8) + (taccum % 8 > 3 ? 1 : 0);
+	u16 t = taccum / 8;
 	u8 ut = t >= 15 ? 15 : (u8)t;
-	u8 us = (u8)((saccum / 8) + (saccum % 8 > 3 ? 1 : 0));
+	u8 us = (u8)(saccum / 8);
 
 	return (us << 4) | ut;
 }
 
 u8 chunk::ao_at_vert(iv3 vert) { 
+
+	LOG_ASSERT(!"Unused!");
 
 	i32 x = vert.x, y = vert.y, z = vert.z;
 
@@ -1308,50 +1314,64 @@ mesh_face chunk::build_face(block_id t, iv3 p, i32 dir) {
 
 	switch(dir) {
 	case 0: {
-		ret.ao[0] = ao_at_vert(p); ret.l[0] = l_at_vert(p);
-		ret.ao[1] = ao_at_vert(p + iv3(0,1,0)); ret.l[1] = l_at_vert(p + iv3(0,1,0));
-		ret.ao[2] = ao_at_vert(p + iv3(0,0,1)); ret.l[2] = l_at_vert(p + iv3(0,0,1));
-		ret.ao[3] = ao_at_vert(p + iv3(0,1,1)); ret.l[3] = l_at_vert(p + iv3(0,1,1));
+		ret.l[0] = l_at_vert(p);
+		ret.l[1] = l_at_vert(p + iv3(0,1,0));
+		ret.l[2] = l_at_vert(p + iv3(0,0,1));
+		ret.l[3] = l_at_vert(p + iv3(0,1,1));
 	} break;
 	case 1: {
-		ret.ao[0] = ao_at_vert(p); ret.l[0] = l_at_vert(p);
-		ret.ao[1] = ao_at_vert(p + iv3(1,0,0)); ret.l[1] = l_at_vert(p + iv3(1,0,0));
-		ret.ao[2] = ao_at_vert(p + iv3(0,0,1)); ret.l[2] = l_at_vert(p + iv3(0,0,1));
-		ret.ao[3] = ao_at_vert(p + iv3(1,0,1)); ret.l[3] = l_at_vert(p + iv3(1,0,1));
+		ret.l[0] = l_at_vert(p);
+		ret.l[1] = l_at_vert(p + iv3(1,0,0));
+		ret.l[2] = l_at_vert(p + iv3(0,0,1));
+		ret.l[3] = l_at_vert(p + iv3(1,0,1));
 	} break;
 	case 2: {
-		ret.ao[0] = ao_at_vert(p); ret.l[0] = l_at_vert(p);
-		ret.ao[1] = ao_at_vert(p + iv3(1,0,0)); ret.l[1] = l_at_vert(p + iv3(1,0,0));
-		ret.ao[2] = ao_at_vert(p + iv3(0,1,0)); ret.l[2] = l_at_vert(p + iv3(0,1,0));
-		ret.ao[3] = ao_at_vert(p + iv3(1,1,0)); ret.l[3] = l_at_vert(p + iv3(1,1,0));
+		ret.l[0] = l_at_vert(p);
+		ret.l[1] = l_at_vert(p + iv3(1,0,0));
+		ret.l[2] = l_at_vert(p + iv3(0,1,0));
+		ret.l[3] = l_at_vert(p + iv3(1,1,0));
 	} break;
 	case 3: {
-		ret.ao[0] = ao_at_vert(p + iv3(1,0,0)); ret.l[0] = l_at_vert(p + iv3(1,0,0));
-		ret.ao[1] = ao_at_vert(p + iv3(1,1,0)); ret.l[1] = l_at_vert(p + iv3(1,1,0));
-		ret.ao[2] = ao_at_vert(p + iv3(1,0,1)); ret.l[2] = l_at_vert(p + iv3(1,0,1));
-		ret.ao[3] = ao_at_vert(p + iv3(1,1,1)); ret.l[3] = l_at_vert(p + iv3(1,1,1));
+		ret.l[0] = l_at_vert(p + iv3(1,0,0));
+		ret.l[1] = l_at_vert(p + iv3(1,1,0));
+		ret.l[2] = l_at_vert(p + iv3(1,0,1));
+		ret.l[3] = l_at_vert(p + iv3(1,1,1));
 	} break;
 	case 4: {
-		ret.ao[0] = ao_at_vert(p + iv3(0,1,0)); ret.l[0] = l_at_vert(p + iv3(0,1,0));
-		ret.ao[1] = ao_at_vert(p + iv3(1,1,0)); ret.l[1] = l_at_vert(p + iv3(1,1,0));
-		ret.ao[2] = ao_at_vert(p + iv3(0,1,1)); ret.l[2] = l_at_vert(p + iv3(0,1,1));
-		ret.ao[3] = ao_at_vert(p + iv3(1,1,1)); ret.l[3] = l_at_vert(p + iv3(1,1,1));
+		ret.l[0] = l_at_vert(p + iv3(0,1,0));
+		ret.l[1] = l_at_vert(p + iv3(1,1,0));
+		ret.l[2] = l_at_vert(p + iv3(0,1,1));
+		ret.l[3] = l_at_vert(p + iv3(1,1,1));
 	} break;
 	case 5: {
-		ret.ao[0] = ao_at_vert(p + iv3(0,0,1)); ret.l[0] = l_at_vert(p + iv3(0,0,1));
-		ret.ao[1] = ao_at_vert(p + iv3(1,0,1)); ret.l[1] = l_at_vert(p + iv3(1,0,1));
-		ret.ao[2] = ao_at_vert(p + iv3(0,1,1)); ret.l[2] = l_at_vert(p + iv3(0,1,1));
-		ret.ao[3] = ao_at_vert(p + iv3(1,1,1)); ret.l[3] = l_at_vert(p + iv3(1,1,1));
+		ret.l[0] = l_at_vert(p + iv3(0,0,1));
+		ret.l[1] = l_at_vert(p + iv3(1,0,1));
+		ret.l[2] = l_at_vert(p + iv3(0,1,1));
+		ret.l[3] = l_at_vert(p + iv3(1,1,1));
 	} break;
 	}
 
 	return ret;
 }
 
-bool mesh_face::can_merge(mesh_face f1, mesh_face f2, i32 dir, bool h) { 
+bool mesh_face::can_merge(mesh_face f1, mesh_face f2, i32 dir) { 
 
-	dir += h ? 3 : 0;
-	return f1.info.type == f2.info.type && f1.ao == f2.ao && f1.l == f2.l && f1.info.merge[dir] && f2.info.merge[dir];
+	if(f1.info.type != f2.info.type) return false;
+
+	if(!f1.info.merge[dir] || !f2.info.merge[dir]) return false;
+
+	// NOTE(max): kind of average-case optimization here (for no or full lighting)
+	// theoretically we could merge faces that support a smooth light transition
+	// across the combined face, but this breaks non-smooth lighting and is more 
+	// intensive to compute
+
+	// TODO(max): do I really want to keep non-smooth lighting? I just got rid of 
+	// its AO system. ALSO, do we even need to merge faces?? It's not much of an
+	// optimization with jagged terrain.
+
+	if(f1.l.all_same() && f1.l == f2.l) return true;
+
+	return false;
 }
 
 void chunk::do_mesh() { PROF_FUNC
@@ -1439,7 +1459,7 @@ void chunk::do_mesh() { PROF_FUNC
 
 								mesh_face merge = build_face(slice[slice_idx + width], w_pos, i);
 
-								if(!mesh_face::can_merge(merge, face_type, ortho_2d, false)) break;
+								if(!mesh_face::can_merge(merge, face_type, i)) break;
 							}
 
 							// Combine all-same face row in +v_2d
@@ -1453,7 +1473,7 @@ void chunk::do_mesh() { PROF_FUNC
 
 									mesh_face merge = build_face(slice[slice_idx + row_idx + height * max[u_2d]], wh_pos, i);
 
-									if(!mesh_face::can_merge(merge, face_type, ortho_2d, true)) {
+									if(!mesh_face::can_merge(merge, face_type, i)) {
 										done = true;
 										break;
 									}
@@ -1481,9 +1501,7 @@ void chunk::do_mesh() { PROF_FUNC
 						iv2 wh(width, height), hw(height, width);
 						 	
 						u8 l, l_0, l_1, l_2, l_3;
-						u8 ao_0, ao_1, ao_2, ao_3;
-						{PROF_SCOPE("ao + l"_);
-							ao_0 = ao_at_vert(v_0); ao_1 = ao_at_vert(v_1); ao_2 = ao_at_vert(v_2); ao_3 = ao_at_vert(v_3);
+						{PROF_SCOPE("Light"_);
 							l_0 = l_at_vert(v_0); l_1 = l_at_vert(v_1); l_2 = l_at_vert(v_2); l_3 = l_at_vert(v_3);
 
 							iv3 facing = v_0;
@@ -1503,28 +1521,28 @@ void chunk::do_mesh() { PROF_FUNC
 
 							if(face_type.info.custom_model) {
 
-								face_type.info.model(&new_mesh, face_type.info, i, v_0 / units_per_voxel, iv2(width, height), bv4(ao_0,ao_1,ao_2,ao_3), l, bv4(l_0,l_1,l_2,l_3));
+								face_type.info.model(&new_mesh, face_type.info, i, v_0 / units_per_voxel, iv2(width, height), l, bv4(l_0,l_1,l_2,l_3));
 
 							} else {
 
 								switch (i) {
 								case 0: // -X
-									new_mesh.quad(v_0, v_2, v_1, v_3, hw, tex, bv4(ao_0,ao_2,ao_1,ao_3), l, bv4(l_0,l_2,l_1,l_3));
+									new_mesh.quad(v_0, v_2, v_1, v_3, hw, tex, l, bv4(l_0,l_2,l_1,l_3));
 									break;
 								case 1: // -Y
-									new_mesh.quad(v_2, v_3, v_0, v_1, wh, tex, bv4(ao_2,ao_3,ao_0,ao_1), l, bv4(l_2,l_3,l_0,l_1));
+									new_mesh.quad(v_2, v_3, v_0, v_1, wh, tex, l, bv4(l_2,l_3,l_0,l_1));
 									break;
 								case 2: // -Z
-									new_mesh.quad(v_1, v_0, v_3, v_2, wh, tex, bv4(ao_1,ao_0,ao_3,ao_2), l, bv4(l_1,l_0,l_3,l_2));
+									new_mesh.quad(v_1, v_0, v_3, v_2, wh, tex, l, bv4(l_1,l_0,l_3,l_2));
 									break;
 								case 3: // +X
-									new_mesh.quad(v_2, v_0, v_3, v_1, hw, tex, bv4(ao_2,ao_0,ao_3,ao_1), l, bv4(l_2,l_0,l_3,l_1));
+									new_mesh.quad(v_2, v_0, v_3, v_1, hw, tex, l, bv4(l_2,l_0,l_3,l_1));
 									break;
 								case 4: // +Y
-									new_mesh.quad(v_0, v_1, v_2, v_3, wh, tex, bv4(ao_0,ao_1,ao_2,ao_3), l, bv4(l_0,l_1,l_2,l_3));
+									new_mesh.quad(v_0, v_1, v_2, v_3, wh, tex, l, bv4(l_0,l_1,l_2,l_3));
 									break;
 								case 5: // +Z
-									new_mesh.quad(v_0, v_1, v_2, v_3, wh, tex, bv4(ao_0,ao_1,ao_2,ao_3), l, bv4(l_0,l_1,l_2,l_3));
+									new_mesh.quad(v_0, v_1, v_2, v_3, wh, tex, l, bv4(l_0,l_1,l_2,l_3));
 									break;
 								}
 							}
@@ -1552,7 +1570,7 @@ void chunk::do_mesh() { PROF_FUNC
 
 
 
-CALLBACK void slab_model(mesh_chunk* m, block_meta info, i32 dir, iv3 v__0, iv2 ex, bv4 ao, u8 ql, bv4 l) {
+CALLBACK void slab_model(mesh_chunk* m, block_meta info, i32 dir, iv3 v__0, iv2 ex, u8 ql, bv4 l) {
 
 	i32 u_2d = (dir + 1) % 3;
 	i32 v_2d = (dir + 2) % 3;
@@ -1586,27 +1604,27 @@ CALLBACK void slab_model(mesh_chunk* m, block_meta info, i32 dir, iv3 v__0, iv2 
 
 	switch (dir) {
 	case 0: // -X
-		m->quad(v_0.to_i(), v_2.to_i(), v_1.to_i(), v_3.to_i(), hw.to_i(), tex, bv4(ao.x,ao.z,ao.y,ao.w), ql, bv4(l.x,l.z,l.y,l.w));
+		m->quad(v_0.to_i(), v_2.to_i(), v_1.to_i(), v_3.to_i(), hw.to_i(), tex, ql, bv4(l.x,l.z,l.y,l.w));
 		break;
 	case 1: // -Y
-		m->quad(v_2.to_i(), v_3.to_i(), v_0.to_i(), v_1.to_i(), wh.to_i(), tex, bv4(ao.z,ao.w,ao.x,ao.y), ql, bv4(l.z,l.w,l.x,l.y));
+		m->quad(v_2.to_i(), v_3.to_i(), v_0.to_i(), v_1.to_i(), wh.to_i(), tex, ql, bv4(l.z,l.w,l.x,l.y));
 		break;
 	case 2: // -Z
-		m->quad(v_1.to_i(), v_0.to_i(), v_3.to_i(), v_2.to_i(), wh.to_i(), tex, bv4(ao.y,ao.x,ao.w,ao.z), ql, bv4(l.y,l.x,l.w,l.z));
+		m->quad(v_1.to_i(), v_0.to_i(), v_3.to_i(), v_2.to_i(), wh.to_i(), tex, ql, bv4(l.y,l.x,l.w,l.z));
 		break;
 	case 3: // +X
-		m->quad(v_2.to_i(), v_0.to_i(), v_3.to_i(), v_1.to_i(), hw.to_i(), tex, bv4(ao.z,ao.x,ao.w,ao.y), ql, bv4(l.z,l.x,l.w,l.y));
+		m->quad(v_2.to_i(), v_0.to_i(), v_3.to_i(), v_1.to_i(), hw.to_i(), tex, ql, bv4(l.z,l.x,l.w,l.y));
 		break;
 	case 4: // +Y
-		m->quad(v_0.to_i(), v_1.to_i(), v_2.to_i(), v_3.to_i(), wh.to_i(), tex, bv4(ao.x,ao.y,ao.z,ao.w), ql, bv4(l.x,l.y,l.z,l.w));
+		m->quad(v_0.to_i(), v_1.to_i(), v_2.to_i(), v_3.to_i(), wh.to_i(), tex, ql, bv4(l.x,l.y,l.z,l.w));
 		break;
 	case 5: // +Z
-		m->quad(v_0.to_i(), v_1.to_i(), v_2.to_i(), v_3.to_i(), wh.to_i(), tex, bv4(ao.x,ao.y,ao.z,ao.w), ql, bv4(l.x,l.y,l.z,l.w));
+		m->quad(v_0.to_i(), v_1.to_i(), v_2.to_i(), v_3.to_i(), wh.to_i(), tex, ql, bv4(l.x,l.y,l.z,l.w));
 		break;
 	}
 }
 
-CALLBACK void torch_model(mesh_chunk* m, block_meta info, i32 dir, iv3 v__0, iv2 ex, bv4 ao, u8 ql, bv4 l) {
+CALLBACK void torch_model(mesh_chunk* m, block_meta info, i32 dir, iv3 v__0, iv2 ex, u8 ql, bv4 l) {
 	
 	i32 o_2d = dir % 3;
 	i32 u_2d = (dir + 1) % 3;
@@ -1664,22 +1682,22 @@ CALLBACK void torch_model(mesh_chunk* m, block_meta info, i32 dir, iv3 v__0, iv2
 
 	switch (dir) {
 	case 0: // -X
-		m->quad(v_0.to_i(), v_2.to_i(), v_1.to_i(), v_3.to_i(), hw.to_i(), tex, bv4(ao.x,ao.z,ao.y,ao.w), ql, bv4(l.x,l.z,l.y,l.w));
+		m->quad(v_0.to_i(), v_2.to_i(), v_1.to_i(), v_3.to_i(), hw.to_i(), tex, ql, bv4(l.x,l.z,l.y,l.w));
 		break;
 	case 1: // -Y
-		m->quad(v_2.to_i(), v_3.to_i(), v_0.to_i(), v_1.to_i(), wh.to_i(), tex, bv4(ao.z,ao.w,ao.x,ao.y), ql, bv4(l.z,l.w,l.x,l.y));
+		m->quad(v_2.to_i(), v_3.to_i(), v_0.to_i(), v_1.to_i(), wh.to_i(), tex, ql, bv4(l.z,l.w,l.x,l.y));
 		break;
 	case 2: // -Z
-		m->quad(v_1.to_i(), v_0.to_i(), v_3.to_i(), v_2.to_i(), wh.to_i(), tex, bv4(ao.y,ao.x,ao.w,ao.z), ql, bv4(l.y,l.x,l.w,l.z));
+		m->quad(v_1.to_i(), v_0.to_i(), v_3.to_i(), v_2.to_i(), wh.to_i(), tex, ql, bv4(l.y,l.x,l.w,l.z));
 		break;
 	case 3: // +X
-		m->quad(v_2.to_i(), v_0.to_i(), v_3.to_i(), v_1.to_i(), hw.to_i(), tex, bv4(ao.z,ao.x,ao.w,ao.y), ql, bv4(l.z,l.x,l.w,l.y));
+		m->quad(v_2.to_i(), v_0.to_i(), v_3.to_i(), v_1.to_i(), hw.to_i(), tex, ql, bv4(l.z,l.x,l.w,l.y));
 		break;
 	case 4: // +Y
-		m->quad(v_0.to_i(), v_1.to_i(), v_2.to_i(), v_3.to_i(), wh.to_i(), tex, bv4(ao.x,ao.y,ao.z,ao.w), ql, bv4(l.x,l.y,l.z,l.w));
+		m->quad(v_0.to_i(), v_1.to_i(), v_2.to_i(), v_3.to_i(), wh.to_i(), tex, ql, bv4(l.x,l.y,l.z,l.w));
 		break;
 	case 5: // +Z
-		m->quad(v_0.to_i(), v_1.to_i(), v_2.to_i(), v_3.to_i(), wh.to_i(), tex, bv4(ao.x,ao.y,ao.z,ao.w), ql, bv4(l.x,l.y,l.z,l.w));
+		m->quad(v_0.to_i(), v_1.to_i(), v_2.to_i(), v_3.to_i(), wh.to_i(), tex, ql, bv4(l.x,l.y,l.z,l.w));
 		break;
 	}
 }

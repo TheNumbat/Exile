@@ -70,7 +70,7 @@ CALLBACK void uniforms_mesh_chunk(shader_program* prog, render_command* cmd) {
 	glUniform1f(glGetUniformLocation(prog->handle, "units_per_voxel"), (f32)chunk::units_per_voxel);
 	glUniform1f(glGetUniformLocation(prog->handle, "render_distance"), (f32)set->view_distance * chunk::wid);
 
-	glUniform4fv(glGetUniformLocation(prog->handle, "ao_curve"), 1, set->ao_curve.a);
+	// glUniform4fv(glGetUniformLocation(prog->handle, "ao_curve"), 1, set->ao_curve.a);
 
 	glUniformMatrix4fv(glGetUniformLocation(prog->handle, "mvp"), 1, gl_bool::_false, mvp.a);
 	glUniformMatrix4fv(glGetUniformLocation(prog->handle, "m"), 1, gl_bool::_false, mv.a);
@@ -1006,7 +1006,7 @@ void mesh_chunk::clear() {
 	dirty = true;
 }
 
-void mesh_chunk::quad(iv3 v_0, iv3 v_1, iv3 v_2, iv3 v_3, iv2 uv, i32 t, bv4 ao, u8 ql, bv4 l) {
+void mesh_chunk::quad(iv3 v_0, iv3 v_1, iv3 v_2, iv3 v_3, iv2 uv, i32 t, u8 ql, bv4 l) {
 
 	chunk_quad q = {};
 
@@ -1030,12 +1030,7 @@ void mesh_chunk::quad(iv3 v_0, iv3 v_1, iv3 v_2, iv3 v_3, iv2 uv, i32 t, bv4 ao,
 		0 <= uv.x && uv.x < 256 && 
 		0 <= uv.y && uv.y < 256 && 
 
-		0 <= t && t < 65536 &&
-
-		0 <= ao.x && ao.x < 4 &&
-		0 <= ao.y && ao.y < 4 &&
-		0 <= ao.z && ao.z < 4 &&
-		0 <= ao.w && ao.w < 4
+		0 <= t && t < 65536
 	);
 
 	q.x_0 = (u8)v_0.x; q.z_0 = (u8)v_0.z;
@@ -1049,8 +1044,7 @@ void mesh_chunk::quad(iv3 v_0, iv3 v_1, iv3 v_2, iv3 v_3, iv2 uv, i32 t, bv4 ao,
 	q.uy01 |= (u8)uv.x; q.vy23 |= (u8)uv.y;
 
 	q.t = (u16)t;
-	q.aol |= (u16)ql << 8;
-	q.aol |= (u8)ao.w; q.aol |= (u8)ao.z << 2; q.aol |= (u8)ao.y << 4; q.aol |= (u8)ao.x << 6; 
+	q.l = ql;
 
 	q.l3 = l.w; q.l2 = l.z; q.l1 = l.y; q.l0 = l.x; 
 

@@ -420,6 +420,7 @@ union bv4 {
 	void operator+=(bv4 v) {x += v.x; y += v.y; z += v.z; w += v.w;}
 	void operator-=(bv4 v) {x -= v.x; y -= v.y; z -= v.z; w -= v.w;}
 	u8& operator[](i32 idx) {return a[idx];}
+	bool all_same() {return x == y && x == z && x == w;}
 
 	bv4() {}
 	bv4(u8 _x, u8 _y, u8 _z, u8 _w) {x = _x; y = _y; z = _z; w = _w;}
