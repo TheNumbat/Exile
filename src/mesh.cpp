@@ -412,7 +412,7 @@ CALLBACK void setup_mesh_chunk(gpu_object* obj) {
 	glBindBuffer(gl_buf_target::array, obj->vbos[0]);
 
 	glVertexAttribIPointer(0, 4, gl_vert_attrib_type::unsigned_int, sizeof(chunk_quad), (void*)(0));
-	glVertexAttribIPointer(1, 2, gl_vert_attrib_type::unsigned_int, sizeof(chunk_quad), (void*)(16));
+	glVertexAttribIPointer(1, 3, gl_vert_attrib_type::unsigned_int, sizeof(chunk_quad), (void*)(16));
 	glVertexAttribDivisor(0, 1);
 	glVertexAttribDivisor(1, 1);
 	glEnableVertexAttribArray(0);
@@ -1006,7 +1006,7 @@ void mesh_chunk::clear() {
 	dirty = true;
 }
 
-void mesh_chunk::quad(iv3 v_0, iv3 v_1, iv3 v_2, iv3 v_3, iv2 uv, i32 t, u8 ql, bv4 l) {
+void mesh_chunk::quad(iv3 v_0, iv3 v_1, iv3 v_2, iv3 v_3, iv2 uv, i32 t, u8 ql, bv4 ao, bv4 l) {
 
 	chunk_quad q = {};
 
@@ -1044,7 +1044,8 @@ void mesh_chunk::quad(iv3 v_0, iv3 v_1, iv3 v_2, iv3 v_3, iv2 uv, i32 t, u8 ql, 
 	q.uy01 |= (u8)uv.x; q.vy23 |= (u8)uv.y;
 
 	q.t = (u16)t;
-	q.l = ql;
+	q.aol |= (u16)ql << 8;
+	q.aol |= (u8)ao.w; q.aol |= (u8)ao.z << 2; q.aol |= (u8)ao.y << 4; q.aol |= (u8)ao.x << 6; 
 
 	q.l3 = l.w; q.l2 = l.z; q.l1 = l.y; q.l0 = l.x; 
 

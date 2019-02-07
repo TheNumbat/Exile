@@ -2,7 +2,7 @@
 #version 330 core
 
 layout (location = 0) in uvec4 v_data;
-layout (location = 1) in uvec2 q_data;
+layout (location = 1) in uvec3 q_data;
 
 // x z v u 
 // x z v u 

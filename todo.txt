@@ -2,6 +2,8 @@
 Working To-Do:
 
 [1]	World & Rendering
+		add east/west sunlight calculation & day curve use
+
 		fix place/break block
 		fix waiting for new neighbor meshes
 

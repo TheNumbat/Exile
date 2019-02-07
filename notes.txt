@@ -29,6 +29,9 @@ Vertex Format
 	0000 0000 0000 0000 0000 0000 0000 0000
 	l0l0 l0l0 l1l1 l1l1 l2l2 l2l2 l3l3 l3l3
 
+	0000 0000 0000 0000 0000 0000 0000 0000
+	l0l0 l0l0 l1l1 l1l1 l2l2 l2l2 l3l3 l3l3
+
 old -
 
 ===FACE APPROACH===

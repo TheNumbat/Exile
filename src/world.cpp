@@ -812,8 +812,8 @@ void chunk::light_rem_sun(light_work work) { PROF_FUNC
 	light_rem_node begin;
 	begin.pos = work.pos;
 	begin.owner = this;
-	begin.val = first.s;
-	first.s = 0;
+	begin.val = first.s0;
+	first.s0 = 0;
 
 	q.push(begin);
 
@@ -829,23 +829,23 @@ void chunk::light_rem_sun(light_work work) { PROF_FUNC
 			block_light nval = node.get_l();
 
 			u8 test = current_light + (i == 1 ? 1 : 0);
-			if(nval.s != 0 && nval.s < test) {
+			if(nval.s0 != 0 && nval.s0 < test) {
 				node.set_s(0);
 				light_rem_node new_node;
 				new_node.pos = node.pos;
 				new_node.owner = node.owner;
-				new_node.val = nval.s;
+				new_node.val = nval.s0;
 				q.push(new_node);
 
 				if(node.owner->lighting_updates.empty()) {
 					light_work t; t.type = light_update::trigger;
 					node.owner->lighting_updates.push(t);
 				}
-			} else if(nval.s != 0 && nval.s >= test) {
+			} else if(nval.s0 != 0 && nval.s0 >= test) {
 				light_work fill;
 				fill.type = light_update::add_sun;
 				fill.pos = node.pos;
-				fill.intensity = nval.s;
+				fill.intensity = nval.s0;
 				node.owner->lighting_updates.push(fill);
 			}
 		}
@@ -856,7 +856,7 @@ void chunk::light_rem_sun(light_work work) { PROF_FUNC
 
 void chunk::light_add_sun(light_work work) { PROF_FUNC
 
-	light[work.pos.x][work.pos.z][work.pos.y].s = work.intensity;
+	light[work.pos.x][work.pos.z][work.pos.y].s0 = work.intensity;
 
 	queue<block_node> q = queue<block_node>::make(2048, &this_thread_data.scratch_arena);
 
@@ -868,7 +868,7 @@ void chunk::light_add_sun(light_work work) { PROF_FUNC
 	while(!q.empty()) {
 
 		block_node cur = q.pop();
-		u8 current_light = cur.owner->l_at(cur.pos).s;
+		u8 current_light = cur.owner->l_at(cur.pos).s0;
 
 		for(i32 i = 0; i < 6; i++) {
 			
@@ -878,7 +878,7 @@ void chunk::light_add_sun(light_work work) { PROF_FUNC
 			if(!node.owner) continue;
 
 			u8 test = current_light - (i == 1 ? 0 : 1);
-			if(node.get_l().s < test && !w->get_info(node.get_type())->opaque[(i + 3) % 6]) {
+			if(node.get_l().s0 < test && !w->get_info(node.get_type())->opaque[(i + 3) % 6]) {
 
 				node.set_s(test);
 				q.push(node);
@@ -1014,7 +1014,7 @@ void chunk::do_light() { PROF_FUNC
 
 						block_meta* info = w->get_info(block_at(iv3(x,y,z)));
 						if(!info->opaque[4]) {
-							light[x][z][y].s = 15;
+							light[x][z][y].s0 = 15;
 						} else {
 							light_work add;
 							add.type = light_update::add_sun;
@@ -1069,7 +1069,7 @@ void block_node::set_l(u8 intensity) {
 void block_node::set_s(u8 intensity) {
 
 	if(owner)
-		owner->light[pos.x][pos.z][pos.y].s = intensity;	
+		owner->light[pos.x][pos.z][pos.y].s0 = intensity;	
 }
 
 block_id block_node::get_type() { 
@@ -1082,7 +1082,7 @@ block_light block_node::get_l() {
 
 	if(pos.y >= chunk::hei) {
 		block_light l;
-		l.s = 15;
+		l.s0 = 15;
 		return l;
 	}
 
@@ -1204,9 +1204,9 @@ block_light chunk::l_at(iv3 block) {
 	return node.owner->light[node.pos.x][node.pos.z][node.pos.y];
 }
 
-u8 block_light::to_u8() {
+u8 block_light::first_u8() {
 
-	return (s << 4) | (t >= 15 ? 15 : t);
+	return (s0 << 4) | (t >= 15 ? 15 : t);
 }
 
 light_gather chunk::gather_l(iv3 vert) {
@@ -1230,14 +1230,12 @@ u8 chunk::l_at_vert(iv3 vert) {
 	light_gather g = gather_l(vert);
 
 	u8 t = (u8)min(g.t / 8, 15);
-	u8 s = (u8)(g.s / 8);
+	u8 s = (u8)(g.s0 / 8);
 
 	return (s << 4) | t;
 }
 
 u8 chunk::ao_at_vert(iv3 vert) { 
-
-	LOG_ASSERT(!"Unused!");
 
 	i32 x = vert.x, y = vert.y, z = vert.z;
 
@@ -1491,16 +1489,17 @@ void chunk::do_mesh() { PROF_FUNC
 						iv3 v_3 = v_2 + width_offset;
 						iv2 wh(width, height), hw(height, width);
 						 	
-						u8 l, l_0, l_1, l_2, l_3;
+						u8 l, l_0, l_1, l_2, l_3, ao_0, ao_1, ao_2, ao_3;
 						{PROF_SCOPE("Light"_);
 							l_0 = l_at_vert(v_0); l_1 = l_at_vert(v_1); l_2 = l_at_vert(v_2); l_3 = l_at_vert(v_3);
+							ao_0 = ao_at_vert(v_0); ao_1 = ao_at_vert(v_1); ao_2 = ao_at_vert(v_2); ao_3 = ao_at_vert(v_3);
 
 							iv3 facing = v_0;
 							if(i < 3) facing[ortho_2d] -= 1;
 							block_light face_light = l_at(facing);
 							l = face_light.t;
 							l = l >= 15 ? 15 : l;
-							l |= face_light.s << 4;
+							l |= face_light.s0 << 4;
 						}
 
 						v_0 *= units_per_voxel; v_1 *= units_per_voxel; v_2 *= units_per_voxel; v_3 *= units_per_voxel;
@@ -1512,28 +1511,28 @@ void chunk::do_mesh() { PROF_FUNC
 
 							if(face_type.info.custom_model) {
 
-								face_type.info.model(&new_mesh, face_type.info, i, v_0 / units_per_voxel, iv2(width, height), l, bv4(l_0,l_1,l_2,l_3));
+								face_type.info.model(&new_mesh, face_type.info, i, v_0 / units_per_voxel, iv2(width, height), l, bv4(ao_0,ao_1,ao_2,ao_3), bv4(l_0,l_1,l_2,l_3));
 
 							} else {
 
 								switch (i) {
 								case 0: // -X
-									new_mesh.quad(v_0, v_2, v_1, v_3, hw, tex, l, bv4(l_0,l_2,l_1,l_3));
+									new_mesh.quad(v_0, v_2, v_1, v_3, hw, tex, l, bv4(ao_0,ao_2,ao_1,ao_3), bv4(l_0,l_2,l_1,l_3));
 									break;
 								case 1: // -Y
-									new_mesh.quad(v_2, v_3, v_0, v_1, wh, tex, l, bv4(l_2,l_3,l_0,l_1));
+									new_mesh.quad(v_2, v_3, v_0, v_1, wh, tex, l, bv4(ao_2,ao_3,ao_0,ao_1), bv4(l_2,l_3,l_0,l_1));
 									break;
 								case 2: // -Z
-									new_mesh.quad(v_1, v_0, v_3, v_2, wh, tex, l, bv4(l_1,l_0,l_3,l_2));
+									new_mesh.quad(v_1, v_0, v_3, v_2, wh, tex, l, bv4(ao_1,ao_0,ao_3,ao_2), bv4(l_1,l_0,l_3,l_2));
 									break;
 								case 3: // +X
-									new_mesh.quad(v_2, v_0, v_3, v_1, hw, tex, l, bv4(l_2,l_0,l_3,l_1));
+									new_mesh.quad(v_2, v_0, v_3, v_1, hw, tex, l, bv4(ao_2,ao_0,ao_3,ao_1), bv4(l_2,l_0,l_3,l_1));
 									break;
 								case 4: // +Y
-									new_mesh.quad(v_0, v_1, v_2, v_3, wh, tex, l, bv4(l_0,l_1,l_2,l_3));
+									new_mesh.quad(v_0, v_1, v_2, v_3, wh, tex, l, bv4(ao_0,ao_1,ao_2,ao_3), bv4(l_0,l_1,l_2,l_3));
 									break;
 								case 5: // +Z
-									new_mesh.quad(v_0, v_1, v_2, v_3, wh, tex, l, bv4(l_0,l_1,l_2,l_3));
+									new_mesh.quad(v_0, v_1, v_2, v_3, wh, tex, l, bv4(ao_0,ao_1,ao_2,ao_3), bv4(l_0,l_1,l_2,l_3));
 									break;
 								}
 							}
@@ -1561,7 +1560,7 @@ void chunk::do_mesh() { PROF_FUNC
 
 
 
-CALLBACK void slab_model(mesh_chunk* m, block_meta info, i32 dir, iv3 v__0, iv2 ex, u8 ql, bv4 l) {
+CALLBACK void slab_model(mesh_chunk* m, block_meta info, i32 dir, iv3 v__0, iv2 ex, u8 ql, bv4 ao, bv4 l) {
 
 	i32 u_2d = (dir + 1) % 3;
 	i32 v_2d = (dir + 2) % 3;
@@ -1595,27 +1594,27 @@ CALLBACK void slab_model(mesh_chunk* m, block_meta info, i32 dir, iv3 v__0, iv2 
 
 	switch (dir) {
 	case 0: // -X
-		m->quad(v_0.to_i(), v_2.to_i(), v_1.to_i(), v_3.to_i(), hw.to_i(), tex, ql, bv4(l.x,l.z,l.y,l.w));
+		m->quad(v_0.to_i(), v_2.to_i(), v_1.to_i(), v_3.to_i(), hw.to_i(), tex, ql, bv4(ao.x,ao.z,ao.y,ao.w), bv4(l.x,l.z,l.y,l.w));
 		break;
 	case 1: // -Y
-		m->quad(v_2.to_i(), v_3.to_i(), v_0.to_i(), v_1.to_i(), wh.to_i(), tex, ql, bv4(l.z,l.w,l.x,l.y));
+		m->quad(v_2.to_i(), v_3.to_i(), v_0.to_i(), v_1.to_i(), wh.to_i(), tex, ql, bv4(ao.z,ao.w,ao.x,ao.y), bv4(l.z,l.w,l.x,l.y));
 		break;
 	case 2: // -Z
-		m->quad(v_1.to_i(), v_0.to_i(), v_3.to_i(), v_2.to_i(), wh.to_i(), tex, ql, bv4(l.y,l.x,l.w,l.z));
+		m->quad(v_1.to_i(), v_0.to_i(), v_3.to_i(), v_2.to_i(), wh.to_i(), tex, ql, bv4(ao.y,ao.x,ao.w,ao.z), bv4(l.y,l.x,l.w,l.z));
 		break;
 	case 3: // +X
-		m->quad(v_2.to_i(), v_0.to_i(), v_3.to_i(), v_1.to_i(), hw.to_i(), tex, ql, bv4(l.z,l.x,l.w,l.y));
+		m->quad(v_2.to_i(), v_0.to_i(), v_3.to_i(), v_1.to_i(), hw.to_i(), tex, ql, bv4(ao.z,ao.x,ao.w,ao.y), bv4(l.z,l.x,l.w,l.y));
 		break;
 	case 4: // +Y
-		m->quad(v_0.to_i(), v_1.to_i(), v_2.to_i(), v_3.to_i(), wh.to_i(), tex, ql, bv4(l.x,l.y,l.z,l.w));
+		m->quad(v_0.to_i(), v_1.to_i(), v_2.to_i(), v_3.to_i(), wh.to_i(), tex, ql, bv4(ao.x,ao.y,ao.z,ao.w), bv4(l.x,l.y,l.z,l.w));
 		break;
 	case 5: // +Z
-		m->quad(v_0.to_i(), v_1.to_i(), v_2.to_i(), v_3.to_i(), wh.to_i(), tex, ql, bv4(l.x,l.y,l.z,l.w));
+		m->quad(v_0.to_i(), v_1.to_i(), v_2.to_i(), v_3.to_i(), wh.to_i(), tex, ql, bv4(ao.x,ao.y,ao.z,ao.w), bv4(l.x,l.y,l.z,l.w));
 		break;
 	}
 }
 
-CALLBACK void torch_model(mesh_chunk* m, block_meta info, i32 dir, iv3 v__0, iv2 ex, u8 ql, bv4 l) {
+CALLBACK void torch_model(mesh_chunk* m, block_meta info, i32 dir, iv3 v__0, iv2 ex, u8 ql, bv4 ao, bv4 l) {
 	
 	i32 o_2d = dir % 3;
 	i32 u_2d = (dir + 1) % 3;
@@ -1673,22 +1672,22 @@ CALLBACK void torch_model(mesh_chunk* m, block_meta info, i32 dir, iv3 v__0, iv2
 
 	switch (dir) {
 	case 0: // -X
-		m->quad(v_0.to_i(), v_2.to_i(), v_1.to_i(), v_3.to_i(), hw.to_i(), tex, ql, bv4(l.x,l.z,l.y,l.w));
+		m->quad(v_0.to_i(), v_2.to_i(), v_1.to_i(), v_3.to_i(), hw.to_i(), tex, ql, bv4(ao.x,ao.z,ao.y,ao.w), bv4(l.x,l.z,l.y,l.w));
 		break;
 	case 1: // -Y
-		m->quad(v_2.to_i(), v_3.to_i(), v_0.to_i(), v_1.to_i(), wh.to_i(), tex, ql, bv4(l.z,l.w,l.x,l.y));
+		m->quad(v_2.to_i(), v_3.to_i(), v_0.to_i(), v_1.to_i(), wh.to_i(), tex, ql, bv4(ao.z,ao.w,ao.x,ao.y), bv4(l.z,l.w,l.x,l.y));
 		break;
 	case 2: // -Z
-		m->quad(v_1.to_i(), v_0.to_i(), v_3.to_i(), v_2.to_i(), wh.to_i(), tex, ql, bv4(l.y,l.x,l.w,l.z));
+		m->quad(v_1.to_i(), v_0.to_i(), v_3.to_i(), v_2.to_i(), wh.to_i(), tex, ql, bv4(ao.y,ao.x,ao.w,ao.z), bv4(l.y,l.x,l.w,l.z));
 		break;
 	case 3: // +X
-		m->quad(v_2.to_i(), v_0.to_i(), v_3.to_i(), v_1.to_i(), hw.to_i(), tex, ql, bv4(l.z,l.x,l.w,l.y));
+		m->quad(v_2.to_i(), v_0.to_i(), v_3.to_i(), v_1.to_i(), hw.to_i(), tex, ql, bv4(ao.z,ao.x,ao.w,ao.y), bv4(l.z,l.x,l.w,l.y));
 		break;
 	case 4: // +Y
-		m->quad(v_0.to_i(), v_1.to_i(), v_2.to_i(), v_3.to_i(), wh.to_i(), tex, ql, bv4(l.x,l.y,l.z,l.w));
+		m->quad(v_0.to_i(), v_1.to_i(), v_2.to_i(), v_3.to_i(), wh.to_i(), tex, ql, bv4(ao.x,ao.y,ao.z,ao.w), bv4(l.x,l.y,l.z,l.w));
 		break;
 	case 5: // +Z
-		m->quad(v_0.to_i(), v_1.to_i(), v_2.to_i(), v_3.to_i(), wh.to_i(), tex, ql, bv4(l.x,l.y,l.z,l.w));
+		m->quad(v_0.to_i(), v_1.to_i(), v_2.to_i(), v_3.to_i(), wh.to_i(), tex, ql, bv4(ao.x,ao.y,ao.z,ao.w), bv4(l.x,l.y,l.z,l.w));
 		break;
 	}
 }

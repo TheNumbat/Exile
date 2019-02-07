@@ -3,6 +3,8 @@
 
 struct chunk;
 
+// -x is east, +x is west
+
 enum class block_id : u16 {
 	none,
 	bedrock,
@@ -26,7 +28,7 @@ struct block_meta {
 	bool does_ao;
 	bool custom_model;
 	
-	func_ptr<void, mesh_chunk*, block_meta, i32, iv3, iv2, u8, bv4> model;
+	func_ptr<void, mesh_chunk*, block_meta, i32, iv3, iv2, u8, bv4, bv4> model;
 };
 
 struct chunk_pos {
@@ -44,17 +46,19 @@ inline u32 hash(chunk_pos key);
 
 struct block_light {
 	u8 t = 0; // 0..255 for large world light propagation. gets clamped to 0..15 in renderer
-	u8 s = 0; // 0..15
+	u8 s0 = 0; // 0..15, 4 bits wasted!!
+	u8 s1 = 0; // 0..15, 0..15 
 
-	u8 to_u8();
+	u8 first_u8();
 };
-static_assert(sizeof(block_light) == 2, "sizeof(block_light) != 2!");
+static_assert(sizeof(block_light) == 3, "sizeof(block_light) != 3");
 
 struct light_gather {
-	u16 t = 0, s = 0;
-	void operator+=(block_light l) {t += l.t; s += l.s;}
+	u16 t = 0;
+	u8 s0 = 0, s1 = 0, s2 = 0;
+	void operator+=(block_light l) {t += l.t; s0 += l.s0; s1 += (l.s1 & 0xf); s1 += (l.s1 >> 4);}
 };
-bool operator==(light_gather l, light_gather r) {return l.t==r.t && l.s==r.s;}
+bool operator==(light_gather l, light_gather r) {return l.t==r.t && l.s0==r.s0 && l.s1==r.s1 && l.s2==r.s2;}
 
 struct mesh_face {
 	
@@ -205,7 +209,7 @@ struct world_settings {
 
 	float ambient_factor = 0.1f;
 
-\	v4 ao_curve = v4(0.75f, 0.825f, 0.9f, 1.0f);
+	v4 ao_curve = v4(0.25f, 0.5f, 0.75f, 1.0f);
 };
 
 struct world_time {
@@ -306,5 +310,5 @@ CALLBACK void cancel_gen(chunk* param);
 CALLBACK void cancel_light(chunk* param);
 CALLBACK void cancel_mesh(chunk* param);
 
-CALLBACK void slab_model(mesh_chunk* m, block_meta i, i32 dir, iv3 v, iv2 wh, u8 ql, bv4 l);
-CALLBACK void torch_model(mesh_chunk* m, block_meta i, i32 dir, iv3 v, iv2 wh, u8 ql, bv4 l);
+CALLBACK void slab_model(mesh_chunk* m, block_meta i, i32 dir, iv3 v, iv2 wh, u8 ql, bv4 ao, bv4 l);
+CALLBACK void torch_model(mesh_chunk* m, block_meta i, i32 dir, iv3 v, iv2 wh, u8 ql, bv4 ao, bv4 l);
