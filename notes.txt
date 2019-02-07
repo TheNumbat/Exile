@@ -24,7 +24,7 @@ Vertex Format
 	+q
 
 	0000 0000 0000 0000 0000 0000 0000 0000
-	tttt tttt tttt tttt llll llll 
+	tttt tttt tttt tttt llll llll aoao aoao
 
 	0000 0000 0000 0000 0000 0000 0000 0000
 	l0l0 l0l0 l1l1 l1l1 l2l2 l2l2 l3l3 l3l3

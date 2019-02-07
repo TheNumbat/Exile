@@ -205,7 +205,7 @@ struct world_settings {
 
 	float ambient_factor = 0.1f;
 
-	// v4 ao_curve = v4(0.75f, 0.825f, 0.9f, 1.0f);
+\	v4 ao_curve = v4(0.75f, 0.825f, 0.9f, 1.0f);
 };
 
 struct world_time {

@@ -70,7 +70,7 @@ CALLBACK void uniforms_mesh_chunk(shader_program* prog, render_command* cmd) {
 	glUniform1f(glGetUniformLocation(prog->handle, "units_per_voxel"), (f32)chunk::units_per_voxel);
 	glUniform1f(glGetUniformLocation(prog->handle, "render_distance"), (f32)set->view_distance * chunk::wid);
 
-	// glUniform4fv(glGetUniformLocation(prog->handle, "ao_curve"), 1, set->ao_curve.a);
+	glUniform4fv(glGetUniformLocation(prog->handle, "ao_curve"), 1, set->ao_curve.a);
 
 	glUniformMatrix4fv(glGetUniformLocation(prog->handle, "mvp"), 1, gl_bool::_false, mvp.a);
 	glUniformMatrix4fv(glGetUniformLocation(prog->handle, "m"), 1, gl_bool::_false, mv.a);
