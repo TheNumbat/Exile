@@ -2,8 +2,6 @@
 Working To-Do:
 
 [1]	World & Rendering
-		sunlight - block updates
-
 		fix place/break block
 		fix waiting for new neighbor meshes
 

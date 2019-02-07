@@ -42,21 +42,27 @@ struct chunk_pos {
 bool operator==(chunk_pos l, chunk_pos r);
 inline u32 hash(chunk_pos key);
 
+struct block_light {
+	u8 t = 0; // 0..255 for large world light propagation. gets clamped to 0..15 in renderer
+	u8 s = 0; // 0..15
+
+	u8 to_u8();
+};
+static_assert(sizeof(block_light) == 2, "sizeof(block_light) != 2!");
+
+struct light_gather {
+	u16 t = 0, s = 0;
+	void operator+=(block_light l) {t += l.t; s += l.s;}
+};
+bool operator==(light_gather l, light_gather r) {return l.t==r.t && l.s==r.s;}
+
 struct mesh_face {
 	
 	static bool can_merge(mesh_face f1, mesh_face f2, i32 dir);
 
 	block_meta info;
-	bv4 l;
+	light_gather l[4] = {};
 };
-
-struct NOREFLECT block_light {
-	u8 t; // 0..255 for large world light propagation. gets clamped to 0..15 in renderer
-	u8 s; // 0..15
-
-	u8 to_u8();
-};
-static_assert(sizeof(block_light) == 2, "sizeof(block_light) != 2!");
 
 enum class chunk_stage : u8 {
 	none,
@@ -151,6 +157,7 @@ struct chunk {
 	
 	u8 ao_at_vert(iv3 vert);
 	u8 l_at_vert(iv3 vert);
+	light_gather gather_l(iv3 vert);
 	
 	block_light l_at(iv3 block);
 	block_id block_at(iv3 block);

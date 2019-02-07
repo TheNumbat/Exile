@@ -1209,39 +1209,30 @@ u8 block_light::to_u8() {
 	return (s << 4) | (t >= 15 ? 15 : t);
 }
 
-u8 chunk::l_at_vert(iv3 vert) {
+light_gather chunk::gather_l(iv3 vert) {
 
-	block_light b0 = l_at(vert);
-	u16 taccum = b0.t;
-	u16 saccum = b0.s;
+	light_gather g;
 
-	block_light b1 = l_at(vert + iv3(-1,0,0));
-	taccum += b1.t;
-	saccum += b1.s;
-	block_light b2 = l_at(vert + iv3(0,0,-1));
-	taccum += b2.t;
-	saccum += b2.s;
-	block_light b3 = l_at(vert + iv3(-1,0,-1));
-	taccum += b3.t;
-	saccum += b3.s;
-	block_light b4 = l_at(vert + iv3(0,-1,0));
-	taccum += b4.t;
-	saccum += b4.s;
-	block_light b5 = l_at(vert + iv3(-1,-1,0));
-	taccum += b5.t;
-	saccum += b5.s;
-	block_light b6 = l_at(vert + iv3(0,-1,-1));
-	taccum += b6.t;
-	saccum += b6.s;
-	block_light b7 = l_at(vert + iv3(-1,-1,-1));
-	taccum += b7.t;
-	saccum += b7.s;
+	g += l_at(vert);
+	g += l_at(vert + iv3(-1,0,0));
+	g += l_at(vert + iv3(0,0,-1));
+	g += l_at(vert + iv3(-1,0,-1));
+	g += l_at(vert + iv3(0,-1,0));
+	g += l_at(vert + iv3(-1,-1,0));
+	g += l_at(vert + iv3(0,-1,-1));
+	g += l_at(vert + iv3(-1,-1,-1));
 
-	u16 t = taccum / 8;
-	u8 ut = t >= 15 ? 15 : (u8)t;
-	u8 us = (u8)(saccum / 8);
+	return g;
+}
 
-	return (us << 4) | ut;
+u8 chunk::l_at_vert(iv3 vert) { 
+
+	light_gather g = gather_l(vert);
+
+	u8 t = (u8)min(g.t / 8, 15);
+	u8 s = (u8)(g.s / 8);
+
+	return (s << 4) | t;
 }
 
 u8 chunk::ao_at_vert(iv3 vert) { 
@@ -1314,40 +1305,40 @@ mesh_face chunk::build_face(block_id t, iv3 p, i32 dir) {
 
 	switch(dir) {
 	case 0: {
-		ret.l[0] = l_at_vert(p);
-		ret.l[1] = l_at_vert(p + iv3(0,1,0));
-		ret.l[2] = l_at_vert(p + iv3(0,0,1));
-		ret.l[3] = l_at_vert(p + iv3(0,1,1));
+		ret.l[0] = gather_l(p);
+		ret.l[1] = gather_l(p + iv3(0,1,0));
+		ret.l[2] = gather_l(p + iv3(0,0,1));
+		ret.l[3] = gather_l(p + iv3(0,1,1));
 	} break;
 	case 1: {
-		ret.l[0] = l_at_vert(p);
-		ret.l[1] = l_at_vert(p + iv3(1,0,0));
-		ret.l[2] = l_at_vert(p + iv3(0,0,1));
-		ret.l[3] = l_at_vert(p + iv3(1,0,1));
+		ret.l[0] = gather_l(p);
+		ret.l[1] = gather_l(p + iv3(1,0,0));
+		ret.l[2] = gather_l(p + iv3(0,0,1));
+		ret.l[3] = gather_l(p + iv3(1,0,1));
 	} break;
 	case 2: {
-		ret.l[0] = l_at_vert(p);
-		ret.l[1] = l_at_vert(p + iv3(1,0,0));
-		ret.l[2] = l_at_vert(p + iv3(0,1,0));
-		ret.l[3] = l_at_vert(p + iv3(1,1,0));
+		ret.l[0] = gather_l(p);
+		ret.l[1] = gather_l(p + iv3(1,0,0));
+		ret.l[2] = gather_l(p + iv3(0,1,0));
+		ret.l[3] = gather_l(p + iv3(1,1,0));
 	} break;
 	case 3: {
-		ret.l[0] = l_at_vert(p + iv3(1,0,0));
-		ret.l[1] = l_at_vert(p + iv3(1,1,0));
-		ret.l[2] = l_at_vert(p + iv3(1,0,1));
-		ret.l[3] = l_at_vert(p + iv3(1,1,1));
+		ret.l[0] = gather_l(p + iv3(1,0,0));
+		ret.l[1] = gather_l(p + iv3(1,1,0));
+		ret.l[2] = gather_l(p + iv3(1,0,1));
+		ret.l[3] = gather_l(p + iv3(1,1,1));
 	} break;
 	case 4: {
-		ret.l[0] = l_at_vert(p + iv3(0,1,0));
-		ret.l[1] = l_at_vert(p + iv3(1,1,0));
-		ret.l[2] = l_at_vert(p + iv3(0,1,1));
-		ret.l[3] = l_at_vert(p + iv3(1,1,1));
+		ret.l[0] = gather_l(p + iv3(0,1,0));
+		ret.l[1] = gather_l(p + iv3(1,1,0));
+		ret.l[2] = gather_l(p + iv3(0,1,1));
+		ret.l[3] = gather_l(p + iv3(1,1,1));
 	} break;
 	case 5: {
-		ret.l[0] = l_at_vert(p + iv3(0,0,1));
-		ret.l[1] = l_at_vert(p + iv3(1,0,1));
-		ret.l[2] = l_at_vert(p + iv3(0,1,1));
-		ret.l[3] = l_at_vert(p + iv3(1,1,1));
+		ret.l[0] = gather_l(p + iv3(0,0,1));
+		ret.l[1] = gather_l(p + iv3(1,0,1));
+		ret.l[2] = gather_l(p + iv3(0,1,1));
+		ret.l[3] = gather_l(p + iv3(1,1,1));
 	} break;
 	}
 
@@ -1369,7 +1360,7 @@ bool mesh_face::can_merge(mesh_face f1, mesh_face f2, i32 dir) {
 	// its AO system. ALSO, do we even need to merge faces?? It's not much of an
 	// optimization with jagged terrain.
 
-	if(f1.l.all_same() && f1.l == f2.l) return true;
+	if(f1.l[0] == f2.l[1] && f1.l[0] == f2.l[2] && f1.l[0] == f2.l[3]) return true;
 
 	return false;
 }
