@@ -2,7 +2,9 @@
 Working To-Do:
 
 [1]	World & Rendering
+		
 		add east/west sunlight calculation & day curve use
+		non-smooth AO is wrong
 
 		fix place/break block
 		fix waiting for new neighbor meshes
