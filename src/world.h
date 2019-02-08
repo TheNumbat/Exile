@@ -28,7 +28,7 @@ struct block_meta {
 	bool does_ao;
 	bool custom_model;
 	
-	func_ptr<void, mesh_chunk*, block_meta, i32, iv3, iv2, u8, bv4, bv4> model;
+	func_ptr<void, mesh_chunk*, block_meta*, i32, iv3, iv2, u8, bv4, bv4> model;
 };
 
 struct chunk_pos {
@@ -64,7 +64,7 @@ struct mesh_face {
 	
 	static bool can_merge(mesh_face f1, mesh_face f2, i32 dir);
 
-	block_meta info;
+	block_meta* info = null;
 	light_gather l[4] = {};
 };
 
@@ -310,5 +310,5 @@ CALLBACK void cancel_gen(chunk* param);
 CALLBACK void cancel_light(chunk* param);
 CALLBACK void cancel_mesh(chunk* param);
 
-CALLBACK void slab_model(mesh_chunk* m, block_meta i, i32 dir, iv3 v, iv2 wh, u8 ql, bv4 ao, bv4 l);
-CALLBACK void torch_model(mesh_chunk* m, block_meta i, i32 dir, iv3 v, iv2 wh, u8 ql, bv4 ao, bv4 l);
+CALLBACK void slab_model(mesh_chunk* m, block_meta* i, i32 dir, iv3 v, iv2 wh, u8 ql, bv4 ao, bv4 l);
+CALLBACK void torch_model(mesh_chunk* m, block_meta* i, i32 dir, iv3 v, iv2 wh, u8 ql, bv4 ao, bv4 l);

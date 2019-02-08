@@ -1299,7 +1299,7 @@ block_id chunk::block_at(iv3 block) {
 mesh_face chunk::build_face(block_id t, iv3 p, i32 dir) { 
 
 	mesh_face ret;
-	ret.info = *w->get_info(t);
+	ret.info = w->get_info(t);
 
 	switch(dir) {
 	case 0: {
@@ -1345,9 +1345,9 @@ mesh_face chunk::build_face(block_id t, iv3 p, i32 dir) {
 
 bool mesh_face::can_merge(mesh_face f1, mesh_face f2, i32 dir) { 
 
-	if(f1.info.type != f2.info.type) return false;
+	if(f1.info->type != f2.info->type) return false;
 
-	if(!f1.info.merge[dir] || !f2.info.merge[dir]) return false;
+	if(!f1.info->merge[dir] || !f2.info->merge[dir]) return false;
 
 	// NOTE(max): kind of average-case optimization here (for no or full lighting)
 	// theoretically we could merge faces that support a smooth light transition
@@ -1505,13 +1505,13 @@ void chunk::do_mesh() { PROF_FUNC
 						v_0 *= units_per_voxel; v_1 *= units_per_voxel; v_2 *= units_per_voxel; v_3 *= units_per_voxel;
 						wh *= units_per_voxel; hw *= units_per_voxel;
 
-						i32 tex = face_type.info.textures[i];
+						i32 tex = face_type.info->textures[i];
 
 						{PROF_SCOPE("Model"_);
 
-							if(face_type.info.custom_model) {
+							if(face_type.info->custom_model) {
 
-								face_type.info.model(&new_mesh, face_type.info, i, v_0 / units_per_voxel, iv2(width, height), l, bv4(ao_0,ao_1,ao_2,ao_3), bv4(l_0,l_1,l_2,l_3));
+								face_type.info->model(&new_mesh, face_type.info, i, v_0 / units_per_voxel, iv2(width, height), l, bv4(ao_0,ao_1,ao_2,ao_3), bv4(l_0,l_1,l_2,l_3));
 
 							} else {
 
@@ -1560,7 +1560,7 @@ void chunk::do_mesh() { PROF_FUNC
 
 
 
-CALLBACK void slab_model(mesh_chunk* m, block_meta info, i32 dir, iv3 v__0, iv2 ex, u8 ql, bv4 ao, bv4 l) {
+CALLBACK void slab_model(mesh_chunk* m, block_meta* info, i32 dir, iv3 v__0, iv2 ex, u8 ql, bv4 ao, bv4 l) {
 
 	i32 u_2d = (dir + 1) % 3;
 	i32 v_2d = (dir + 2) % 3;
@@ -1590,7 +1590,7 @@ CALLBACK void slab_model(mesh_chunk* m, block_meta info, i32 dir, iv3 v__0, iv2 
 	v_0 *= units; v_1 *= units; v_2 *= units; v_3 *= units;
 	wh *= units; hw *= units;
 
-	i32 tex = info.textures[dir];
+	i32 tex = info->textures[dir];
 
 	switch (dir) {
 	case 0: // -X
@@ -1614,7 +1614,7 @@ CALLBACK void slab_model(mesh_chunk* m, block_meta info, i32 dir, iv3 v__0, iv2 
 	}
 }
 
-CALLBACK void torch_model(mesh_chunk* m, block_meta info, i32 dir, iv3 v__0, iv2 ex, u8 ql, bv4 ao, bv4 l) {
+CALLBACK void torch_model(mesh_chunk* m, block_meta* info, i32 dir, iv3 v__0, iv2 ex, u8 ql, bv4 ao, bv4 l) {
 	
 	i32 o_2d = dir % 3;
 	i32 u_2d = (dir + 1) % 3;
@@ -1668,7 +1668,7 @@ CALLBACK void torch_model(mesh_chunk* m, block_meta info, i32 dir, iv3 v__0, iv2
 	v_0 *= units; v_1 *= units; v_2 *= units; v_3 *= units;
 	wh *= units; hw *= units;
 
-	i32 tex = info.textures[dir];
+	i32 tex = info->textures[dir];
 
 	switch (dir) {
 	case 0: // -X
