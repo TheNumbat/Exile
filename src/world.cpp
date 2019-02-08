@@ -1358,7 +1358,8 @@ bool mesh_face::can_merge(mesh_face f1, mesh_face f2, i32 dir) {
 	// its AO system. ALSO, do we even need to merge faces?? It's not much of an
 	// optimization with jagged terrain.
 
-	if(f1.l[0] == f2.l[1] && f1.l[0] == f2.l[2] && f1.l[0] == f2.l[3]) return true;
+	if(f1.l[0] == f1.l[1] && f1.l[0] == f1.l[2] && f1.l[0] == f1.l[3] &&
+	   f1.l[0] == f2.l[0] && f1.l[0] == f2.l[1] && f1.l[0] == f2.l[2] && f1.l[0] == f2.l[3]) return true;
 
 	return false;
 }
