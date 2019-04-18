@@ -3,16 +3,17 @@ Working To-Do:
 
 [1]	World & Rendering
 		
-		add east/west sunlight calculation & day curve use
-
-		fix place/break block
-		fix waiting for new neighbor meshes
-
 		deferred rendering
 		gamma correction
-		
+
 		dynamic lights
 		dynamic shadows
+
+		add east/west sunlight calculation & day curve use
+		
+		there's some light removal bug 
+		fix place/break block
+		fix waiting for new neighbor meshes
 		
 		sunlight shadows
 		sun/moon objects 

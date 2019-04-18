@@ -26,11 +26,55 @@ Goals:
   - C++14/STL
 
 ### Screenshots
-![shot1](https://i.imgur.com/mUqnzkU.png)
+![shot1](https://i.imgur.com/rZDhSEM.png)
+![shot1](https://i.imgur.com/hirAEHY.png)
 
 ### Current Features
 
 See todo.txt for plans.
+
+- Game
+  - World generation 
+    - Parallelized chunk generation, updates, and voxel lighting
+  - Hybrid voxel terrain meshing
+  - Voxel face rendering pipeline
+  - Time and environment assets
+  - Block data framework
+  - Player movement
+
+- Engine
+  - Assets
+    - Images
+    - Fonts, font atlases
+  - Debugging
+    - Debug message system
+    - Profiler
+      - Timing
+      - Calls/call locations
+      - Allocations/memory safety
+      - Threaded timing/work delegation
+    - Debug console and command system
+    - Runtime variable inspection interface
+  - Input
+    - Event parsing from the platform layer
+    - Context state machines
+  - Interface
+    - Dear ImGui implementation and reflection-based add-ons
+    - [depreciated] Custom immediate mode GUI system
+  - Log
+    - Thread safe log formatting and output
+    - HTML and custom output
+  - Rendering
+    - Textures
+    - Shaders
+    - Meshes
+    - Command lists
+    - State management
+    - OpenGL setup
+  - Async
+    - Atomics
+    - Thread pool
+    - Futures
 
 - Lib
   - Allocators
@@ -59,47 +103,6 @@ See todo.txt for plans.
   - Architectures
     - Win32
     - SDL2
-- Engine
-  - Assets
-    - Images
-    - Fonts, font atlases
-  - Debugging
-    - Debug message system
-    - Profiler
-      - Time
-      - Calls
-      - Allocations
-      - Worker threads
-    - Debug console and command system
-    - Debug runtime variable interface
-  - Input
-    - Event parsing
-    - Context state machines
-  - Interface
-    - Dear ImGui implementation and reflection add-ons
-    - [depreciated] Custom immediate mode GUI system
-  - Log
-    - Thread safe log formatting and output
-    - HTML and custom output
-  - Rendering
-    - Textures
-    - Shaders
-    - Meshes
-    - Command lists
-    - State management
-    - OpenGL setup
-  - Async
-    - Atomics
-    - Thread pool
-    - Futures
-- Game
-  - World generation
-  - Time
-  - Block data and setup
-  - Voxel terrain meshing and rendering
-  - Sky and star rendering
-  - Movement
-  - Threaded terrain generation
 - Meta
   - Metaprogram to generate reflection data
   - Asset bulider to generate asset packs

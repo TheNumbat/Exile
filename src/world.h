@@ -47,7 +47,7 @@ inline u32 hash(chunk_pos key);
 struct block_light {
 	u8 t = 0; // 0..255 for large world light propagation. gets clamped to 0..15 in renderer
 	u8 s0 = 0; // 0..15, 4 bits wasted!!
-	u8 s1 = 0; // 0..15, 0..15 
+	u8 s1 = 0; // 0..15, 0..15  [FOR LATER SUNLIGHT PROP]
 
 	u8 first_u8();
 };
@@ -101,7 +101,6 @@ struct light_work {
 struct chunk;
 struct world;
 
-// these are all basically the same but whatever
 struct block_node {
 	iv3 pos;
 	chunk* owner = null;
