@@ -1,6 +1,9 @@
 
 Working To-Do:
 
+Fix:
+	Something is wrong with light and sunlight removal
+
 [1]	World & Rendering
 		
 		deferred rendering
@@ -33,8 +36,12 @@ Working To-Do:
 	chunk paging and persistence
 	world generation framework
 
-Bugs:
+Relatively unimportant bugs:
 	SDL layer resets the cursor to pointer on every mouse move
+	There is still some inconsistency in code reloading
+		IMGUI window data persisting between code reloads occasionally doesn't work?
+		threads.cpp:233 log allocations don't get cataloged, but the frees do...maybe something to do with registering a new thread?
+
 
 Large-Scale Improvements | Changes for Future Projects
 	rewrite metaprogram for robustness, possibly as a library/outputting a data format
@@ -43,6 +50,7 @@ Large-Scale Improvements | Changes for Future Projects
 	probably don't use the futures pattern for the thread pool, go back to event loop
 	asset store can be more meta file + data files for hot/cold loading etc. Not sure if necessary though
 	use Vulkan
+	probably don't use hot DLL reloading for the whole project; isolate this to the game components at least and ensure that hot-reloaded things are pure, and don't have changing data definitions.
 
 Overall To-Do List:
 

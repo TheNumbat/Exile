@@ -23,7 +23,11 @@ CALLBACK void console_place_light(string p, void* w_) {
 		pos += used;
 	}
 
-		w->place_light(iv3(vals[0],vals[1],vals[2]), (u8)vals[3]);
+	iv3 loc = iv3(vals[0],vals[1],vals[2]);
+	u8  val = (u8)vals[3];
+
+	w->place_light(loc,val);
+	eng->dbg.console.add_console_msg(string::makef("Placed % light at (%,%,%)."_, val, loc.x, loc.y, loc.z)); //TODO(max): better print rule for the integer vecs
 }
 
 CALLBACK void console_rem_light(string p, void* w_) {
@@ -38,7 +42,10 @@ CALLBACK void console_rem_light(string p, void* w_) {
 		pos += used;
 	}
 
-	w->rem_light(iv3(vals[0],vals[1],vals[2]));
+	iv3 loc = iv3(vals[0],vals[1],vals[2]);
+
+	w->rem_light(loc);
+	eng->dbg.console.add_console_msg(string::makef("Removed light at (%,%,%)."_, loc.x, loc.y, loc.z));
 }
 
 CALLBACK void console_set_block(string p, void* w_) {
@@ -59,4 +66,5 @@ CALLBACK void console_set_block(string p, void* w_) {
 	iv3 block(vals[0],vals[1],vals[2]);
 
 	w->set_block(block, id);
+	eng->dbg.console.add_console_msg(string::makef("Placed block % at (%,%,%)."_, id, block.x, block.y, block.z));
 }

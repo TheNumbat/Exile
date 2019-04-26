@@ -230,7 +230,7 @@ i32 worker(void* data_) {
 	begin_thread("worker %"_, data->alloc, global_api->this_thread_id());
 	global_dbg->profiler.register_thread(10);
 	
-	LOG_DEBUG("Starting worker thread"_);
+	LOG_DEBUG("Starting worker thread"_); 
 
 	do {
 		global_api->wait_semaphore(data->jobs_semaphore, -1);
