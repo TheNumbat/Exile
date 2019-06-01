@@ -1,9 +1,6 @@
 
 Working To-Do:
 
-Fix:
-	Something is wrong with light and sunlight removal
-
 [1]	World & Rendering
 		
 		deferred rendering
@@ -20,10 +17,13 @@ Fix:
 		
 		sunlight shadows
 		sun/moon objects 
+		spinning sky/stars
 		
 		chunk culling / visibility query
 		normal mapping
 		HDR / bloom / god rays / better fog
+
+		something may be wrong with light/sunlight propagation or smooth calculation that causes AO
 
 	data serialization/deserialization
 	user settings interface

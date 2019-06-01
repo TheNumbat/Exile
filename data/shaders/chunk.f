@@ -16,6 +16,7 @@ uniform sampler2D sky_tex;
 uniform bool do_fog;
 uniform bool do_light;
 uniform bool smooth_light;
+uniform int debug_light;
 
 uniform float render_distance;
 uniform float day_01;
@@ -35,7 +36,17 @@ void main() {
 
 		float day_factor = 1.0f - (smoothstep(0.3f, 0.15f, day_01) + smoothstep(0.75f, 0.9f, day_01));
 
-		if(smooth_light) {
+		if(debug_light == 1) {
+
+			float t = float(f_ql) / 15.0f;
+			color = clamp(vec3(t), 0.0f, 1.0f);
+
+		} else if(debug_light == 2) {
+
+			float s = float(f_qs) / 15.0f;
+			color = clamp(vec3(s), 0.0f, 1.0f);
+
+		} else if(smooth_light) {
 
 			float t0 = mix(f_l.x, f_l.y, fract(f_uv.x));
 			float t1 = mix(f_l.z, f_l.w, fract(f_uv.x));
@@ -49,16 +60,14 @@ void main() {
 
 		} else {
 
+			float ao0 = mix(f_ao.x, f_ao.y, fract(f_uv.x));
+			
+			float ao1 = mix(f_ao.z, f_ao.w, fract(f_uv.x));
+			float ao = mix(ao0, ao1, fract(f_uv.y));
 			float t = float(f_ql) / 15.0f;
 			float s = float(f_qs) / 15.0f * day_factor;
 
-			color *= clamp(ambient + max(t,s), 0.0f, 1.0f);
-
-			float ao0 = mix(f_ao.x, f_ao.y, fract(f_uv.x));
-			float ao1 = mix(f_ao.z, f_ao.w, fract(f_uv.x));
-			float ao = mix(ao0, ao1, fract(f_uv.y));
-
-			color *= ao;
+			color *= clamp(ambient + ao * max(t,s), 0.0f, 1.0f);
 		}
 	}
 

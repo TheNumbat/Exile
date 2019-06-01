@@ -188,6 +188,12 @@ struct player {
 	void reset();
 };
 
+enum class light_debug : i32 {
+	none = 0,
+	torch,
+	sun
+};
+
 struct world_settings {
 
 	f32 gravity = 0.0f;
@@ -205,6 +211,7 @@ struct world_settings {
 	
 	bool block_light = true;
 	bool smooth_light = true;
+	light_debug light_debug_mode = light_debug::none;
 
 	float ambient_factor = 0.1f;
 

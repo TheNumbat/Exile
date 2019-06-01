@@ -793,7 +793,7 @@ void chunk::do_gen() { PROF_FUNC
 				blocks[x][z][height] = block_id::torch;
 				place_light(iv3(x, height, z), 16);
 			} else {
-				blocks[x][z][height] = block_id::stone_slab;
+				// blocks[x][z][height] = block_id::stone_slab;
 			}
 		}
 	}
@@ -1200,7 +1200,6 @@ block_light chunk::l_at(iv3 block) {
 	block_node node = canonical_block(block);	
 
 	if(!node.owner) return {};
-
 	return node.owner->light[node.pos.x][node.pos.z][node.pos.y];
 }
 
@@ -1496,7 +1495,8 @@ void chunk::do_mesh() { PROF_FUNC
 							ao_0 = ao_at_vert(v_0); ao_1 = ao_at_vert(v_1); ao_2 = ao_at_vert(v_2); ao_3 = ao_at_vert(v_3);
 
 							iv3 facing = v_0;
-							if(i < 3) facing[ortho_2d] -= 1;
+							if(backface_offset < 0) facing[ortho_2d] -= 1;
+
 							block_light face_light = l_at(facing);
 							l = face_light.t;
 							l = l >= 15 ? 15 : l;
