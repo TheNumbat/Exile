@@ -23,6 +23,13 @@ CALLBACK void player_debug_ui(world* w) {
 
 	v3 intersection = w->raymarch(w->p.camera.pos, w->p.camera.front, w->p.camera.reach);
 	ImGui::ViewAny("inter"_, intersection);
+	ImGui::ViewAny("block"_, w->block_at(w->p.camera.pos.to_i_t()));
+}
+
+block_id world::block_at(iv3 pos) {
+	block_node node = world_to_canonical(pos);
+	if(!node.owner) return block_id::none;
+	return node.owner->block_at(node.pos);
 }
 
 void world::init(asset_store* store, allocator* a) { PROF_FUNC
@@ -52,7 +59,7 @@ void world::init(asset_store* store, allocator* a) { PROF_FUNC
 		eng->dbg.store.add_var("player/speed"_, &p.speed);
 		eng->dbg.store.add_var("player/enable"_, &p.enable);
 		eng->dbg.store.add_var("player/noclip"_, &p.noclip);
-		eng->dbg.store.add_ele("player/inter"_, FPTR(player_debug_ui), this);
+		eng->dbg.store.add_ele("player/info"_, FPTR(player_debug_ui), this);
 	}
 
 	{
@@ -828,8 +835,11 @@ void chunk::light_rem_sun(light_work work) { PROF_FUNC
 			block_node node = cur.owner->canonical_block(neighbor);
 			block_light nval = node.get_l();
 
-			u8 test = current_light + (i == 1 ? 1 : 0);
-			if(nval.s0 != 0 && nval.s0 < test) {
+			if(nval.s0 == 0) continue;
+
+			u8 test = current_light + (i == 1 && current_light == 15 ? 1 : 0);
+			if(nval.s0 < test) {
+				
 				node.set_s(0);
 				light_rem_node new_node;
 				new_node.pos = node.pos;
@@ -841,7 +851,8 @@ void chunk::light_rem_sun(light_work work) { PROF_FUNC
 					light_work t; t.type = light_update::trigger;
 					node.owner->lighting_updates.push(t);
 				}
-			} else if(nval.s0 != 0 && nval.s0 >= test) {
+
+			} else {
 				light_work fill;
 				fill.type = light_update::add_sun;
 				fill.pos = node.pos;
@@ -877,7 +888,8 @@ void chunk::light_add_sun(light_work work) { PROF_FUNC
 
 			if(!node.owner) continue;
 
-			u8 test = current_light - (i == 1 ? 0 : 1);
+			u8 test = current_light - (i == 1 && current_light == 15 ? 0 : 1);
+
 			if(node.get_l().s0 < test && !w->get_info(node.get_type())->opaque[(i + 3) % 6]) {
 
 				node.set_s(test);
@@ -957,25 +969,16 @@ void chunk::light_remove(light_work work) { PROF_FUNC
 			block_node node = cur.owner->canonical_block(neighbor);
 			block_light nval = node.get_l();
 
-			if(nval.t != 0 && nval.t < current_light) {
+			if(nval.t == 0) continue;
+
+			if(nval.t < current_light) {
 				node.set_l(0);
 				light_rem_node new_node;
 				new_node.pos = node.pos;
 				new_node.owner = node.owner;
 				new_node.val = nval.t;
 				q.push(new_node);
-
-				if(node.owner->lighting_updates.empty()) {
-					light_work t; t.type = light_update::trigger;
-					node.owner->lighting_updates.push(t);
-				}
-			} else if(nval.t >= current_light) {
-				light_work fill;
-				fill.type = light_update::add;
-				fill.pos = node.pos;
-				fill.intensity = nval.t;
-				node.owner->lighting_updates.push(fill);
-			} else { 
+				
 				u8 emit = w->get_info(node.get_type())->emit_light;
 				if(emit > 0) {
 					light_work fill;
@@ -983,7 +986,17 @@ void chunk::light_remove(light_work work) { PROF_FUNC
 					fill.pos = node.pos;
 					fill.intensity = emit;
 					node.owner->lighting_updates.push(fill);
+				} else if(node.owner->lighting_updates.empty()) {
+					light_work t; t.type = light_update::trigger;
+					node.owner->lighting_updates.push(t);
 				}
+				
+			} else {
+				light_work fill;
+				fill.type = light_update::add;
+				fill.pos = node.pos;
+				fill.intensity = nval.t;
+				node.owner->lighting_updates.push(fill);
 			}
 		}
 	}
@@ -1037,7 +1050,6 @@ void chunk::do_light() { PROF_FUNC
 			lighting_updates.push(rem);
 
 			rem.type = light_update::remove_sun;
-			rem.pos = work.pos;
 			lighting_updates.push(rem);
 
 			for(i32 i = 0; i < 6; i++) {

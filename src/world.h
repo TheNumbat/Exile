@@ -303,6 +303,7 @@ struct world {
 	void player_place_block();
 
 	block_node world_to_canonical(iv3 pos);
+	block_id block_at(iv3 pos);
 
 	v3 raymarch(v3 origin, v3 dir, f32 max);
 	v3 raymarch(v3 origin, v3 max);
