@@ -5,8 +5,16 @@ v2 size_text(asset* font, string text_utf8, f32 point);
 
 typedef i32 texture_id;
 typedef i32 gpu_object_id;
+typedef i32 framebuffer_id;
 
 struct shader_source {
+
+	friend struct shader_program;
+	friend struct ogl_manager;
+	friend void make_meta_info();
+
+private: 
+
 	string path;
 	platform_file_attributes last_attrib;
 	string source;
@@ -21,18 +29,29 @@ struct shader_source {
 struct render_command; struct render_command_list;
 
 struct shader_program {
+
+	friend struct ogl_manager;
+	friend void make_meta_info();
+
+	i32 location(string name);
+
+private:
+
 	GLuint handle = 0;
 	shader_source vertex, geometry, fragment;
 	func_ptr<void, shader_program*, render_command*> send_uniforms;
 	// tessellation control, evaluation, geometry
 
 	static shader_program make(string vert, string frag, string geom, _FPTR* uniforms, allocator* a);
-	void compile();
-	bool try_refresh();
 	void destroy();
 	void gl_destroy();
 	void recreate();
+
+	void compile();
+	bool try_refresh();
 	bool check_compile(string name, GLuint shader);
+	
+	void bind();
 };
 
 enum class texture_wrap : u8 {
@@ -47,7 +66,8 @@ enum class texture_type : u8 {
 	bmp,
 	rf,
 	array,
-	cube
+	cube,
+	target
 };
 
 struct asset_pair {
@@ -57,6 +77,7 @@ struct asset_pair {
 
 struct texture_cube_info {
 	asset_pair info;
+	iv2 dim;
 
 	void load_single(GLuint handle, asset_store* store, string name);
 };
@@ -72,17 +93,38 @@ struct texture_array_info {
 
 struct texture_bmp_info {
 	asset_pair info;
+	iv2 dim;
 
 	void load(GLuint handle, asset_store* store, string name);
 };
 
 struct texture_rf_info {
 	asset_pair info;
+	iv2 dim;
 
 	void load(GLuint handle, asset_store* store, string name);
 };
 
+struct texture_target_info {
+	gl_tex_format format = gl_tex_format::rgba8;
+	i32 samples = 1;
+	iv2 dim;
+};
+
 struct texture {
+
+	friend struct ogl_manager;
+	friend struct render_target;
+	friend struct framebuffer;
+	friend void make_meta_info();
+
+	texture() {}
+	texture(texture& t) {_memcpy(&t, this, sizeof(texture));}
+	texture(texture&& t) {_memcpy(&t, this, sizeof(texture));}
+	texture& operator=(texture& t) {_memcpy(&t, this, sizeof(texture)); return *this;}
+
+private:
+
 	texture_type type   = texture_type::none;
 	texture_id id 		= 0;
 	GLuint handle 		= 0;
@@ -93,28 +135,94 @@ struct texture {
 	f32 anisotropy 		  = 1.0f;
 
 	union {	
-		texture_rf_info    rf_info;
-		texture_bmp_info   bmp_info;
-		texture_cube_info  cube_info;
-		texture_array_info array_info;
+		texture_rf_info     rf_info;
+		texture_bmp_info    bmp_info;
+		texture_cube_info   cube_info;
+		texture_array_info  array_info;
+		texture_target_info target_info;
 	};
-
-	// WHY C++ WHY
-	texture() {}
-	texture(texture& t) {_memcpy(&t, this, sizeof(texture));}
-	texture(texture&& t) {_memcpy(&t, this, sizeof(texture));}
-	texture& operator=(texture& t) {_memcpy(&t, this, sizeof(texture)); return *this;}
 
 	static texture make_cube(texture_wrap wrap, bool pixelated, f32 aniso);
 	static texture make_rf(texture_wrap wrap, bool pixelated, f32 aniso);
 	static texture make_bmp(texture_wrap wrap, bool pixelated, f32 aniso);
 	static texture make_array(iv3 dim, u32 idx_offset, texture_wrap wrap, bool pixelated, f32 aniso, allocator* a);
+	static texture make_target(iv2 dim, i32 samples, gl_tex_format format, texture_wrap wrap, bool pixelated, f32 aniso);
 	void destroy(allocator* a);
 	void gl_destroy();
 
 	void recreate();
 	void reload_data();
 	void set_params();
+
+	void bind(u32 unit = 0);
+};
+
+enum class render_target_type : u8 {
+	tex,
+	buf
+};
+
+struct render_buffer {
+
+	friend struct render_target;
+	friend struct framebuffer;
+	friend void make_meta_info();
+
+private:
+
+	GLuint handle = 0;
+	i32 samples = 1;
+	iv2 dim;
+	
+	static render_buffer make(gl_tex_format format, iv2 dim, i32 samples = 1);
+	void gl_destroy();
+	void bind();
+};
+
+struct render_target {
+
+	friend struct framebuffer;
+	friend struct ogl_manager;
+	friend void make_meta_info();
+
+	render_target() {}
+	render_target(render_target& t) {_memcpy(&t, this, sizeof(render_target));}
+	render_target(render_target&& t) {_memcpy(&t, this, sizeof(render_target));}
+	render_target& operator=(render_target& t) {_memcpy(&t, this, sizeof(render_target)); return *this;}
+
+private:
+
+	render_target_type type;
+	gl_draw_target target = gl_draw_target::color_0;
+	union {
+		render_buffer buffer;
+		texture tex;
+	};
+
+	static render_target make_tex(gl_draw_target target, texture tex);
+	static render_target make_buf(gl_draw_target target, render_buffer buf);
+	void gl_destroy();
+	void bind();
+};
+
+struct framebuffer {
+
+	friend struct ogl_manager;
+	friend void make_meta_info();
+
+private:
+
+	GLuint handle = 0;
+	vector<render_target> targets;
+	allocator* alloc = null;
+
+	static framebuffer make(allocator* a);
+	void destroy();
+	void gl_destroy();
+
+	void add_target(render_target target);
+	void bind();
+	void commit();
 };
 
 struct ogl_info {
@@ -133,13 +241,19 @@ struct ogl_info {
 };
 
 struct gpu_object {
-	func_ptr<void, gpu_object*> setup;
-	func_ptr<void, gpu_object*, void*, bool> update;
+
+	friend struct ogl_manager;
+	friend void make_meta_info();
 
 	GLuint vao = 0;
 	GLuint vbos[5] = {};
-
+	
+	func_ptr<void, gpu_object*, void*, bool> update;
 	void* data = null;
+
+private:
+
+	func_ptr<void, gpu_object*> setup;
 	gpu_object_id id = -1;
 
 	static gpu_object make();
@@ -148,6 +262,12 @@ struct gpu_object {
 };
 
 struct draw_context {
+
+	friend struct ogl_manager;
+	friend void make_meta_info();
+
+private:
+
 	func_ptr<bool, ogl_info*> compat;
 	func_ptr<void, render_command*, gpu_object*> run;
 	shader_program shader;
@@ -185,32 +305,28 @@ struct ogl_settings {
 };
 
 struct render_command {
-	u16 cmd = 0;
+	
+	u16 cmd_id = 0;
 
-	struct {	
-		
-		texture_id texture0 = -1, texture1 = -1;
-		gpu_object_id object = -1;
-		void* uniform_info = null;
+	gpu_object_id object = -1;
+	
+	texture_id textures[8] = {-1};
+	
+	void* user_data = null;
+	u32 sort_key = 0;
 
-		m4 model, view, proj;
-		u32 sort_key = 0;
+	m4 model, view, proj;
+	r2 viewport;
+	r2 scissor;
 
-		// triangle index, gets * 3 to compute element index
-		u32 offset = 0, num_tris = 0, start_tri = 0;
+	// triangle index, gets * 3 to compute element index
+	u32 offset = 0, num_tris = 0, start_tri = 0;
 
-		// zero for entire window
-		r2 viewport;
-		r2 scissor;
+	void* callback_data = null;
+	func_ptr<void, void*> callback;
 
-		func_ptr<void, void*> callback;
-		void* param = null;
-	};
-
-	struct {
-		render_setting setting;
-		bool enable = false;
-	};
+	bool enable = false;
+	render_setting setting;
 
 	render_command() {}
 
@@ -267,17 +383,57 @@ struct ogl_manager {
 	static const u16 cmd_push_settings = 1;
 	static const u16 cmd_pop_settings = 2;
 	static const u16 cmd_setting = 3;
+	
+	ogl_info info;
+	ogl_settings settings;
+
+	// Management
+	static ogl_manager make(platform_window* win, allocator* a);
+	void destroy();
+
+	void gl_end_reload();
+	void gl_begin_reload();
+	void apply_settings();
+	void try_reload_programs();
+	void load_global_funcs();
+	void reload_texture_assets();
+
+	// Commands
+	void add_command(u16 id, _FPTR* run, _FPTR* uniforms, _FPTR* compat, string v, string f, string g = {});
+
+ 	// Textures
+	texture_id add_cubemap(asset_store* as, string name);
+	texture_id add_texture(asset_store* as, string name, texture_wrap wrap = texture_wrap::repeat, bool pixelated = false);
+	texture_id add_texture_from_font(asset_store* as, string name, texture_wrap wrap = texture_wrap::repeat, bool pixelated = false);
+
+	texture_id begin_tex_array(iv3 dim, texture_wrap wrap = texture_wrap::repeat, bool pixelated = false, u32 offset = 0);
+	void push_tex_array(texture_id tex, asset_store* as, string name);
+	i32 get_layers(texture_id tex);
+
+ 	void destroy_texture(texture_id id);
+
+ 	// Objects
+	gpu_object_id add_object(_FPTR* setup, _FPTR* update, void* cpu_data);
+ 	void destroy_object(gpu_object_id id);
+
+ 	void object_trigger_update(gpu_object_id id, void* data, bool force);
+
+ 	// Rendering
+	void execute_command_list(render_command_list* rcl);
+ 	void dbg_render_texture_fullscreen(texture_id id);
+
+	friend void make_meta_info();
+
+private:
 
 	map<u16, draw_context> commands;
-
 	map<texture_id, texture> textures;
 	map<gpu_object_id, gpu_object> objects;
 
-	ogl_settings 		settings, prev_settings;
+	ogl_settings 		prev_settings;
 	stack<cmd_settings> command_settings;
 
 	shader_program dbg_shader;
-	ogl_info info;
 
 	gpu_object_id 	next_gpu_id = 1;
 	texture_id 		next_texture_id = 1;
@@ -285,50 +441,23 @@ struct ogl_manager {
 	platform_window* win = null;
 	allocator* alloc = null;
 
-	static ogl_manager make(platform_window* win, allocator* a);
-	void destroy();
-
-	void apply_settings();
-
 	void _cmd_pop_settings();
 	void _cmd_push_settings();
 	void _cmd_apply_settings();
 	void _cmd_set_setting(render_setting setting, bool enable);
 	void _cmd_set_settings(render_command* cmd);
 
-	void load_global_funcs();
-	void try_reload_programs();
 	void check_leaked_handles();
-	void reload_texture_assets();
 	
-	void gl_end_reload();
-	void gl_begin_reload();
-
 	draw_context* select_ctx(u16 id);
-	void add_command(u16 id, _FPTR* run, _FPTR* uniforms, _FPTR* compat, string v, string f, string g = {});
 
-	texture_id add_cubemap(asset_store* as, string name);
-	void push_tex_array(texture_id tex, asset_store* as, string name);
-	texture_id begin_tex_array(iv3 dim, texture_wrap wrap = texture_wrap::repeat, bool pixelated = false, u32 offset = 0);
-	i32 get_layers(texture_id tex);
-
-	void destroy_texture(texture_id id);
 	texture* select_texture(u32 unit, texture_id id);
 	void select_textures(render_command* cmd);
-
-	texture_id add_texture(asset_store* as, string name, texture_wrap wrap = texture_wrap::repeat, bool pixelated = false);
-	texture_id add_texture_from_font(asset_store* as, string name, texture_wrap wrap = texture_wrap::repeat, bool pixelated = false);
-
-	void destroy_object(gpu_object_id id);
-	gpu_object_id add_object(_FPTR* setup, _FPTR* update, void* cpu_data);
+	
 	gpu_object* select_object(gpu_object_id id);
 	gpu_object* get_object(gpu_object_id id);
-
-	void dbg_render_texture_fullscreen(texture_id id);
-	void execute_command_list(render_command_list* rcl);
 };
 
 CALLBACK void ogl_apply(void* eng);
-
 CALLBACK void uniforms_dbg(shader_program* prog, render_command* rc, render_command_list* rcl) {};
 void debug_proc(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userPointer);

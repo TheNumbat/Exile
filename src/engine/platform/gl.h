@@ -363,6 +363,43 @@ enum class gl_vert_attrib_type : GLenum {
 	unsigned_int_10f_11f_11f_rev= 0x8C3B	
 };
 
+enum class gl_draw_target : GLenum {
+	color_0  			= 0x8CE0,
+	color_1  			= 0x8CE1,
+	color_2  			= 0x8CE2,
+	color_3  			= 0x8CE3,
+	color_4  			= 0x8CE4,
+	color_5  			= 0x8CE5,
+	color_6  			= 0x8CE6,
+	color_7  			= 0x8CE7,
+	color_8  			= 0x8CE8,
+	color_9  			= 0x8CE9,
+	color_10 			= 0x8CEA,
+	color_11 			= 0x8CEB,
+	color_12 			= 0x8CEC,
+	color_13 			= 0x8CED,
+	color_14 			= 0x8CEE,
+	color_15 			= 0x8CEF,
+	color_16 			= 0x8CF0,
+	color_17 			= 0x8CF1,
+	color_18 			= 0x8CF2,
+	color_19 			= 0x8CF3,
+	color_20 			= 0x8CF4,
+	color_21 			= 0x8CF5,
+	color_22 			= 0x8CF6,
+	color_23 			= 0x8CF7,
+	color_24 			= 0x8CF8,
+	color_25 			= 0x8CF9,
+	color_26 			= 0x8CFA,
+	color_27 			= 0x8CFB,
+	color_28 			= 0x8CFC,
+	color_29 			= 0x8CFD,
+	color_30 			= 0x8CFE,
+	color_31 			= 0x8CFF,
+	depth   			= 0x8D00,
+	stencil 			= 0x8D20
+};
+
 enum class gl_tex_filter : GLint {
 	nearest                   	= 0x2600,
 	linear                    	= 0x2601,
@@ -713,6 +750,16 @@ enum class gl_pix_store : GLenum {
 	unpack_swap_bytes   = 0x0CF0
 };
 
+enum class gl_renderbuffer : GLenum {
+	val = 0x8D41
+};
+
+enum class gl_framebuffer : GLenum {
+	val  = 0x8D40,
+	read = 0x8CA8,
+	draw = 0x8CA9
+};
+
 DLL_IMPORT const GLubyte* glGetString(gl_info name);
 
 DLL_IMPORT void glDeleteTextures(GLsizei n, const GLuint *textures);
@@ -816,6 +863,21 @@ typedef void (*glDrawElementsBaseVertex_t)(gl_draw_mode mode, GLsizei count, gl_
 
 typedef void (*glTexParameterIiv_t)(gl_tex_target target, gl_tex_param pname, const GLint *params);
 
+typedef void (*glGenRenderbuffers_t)(GLsizei n, GLuint *buffers);
+typedef void (*glBindRenderbuffer_t)(gl_renderbuffer target, GLuint renderbuffer);
+typedef void (*glRenderbufferStorage_t)(gl_renderbuffer target, gl_tex_format internalformat, GLsizei width, GLsizei height);
+typedef void (*glRenderbufferStorageMultisample_t)(gl_renderbuffer target, GLsizei samples, gl_tex_format internalformat, GLsizei width, GLsizei height);
+typedef void (*glDeleteRenderbuffers_t)(GLsizei n, GLuint *renderbuffers);
+
+typedef void (*glTexImage2DMultisample_t)(gl_tex_target target, GLsizei samples, gl_tex_format internalformat, GLsizei width, GLsizei height, gl_bool fixedsamplelocations);
+
+typedef void (*glGenFramebuffers_t)(GLsizei n, GLuint *ids);
+typedef void (*glDeleteFramebuffers_t)(GLsizei n, GLuint *framebuffers);
+typedef void (*glBindFramebuffer_t)(gl_framebuffer target, GLuint framebuffer);
+typedef void (*glFramebufferTexture2D_t)(gl_framebuffer target, gl_draw_target attachment, gl_tex_target textarget, GLuint texture, GLint level);
+typedef void (*glFramebufferRenderbuffer_t)(gl_framebuffer target, gl_draw_target attachment, gl_renderbuffer renderbuffertarget, GLuint renderbuffer);
+typedef void (*glDrawBuffers_t)(GLsizei n, gl_draw_target *bufs);
+
 glIs_t glIsTexture;
 glIs_t glIsBuffer;
 glIs_t glIsFramebuffer;
@@ -888,3 +950,18 @@ glVertexAttribPointer_t		glVertexAttribPointer;
 glVertexAttribIPointer_t	glVertexAttribIPointer;
 glEnableVertexAttribArray_t glEnableVertexAttribArray;
 glDrawElementsBaseVertex_t	glDrawElementsBaseVertex;
+
+glGenRenderbuffers_t				glGenRenderbuffers;
+glBindRenderbuffer_t				glBindRenderbuffer;
+glRenderbufferStorage_t				glRenderbufferStorage;
+glRenderbufferStorageMultisample_t	glRenderbufferStorageMultisample;
+glDeleteRenderbuffers_t				glDeleteRenderbuffers;
+
+glTexImage2DMultisample_t 	glTexImage2DMultisample;
+
+glGenFramebuffers_t 		glGenFramebuffers;
+glDeleteFramebuffers_t 		glDeleteFramebuffers;
+glBindFramebuffer_t 		glBindFramebuffer;
+glFramebufferTexture2D_t 	glFramebufferTexture2D;
+glFramebufferRenderbuffer_t glFramebufferRenderbuffer;
+glDrawBuffers_t 			glDrawBuffers;

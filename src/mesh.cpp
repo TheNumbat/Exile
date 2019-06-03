@@ -1,4 +1,6 @@
 
+// TODO(max): remove all OpenGL calls; abstract into renderer system
+
 void setup_mesh_commands() { 
 	
 	register_mesh(lines);
@@ -27,11 +29,11 @@ CALLBACK void uniforms_mesh_pointcloud(shader_program* prog, render_command* cmd
 
 CALLBACK void uniforms_mesh_skydome(shader_program* prog, render_command* cmd) { 
 
-	world_time* time = (world_time*)cmd->uniform_info;
+	world_time* time = (world_time*)cmd->user_data;
 
-	GLint tloc = glGetUniformLocation(prog->handle, "transform");
-	GLint dloc = glGetUniformLocation(prog->handle, "day_01");
-	GLint sloc = glGetUniformLocation(prog->handle, "tex");
+	GLint tloc = prog->location("transform"_);
+	GLint dloc = prog->location("day_01"_);
+	GLint sloc = prog->location("tex"_);
 
 	m4 transform = cmd->proj * cmd->view * cmd->model;
 
@@ -42,7 +44,7 @@ CALLBACK void uniforms_mesh_skydome(shader_program* prog, render_command* cmd) {
 
 CALLBACK void uniforms_mesh_cubemap(shader_program* prog, render_command* cmd) { 
 
-	GLint loc = glGetUniformLocation(prog->handle, "transform");
+	GLint loc = prog->location("transform"_);
 
 	m4 transform = cmd->proj * cmd->view * cmd->model;
 
@@ -51,35 +53,35 @@ CALLBACK void uniforms_mesh_cubemap(shader_program* prog, render_command* cmd) {
 
 CALLBACK void uniforms_mesh_chunk(shader_program* prog, render_command* cmd) { 
 
-	world* w = (world*)cmd->uniform_info;
+	world* w = (world*)cmd->user_data;
 	world_settings* set = &w->settings;
 	world_time* time = &w->time;
 	
 	m4 mvp = cmd->proj * cmd->view * cmd->model;
 	m4 mv = w->p.camera.offset() * cmd->model;
 
-	glUniform1i(glGetUniformLocation(prog->handle, "blocks_tex"), 0);
-	glUniform1i(glGetUniformLocation(prog->handle, "sky_tex"), 1);
+	glUniform1i(prog->location("blocks_tex"_), 0);
+	glUniform1i(prog->location("sky_tex"_), 1);
 
-	glUniform1i(glGetUniformLocation(prog->handle, "do_fog"), set->dist_fog);
-	glUniform1i(glGetUniformLocation(prog->handle, "do_light"), set->block_light);
-	glUniform1i(glGetUniformLocation(prog->handle, "smooth_light"), set->smooth_light);
-	glUniform1i(glGetUniformLocation(prog->handle, "debug_light"), (i32)set->light_debug_mode);
+	glUniform1i(prog->location("do_fog"_), set->dist_fog);
+	glUniform1i(prog->location("do_light"_), set->block_light);
+	glUniform1i(prog->location("smooth_light"_), set->smooth_light);
+	glUniform1i(prog->location("debug_light"_), (i32)set->light_debug_mode);
 
-	glUniform1f(glGetUniformLocation(prog->handle, "day_01"), time->day_01());
-	glUniform1f(glGetUniformLocation(prog->handle, "ambient"), set->ambient_factor);
-	glUniform1f(glGetUniformLocation(prog->handle, "units_per_voxel"), (f32)chunk::units_per_voxel);
-	glUniform1f(glGetUniformLocation(prog->handle, "render_distance"), (f32)set->view_distance * chunk::wid);
+	glUniform1f(prog->location("day_01"_), time->day_01());
+	glUniform1f(prog->location("ambient"_), set->ambient_factor);
+	glUniform1f(prog->location("units_per_voxel"_), (f32)chunk::units_per_voxel);
+	glUniform1f(prog->location("render_distance"_), (f32)set->view_distance * chunk::wid);
 
-	glUniform4fv(glGetUniformLocation(prog->handle, "ao_curve"), 1, set->ao_curve.a);
+	glUniform4fv(prog->location("ao_curve"_), 1, set->ao_curve.a);
 
-	glUniformMatrix4fv(glGetUniformLocation(prog->handle, "mvp"), 1, gl_bool::_false, mvp.a);
-	glUniformMatrix4fv(glGetUniformLocation(prog->handle, "m"), 1, gl_bool::_false, mv.a);
+	glUniformMatrix4fv(prog->location("mvp"_), 1, gl_bool::_false, mvp.a);
+	glUniformMatrix4fv(prog->location("m"_), 1, gl_bool::_false, mv.a);
 }
 
 CALLBACK void uniforms_mesh_2d_col(shader_program* prog, render_command* cmd) { 
 
-	GLint loc = glGetUniformLocation(prog->handle, "transform");
+	GLint loc = prog->location("transform"_);
 
 	m4 transform = cmd->proj * cmd->view * cmd->model;
 
@@ -88,7 +90,7 @@ CALLBACK void uniforms_mesh_2d_col(shader_program* prog, render_command* cmd) {
 
 CALLBACK void uniforms_mesh_2d_tex(shader_program* prog, render_command* cmd) { 
 
-	GLint loc = glGetUniformLocation(prog->handle, "transform");
+	GLint loc = prog->location("transform"_);
 
 	m4 transform = cmd->proj * cmd->view * cmd->model;
 
@@ -97,7 +99,7 @@ CALLBACK void uniforms_mesh_2d_tex(shader_program* prog, render_command* cmd) {
 
 CALLBACK void uniforms_mesh_2d_tex_col(shader_program* prog, render_command* cmd) { 
 
-	GLint loc = glGetUniformLocation(prog->handle, "transform");
+	GLint loc = prog->location("transform"_);
 
 	m4 transform = cmd->proj * cmd->view * cmd->model;
 
@@ -106,7 +108,7 @@ CALLBACK void uniforms_mesh_2d_tex_col(shader_program* prog, render_command* cmd
 
 CALLBACK void uniforms_mesh_3d_tex(shader_program* prog, render_command* cmd) { 
 	
-	GLint loc = glGetUniformLocation(prog->handle, "transform");
+	GLint loc = prog->location("transform"_);
 
 	m4 transform = cmd->proj * cmd->view * cmd->model;
 
@@ -115,7 +117,7 @@ CALLBACK void uniforms_mesh_3d_tex(shader_program* prog, render_command* cmd) {
 
 CALLBACK void uniforms_mesh_lines(shader_program* prog, render_command* cmd) { 
 	
-	GLint loc = glGetUniformLocation(prog->handle, "transform");
+	GLint loc = prog->location("transform"_);
 
 	m4 transform = cmd->proj * cmd->view * cmd->model;
 
@@ -124,7 +126,7 @@ CALLBACK void uniforms_mesh_lines(shader_program* prog, render_command* cmd) {
 
 CALLBACK void uniforms_mesh_3d_tex_instanced(shader_program* prog, render_command* cmd) { 
 	
-	GLint loc = glGetUniformLocation(prog->handle, "transform");
+	GLint loc = prog->location("transform"_);
 
 	m4 transform = cmd->proj * cmd->view * cmd->model;
 
@@ -254,9 +256,7 @@ CALLBACK void update_mesh_3d_tex_instanced(gpu_object* obj, void* d, bool force)
 	mesh_3d_tex_instance_data* data = (mesh_3d_tex_instance_data*)d;
 	mesh_3d_tex* m = data->parent;
 
-	gpu_object* par_obj = eng->ogl.get_object(m->gpu);
-
-	par_obj->update(par_obj, m, force);
+	eng->ogl.object_trigger_update(m->gpu, m, force);
 
 	if(force || data->dirty) {
 

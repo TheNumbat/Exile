@@ -173,6 +173,15 @@ void shader_program::gl_destroy() {
 	handle = 0;
 }
 
+i32 shader_program::location(string name) {
+
+	return glGetUniformLocation(handle, name.c_str);
+}
+
+void shader_program::bind() {
+	glUseProgram(handle);
+}
+
 void shader_program::recreate() {  
 
 	handle = glCreateProgram();
@@ -302,7 +311,7 @@ gpu_object gpu_object::make() {
 	glGenBuffers(5, ret.vbos);
 	return ret;
 }
- 
+
 void gpu_object::recreate() { 
 
 	glGenVertexArrays(1, &vao);
@@ -348,6 +357,12 @@ void ogl_manager::destroy_object(gpu_object_id id) {
 		obj->destroy();
 		objects.erase(id);
 	}
+}
+
+void ogl_manager::object_trigger_update(gpu_object_id id, void* data, bool force) {
+
+	gpu_object* obj = get_object(id);
+	obj->update(obj, data, force);
 }
 
 gpu_object* ogl_manager::get_object(gpu_object_id id) { 
@@ -497,15 +512,16 @@ texture* ogl_manager::select_texture(u32 unit, texture_id id) {
 		return null;
 	}
 
-	glBindTextureUnit(unit, t->handle);
+	t->bind(unit);
 
 	return t;
 }
 
 void ogl_manager::select_textures(render_command* cmd) { 
 
-	select_texture(0, cmd->texture0);
-	select_texture(1, cmd->texture1);
+	DO(8) {
+		select_texture(__i, cmd->textures[__i]);
+	}
 }
 
 texture texture::make_bmp(texture_wrap wrap, bool pixelated, f32 aniso) { 
@@ -578,6 +594,25 @@ texture texture::make_array(iv3 dim, u32 offset, texture_wrap wrap, bool pixelat
 	return ret;
 }
 
+texture texture::make_target(iv2 dim, i32 samples, gl_tex_format format, texture_wrap wrap, bool pixelated, f32 aniso) {
+
+	texture ret;
+	ret.type = texture_type::target;
+	ret.gl_type = samples == 1 ? gl_tex_target::_2D : gl_tex_target::_2D_multisample;
+	ret.wrap = wrap;
+	ret.pixelated = pixelated;
+	ret.anisotropy = aniso;
+
+	ret.target_info.dim = dim;
+	ret.target_info.samples = samples;
+	ret.target_info.format = format;
+
+	glGenTextures(1, &ret.handle);
+	ret.set_params();
+
+	return ret;
+}
+
 void texture::set_params() { 
 
 	glBindTexture(gl_type, handle);
@@ -591,6 +626,14 @@ void texture::set_params() {
 		glTexParameteri(gl_type, gl_tex_param::wrap_t, (GLint)gl_tex_wrap::clamp_to_edge);
 		glBindTexture(gl_type, 0);
 		return;
+	}
+
+	if(type == texture_type::target) {
+		if(target_info.samples == 1) {
+			glTexImage2D(gl_type, 0, target_info.format, target_info.dim.x, target_info.dim.y, 0, gl_pixel_data_format::rgb, gl_pixel_data_type::unsigned_byte, 0);
+		} else {
+			glTexImage2DMultisample(gl_type, target_info.samples, target_info.format, target_info.dim.x, target_info.dim.y, gl_bool::_true);
+		}
 	}
 
 	if(gl_type == gl_tex_target::_2D_array) {
@@ -643,6 +686,7 @@ void texture_cube_info::load_single(GLuint handle, asset_store* store, string na
 	LOG_DEBUG_ASSERT(a);
 	LOG_DEBUG_ASSERT(a->type == asset_type::bitmap);
 
+	dim = iv2(a->bitmap.width, a->bitmap.height);
 	glBindTexture(gl_tex_target::cube_map, handle);
 
 	glTexImage2D(gl_tex_target::cube_map_negative_z, 0, gl_tex_format::rgba8, a->bitmap.width, a->bitmap.height, 0, gl_pixel_data_format::rgba, gl_pixel_data_type::unsigned_byte, a->mem);
@@ -667,6 +711,7 @@ void texture_rf_info::load(GLuint handle, asset_store* as, string name) {
 	LOG_DEBUG_ASSERT(a);
 	LOG_DEBUG_ASSERT(a->type == asset_type::raster_font);
 
+	dim = iv2(a->raster_font.width, a->raster_font.height);
 	glBindTexture(gl_tex_target::_2D, handle);
 
 	glTexImage2D(gl_tex_target::_2D, 0, gl_tex_format::rgba8, a->raster_font.width, a->raster_font.height, 0, gl_pixel_data_format::red, gl_pixel_data_type::unsigned_byte, a->mem);
@@ -688,6 +733,7 @@ void texture_bmp_info::load(GLuint handle, asset_store* as, string name) {
 	LOG_DEBUG_ASSERT(a);
 	LOG_DEBUG_ASSERT(a->type == asset_type::bitmap);
 
+	dim = iv2(a->bitmap.width, a->bitmap.height);
 	glBindTexture(gl_tex_target::_2D, handle);
 
 	glTexImage2D(gl_tex_target::_2D, 0, gl_tex_format::rgba8, a->bitmap.width, a->bitmap.height, 0, gl_pixel_data_format::rgba, gl_pixel_data_type::unsigned_byte, a->mem);
@@ -720,6 +766,11 @@ void texture_array_info::push(GLuint handle, asset_store* as, string name) {
 void texture::gl_destroy() { 
 	
 	glDeleteTextures(1, &handle);
+	handle = 0;
+}
+
+void texture::bind(u32 unit) {
+	glBindTextureUnit(unit, handle);
 }
 
 void texture::recreate() { 
@@ -763,6 +814,132 @@ void texture::destroy(allocator* a) {
 	gl_destroy();
 }
 
+render_buffer render_buffer::make(gl_tex_format format, iv2 dim, i32 samples) {
+
+	render_buffer ret;
+
+	ret.dim = dim;
+	ret.samples = samples;
+
+	glGenRenderbuffers(1, &ret.handle);
+	glBindRenderbuffer(gl_renderbuffer::val, ret.handle);
+
+	if(samples == 1) {
+		glRenderbufferStorage(gl_renderbuffer::val, format, dim.x, dim.y);
+	} else {
+		glRenderbufferStorageMultisample(gl_renderbuffer::val, samples, format, dim.x, dim.y);
+	}
+
+	glBindRenderbuffer(gl_renderbuffer::val, 0);
+
+	return ret;
+}
+
+void render_buffer::gl_destroy() {
+
+	glDeleteRenderbuffers(1, &handle);
+	handle = 0;
+}
+
+void render_buffer::bind() {
+
+	glBindRenderbuffer(gl_renderbuffer::val, handle);
+}
+
+render_target render_target::make_tex(gl_draw_target target, texture tex) {
+
+	LOG_DEBUG_ASSERT(tex.type == texture_type::target);
+
+	render_target ret;
+	ret.type = render_target_type::tex;
+	ret.target = target;
+	ret.tex = tex;
+	return ret;
+}
+
+render_target render_target::make_buf(gl_draw_target target, render_buffer buf) {
+
+	render_target ret;
+	ret.type = render_target_type::buf;
+	ret.target = target;
+	ret.buffer = buf;
+	return ret;
+}
+
+void render_target::gl_destroy() {
+
+	if(type == render_target_type::tex) {
+		tex.gl_destroy();
+	} else {
+		buffer.gl_destroy();
+	}
+}
+
+void render_target::bind() {
+
+	if(type == render_target_type::tex) {
+		tex.bind();
+	} else {
+		buffer.bind();
+	}
+}
+
+framebuffer framebuffer::make(allocator* a) {
+
+	framebuffer ret;
+
+	glGenFramebuffers(1, &ret.handle);
+	ret.targets = vector<render_target>::make(4, a);
+	ret.alloc = a;
+
+	return ret;
+}
+
+void framebuffer::destroy() {
+
+	targets.destroy();
+	gl_destroy();
+}
+
+void framebuffer::gl_destroy() {
+
+	glDeleteFramebuffers(1, &handle);
+	handle = 0;
+}
+
+void framebuffer::add_target(render_target target) {
+
+	// TODO(max): maybe assert that the attachment isn't already used
+	targets.push(target);
+}
+
+void framebuffer::commit() {
+
+	glBindFramebuffer(gl_framebuffer::val, handle);
+	
+	array<gl_draw_target> target_data = array<gl_draw_target>::make(targets.size);
+
+	FORVEC(it, targets) {
+		if(it->type == render_target_type::tex) {
+			glFramebufferTexture2D(gl_framebuffer::val, it->target, it->tex.gl_type, it->tex.handle, 0);
+		} else {
+			glFramebufferRenderbuffer(gl_framebuffer::val, it->target, gl_renderbuffer::val, it->buffer.handle);
+		}
+		*target_data.get(__it) = it->target;
+	}
+
+	// NOTE(max): this serves as a remapping - location in shader
+	glDrawBuffers(target_data.capacity, target_data.memory);
+
+	target_data.destroy();
+	glBindFramebuffer(gl_framebuffer::val, 0);
+}
+
+void framebuffer::bind() {
+
+	glBindFramebuffer(gl_framebuffer::val, handle);
+}
+
 void ogl_manager::add_command(u16 id, _FPTR* run, _FPTR* uniforms, _FPTR* compat, string v, string f, string g) { 
 
 	if(commands.try_get(id)) {
@@ -800,9 +977,7 @@ draw_context* ogl_manager::select_ctx(u16 id) {
 		return null;
 	}
 
-	{ PROF_SCOPE("glUseProgram"_);
-		glUseProgram(d->shader.handle);
-	}
+	d->shader.bind();
 	
 	return d;
 }
@@ -887,7 +1062,7 @@ void ogl_manager::execute_command_list(render_command_list* rcl) {
 
 	FORVEC(cmd, rcl->commands) {
 
-		switch(cmd->cmd) {
+		switch(cmd->cmd_id) {
 		case cmd_push_settings: {
 			_cmd_push_settings();
 		} break;
@@ -904,7 +1079,7 @@ void ogl_manager::execute_command_list(render_command_list* rcl) {
 			
 			gpu_object* obj = select_object(cmd->object);
 
-			draw_context* d = select_ctx(cmd->cmd);
+			draw_context* d = select_ctx(cmd->cmd_id);
 
 			d->shader.send_uniforms(&d->shader, cmd);
 			d->run(cmd, obj);
@@ -913,7 +1088,7 @@ void ogl_manager::execute_command_list(render_command_list* rcl) {
 		}
 
 		if(cmd->callback) {
-			cmd->callback(cmd->param);
+			cmd->callback(cmd->callback_data);
 		}
 	}
 }
@@ -1154,6 +1329,18 @@ void ogl_manager::load_global_funcs() {
 	GL_LOAD(glUniform4fv);
 	GL_LOAD(glBindSampler);
 	GL_LOAD(glUniform2f);
+	GL_LOAD(glGenRenderbuffers);
+	GL_LOAD(glBindRenderbuffer);
+	GL_LOAD(glRenderbufferStorage);
+	GL_LOAD(glRenderbufferStorageMultisample);
+	GL_LOAD(glDeleteRenderbuffers);
+	GL_LOAD(glTexImage2DMultisample);
+	GL_LOAD(glGenFramebuffers);
+	GL_LOAD(glDeleteFramebuffers);
+	GL_LOAD(glBindFramebuffer);
+	GL_LOAD(glFramebufferTexture2D);
+	GL_LOAD(glFramebufferRenderbuffer);
+	GL_LOAD(glDrawBuffers);
 
 	GL_LOAD(glGetStringi);
 	GL_LOAD(glGetInteger64v);
@@ -1215,14 +1402,14 @@ void ogl_manager::check_leaked_handles() {
 render_command render_command::make(u16 type) {
 
 	render_command ret;
-	ret.cmd = type;
+	ret.cmd_id = type;
 	return ret;
 }
 
 render_command render_command::make(u16 type, render_setting setting, bool enable) { 
 
 	render_command ret;
-	ret.cmd = type;
+	ret.cmd_id = type;
 	ret.setting = setting;
 	ret.enable = enable;
 	return ret;
@@ -1232,7 +1419,7 @@ render_command render_command::make(u16 id, gpu_object_id gpu, u32 key) {
 
 	render_command ret;
 	ret.object = gpu;
-	ret.cmd = id;
+	ret.cmd_id = id;
 	ret.sort_key = key;
 	return ret;
 }

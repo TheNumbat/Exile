@@ -438,8 +438,8 @@ void world_environment::render(player* p, world_time* t) { PROF_FUNC
 	{
 		render_command cmd = render_command::make((u16)mesh_cmd::skydome, sky.gpu);
 
-		cmd.uniform_info = t;
-		cmd.texture0 = sky_texture;
+		cmd.user_data = t;
+		cmd.textures[0] = sky_texture;
 
 		cmd.view = p->camera.view_no_translate();
 		cmd.proj = mproj;
@@ -451,7 +451,7 @@ void world_environment::render(player* p, world_time* t) { PROF_FUNC
 
 		render_command cmd = render_command::make((u16)mesh_cmd::pointcloud, stars.gpu);
 
-		cmd.uniform_info = t;
+		cmd.user_data = t;
 		cmd.view = p->camera.view_no_translate();
 		cmd.proj = mproj;
 
@@ -460,8 +460,8 @@ void world_environment::render(player* p, world_time* t) { PROF_FUNC
 	{
 		render_command cmd = render_command::make((u16)mesh_cmd::skyfar, sun_moon.gpu);
 
-		cmd.uniform_info = t;
-		cmd.texture0 = env_texture;
+		cmd.user_data = t;
+		cmd.textures[0] = env_texture;
 
 		cmd.view = p->camera.view_no_translate();
 		cmd.proj = mproj;
@@ -508,16 +508,16 @@ void world::render_chunks() { PROF_FUNC
 			}
 			render_command cmd = render_command::make((u16)mesh_cmd::chunk, c->mesh.gpu);
 
-			cmd.texture0 = block_textures;
-			cmd.texture1 = env.sky_texture;
+			cmd.textures[0] = block_textures;
+			cmd.textures[1] = env.sky_texture;
 			cmd.num_tris = c->mesh_faces;
-			cmd.uniform_info = this;
+			cmd.user_data = this;
 
 			v3 chunk_pos = v3((f32)current.x * chunk::wid, (f32)current.y * chunk::hei, (f32)current.z * chunk::wid);
 			cmd.model = translate(chunk_pos - p.camera.pos);
 
 			cmd.callback = FPTR(unlock_chunk);
-			cmd.param = c;
+			cmd.callback_data = c;
 
 			cmd.view = p.camera.view_pos_origin();
 			cmd.proj = p.camera.proj((f32)eng->window.settings.w / (f32)eng->window.settings.h);
@@ -548,7 +548,7 @@ void world::render_chunks() { PROF_FUNC
 		cmd.view = p.camera.view();
 		cmd.proj = p.camera.proj((f32)eng->window.settings.w / (f32)eng->window.settings.h);
 		cmd.callback = FPTR(destroy_lines);
-		cmd.param = &lines;
+		cmd.callback_data = &lines;
 		rcl.add_command(cmd);
 	}
 	}
@@ -579,7 +579,7 @@ void world::render_player() { PROF_FUNC
 		cmd.view = cam.view();
 		cmd.proj = cam.proj((f32)eng->window.settings.w / (f32)eng->window.settings.h);
 		cmd.callback = FPTR(destroy_lines);
-		cmd.param = &lines;
+		cmd.callback_data = &lines;
 		rcl.add_command(cmd);
 	}
 
@@ -595,7 +595,7 @@ void world::render_player() { PROF_FUNC
 		cmd.proj = ortho(0, w, h, 0, -1, 1);
 
 		cmd.callback = FPTR(destroy_2d_col);
-		cmd.param = &crosshair;
+		cmd.callback_data = &crosshair;
 
 		rcl.push_settings();
 		rcl.set_setting(render_setting::depth_test, false);

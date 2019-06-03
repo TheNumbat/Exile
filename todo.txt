@@ -6,6 +6,15 @@ Working To-Do:
 		FIX: torchlight AND sunlight removal ?????
 
 		deferred rendering
+			creating, reloading, deleting framebuffers, renderbuffers, etc. (OGL interface)
+			render to screen (default framebuffer)
+			render passes/render command use of framebuffers
+			multisample targets and textures
+			multiple attachments
+			testing
+
+		GLNAMED OPERATIONS EVERYWHERE 
+
 		gamma correction
 		HDR / bloom / god rays / better fog
 		dynamic lights
