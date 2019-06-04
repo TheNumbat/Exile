@@ -188,34 +188,13 @@ struct player {
 	void reset();
 };
 
-enum class light_debug : i32 {
-	none = 0,
-	torch,
-	sun
-};
-
 struct world_settings {
 
 	f32 gravity = 0.0f;
 	i32 view_distance = 4;
 	i32 max_light_propogation = 1;
 	bool respect_cam = true;
-	
-	f32 gamma = 2.2f;
-	bool wireframe = false;
-	bool cull_backface = true;
-	bool sample_shading = true;
 	bool draw_chunk_corners = false;
-
-	bool dist_fog = false;
-	
-	bool block_light = true;
-	bool smooth_light = true;
-	light_debug light_debug_mode = light_debug::none;
-
-	float ambient_factor = 0.1f;
-
-	v4 ao_curve = v4(0.25f, 0.5f, 0.75f, 1.0f);
 };
 
 struct world_time {

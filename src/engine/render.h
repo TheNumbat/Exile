@@ -319,7 +319,8 @@ struct render_command {
 	
 	texture_id textures[8] = {-1, -1, -1, -1, -1, -1, -1, -1};
 
-	void* user_data = null;
+	void* user_data0 = null;
+	void* user_data1 = null;
 	u32 sort_key = 0;
 
 	m4 model, view, proj;

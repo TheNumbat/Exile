@@ -456,13 +456,7 @@ void world::render_chunks() { PROF_FUNC
 	render_command_list rcl = render_command_list::make();
 	thread_pool.renew_priorities(check_pirority, this);
 
-	rcl.push_settings();
-	if(settings.wireframe)
-		rcl.set_setting(render_setting::wireframe, true);
-	if(settings.cull_backface)
-		rcl.set_setting(render_setting::cull, true);
-	if(settings.sample_shading)
-		rcl.set_setting(render_setting::aa_shading, true);
+	exile->ren.world_begin_chunks(&rcl);
 
 	{PROF_SCOPE("Build Render List"_);
 
@@ -488,7 +482,7 @@ void world::render_chunks() { PROF_FUNC
 		}
 	}
 
-	rcl.pop_settings();
+	exile->ren.world_end_chunks(&rcl);
 
 	mesh_lines lines; 
 	if(settings.draw_chunk_corners) {

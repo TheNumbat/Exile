@@ -212,11 +212,34 @@ struct world;
 struct chunk;
 struct world_time;
 
-struct exile_render_settings {
-	
-	// TODO(max): move world render settings here
+enum class world_light_debug : i32 {
+	none = 0,
+	torch,
+	sun
+};
 
+struct world_render_settings {
+	
+	bool block_light = true;
+	bool smooth_light = true;
+	float ambient_factor = 0.1f;
+	world_light_debug light_debug_mode = world_light_debug::none;
+	v4 ao_curve = v4(0.25f, 0.5f, 0.75f, 1.0f);
+
+	bool wireframe = false;
+	bool cull_backface = true;
+	bool sample_shading = true;
+
+	bool dist_fog = false;
+};
+
+struct exile_render_settings {
+
+	world_render_settings world_set;
+
+	f32 gamma = 2.2f;
 	i32 num_samples = 4;
+
 	colorf clear_color = colorf(0.8f, 0.8f, 0.8f, 1.0f);
 };
 
@@ -269,7 +292,10 @@ struct exile_renderer {
 	render_command world_lines_cmd(mesh_lines* mesh, m4 view, m4 proj);
 	render_command world_stars_cmd(gpu_object_id gpu_id, world_time* time, m4 view, m4 proj);
 	render_command world_skydome_cmd(gpu_object_id gpu_id, world_time* time, texture_id sky, m4 view, m4 proj);
+	
+	void world_begin_chunks(render_command_list* rcl);
 	render_command world_chunk_cmd(world* w, chunk* c, texture_id blocks, texture_id sky, m4 model, m4 view, m4 proj);
+	void world_end_chunks(render_command_list* rcl);
 
 	void generate_mesh_commands();
 	void generate_passes();

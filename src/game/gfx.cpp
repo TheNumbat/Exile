@@ -17,7 +17,7 @@ render_command exile_renderer::world_skydome_cmd(gpu_object_id gpu_id, world_tim
 	render_command cmd = render_command::make(cmd_skydome, gpu_id);
 
 	cmd.fb_id = world_pass.buffer;
-	cmd.user_data = time;
+	cmd.user_data0 = time;
 	cmd.textures[0] = sky;
 
 	cmd.view = view;
@@ -31,11 +31,27 @@ render_command exile_renderer::world_stars_cmd(gpu_object_id gpu_id, world_time*
 	render_command cmd = render_command::make(cmd_pointcloud, gpu_id);
 
 	cmd.fb_id = world_pass.buffer;
-	cmd.user_data = time;
+	cmd.user_data0 = time;
 	cmd.view = view;
 	cmd.proj = proj;
 
 	return cmd;
+}
+
+void exile_renderer::world_begin_chunks(render_command_list* rcl) {
+
+	rcl->push_settings();
+	if(settings.world_set.wireframe)
+		rcl->set_setting(render_setting::wireframe, true);
+	if(settings.world_set.cull_backface)
+		rcl->set_setting(render_setting::cull, true);
+	if(settings.world_set.sample_shading)
+		rcl->set_setting(render_setting::aa_shading, true);
+}
+
+void exile_renderer::world_end_chunks(render_command_list* rcl) {
+
+	rcl->pop_settings();
 }
 
 render_command exile_renderer::world_chunk_cmd(world* w, chunk* c, texture_id blocks, texture_id sky, m4 model, m4 view, m4 proj) {
@@ -46,7 +62,8 @@ render_command exile_renderer::world_chunk_cmd(world* w, chunk* c, texture_id bl
 	cmd.textures[0] = blocks;
 	cmd.textures[1] = sky;
 	cmd.num_tris = c->mesh_faces;
-	cmd.user_data = w;
+	cmd.user_data0 = w;
+	cmd.user_data1 = &settings.world_set;
 
 	cmd.model = model;
 	cmd.view = view;
@@ -118,7 +135,7 @@ void exile_renderer::render_to_screen() {
 
 		cmd.textures[0] = world_pass.tex;
 		cmd.textures[1] = hud_pass.tex;
-		cmd.user_data = this;
+		cmd.user_data0 = this;
 
 		rcl.add_command(cmd);
 	}
@@ -281,7 +298,7 @@ CALLBACK void uniforms_composite_ms(shader_program* prog, render_command* cmd) {
 
 	uniforms_composite(prog, cmd);
 
-	exile_renderer* set = (exile_renderer*)cmd->user_data;
+	exile_renderer* set = (exile_renderer*)cmd->user_data0;
 
 	glUniform1i(prog->location("num_samples"_), set->prev_samples);
 	glUniform2f(prog->location("screen_size"_), (f32)set->prev_dim.x, (f32)set->prev_dim.y);
@@ -322,7 +339,7 @@ CALLBACK void uniforms_mesh_pointcloud(shader_program* prog, render_command* cmd
 
 CALLBACK void uniforms_mesh_skydome(shader_program* prog, render_command* cmd) { 
 
-	world_time* time = (world_time*)cmd->user_data;
+	world_time* time = (world_time*)cmd->user_data0;
 
 	GLint tloc = prog->location("transform"_);
 	GLint dloc = prog->location("day_01"_);
@@ -346,9 +363,9 @@ CALLBACK void uniforms_mesh_cubemap(shader_program* prog, render_command* cmd) {
 
 CALLBACK void uniforms_mesh_chunk(shader_program* prog, render_command* cmd) { 
 
-	world* w = (world*)cmd->user_data;
-	world_settings* set = &w->settings;
+	world* w = (world*)cmd->user_data0;
 	world_time* time = &w->time;
+	world_render_settings* set = (world_render_settings*)cmd->user_data1;
 	
 	m4 mvp = cmd->proj * cmd->view * cmd->model;
 	m4 mv = w->p.camera.offset() * cmd->model;
@@ -364,7 +381,7 @@ CALLBACK void uniforms_mesh_chunk(shader_program* prog, render_command* cmd) {
 	glUniform1f(prog->location("day_01"_), time->day_01());
 	glUniform1f(prog->location("ambient"_), set->ambient_factor);
 	glUniform1f(prog->location("units_per_voxel"_), (f32)chunk::units_per_voxel);
-	glUniform1f(prog->location("render_distance"_), (f32)set->view_distance * chunk::wid);
+	glUniform1f(prog->location("render_distance"_), (f32)w->settings.view_distance * chunk::wid);
 
 	glUniform4fv(prog->location("ao_curve"_), 1, set->ao_curve.a);
 
