@@ -31,7 +31,7 @@ void exile_state::init() { PROF_FUNC
 void exile_state::gl_reload() { 
 
 	w.regenerate();	
-	ren.apply_window_settings();
+	ren.recreate_passes();
 }
 
 void exile_state::update() { PROF_FUNC

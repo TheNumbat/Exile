@@ -237,8 +237,13 @@ struct exile_renderer {
 
 	void generate_mesh_commands();
 	void generate_passes();
+	void recreate_passes();
+	void destroy_passes();
+	void check_recreate();
 
-	void apply_window_settings();
+	iv2 prev_dim;
+	i32 prev_samples = 0;
+
 	void render_to_screen();
 };
 

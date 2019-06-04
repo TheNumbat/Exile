@@ -96,10 +96,6 @@ void exile_renderer::world_begin_clear() {
 	rcl.destroy();
 }
 
-void exile_renderer::apply_window_settings() {
-	LOG_ASSERT(false);
-}
-
 void exile_renderer::render_to_screen() {
 
 	render_command_list rcl = render_command_list::make();
@@ -115,22 +111,39 @@ void exile_renderer::render_to_screen() {
 	rcl.destroy();
 
 	exile->eng->ogl.dbg_render_texture_fullscreen(world_buf_tex);
+
+	check_recreate();
 }
 
 void exile_renderer::generate_passes() {
 
-	iv2 dim = iv2(exile->eng->window.settings.w, exile->eng->window.settings.h);
+	prev_dim = iv2(exile->eng->window.settings.w, exile->eng->window.settings.h);
+	prev_samples = exile->eng->window.settings.samples;
 
-	world_buf_tex = exile->eng->ogl.add_texture_target(dim, /*exile->eng->window.settings.samples*/ 1, gl_tex_format::rgba8, true);
+	world_buf_tex = exile->eng->ogl.add_texture_target(prev_dim, /*prev_samples*/ 1, gl_tex_format::rgba8, true);
 	world_color = exile->eng->ogl.make_target(gl_draw_target::color_0, world_buf_tex);
 	
-	depth_buffer = render_buffer::make(gl_tex_format::depth_component, dim, /*exile->eng->window.settings.samples*/ 1);
+	depth_buffer = render_buffer::make(gl_tex_format::depth_component, prev_dim, /*prev_samples*/ 1);
 	world_depth = exile->eng->ogl.make_target(gl_draw_target::depth, &depth_buffer);
 
 	world_buffer = exile->eng->ogl.add_framebuffer();
 	exile->eng->ogl.add_target(world_buffer, world_color);
 	exile->eng->ogl.add_target(world_buffer, world_depth);
 	exile->eng->ogl.commit_framebuffer(world_buffer);
+}
+
+void exile_renderer::recreate_passes() {
+	destroy_passes();
+	generate_passes();
+}
+
+void exile_renderer::check_recreate() {
+	if(exile->eng->window.settings.w != prev_dim.x ||
+	   exile->eng->window.settings.h != prev_dim.y ||
+	   exile->eng->window.settings.samples != prev_samples) {
+
+		recreate_passes();
+	}
 }
 
 void exile_renderer::generate_mesh_commands() { 
@@ -182,6 +195,11 @@ void exile_renderer::destroy() {
 	cmd_chunk            = 0;
 	cmd_skydome          = 0;
 	cmd_skyfar           = 0;
+
+	destroy_passes();
+}
+
+void exile_renderer::destroy_passes() {
 
 	exile->eng->ogl.destroy_texture(world_buf_tex);
 	exile->eng->ogl.destroy_framebuffer(world_buffer);
