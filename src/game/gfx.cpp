@@ -7,6 +7,9 @@ void exile_renderer::init() {
 	
 	generate_mesh_commands();
 	generate_passes();
+
+	the_cubemap.init();
+	the_quad.init();
 }
 
 render_command exile_renderer::world_skydome_cmd(gpu_object_id gpu_id, world_time* time, texture_id sky, m4 view, m4 proj) {
@@ -68,7 +71,7 @@ render_command exile_renderer::world_lines_cmd(mesh_lines* mesh, m4 view, m4 pro
 
 render_command exile_renderer::hud_2D_cmd(mesh_2d_col* mesh) {
 
-	render_command cmd = render_command::make(cmd_2d_col, mesh->gpu);
+	render_command cmd = render_command::make(cmd_2D_col, mesh->gpu);
 	
 	//TODO(max): different pass for HUD 
 	cmd.fb_id = world_buffer;
@@ -100,17 +103,24 @@ void exile_renderer::render_to_screen() {
 
 	render_command_list rcl = render_command_list::make();
 	
-	render_command cmd = render_command::make(ogl_manager::cmd_clear);
+	{
+		render_command cmd = render_command::make(ogl_manager::cmd_clear);
 	
-	cmd.clear_color = settings.clear_color;
-	cmd.clear_components = (GLbitfield)gl_clear::color_buffer_bit | (GLbitfield)gl_clear::depth_buffer_bit;
+		cmd.clear_color = settings.clear_color;
+		cmd.clear_components = (GLbitfield)gl_clear::color_buffer_bit | (GLbitfield)gl_clear::depth_buffer_bit;
 
-	rcl.add_command(cmd);
-	
+		rcl.add_command(cmd);
+	}
+	{
+		render_command cmd = render_command::make(cmd_composite, the_quad.gpu);
+
+		cmd.textures[0] = world_buf_tex;
+
+		rcl.add_command(cmd);
+	}
+
 	exile->eng->ogl.execute_command_list(&rcl);
 	rcl.destroy();
-
-	exile->eng->ogl.dbg_render_texture_fullscreen(world_buf_tex);
 
 	check_recreate();
 }
@@ -148,55 +158,60 @@ void exile_renderer::check_recreate() {
 
 void exile_renderer::generate_mesh_commands() { 
 	
-	#define reg(name) cmd_##name = exile->eng->ogl.add_command(FPTR(run_mesh_##name), FPTR(uniforms_mesh_##name), \
-								   FPTR(compat_mesh_##name), "shaders/" #name ".v"_, "shaders/" #name ".f"_);
-	#define reg_ex(cmd, name, path) cmd_##name = exile->eng->ogl.add_command(FPTR(run_mesh_##name), FPTR(uniforms_mesh_##name), \
-											  	 FPTR(compat_mesh_##name), "shaders/" path #name ".v"_, "shaders/" path #name ".f"_);
+	#define reg(cmdn, name, path) cmd_##cmdn = exile->eng->ogl.add_command(FPTR(run_##name), FPTR(uniforms_##name), \
+											   FPTR(compat_##name), "shaders/" path #cmdn ".v"_, "shaders/" path #cmdn ".f"_);
+ 
+	reg(chunk, mesh_chunk, "");
+	reg(cubemap, mesh_cubemap, "");
 
-	reg(lines);
-	reg(cubemap);
-	reg(skydome);
-	reg(chunk);
-	reg(pointcloud);
-	reg(skyfar);
+	reg(skyfar, mesh_skyfar, "env/");
+	reg(skydome, mesh_skydome, "env/");
+	reg(pointcloud, mesh_pointcloud, "env/");
 
-	reg_ex(_2d_col, 2d_col, "mesh/");
-	reg_ex(_2d_tex, 2d_tex, "mesh/");
-	reg_ex(_3d_tex, 3d_tex, "mesh/");
-	reg_ex(_2d_tex_col, 2d_tex_col, "mesh/");
-	reg_ex(_3d_tex_instanced, 3d_tex_instanced, "mesh/");
+	reg(lines, mesh_lines, "mesh/");
+	reg(2D_col, mesh_2D_col, "mesh/");
+	reg(2D_tex, mesh_2D_tex, "mesh/");
+	reg(3D_tex, mesh_3D_tex, "mesh/");
+	reg(2D_tex_col, mesh_2D_tex_col, "mesh/");
+	reg(3D_tex_instanced, mesh_3D_tex_instanced, "mesh/");
+
+	reg(composite, composite, "");
 
 	#undef reg
-	#undef reg_ex
 }
 
 void exile_renderer::destroy() {
 
-	exile->eng->ogl.rem_command(cmd_2d_col);
-	exile->eng->ogl.rem_command(cmd_2d_tex);
-	exile->eng->ogl.rem_command(cmd_2d_tex_col);
-	exile->eng->ogl.rem_command(cmd_3d_tex);
-	exile->eng->ogl.rem_command(cmd_3d_tex_instanced);
+	exile->eng->ogl.rem_command(cmd_2D_col);
+	exile->eng->ogl.rem_command(cmd_2D_tex);
+	exile->eng->ogl.rem_command(cmd_2D_tex_col);
+	exile->eng->ogl.rem_command(cmd_3D_tex);
+	exile->eng->ogl.rem_command(cmd_3D_tex_instanced);
 	exile->eng->ogl.rem_command(cmd_lines);
 	exile->eng->ogl.rem_command(cmd_pointcloud);
 	exile->eng->ogl.rem_command(cmd_cubemap);
 	exile->eng->ogl.rem_command(cmd_chunk);
 	exile->eng->ogl.rem_command(cmd_skydome);
 	exile->eng->ogl.rem_command(cmd_skyfar);
+	exile->eng->ogl.rem_command(cmd_composite);
 
-	cmd_2d_col           = 0;
-	cmd_2d_tex           = 0;
-	cmd_2d_tex_col       = 0;
-	cmd_3d_tex           = 0;
-	cmd_3d_tex_instanced = 0;
+	cmd_2D_col           = 0;
+	cmd_2D_tex           = 0;
+	cmd_2D_tex_col       = 0;
+	cmd_3D_tex           = 0;
+	cmd_3D_tex_instanced = 0;
 	cmd_lines            = 0;
 	cmd_pointcloud       = 0;
 	cmd_cubemap          = 0;
 	cmd_chunk            = 0;
 	cmd_skydome          = 0;
 	cmd_skyfar           = 0;
+	cmd_composite 		 = 0;
 
 	destroy_passes();
+
+	the_cubemap.destroy();
+	the_quad.destroy();
 }
 
 void exile_renderer::destroy_passes() {
@@ -208,6 +223,51 @@ void exile_renderer::destroy_passes() {
 	depth_buffer = {};
 	world_color = {};
 	world_depth = {};
+}
+
+CALLBACK void uniforms_composite(shader_program* prog, render_command* cmd) {
+	
+	glUniform1i(prog->location("tex0"_), 0);
+	glUniform1i(prog->location("tex1"_), 1);
+	glUniform1i(prog->location("tex2"_), 2);
+}
+
+CALLBACK void run_composite(render_command* cmd, gpu_object* gpu) {
+	glDrawArrays(gl_draw_mode::triangles, 0, 6);
+}
+
+CALLBACK void setup_mesh_quad(gpu_object* obj) {
+
+	glBindBuffer(gl_buf_target::array, obj->vbos[0]);
+
+	glVertexAttribPointer(0, 2, gl_vert_attrib_type::_float, gl_bool::_false, sizeof(v4), (GLvoid*)0);
+	glVertexAttribPointer(1, 2, gl_vert_attrib_type::_float, gl_bool::_false, sizeof(v4), (GLvoid*)(sizeof(v2)));
+	glEnableVertexAttribArray(0);
+	glEnableVertexAttribArray(1);
+}
+
+CALLBACK void update_mesh_quad(gpu_object* obj, void* data, bool force) {
+	
+	mesh_quad* m = (mesh_quad*)data;
+	if(!force) return;
+
+	glBindBuffer(gl_buf_target::array, obj->vbos[0]);
+	glBufferData(gl_buf_target::array, sizeof(m->vbo_data), m->vbo_data, gl_buf_usage::static_draw);
+}
+
+CALLBACK bool compat_composite(ogl_info* info) {
+	return info->check_version(3, 2);
+}
+
+void mesh_quad::init() {
+
+	gpu = exile->eng->ogl.add_object(FPTR(setup_mesh_quad), FPTR(update_mesh_quad), this);
+	exile->eng->ogl.object_trigger_update(gpu, this, true);
+}
+
+void mesh_quad::destroy() {
+
+	exile->eng->ogl.destroy_object(gpu);
 }
 
 CALLBACK void uniforms_mesh_skyfar(shader_program* prog, render_command* cmd) { 
@@ -272,7 +332,7 @@ CALLBACK void uniforms_mesh_chunk(shader_program* prog, render_command* cmd) {
 	glUniformMatrix4fv(prog->location("m"_), 1, gl_bool::_false, mv.a);
 }
 
-CALLBACK void uniforms_mesh_2d_col(shader_program* prog, render_command* cmd) { 
+CALLBACK void uniforms_mesh_2D_col(shader_program* prog, render_command* cmd) { 
 
 	GLint loc = prog->location("transform"_);
 
@@ -281,7 +341,7 @@ CALLBACK void uniforms_mesh_2d_col(shader_program* prog, render_command* cmd) {
 	glUniformMatrix4fv(loc, 1, gl_bool::_false, transform.a);
 }
 
-CALLBACK void uniforms_mesh_2d_tex(shader_program* prog, render_command* cmd) { 
+CALLBACK void uniforms_mesh_2D_tex(shader_program* prog, render_command* cmd) { 
 
 	GLint loc = prog->location("transform"_);
 
@@ -290,7 +350,7 @@ CALLBACK void uniforms_mesh_2d_tex(shader_program* prog, render_command* cmd) {
 	glUniformMatrix4fv(loc, 1, gl_bool::_false, transform.a);
 }
 
-CALLBACK void uniforms_mesh_2d_tex_col(shader_program* prog, render_command* cmd) { 
+CALLBACK void uniforms_mesh_2D_tex_col(shader_program* prog, render_command* cmd) { 
 
 	GLint loc = prog->location("transform"_);
 
@@ -299,7 +359,7 @@ CALLBACK void uniforms_mesh_2d_tex_col(shader_program* prog, render_command* cmd
 	glUniformMatrix4fv(loc, 1, gl_bool::_false, transform.a);
 }
 
-CALLBACK void uniforms_mesh_3d_tex(shader_program* prog, render_command* cmd) { 
+CALLBACK void uniforms_mesh_3D_tex(shader_program* prog, render_command* cmd) { 
 	
 	GLint loc = prog->location("transform"_);
 
@@ -317,7 +377,7 @@ CALLBACK void uniforms_mesh_lines(shader_program* prog, render_command* cmd) {
 	glUniformMatrix4fv(loc, 1, gl_bool::_false, transform.a);
 }
 
-CALLBACK void uniforms_mesh_3d_tex_instanced(shader_program* prog, render_command* cmd) { 
+CALLBACK void uniforms_mesh_3D_tex_instanced(shader_program* prog, render_command* cmd) { 
 	
 	GLint loc = prog->location("transform"_);
 
@@ -340,12 +400,10 @@ CALLBACK void update_mesh_pointcloud(gpu_object* obj, void* data, bool force) {
 CALLBACK void update_mesh_cubemap(gpu_object* obj, void* data, bool force) { 
 
 	mesh_cubemap* m = (mesh_cubemap*)data;
-	if(!force && !m->dirty) return;
+	if(!force) return;
 
 	glBindBuffer(gl_buf_target::array, obj->vbos[0]);
-	glBufferData(gl_buf_target::array, 36 * sizeof(v3), m->vertices, gl_buf_usage::dynamic_draw);
-
-	m->dirty = false;
+	glBufferData(gl_buf_target::array, 36 * sizeof(v3), m->vertices, gl_buf_usage::static_draw);
 }
 
 CALLBACK void update_mesh_chunk(gpu_object* obj, void* data, bool force) { 
@@ -359,7 +417,7 @@ CALLBACK void update_mesh_chunk(gpu_object* obj, void* data, bool force) {
 	m->dirty = false;
 }
 
-CALLBACK void update_mesh_2d_col(gpu_object* obj, void* data, bool force) { 
+CALLBACK void update_mesh_2D_col(gpu_object* obj, void* data, bool force) { 
 
 	mesh_2d_col* m = (mesh_2d_col*)data;
 	if(!force && !m->dirty) return;
@@ -376,7 +434,7 @@ CALLBACK void update_mesh_2d_col(gpu_object* obj, void* data, bool force) {
 	m->dirty = false;
 }
 
-CALLBACK void update_mesh_2d_tex(gpu_object* obj, void* data, bool force) { 
+CALLBACK void update_mesh_2D_tex(gpu_object* obj, void* data, bool force) { 
 
 	mesh_2d_tex* m = (mesh_2d_tex*)data;
 	if(!force && !m->dirty) return;
@@ -393,7 +451,7 @@ CALLBACK void update_mesh_2d_tex(gpu_object* obj, void* data, bool force) {
 	m->dirty = false;
 }
 
-CALLBACK void update_mesh_2d_tex_col(gpu_object* obj, void* data, bool force) { 
+CALLBACK void update_mesh_2D_tex_col(gpu_object* obj, void* data, bool force) { 
 
 	mesh_2d_tex_col* m = (mesh_2d_tex_col*)data;
 	if(!force && !m->dirty) return;
@@ -413,7 +471,7 @@ CALLBACK void update_mesh_2d_tex_col(gpu_object* obj, void* data, bool force) {
 	m->dirty = false;
 }
 
-CALLBACK void update_mesh_3d_tex(gpu_object* obj, void* data, bool force) { 
+CALLBACK void update_mesh_3D_tex(gpu_object* obj, void* data, bool force) { 
 
 	mesh_3d_tex* m = (mesh_3d_tex*)data;
 	if(!force && !m->dirty) return;
@@ -444,7 +502,7 @@ CALLBACK void update_mesh_lines(gpu_object* obj, void* data, bool force) {
 	m->dirty = false;
 }
 
-CALLBACK void update_mesh_3d_tex_instanced(gpu_object* obj, void* d, bool force) { 
+CALLBACK void update_mesh_3D_tex_instanced(gpu_object* obj, void* d, bool force) { 
 
 	mesh_3d_tex_instance_data* data = (mesh_3d_tex_instance_data*)d;
 	mesh_3d_tex* m = data->parent;
@@ -462,7 +520,7 @@ CALLBACK void update_mesh_3d_tex_instanced(gpu_object* obj, void* d, bool force)
 
 CALLBACK void run_mesh_skyfar(render_command* cmd, gpu_object* gpu) { 
 
-	run_mesh_3d_tex(cmd, gpu);
+	run_mesh_3D_tex(cmd, gpu);
 }
 
 CALLBACK void run_mesh_pointcloud(render_command* cmd, gpu_object* gpu) { 
@@ -475,7 +533,7 @@ CALLBACK void run_mesh_pointcloud(render_command* cmd, gpu_object* gpu) {
 
 CALLBACK void run_mesh_skydome(render_command* cmd, gpu_object* gpu) { 	
 
-	run_mesh_3d_tex(cmd, gpu);
+	run_mesh_3D_tex(cmd, gpu);
 }
 
 CALLBACK void run_mesh_cubemap(render_command* cmd, gpu_object* gpu) { 
@@ -491,7 +549,7 @@ CALLBACK void run_mesh_chunk(render_command* cmd, gpu_object* gpu) {
 	glDrawArraysInstanced(gl_draw_mode::triangle_strip, 0, 4, num_faces);
 }
 
-CALLBACK void run_mesh_2d_col(render_command* cmd, gpu_object* gpu) { 
+CALLBACK void run_mesh_2D_col(render_command* cmd, gpu_object* gpu) { 
 
 	mesh_2d_col* m = (mesh_2d_col*)gpu->data;
 
@@ -499,7 +557,7 @@ CALLBACK void run_mesh_2d_col(render_command* cmd, gpu_object* gpu) {
 	glDrawElementsBaseVertex(gl_draw_mode::triangles, num_tris, gl_index_type::unsigned_int, (void*)(u64)(0), cmd->offset);
 }
 
-CALLBACK void run_mesh_2d_tex(render_command* cmd, gpu_object* gpu) { 
+CALLBACK void run_mesh_2D_tex(render_command* cmd, gpu_object* gpu) { 
 
 	mesh_2d_tex* m = (mesh_2d_tex*)gpu->data;
 
@@ -507,7 +565,7 @@ CALLBACK void run_mesh_2d_tex(render_command* cmd, gpu_object* gpu) {
 	glDrawElementsBaseVertex(gl_draw_mode::triangles, num_tris, gl_index_type::unsigned_int, (void*)(u64)(0), cmd->offset);
 }
 
-CALLBACK void run_mesh_2d_tex_col(render_command* cmd, gpu_object* gpu) { 
+CALLBACK void run_mesh_2D_tex_col(render_command* cmd, gpu_object* gpu) { 
 
 	mesh_2d_tex_col* m = (mesh_2d_tex_col*)gpu->data;
 
@@ -515,7 +573,7 @@ CALLBACK void run_mesh_2d_tex_col(render_command* cmd, gpu_object* gpu) {
 	glDrawElementsBaseVertex(gl_draw_mode::triangles, num_tris, gl_index_type::unsigned_int, (void*)(u64)(0), cmd->offset);
 }
 
-CALLBACK void run_mesh_3d_tex(render_command* cmd, gpu_object* gpu) { 
+CALLBACK void run_mesh_3D_tex(render_command* cmd, gpu_object* gpu) { 
 
 	mesh_3d_tex* m = (mesh_3d_tex*)gpu->data;
 
@@ -530,7 +588,7 @@ CALLBACK void run_mesh_lines(render_command* cmd, gpu_object* gpu) {
 	glDrawArrays(gl_draw_mode::lines, 0, m->vertices.size);
 }
 
-CALLBACK void run_mesh_3d_tex_instanced(render_command* cmd, gpu_object* gpu) { 
+CALLBACK void run_mesh_3D_tex_instanced(render_command* cmd, gpu_object* gpu) { 
 
 	mesh_3d_tex_instance_data* data = (mesh_3d_tex_instance_data*)gpu->data;
 	mesh_3d_tex* m = data->parent;
@@ -561,19 +619,19 @@ CALLBACK bool compat_mesh_chunk(ogl_info* info) {
 	return info->check_version(3, 2);
 }
 
-CALLBACK bool compat_mesh_2d_col(ogl_info* info) { 
+CALLBACK bool compat_mesh_2D_col(ogl_info* info) { 
 	return info->check_version(3, 2);
 }
 
-CALLBACK bool compat_mesh_2d_tex(ogl_info* info) { 
+CALLBACK bool compat_mesh_2D_tex(ogl_info* info) { 
 	return info->check_version(3, 2);
 }
 
-CALLBACK bool compat_mesh_2d_tex_col(ogl_info* info) { 
+CALLBACK bool compat_mesh_2D_tex_col(ogl_info* info) { 
 	return info->check_version(3, 2);
 }
 
-CALLBACK bool compat_mesh_3d_tex(ogl_info* info) { 
+CALLBACK bool compat_mesh_3D_tex(ogl_info* info) { 
 	return info->check_version(3, 2);
 }
 
@@ -581,7 +639,7 @@ CALLBACK bool compat_mesh_lines(ogl_info* info) {
 	return info->check_version(3, 2);
 }
 
-CALLBACK bool compat_mesh_3d_tex_instanced(ogl_info* info) { 
+CALLBACK bool compat_mesh_3D_tex_instanced(ogl_info* info) { 
 	return info->check_version(3, 3);
 }
 
@@ -613,7 +671,7 @@ CALLBACK void setup_mesh_chunk(gpu_object* obj) {
 	glEnableVertexAttribArray(1);
 }
 
-CALLBACK void setup_mesh_2d_col(gpu_object* obj) { 
+CALLBACK void setup_mesh_2D_col(gpu_object* obj) { 
 
 	glBindVertexArray(obj->vao);
 
@@ -630,7 +688,7 @@ CALLBACK void setup_mesh_2d_col(gpu_object* obj) {
 	glBindVertexArray(0);
 }
 
-CALLBACK void setup_mesh_2d_tex(gpu_object* obj) { 
+CALLBACK void setup_mesh_2D_tex(gpu_object* obj) { 
 
 	glBindVertexArray(obj->vao);
 
@@ -647,7 +705,7 @@ CALLBACK void setup_mesh_2d_tex(gpu_object* obj) {
 	glBindVertexArray(0);
 }
 
-CALLBACK void setup_mesh_2d_tex_col(gpu_object* obj) { 
+CALLBACK void setup_mesh_2D_tex_col(gpu_object* obj) { 
 
 	glBindVertexArray(obj->vao);
 
@@ -668,7 +726,7 @@ CALLBACK void setup_mesh_2d_tex_col(gpu_object* obj) {
 	glBindVertexArray(0);
 }
 
-CALLBACK void setup_mesh_3d_tex(gpu_object* obj) { 
+CALLBACK void setup_mesh_3D_tex(gpu_object* obj) { 
 
 	glBindVertexArray(obj->vao);
 
@@ -685,7 +743,7 @@ CALLBACK void setup_mesh_3d_tex(gpu_object* obj) {
 	glBindVertexArray(0);
 }
 
-CALLBACK void setup_mesh_3d_tex_instanced(gpu_object* obj) { 
+CALLBACK void setup_mesh_3D_tex_instanced(gpu_object* obj) { 
 
 	glBindVertexArray(obj->vao);
 
@@ -735,8 +793,9 @@ void mesh_pointcloud::push(v3 p, f32 s) {
 
 void mesh_cubemap::init() {
 
-	dirty = true;
 	gpu = exile->eng->ogl.add_object(FPTR(setup_mesh_cubemap), FPTR(update_mesh_cubemap), this);
+	
+	exile->eng->ogl.object_trigger_update(gpu, this, true);
 }
 
 void mesh_cubemap::destroy() {
@@ -788,7 +847,7 @@ void mesh_3d_tex_instance_data::init(mesh_3d_tex* par, u32 i, allocator* alloc) 
 
 	parent = par;
 	data = vector<v3>::make(i, alloc);
-	gpu = exile->eng->ogl.add_object(FPTR(setup_mesh_3d_tex_instanced), FPTR(update_mesh_3d_tex_instanced), this);
+	gpu = exile->eng->ogl.add_object(FPTR(setup_mesh_3D_tex_instanced), FPTR(update_mesh_3D_tex_instanced), this);
 }
 
 void mesh_3d_tex_instance_data::destroy() { 
@@ -820,7 +879,7 @@ void mesh_2d_col::init(allocator* alloc) {
 	vertices = vector<v2>::make(1024, alloc);
 	colors 	  =	vector<colorf>::make(1024, alloc);
 	elements  = vector<uv3>::make(1024, alloc); 
-	gpu = exile->eng->ogl.add_object(FPTR(setup_mesh_2d_col), FPTR(update_mesh_2d_col), this);
+	gpu = exile->eng->ogl.add_object(FPTR(setup_mesh_2D_col), FPTR(update_mesh_2D_col), this);
 }
 
 void mesh_2d_col::destroy() { 
@@ -917,7 +976,7 @@ void mesh_2d_tex::init(allocator* alloc) {
 	vertices = vector<v2>::make(1024, alloc);
 	texCoords =	vector<v2>::make(1024, alloc);
 	elements  = vector<uv3>::make(1024, alloc); 
-	gpu = exile->eng->ogl.add_object(FPTR(setup_mesh_2d_tex), FPTR(update_mesh_2d_tex), this);
+	gpu = exile->eng->ogl.add_object(FPTR(setup_mesh_2D_tex), FPTR(update_mesh_2D_tex), this);
 }
 
 void mesh_2d_tex::destroy() { 
@@ -953,7 +1012,7 @@ void mesh_2d_tex_col::init(allocator* alloc) {
 	texCoords =	vector<v2>::make(1024, alloc);
 	colors 	  = vector<colorf>::make(1024, alloc);
 	elements  = vector<uv3>::make(1024, alloc); 
-	gpu = exile->eng->ogl.add_object(FPTR(setup_mesh_2d_tex_col), FPTR(update_mesh_2d_tex_col), this);
+	gpu = exile->eng->ogl.add_object(FPTR(setup_mesh_2D_tex_col), FPTR(update_mesh_2D_tex_col), this);
 }
 
 void mesh_2d_tex_col::destroy() { 
@@ -988,7 +1047,7 @@ void mesh_3d_tex::init(allocator* alloc) {
 	vertices = vector<v3>::make(1024, alloc);
 	texCoords = vector<v2>::make(1024, alloc);
 	elements  = vector<uv3>::make(1024, alloc);
-	gpu = exile->eng->ogl.add_object(FPTR(setup_mesh_3d_tex), FPTR(update_mesh_3d_tex), this);
+	gpu = exile->eng->ogl.add_object(FPTR(setup_mesh_3D_tex), FPTR(update_mesh_3D_tex), this);
 }
 
 void mesh_3d_tex::destroy() { 

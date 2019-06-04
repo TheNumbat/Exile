@@ -6,13 +6,13 @@ Working To-Do:
 		FIX: torchlight AND sunlight removal ?????
 
 		render pass system
-			apply window settings / resizing / sampling later?
-
-			better render to screen / multiple passes / compositing shader
+			compositing shader
+			
 			multisample targets and textures
 				fix multisample final screen target (not needed?)
 			testing
 			
+			multiple passes
 			gamma correction
 			HDR / bloom / god rays / better fog
 

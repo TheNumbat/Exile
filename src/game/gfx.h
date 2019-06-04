@@ -31,8 +31,9 @@ struct mesh_chunk {
 	void quad(iv3 v_0, iv3 v_1, iv3 v_2, iv3 v_3, iv2 uv, i32 t, u8 ql, bv4 a0, bv4 l);
 };
 
+// NOTE(max): only ever need one of these to exist
 struct mesh_cubemap {
-	v3 vertices[36] = {
+	const v3 vertices[36] = {
 		{-1.0f,  1.0f, -1.0f},
 		{-1.0f, -1.0f, -1.0f},
 		{ 1.0f, -1.0f, -1.0f},
@@ -72,7 +73,23 @@ struct mesh_cubemap {
 	};
 
 	gpu_object_id gpu = -1;
-	bool dirty = false;
+
+	void init();
+	void destroy();
+};
+
+struct mesh_quad {
+	const v4 vbo_data[6] = {
+	    {-1.0f,  1.0f,  0.0f, 1.0f},
+	    {-1.0f, -1.0f,  0.0f, 0.0f},
+	    { 1.0f, -1.0f,  1.0f, 0.0f},
+
+	    {-1.0f,  1.0f,  0.0f, 1.0f},
+	    { 1.0f, -1.0f,  1.0f, 0.0f},
+	    { 1.0f,  1.0f,  1.0f, 1.0f}
+	};
+
+	gpu_object_id gpu = -1;
 
 	void init();
 	void destroy();
@@ -205,11 +222,11 @@ struct exile_renderer {
 	void init();
 	void destroy();
 
-	draw_cmd_id cmd_2d_col           = -1;
-	draw_cmd_id cmd_2d_tex           = -1;
-	draw_cmd_id cmd_2d_tex_col       = -1;
-	draw_cmd_id cmd_3d_tex           = -1;
-	draw_cmd_id cmd_3d_tex_instanced = -1;
+	draw_cmd_id cmd_2D_col           = -1;
+	draw_cmd_id cmd_2D_tex           = -1;
+	draw_cmd_id cmd_2D_tex_col       = -1;
+	draw_cmd_id cmd_3D_tex           = -1;
+	draw_cmd_id cmd_3D_tex_instanced = -1;
 	draw_cmd_id cmd_lines            = -1;
 	draw_cmd_id cmd_pointcloud       = -1;
 	draw_cmd_id cmd_cubemap          = -1;
@@ -217,7 +234,12 @@ struct exile_renderer {
 	draw_cmd_id cmd_skydome          = -1;
 	draw_cmd_id cmd_skyfar           = -1;
 
+	draw_cmd_id cmd_composite 		 = -1;
+
 	exile_render_settings settings;
+
+	mesh_cubemap the_cubemap;
+	mesh_quad 	 the_quad;
 
 	//TODO(max): move
 	render_buffer depth_buffer;
@@ -258,10 +280,16 @@ decl_mesh(skyfar);
 decl_mesh(skydome);
 decl_mesh(cubemap);
 decl_mesh(chunk);
-decl_mesh(2d_col);
-decl_mesh(2d_tex);
-decl_mesh(2d_tex_col);
-decl_mesh(3d_tex);
-decl_mesh(3d_tex_instanced);
+decl_mesh(2D_col);
+decl_mesh(2D_tex);
+decl_mesh(2D_tex_col);
+decl_mesh(3D_tex);
+decl_mesh(3D_tex_instanced);
 decl_mesh(lines);
 decl_mesh(pointcloud);
+
+CALLBACK void setup_mesh_quad(gpu_object* obj);
+CALLBACK void update_mesh_quad(gpu_object* obj, void* data, bool force);
+CALLBACK void uniforms_composite(shader_program* prog, render_command* cmd);
+CALLBACK void run_composite(render_command* cmd, gpu_object* gpu);		
+CALLBACK bool compat_composite(ogl_info* info);

@@ -367,6 +367,8 @@ void ogl_manager::destroy_object(gpu_object_id id) {
 void ogl_manager::object_trigger_update(gpu_object_id id, void* data, bool force) {
 
 	gpu_object* obj = get_object(id);
+
+	glBindVertexArray(obj->vao);
 	obj->update(obj, data, force);
 }
 
