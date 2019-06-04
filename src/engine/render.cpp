@@ -223,6 +223,9 @@ void ogl_manager::gl_begin_reload() {
 	FORMAP(it, commands) {
 		it->value.shader.gl_destroy();
 	}
+	FORMAP(it, framebuffers) {
+		it->value.gl_destroy();
+	}
 	dbg_shader.gl_destroy();
 	FORMAP(it, textures) {
 		it->value.gl_destroy();
@@ -250,6 +253,9 @@ void ogl_manager::gl_end_reload() {
 		it->value.recreate();
 	}
 	FORMAP(it, objects) {
+		it->value.recreate();
+	}
+	FORMAP(it, framebuffers) {
 		it->value.recreate();
 	}
 
@@ -285,9 +291,9 @@ ogl_manager ogl_manager::make(platform_window* win, allocator* a) {
 	ret.alloc = a;
 	
 	ret.textures = map<texture_id, texture>::make(32, a);
-	ret.objects = map<gpu_object_id, gpu_object>::make(256, a);
-
-	ret.commands = map<u16, draw_context>::make(32, a);
+	ret.commands = map<draw_cmd_id, draw_context>::make(32, a);
+	ret.objects = map<gpu_object_id, gpu_object>::make(2048, a);
+	ret.framebuffers = map<framebuffer_id, framebuffer>::make(32, a);
 	
 	ret.command_settings = stack<cmd_settings>::make(4, a);
 	ret.command_settings.push(cmd_settings());
@@ -344,8 +350,7 @@ gpu_object_id ogl_manager::add_object(_FPTR* setup, _FPTR* update, void* cpu_dat
 
 	objects.insert(obj.id, obj);
 
-	next_gpu_id++;
-	return next_gpu_id - 1;
+	return next_gpu_id++;
 }
 
 void ogl_manager::destroy_object(gpu_object_id id) { 
@@ -396,11 +401,15 @@ void ogl_manager::destroy() {
 	FORMAP(it, objects) {
 		it->value.destroy();
 	}
+	FORMAP(it, framebuffers) {
+		it->value.destroy();
+	}
 
 	dbg_shader.destroy();
 	textures.destroy();
 	commands.destroy();
 	objects.destroy();
+	framebuffers.destroy();
 	info.destroy();
 	command_settings.destroy();
 
@@ -418,8 +427,7 @@ texture_id ogl_manager::add_texture_from_font(asset_store* as, string name, text
 
 	LOG_DEBUG_F("Created texture % from font asset %"_, next_texture_id, name);
 
-	next_texture_id++;
-	return next_texture_id - 1;
+	return next_texture_id++;
 }
 
 texture_id ogl_manager::add_texture(asset_store* as, string name, texture_wrap wrap, bool pixelated) { 
@@ -433,8 +441,7 @@ texture_id ogl_manager::add_texture(asset_store* as, string name, texture_wrap w
 
 	LOG_DEBUG_F("Created texture % from bitmap asset %"_, next_texture_id, name);
 
-	next_texture_id++;
-	return next_texture_id - 1;
+	return next_texture_id++;
 }
 
 texture_id ogl_manager::add_cubemap(asset_store* as, string name) {
@@ -448,8 +455,7 @@ texture_id ogl_manager::add_cubemap(asset_store* as, string name) {
 
 	LOG_DEBUG_F("Created cubemap %"_, next_texture_id);
 
-	next_texture_id++;
-	return next_texture_id - 1;
+	return next_texture_id++;
 }
 
 i32 ogl_manager::get_layers(texture_id tex) {  
@@ -471,8 +477,7 @@ texture_id ogl_manager::begin_tex_array(iv3 dim, texture_wrap wrap, bool pixelat
 
 	LOG_DEBUG_F("Created texture array %"_, next_texture_id);
 
-	next_texture_id++;
-	return next_texture_id - 1;
+	return next_texture_id++;
 }
 
 void ogl_manager::push_tex_array(texture_id tex, asset_store* as, string name) { 
@@ -520,7 +525,8 @@ texture* ogl_manager::select_texture(u32 unit, texture_id id) {
 void ogl_manager::select_textures(render_command* cmd) { 
 
 	DO(8) {
-		select_texture(__i, cmd->textures[__i]);
+		if(cmd->textures[__i] != -1)
+			select_texture(__i, cmd->textures[__i]);
 	}
 }
 
@@ -819,18 +825,10 @@ render_buffer render_buffer::make(gl_tex_format format, iv2 dim, i32 samples) {
 	render_buffer ret;
 
 	ret.dim = dim;
+	ret.format = format;
 	ret.samples = samples;
 
-	glGenRenderbuffers(1, &ret.handle);
-	glBindRenderbuffer(gl_renderbuffer::val, ret.handle);
-
-	if(samples == 1) {
-		glRenderbufferStorage(gl_renderbuffer::val, format, dim.x, dim.y);
-	} else {
-		glRenderbufferStorageMultisample(gl_renderbuffer::val, samples, format, dim.x, dim.y);
-	}
-
-	glBindRenderbuffer(gl_renderbuffer::val, 0);
+	ret.recreate();
 
 	return ret;
 }
@@ -839,6 +837,20 @@ void render_buffer::gl_destroy() {
 
 	glDeleteRenderbuffers(1, &handle);
 	handle = 0;
+}
+
+void render_buffer::recreate() {
+
+	glGenRenderbuffers(1, &handle);
+	glBindRenderbuffer(gl_renderbuffer::val, handle);
+
+	if(samples == 1) {
+		glRenderbufferStorage(gl_renderbuffer::val, format, dim.x, dim.y);
+	} else {
+		glRenderbufferStorageMultisample(gl_renderbuffer::val, samples, format, dim.x, dim.y);
+	}
+
+	glBindRenderbuffer(gl_renderbuffer::val, 0);	
 }
 
 void render_buffer::bind() {
@@ -864,6 +876,15 @@ render_target render_target::make_buf(gl_draw_target target, render_buffer buf) 
 	ret.target = target;
 	ret.buffer = buf;
 	return ret;
+}
+
+void render_target::recreate() {
+
+	if(type == render_target_type::tex) {
+		tex.recreate();
+	} else {
+		buffer.recreate();
+	}
 }
 
 void render_target::gl_destroy() {
@@ -897,11 +918,15 @@ framebuffer framebuffer::make(allocator* a) {
 
 void framebuffer::destroy() {
 
-	targets.destroy();
 	gl_destroy();
+	targets.destroy();
 }
 
 void framebuffer::gl_destroy() {
+
+	FORVEC(it, targets) {
+		it->gl_destroy();
+	}
 
 	glDeleteFramebuffers(1, &handle);
 	handle = 0;
@@ -935,25 +960,45 @@ void framebuffer::commit() {
 	glBindFramebuffer(gl_framebuffer::val, 0);
 }
 
+void framebuffer::recreate() {
+
+	glGenFramebuffers(1, &handle);
+
+	FORVEC(it, targets) {
+		it->recreate();
+	}
+	commit();
+}
+
 void framebuffer::bind() {
 
 	glBindFramebuffer(gl_framebuffer::val, handle);
 }
 
-void ogl_manager::add_command(u16 id, _FPTR* run, _FPTR* uniforms, _FPTR* compat, string v, string f, string g) { 
+void ogl_manager::rem_command(draw_cmd_id id) {
 
-	if(commands.try_get(id)) {
-		LOG_ERR_F("Render command id % already in use!!!"_, id);
+	draw_context* d = commands.try_get(id);
+
+	if(!d) {
+		LOG_ERR_F("Failed to retrieve context %"_, id);
 		return;
 	}
+
+	d->shader.destroy();
+	commands.erase(id);
+
+	return;
+}
+
+draw_cmd_id ogl_manager::add_command(_FPTR* run, _FPTR* uniforms, _FPTR* compat, string v, string f, string g) { 
 
 	draw_context d;
 	d.compat.set(compat);
 
 	if(!d.compat(&info)) {
 		
-		LOG_WARN_F("Render command % failed compatibility check!!!"_, id);
-		return;
+		LOG_WARN_F("Render command run/% shaders/%,% failed compatibility check!!!"_, run, v, f);
+		return -1;
 	}
 
 	d.run.set(run);
@@ -964,11 +1009,11 @@ void ogl_manager::add_command(u16 id, _FPTR* run, _FPTR* uniforms, _FPTR* compat
 	else 
 		LOG_DEBUG_F("Loaded shader from %, %"_, v, f);
 
-	commands.insert(id, d);
-	return;
+	commands.insert(next_draw_cmd_id, d);
+	return next_draw_cmd_id++;
 }
 
-draw_context* ogl_manager::select_ctx(u16 id) { 
+draw_context* ogl_manager::select_ctx(draw_cmd_id id) { 
 
 	draw_context* d = commands.try_get(id);
 
@@ -1399,14 +1444,14 @@ void ogl_manager::check_leaked_handles() {
 }
 
 
-render_command render_command::make(u16 type) {
+render_command render_command::make(draw_cmd_id type) {
 
 	render_command ret;
 	ret.cmd_id = type;
 	return ret;
 }
 
-render_command render_command::make(u16 type, render_setting setting, bool enable) { 
+render_command render_command::make(draw_cmd_id type, render_setting setting, bool enable) { 
 
 	render_command ret;
 	ret.cmd_id = type;
@@ -1415,7 +1460,7 @@ render_command render_command::make(u16 type, render_setting setting, bool enabl
 	return ret;
 }
 
-render_command render_command::make(u16 id, gpu_object_id gpu, u32 key) { 
+render_command render_command::make(draw_cmd_id id, gpu_object_id gpu, u32 key) { 
 
 	render_command ret;
 	ret.object = gpu;

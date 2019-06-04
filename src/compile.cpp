@@ -18,15 +18,14 @@
 // #define FAST_CLOSE
 
 #include "engine/compile.h"
-engine* eng = null;
 
-#include "mesh.h"
+#include "gfx.h"
 #include "world.h"
 #include "console.h"
 #include "exile.h"
 
 #include "console.cpp"
-#include "mesh.cpp"
+#include "gfx.cpp"
 #include "world.cpp"
 #include "exile.cpp"
 #include <meta_types.cpp>

@@ -2,7 +2,7 @@
 #pragma once
 
 struct exile;
-void setup_console_commands(exile* e);
+void setup_console_commands();
 
 CALLBACK void console_exit(string, void* e);
 CALLBACK void console_place_light(string, void* w);

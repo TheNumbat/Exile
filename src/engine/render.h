@@ -4,6 +4,7 @@
 v2 size_text(asset* font, string text_utf8, f32 point);
 
 typedef i32 texture_id;
+typedef i32 draw_cmd_id;
 typedef i32 gpu_object_id;
 typedef i32 framebuffer_id;
 
@@ -168,14 +169,17 @@ struct render_buffer {
 	friend struct framebuffer;
 	friend void make_meta_info();
 
+	static render_buffer make(gl_tex_format format, iv2 dim, i32 samples = 1);
+
 private:
 
 	GLuint handle = 0;
+	gl_tex_format format = gl_tex_format::rgba8;
 	i32 samples = 1;
 	iv2 dim;
 	
-	static render_buffer make(gl_tex_format format, iv2 dim, i32 samples = 1);
 	void gl_destroy();
+	void recreate();
 	void bind();
 };
 
@@ -190,6 +194,9 @@ struct render_target {
 	render_target(render_target&& t) {_memcpy(&t, this, sizeof(render_target));}
 	render_target& operator=(render_target& t) {_memcpy(&t, this, sizeof(render_target)); return *this;}
 
+	static render_target make_tex(gl_draw_target target, texture tex);
+	static render_target make_buf(gl_draw_target target, render_buffer buf);
+
 private:
 
 	render_target_type type;
@@ -199,9 +206,8 @@ private:
 		texture tex;
 	};
 
-	static render_target make_tex(gl_draw_target target, texture tex);
-	static render_target make_buf(gl_draw_target target, render_buffer buf);
 	void gl_destroy();
+	void recreate();
 	void bind();
 };
 
@@ -219,10 +225,12 @@ private:
 	static framebuffer make(allocator* a);
 	void destroy();
 	void gl_destroy();
+	void recreate();
 
 	void add_target(render_target target);
-	void bind();
 	void commit();
+
+	void bind();
 };
 
 struct ogl_info {
@@ -306,11 +314,11 @@ struct ogl_settings {
 
 struct render_command {
 	
-	u16 cmd_id = 0;
+	draw_cmd_id cmd_id = 0;
 
 	gpu_object_id object = -1;
 	
-	texture_id textures[8] = {-1};
+	texture_id textures[8] = {-1, -1, -1, -1, -1, -1, -1, -1};
 	
 	void* user_data = null;
 	u32 sort_key = 0;
@@ -330,9 +338,9 @@ struct render_command {
 
 	render_command() {}
 
-	static render_command make(u16 type);
-	static render_command make(u16 type, gpu_object_id gpu, u32 key = 0);
-	static render_command make(u16 type, render_setting setting, bool enable);
+	static render_command make(draw_cmd_id type);
+	static render_command make(draw_cmd_id type, gpu_object_id gpu, u32 key = 0);
+	static render_command make(draw_cmd_id type, render_setting setting, bool enable);
 };
 
 bool operator<=(render_command& first, render_command& second);
@@ -399,7 +407,8 @@ struct ogl_manager {
 	void reload_texture_assets();
 
 	// Commands
-	void add_command(u16 id, _FPTR* run, _FPTR* uniforms, _FPTR* compat, string v, string f, string g = {});
+	draw_cmd_id add_command(_FPTR* run, _FPTR* uniforms, _FPTR* compat, string v, string f, string g = {});
+	void rem_command(draw_cmd_id id);
 
  	// Textures
 	texture_id add_cubemap(asset_store* as, string name);
@@ -418,17 +427,27 @@ struct ogl_manager {
 
  	void object_trigger_update(gpu_object_id id, void* data, bool force);
 
+ 	// Framebuffers
+ 	framebuffer_id add_framebuffer();
+ 	
+ 	void commit_framebuffer(framebuffer_id id);
+ 	void add_target(framebuffer_id id, render_target target);
+ 	
+ 	void destroy_framebuffer();
+
  	// Rendering
-	void execute_command_list(render_command_list* rcl);
  	void dbg_render_texture_fullscreen(texture_id id);
+	void execute_command_list(render_command_list* rcl);
 
 	friend void make_meta_info();
 
 private:
 
-	map<u16, draw_context> commands;
 	map<texture_id, texture> textures;
-	map<gpu_object_id, gpu_object> objects;
+	map<gpu_object_id, gpu_object> objects; // TODO(max): there are a few orders of magnitude more of these than
+											// the other things, do we really want to put them all in one map?
+	map<draw_cmd_id, draw_context> commands;
+	map<framebuffer_id, framebuffer> framebuffers;
 
 	ogl_settings 		prev_settings;
 	stack<cmd_settings> command_settings;
@@ -437,7 +456,8 @@ private:
 
 	gpu_object_id 	next_gpu_id = 1;
 	texture_id 		next_texture_id = 1;
-	
+	draw_cmd_id 	next_draw_cmd_id = 4;
+
 	platform_window* win = null;
 	allocator* alloc = null;
 
@@ -449,13 +469,15 @@ private:
 
 	void check_leaked_handles();
 	
-	draw_context* select_ctx(u16 id);
+	draw_context* select_ctx(draw_cmd_id id);
 
 	texture* select_texture(u32 unit, texture_id id);
 	void select_textures(render_command* cmd);
 	
 	gpu_object* select_object(gpu_object_id id);
 	gpu_object* get_object(gpu_object_id id);
+
+	framebuffer* select_framebuffer(framebuffer_id id);
 };
 
 CALLBACK void ogl_apply(void* eng);

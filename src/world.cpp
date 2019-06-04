@@ -46,20 +46,20 @@ void world::init(asset_store* store, allocator* a) { PROF_FUNC
 	{
 		LOG_DEBUG_F("% logical cores % physical cores"_, global_api->get_num_cpus(), global_api->get_phys_cpus());
 		chunks = map<chunk_pos, chunk*>::make(512, a);
-		thread_pool = threadpool::make(a, eng->platform->get_phys_cpus() - 1);
+		thread_pool = threadpool::make(a, exile->eng->platform->get_phys_cpus() - 1);
 		thread_pool.start_all();
 	}
 
 	{
-		eng->dbg.store.add_var("world/settings"_, &settings);
-		eng->dbg.store.add_var("world/time"_, &time);
-		eng->dbg.store.add_ele("world/ui"_, FPTR(world_debug_ui), this);
+		exile->eng->dbg.store.add_var("world/settings"_, &settings);
+		exile->eng->dbg.store.add_var("world/time"_, &time);
+		exile->eng->dbg.store.add_ele("world/ui"_, FPTR(world_debug_ui), this);
 
-		eng->dbg.store.add_var("player/cam"_, &p.camera);
-		eng->dbg.store.add_var("player/speed"_, &p.speed);
-		eng->dbg.store.add_var("player/enable"_, &p.enable);
-		eng->dbg.store.add_var("player/noclip"_, &p.noclip);
-		eng->dbg.store.add_ele("player/info"_, FPTR(player_debug_ui), this);
+		exile->eng->dbg.store.add_var("player/cam"_, &p.camera);
+		exile->eng->dbg.store.add_var("player/speed"_, &p.speed);
+		exile->eng->dbg.store.add_var("player/enable"_, &p.enable);
+		exile->eng->dbg.store.add_var("player/noclip"_, &p.noclip);
+		exile->eng->dbg.store.add_ele("player/info"_, FPTR(player_debug_ui), this);
 	}
 
 	{
@@ -306,7 +306,7 @@ void world::local_mesh() { PROF_FUNC
 
 CALLBACK void unlock_chunk(chunk* c) { 
 
-	eng->platform->release_mutex(&c->swap_mut);
+	exile->eng->platform->release_mutex(&c->swap_mut);
 }
 
 float check_pirority(super_job* j, void* param) {
@@ -414,10 +414,10 @@ void world_environment::init(asset_store* store, allocator* a) { PROF_FUNC
 
 	sky.init(a);
 	sky.push_dome({}, 1.0f, 64);
-	sky_texture = eng->ogl.add_texture(store, "sky"_, texture_wrap::mirror);
+	sky_texture = exile->eng->ogl.add_texture(store, "sky"_, texture_wrap::mirror);
 
 	sun_moon.init(a);
-	env_texture = eng->ogl.add_texture(store, "env"_);
+	env_texture = exile->eng->ogl.add_texture(store, "env"_);
 
 	stars.init(a);
 	stars.push_points({}, 1.0f, 5000, 0.1f);
@@ -434,9 +434,9 @@ void world_environment::render(player* p, world_time* t) { PROF_FUNC
 
 	render_command_list rcl = render_command_list::make();
 
-	m4 mproj = p->camera.proj((f32)eng->window.settings.w / (f32)eng->window.settings.h);
+	m4 mproj = p->camera.proj((f32)exile->eng->window.settings.w / (f32)exile->eng->window.settings.h);
 	{
-		render_command cmd = render_command::make((u16)mesh_cmd::skydome, sky.gpu);
+		render_command cmd = render_command::make(exile->ren.cmd_skydome, sky.gpu);
 
 		cmd.user_data = t;
 		cmd.textures[0] = sky_texture;
@@ -449,7 +449,7 @@ void world_environment::render(player* p, world_time* t) { PROF_FUNC
 	{
 		rcl.set_setting(render_setting::point_size, true);
 
-		render_command cmd = render_command::make((u16)mesh_cmd::pointcloud, stars.gpu);
+		render_command cmd = render_command::make(exile->ren.cmd_pointcloud, stars.gpu);
 
 		cmd.user_data = t;
 		cmd.view = p->camera.view_no_translate();
@@ -458,7 +458,7 @@ void world_environment::render(player* p, world_time* t) { PROF_FUNC
 		rcl.add_command(cmd);
 	}
 	{
-		render_command cmd = render_command::make((u16)mesh_cmd::skyfar, sun_moon.gpu);
+		render_command cmd = render_command::make(exile->ren.cmd_skyfar, sun_moon.gpu);
 
 		cmd.user_data = t;
 		cmd.textures[0] = env_texture;
@@ -469,7 +469,7 @@ void world_environment::render(player* p, world_time* t) { PROF_FUNC
 		rcl.add_command(cmd);
 	}
 
-	eng->ogl.execute_command_list(&rcl);
+	exile->eng->ogl.execute_command_list(&rcl);
 
 	rcl.destroy();
 }
@@ -502,11 +502,11 @@ void world::render_chunks() { PROF_FUNC
 			current.y = 0;
 			chunk* c = *chunks.try_get(current);;
 
-			eng->platform->aquire_mutex(&c->swap_mut);
+			exile->eng->platform->aquire_mutex(&c->swap_mut);
 			if(!c->mesh.dirty) {
 				c->mesh.free_cpu();
 			}
-			render_command cmd = render_command::make((u16)mesh_cmd::chunk, c->mesh.gpu);
+			render_command cmd = render_command::make(exile->ren.cmd_chunk, c->mesh.gpu);
 
 			cmd.textures[0] = block_textures;
 			cmd.textures[1] = env.sky_texture;
@@ -520,7 +520,7 @@ void world::render_chunks() { PROF_FUNC
 			cmd.callback_data = c;
 
 			cmd.view = p.camera.view_pos_origin();
-			cmd.proj = p.camera.proj((f32)eng->window.settings.w / (f32)eng->window.settings.h);
+			cmd.proj = p.camera.proj((f32)exile->eng->window.settings.w / (f32)exile->eng->window.settings.h);
 
 			rcl.add_command(cmd);
 		}
@@ -544,16 +544,16 @@ void world::render_chunks() { PROF_FUNC
 			}
 		}
 
-		render_command cmd = render_command::make((u16)mesh_cmd::lines, lines.gpu);
+		render_command cmd = render_command::make(exile->ren.cmd_lines, lines.gpu);
 		cmd.view = p.camera.view();
-		cmd.proj = p.camera.proj((f32)eng->window.settings.w / (f32)eng->window.settings.h);
+		cmd.proj = p.camera.proj((f32)exile->eng->window.settings.w / (f32)exile->eng->window.settings.h);
 		cmd.callback = FPTR(destroy_lines);
 		cmd.callback_data = &lines;
 		rcl.add_command(cmd);
 	}
 	}
 
-	eng->ogl.execute_command_list(&rcl);
+	exile->eng->ogl.execute_command_list(&rcl);
 	rcl.destroy();
 }
 
@@ -574,10 +574,10 @@ void world::render_player() { PROF_FUNC
 
 		lines.push(cam.pos, intersection, colorf(0,0,0,1), colorf(0,0,0,1));
 
-		render_command cmd = render_command::make((u16)mesh_cmd::lines, lines.gpu);
+		render_command cmd = render_command::make(exile->ren.cmd_lines, lines.gpu);
 
 		cmd.view = cam.view();
-		cmd.proj = cam.proj((f32)eng->window.settings.w / (f32)eng->window.settings.h);
+		cmd.proj = cam.proj((f32)exile->eng->window.settings.w / (f32)exile->eng->window.settings.h);
 		cmd.callback = FPTR(destroy_lines);
 		cmd.callback_data = &lines;
 		rcl.add_command(cmd);
@@ -586,12 +586,12 @@ void world::render_player() { PROF_FUNC
 	mesh_2d_col crosshair;
 	{
 		crosshair.init();
-		f32 w = (f32)eng->window.settings.w, h = (f32)eng->window.settings.h;
+		f32 w = (f32)exile->eng->window.settings.w, h = (f32)exile->eng->window.settings.h;
 
 		crosshair.push_rect(r2(w / 2.0f - 5.0f, h / 2.0f - 1.0f, 10.0f, 2.0f), WHITE);
 		crosshair.push_rect(r2(w / 2.0f - 1.0f, h / 2.0f - 5.0f, 2.0f, 10.0f), WHITE);
 
-		render_command cmd = render_command::make((u16)mesh_cmd::_2d_col, crosshair.gpu);
+		render_command cmd = render_command::make(exile->ren.cmd_2d_col, crosshair.gpu);
 		cmd.proj = ortho(0, w, h, 0, -1, 1);
 
 		cmd.callback = FPTR(destroy_2d_col);
@@ -603,7 +603,7 @@ void world::render_player() { PROF_FUNC
 		rcl.pop_settings();
 	}
 
-	eng->ogl.execute_command_list(&rcl);
+	exile->eng->ogl.execute_command_list(&rcl);
 	rcl.destroy();
 }
 
@@ -612,32 +612,32 @@ void world::update_player(u64 now) { PROF_FUNC
 	render_camera& cam = p.camera;
 
 	u64 pdt = now - p.last;
-	f64 dt = (f64)pdt / (f64)eng->platform->get_perfcount_freq();
+	f64 dt = (f64)pdt / (f64)exile->eng->platform->get_perfcount_freq();
 
 	if(p.enable) {
 
 		v3 accel = v3(0.0f, -settings.gravity, 0.0f);
 		v3 mov_v;
 
-		if(eng->platform->window_focused(&eng->window)) {
+		if(exile->eng->platform->window_focused(&exile->eng->window)) {
 
-			if(eng->platform->keydown(platform_keycode::w)) {
+			if(exile->eng->platform->keydown(platform_keycode::w)) {
 				mov_v += cam.front * p.speed;
 			}
-			if(eng->platform->keydown(platform_keycode::a)) {
+			if(exile->eng->platform->keydown(platform_keycode::a)) {
 				mov_v += cam.right * -p.speed;
 			}
-			if(eng->platform->keydown(platform_keycode::s)) {
+			if(exile->eng->platform->keydown(platform_keycode::s)) {
 				mov_v += cam.front * -p.speed;
 			}
-			if(eng->platform->keydown(platform_keycode::d)) {
+			if(exile->eng->platform->keydown(platform_keycode::d)) {
 				mov_v += cam.right * p.speed;
 			}
 			mov_v.y = 0.0f;
-			if(eng->platform->keydown(platform_keycode::space)) {
+			if(exile->eng->platform->keydown(platform_keycode::space)) {
 				mov_v.y += p.speed;
 			}
-			if(eng->platform->keydown(platform_keycode::lshift)) {
+			if(exile->eng->platform->keydown(platform_keycode::lshift)) {
 				mov_v.y += -p.speed;
 			}
 		}
@@ -714,7 +714,7 @@ void chunk::init(world* _w, chunk_pos p, allocator* a) {
 
 	mesh.init_gpu();
 	
-	eng->platform->create_mutex(&swap_mut, false);
+	exile->eng->platform->create_mutex(&swap_mut, false);
 	lighting_updates = locking_queue<light_work>::make(4, alloc);
 }
 
@@ -770,7 +770,7 @@ void chunk::destroy() {
 
 	lighting_updates.destroy();
 	mesh.destroy();
-	eng->platform->destroy_mutex(&swap_mut);
+	exile->eng->platform->destroy_mutex(&swap_mut);
 }
 
 i32 chunk::y_at(i32 x, i32 z) { 
@@ -1565,10 +1565,10 @@ void chunk::do_mesh() { PROF_FUNC
 		}
 	}
 
-	eng->platform->aquire_mutex(&swap_mut);
+	exile->eng->platform->aquire_mutex(&swap_mut);
 	mesh.swap_mesh(new_mesh);
 	mesh_faces = mesh.quads.size;
-	eng->platform->release_mutex(&swap_mut);
+	exile->eng->platform->release_mutex(&swap_mut);
 }
 
 
@@ -1708,14 +1708,14 @@ CALLBACK void torch_model(mesh_chunk* m, block_meta* info, i32 dir, iv3 v__0, iv
 void world::init_blocks(asset_store* store) {
 
 	block_info = vector<block_meta>::make((u32)block_id::total_blocks, alloc);
-	block_textures = eng->ogl.begin_tex_array(iv3(32, 32, eng->ogl.info.max_texture_layers), texture_wrap::repeat, true, 1);
+	block_textures = exile->eng->ogl.begin_tex_array(iv3(32, 32, exile->eng->ogl.info.max_texture_layers), texture_wrap::repeat, true, 1);
 
 	texture_id tex = block_textures;
-	i32 tex_idx = eng->ogl.get_layers(tex);
+	i32 tex_idx = exile->eng->ogl.get_layers(tex);
 	
 
-	tex_idx = eng->ogl.get_layers(tex);
-	eng->ogl.push_tex_array(tex, store, "bedrock"_);
+	tex_idx = exile->eng->ogl.get_layers(tex);
+	exile->eng->ogl.push_tex_array(tex, store, "bedrock"_);
 
 	block_meta* bedrock = get_info(block_id::bedrock);
 	*bedrock = {
@@ -1727,8 +1727,8 @@ void world::init_blocks(asset_store* store) {
 	};
 
 
-	tex_idx = eng->ogl.get_layers(tex);
-	eng->ogl.push_tex_array(tex, store, "stone"_);
+	tex_idx = exile->eng->ogl.get_layers(tex);
+	exile->eng->ogl.push_tex_array(tex, store, "stone"_);
 
 	block_meta* stone = get_info(block_id::stone);
 	*stone = {
@@ -1740,10 +1740,10 @@ void world::init_blocks(asset_store* store) {
 	};
 
 
-	tex_idx = eng->ogl.get_layers(tex);
-	eng->ogl.push_tex_array(tex, store, "path_side"_);
-	eng->ogl.push_tex_array(tex, store, "dirt"_);
-	eng->ogl.push_tex_array(tex, store, "path_top"_);
+	tex_idx = exile->eng->ogl.get_layers(tex);
+	exile->eng->ogl.push_tex_array(tex, store, "path_side"_);
+	exile->eng->ogl.push_tex_array(tex, store, "dirt"_);
+	exile->eng->ogl.push_tex_array(tex, store, "path_top"_);
 	
 	block_meta* path = get_info(block_id::path);
 	*path = {
@@ -1755,9 +1755,9 @@ void world::init_blocks(asset_store* store) {
 	};	
 
 
-	tex_idx = eng->ogl.get_layers(tex);
-	eng->ogl.push_tex_array(tex, store, "slab_side"_);
-	eng->ogl.push_tex_array(tex, store, "slab_top"_);
+	tex_idx = exile->eng->ogl.get_layers(tex);
+	exile->eng->ogl.push_tex_array(tex, store, "slab_side"_);
+	exile->eng->ogl.push_tex_array(tex, store, "slab_top"_);
 
 	block_meta* stone_slab = get_info(block_id::stone_slab);
 	*stone_slab = {
@@ -1769,10 +1769,10 @@ void world::init_blocks(asset_store* store) {
 	};	
 
 
-	tex_idx = eng->ogl.get_layers(tex);
-	eng->ogl.push_tex_array(tex, store, "torch_side"_);
-	eng->ogl.push_tex_array(tex, store, "torch_bot"_);
-	eng->ogl.push_tex_array(tex, store, "torch_top"_);
+	tex_idx = exile->eng->ogl.get_layers(tex);
+	exile->eng->ogl.push_tex_array(tex, store, "torch_side"_);
+	exile->eng->ogl.push_tex_array(tex, store, "torch_bot"_);
+	exile->eng->ogl.push_tex_array(tex, store, "torch_top"_);
 
 	block_meta* torch = get_info(block_id::torch);
 	*torch = {

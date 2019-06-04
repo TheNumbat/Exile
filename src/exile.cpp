@@ -1,20 +1,21 @@
 
-void exile::init() { PROF_FUNC
+void exile_state::init() { PROF_FUNC
 
 	alloc = MAKE_PLATFORM_ALLOCATOR("world"_);
 
 	store = asset_store::make(&alloc);
 	store.load("assets/game.asset"_);
 
-	setup_mesh_commands();
-	setup_console_commands(this);
+	setup_console_commands();
+
+	ren = exile_renderer::make();
 
 	w.init(&store, &alloc);
 
 	{
-		default_evt = eng->evt.add_handler(FPTR(default_evt_handle), this);
+		default_evt = exile->eng->evt.add_handler(FPTR(default_evt_handle), this);
 
-		controls = evt_state_machine::make(&eng->evt, &alloc);
+		controls = evt_state_machine::make(&exile->eng->evt, &alloc);
 
 		camera_evt = controls.add_state(FPTR(camera_evt_handle), this);
 		ui_evt = controls.add_state(FPTR(ui_evt_handle), this);
@@ -23,33 +24,33 @@ void exile::init() { PROF_FUNC
 		controls.add_transition(ui_evt, camera_evt, FPTR(ui_to_camera), &w.p);
 		
 		controls.set_state(camera_evt);
-		eng->platform->capture_mouse(&eng->window);
+		exile->eng->platform->capture_mouse(&exile->eng->window);
 	}
 }
 
-void exile::gl_reload() { 
+void exile_state::gl_reload() { 
 
 	w.regenerate();	
 }
 
-void exile::update() { PROF_FUNC
+void exile_state::update() { PROF_FUNC
 
-	u64 now = eng->platform->get_perfcount();
+	u64 now = exile->eng->platform->get_perfcount();
 
 	w.update(now);
 
 #ifndef RELEASE 
 	if(store.try_reload()) {
-		eng->ogl.reload_texture_assets();
-		eng->imgui.load_font(&store);
+		exile->eng->ogl.reload_texture_assets();
+		exile->eng->imgui.load_font(&store);
 	}
 #endif
 }
 
-void exile::render() { PROF_FUNC
+void exile_state::render() { PROF_FUNC
 
 	const ImGuiWindowFlags flags = ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_AlwaysAutoResize;
-	if(!eng->dbg.show_ui) {
+	if(!exile->eng->dbg.show_ui) {
 		ImGui::SetNextWindowPos({0.0f, 0.0f});
 		ImGui::Begin("Help"_, null, flags);
 		ImGui::Text("GRAVE : show debug UI");
@@ -67,13 +68,13 @@ void exile::render() { PROF_FUNC
 	w.render();
 }
 
-void exile::destroy() { 
+void exile_state::destroy() { 
 
-	eng->evt.rem_handler(default_evt);
+	exile->eng->evt.rem_handler(default_evt);
 
 	w.destroy();
 	store.destroy();
-	
+	ren.destroy();
 	controls.destroy();
 }
 
@@ -84,13 +85,13 @@ CALLBACK bool default_evt_handle(void* param, platform_event evt) {
 			
 			if(evt.key.code == platform_keycode::escape) {
 
-				eng->running = false;
+				exile->eng->running = false;
 				return true;
 			
 			} else if(evt.key.code == platform_keycode::f11) {
 
-				eng->window.settings.mode = eng->window.settings.mode == platform_window_mode::fullscreen ? platform_window_mode::windowed : platform_window_mode::fullscreen;
-				eng->platform->apply_window_settings(&eng->window);
+				exile->eng->window.settings.mode = exile->eng->window.settings.mode == platform_window_mode::fullscreen ? platform_window_mode::windowed : platform_window_mode::fullscreen;
+				exile->eng->platform->apply_window_settings(&exile->eng->window);
 				return true;
 			}
 		}
@@ -101,8 +102,8 @@ CALLBACK bool default_evt_handle(void* param, platform_event evt) {
 
 CALLBACK void camera_to_ui(void* param) { 
 
-	eng->platform->release_mouse(&eng->window);
-	eng->dbg.show_ui = true;
+	exile->eng->platform->release_mouse(&exile->eng->window);
+	exile->eng->dbg.show_ui = true;
 
 	player* p = (player*)param;
 	p->enable = false;
@@ -110,8 +111,8 @@ CALLBACK void camera_to_ui(void* param) {
 
 CALLBACK void ui_to_camera(void* param) { 
 
-	eng->platform->capture_mouse(&eng->window);
-	eng->dbg.show_ui = false;
+	exile->eng->platform->capture_mouse(&exile->eng->window);
+	exile->eng->dbg.show_ui = false;
 
 	player* p = (player*)param;
 	p->enable = true;
@@ -119,8 +120,7 @@ CALLBACK void ui_to_camera(void* param) {
 
 CALLBACK bool camera_evt_handle(void* param, platform_event evt) { 
 
-	exile* game = (exile*)param;
-	player& p = game->w.p;
+	player& p = exile->w.p;
 
 	if(evt.type == platform_event_type::key) {
 
@@ -130,7 +130,7 @@ CALLBACK bool camera_evt_handle(void* param, platform_event evt) {
 
 			case platform_keycode::grave: {
 
-				game->controls.transition(game->ui_evt);
+				exile->controls.transition(exile->ui_evt);
 
 			} return true;
 
@@ -151,9 +151,9 @@ CALLBACK bool camera_evt_handle(void* param, platform_event evt) {
 		else if(evt.mouse.flags & (u16)platform_mouseflag::press) {
 
 			if(evt.mouse.flags & (u16)platform_mouseflag::lclick) {
-				game->w.player_break_block();
+				exile->w.player_break_block();
 			} else if(evt.mouse.flags & (u16)platform_mouseflag::rclick) {
-				game->w.player_place_block();
+				exile->w.player_place_block();
 			}
 
 			return true;
@@ -164,7 +164,7 @@ CALLBACK bool camera_evt_handle(void* param, platform_event evt) {
 
 		if(evt.window.op == platform_windowop::unfocused) {
 
-			game->controls.transition(game->ui_evt);
+			exile->controls.transition(exile->ui_evt);
 		}
 	}
 
@@ -172,8 +172,6 @@ CALLBACK bool camera_evt_handle(void* param, platform_event evt) {
 }
 
 CALLBACK bool ui_evt_handle(void* param, platform_event evt) { 
-
-	exile* game = (exile*)param;
 
 	if(evt.type == platform_event_type::key) {
 
@@ -183,19 +181,19 @@ CALLBACK bool ui_evt_handle(void* param, platform_event evt) {
 
 			case platform_keycode::grave: {
 
-				game->controls.transition(game->camera_evt);
+				exile->controls.transition(exile->camera_evt);
 
 			} return true;
 
 			case platform_keycode::p: {
 
-				eng->dbg.toggle_profile();
+				exile->eng->dbg.toggle_profile();
 
 			} return true;
 
 			case platform_keycode::o: {
 
-				eng->dbg.toggle_vars();
+				exile->eng->dbg.toggle_vars();
 				
 			} return true;
 

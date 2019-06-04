@@ -6,7 +6,9 @@ Working To-Do:
 		FIX: torchlight AND sunlight removal ?????
 
 		deferred rendering
-			creating, reloading, deleting framebuffers, renderbuffers, etc. (OGL interface)
+			command ids? restructure mesh to game specific render implementation
+			creating, deleting framebuffers, renderbuffers, etc. (OGL interface)
+
 			render to screen (default framebuffer)
 			render passes/render command use of framebuffers
 			multisample targets and textures
