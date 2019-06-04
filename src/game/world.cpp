@@ -346,8 +346,9 @@ void player::reset() {
 
 void world::render() { PROF_FUNC
 
+	exile->ren.world_begin_clear();
+	
 	env.render(&p, &time);
-
 	render_chunks();
 	render_player();
 }

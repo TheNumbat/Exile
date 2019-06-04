@@ -8,7 +8,7 @@ void exile_state::init() { PROF_FUNC
 
 	setup_console_commands();
 
-	ren = exile_renderer::make();
+	ren.init();
 
 	w.init(&store, &alloc);
 
@@ -31,6 +31,7 @@ void exile_state::init() { PROF_FUNC
 void exile_state::gl_reload() { 
 
 	w.regenerate();	
+	ren.apply_window_settings();
 }
 
 void exile_state::update() { PROF_FUNC

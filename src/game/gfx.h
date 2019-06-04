@@ -195,10 +195,14 @@ struct world;
 struct chunk;
 struct world_time;
 
+struct exile_render_settings {
+	colorf clear_color = colorf(0.8f, 0.8f, 0.8f, 1.0f);
+};
+
 // NOTE(max): sort of a client implementation using the engine OGL renderer 
 struct exile_renderer {
 
-	static exile_renderer make();
+	void init();
 	void destroy();
 
 	draw_cmd_id cmd_2d_col           = -1;
@@ -213,19 +217,28 @@ struct exile_renderer {
 	draw_cmd_id cmd_skydome          = -1;
 	draw_cmd_id cmd_skyfar           = -1;
 
+	exile_render_settings settings;
+
+	//TODO(max): move
+	render_buffer depth_buffer;
+	render_target world_color;
+	render_target world_depth;
+	
 	texture_id 	   world_buf_tex = -1;
 	framebuffer_id world_buffer  = -1;
 
 	render_command hud_2D_cmd(mesh_2d_col* mesh);
 
+	void world_begin_clear();
 	render_command world_lines_cmd(mesh_lines* mesh, m4 view, m4 proj);
 	render_command world_stars_cmd(gpu_object_id gpu_id, world_time* time, m4 view, m4 proj);
 	render_command world_skydome_cmd(gpu_object_id gpu_id, world_time* time, texture_id sky, m4 view, m4 proj);
 	render_command world_chunk_cmd(world* w, chunk* c, texture_id blocks, texture_id sky, m4 model, m4 view, m4 proj);
 
 	void generate_mesh_commands();
-	void generate_swapchain();
+	void generate_passes();
 
+	void apply_window_settings();
 	void render_to_screen();
 };
 

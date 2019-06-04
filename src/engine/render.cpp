@@ -430,6 +430,17 @@ texture_id ogl_manager::add_texture_from_font(asset_store* as, string name, text
 	return next_texture_id++;
 }
 
+texture_id ogl_manager::add_texture_target(iv2 dim, i32 samples, gl_tex_format format, bool pixelated) { 
+
+	texture t = texture::make_target(dim, samples, format, pixelated);
+
+	textures.insert(next_texture_id, t);
+
+	LOG_DEBUG_F("Created texture target %"_, next_texture_id);
+
+	return next_texture_id++;
+}
+
 texture_id ogl_manager::add_texture(asset_store* as, string name, texture_wrap wrap, bool pixelated) { 
 
 	texture t = texture::make_bmp(wrap, pixelated, settings.anisotropy);
@@ -522,6 +533,17 @@ texture* ogl_manager::select_texture(u32 unit, texture_id id) {
 	return t;
 }
 
+texture* ogl_manager::get_texture(texture_id id) {  
+
+	texture* t = textures.try_get(id);
+
+	if(!t) {
+		LOG_ERR_F("Failed to retrieve texture %"_, id);
+		return null;
+	}
+	return t;
+}
+
 void ogl_manager::select_textures(render_command* cmd) { 
 
 	DO(8) {
@@ -600,14 +622,12 @@ texture texture::make_array(iv3 dim, u32 offset, texture_wrap wrap, bool pixelat
 	return ret;
 }
 
-texture texture::make_target(iv2 dim, i32 samples, gl_tex_format format, texture_wrap wrap, bool pixelated, f32 aniso) {
+texture texture::make_target(iv2 dim, i32 samples, gl_tex_format format, bool pixelated) {
 
 	texture ret;
 	ret.type = texture_type::target;
 	ret.gl_type = samples == 1 ? gl_tex_target::_2D : gl_tex_target::_2D_multisample;
-	ret.wrap = wrap;
 	ret.pixelated = pixelated;
-	ret.anisotropy = aniso;
 
 	ret.target_info.dim = dim;
 	ret.target_info.samples = samples;
@@ -858,9 +878,9 @@ void render_buffer::bind() {
 	glBindRenderbuffer(gl_renderbuffer::val, handle);
 }
 
-render_target render_target::make_tex(gl_draw_target target, texture tex) {
+render_target render_target::make_tex(gl_draw_target target, texture* tex) {
 
-	LOG_DEBUG_ASSERT(tex.type == texture_type::target);
+	LOG_DEBUG_ASSERT(tex->type == texture_type::target);
 
 	render_target ret;
 	ret.type = render_target_type::tex;
@@ -869,7 +889,7 @@ render_target render_target::make_tex(gl_draw_target target, texture tex) {
 	return ret;
 }
 
-render_target render_target::make_buf(gl_draw_target target, render_buffer buf) {
+render_target render_target::make_buf(gl_draw_target target, render_buffer* buf) {
 
 	render_target ret;
 	ret.type = render_target_type::buf;
@@ -881,27 +901,27 @@ render_target render_target::make_buf(gl_draw_target target, render_buffer buf) 
 void render_target::recreate() {
 
 	if(type == render_target_type::tex) {
-		tex.recreate();
+		tex->recreate();
 	} else {
-		buffer.recreate();
+		buffer->recreate();
 	}
 }
 
 void render_target::gl_destroy() {
 
 	if(type == render_target_type::tex) {
-		tex.gl_destroy();
+		tex->gl_destroy();
 	} else {
-		buffer.gl_destroy();
+		buffer->gl_destroy();
 	}
 }
 
 void render_target::bind() {
 
 	if(type == render_target_type::tex) {
-		tex.bind();
+		tex->bind();
 	} else {
-		buffer.bind();
+		buffer->bind();
 	}
 }
 
@@ -946,9 +966,9 @@ void framebuffer::commit() {
 
 	FORVEC(it, targets) {
 		if(it->type == render_target_type::tex) {
-			glFramebufferTexture2D(gl_framebuffer::val, it->target, it->tex.gl_type, it->tex.handle, 0);
+			glFramebufferTexture2D(gl_framebuffer::val, it->target, it->tex->gl_type, it->tex->handle, 0);
 		} else {
-			glFramebufferRenderbuffer(gl_framebuffer::val, it->target, gl_renderbuffer::val, it->buffer.handle);
+			glFramebufferRenderbuffer(gl_framebuffer::val, it->target, gl_renderbuffer::val, it->buffer->handle);
 		}
 		*target_data.get(__it) = it->target;
 	}
@@ -995,6 +1015,16 @@ void ogl_manager::commit_framebuffer(framebuffer_id id) {
 	f->commit();
 }
 
+render_target ogl_manager::make_target(gl_draw_target target, texture_id tex) {
+
+	return render_target::make_tex(target, get_texture(tex));
+}
+
+render_target ogl_manager::make_target(gl_draw_target target, render_buffer* buf) {
+
+	return render_target::make_buf(target, buf);
+}
+
 void ogl_manager::add_target(framebuffer_id id, render_target target) {
 
 	framebuffer* f = framebuffers.try_get(id);
@@ -1021,6 +1051,11 @@ void ogl_manager::destroy_framebuffer(framebuffer_id id) {
 }
 
 framebuffer* ogl_manager::select_framebuffer(framebuffer_id id) {
+
+	if(id == -1) {
+		glBindFramebuffer(gl_framebuffer::val, 0);
+		return null;
+	}
 
 	framebuffer* f = framebuffers.try_get(id);
 
@@ -1093,6 +1128,11 @@ void ogl_manager::_cmd_push_settings() {
 void ogl_manager::_cmd_pop_settings() { 
 
 	command_settings.pop();
+}
+
+void ogl_manager::_cmd_clear(colorf clear_color, GLenum components) { 
+	glClearColor(clear_color.r, clear_color.g, clear_color.b, clear_color.a);
+	glClear(components);
 }
 
 void ogl_manager::_cmd_set_setting(render_setting setting, bool enable) { 
@@ -1175,12 +1215,15 @@ void ogl_manager::execute_command_list(render_command_list* rcl) {
 		case cmd_setting: {
 			_cmd_set_setting(cmd->setting, cmd->enable);
 		} break;
+		case cmd_clear: {
+			select_framebuffer(cmd->fb_id);
+			_cmd_clear(cmd->clear_color, cmd->clear_components);
+		} break;
 		default: {
 			_cmd_set_settings(cmd);
 
 			select_textures(cmd);
-			if(cmd->fb_id != -1)
-				select_framebuffer(cmd->fb_id);
+			select_framebuffer(cmd->fb_id);
 			
 			gpu_object* obj = select_object(cmd->obj_id);
 			draw_context* d = select_ctx(cmd->cmd_id);

@@ -147,7 +147,7 @@ private:
 	static texture make_rf(texture_wrap wrap, bool pixelated, f32 aniso);
 	static texture make_bmp(texture_wrap wrap, bool pixelated, f32 aniso);
 	static texture make_array(iv3 dim, u32 idx_offset, texture_wrap wrap, bool pixelated, f32 aniso, allocator* a);
-	static texture make_target(iv2 dim, i32 samples, gl_tex_format format, texture_wrap wrap, bool pixelated, f32 aniso);
+	static texture make_target(iv2 dim, i32 samples, gl_tex_format format, bool pixelated);
 	void destroy(allocator* a);
 	void gl_destroy();
 
@@ -192,19 +192,19 @@ struct render_target {
 	render_target() {}
 	render_target(render_target& t) {_memcpy(&t, this, sizeof(render_target));}
 	render_target(render_target&& t) {_memcpy(&t, this, sizeof(render_target));}
-	render_target& operator=(render_target& t) {_memcpy(&t, this, sizeof(render_target)); return *this;}
-
-	static render_target make_tex(gl_draw_target target, texture tex);
-	static render_target make_buf(gl_draw_target target, render_buffer buf);
+	render_target& operator=(const render_target& t) {_memcpy((void*)&t, this, sizeof(render_target)); return *this;}
 
 private:
 
 	render_target_type type;
 	gl_draw_target target = gl_draw_target::color_0;
 	union {
-		render_buffer buffer;
-		texture tex;
+		render_buffer* buffer;
+		texture* tex;
 	};
+
+	static render_target make_tex(gl_draw_target target, texture* tex);
+	static render_target make_buf(gl_draw_target target, render_buffer* buf);
 
 	void gl_destroy();
 	void recreate();
@@ -319,7 +319,6 @@ struct render_command {
 	gpu_object_id obj_id = -1;
 	
 	texture_id textures[8] = {-1, -1, -1, -1, -1, -1, -1, -1};
-	
 
 	void* user_data = null;
 	u32 sort_key = 0;
@@ -336,6 +335,9 @@ struct render_command {
 
 	bool enable = false;
 	render_setting setting;
+
+	colorf clear_color;
+	GLbitfield clear_components = 0;
 
 	render_command() {}
 
@@ -390,8 +392,9 @@ struct render_camera {
 struct ogl_manager {
 
 	static const draw_cmd_id cmd_push_settings = 0;
-	static const draw_cmd_id cmd_pop_settings = 1;
-	static const draw_cmd_id cmd_setting = 2;
+	static const draw_cmd_id cmd_pop_settings  = 1;
+	static const draw_cmd_id cmd_setting       = 2;
+	static const draw_cmd_id cmd_clear         = 3;
 	
 	ogl_info info;
 	ogl_settings settings;
@@ -413,6 +416,7 @@ struct ogl_manager {
 
  	// Textures
 	texture_id add_cubemap(asset_store* as, string name);
+ 	texture_id add_texture_target(iv2 dim, i32 samples, gl_tex_format format, bool pixelated);
 	texture_id add_texture(asset_store* as, string name, texture_wrap wrap = texture_wrap::repeat, bool pixelated = false);
 	texture_id add_texture_from_font(asset_store* as, string name, texture_wrap wrap = texture_wrap::repeat, bool pixelated = false);
 
@@ -436,6 +440,9 @@ struct ogl_manager {
  	
  	void destroy_framebuffer(framebuffer_id id);
 
+	render_target make_target(gl_draw_target target, texture_id tex);
+	render_target make_target(gl_draw_target target, render_buffer* buf);
+
  	// Rendering
  	void dbg_render_texture_fullscreen(texture_id id);
 	void execute_command_list(render_command_list* rcl);
@@ -457,7 +464,7 @@ private:
 
 	gpu_object_id 	next_gpu_id = 1;
 	texture_id 		next_texture_id = 1;
-	draw_cmd_id 	next_draw_cmd_id = 3;
+	draw_cmd_id 	next_draw_cmd_id = 4;
 	framebuffer_id  next_framebuffer_id = 1;
 
 	platform_window* win = null;
@@ -468,12 +475,14 @@ private:
 	void _cmd_apply_settings();
 	void _cmd_set_setting(render_setting setting, bool enable);
 	void _cmd_set_settings(render_command* cmd);
+	void _cmd_clear(colorf clear_color, GLenum components);
 
 	void check_leaked_handles();
 	
 	draw_context* select_ctx(draw_cmd_id id);
 
 	texture* select_texture(u32 unit, texture_id id);
+	texture* get_texture(texture_id id);
 	void select_textures(render_command* cmd);
 	
 	gpu_object* select_object(gpu_object_id id);

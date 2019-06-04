@@ -1,16 +1,19 @@
 
 // TODO(max): remove all OpenGL calls; abstract into renderer system
 
-exile_renderer exile_renderer::make() {
-	exile_renderer ret;
-	ret.generate_mesh_commands();
-	return ret;
+void exile_renderer::init() {
+	
+	exile->eng->dbg.store.add_var("render/settings"_, &settings);
+	
+	generate_mesh_commands();
+	generate_passes();
 }
 
 render_command exile_renderer::world_skydome_cmd(gpu_object_id gpu_id, world_time* time, texture_id sky, m4 view, m4 proj) {
 
 	render_command cmd = render_command::make(cmd_skydome, gpu_id);
 
+	cmd.fb_id = world_buffer;
 	cmd.user_data = time;
 	cmd.textures[0] = sky;
 
@@ -24,6 +27,7 @@ render_command exile_renderer::world_stars_cmd(gpu_object_id gpu_id, world_time*
 
 	render_command cmd = render_command::make(cmd_pointcloud, gpu_id);
 
+	cmd.fb_id = world_buffer;
 	cmd.user_data = time;
 	cmd.view = view;
 	cmd.proj = proj;
@@ -35,6 +39,7 @@ render_command exile_renderer::world_chunk_cmd(world* w, chunk* c, texture_id bl
 
 	render_command cmd = render_command::make(cmd_chunk, c->mesh.gpu);
 
+	cmd.fb_id = world_buffer;
 	cmd.textures[0] = blocks;
 	cmd.textures[1] = sky;
 	cmd.num_tris = c->mesh_faces;
@@ -54,6 +59,7 @@ render_command exile_renderer::world_lines_cmd(mesh_lines* mesh, m4 view, m4 pro
 	
 	render_command cmd = render_command::make(cmd_lines, mesh->gpu);
 
+	cmd.fb_id = world_buffer;
 	cmd.callback = FPTR(destroy_lines);
 	cmd.callback_data = mesh;
 	
@@ -64,6 +70,8 @@ render_command exile_renderer::hud_2D_cmd(mesh_2d_col* mesh) {
 
 	render_command cmd = render_command::make(cmd_2d_col, mesh->gpu);
 	
+	//TODO(max): different pass for HUD 
+	cmd.fb_id = world_buffer;
 	cmd.callback = FPTR(destroy_2d_col);
 	cmd.callback_data = mesh;
 
@@ -73,8 +81,56 @@ render_command exile_renderer::hud_2D_cmd(mesh_2d_col* mesh) {
 	return cmd;
 }
 
+void exile_renderer::world_begin_clear() {
+
+	render_command_list rcl = render_command_list::make();
+	
+	render_command cmd = render_command::make(ogl_manager::cmd_clear);
+	
+	cmd.fb_id = world_buffer;
+	cmd.clear_color = settings.clear_color;
+	cmd.clear_components = (GLbitfield)gl_clear::color_buffer_bit | (GLbitfield)gl_clear::depth_buffer_bit;
+
+	rcl.add_command(cmd);
+	exile->eng->ogl.execute_command_list(&rcl);
+	rcl.destroy();
+}
+
+void exile_renderer::apply_window_settings() {
+	LOG_ASSERT(false);
+}
+
 void exile_renderer::render_to_screen() {
 
+	render_command_list rcl = render_command_list::make();
+	
+	render_command cmd = render_command::make(ogl_manager::cmd_clear);
+	
+	cmd.clear_color = settings.clear_color;
+	cmd.clear_components = (GLbitfield)gl_clear::color_buffer_bit | (GLbitfield)gl_clear::depth_buffer_bit;
+
+	rcl.add_command(cmd);
+	
+	exile->eng->ogl.execute_command_list(&rcl);
+	rcl.destroy();
+
+	exile->eng->ogl.dbg_render_texture_fullscreen(world_buf_tex);
+}
+
+void exile_renderer::generate_passes() {
+
+	iv2 dim = iv2(exile->eng->window.settings.w, exile->eng->window.settings.h);
+
+	world_buf_tex = exile->eng->ogl.add_texture_target(dim, /*exile->eng->window.settings.samples*/ 1, gl_tex_format::rgba8, true);
+	world_color = exile->eng->ogl.make_target(gl_draw_target::color_0, world_buf_tex);
+	
+	depth_buffer = render_buffer::make(gl_tex_format::depth_component, dim, /*exile->eng->window.settings.samples*/ 1);
+	world_depth = exile->eng->ogl.make_target(gl_draw_target::depth, &depth_buffer);
+
+	world_buffer = exile->eng->ogl.add_framebuffer();
+	exile->eng->ogl.add_target(world_buffer, world_color);
+	exile->eng->ogl.add_target(world_buffer, world_depth);
+	exile->eng->ogl.commit_framebuffer(world_buffer);
 }
 
 void exile_renderer::generate_mesh_commands() { 
@@ -126,6 +182,14 @@ void exile_renderer::destroy() {
 	cmd_chunk            = 0;
 	cmd_skydome          = 0;
 	cmd_skyfar           = 0;
+
+	exile->eng->ogl.destroy_texture(world_buf_tex);
+	exile->eng->ogl.destroy_framebuffer(world_buffer);
+	world_buf_tex = world_buffer = 0;
+
+	depth_buffer = {};
+	world_color = {};
+	world_depth = {};
 }
 
 CALLBACK void uniforms_mesh_skyfar(shader_program* prog, render_command* cmd) { 

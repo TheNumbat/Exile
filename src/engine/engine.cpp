@@ -94,11 +94,6 @@ EXPORT bool main_loop(engine* state) {
 
 	{PROF_SCOPE("Main Loop"_);
 
-	{PROF_SCOPE("GL Clear"_);
-		glClearColor(0.8f, 0.8f, 0.8f, 1.0f);
-		glClear((GLbitfield)gl_clear::color_buffer_bit | (GLbitfield)gl_clear::depth_buffer_bit);
-	}
-
 	state->evt.run_events(state); 
 
 	state->imgui.begin_frame(&state->window);
