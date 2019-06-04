@@ -6,7 +6,7 @@ Working To-Do:
 		FIX: torchlight AND sunlight removal ?????
 
 		render pass system
-			compositing shader
+			render compositing to texture as well (proof of concept)
 			
 			multisample targets and textures
 				fix multisample final screen target (not needed?)

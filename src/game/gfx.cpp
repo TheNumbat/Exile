@@ -16,7 +16,7 @@ render_command exile_renderer::world_skydome_cmd(gpu_object_id gpu_id, world_tim
 
 	render_command cmd = render_command::make(cmd_skydome, gpu_id);
 
-	cmd.fb_id = wor.buffer;
+	cmd.fb_id = world_pass.buffer;
 	cmd.user_data = time;
 	cmd.textures[0] = sky;
 
@@ -30,7 +30,7 @@ render_command exile_renderer::world_stars_cmd(gpu_object_id gpu_id, world_time*
 
 	render_command cmd = render_command::make(cmd_pointcloud, gpu_id);
 
-	cmd.fb_id = wor.buffer;
+	cmd.fb_id = world_pass.buffer;
 	cmd.user_data = time;
 	cmd.view = view;
 	cmd.proj = proj;
@@ -42,7 +42,7 @@ render_command exile_renderer::world_chunk_cmd(world* w, chunk* c, texture_id bl
 
 	render_command cmd = render_command::make(cmd_chunk, c->mesh.gpu);
 
-	cmd.fb_id = wor.buffer;
+	cmd.fb_id = world_pass.buffer;
 	cmd.textures[0] = blocks;
 	cmd.textures[1] = sky;
 	cmd.num_tris = c->mesh_faces;
@@ -62,7 +62,7 @@ render_command exile_renderer::world_lines_cmd(mesh_lines* mesh, m4 view, m4 pro
 	
 	render_command cmd = render_command::make(cmd_lines, mesh->gpu);
 
-	cmd.fb_id = wor.buffer;
+	cmd.fb_id = world_pass.buffer;
 	cmd.callback = FPTR(destroy_lines);
 	cmd.callback_data = mesh;
 	
@@ -73,7 +73,7 @@ render_command exile_renderer::hud_2D_cmd(mesh_2d_col* mesh) {
 
 	render_command cmd = render_command::make(cmd_2D_col, mesh->gpu);
 	
-	cmd.fb_id = hud.buffer;
+	cmd.fb_id = hud_pass.buffer;
 	cmd.callback = FPTR(destroy_2d_col);
 	cmd.callback_data = mesh;
 
@@ -89,7 +89,7 @@ void exile_renderer::world_begin_clear() {
 	
 	render_command cmd = render_command::make(ogl_manager::cmd_clear);
 	
-	cmd.fb_id = wor.buffer;
+	cmd.fb_id = world_pass.buffer;
 	cmd.clear_color = settings.clear_color;
 	cmd.clear_components = (GLbitfield)gl_clear::color_buffer_bit | (GLbitfield)gl_clear::depth_buffer_bit;
 
@@ -113,8 +113,8 @@ void exile_renderer::render_to_screen() {
 	{
 		render_command cmd = render_command::make(cmd_composite, the_quad.gpu);
 
-		cmd.textures[0] = wor.tex;
-		cmd.textures[1] = hud.tex;
+		cmd.textures[0] = world_pass.tex;
+		cmd.textures[1] = hud_pass.tex;
 
 		rcl.add_command(cmd);
 	}
@@ -130,25 +130,11 @@ void exile_renderer::generate_passes() {
 	prev_dim = iv2(exile->eng->window.settings.w, exile->eng->window.settings.h);
 	prev_samples = exile->eng->window.settings.samples;
 
-	wor.init(prev_dim, prev_samples);
-	hud.init(prev_dim, prev_samples);
+	world_pass.init(prev_dim, prev_samples);
+	hud_pass.init(prev_dim, prev_samples);
 }
 
-void world_passes::init(iv2 dim, i32 samples) {
-
-	tex = exile->eng->ogl.add_texture_target(dim, /*samples*/ 1, gl_tex_format::rgba8, true);
-	col = exile->eng->ogl.make_target(gl_draw_target::color_0, tex);
-	
-	depth_buf = render_buffer::make(gl_tex_format::depth_component, dim, /*samples*/ 1);
-	depth = exile->eng->ogl.make_target(gl_draw_target::depth, &depth_buf);
-
-	buffer = exile->eng->ogl.add_framebuffer();
-	exile->eng->ogl.add_target(buffer, col);
-	exile->eng->ogl.add_target(buffer, depth);
-	exile->eng->ogl.commit_framebuffer(buffer);
-}
-
-void hud_passes::init(iv2 dim, i32 samples) {
+void basic_passes::init(iv2 dim, i32 samples) {
 
 	tex = exile->eng->ogl.add_texture_target(dim, /*samples*/ 1, gl_tex_format::rgba8, true);
 	col = exile->eng->ogl.make_target(gl_draw_target::color_0, tex);
@@ -236,22 +222,11 @@ void exile_renderer::destroy() {
 
 void exile_renderer::destroy_passes() {
 
-	wor.destroy();
-	hud.destroy();
+	hud_pass.destroy();
+	world_pass.destroy();
 }
 
-void world_passes::destroy() {
-
-	exile->eng->ogl.destroy_texture(tex);
-	exile->eng->ogl.destroy_framebuffer(buffer);
-	tex = buffer = 0;
-
-	col = {};
-	depth = {};
-	depth_buf = {};
-}
-
-void hud_passes::destroy() {
+void basic_passes::destroy() {
 
 	exile->eng->ogl.destroy_texture(tex);
 	exile->eng->ogl.destroy_framebuffer(buffer);
