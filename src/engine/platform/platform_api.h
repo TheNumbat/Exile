@@ -46,7 +46,7 @@ struct platform_window_settings {
 
 	platform_window_mode mode = platform_window_mode::windowed;
 	i32 w = 1280, h = 720;
-	i32 samples = 4;
+	i32 samples = 1;
 	bool vsync = false;
 };
 

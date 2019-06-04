@@ -65,6 +65,9 @@ render_command exile_renderer::world_lines_cmd(mesh_lines* mesh, m4 view, m4 pro
 	cmd.fb_id = world_pass.buffer;
 	cmd.callback = FPTR(destroy_lines);
 	cmd.callback_data = mesh;
+
+	cmd.view = view;
+	cmd.proj = proj;
 	
 	return cmd;
 }
@@ -111,10 +114,11 @@ void exile_renderer::render_to_screen() {
 		rcl.add_command(cmd);
 	}
 	{
-		render_command cmd = render_command::make(cmd_composite, the_quad.gpu);
+		render_command cmd = render_command::make(prev_samples == 1 ? cmd_composite : cmd_composite_ms, the_quad.gpu);
 
 		cmd.textures[0] = world_pass.tex;
 		cmd.textures[1] = hud_pass.tex;
+		cmd.user_data = this;
 
 		rcl.add_command(cmd);
 	}
@@ -128,7 +132,7 @@ void exile_renderer::render_to_screen() {
 void exile_renderer::generate_passes() {
 
 	prev_dim = iv2(exile->eng->window.settings.w, exile->eng->window.settings.h);
-	prev_samples = exile->eng->window.settings.samples;
+	prev_samples = settings.num_samples;
 
 	world_pass.init(prev_dim, prev_samples);
 	hud_pass.init(prev_dim, prev_samples);
@@ -136,10 +140,10 @@ void exile_renderer::generate_passes() {
 
 void basic_passes::init(iv2 dim, i32 samples) {
 
-	tex = exile->eng->ogl.add_texture_target(dim, /*samples*/ 1, gl_tex_format::rgba8, true);
+	tex = exile->eng->ogl.add_texture_target(dim, samples, gl_tex_format::rgba8, true);
 	col = exile->eng->ogl.make_target(gl_draw_target::color_0, tex);
 	
-	depth_buf = render_buffer::make(gl_tex_format::depth_component, dim, /*samples*/ 1);
+	depth_buf = render_buffer::make(gl_tex_format::depth_component, dim, samples);
 	depth = exile->eng->ogl.make_target(gl_draw_target::depth, &depth_buf);
 
 	buffer = exile->eng->ogl.add_framebuffer();
@@ -156,7 +160,7 @@ void exile_renderer::recreate_passes() {
 void exile_renderer::check_recreate() {
 	if(exile->eng->window.settings.w != prev_dim.x ||
 	   exile->eng->window.settings.h != prev_dim.y ||
-	   exile->eng->window.settings.samples != prev_samples) {
+	   settings.num_samples != prev_samples) {
 
 		recreate_passes();
 	}
@@ -181,7 +185,8 @@ void exile_renderer::generate_mesh_commands() {
 	reg(2D_tex_col, mesh_2D_tex_col, "mesh/");
 	reg(3D_tex_instanced, mesh_3D_tex_instanced, "mesh/");
 
-	reg(composite, composite, "");
+	reg(composite, composite, "effects/");
+	reg(composite_ms, composite_ms, "effects/");
 
 	#undef reg
 }
@@ -270,6 +275,24 @@ CALLBACK void update_mesh_quad(gpu_object* obj, void* data, bool force) {
 
 	glBindBuffer(gl_buf_target::array, obj->vbos[0]);
 	glBufferData(gl_buf_target::array, sizeof(m->vbo_data), m->vbo_data, gl_buf_usage::static_draw);
+}
+
+CALLBACK void uniforms_composite_ms(shader_program* prog, render_command* cmd) {
+
+	uniforms_composite(prog, cmd);
+
+	exile_renderer* set = (exile_renderer*)cmd->user_data;
+
+	glUniform1i(prog->location("num_samples"_), set->prev_samples);
+	glUniform2f(prog->location("screen_size"_), (f32)set->prev_dim.x, (f32)set->prev_dim.y);
+}
+
+CALLBACK void run_composite_ms(render_command* cmd, gpu_object* gpu) {
+	glDrawArrays(gl_draw_mode::triangles, 0, 6);
+}
+
+CALLBACK bool compat_composite_ms(ogl_info* info) {
+	return info->check_version(3, 2);
 }
 
 CALLBACK bool compat_composite(ogl_info* info) {

@@ -933,7 +933,6 @@ framebuffer framebuffer::make(allocator* a) {
 
 	glGenFramebuffers(1, &ret.handle);
 	ret.targets = vector<render_target>::make(4, a);
-	ret.alloc = a;
 
 	return ret;
 }
@@ -1475,6 +1474,7 @@ void ogl_manager::load_global_funcs() {
 	GL_LOAD(glTexSubImage3D);
 	GL_LOAD(glUniform1f);
 	GL_LOAD(glUniform1i);
+	GL_LOAD(glUniform2i);
 	GL_LOAD(glUniform4fv);
 	GL_LOAD(glBindSampler);
 	GL_LOAD(glUniform2f);
@@ -1584,7 +1584,6 @@ render_command_list render_command_list::make(allocator* alloc, u32 cmds) {
 
 	render_command_list ret;
 
-	ret.alloc = alloc;
 	ret.commands = vector<render_command>::make(cmds, alloc);
 
 	return ret;
@@ -1598,7 +1597,6 @@ void render_command_list::clear() {
 void render_command_list::destroy() { 
 
 	commands.destroy();
-	alloc = null;
 }
 
 void render_command_list::push_settings() {

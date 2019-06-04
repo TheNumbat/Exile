@@ -6,12 +6,7 @@ Working To-Do:
 		FIX: torchlight AND sunlight removal ?????
 
 		render pass system
-			render compositing to texture as well (proof of concept)
-			
-			multisample targets and textures
-				fix multisample final screen target (not needed?)
-			testing
-			
+			move world render settings to renderer settings			
 			multiple passes
 			gamma correction
 			HDR / bloom / god rays / better fog

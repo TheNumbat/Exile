@@ -220,7 +220,6 @@ private:
 
 	GLuint handle = 0;
 	vector<render_target> targets;
-	allocator* alloc = null;
 
 	static framebuffer make(allocator* a);
 	void destroy();
@@ -350,7 +349,6 @@ bool operator<=(render_command& first, render_command& second);
 
 struct render_command_list {
 	vector<render_command> commands;
-	allocator* alloc = null;
 
 	static render_command_list make(allocator* alloc = null, u32 cmds = 8);
 	void destroy();

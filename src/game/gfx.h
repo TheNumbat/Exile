@@ -213,6 +213,10 @@ struct chunk;
 struct world_time;
 
 struct exile_render_settings {
+	
+	// TODO(max): move world render settings here
+
+	i32 num_samples = 4;
 	colorf clear_color = colorf(0.8f, 0.8f, 0.8f, 1.0f);
 };
 
@@ -247,7 +251,9 @@ struct exile_renderer {
 	draw_cmd_id cmd_skydome          = -1;
 	draw_cmd_id cmd_skyfar           = -1;
 
+	// TODO(max): different interface for effects vs. mesh-based rendering?
 	draw_cmd_id cmd_composite 		 = -1;
+	draw_cmd_id cmd_composite_ms	 = -1;
 
 	exile_render_settings settings;
 
@@ -298,6 +304,12 @@ decl_mesh(pointcloud);
 
 CALLBACK void setup_mesh_quad(gpu_object* obj);
 CALLBACK void update_mesh_quad(gpu_object* obj, void* data, bool force);
+
 CALLBACK void uniforms_composite(shader_program* prog, render_command* cmd);
 CALLBACK void run_composite(render_command* cmd, gpu_object* gpu);		
 CALLBACK bool compat_composite(ogl_info* info);
+
+CALLBACK void uniforms_composite_ms(shader_program* prog, render_command* cmd);
+CALLBACK void run_composite_ms(render_command* cmd, gpu_object* gpu);		
+CALLBACK bool compat_composite_ms(ogl_info* info);
+
