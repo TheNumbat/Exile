@@ -216,6 +216,32 @@ struct exile_render_settings {
 	colorf clear_color = colorf(0.8f, 0.8f, 0.8f, 1.0f);
 };
 
+struct world_passes {
+
+	render_buffer depth_buf;
+	render_target col;
+	render_target depth;
+	
+	texture_id 	   tex = -1;
+	framebuffer_id buffer  = -1;
+
+	void init(iv2 dim, i32 samples);
+	void destroy();
+};
+
+struct hud_passes {
+
+	render_buffer depth_buf;
+	render_target col;
+	render_target depth;
+	
+	texture_id 	   tex = -1;
+	framebuffer_id buffer  = -1;
+
+	void init(iv2 dim, i32 samples);
+	void destroy();
+};
+
 // NOTE(max): sort of a client implementation using the engine OGL renderer 
 struct exile_renderer {
 
@@ -241,13 +267,8 @@ struct exile_renderer {
 	mesh_cubemap the_cubemap;
 	mesh_quad 	 the_quad;
 
-	//TODO(max): move
-	render_buffer depth_buffer;
-	render_target world_color;
-	render_target world_depth;
-	
-	texture_id 	   world_buf_tex = -1;
-	framebuffer_id world_buffer  = -1;
+	world_passes wor;
+	hud_passes hud;
 
 	render_command hud_2D_cmd(mesh_2d_col* mesh);
 

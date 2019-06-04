@@ -5,12 +5,21 @@ in vec2 f_uv;
 
 out vec4 color;
 
-uniform sampler2D tex0;
-uniform sampler2D tex1;
-uniform sampler2D tex2;
+uniform int num_textures;
+uniform sampler2D textures[8];
 
 void main() {
 
-	color = texture(tex0, f_uv);
+	//TODO(max): this is totally not the right way to blend
+
+	vec4 col = texture(textures[0], f_uv);
+
+	for(int i = 1; i < num_textures; i++) {
+
+		vec4 next = texture(textures[i], f_uv);
+		col = mix(col, next, next.a);
+	}
+
+	color = col;
 }
 
