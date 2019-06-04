@@ -241,7 +241,6 @@ struct world_environment {
 	texture_id sky_texture = -1, env_texture = -1;
 	
 	mesh_3d_tex sky;
-	mesh_3d_tex sun_moon;
 	mesh_pointcloud stars;
 
 	void init(asset_store* store, allocator* a);

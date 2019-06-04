@@ -65,7 +65,9 @@ void exile_state::render() { PROF_FUNC
 		ImGui::End();
 	}
 
+	// NOTE(max): engine IMGUI-based debug UI is rendered on top of everything, separately
 	w.render();
+	ren.render_to_screen();
 }
 
 void exile_state::destroy() { 

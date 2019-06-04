@@ -975,6 +975,64 @@ void framebuffer::bind() {
 	glBindFramebuffer(gl_framebuffer::val, handle);
 }
 
+framebuffer_id ogl_manager::add_framebuffer() {
+	
+	framebuffer new_fb = framebuffer::make(alloc);
+	framebuffers.insert(next_framebuffer_id, new_fb);
+
+	return next_framebuffer_id++;
+}
+
+void ogl_manager::commit_framebuffer(framebuffer_id id) {
+
+	framebuffer* f = framebuffers.try_get(id);
+
+	if(!f) {
+		LOG_ERR_F("Failed to retrieve framebuffer %"_, id);
+		return;
+	}
+
+	f->commit();
+}
+
+void ogl_manager::add_target(framebuffer_id id, render_target target) {
+
+	framebuffer* f = framebuffers.try_get(id);
+
+	if(!f) {
+		LOG_ERR_F("Failed to retrieve framebuffer %"_, id);
+		return;
+	}
+
+	f->add_target(target);
+}
+
+void ogl_manager::destroy_framebuffer(framebuffer_id id) {
+
+	framebuffer* f = framebuffers.try_get(id);
+
+	if(!f) {
+		LOG_ERR_F("Failed to retrieve framebuffer %"_, id);
+		return;
+	}
+
+	f->destroy();
+	framebuffers.erase(id);
+}
+
+framebuffer* ogl_manager::select_framebuffer(framebuffer_id id) {
+
+	framebuffer* f = framebuffers.try_get(id);
+
+	if(!f) {
+		LOG_ERR_F("Failed to retrieve framebuffer %"_, id);
+		return null;
+	}
+
+	f->bind();
+	return f;
+}
+
 void ogl_manager::rem_command(draw_cmd_id id) {
 
 	draw_context* d = commands.try_get(id);
@@ -1121,9 +1179,10 @@ void ogl_manager::execute_command_list(render_command_list* rcl) {
 			_cmd_set_settings(cmd);
 
 			select_textures(cmd);
+			if(cmd->fb_id != -1)
+				select_framebuffer(cmd->fb_id);
 			
-			gpu_object* obj = select_object(cmd->object);
-
+			gpu_object* obj = select_object(cmd->obj_id);
 			draw_context* d = select_ctx(cmd->cmd_id);
 
 			d->shader.send_uniforms(&d->shader, cmd);
@@ -1443,7 +1502,6 @@ void ogl_manager::check_leaked_handles() {
 	#undef GL_CHECK
 }
 
-
 render_command render_command::make(draw_cmd_id type) {
 
 	render_command ret;
@@ -1463,7 +1521,7 @@ render_command render_command::make(draw_cmd_id type, render_setting setting, bo
 render_command render_command::make(draw_cmd_id id, gpu_object_id gpu, u32 key) { 
 
 	render_command ret;
-	ret.object = gpu;
+	ret.obj_id = gpu;
 	ret.cmd_id = id;
 	ret.sort_key = key;
 	return ret;

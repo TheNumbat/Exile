@@ -416,7 +416,6 @@ void world_environment::init(asset_store* store, allocator* a) { PROF_FUNC
 	sky.push_dome({}, 1.0f, 64);
 	sky_texture = exile->eng->ogl.add_texture(store, "sky"_, texture_wrap::mirror);
 
-	sun_moon.init(a);
 	env_texture = exile->eng->ogl.add_texture(store, "env"_);
 
 	stars.init(a);
@@ -427,7 +426,6 @@ void world_environment::destroy() {
 
 	sky.destroy();
 	stars.destroy();
-	sun_moon.destroy();
 }
 
 void world_environment::render(player* p, world_time* t) { PROF_FUNC
@@ -435,39 +433,12 @@ void world_environment::render(player* p, world_time* t) { PROF_FUNC
 	render_command_list rcl = render_command_list::make();
 
 	m4 mproj = p->camera.proj((f32)exile->eng->window.settings.w / (f32)exile->eng->window.settings.h);
-	{
-		render_command cmd = render_command::make(exile->ren.cmd_skydome, sky.gpu);
+	m4 view_no_trans = p->camera.view_no_translate();
 
-		cmd.user_data = t;
-		cmd.textures[0] = sky_texture;
+	rcl.add_command(exile->ren.world_skydome_cmd(sky.gpu, t, sky_texture, view_no_trans, mproj));
 
-		cmd.view = p->camera.view_no_translate();
-		cmd.proj = mproj;
-
-		rcl.add_command(cmd);
-	}
-	{
-		rcl.set_setting(render_setting::point_size, true);
-
-		render_command cmd = render_command::make(exile->ren.cmd_pointcloud, stars.gpu);
-
-		cmd.user_data = t;
-		cmd.view = p->camera.view_no_translate();
-		cmd.proj = mproj;
-
-		rcl.add_command(cmd);
-	}
-	{
-		render_command cmd = render_command::make(exile->ren.cmd_skyfar, sun_moon.gpu);
-
-		cmd.user_data = t;
-		cmd.textures[0] = env_texture;
-
-		cmd.view = p->camera.view_no_translate();
-		cmd.proj = mproj;
-
-		rcl.add_command(cmd);
-	}
+	rcl.set_setting(render_setting::point_size, true);
+	rcl.add_command(exile->ren.world_stars_cmd(stars.gpu, t, view_no_trans, mproj));
 
 	exile->eng->ogl.execute_command_list(&rcl);
 
@@ -506,23 +477,13 @@ void world::render_chunks() { PROF_FUNC
 			if(!c->mesh.dirty) {
 				c->mesh.free_cpu();
 			}
-			render_command cmd = render_command::make(exile->ren.cmd_chunk, c->mesh.gpu);
-
-			cmd.textures[0] = block_textures;
-			cmd.textures[1] = env.sky_texture;
-			cmd.num_tris = c->mesh_faces;
-			cmd.user_data = this;
 
 			v3 chunk_pos = v3((f32)current.x * chunk::wid, (f32)current.y * chunk::hei, (f32)current.z * chunk::wid);
-			cmd.model = translate(chunk_pos - p.camera.pos);
+			m4 model = translate(chunk_pos - p.camera.pos);
+			m4 view = p.camera.view_pos_origin();
+			m4 proj = p.camera.proj((f32)exile->eng->window.settings.w / (f32)exile->eng->window.settings.h);
 
-			cmd.callback = FPTR(unlock_chunk);
-			cmd.callback_data = c;
-
-			cmd.view = p.camera.view_pos_origin();
-			cmd.proj = p.camera.proj((f32)exile->eng->window.settings.w / (f32)exile->eng->window.settings.h);
-
-			rcl.add_command(cmd);
+			rcl.add_command(exile->ren.world_chunk_cmd(this, c, block_textures, env.sky_texture, model, view, proj));
 		}
 	}
 
@@ -544,12 +505,10 @@ void world::render_chunks() { PROF_FUNC
 			}
 		}
 
-		render_command cmd = render_command::make(exile->ren.cmd_lines, lines.gpu);
-		cmd.view = p.camera.view();
-		cmd.proj = p.camera.proj((f32)exile->eng->window.settings.w / (f32)exile->eng->window.settings.h);
-		cmd.callback = FPTR(destroy_lines);
-		cmd.callback_data = &lines;
-		rcl.add_command(cmd);
+		m4 view = p.camera.view();
+		m4 proj = p.camera.proj((f32)exile->eng->window.settings.w / (f32)exile->eng->window.settings.h);
+
+		rcl.add_command(exile->ren.world_lines_cmd(&lines, view, proj));
 	}
 	}
 
@@ -574,13 +533,10 @@ void world::render_player() { PROF_FUNC
 
 		lines.push(cam.pos, intersection, colorf(0,0,0,1), colorf(0,0,0,1));
 
-		render_command cmd = render_command::make(exile->ren.cmd_lines, lines.gpu);
-
-		cmd.view = cam.view();
-		cmd.proj = cam.proj((f32)exile->eng->window.settings.w / (f32)exile->eng->window.settings.h);
-		cmd.callback = FPTR(destroy_lines);
-		cmd.callback_data = &lines;
-		rcl.add_command(cmd);
+		m4 view = cam.view();
+		m4 proj = cam.proj((f32)exile->eng->window.settings.w / (f32)exile->eng->window.settings.h);
+		
+		rcl.add_command(exile->ren.world_lines_cmd(&lines, view, proj));
 	}
 
 	mesh_2d_col crosshair;
@@ -591,15 +547,9 @@ void world::render_player() { PROF_FUNC
 		crosshair.push_rect(r2(w / 2.0f - 5.0f, h / 2.0f - 1.0f, 10.0f, 2.0f), WHITE);
 		crosshair.push_rect(r2(w / 2.0f - 1.0f, h / 2.0f - 5.0f, 2.0f, 10.0f), WHITE);
 
-		render_command cmd = render_command::make(exile->ren.cmd_2d_col, crosshair.gpu);
-		cmd.proj = ortho(0, w, h, 0, -1, 1);
-
-		cmd.callback = FPTR(destroy_2d_col);
-		cmd.callback_data = &crosshair;
-
 		rcl.push_settings();
 		rcl.set_setting(render_setting::depth_test, false);
-		rcl.add_command(cmd);
+		rcl.add_command(exile->ren.hud_2D_cmd(&crosshair));
 		rcl.pop_settings();
 	}
 

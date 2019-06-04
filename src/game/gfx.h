@@ -191,6 +191,10 @@ struct mesh_3d_tex_instance_data {
 	bool empty();
 };
 
+struct world;
+struct chunk;
+struct world_time;
+
 // NOTE(max): sort of a client implementation using the engine OGL renderer 
 struct exile_renderer {
 
@@ -209,7 +213,20 @@ struct exile_renderer {
 	draw_cmd_id cmd_skydome          = -1;
 	draw_cmd_id cmd_skyfar           = -1;
 
+	texture_id 	   world_buf_tex = -1;
+	framebuffer_id world_buffer  = -1;
+
+	render_command hud_2D_cmd(mesh_2d_col* mesh);
+
+	render_command world_lines_cmd(mesh_lines* mesh, m4 view, m4 proj);
+	render_command world_stars_cmd(gpu_object_id gpu_id, world_time* time, m4 view, m4 proj);
+	render_command world_skydome_cmd(gpu_object_id gpu_id, world_time* time, texture_id sky, m4 view, m4 proj);
+	render_command world_chunk_cmd(world* w, chunk* c, texture_id blocks, texture_id sky, m4 model, m4 view, m4 proj);
+
 	void generate_mesh_commands();
+	void generate_swapchain();
+
+	void render_to_screen();
 };
 
 #define decl_mesh(name) \

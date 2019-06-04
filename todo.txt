@@ -6,7 +6,6 @@ Working To-Do:
 		FIX: torchlight AND sunlight removal ?????
 
 		deferred rendering
-			command ids? restructure mesh to game specific render implementation
 			creating, deleting framebuffers, renderbuffers, etc. (OGL interface)
 
 			render to screen (default framebuffer)

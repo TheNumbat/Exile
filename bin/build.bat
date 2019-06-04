@@ -52,7 +52,7 @@ echo.
 
 	echo running
 	xcopy w:\deps\clang-c\libclang.dll w:\build\ /C /Y > NUL 2> NUL
-	meta.exe w:\src\compile.cpp %SDL_META%
+	meta.exe w:\src\game\compile.cpp %SDL_META%
 )
 echo.
 echo TESTS 
@@ -76,7 +76,7 @@ echo.
 	if not exist imgui_compile.obj (
 		cl %Game_CompilerFlags% -c w:\deps\imgui\imgui_compile.cpp /link %Game_LinkerFlags%
 	)
-	cl %Game_CompilerFlags% %SDL_COMP% -Fegame.dll w:\src\compile.cpp /link %Game_LinkerFlags% imgui_compile.obj
+	cl %Game_CompilerFlags% %SDL_COMP% -Fegame.dll w:\src\game\compile.cpp /link %Game_LinkerFlags% imgui_compile.obj
 )
 echo.
 echo PLATFORM 

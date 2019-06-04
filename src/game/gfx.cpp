@@ -7,6 +7,76 @@ exile_renderer exile_renderer::make() {
 	return ret;
 }
 
+render_command exile_renderer::world_skydome_cmd(gpu_object_id gpu_id, world_time* time, texture_id sky, m4 view, m4 proj) {
+
+	render_command cmd = render_command::make(cmd_skydome, gpu_id);
+
+	cmd.user_data = time;
+	cmd.textures[0] = sky;
+
+	cmd.view = view;
+	cmd.proj = proj;
+
+	return cmd;
+}
+
+render_command exile_renderer::world_stars_cmd(gpu_object_id gpu_id, world_time* time, m4 view, m4 proj) {
+
+	render_command cmd = render_command::make(cmd_pointcloud, gpu_id);
+
+	cmd.user_data = time;
+	cmd.view = view;
+	cmd.proj = proj;
+
+	return cmd;
+}
+
+render_command exile_renderer::world_chunk_cmd(world* w, chunk* c, texture_id blocks, texture_id sky, m4 model, m4 view, m4 proj) {
+
+	render_command cmd = render_command::make(cmd_chunk, c->mesh.gpu);
+
+	cmd.textures[0] = blocks;
+	cmd.textures[1] = sky;
+	cmd.num_tris = c->mesh_faces;
+	cmd.user_data = w;
+
+	cmd.model = model;
+	cmd.view = view;
+	cmd.proj = proj;
+
+	cmd.callback = FPTR(unlock_chunk);
+	cmd.callback_data = c;
+
+	return cmd;
+}
+
+render_command exile_renderer::world_lines_cmd(mesh_lines* mesh, m4 view, m4 proj) {
+	
+	render_command cmd = render_command::make(cmd_lines, mesh->gpu);
+
+	cmd.callback = FPTR(destroy_lines);
+	cmd.callback_data = mesh;
+	
+	return cmd;
+}
+
+render_command exile_renderer::hud_2D_cmd(mesh_2d_col* mesh) {
+
+	render_command cmd = render_command::make(cmd_2d_col, mesh->gpu);
+	
+	cmd.callback = FPTR(destroy_2d_col);
+	cmd.callback_data = mesh;
+
+	f32 w = (f32)exile->eng->window.settings.w, h = (f32)exile->eng->window.settings.h;
+	cmd.proj = ortho(0, w, h, 0, -1, 1);
+
+	return cmd;
+}
+
+void exile_renderer::render_to_screen() {
+
+}
+
 void exile_renderer::generate_mesh_commands() { 
 	
 	#define reg(name) cmd_##name = exile->eng->ogl.add_command(FPTR(run_mesh_##name), FPTR(uniforms_mesh_##name), \

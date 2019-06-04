@@ -17,7 +17,7 @@
 // #define RELEASE // turn off everything for a true release build
 // #define FAST_CLOSE
 
-#include "engine/compile.h"
+#include "../engine/compile.h"
 
 #include "gfx.h"
 #include "world.h"

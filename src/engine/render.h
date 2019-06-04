@@ -314,12 +314,13 @@ struct ogl_settings {
 
 struct render_command {
 	
-	draw_cmd_id cmd_id = 0;
-
-	gpu_object_id object = -1;
+	draw_cmd_id cmd_id = -1;
+	framebuffer_id fb_id = -1;
+	gpu_object_id obj_id = -1;
 	
 	texture_id textures[8] = {-1, -1, -1, -1, -1, -1, -1, -1};
 	
+
 	void* user_data = null;
 	u32 sort_key = 0;
 
@@ -388,9 +389,9 @@ struct render_camera {
 
 struct ogl_manager {
 
-	static const u16 cmd_push_settings = 1;
-	static const u16 cmd_pop_settings = 2;
-	static const u16 cmd_setting = 3;
+	static const draw_cmd_id cmd_push_settings = 0;
+	static const draw_cmd_id cmd_pop_settings = 1;
+	static const draw_cmd_id cmd_setting = 2;
 	
 	ogl_info info;
 	ogl_settings settings;
@@ -433,7 +434,7 @@ struct ogl_manager {
  	void commit_framebuffer(framebuffer_id id);
  	void add_target(framebuffer_id id, render_target target);
  	
- 	void destroy_framebuffer();
+ 	void destroy_framebuffer(framebuffer_id id);
 
  	// Rendering
  	void dbg_render_texture_fullscreen(texture_id id);
@@ -456,7 +457,8 @@ private:
 
 	gpu_object_id 	next_gpu_id = 1;
 	texture_id 		next_texture_id = 1;
-	draw_cmd_id 	next_draw_cmd_id = 4;
+	draw_cmd_id 	next_draw_cmd_id = 3;
+	framebuffer_id  next_framebuffer_id = 1;
 
 	platform_window* win = null;
 	allocator* alloc = null;
