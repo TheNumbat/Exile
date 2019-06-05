@@ -599,6 +599,7 @@ void imgui_manager::end_frame() { PROF_FUNC
 	m4 mat = ortho(0, (f32)fb_width, (f32)fb_height, 0, -1, 1);
 
 	glBindFramebuffer(gl_framebuffer::val, 0);
+	glDisable(gl_capability::framebuffer_srgb);
 	glUseProgram(gl_info.program);
 	glUniform1i(gl_info.tex_loc, 0);
 	glUniformMatrix4fv(gl_info.mat_loc, 1, gl_bool::_false, &mat[0][0]);

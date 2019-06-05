@@ -9,7 +9,6 @@ uniform int num_samples;
 uniform int num_textures;
 uniform sampler2DMS textures[8];
 uniform vec2 screen_size;
-uniform float gamma;
 
 vec4 texture_ms(int idx, ivec2 coord) {
 
@@ -35,6 +34,6 @@ void main() {
 		col = mix(col, next, next.a);
 	}
 
-	color = vec4(pow(col.rgb, vec3(1.0f / gamma)), col.a);
+	color = col;
 }
 

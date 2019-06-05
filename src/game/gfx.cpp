@@ -131,6 +131,10 @@ void exile_renderer::render_to_screen() {
 		rcl.add_command(cmd);
 	}
 	{
+		rcl.push_settings();
+		if(settings.gamma)
+			rcl.set_setting(render_setting::output_srgb, true);
+
 		render_command cmd = render_command::make(prev_samples == 1 ? cmd_composite : cmd_composite_ms, the_quad.gpu);
 
 		cmd.textures[0] = world_pass.tex;
@@ -138,6 +142,8 @@ void exile_renderer::render_to_screen() {
 		cmd.user_data0 = this;
 
 		rcl.add_command(cmd);
+
+		rcl.pop_settings();
 	}
 
 	exile->eng->ogl.execute_command_list(&rcl);
@@ -262,8 +268,6 @@ void basic_passes::destroy() {
 
 CALLBACK void uniforms_composite(shader_program* prog, render_command* cmd) {
 
-	exile_renderer* set = (exile_renderer*)cmd->user_data0;
-
 	i32 textures = 0;
 	DO(8) {
 		if(cmd->textures[__i] != -1) {
@@ -272,8 +276,6 @@ CALLBACK void uniforms_composite(shader_program* prog, render_command* cmd) {
 		}
 	}	
 	glUniform1i(prog->location("num_textures"_), textures);
-
-	glUniform1f(prog->location("gamma"_), set->settings.gamma);
 }
 
 CALLBACK void run_composite(render_command* cmd, gpu_object* gpu) {

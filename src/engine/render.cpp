@@ -1161,6 +1161,7 @@ void ogl_manager::_cmd_set_setting(render_setting setting, bool enable) {
 	case render_setting::aa_shading: set->sample_shading = enable; break;
 	case render_setting::write_depth: set->depth_mask = enable; break;
 	case render_setting::point_size: set->point_size = enable; break;
+	case render_setting::output_srgb: set->output_srgb = enable; break;
 	default: break;
 	}
 }
@@ -1206,6 +1207,7 @@ void ogl_manager::_cmd_apply_settings() {
 	set->sample_shading	? glEnable(gl_capability::sample_shading) : glDisable(gl_capability::sample_shading);
 	set->point_size		? glEnable(gl_capability::program_point_size) : glDisable(gl_capability::program_point_size);
 	set->depth_mask 	? glDepthMask(gl_bool::_true) : glDepthMask(gl_bool::_false);
+	set->output_srgb 	? glEnable(gl_capability::framebuffer_srgb) : glDisable(gl_capability::framebuffer_srgb);
 
 	if(set->sample_shading && info.check_version(4,0)) {
 		glMinSampleShading(1.0f);

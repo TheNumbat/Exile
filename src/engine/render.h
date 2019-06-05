@@ -292,7 +292,8 @@ enum class render_setting : u8 {
 	msaa,
 	aa_shading,
 	write_depth,
-	point_size
+	point_size,
+	output_srgb,
 };
 
 struct cmd_settings {
@@ -306,6 +307,7 @@ struct cmd_settings {
 	bool sample_shading = false;
 	bool depth_mask = true;
 	bool point_size = false;
+	bool output_srgb = false;
 };
 
 struct ogl_settings {

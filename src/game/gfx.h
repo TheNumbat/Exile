@@ -237,8 +237,8 @@ struct exile_render_settings {
 
 	world_render_settings world_set;
 
-	f32 gamma = 2.2f;
 	i32 num_samples = 4;
+	bool gamma = true;
 
 	colorf clear_color = colorf(0.8f, 0.8f, 0.8f, 1.0f);
 };
