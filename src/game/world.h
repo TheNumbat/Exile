@@ -20,6 +20,7 @@ struct block_meta {
 	block_id type;
 
 	bool opaque[6]; // -x -y -z +x +y +z
+	bool solid; 	// transmits light
 	i32 textures[6];
 	bool merge[6];
 
@@ -47,18 +48,31 @@ inline u32 hash(chunk_pos key);
 struct block_light {
 	u8 t = 0; // 0..255 for large world light propagation. gets clamped to 0..15 in renderer
 	u8 s0 = 0; // 0..15, 4 bits wasted!!
-	u8 s1 = 0; // 0..15, 0..15  [FOR LATER SUNLIGHT PROP]
+
+	// TODO(max): add back other sun values
 
 	u8 first_u8();
 };
-static_assert(sizeof(block_light) == 3, "sizeof(block_light) != 3");
+static_assert(sizeof(block_light) == 2, "sizeof(block_light) != 2");
+
+struct light_at {
+	bool solid = false;
+	block_light light;
+};
 
 struct light_gather {
 	u16 t = 0;
-	u8 s0 = 0, s1 = 0, s2 = 0;
-	void operator+=(block_light l) {t += l.t; s0 += l.s0; s1 += (l.s1 & 0xf); s1 += (l.s1 >> 4);}
+	u8 s0 = 0;
+	u8 contrib = 0;
+	
+	void operator+=(light_at l) {
+		if(l.solid) return;
+		t += l.light.t; 
+		s0 += l.light.s0;
+		contrib++;
+	}
 };
-bool operator==(light_gather l, light_gather r) {return l.t==r.t && l.s0==r.s0 && l.s1==r.s1 && l.s2==r.s2;}
+bool operator==(light_gather l, light_gather r) {return l.t==r.t && l.s0==r.s0;}
 
 struct mesh_face {
 	
@@ -162,7 +176,7 @@ struct chunk {
 	u8 l_at_vert(iv3 vert);
 	light_gather gather_l(iv3 vert);
 	
-	block_light l_at(iv3 block);
+	light_at l_at(iv3 block);
 	block_id block_at(iv3 block);
 	block_node canonical_block(iv3 block);
 	

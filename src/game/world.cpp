@@ -824,7 +824,7 @@ void chunk::light_add_sun(light_work work) { PROF_FUNC
 	while(!q.empty()) {
 
 		block_node cur = q.pop();
-		u8 current_light = cur.owner->l_at(cur.pos).s0;
+		u8 current_light = cur.owner->l_at(cur.pos).light.s0;
 
 		for(i32 i = 0; i < 6; i++) {
 			
@@ -865,7 +865,7 @@ void chunk::light_add(light_work work) { PROF_FUNC
 	while(!q.empty()) {
 
 		block_node cur = q.pop();
-		u8 current_light = cur.owner->l_at(cur.pos).t;
+		u8 current_light = cur.owner->l_at(cur.pos).light.t;
 
 		for(i32 i = 0; i < 6; i++) {
 			
@@ -1152,12 +1152,15 @@ block_node chunk::canonical_block(iv3 block) {
 	return same;
 }
 
-block_light chunk::l_at(iv3 block) {
+light_at chunk::l_at(iv3 block) {
 
 	block_node node = canonical_block(block);	
 
-	if(!node.owner) return {};
-	return node.owner->light[node.pos.x][node.pos.z][node.pos.y];
+	light_at ret;
+	ret.solid = w->get_info(node.get_type())->solid;
+	ret.light = node.get_l();
+
+	return ret;
 }
 
 u8 block_light::first_u8() {
@@ -1185,8 +1188,10 @@ u8 chunk::l_at_vert(iv3 vert) {
 
 	light_gather g = gather_l(vert);
 
-	u8 t = (u8)min(g.t / 8, 15);
-	u8 s = (u8)(g.s0 / 8);
+	u8 div = g.contrib ? g.contrib : 1;
+
+	u8 t = (u8)min(g.t / div, 15);
+	u8 s = (u8)(g.s0 / div);
 
 	return (s << 4) | t;
 }
@@ -1454,10 +1459,10 @@ void chunk::do_mesh() { PROF_FUNC
 							iv3 facing = v_0;
 							if(backface_offset < 0) facing[ortho_2d] -= 1;
 
-							block_light face_light = l_at(facing);
-							l = face_light.t;
+							light_at face_light = l_at(facing);
+							l = face_light.light.t;
 							l = l >= 15 ? 15 : l;
-							l |= face_light.s0 << 4;
+							l |= face_light.light.s0 << 4;
 						}
 
 						v_0 *= units_per_voxel; v_1 *= units_per_voxel; v_2 *= units_per_voxel; v_3 *= units_per_voxel;
@@ -1665,7 +1670,7 @@ void world::init_blocks(asset_store* store) {
 	block_meta* bedrock = get_info(block_id::bedrock);
 	*bedrock = {
 		block_id::bedrock,
-		{true, true, true, true, true, true},
+		{true, true, true, true, true, true}, true,
 		{tex_idx, tex_idx, tex_idx, tex_idx, tex_idx, tex_idx},
 		{true, true, true, true, true, true},
 		0, true, true, false
@@ -1678,7 +1683,7 @@ void world::init_blocks(asset_store* store) {
 	block_meta* stone = get_info(block_id::stone);
 	*stone = {
 		block_id::stone,
-		{true, true, true, true, true, true},
+		{true, true, true, true, true, true}, true,
 		{tex_idx, tex_idx, tex_idx, tex_idx, tex_idx, tex_idx},
 		{true, true, true, true, true, true},
 		0, true, true, false
@@ -1693,7 +1698,7 @@ void world::init_blocks(asset_store* store) {
 	block_meta* path = get_info(block_id::path);
 	*path = {
 		block_id::path,
-		{true, true, true, true, true, true},
+		{true, true, true, true, true, true}, true,
 		{tex_idx, tex_idx + 1, tex_idx, tex_idx, tex_idx + 2, tex_idx},
 		{true, true, true, true, true, true},
 		0, true, true, false
@@ -1707,7 +1712,7 @@ void world::init_blocks(asset_store* store) {
 	block_meta* stone_slab = get_info(block_id::stone_slab);
 	*stone_slab = {
 		block_id::stone_slab,
-		{false, true, false, false, false, false},
+		{false, true, false, false, false, false}, false,
 		{tex_idx, tex_idx + 1, tex_idx, tex_idx, tex_idx + 1, tex_idx},
 		{false, true, true, true, true, false},
 		0, true, false, true, FPTR(slab_model)
@@ -1722,7 +1727,7 @@ void world::init_blocks(asset_store* store) {
 	block_meta* torch = get_info(block_id::torch);
 	*torch = {
 		block_id::torch,
-		{false, false, false, false, false, false},
+		{false, false, false, false, false, false}, false,
 		{tex_idx, tex_idx + 1, tex_idx, tex_idx, tex_idx + 2, tex_idx},
 		{false, false, false, false, false, false},
 		16, true, false, true, FPTR(torch_model)

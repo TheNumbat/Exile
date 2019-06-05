@@ -224,7 +224,7 @@ struct world_render_settings {
 	bool smooth_light = true;
 	float ambient_factor = 0.05f;
 	world_light_debug light_debug_mode = world_light_debug::none;
-	v4 ao_curve = v4(0.7f, 0.8f, 0.9f, 1.0f);
+	v4 ao_curve = v4(0.65f, 0.75f, 0.85f, 1.0f);
 
 	bool wireframe = false;
 	bool cull_backface = true;
