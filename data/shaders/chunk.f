@@ -60,7 +60,8 @@ void main() {
 			float ao1 = mix(f_ao.z, f_ao.w, fract(f_uv.x));
 			float ao = mix(ao0, ao1, fract(f_uv.y));
 
-			color *= clamp(ao * ambient + max(t,s), 0.05f, 1.0f);
+			float l = max(t,s);
+			color *= clamp(ao * ambient + l * l, 0.05f, 1.0f);
 
 		} else {
 

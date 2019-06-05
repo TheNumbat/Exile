@@ -5,15 +5,20 @@ Working To-Do:
 		
 		FIX: torchlight AND sunlight removal ?????
 
-		render pass system
+		framebuffers 'n' stuff
 			fix sky texture
 			fix darks under gamma
 			multiple passes
-			HDR / bloom / god rays / better fog
+			framebuffer blitting, maybe use this to resolve MSAA instead?
+				then put gamma and stuff into "effect" passes
+				(or just use an srgb framebuffer)
+			then see deferred rendering
 
 		GLNAMED OPERATIONS EVERYWHERE 
 
 		deferred rendering
+			do we still want MSAA? probably
+			HDR / bloom / god rays / better fog
 			dynamic lights
 			dynamic shadows
 			sunlight shadows
