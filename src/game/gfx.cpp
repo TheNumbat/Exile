@@ -157,7 +157,7 @@ void exile_renderer::generate_passes() {
 
 void basic_passes::init(iv2 dim, i32 samples) {
 
-	tex = exile->eng->ogl.add_texture_target(dim, samples, gl_tex_format::rgba8, true);
+	tex = exile->eng->ogl.add_texture_target(dim, samples, gl_tex_format::rgba8);
 	col = exile->eng->ogl.make_target(gl_draw_target::color_0, tex);
 	
 	depth_buf = render_buffer::make(gl_tex_format::depth_component, dim, samples);
@@ -203,7 +203,8 @@ void exile_renderer::generate_mesh_commands() {
 	reg(3D_tex_instanced, mesh_3D_tex_instanced, "mesh/");
 
 	reg(composite, composite, "effects/");
-	reg(composite_ms, composite_ms, "effects/");
+	cmd_composite_ms = exile->eng->ogl.add_command(FPTR(run_composite), FPTR(uniforms_composite_ms),
+					   FPTR(compat_composite), "shaders/effects/composite.v"_, "shaders/effects/composite_ms.f"_);
 
 	#undef reg
 }
@@ -261,6 +262,8 @@ void basic_passes::destroy() {
 
 CALLBACK void uniforms_composite(shader_program* prog, render_command* cmd) {
 
+	exile_renderer* set = (exile_renderer*)cmd->user_data0;
+
 	i32 textures = 0;
 	DO(8) {
 		if(cmd->textures[__i] != -1) {
@@ -269,6 +272,8 @@ CALLBACK void uniforms_composite(shader_program* prog, render_command* cmd) {
 		}
 	}	
 	glUniform1i(prog->location("num_textures"_), textures);
+
+	glUniform1f(prog->location("gamma"_), set->settings.gamma);
 }
 
 CALLBACK void run_composite(render_command* cmd, gpu_object* gpu) {
@@ -302,14 +307,6 @@ CALLBACK void uniforms_composite_ms(shader_program* prog, render_command* cmd) {
 
 	glUniform1i(prog->location("num_samples"_), set->prev_samples);
 	glUniform2f(prog->location("screen_size"_), (f32)set->prev_dim.x, (f32)set->prev_dim.y);
-}
-
-CALLBACK void run_composite_ms(render_command* cmd, gpu_object* gpu) {
-	glDrawArrays(gl_draw_mode::triangles, 0, 6);
-}
-
-CALLBACK bool compat_composite_ms(ogl_info* info) {
-	return info->check_version(3, 2);
 }
 
 CALLBACK bool compat_composite(ogl_info* info) {

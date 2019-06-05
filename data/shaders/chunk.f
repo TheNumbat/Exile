@@ -56,18 +56,22 @@ void main() {
 			float s1 = mix(f_s.z, f_s.w, fract(f_uv.x));
 			float s = mix(s0, s1, fract(f_uv.y)) * day_factor;
 
-			color *= clamp(ambient + max(t,s), 0.0f, 1.0f);
+			float ao0 = mix(f_ao.x, f_ao.y, fract(f_uv.x));
+			float ao1 = mix(f_ao.z, f_ao.w, fract(f_uv.x));
+			float ao = mix(ao0, ao1, fract(f_uv.y));
+
+			color *= clamp(ao * ambient + max(t,s), 0.05f, 1.0f);
 
 		} else {
 
 			float ao0 = mix(f_ao.x, f_ao.y, fract(f_uv.x));
-			
 			float ao1 = mix(f_ao.z, f_ao.w, fract(f_uv.x));
 			float ao = mix(ao0, ao1, fract(f_uv.y));
+
 			float t = float(f_ql) / 15.0f;
 			float s = float(f_qs) / 15.0f * day_factor;
 
-			color *= clamp(ambient + ao * max(t,s), 0.0f, 1.0f);
+			color *= clamp(ao * (ambient + max(t,s)), 0.0f, 1.0f);
 		}
 	}
 

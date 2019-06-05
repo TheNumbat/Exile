@@ -222,9 +222,9 @@ struct world_render_settings {
 	
 	bool block_light = true;
 	bool smooth_light = true;
-	float ambient_factor = 0.1f;
+	float ambient_factor = 0.05f;
 	world_light_debug light_debug_mode = world_light_debug::none;
-	v4 ao_curve = v4(0.25f, 0.5f, 0.75f, 1.0f);
+	v4 ao_curve = v4(0.7f, 0.8f, 0.9f, 1.0f);
 
 	bool wireframe = false;
 	bool cull_backface = true;
@@ -331,11 +331,9 @@ decl_mesh(pointcloud);
 CALLBACK void setup_mesh_quad(gpu_object* obj);
 CALLBACK void update_mesh_quad(gpu_object* obj, void* data, bool force);
 
+CALLBACK void uniforms_composite_ms(shader_program* prog, render_command* cmd);
 CALLBACK void uniforms_composite(shader_program* prog, render_command* cmd);
 CALLBACK void run_composite(render_command* cmd, gpu_object* gpu);		
 CALLBACK bool compat_composite(ogl_info* info);
 
-CALLBACK void uniforms_composite_ms(shader_program* prog, render_command* cmd);
-CALLBACK void run_composite_ms(render_command* cmd, gpu_object* gpu);		
-CALLBACK bool compat_composite_ms(ogl_info* info);
 

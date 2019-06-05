@@ -6,9 +6,9 @@ Working To-Do:
 		FIX: torchlight AND sunlight removal ?????
 
 		render pass system
-			move world render settings to renderer settings			
+			fix sky texture
+			fix darks under gamma
 			multiple passes
-			gamma correction
 			HDR / bloom / god rays / better fog
 
 		GLNAMED OPERATIONS EVERYWHERE 

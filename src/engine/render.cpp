@@ -418,12 +418,12 @@ void ogl_manager::destroy() {
 	check_leaked_handles();
 } 
 
-texture_id ogl_manager::add_texture_from_font(asset_store* as, string name, texture_wrap wrap, bool pixelated) { 
+texture_id ogl_manager::add_texture_from_font(asset_store* as, string name, texture_wrap wrap, bool pixelated, bool srgb) { 
 
-	texture t = texture::make_rf(wrap, pixelated, settings.anisotropy);
+	texture t = texture::make_rf(wrap, pixelated, false, settings.anisotropy);
 	t.id = next_texture_id;
 
-	t.rf_info.load(t.handle, as, name);
+	t.rf_info.load(t.handle, as, name, srgb);
 
 	textures.insert(next_texture_id, t);
 
@@ -443,12 +443,12 @@ texture_id ogl_manager::add_texture_target(iv2 dim, i32 samples, gl_tex_format f
 	return next_texture_id++;
 }
 
-texture_id ogl_manager::add_texture(asset_store* as, string name, texture_wrap wrap, bool pixelated) { 
+texture_id ogl_manager::add_texture(asset_store* as, string name, texture_wrap wrap, bool pixelated, bool srgb) { 
 
-	texture t = texture::make_bmp(wrap, pixelated, settings.anisotropy);
+	texture t = texture::make_bmp(wrap, pixelated, srgb, settings.anisotropy);
 	t.id = next_texture_id;
 
-	t.bmp_info.load(t.handle, as, name);
+	t.bmp_info.load(t.handle, as, name, srgb);
 
 	textures.insert(next_texture_id, t);
 
@@ -457,12 +457,12 @@ texture_id ogl_manager::add_texture(asset_store* as, string name, texture_wrap w
 	return next_texture_id++;
 }
 
-texture_id ogl_manager::add_cubemap(asset_store* as, string name) {
+texture_id ogl_manager::add_cubemap(asset_store* as, string name, bool srgb) {
 
-	texture t = texture::make_cube(texture_wrap::repeat, false, settings.anisotropy);
+	texture t = texture::make_cube(texture_wrap::repeat, false, srgb, settings.anisotropy);
 	t.id = next_texture_id;
 
-	t.cube_info.load_single(t.handle, as, name);
+	t.cube_info.load_single(t.handle, as, name, srgb);
 
 	textures.insert(next_texture_id, t);
 
@@ -481,9 +481,9 @@ i32 ogl_manager::get_layers(texture_id tex) {
 	return t->array_info.current_layer;
 }
 
-texture_id ogl_manager::begin_tex_array(iv3 dim, texture_wrap wrap, bool pixelated, u32 offset) { 
+texture_id ogl_manager::begin_tex_array(iv3 dim, texture_wrap wrap, bool pixelated, bool srgb, u32 offset) { 
 
-	texture t = texture::make_array(dim, offset, wrap, pixelated, settings.anisotropy, alloc);
+	texture t = texture::make_array(dim, offset, wrap, pixelated, srgb, settings.anisotropy, alloc);
 	t.id = next_texture_id;
 
 	textures.insert(next_texture_id, t);
@@ -554,13 +554,14 @@ void ogl_manager::select_textures(render_command* cmd) {
 	}
 }
 
-texture texture::make_bmp(texture_wrap wrap, bool pixelated, f32 aniso) { 
+texture texture::make_bmp(texture_wrap wrap, bool pixelated, bool srgb, f32 aniso) { 
 
 	texture ret;
 
 	ret.type = texture_type::bmp;
 	ret.gl_type = gl_tex_target::_2D;
 	ret.wrap = wrap;
+	ret.srgb = srgb;
 	ret.pixelated = pixelated;
 	ret.anisotropy = aniso;
 	glGenTextures(1, &ret.handle);
@@ -570,7 +571,7 @@ texture texture::make_bmp(texture_wrap wrap, bool pixelated, f32 aniso) {
 	return ret;
 }
 
-texture texture::make_cube(texture_wrap wrap, bool pixelated, f32 aniso) { 
+texture texture::make_cube(texture_wrap wrap, bool pixelated, bool srgb, f32 aniso) { 
 
 	texture ret;
 
@@ -578,6 +579,7 @@ texture texture::make_cube(texture_wrap wrap, bool pixelated, f32 aniso) {
 	ret.gl_type = gl_tex_target::cube_map;
 	ret.anisotropy = aniso;
 	ret.wrap = wrap;
+	ret.srgb = srgb;
 	ret.pixelated = pixelated;
 
 	glGenTextures(1, &ret.handle);
@@ -587,13 +589,14 @@ texture texture::make_cube(texture_wrap wrap, bool pixelated, f32 aniso) {
 	return ret;	
 }
 
-texture texture::make_rf(texture_wrap wrap, bool pixelated, f32 aniso) { 
+texture texture::make_rf(texture_wrap wrap, bool pixelated, bool srgb, f32 aniso) { 
 
 	texture ret;
 
 	ret.type = texture_type::rf;
 	ret.gl_type = gl_tex_target::_2D;
 	ret.wrap = wrap;
+	ret.srgb = srgb;
 	ret.pixelated = pixelated;
 	ret.anisotropy = aniso;
 	glGenTextures(1, &ret.handle);
@@ -603,13 +606,14 @@ texture texture::make_rf(texture_wrap wrap, bool pixelated, f32 aniso) {
 	return ret;
 }
 
-texture texture::make_array(iv3 dim, u32 offset, texture_wrap wrap, bool pixelated, f32 aniso, allocator* a) { 
+texture texture::make_array(iv3 dim, u32 offset, texture_wrap wrap, bool pixelated, bool srgb, f32 aniso, allocator* a) { 
 
 	texture ret;
 
 	ret.type = texture_type::array;
 	ret.gl_type = gl_tex_target::_2D_array;
 	ret.wrap = wrap;
+	ret.srgb = srgb;
 	ret.pixelated = pixelated;
 	ret.array_info.dim = dim;
 	ret.array_info.layer_offset = offset;
@@ -665,7 +669,7 @@ void texture::set_params() {
 	}
 
 	if(gl_type == gl_tex_target::_2D_array) {
-		glTexStorage3D(gl_type, 1, gl_tex_format::rgba8, array_info.dim.x, array_info.dim.y, array_info.dim.z);
+		glTexStorage3D(gl_type, 1, srgb ? gl_tex_format::srgb8_alpha8 : gl_tex_format::rgba8, array_info.dim.x, array_info.dim.y, array_info.dim.z);
 	}
 
 	switch(wrap) {
@@ -704,7 +708,7 @@ void texture::set_params() {
 	glBindTexture(gl_type, 0);
 }
 
-void texture_cube_info::load_single(GLuint handle, asset_store* store, string name) {  
+void texture_cube_info::load_single(GLuint handle, asset_store* store, string name, bool srgb) {  
 
 	asset* a = store->get(name);
 
@@ -717,19 +721,21 @@ void texture_cube_info::load_single(GLuint handle, asset_store* store, string na
 	dim = iv2(a->bitmap.width, a->bitmap.height);
 	glBindTexture(gl_tex_target::cube_map, handle);
 
-	glTexImage2D(gl_tex_target::cube_map_negative_z, 0, gl_tex_format::rgba8, a->bitmap.width, a->bitmap.height, 0, gl_pixel_data_format::rgba, gl_pixel_data_type::unsigned_byte, a->mem);
-	glTexImage2D(gl_tex_target::cube_map_positive_z, 0, gl_tex_format::rgba8, a->bitmap.width, a->bitmap.height, 0, gl_pixel_data_format::rgba, gl_pixel_data_type::unsigned_byte, a->mem);
-	glTexImage2D(gl_tex_target::cube_map_positive_y, 0, gl_tex_format::rgba8, a->bitmap.width, a->bitmap.height, 0, gl_pixel_data_format::rgba, gl_pixel_data_type::unsigned_byte, a->mem);
-	glTexImage2D(gl_tex_target::cube_map_negative_y, 0, gl_tex_format::rgba8, a->bitmap.width, a->bitmap.height, 0, gl_pixel_data_format::rgba, gl_pixel_data_type::unsigned_byte, a->mem);
-	glTexImage2D(gl_tex_target::cube_map_negative_x, 0, gl_tex_format::rgba8, a->bitmap.width, a->bitmap.height, 0, gl_pixel_data_format::rgba, gl_pixel_data_type::unsigned_byte, a->mem);
-	glTexImage2D(gl_tex_target::cube_map_positive_x, 0, gl_tex_format::rgba8, a->bitmap.width, a->bitmap.height, 0, gl_pixel_data_format::rgba, gl_pixel_data_type::unsigned_byte, a->mem);
+	gl_tex_format format = srgb ? gl_tex_format::srgb8_alpha8 : gl_tex_format::rgba8;
+
+	glTexImage2D(gl_tex_target::cube_map_negative_z, 0, format, a->bitmap.width, a->bitmap.height, 0, gl_pixel_data_format::rgba, gl_pixel_data_type::unsigned_byte, a->mem);
+	glTexImage2D(gl_tex_target::cube_map_positive_z, 0, format, a->bitmap.width, a->bitmap.height, 0, gl_pixel_data_format::rgba, gl_pixel_data_type::unsigned_byte, a->mem);
+	glTexImage2D(gl_tex_target::cube_map_positive_y, 0, format, a->bitmap.width, a->bitmap.height, 0, gl_pixel_data_format::rgba, gl_pixel_data_type::unsigned_byte, a->mem);
+	glTexImage2D(gl_tex_target::cube_map_negative_y, 0, format, a->bitmap.width, a->bitmap.height, 0, gl_pixel_data_format::rgba, gl_pixel_data_type::unsigned_byte, a->mem);
+	glTexImage2D(gl_tex_target::cube_map_negative_x, 0, format, a->bitmap.width, a->bitmap.height, 0, gl_pixel_data_format::rgba, gl_pixel_data_type::unsigned_byte, a->mem);
+	glTexImage2D(gl_tex_target::cube_map_positive_x, 0, format, a->bitmap.width, a->bitmap.height, 0, gl_pixel_data_format::rgba, gl_pixel_data_type::unsigned_byte, a->mem);
 
 	glGenerateMipmap(gl_tex_target::cube_map);
 
 	glBindTexture(gl_tex_target::cube_map, 0);
 }
 
-void texture_rf_info::load(GLuint handle, asset_store* as, string name) { 
+void texture_rf_info::load(GLuint handle, asset_store* as, string name, bool srgb) { 
 
 	asset* a = as->get(name);
 
@@ -742,7 +748,9 @@ void texture_rf_info::load(GLuint handle, asset_store* as, string name) {
 	dim = iv2(a->raster_font.width, a->raster_font.height);
 	glBindTexture(gl_tex_target::_2D, handle);
 
-	glTexImage2D(gl_tex_target::_2D, 0, gl_tex_format::rgba8, a->raster_font.width, a->raster_font.height, 0, gl_pixel_data_format::red, gl_pixel_data_type::unsigned_byte, a->mem);
+	gl_tex_format format = srgb ? gl_tex_format::srgb8_alpha8 : gl_tex_format::rgba8;
+
+	glTexImage2D(gl_tex_target::_2D, 0, format, a->raster_font.width, a->raster_font.height, 0, gl_pixel_data_format::red, gl_pixel_data_type::unsigned_byte, a->mem);
 	gl_tex_swizzle swizzle[] = {gl_tex_swizzle::red, gl_tex_swizzle::red, gl_tex_swizzle::red, gl_tex_swizzle::red};
 	glTexParameteriv(gl_tex_target::_2D, gl_tex_param::swizzle_rgba, (GLint*)swizzle);
 
@@ -751,7 +759,7 @@ void texture_rf_info::load(GLuint handle, asset_store* as, string name) {
 	glBindTexture(gl_tex_target::_2D, 0);
 }
 
-void texture_bmp_info::load(GLuint handle, asset_store* as, string name) { 
+void texture_bmp_info::load(GLuint handle, asset_store* as, string name, bool srgb) { 
 
 	asset* a = as->get(name);
 	
@@ -764,7 +772,9 @@ void texture_bmp_info::load(GLuint handle, asset_store* as, string name) {
 	dim = iv2(a->bitmap.width, a->bitmap.height);
 	glBindTexture(gl_tex_target::_2D, handle);
 
-	glTexImage2D(gl_tex_target::_2D, 0, gl_tex_format::rgba8, a->bitmap.width, a->bitmap.height, 0, gl_pixel_data_format::rgba, gl_pixel_data_type::unsigned_byte, a->mem);
+	gl_tex_format format = srgb ? gl_tex_format::srgb8_alpha8 : gl_tex_format::rgba8;
+
+	glTexImage2D(gl_tex_target::_2D, 0, format, a->bitmap.width, a->bitmap.height, 0, gl_pixel_data_format::rgba, gl_pixel_data_type::unsigned_byte, a->mem);
 	
 	glGenerateMipmap(gl_tex_target::_2D);
 
@@ -822,13 +832,13 @@ void texture::reload_data() {
 		}
 	} break;
 	case texture_type::bmp: {
-		bmp_info.load(handle, bmp_info.info.store, bmp_info.info.name);
+		bmp_info.load(handle, bmp_info.info.store, bmp_info.info.name, srgb);
 	} break;
 	case texture_type::rf: {
-		rf_info.load(handle, rf_info.info.store, rf_info.info.name);
+		rf_info.load(handle, rf_info.info.store, rf_info.info.name, srgb);
 	} break;
 	case texture_type::cube: {
-		cube_info.load_single(handle, cube_info.info.store, cube_info.info.name);
+		cube_info.load_single(handle, cube_info.info.store, cube_info.info.name, srgb);
 	} break;
 	}
 }

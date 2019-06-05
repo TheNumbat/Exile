@@ -1653,7 +1653,7 @@ CALLBACK void torch_model(mesh_chunk* m, block_meta* info, i32 dir, iv3 v__0, iv
 void world::init_blocks(asset_store* store) {
 
 	block_info = vector<block_meta>::make((u32)block_id::total_blocks, alloc);
-	block_textures = exile->eng->ogl.begin_tex_array(iv3(32, 32, exile->eng->ogl.info.max_texture_layers), texture_wrap::repeat, true, 1);
+	block_textures = exile->eng->ogl.begin_tex_array(iv3(32, 32, exile->eng->ogl.info.max_texture_layers), texture_wrap::repeat, true, true, 1);
 
 	texture_id tex = block_textures;
 	i32 tex_idx = exile->eng->ogl.get_layers(tex);

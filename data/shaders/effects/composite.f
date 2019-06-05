@@ -7,6 +7,7 @@ out vec4 color;
 
 uniform int num_textures;
 uniform sampler2D textures[8];
+uniform float gamma;
 
 void main() {
 
@@ -20,6 +21,6 @@ void main() {
 		col = mix(col, next, next.a);
 	}
 
-	color = col;
+	color = vec4(pow(col.rgb, vec3(1.0f / gamma)), col.a);
 }
 

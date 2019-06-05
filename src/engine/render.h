@@ -80,7 +80,7 @@ struct texture_cube_info {
 	asset_pair info;
 	iv2 dim;
 
-	void load_single(GLuint handle, asset_store* store, string name);
+	void load_single(GLuint handle, asset_store* store, string name, bool srgb);
 };
 
 struct texture_array_info {
@@ -96,14 +96,14 @@ struct texture_bmp_info {
 	asset_pair info;
 	iv2 dim;
 
-	void load(GLuint handle, asset_store* store, string name);
+	void load(GLuint handle, asset_store* store, string name, bool srgb);
 };
 
 struct texture_rf_info {
 	asset_pair info;
 	iv2 dim;
 
-	void load(GLuint handle, asset_store* store, string name);
+	void load(GLuint handle, asset_store* store, string name, bool srgb);
 };
 
 struct texture_target_info {
@@ -133,6 +133,7 @@ private:
 	gl_tex_target gl_type = gl_tex_target::_2D;
 	texture_wrap wrap     = texture_wrap::repeat;
 	bool pixelated        = false;
+	bool srgb 			  = false;
 	f32 anisotropy 		  = 1.0f;
 
 	union {	
@@ -143,10 +144,10 @@ private:
 		texture_target_info target_info;
 	};
 
-	static texture make_cube(texture_wrap wrap, bool pixelated, f32 aniso);
-	static texture make_rf(texture_wrap wrap, bool pixelated, f32 aniso);
-	static texture make_bmp(texture_wrap wrap, bool pixelated, f32 aniso);
-	static texture make_array(iv3 dim, u32 idx_offset, texture_wrap wrap, bool pixelated, f32 aniso, allocator* a);
+	static texture make_cube(texture_wrap wrap, bool pixelated, bool srgb, f32 aniso);
+	static texture make_rf(texture_wrap wrap, bool pixelated, bool srgb, f32 aniso);
+	static texture make_bmp(texture_wrap wrap, bool pixelated, bool srgb, f32 aniso);
+	static texture make_array(iv3 dim, u32 idx_offset, texture_wrap wrap, bool pixelated, bool srgb, f32 aniso, allocator* a);
 	static texture make_target(iv2 dim, i32 samples, gl_tex_format format, bool pixelated);
 	void destroy(allocator* a);
 	void gl_destroy();
@@ -414,12 +415,12 @@ struct ogl_manager {
 	void rem_command(draw_cmd_id id);
 
  	// Textures
-	texture_id add_cubemap(asset_store* as, string name);
- 	texture_id add_texture_target(iv2 dim, i32 samples, gl_tex_format format, bool pixelated);
-	texture_id add_texture(asset_store* as, string name, texture_wrap wrap = texture_wrap::repeat, bool pixelated = false);
-	texture_id add_texture_from_font(asset_store* as, string name, texture_wrap wrap = texture_wrap::repeat, bool pixelated = false);
+	texture_id add_cubemap(asset_store* as, string name, bool srgb);
+ 	texture_id add_texture_target(iv2 dim, i32 samples, gl_tex_format format, bool pixelated = true);
+	texture_id add_texture(asset_store* as, string name, texture_wrap wrap = texture_wrap::repeat, bool pixelated = false, bool srgb = true);
+	texture_id add_texture_from_font(asset_store* as, string name, texture_wrap wrap = texture_wrap::repeat, bool pixelated = false, bool srgb = false);
 
-	texture_id begin_tex_array(iv3 dim, texture_wrap wrap = texture_wrap::repeat, bool pixelated = false, u32 offset = 0);
+	texture_id begin_tex_array(iv3 dim, texture_wrap wrap = texture_wrap::repeat, bool pixelated = false, bool srgb = true, u32 offset = 0);
 	void push_tex_array(texture_id tex, asset_store* as, string name);
 	i32 get_layers(texture_id tex);
 
