@@ -6,9 +6,10 @@ Working To-Do:
 		FIX: torchlight AND sunlight removal ?????
 
 		framebuffers 'n' stuff
-			fix gamma
-				fix sky texture ??
-				fix darks under gamma ??
+			gamma fixes ?
+				dark threshholding looks bad
+				daylight chunks are questionable
+				sky texture is broken @ 4:30 AM
 			framebuffer blitting, maybe use this to resolve MSAA instead?
 			multiple passes, define "effect" pass/shaders
 			then do deferred rendering
