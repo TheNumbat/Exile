@@ -34,7 +34,7 @@ void main() {
 
 	if(do_light) {
 
-		float day_factor = 1.0f - (smoothstep(0.3f, 0.15f, day_01) + smoothstep(0.75f, 0.9f, day_01));
+		float day_factor = 1.0f - (smoothstep(0.32f, 0.17f, day_01) + smoothstep(0.75f, 0.9f, day_01));
 
 		if(debug_light == 1) {
 

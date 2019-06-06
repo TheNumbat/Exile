@@ -8,10 +8,7 @@ Working To-Do:
 		framebuffers 'n' stuff
 			framebuffer blitting, maybe use this to resolve MSAA instead?
 			multiple passes, define "effect" pass/shaders
-			
-			deferred rendering
-			sky texture broken / dark threshholding looks bad
-				[[should be fixed by float framebuffers for HDR]]
+			deferred rendering list of tasks
 
 		GLNAMED OPERATIONS EVERYWHERE 
 

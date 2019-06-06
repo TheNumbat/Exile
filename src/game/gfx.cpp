@@ -163,7 +163,7 @@ void exile_renderer::generate_passes() {
 
 void basic_passes::init(iv2 dim, i32 samples) {
 
-	tex = exile->eng->ogl.add_texture_target(dim, samples, gl_tex_format::rgba8);
+	tex = exile->eng->ogl.add_texture_target(dim, samples, gl_tex_format::rgba16f);
 	col = exile->eng->ogl.make_target(gl_draw_target::color_0, tex);
 	
 	depth_buf = render_buffer::make(gl_tex_format::depth_component, dim, samples);
