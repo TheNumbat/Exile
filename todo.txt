@@ -5,13 +5,10 @@ Working To-Do:
 		
 		FIX: torchlight AND sunlight removal ?????
 
-		framebuffers 'n' stuff
-			framebuffer blitting, maybe use this to resolve MSAA instead?
+		framebuffers 'n' stuff			
 			multiple passes, define "effect" pass/shaders
-			deferred rendering list of tasks
 
-		GLNAMED OPERATIONS EVERYWHERE 
-
+		glnamed operations everywhere 
 		deferred rendering
 			do we still want MSAA? probably
 			HDR / bloom / god rays / better fog
@@ -20,7 +17,9 @@ Working To-Do:
 			sunlight shadows
 			chunk culling / visibility query
 			normal mapping
+
 		add east/west sunlight calculation & day curve use
+		framebuffer blitting, maybe use this to resolve MSAA instead?
 
 		sun/moon objects 
 		spinning sky/stars

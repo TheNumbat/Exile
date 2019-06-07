@@ -11,7 +11,8 @@ struct exile_state {
 
 	world w;
 	exile_renderer ren;
-	platform_allocator alloc;
+	
+	platform_allocator a_assets, a_world, a_render, a_general;
 
 	asset_store store;
 

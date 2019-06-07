@@ -1,64 +1,71 @@
 
 // TODO(max): remove all OpenGL calls; abstract into renderer system
 
-void exile_renderer::init() {
+void exile_renderer::init(allocator* a) {
 	
 	exile->eng->dbg.store.add_var("render/settings"_, &settings);
 	
-	generate_mesh_commands();
-	generate_passes();
+	generate_commands();
+	generate_targets();
 
 	the_cubemap.init();
 	the_quad.init();
+
+	alloc = a;
+	frame_tasks = render_command_list::make(alloc, 1024);
 }
 
-render_command exile_renderer::world_skydome_cmd(gpu_object_id gpu_id, world_time* time, texture_id sky, m4 view, m4 proj) {
+void exile_renderer::world_skydome(gpu_object_id gpu_id, world_time* time, texture_id sky, m4 view, m4 proj) {
 
 	render_command cmd = render_command::make(cmd_skydome, gpu_id);
 
-	cmd.fb_id = world_pass.buffer;
+	cmd.fb_id = world_target.buffer;
 	cmd.user_data0 = time;
 	cmd.textures[0] = sky;
 
 	cmd.view = view;
 	cmd.proj = proj;
 
-	return cmd;
+	frame_tasks.add_command(cmd);
 }
 
-render_command exile_renderer::world_stars_cmd(gpu_object_id gpu_id, world_time* time, m4 view, m4 proj) {
+void exile_renderer::world_stars(gpu_object_id gpu_id, world_time* time, m4 view, m4 proj) {
+
+	frame_tasks.push_settings();
+	frame_tasks.set_setting(render_setting::point_size, true);
 
 	render_command cmd = render_command::make(cmd_pointcloud, gpu_id);
 
-	cmd.fb_id = world_pass.buffer;
+	cmd.fb_id = world_target.buffer;
 	cmd.user_data0 = time;
 	cmd.view = view;
 	cmd.proj = proj;
 
-	return cmd;
+	frame_tasks.add_command(cmd);
+	frame_tasks.pop_settings();
 }
 
-void exile_renderer::world_begin_chunks(render_command_list* rcl) {
+void exile_renderer::world_begin_chunks() {
 
-	rcl->push_settings();
+	frame_tasks.push_settings();
 	if(settings.world_set.wireframe)
-		rcl->set_setting(render_setting::wireframe, true);
+		frame_tasks.set_setting(render_setting::wireframe, true);
 	if(settings.world_set.cull_backface)
-		rcl->set_setting(render_setting::cull, true);
+		frame_tasks.set_setting(render_setting::cull, true);
 	if(settings.world_set.sample_shading)
-		rcl->set_setting(render_setting::aa_shading, true);
+		frame_tasks.set_setting(render_setting::aa_shading, true);
 }
 
-void exile_renderer::world_end_chunks(render_command_list* rcl) {
+void exile_renderer::world_finish_chunks() {
 
-	rcl->pop_settings();
+	frame_tasks.pop_settings();
 }
 
-render_command exile_renderer::world_chunk_cmd(world* w, chunk* c, texture_id blocks, texture_id sky, m4 model, m4 view, m4 proj) {
+void exile_renderer::world_chunk(world* w, chunk* c, texture_id blocks, texture_id sky, m4 model, m4 view, m4 proj) {
 
 	render_command cmd = render_command::make(cmd_chunk, c->mesh.gpu);
 
-	cmd.fb_id = world_pass.buffer;
+	cmd.fb_id = world_target.buffer;
 	cmd.textures[0] = blocks;
 	cmd.textures[1] = sky;
 	cmd.num_tris = c->mesh_faces;
@@ -72,96 +79,105 @@ render_command exile_renderer::world_chunk_cmd(world* w, chunk* c, texture_id bl
 	cmd.callback = FPTR(unlock_chunk);
 	cmd.callback_data = c;
 
-	return cmd;
+	frame_tasks.add_command(cmd);
 }
 
-render_command exile_renderer::world_lines_cmd(mesh_lines* mesh, m4 view, m4 proj) {
+void exile_renderer::world_lines(gpu_object_id gpu_id, m4 view, m4 proj) {
 	
-	render_command cmd = render_command::make(cmd_lines, mesh->gpu);
+	render_command cmd = render_command::make(cmd_lines, gpu_id);
 
-	cmd.fb_id = world_pass.buffer;
-	cmd.callback = FPTR(destroy_lines);
-	cmd.callback_data = mesh;
+	cmd.fb_id = world_target.buffer;
 
 	cmd.view = view;
 	cmd.proj = proj;
 	
-	return cmd;
+	frame_tasks.add_command(cmd);
 }
 
-render_command exile_renderer::hud_2D_cmd(mesh_2d_col* mesh) {
+void exile_renderer::hud_2D(gpu_object_id gpu_id) {
 
-	render_command cmd = render_command::make(cmd_2D_col, mesh->gpu);
+	frame_tasks.push_settings();
+	frame_tasks.set_setting(render_setting::depth_test, false);
+
+	render_command cmd = render_command::make(cmd_2D_col, gpu_id);
 	
-	cmd.fb_id = hud_pass.buffer;
-	cmd.callback = FPTR(destroy_2d_col);
-	cmd.callback_data = mesh;
+	cmd.fb_id = hud_target.buffer;
 
 	f32 w = (f32)exile->eng->window.settings.w, h = (f32)exile->eng->window.settings.h;
 	cmd.proj = ortho(0, w, h, 0, -1, 1);
 
-	return cmd;
+	frame_tasks.add_command(cmd);
+	frame_tasks.pop_settings();
 }
 
-void exile_renderer::world_begin_clear() {
+void exile_renderer::world_clear() {
 
-	render_command_list rcl = render_command_list::make();
-	
 	render_command cmd = render_command::make(ogl_manager::cmd_clear);
 	
-	cmd.fb_id = world_pass.buffer;
+	cmd.fb_id = world_target.buffer;
 	cmd.clear_color = settings.clear_color;
 	cmd.clear_components = (GLbitfield)gl_clear::color_buffer_bit | (GLbitfield)gl_clear::depth_buffer_bit;
 
-	rcl.add_command(cmd);
-	exile->eng->ogl.execute_command_list(&rcl);
-	rcl.destroy();
+	frame_tasks.add_command(cmd);
 }
 
-void exile_renderer::render_to_screen() {
+void exile_renderer::end_frame() {
 
-	render_command_list rcl = render_command_list::make();
-	
 	{
 		render_command cmd = render_command::make(ogl_manager::cmd_clear);
 	
 		cmd.clear_color = settings.clear_color;
 		cmd.clear_components = (GLbitfield)gl_clear::color_buffer_bit | (GLbitfield)gl_clear::depth_buffer_bit;
 
-		rcl.add_command(cmd);
+		frame_tasks.add_command(cmd);
 	}
 	{
-		rcl.push_settings();
+		frame_tasks.push_settings();
 		if(settings.gamma)
-			rcl.set_setting(render_setting::output_srgb, true);
+			frame_tasks.set_setting(render_setting::output_srgb, true);
 
-		render_command cmd = render_command::make(prev_samples == 1 ? cmd_composite : cmd_composite_ms, the_quad.gpu);
+		render_command cmd = prev_samples == 1 ? resolve.make_cmd() : resolve_ms.make_cmd();
 
-		cmd.textures[0] = world_pass.tex;
-		cmd.textures[1] = hud_pass.tex;
+		cmd.textures[0] = world_target.tex;
+		cmd.textures[1] = hud_target.tex;
 		cmd.user_data0 = this;
 
-		rcl.add_command(cmd);
-
-		rcl.pop_settings();
+		frame_tasks.add_command(cmd);
+		frame_tasks.pop_settings();
 	}
 
-	exile->eng->ogl.execute_command_list(&rcl);
-	rcl.destroy();
+	exile->eng->ogl.execute_command_list(&frame_tasks);
+	frame_tasks.clear();
 
 	check_recreate();
 }
 
-void exile_renderer::generate_passes() {
+void exile_renderer::generate_targets() {
 
 	prev_dim = iv2(exile->eng->window.settings.w, exile->eng->window.settings.h);
 	prev_samples = settings.num_samples;
 
-	world_pass.init(prev_dim, prev_samples);
-	hud_pass.init(prev_dim, prev_samples);
+	world_target.init(prev_dim, prev_samples);
+	hud_target.init(prev_dim, prev_samples);
 }
 
-void basic_passes::init(iv2 dim, i32 samples) {
+void effect_pass::init(_FPTR* uniforms, string frag) {
+
+	cmd_id = exile->eng->ogl.add_command(FPTR(run_effect), uniforms, "shaders/effects/effect.v"_, string::makef("shaders/effects/%"_, frag));
+}
+
+void effect_pass::destroy() {
+
+	exile->eng->ogl.rem_command(cmd_id);
+	cmd_id = -1;	
+}
+
+render_command effect_pass::make_cmd() {
+
+	return render_command::make(cmd_id, exile->ren.the_quad.gpu);
+}
+
+void basic_target::init(iv2 dim, i32 samples) {
 
 	tex = exile->eng->ogl.add_texture_target(dim, samples, gl_tex_format::rgba16f);
 	col = exile->eng->ogl.make_target(gl_draw_target::color_0, tex);
@@ -175,9 +191,9 @@ void basic_passes::init(iv2 dim, i32 samples) {
 	exile->eng->ogl.commit_framebuffer(buffer);
 }
 
-void exile_renderer::recreate_passes() {
-	destroy_passes();
-	generate_passes();
+void exile_renderer::recreate_targets() {
+	destroy_targets();
+	generate_targets();
 }
 
 void exile_renderer::check_recreate() {
@@ -185,14 +201,14 @@ void exile_renderer::check_recreate() {
 	   exile->eng->window.settings.h != prev_dim.y ||
 	   settings.num_samples != prev_samples) {
 
-		recreate_passes();
+		recreate_targets();
 	}
 }
 
-void exile_renderer::generate_mesh_commands() { 
+void exile_renderer::generate_commands() { 
 	
 	#define reg(cmdn, name, path) cmd_##cmdn = exile->eng->ogl.add_command(FPTR(run_##name), FPTR(uniforms_##name), \
-											   FPTR(compat_##name), "shaders/" path #cmdn ".v"_, "shaders/" path #cmdn ".f"_);
+											   "shaders/" path #cmdn ".v"_, "shaders/" path #cmdn ".f"_);
  
 	reg(chunk, mesh_chunk, "");
 	reg(cubemap, mesh_cubemap, "");
@@ -208,9 +224,8 @@ void exile_renderer::generate_mesh_commands() {
 	reg(2D_tex_col, mesh_2D_tex_col, "mesh/");
 	reg(3D_tex_instanced, mesh_3D_tex_instanced, "mesh/");
 
-	reg(composite, composite, "effects/");
-	cmd_composite_ms = exile->eng->ogl.add_command(FPTR(run_composite), FPTR(uniforms_composite_ms),
-					   FPTR(compat_composite), "shaders/effects/composite.v"_, "shaders/effects/composite_ms.f"_);
+	resolve.init(FPTR(uniforms_resolve), "resolve.f"_);
+	resolve_ms.init(FPTR(uniforms_resolve_ms), "resolve_ms.f"_);
 
 	#undef reg
 }
@@ -228,7 +243,6 @@ void exile_renderer::destroy() {
 	exile->eng->ogl.rem_command(cmd_chunk);
 	exile->eng->ogl.rem_command(cmd_skydome);
 	exile->eng->ogl.rem_command(cmd_skyfar);
-	exile->eng->ogl.rem_command(cmd_composite);
 
 	cmd_2D_col           = 0;
 	cmd_2D_tex           = 0;
@@ -241,21 +255,24 @@ void exile_renderer::destroy() {
 	cmd_chunk            = 0;
 	cmd_skydome          = 0;
 	cmd_skyfar           = 0;
-	cmd_composite 		 = 0;
 
-	destroy_passes();
+	destroy_targets();
+	resolve.destroy();
+	resolve_ms.destroy();
+
+	frame_tasks.destroy();
 
 	the_cubemap.destroy();
 	the_quad.destroy();
 }
 
-void exile_renderer::destroy_passes() {
+void exile_renderer::destroy_targets() {
 
-	hud_pass.destroy();
-	world_pass.destroy();
+	hud_target.destroy();
+	world_target.destroy();
 }
 
-void basic_passes::destroy() {
+void basic_target::destroy() {
 
 	exile->eng->ogl.destroy_texture(tex);
 	exile->eng->ogl.destroy_framebuffer(buffer);
@@ -266,7 +283,7 @@ void basic_passes::destroy() {
 	depth_buf = {};
 }
 
-CALLBACK void uniforms_composite(shader_program* prog, render_command* cmd) {
+CALLBACK void uniforms_resolve(shader_program* prog, render_command* cmd) {
 
 	i32 textures = 0;
 	DO(8) {
@@ -278,7 +295,7 @@ CALLBACK void uniforms_composite(shader_program* prog, render_command* cmd) {
 	glUniform1i(prog->location("num_textures"_), textures);
 }
 
-CALLBACK void run_composite(render_command* cmd, gpu_object* gpu) {
+CALLBACK void run_effect(render_command* cmd, gpu_object* gpu) {
 	glDrawArrays(gl_draw_mode::triangles, 0, 6);
 }
 
@@ -301,18 +318,14 @@ CALLBACK void update_mesh_quad(gpu_object* obj, void* data, bool force) {
 	glBufferData(gl_buf_target::array, sizeof(m->vbo_data), m->vbo_data, gl_buf_usage::static_draw);
 }
 
-CALLBACK void uniforms_composite_ms(shader_program* prog, render_command* cmd) {
+CALLBACK void uniforms_resolve_ms(shader_program* prog, render_command* cmd) {
 
-	uniforms_composite(prog, cmd);
+	uniforms_resolve(prog, cmd);
 
 	exile_renderer* set = (exile_renderer*)cmd->user_data0;
 
 	glUniform1i(prog->location("num_samples"_), set->prev_samples);
 	glUniform2f(prog->location("screen_size"_), (f32)set->prev_dim.x, (f32)set->prev_dim.y);
-}
-
-CALLBACK bool compat_composite(ogl_info* info) {
-	return info->check_version(3, 2);
 }
 
 void mesh_quad::init() {
@@ -654,51 +667,6 @@ CALLBACK void run_mesh_3D_tex_instanced(render_command* cmd, gpu_object* gpu) {
 	glDrawElementsInstancedBaseVertex(gl_draw_mode::triangles, num_tris, gl_index_type::unsigned_int, (void*)(u64)(0), data->instances, cmd->offset);
 }
 
-// TODO(max): actually do these
-CALLBACK bool compat_mesh_skyfar(ogl_info* info) { 
-	return info->check_version(3, 2);
-}
-
-CALLBACK bool compat_mesh_pointcloud(ogl_info* info) { 
-	return info->check_version(3, 2);
-}
-
-CALLBACK bool compat_mesh_skydome(ogl_info* info) { 
-	return info->check_version(3, 2);
-}
-
-CALLBACK bool compat_mesh_cubemap(ogl_info* info) { 
-	return info->check_version(3, 2);
-}
-
-CALLBACK bool compat_mesh_chunk(ogl_info* info) { 
-	return info->check_version(3, 2);
-}
-
-CALLBACK bool compat_mesh_2D_col(ogl_info* info) { 
-	return info->check_version(3, 2);
-}
-
-CALLBACK bool compat_mesh_2D_tex(ogl_info* info) { 
-	return info->check_version(3, 2);
-}
-
-CALLBACK bool compat_mesh_2D_tex_col(ogl_info* info) { 
-	return info->check_version(3, 2);
-}
-
-CALLBACK bool compat_mesh_3D_tex(ogl_info* info) { 
-	return info->check_version(3, 2);
-}
-
-CALLBACK bool compat_mesh_lines(ogl_info* info) { 
-	return info->check_version(3, 2);
-}
-
-CALLBACK bool compat_mesh_3D_tex_instanced(ogl_info* info) { 
-	return info->check_version(3, 3);
-}
-
 CALLBACK void setup_mesh_pointcloud(gpu_object* obj) { 
 
 	glBindBuffer(gl_buf_target::array, obj->vbos[0]);
@@ -859,6 +827,11 @@ void mesh_cubemap::destroy() {
 	exile->eng->ogl.destroy_object(gpu);
 }
 
+void mesh_lines::clear() {
+	vertices.clear();
+	colors.clear();
+}
+
 void mesh_lines::init(allocator* alloc) { 
 
 	if(!alloc) alloc = CURRENT_ALLOC();
@@ -890,9 +863,6 @@ void mesh_lines::destroy() {
 
 	exile->eng->ogl.destroy_object(gpu);
 	gpu = -1;
-}
-CALLBACK void destroy_lines(mesh_lines* m) {
-	m->destroy();
 }
 
 void mesh_3d_tex_instance_data::init(mesh_3d_tex* par, u32 i, allocator* alloc) { 
@@ -946,10 +916,6 @@ void mesh_2d_col::destroy() {
 
 	exile->eng->ogl.destroy_object(gpu);
 	gpu = -1;
-}
-
-CALLBACK void destroy_2d_col(mesh_2d_col* m) {
-	m->destroy();
 }
 
 void mesh_2d_col::clear() { 

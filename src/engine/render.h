@@ -276,7 +276,6 @@ struct draw_context {
 
 private:
 
-	func_ptr<bool, ogl_info*> compat;
 	func_ptr<void, render_command*, gpu_object*> run;
 	shader_program shader;
 };
@@ -413,7 +412,7 @@ struct ogl_manager {
 	void reload_texture_assets();
 
 	// Commands
-	draw_cmd_id add_command(_FPTR* run, _FPTR* uniforms, _FPTR* compat, string v, string f, string g = {});
+	draw_cmd_id add_command(_FPTR* run, _FPTR* uniforms, string v, string f, string g = {});
 	void rem_command(draw_cmd_id id);
 
  	// Textures

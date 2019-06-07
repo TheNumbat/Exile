@@ -266,6 +266,9 @@ struct world {
 	world_time time;
 	world_environment env;
 
+	mesh_lines chunk_corners, player_sightline;
+	mesh_2d_col player_hud;
+
 	void init(asset_store* store, allocator* a);
 	void init_blocks(asset_store* store);
 	block_meta* get_info(block_id id);

@@ -51,6 +51,12 @@ void world::init(asset_store* store, allocator* a) { PROF_FUNC
 	}
 
 	{
+		player_sightline.init(alloc);
+		chunk_corners.init(alloc);
+		player_hud.init(alloc);
+	}
+
+	{
 		exile->eng->dbg.store.add_var("world/settings"_, &settings);
 		exile->eng->dbg.store.add_var("world/time"_, &time);
 		exile->eng->dbg.store.add_ele("world/ui"_, FPTR(world_debug_ui), this);
@@ -86,6 +92,9 @@ void world::destroy() {
 	thread_pool.destroy();
 	destroy_chunks();
 	block_info.destroy();
+	player_sightline.destroy();
+	chunk_corners.destroy();
+	player_hud.destroy();
 }
 
 v3 world::raymarch(v3 origin, v3 max) { 
@@ -346,7 +355,7 @@ void player::reset() {
 
 void world::render() { PROF_FUNC
 
-	exile->ren.world_begin_clear();
+	exile->ren.world_clear();
 	
 	env.render(&p, &time);
 	render_chunks();
@@ -431,19 +440,11 @@ void world_environment::destroy() {
 
 void world_environment::render(player* p, world_time* t) { PROF_FUNC
 
-	render_command_list rcl = render_command_list::make();
-
 	m4 mproj = p->camera.proj((f32)exile->eng->window.settings.w / (f32)exile->eng->window.settings.h);
 	m4 view_no_trans = p->camera.view_no_translate();
 
-	rcl.add_command(exile->ren.world_skydome_cmd(sky.gpu, t, sky_texture, view_no_trans, mproj));
-
-	rcl.set_setting(render_setting::point_size, true);
-	rcl.add_command(exile->ren.world_stars_cmd(stars.gpu, t, view_no_trans, mproj));
-
-	exile->eng->ogl.execute_command_list(&rcl);
-
-	rcl.destroy();
+	exile->ren.world_skydome(sky.gpu, t, sky_texture, view_no_trans, mproj);
+	exile->ren.world_stars(stars.gpu, t, view_no_trans, mproj);
 }
 
 void world::render_chunks() { PROF_FUNC
@@ -453,10 +454,9 @@ void world::render_chunks() { PROF_FUNC
 	local_light();
 	local_mesh();
 
-	render_command_list rcl = render_command_list::make();
 	thread_pool.renew_priorities(check_pirority, this);
 
-	exile->ren.world_begin_chunks(&rcl);
+	exile->ren.world_begin_chunks();
 
 	{PROF_SCOPE("Build Render List"_);
 
@@ -478,16 +478,15 @@ void world::render_chunks() { PROF_FUNC
 			m4 view = p.camera.view_pos_origin();
 			m4 proj = p.camera.proj((f32)exile->eng->window.settings.w / (f32)exile->eng->window.settings.h);
 
-			rcl.add_command(exile->ren.world_chunk_cmd(this, c, block_textures, env.sky_texture, model, view, proj));
+			exile->ren.world_chunk(this, c, block_textures, env.sky_texture, model, view, proj);
 		}
 	}
 
-	exile->ren.world_end_chunks(&rcl);
+	exile->ren.world_finish_chunks();
 
-	mesh_lines lines; 
 	if(settings.draw_chunk_corners) {
 		
-		lines.init();
+		chunk_corners.clear();
 
 		for(i32 x = -settings.view_distance; x <= settings.view_distance + 1; x++) {
 			for(i32 z = -settings.view_distance; z <= settings.view_distance + 1; z++) {
@@ -496,60 +495,48 @@ void world::render_chunks() { PROF_FUNC
 
 				f32 fx = (f32)current.x * chunk::wid;
 				f32 fz = (f32)current.z * chunk::wid;
-				lines.push(v3(fx, 0.0f, fz), v3(fx, (f32)chunk::hei, fz), colorf(1,0,0,1));
+				chunk_corners.push(v3(fx, 0.0f, fz), v3(fx, (f32)chunk::hei, fz), colorf(1,0,0,1));
 			}
 		}
 
 		m4 view = p.camera.view();
 		m4 proj = p.camera.proj((f32)exile->eng->window.settings.w / (f32)exile->eng->window.settings.h);
 
-		rcl.add_command(exile->ren.world_lines_cmd(&lines, view, proj));
+		exile->ren.world_lines(chunk_corners.gpu, view, proj);
 	}
 	}
-
-	exile->eng->ogl.execute_command_list(&rcl);
-	rcl.destroy();
 }
 
 void world::render_player() { PROF_FUNC
 
 	render_camera& cam = p.camera;
 
-	render_command_list rcl = render_command_list::make();
-
-	mesh_lines lines; 
 	if(cam.mode == camera_mode::third) {
 
-		lines.init();
-		lines.push(cam.pos + cam.front, cam.pos + cam.reach * cam.front, colorf(0,0,1,1), colorf(0,1,0,1));
-		lines.push(cam.pos, cam.pos + cam.front, colorf(1,0,0,1), colorf(0,0,1,1));
+		player_sightline.clear();
+		player_sightline.push(cam.pos + cam.front, cam.pos + cam.reach * cam.front, colorf(0,0,1,1), colorf(0,1,0,1));
+		player_sightline.push(cam.pos, cam.pos + cam.front, colorf(1,0,0,1), colorf(0,0,1,1));
 
 		v3 intersection = raymarch(cam.pos, cam.front, cam.reach);
 
-		lines.push(cam.pos, intersection, colorf(0,0,0,1), colorf(0,0,0,1));
+		player_sightline.push(cam.pos, intersection, colorf(0,0,0,1), colorf(0,0,0,1));
 
 		m4 view = cam.view();
 		m4 proj = cam.proj((f32)exile->eng->window.settings.w / (f32)exile->eng->window.settings.h);
 		
-		rcl.add_command(exile->ren.world_lines_cmd(&lines, view, proj));
+		exile->ren.world_lines(player_sightline.gpu, view, proj);
 	}
 
-	mesh_2d_col crosshair;
 	{
-		crosshair.init();
+		player_hud.clear();
+		
 		f32 w = (f32)exile->eng->window.settings.w, h = (f32)exile->eng->window.settings.h;
 
-		crosshair.push_rect(r2(w / 2.0f - 5.0f, h / 2.0f - 1.0f, 10.0f, 2.0f), WHITE);
-		crosshair.push_rect(r2(w / 2.0f - 1.0f, h / 2.0f - 5.0f, 2.0f, 10.0f), WHITE);
+		player_hud.push_rect(r2(w / 2.0f - 5.0f, h / 2.0f - 1.0f, 10.0f, 2.0f), WHITE);
+		player_hud.push_rect(r2(w / 2.0f - 1.0f, h / 2.0f - 5.0f, 2.0f, 10.0f), WHITE);
 
-		rcl.push_settings();
-		rcl.set_setting(render_setting::depth_test, false);
-		rcl.add_command(exile->ren.hud_2D_cmd(&crosshair));
-		rcl.pop_settings();
+		exile->ren.hud_2D(player_hud.gpu);
 	}
-
-	exile->eng->ogl.execute_command_list(&rcl);
-	rcl.destroy();
 }
 
 void world::update_player(u64 now) { PROF_FUNC

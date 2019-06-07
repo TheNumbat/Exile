@@ -241,11 +241,6 @@ void ogl_manager::gl_end_reload() {
 	info = ogl_info::make(alloc);
 
 	FORMAP(it, commands) {
-		if(!it->value.compat(&info)) {	
-			LOG_WARN_F("Render command % failed compatibility check!!!"_, it->key);
-			continue;
-		}
-
 		it->value.shader.recreate();
 	}
 	dbg_shader.recreate();
@@ -1094,16 +1089,9 @@ void ogl_manager::rem_command(draw_cmd_id id) {
 	return;
 }
 
-draw_cmd_id ogl_manager::add_command(_FPTR* run, _FPTR* uniforms, _FPTR* compat, string v, string f, string g) { 
+draw_cmd_id ogl_manager::add_command(_FPTR* run, _FPTR* uniforms, string v, string f, string g) { 
 
 	draw_context d;
-	d.compat.set(compat);
-
-	if(!d.compat(&info)) {
-		
-		LOG_WARN_F("Render command run/% shaders/%,% failed compatibility check!!!"_, run, v, f);
-		return -1;
-	}
 
 	d.run.set(run);
 	d.shader = shader_program::make(v, f, g, uniforms, alloc);

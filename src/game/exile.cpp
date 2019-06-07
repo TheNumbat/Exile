@@ -1,21 +1,24 @@
 
 void exile_state::init() { PROF_FUNC
 
-	alloc = MAKE_PLATFORM_ALLOCATOR("world"_);
+	a_general = MAKE_PLATFORM_ALLOCATOR("game_general"_);
+	a_assets = MAKE_PLATFORM_ALLOCATOR("game_assets"_);
+	a_world = MAKE_PLATFORM_ALLOCATOR("game_world"_);
+	a_render = MAKE_PLATFORM_ALLOCATOR("game_render"_);
 
-	store = asset_store::make(&alloc);
+	store = asset_store::make(&a_assets);
 	store.load("assets/game.asset"_);
 
 	setup_console_commands();
 
-	ren.init();
+	ren.init(&a_render);
 
-	w.init(&store, &alloc);
+	w.init(&store, &a_world);
 
 	{
 		default_evt = exile->eng->evt.add_handler(FPTR(default_evt_handle), this);
 
-		controls = evt_state_machine::make(&exile->eng->evt, &alloc);
+		controls = evt_state_machine::make(&exile->eng->evt, &a_general);
 
 		camera_evt = controls.add_state(FPTR(camera_evt_handle), this);
 		ui_evt = controls.add_state(FPTR(ui_evt_handle), this);
@@ -31,7 +34,7 @@ void exile_state::init() { PROF_FUNC
 void exile_state::gl_reload() { 
 
 	w.regenerate();	
-	ren.recreate_passes();
+	ren.recreate_targets();
 }
 
 void exile_state::update() { PROF_FUNC
@@ -68,7 +71,7 @@ void exile_state::render() { PROF_FUNC
 
 	// NOTE(max): engine IMGUI-based debug UI is rendered on top of everything, separately
 	w.render();
-	ren.render_to_screen();
+	ren.end_frame();
 }
 
 void exile_state::destroy() { 

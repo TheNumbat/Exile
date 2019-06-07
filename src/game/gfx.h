@@ -104,11 +104,11 @@ struct mesh_lines {
 
 	void init(allocator* alloc = null);
 	void destroy();
+	void clear();
 
 	void push(v3 p1, v3 p2, colorf c1, colorf c2);
 	void push(v3 p1, v3 p2, colorf c);
 };
-CALLBACK void destroy_lines(mesh_lines* m);
 
 struct mesh_pointcloud {
 	vector<v4> vertices;
@@ -140,8 +140,7 @@ struct mesh_2d_col {
 	void push_rect(r2 rect, color c);
 	void push_cutrect(r2 r, f32 round, color c);
 };
-CALLBACK void destroy_2d_col(mesh_2d_col* m);
-
+ 
 struct mesh_2d_tex {
 	vector<v2>		vertices;	// x y 
 	vector<v2>		texCoords;	// u v
@@ -239,11 +238,12 @@ struct exile_render_settings {
 
 	i32 num_samples = 4;
 	bool gamma = true;
+	bool invert_effect = false;
 
 	colorf clear_color = colorf(0.8f, 0.8f, 0.8f, 1.0f);
 };
 
-struct basic_passes {
+struct basic_target {
 
 	render_buffer depth_buf;
 	render_target col;
@@ -256,10 +256,25 @@ struct basic_passes {
 	void destroy();
 };
 
+struct effect_pass {
+
+	draw_cmd_id cmd_id = -1;
+
+	void init(_FPTR* uniforms, string frag);
+	void destroy();
+
+	render_command make_cmd();
+};
+CALLBACK void run_effect(render_command* cmd, gpu_object* gpu);		
+CALLBACK void setup_mesh_quad(gpu_object* obj);
+CALLBACK void update_mesh_quad(gpu_object* obj, void* data, bool force);
+
 // NOTE(max): sort of a client implementation using the engine OGL renderer 
 struct exile_renderer {
 
-	void init();
+	allocator* alloc = null;
+
+	void init(allocator* a);
 	void destroy();
 
 	draw_cmd_id cmd_2D_col           = -1;
@@ -274,47 +289,49 @@ struct exile_renderer {
 	draw_cmd_id cmd_skydome          = -1;
 	draw_cmd_id cmd_skyfar           = -1;
 
-	// TODO(max): different interface for effects vs. mesh-based rendering?
-	draw_cmd_id cmd_composite 		 = -1;
-	draw_cmd_id cmd_composite_ms	 = -1;
-
 	exile_render_settings settings;
 
+	// NOTE(max): these should be static, but hot reloading
 	mesh_cubemap the_cubemap;
 	mesh_quad 	 the_quad;
 
-	basic_passes world_pass;
-	basic_passes hud_pass;
+	effect_pass resolve, resolve_ms;
+	effect_pass invert;
 
-	render_command hud_2D_cmd(mesh_2d_col* mesh);
+	basic_target world_target;
+	basic_target hud_target;
 
-	void world_begin_clear();
-	render_command world_lines_cmd(mesh_lines* mesh, m4 view, m4 proj);
-	render_command world_stars_cmd(gpu_object_id gpu_id, world_time* time, m4 view, m4 proj);
-	render_command world_skydome_cmd(gpu_object_id gpu_id, world_time* time, texture_id sky, m4 view, m4 proj);
+	render_command_list frame_tasks;
+
+	void hud_2D(gpu_object_id gpu_id);
+
+	void world_clear();
+	void world_lines(gpu_object_id id, m4 view, m4 proj);
+	void world_stars(gpu_object_id gpu_id, world_time* time, m4 view, m4 proj);
+	void world_skydome(gpu_object_id gpu_id, world_time* time, texture_id sky, m4 view, m4 proj);
 	
-	void world_begin_chunks(render_command_list* rcl);
-	render_command world_chunk_cmd(world* w, chunk* c, texture_id blocks, texture_id sky, m4 model, m4 view, m4 proj);
-	void world_end_chunks(render_command_list* rcl);
+	void world_begin_chunks();
+	// NOTE(max): this assumes the chunk mesh object is long-lived
+	void world_chunk(world* w, chunk* c, texture_id blocks, texture_id sky, m4 model, m4 view, m4 proj);
+	void world_finish_chunks();
 
-	void generate_mesh_commands();
-	void generate_passes();
-	void recreate_passes();
-	void destroy_passes();
+	void generate_commands();
+	void generate_targets();
+	void recreate_targets();
+	void destroy_targets();
 	void check_recreate();
 
 	iv2 prev_dim;
 	i32 prev_samples = 0;
 
-	void render_to_screen();
+	void end_frame();
 };
 
 #define decl_mesh(name) \
 	CALLBACK void uniforms_mesh_##name(shader_program* prog, render_command* cmd); 	\
 	CALLBACK void setup_mesh_##name(gpu_object* obj); 								\
 	CALLBACK void update_mesh_##name(gpu_object* obj, void* data, bool force);		\
-	CALLBACK void run_mesh_##name(render_command* cmd, gpu_object* gpu);			\
-	CALLBACK bool compat_mesh_##name(ogl_info* info);
+	CALLBACK void run_mesh_##name(render_command* cmd, gpu_object* gpu);
 
 decl_mesh(skyfar);
 decl_mesh(skydome);
@@ -328,12 +345,7 @@ decl_mesh(3D_tex_instanced);
 decl_mesh(lines);
 decl_mesh(pointcloud);
 
-CALLBACK void setup_mesh_quad(gpu_object* obj);
-CALLBACK void update_mesh_quad(gpu_object* obj, void* data, bool force);
-
-CALLBACK void uniforms_composite_ms(shader_program* prog, render_command* cmd);
-CALLBACK void uniforms_composite(shader_program* prog, render_command* cmd);
-CALLBACK void run_composite(render_command* cmd, gpu_object* gpu);		
-CALLBACK bool compat_composite(ogl_info* info);
+CALLBACK void uniforms_resolve_ms(shader_program* prog, render_command* cmd);
+CALLBACK void uniforms_resolve(shader_program* prog, render_command* cmd);
 
 
