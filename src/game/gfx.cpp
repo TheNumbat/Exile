@@ -101,12 +101,12 @@ void exile_renderer::hud_2D(gpu_object_id gpu_id) {
 
 	render_command cmd = render_command::make(cmd_2D_col, gpu_id);
 	
-	cmd.fb_id = hud_target.buffer;
+	// cmd.fb_id = hud_target.buffer;
 
 	f32 w = (f32)exile->eng->window.settings.w, h = (f32)exile->eng->window.settings.h;
 	cmd.proj = ortho(0, w, h, 0, -1, 1);
 
-	frame_tasks.add_command(cmd);
+	// frame_tasks.add_command(cmd);
 	frame_tasks.pop_settings();
 }
 
@@ -121,56 +121,22 @@ void exile_renderer::world_clear() {
 	frame_tasks.add_command(cmd);
 }
 
-void exile_renderer::resolve_buffers() {
-
-	if(prev_samples != 1) {
-			render_command cmd = render_command::make(ogl_manager::cmd_clear);
-
-			cmd.fb_id = world_resolve.buffer;
-			cmd.clear_color = settings.clear_color;
-			cmd.clear_components = (GLbitfield)gl_clear::depth_buffer_bit;
-
-			frame_tasks.add_command(cmd);
-
-			cmd.fb_id = hud_resolve.buffer;
-
-			frame_tasks.add_command(cmd);
-
-			cmd = resolve.make_cmd();
-
-			cmd.fb_id = world_resolve.buffer;
-			cmd.textures[0] = world_target.tex;
-			cmd.user_data0 = this;
-
-			frame_tasks.add_command(cmd);
-
-			cmd.fb_id = hud_resolve.buffer;
-			cmd.textures[0] = hud_target.tex;
-
-			frame_tasks.add_command(cmd);
-		}
-}
 
 void exile_renderer::end_frame() {
 
-	texture_id hud_tex = prev_samples == 1 ? hud_target.tex : hud_resolve.tex;
-	texture_id world_tex = prev_samples == 1 ? world_target.tex : world_resolve.tex;
-
-	resolve_buffers();
-
 	// run world effects
-	{	
-		if(settings.invert_effect) {
+	// {	
+	// 	if(settings.invert_effect) {
 
-			render_command cmd = invert.make_cmd();
+	// 		render_command cmd = invert.make_cmd();
 
-			// TODO(max) : this doesn't work
-			cmd.fb_id = world_target.buffer;
-			cmd.textures[0] = world_tex;
+	// 		// TODO(max) : this doesn't work
+	// 		cmd.fb_id = world_target.buffer;
+	// 		cmd.textures[0] = world_target.tex;
 
-			frame_tasks.add_command(cmd);
-		}
-	}
+	// 		frame_tasks.add_command(cmd);
+	// 	}
+	// }
 
 	// clear screen
 	{
@@ -181,16 +147,16 @@ void exile_renderer::end_frame() {
 
 		frame_tasks.add_command(cmd);
 	}
-	// composite to screen
+	// resolve to screen (used to pre-resolve textures to single-sample, then composite, but removed that)
 	{
 		frame_tasks.push_settings();
 		if(settings.gamma)
 			frame_tasks.set_setting(render_setting::output_srgb, true);
 
-		render_command cmd = composite.make_cmd();
+		render_command cmd = resolve.make_cmd();
 
-		cmd.textures[0] = world_tex;
-		cmd.textures[1] = hud_tex;
+		cmd.textures[0] = world_target.tex;
+		cmd.user_data0 = this;
 
 		frame_tasks.add_command(cmd);
 		frame_tasks.pop_settings();
@@ -208,12 +174,6 @@ void exile_renderer::generate_targets() {
 	prev_samples = settings.num_samples;
 
 	world_target.init(prev_dim, prev_samples);
-	hud_target.init(prev_dim, prev_samples);
-	
-	if(prev_samples != 1) {
-		hud_resolve.init(prev_dim, 1);
-		world_resolve.init(prev_dim, 1);
-	}
 }
 
 void effect_pass::init(_FPTR* uniforms, string frag) {
@@ -327,13 +287,7 @@ void exile_renderer::destroy() {
 
 void exile_renderer::destroy_targets() {
 
-	hud_target.destroy();
 	world_target.destroy();
-
-	if(prev_samples != 1) {
-		hud_resolve.destroy();
-		world_resolve.destroy();
-	}
 }
 
 void basic_target::destroy() {

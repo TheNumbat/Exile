@@ -6,7 +6,6 @@ Working To-Do:
 		FIX: torchlight AND sunlight removal ?????
 
 		framebuffers 'n' stuff	
-			remove HUD framebuffer due to memory constraints
 			fix effect pass system
 			move HUD system to another render pass, kind of like effects but without its own framebuffer
 			framebuffer blitting, maybe use this to resolve MSAA instead?

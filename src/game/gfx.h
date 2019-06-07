@@ -298,8 +298,7 @@ struct exile_renderer {
 	effect_pass composite, composite_resolve, resolve;
 	effect_pass invert;
 
-	basic_target world_target, hud_target;
-	basic_target world_resolve, hud_resolve;
+	basic_target world_target;
 
 	render_command_list frame_tasks;
 
@@ -320,7 +319,6 @@ struct exile_renderer {
 	void recreate_targets();
 	void destroy_targets();
 	void check_recreate();
-	void resolve_buffers();
 
 	iv2 prev_dim;
 	i32 prev_samples = 0;
