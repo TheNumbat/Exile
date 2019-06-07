@@ -295,11 +295,11 @@ struct exile_renderer {
 	mesh_cubemap the_cubemap;
 	mesh_quad 	 the_quad;
 
-	effect_pass resolve, resolve_ms;
+	effect_pass composite, composite_resolve, resolve;
 	effect_pass invert;
 
-	basic_target world_target;
-	basic_target hud_target;
+	basic_target world_target, hud_target;
+	basic_target world_resolve, hud_resolve;
 
 	render_command_list frame_tasks;
 
@@ -320,6 +320,7 @@ struct exile_renderer {
 	void recreate_targets();
 	void destroy_targets();
 	void check_recreate();
+	void resolve_buffers();
 
 	iv2 prev_dim;
 	i32 prev_samples = 0;
@@ -345,7 +346,9 @@ decl_mesh(3D_tex_instanced);
 decl_mesh(lines);
 decl_mesh(pointcloud);
 
-CALLBACK void uniforms_resolve_ms(shader_program* prog, render_command* cmd);
 CALLBACK void uniforms_resolve(shader_program* prog, render_command* cmd);
+CALLBACK void uniforms_composite(shader_program* prog, render_command* cmd);
+CALLBACK void uniforms_composite_resolve(shader_program* prog, render_command* cmd);
+CALLBACK void uniforms_invert(shader_program* prog, render_command* cmd);
 
 

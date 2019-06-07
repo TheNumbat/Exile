@@ -121,34 +121,84 @@ void exile_renderer::world_clear() {
 	frame_tasks.add_command(cmd);
 }
 
+void exile_renderer::resolve_buffers() {
+
+	if(prev_samples != 1) {
+			render_command cmd = render_command::make(ogl_manager::cmd_clear);
+
+			cmd.fb_id = world_resolve.buffer;
+			cmd.clear_color = settings.clear_color;
+			cmd.clear_components = (GLbitfield)gl_clear::depth_buffer_bit;
+
+			frame_tasks.add_command(cmd);
+
+			cmd.fb_id = hud_resolve.buffer;
+
+			frame_tasks.add_command(cmd);
+
+			cmd = resolve.make_cmd();
+
+			cmd.fb_id = world_resolve.buffer;
+			cmd.textures[0] = world_target.tex;
+			cmd.user_data0 = this;
+
+			frame_tasks.add_command(cmd);
+
+			cmd.fb_id = hud_resolve.buffer;
+			cmd.textures[0] = hud_target.tex;
+
+			frame_tasks.add_command(cmd);
+		}
+}
+
 void exile_renderer::end_frame() {
 
+	texture_id hud_tex = prev_samples == 1 ? hud_target.tex : hud_resolve.tex;
+	texture_id world_tex = prev_samples == 1 ? world_target.tex : world_resolve.tex;
+
+	resolve_buffers();
+
+	// run world effects
+	{	
+		if(settings.invert_effect) {
+
+			render_command cmd = invert.make_cmd();
+
+			// TODO(max) : this doesn't work
+			cmd.fb_id = world_target.buffer;
+			cmd.textures[0] = world_tex;
+
+			frame_tasks.add_command(cmd);
+		}
+	}
+
+	// clear screen
 	{
 		render_command cmd = render_command::make(ogl_manager::cmd_clear);
 	
 		cmd.clear_color = settings.clear_color;
-		cmd.clear_components = (GLbitfield)gl_clear::color_buffer_bit | (GLbitfield)gl_clear::depth_buffer_bit;
+		cmd.clear_components = (GLbitfield)gl_clear::depth_buffer_bit;
 
 		frame_tasks.add_command(cmd);
 	}
+	// composite to screen
 	{
 		frame_tasks.push_settings();
 		if(settings.gamma)
 			frame_tasks.set_setting(render_setting::output_srgb, true);
 
-		render_command cmd = prev_samples == 1 ? resolve.make_cmd() : resolve_ms.make_cmd();
+		render_command cmd = composite.make_cmd();
 
-		cmd.textures[0] = world_target.tex;
-		cmd.textures[1] = hud_target.tex;
-		cmd.user_data0 = this;
+		cmd.textures[0] = world_tex;
+		cmd.textures[1] = hud_tex;
 
 		frame_tasks.add_command(cmd);
 		frame_tasks.pop_settings();
 	}
 
 	exile->eng->ogl.execute_command_list(&frame_tasks);
-	frame_tasks.clear();
 
+	frame_tasks.clear();
 	check_recreate();
 }
 
@@ -159,6 +209,11 @@ void exile_renderer::generate_targets() {
 
 	world_target.init(prev_dim, prev_samples);
 	hud_target.init(prev_dim, prev_samples);
+	
+	if(prev_samples != 1) {
+		hud_resolve.init(prev_dim, 1);
+		world_resolve.init(prev_dim, 1);
+	}
 }
 
 void effect_pass::init(_FPTR* uniforms, string frag) {
@@ -225,7 +280,9 @@ void exile_renderer::generate_commands() {
 	reg(3D_tex_instanced, mesh_3D_tex_instanced, "mesh/");
 
 	resolve.init(FPTR(uniforms_resolve), "resolve.f"_);
-	resolve_ms.init(FPTR(uniforms_resolve_ms), "resolve_ms.f"_);
+	composite.init(FPTR(uniforms_composite), "composite.f"_);
+	composite_resolve.init(FPTR(uniforms_composite_resolve), "composite_resolve.f"_);
+	invert.init(FPTR(uniforms_invert), "invert.f"_);
 
 	#undef reg
 }
@@ -258,7 +315,9 @@ void exile_renderer::destroy() {
 
 	destroy_targets();
 	resolve.destroy();
-	resolve_ms.destroy();
+	composite.destroy();
+	composite_resolve.destroy();
+	invert.destroy();
 
 	frame_tasks.destroy();
 
@@ -270,6 +329,11 @@ void exile_renderer::destroy_targets() {
 
 	hud_target.destroy();
 	world_target.destroy();
+
+	if(prev_samples != 1) {
+		hud_resolve.destroy();
+		world_resolve.destroy();
+	}
 }
 
 void basic_target::destroy() {
@@ -283,7 +347,7 @@ void basic_target::destroy() {
 	depth_buf = {};
 }
 
-CALLBACK void uniforms_resolve(shader_program* prog, render_command* cmd) {
+CALLBACK void uniforms_composite(shader_program* prog, render_command* cmd) {
 
 	i32 textures = 0;
 	DO(8) {
@@ -293,6 +357,30 @@ CALLBACK void uniforms_resolve(shader_program* prog, render_command* cmd) {
 		}
 	}	
 	glUniform1i(prog->location("num_textures"_), textures);
+}
+
+CALLBACK void uniforms_composite_resolve(shader_program* prog, render_command* cmd) {
+
+	uniforms_composite(prog, cmd);
+
+	exile_renderer* set = (exile_renderer*)cmd->user_data0;
+
+	glUniform1i(prog->location("num_samples"_), set->prev_samples);
+	glUniform2f(prog->location("screen_size"_), (f32)set->prev_dim.x, (f32)set->prev_dim.y);
+}
+
+CALLBACK void uniforms_resolve(shader_program* prog, render_command* cmd) {
+
+	exile_renderer* set = (exile_renderer*)cmd->user_data0;
+
+	glUniform1i(prog->location("tex"_), 0);
+	glUniform1i(prog->location("num_samples"_), set->prev_samples);
+	glUniform2f(prog->location("screen_size"_), (f32)set->prev_dim.x, (f32)set->prev_dim.y);
+}
+
+CALLBACK void uniforms_invert(shader_program* prog, render_command* cmd) {
+
+	glUniform1i(prog->location("tex"_), 0);
 }
 
 CALLBACK void run_effect(render_command* cmd, gpu_object* gpu) {
@@ -316,16 +404,6 @@ CALLBACK void update_mesh_quad(gpu_object* obj, void* data, bool force) {
 
 	glBindBuffer(gl_buf_target::array, obj->vbos[0]);
 	glBufferData(gl_buf_target::array, sizeof(m->vbo_data), m->vbo_data, gl_buf_usage::static_draw);
-}
-
-CALLBACK void uniforms_resolve_ms(shader_program* prog, render_command* cmd) {
-
-	uniforms_resolve(prog, cmd);
-
-	exile_renderer* set = (exile_renderer*)cmd->user_data0;
-
-	glUniform1i(prog->location("num_samples"_), set->prev_samples);
-	glUniform2f(prog->location("screen_size"_), (f32)set->prev_dim.x, (f32)set->prev_dim.y);
 }
 
 void mesh_quad::init() {

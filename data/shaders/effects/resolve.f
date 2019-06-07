@@ -5,21 +5,19 @@ in vec2 f_uv;
 
 out vec4 color;
 
-uniform int num_textures;
-uniform sampler2D textures[8];
+uniform int num_samples;
+uniform sampler2DMS tex;
+uniform vec2 screen_size;
 
 void main() {
 
-	//TODO(max): this is totally not the right way to blend
+	ivec2 coord = ivec2(f_uv * screen_size);
+	
+	color = vec4(0.0f);
 
-	vec4 col = texture(textures[0], f_uv);
+	for(int i = 0; i < num_samples; i++)
+		color += texelFetch(tex, coord, i);
 
-	for(int i = 1; i < num_textures; i++) {
-
-		vec4 next = texture(textures[i], f_uv);
-		col = mix(col, next, next.a);
-	}
-
-	color = col;
+	color /= float(num_samples);
 }
 

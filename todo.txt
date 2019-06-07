@@ -6,7 +6,8 @@ Working To-Do:
 		FIX: torchlight AND sunlight removal ?????
 
 		framebuffers 'n' stuff			
-			multiple passes, define "effect" pass/shaders
+			fix effect pass system
+			framebuffer blitting, maybe use this to resolve MSAA instead?
 
 		glnamed operations everywhere 
 		deferred rendering
@@ -19,7 +20,6 @@ Working To-Do:
 			normal mapping
 
 		add east/west sunlight calculation & day curve use
-		framebuffer blitting, maybe use this to resolve MSAA instead?
 
 		sun/moon objects 
 		spinning sky/stars
