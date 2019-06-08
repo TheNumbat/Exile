@@ -17,14 +17,14 @@ void exile_renderer::init(allocator* a) {
 
 void exile_renderer::world_skydome(gpu_object_id gpu_id, world_time* time, texture_id sky, m4 view, m4 proj) {
 
-	render_command cmd = render_command::make(cmd_skydome, gpu_id);
+	render_command cmd = render_command::make_cst(cmd_skydome, gpu_id);
 
-	cmd.fb_id = world_target.world_fb();
-	cmd.user_data0 = time;
-	cmd.textures[0] = sky;
+	cmd.info.fb_id = world_target.world_fb();
+	cmd.info.user_data0 = time;
+	cmd.info.textures[0] = sky;
 
-	cmd.view = view;
-	cmd.proj = proj;
+	cmd.info.view = view;
+	cmd.info.proj = proj;
 
 	frame_tasks.add_command(cmd);
 }
@@ -34,12 +34,12 @@ void exile_renderer::world_stars(gpu_object_id gpu_id, world_time* time, m4 view
 	frame_tasks.push_settings();
 	frame_tasks.set_setting(render_setting::point_size, true);
 
-	render_command cmd = render_command::make(cmd_pointcloud, gpu_id);
+	render_command cmd = render_command::make_cst(cmd_pointcloud, gpu_id);
 
-	cmd.fb_id = world_target.world_fb();
-	cmd.user_data0 = time;
-	cmd.view = view;
-	cmd.proj = proj;
+	cmd.info.fb_id = world_target.world_fb();
+	cmd.info.user_data0 = time;
+	cmd.info.view = view;
+	cmd.info.proj = proj;
 
 	frame_tasks.add_command(cmd);
 	frame_tasks.pop_settings();
@@ -63,18 +63,18 @@ void exile_renderer::world_finish_chunks() {
 
 void exile_renderer::world_chunk(world* w, chunk* c, texture_id blocks, texture_id sky, m4 model, m4 view, m4 proj) {
 
-	render_command cmd = render_command::make(cmd_chunk, c->mesh.gpu);
+	render_command cmd = render_command::make_cst(cmd_chunk, c->mesh.gpu);
 
-	cmd.fb_id = world_target.world_fb();
-	cmd.textures[0] = blocks;
-	cmd.textures[1] = sky;
-	cmd.num_tris = c->mesh_faces;
-	cmd.user_data0 = w;
-	cmd.user_data1 = &settings.world_set;
+	cmd.info.fb_id = world_target.world_fb();
+	cmd.info.textures[0] = blocks;
+	cmd.info.textures[1] = sky;
+	cmd.info.num_tris = c->mesh_faces;
+	cmd.info.user_data0 = w;
+	cmd.info.user_data1 = &settings.world_set;
 
-	cmd.model = model;
-	cmd.view = view;
-	cmd.proj = proj;
+	cmd.info.model = model;
+	cmd.info.view = view;
+	cmd.info.proj = proj;
 
 	cmd.callback = FPTR(unlock_chunk);
 	cmd.callback_data = c;
@@ -84,12 +84,12 @@ void exile_renderer::world_chunk(world* w, chunk* c, texture_id blocks, texture_
 
 void exile_renderer::world_lines(gpu_object_id gpu_id, m4 view, m4 proj) {
 	
-	render_command cmd = render_command::make(cmd_lines, gpu_id);
+	render_command cmd = render_command::make_cst(cmd_lines, gpu_id);
 
-	cmd.fb_id = world_target.world_fb();
+	cmd.info.fb_id = world_target.world_fb();
 
-	cmd.view = view;
-	cmd.proj = proj;
+	cmd.info.view = view;
+	cmd.info.proj = proj;
 	
 	frame_tasks.add_command(cmd);
 }
@@ -99,12 +99,12 @@ void exile_renderer::hud_2D(gpu_object_id gpu_id) {
 	frame_tasks.push_settings();
 	frame_tasks.set_setting(render_setting::depth_test, false);
 
-	render_command cmd = render_command::make(cmd_2D_col, gpu_id);
+	render_command cmd = render_command::make_cst(cmd_2D_col, gpu_id);
 	
 	// cmd.fb_id = hud_target.buffer;
 
 	f32 w = (f32)exile->eng->window.settings.w, h = (f32)exile->eng->window.settings.h;
-	cmd.proj = ortho(0, w, h, 0, -1, 1);
+	cmd.info.proj = ortho(0, w, h, 0, -1, 1);
 
 	// frame_tasks.add_command(cmd);
 	frame_tasks.pop_settings();
@@ -114,9 +114,9 @@ void exile_renderer::world_clear() {
 
 	render_command cmd = render_command::make(ogl_manager::cmd_clear);
 	
-	cmd.fb_id = world_target.world_fb();
-	cmd.clear_color = settings.clear_color;
-	cmd.clear_components = (GLbitfield)gl_clear::color_buffer_bit | (GLbitfield)gl_clear::depth_buffer_bit;
+	cmd.clear.fb_id = world_target.world_fb();
+	cmd.clear.col = settings.clear_color;
+	cmd.clear.components = (GLbitfield)gl_clear::color_buffer_bit | (GLbitfield)gl_clear::depth_buffer_bit;
 
 	frame_tasks.add_command(cmd);
 }
@@ -126,17 +126,17 @@ void exile_renderer::end_frame() {
 
 	// run world effects
 	frame_tasks.set_setting(render_setting::depth_test, false);	
-	
+
 	{	
 		world_target.resolve(&frame_tasks);
 		if(settings.invert_effect) {
 
 			render_command cmd = invert.make_cmd();
 			
-			cmd.textures[0] = world_target.get_output();
+			cmd.info.textures[0] = world_target.get_output();
 			
 			world_target.flip_fb();
-			cmd.fb_id = world_target.get_fb();
+			cmd.info.fb_id = world_target.get_fb();
 
 			frame_tasks.add_command(cmd);
 		}
@@ -148,9 +148,13 @@ void exile_renderer::end_frame() {
 			frame_tasks.set_setting(render_setting::output_srgb, true);
 
 		render_command cmd = composite.make_cmd();
-
-		cmd.textures[0] = world_target.get_output();
-
+		cmd.info.textures[0] = world_target.get_output();
+		
+		// render_command cmd = render_command::make(ogl_manager::cmd_blit_fb);
+		// cmd.blit.src = world_target.get_fb();
+		// cmd.blit.mask = (GLbitfield)gl_clear::color_buffer_bit;
+		// cmd.blit.filter = gl_tex_filter::nearest;
+		
 		frame_tasks.add_command(cmd);
 	}
 
@@ -181,7 +185,7 @@ void effect_pass::destroy() {
 
 render_command effect_pass::make_cmd() {
 
-	return render_command::make(cmd_id, exile->ren.the_quad.gpu);
+	return render_command::make_cst(cmd_id, exile->ren.the_quad.gpu);
 }
 
 void world_target_info::init(iv2 dim, i32 samples) {
@@ -224,9 +228,9 @@ void world_target_info::resolve(render_command_list* list) {
 	
 	if(msaa) {
 		render_command cmd = exile->ren.resolve.make_cmd(); // TODO(max): clean
-		cmd.fb_id = get_fb();
-		cmd.textures[0] = col_buf;
-		cmd.user_data0 = &exile->ren;	
+		cmd.info.fb_id = get_fb();
+		cmd.info.textures[0] = col_buf;
+		cmd.info.user_data0 = &exile->ren;
 		list->add_command(cmd);
 	}
 }
@@ -357,7 +361,7 @@ CALLBACK void uniforms_composite(shader_program* prog, render_command* cmd) {
 
 	i32 textures = 0;
 	DO(8) {
-		if(cmd->textures[__i]) {
+		if(cmd->info.textures[__i]) {
 			glUniform1i(prog->location(string::makef("textures[%]"_, __i)), __i);
 			textures++;
 		}
@@ -369,7 +373,7 @@ CALLBACK void uniforms_composite_resolve(shader_program* prog, render_command* c
 
 	uniforms_composite(prog, cmd);
 
-	exile_renderer* set = (exile_renderer*)cmd->user_data0;
+	exile_renderer* set = (exile_renderer*)cmd->info.user_data0;
 
 	glUniform1i(prog->location("num_samples"_), set->prev_samples);
 	glUniform2f(prog->location("screen_size"_), (f32)set->prev_dim.x, (f32)set->prev_dim.y);
@@ -377,7 +381,7 @@ CALLBACK void uniforms_composite_resolve(shader_program* prog, render_command* c
 
 CALLBACK void uniforms_resolve(shader_program* prog, render_command* cmd) {
 
-	exile_renderer* set = (exile_renderer*)cmd->user_data0;
+	exile_renderer* set = (exile_renderer*)cmd->info.user_data0;
 
 	glUniform1i(prog->location("tex"_), 0);
 	glUniform1i(prog->location("num_samples"_), set->prev_samples);
@@ -435,13 +439,13 @@ CALLBACK void uniforms_mesh_pointcloud(shader_program* prog, render_command* cmd
 
 CALLBACK void uniforms_mesh_skydome(shader_program* prog, render_command* cmd) { 
 
-	world_time* time = (world_time*)cmd->user_data0;
+	world_time* time = (world_time*)cmd->info.user_data0;
 
 	GLint tloc = prog->location("transform"_);
 	GLint dloc = prog->location("day_01"_);
 	GLint sloc = prog->location("tex"_);
 
-	m4 transform = cmd->proj * cmd->view * cmd->model;
+	m4 transform = cmd->info.proj * cmd->info.view * cmd->info.model;
 
 	glUniform1i(sloc, 0);
 	glUniform1f(dloc, time->day_01());
@@ -452,19 +456,19 @@ CALLBACK void uniforms_mesh_cubemap(shader_program* prog, render_command* cmd) {
 
 	GLint loc = prog->location("transform"_);
 
-	m4 transform = cmd->proj * cmd->view * cmd->model;
+	m4 transform = cmd->info.proj * cmd->info.view * cmd->info.model;
 
 	glUniformMatrix4fv(loc, 1, gl_bool::_false, transform.a);
 }
 
 CALLBACK void uniforms_mesh_chunk(shader_program* prog, render_command* cmd) { 
 
-	world* w = (world*)cmd->user_data0;
+	world* w = (world*)cmd->info.user_data0;
 	world_time* time = &w->time;
-	world_render_settings* set = (world_render_settings*)cmd->user_data1;
+	world_render_settings* set = (world_render_settings*)cmd->info.user_data1;
 	
-	m4 mvp = cmd->proj * cmd->view * cmd->model;
-	m4 mv = w->p.camera.offset() * cmd->model;
+	m4 mvp = cmd->info.proj * cmd->info.view * cmd->info.model;
+	m4 mv = w->p.camera.offset() * cmd->info.model;
 
 	glUniform1i(prog->location("blocks_tex"_), 0);
 	glUniform1i(prog->location("sky_tex"_), 1);
@@ -489,7 +493,7 @@ CALLBACK void uniforms_mesh_2D_col(shader_program* prog, render_command* cmd) {
 
 	GLint loc = prog->location("transform"_);
 
-	m4 transform = cmd->proj * cmd->view * cmd->model;
+	m4 transform = cmd->info.proj * cmd->info.view * cmd->info.model;
 
 	glUniformMatrix4fv(loc, 1, gl_bool::_false, transform.a);
 }
@@ -498,7 +502,7 @@ CALLBACK void uniforms_mesh_2D_tex(shader_program* prog, render_command* cmd) {
 
 	GLint loc = prog->location("transform"_);
 
-	m4 transform = cmd->proj * cmd->view * cmd->model;
+	m4 transform = cmd->info.proj * cmd->info.view * cmd->info.model;
 
 	glUniformMatrix4fv(loc, 1, gl_bool::_false, transform.a);
 }
@@ -507,7 +511,7 @@ CALLBACK void uniforms_mesh_2D_tex_col(shader_program* prog, render_command* cmd
 
 	GLint loc = prog->location("transform"_);
 
-	m4 transform = cmd->proj * cmd->view * cmd->model;
+	m4 transform = cmd->info.proj * cmd->info.view * cmd->info.model;
 
 	glUniformMatrix4fv(loc, 1, gl_bool::_false, transform.a);
 }
@@ -516,7 +520,7 @@ CALLBACK void uniforms_mesh_3D_tex(shader_program* prog, render_command* cmd) {
 	
 	GLint loc = prog->location("transform"_);
 
-	m4 transform = cmd->proj * cmd->view * cmd->model;
+	m4 transform = cmd->info.proj * cmd->info.view * cmd->info.model;
 
 	glUniformMatrix4fv(loc, 1, gl_bool::_false, transform.a);
 }
@@ -525,7 +529,7 @@ CALLBACK void uniforms_mesh_lines(shader_program* prog, render_command* cmd) {
 	
 	GLint loc = prog->location("transform"_);
 
-	m4 transform = cmd->proj * cmd->view * cmd->model;
+	m4 transform = cmd->info.proj * cmd->info.view * cmd->info.model;
 
 	glUniformMatrix4fv(loc, 1, gl_bool::_false, transform.a);
 }
@@ -534,7 +538,7 @@ CALLBACK void uniforms_mesh_3D_tex_instanced(shader_program* prog, render_comman
 	
 	GLint loc = prog->location("transform"_);
 
-	m4 transform = cmd->proj * cmd->view * cmd->model;
+	m4 transform = cmd->info.proj * cmd->info.view * cmd->info.model;
 
 	glUniformMatrix4fv(loc, 1, gl_bool::_false, transform.a);
 }
@@ -680,7 +684,7 @@ CALLBACK void run_mesh_pointcloud(render_command* cmd, gpu_object* gpu) {
 
 	mesh_pointcloud* m = (mesh_pointcloud*)gpu->data;
 
-	u32 num_pts = cmd->num_tris ? cmd->num_tris : m->vertices.size;
+	u32 num_pts = cmd->info.num_tris ? cmd->info.num_tris : m->vertices.size;
 	glDrawArrays(gl_draw_mode::points, 0, num_pts);
 }
 
@@ -698,7 +702,7 @@ CALLBACK void run_mesh_chunk(render_command* cmd, gpu_object* gpu) {
 
 	mesh_chunk* m = (mesh_chunk*)gpu->data;
 
-	u32 num_faces = cmd->num_tris ? cmd->num_tris : m->quads.size;
+	u32 num_faces = cmd->info.num_tris ? cmd->info.num_tris : m->quads.size;
 	glDrawArraysInstanced(gl_draw_mode::triangle_strip, 0, 4, num_faces);
 }
 
@@ -706,32 +710,32 @@ CALLBACK void run_mesh_2D_col(render_command* cmd, gpu_object* gpu) {
 
 	mesh_2d_col* m = (mesh_2d_col*)gpu->data;
 
-	u32 num_tris = ((cmd->num_tris ? cmd->num_tris : m->elements.size) - cmd->start_tri) * 3;
-	glDrawElementsBaseVertex(gl_draw_mode::triangles, num_tris, gl_index_type::unsigned_int, (void*)(u64)(0), cmd->offset);
+	u32 num_tris = ((cmd->info.num_tris ? cmd->info.num_tris : m->elements.size) - cmd->info.start_tri) * 3;
+	glDrawElementsBaseVertex(gl_draw_mode::triangles, num_tris, gl_index_type::unsigned_int, (void*)(u64)(0), cmd->info.offset);
 }
 
 CALLBACK void run_mesh_2D_tex(render_command* cmd, gpu_object* gpu) { 
 
 	mesh_2d_tex* m = (mesh_2d_tex*)gpu->data;
 
-	u32 num_tris = ((cmd->num_tris ? cmd->num_tris : m->elements.size) - cmd->start_tri) * 3;
-	glDrawElementsBaseVertex(gl_draw_mode::triangles, num_tris, gl_index_type::unsigned_int, (void*)(u64)(0), cmd->offset);
+	u32 num_tris = ((cmd->info.num_tris ? cmd->info.num_tris : m->elements.size) - cmd->info.start_tri) * 3;
+	glDrawElementsBaseVertex(gl_draw_mode::triangles, num_tris, gl_index_type::unsigned_int, (void*)(u64)(0), cmd->info.offset);
 }
 
 CALLBACK void run_mesh_2D_tex_col(render_command* cmd, gpu_object* gpu) { 
 
 	mesh_2d_tex_col* m = (mesh_2d_tex_col*)gpu->data;
 
-	u32 num_tris = ((cmd->num_tris ? cmd->num_tris : m->elements.size) - cmd->start_tri) * 3;
-	glDrawElementsBaseVertex(gl_draw_mode::triangles, num_tris, gl_index_type::unsigned_int, (void*)(u64)(0), cmd->offset);
+	u32 num_tris = ((cmd->info.num_tris ? cmd->info.num_tris : m->elements.size) - cmd->info.start_tri) * 3;
+	glDrawElementsBaseVertex(gl_draw_mode::triangles, num_tris, gl_index_type::unsigned_int, (void*)(u64)(0), cmd->info.offset);
 }
 
 CALLBACK void run_mesh_3D_tex(render_command* cmd, gpu_object* gpu) { 
 
 	mesh_3d_tex* m = (mesh_3d_tex*)gpu->data;
 
-	u32 num_tris = ((cmd->num_tris ? cmd->num_tris : m->elements.size) - cmd->start_tri) * 3;
-	glDrawElementsBaseVertex(gl_draw_mode::triangles, num_tris, gl_index_type::unsigned_int, (void*)(u64)(0), cmd->offset);
+	u32 num_tris = ((cmd->info.num_tris ? cmd->info.num_tris : m->elements.size) - cmd->info.start_tri) * 3;
+	glDrawElementsBaseVertex(gl_draw_mode::triangles, num_tris, gl_index_type::unsigned_int, (void*)(u64)(0), cmd->info.offset);
 }
 
 CALLBACK void run_mesh_lines(render_command* cmd, gpu_object* gpu) { 
@@ -746,9 +750,9 @@ CALLBACK void run_mesh_3D_tex_instanced(render_command* cmd, gpu_object* gpu) {
 	mesh_3d_tex_instance_data* data = (mesh_3d_tex_instance_data*)gpu->data;
 	mesh_3d_tex* m = data->parent;
 
-	u32 num_tris = ((cmd->num_tris ? cmd->num_tris : m->elements.size) - cmd->start_tri) * 3;
+	u32 num_tris = ((cmd->info.num_tris ? cmd->info.num_tris : m->elements.size) - cmd->info.start_tri) * 3;
 
-	glDrawElementsInstancedBaseVertex(gl_draw_mode::triangles, num_tris, gl_index_type::unsigned_int, (void*)(u64)(0), data->instances, cmd->offset);
+	glDrawElementsInstancedBaseVertex(gl_draw_mode::triangles, num_tris, gl_index_type::unsigned_int, (void*)(u64)(0), data->instances, cmd->info.offset);
 }
 
 CALLBACK void setup_mesh_pointcloud(gpu_object* obj) { 
