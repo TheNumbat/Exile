@@ -299,6 +299,8 @@ ogl_manager ogl_manager::make(platform_window* win, allocator* a) {
 
 	ret.dbg_shader = shader_program::make("shaders/dbg.v"_,"shaders/dbg.f"_, {}, FPTR(uniforms_dbg), a);
 
+	ret.framebuffers.insert(0, {});	
+
 	glBlendFunc(gl_blend_factor::one, gl_blend_factor::one_minus_src_alpha);
 	glDepthFunc(gl_depth_factor::lequal);
 
@@ -544,8 +546,8 @@ texture* ogl_manager::get_texture(texture_id id) {
 void ogl_manager::select_textures(render_command* cmd) { 
 
 	DO(8) {
-		if(cmd->textures[__i])
-			select_texture(__i, cmd->textures[__i]);
+		if(cmd->info.textures[__i])
+			select_texture(__i, cmd->info.textures[__i]);
 	}
 }
 
@@ -644,23 +646,29 @@ void texture::set_params() {
 
 	glBindTexture(gl_type, handle);
 
-	if(gl_type == gl_tex_target::cube_map) {
-		glTexParameteri(gl_type, gl_tex_param::min_filter, (GLint)gl_tex_filter::linear_mipmap_linear);
-		glTexParameteri(gl_type, gl_tex_param::mag_filter, (GLint)gl_tex_filter::linear);
-
-		glTexParameteri(gl_type, gl_tex_param::wrap_r, (GLint)gl_tex_wrap::clamp_to_edge);
-		glTexParameteri(gl_type, gl_tex_param::wrap_s, (GLint)gl_tex_wrap::clamp_to_edge);
-		glTexParameteri(gl_type, gl_tex_param::wrap_t, (GLint)gl_tex_wrap::clamp_to_edge);
-		glBindTexture(gl_type, 0);
-		return;
-	}
-
 	if(type == texture_type::target) {
 		if(target_info.samples == 1) {
 			glTexImage2D(gl_type, 0, target_info.format, target_info.dim.x, target_info.dim.y, 0, gl_pixel_data_format::rgb, gl_pixel_data_type::unsigned_byte, 0);
 		} else {
 			glTexImage2DMultisample(gl_type, target_info.samples, target_info.format, target_info.dim.x, target_info.dim.y, gl_bool::_true);
 		}
+		return;
+	}
+
+	if(pixelated) {
+		glTexParameteri(gl_type, gl_tex_param::min_filter, (GLint)gl_tex_filter::nearest);
+		glTexParameteri(gl_type, gl_tex_param::mag_filter, (GLint)gl_tex_filter::nearest);
+	} else {
+		glTexParameteri(gl_type, gl_tex_param::min_filter, (GLint)gl_tex_filter::linear_mipmap_linear);
+		glTexParameteri(gl_type, gl_tex_param::mag_filter, (GLint)gl_tex_filter::linear);
+	}
+
+	if(gl_type == gl_tex_target::cube_map) {
+		glTexParameteri(gl_type, gl_tex_param::wrap_r, (GLint)gl_tex_wrap::clamp_to_edge);
+		glTexParameteri(gl_type, gl_tex_param::wrap_s, (GLint)gl_tex_wrap::clamp_to_edge);
+		glTexParameteri(gl_type, gl_tex_param::wrap_t, (GLint)gl_tex_wrap::clamp_to_edge);
+		glBindTexture(gl_type, 0);
+		return;
 	}
 
 	if(gl_type == gl_tex_target::_2D_array) {
@@ -686,14 +694,6 @@ void texture::set_params() {
 		f32 borderColor[] = { 0.0f, 0.0f, 0.0f, 1.0f };
 		glTexParameterfv(gl_type, gl_tex_param::border_color, borderColor);  
 		break;
-	}
-
-	if(pixelated) {
-		glTexParameteri(gl_type, gl_tex_param::min_filter, (GLint)gl_tex_filter::nearest);
-		glTexParameteri(gl_type, gl_tex_param::mag_filter, (GLint)gl_tex_filter::nearest);
-	} else {
-		glTexParameteri(gl_type, gl_tex_param::min_filter, (GLint)gl_tex_filter::linear_mipmap_linear);
-		glTexParameteri(gl_type, gl_tex_param::mag_filter, (GLint)gl_tex_filter::linear);
 	}
 
 	if(anisotropy) {
@@ -968,11 +968,23 @@ void framebuffer::add_target(render_target target) {
 	targets.push(target);
 }
 
+iv2 framebuffer::get_dim_first() {
+	
+	LOG_ASSERT(targets.size > 0);
+
+	render_target* target = targets.get(0);
+	if(target->type == render_target_type::tex) {
+		return target->tex->target_info.dim;
+	} else {
+		return target->buffer->dim;
+	}
+}
+
 void framebuffer::commit() {
 
 	glBindFramebuffer(gl_framebuffer::val, handle);
 	
-	array<gl_draw_target> target_data = array<gl_draw_target>::make(targets.size);
+	vector<gl_draw_target> target_data = vector<gl_draw_target>::make(targets.size);
 
 	FORVEC(it, targets) {
 		if(it->type == render_target_type::tex) {
@@ -980,11 +992,12 @@ void framebuffer::commit() {
 		} else {
 			glFramebufferRenderbuffer(gl_framebuffer::val, it->target, gl_renderbuffer::val, it->buffer->handle);
 		}
-		*target_data.get(__it) = it->target;
+		if(it->target != gl_draw_target::depth && it->target != gl_draw_target::stencil)
+			target_data.push(it->target);
 	}
 
 	// NOTE(max): this serves as a remapping - location in shader
-	glDrawBuffers(target_data.capacity, target_data.memory);
+	glDrawBuffers(target_data.size, target_data.memory);
 
 	target_data.destroy();
 	glBindFramebuffer(gl_framebuffer::val, 0);
@@ -1062,11 +1075,6 @@ void ogl_manager::destroy_framebuffer(framebuffer_id id) {
 
 framebuffer* ogl_manager::select_framebuffer(framebuffer_id id) {
 
-	if(id == 0) {
-		glBindFramebuffer(gl_framebuffer::val, 0);
-		return null;
-	}
-
 	framebuffer* f = framebuffers.try_get(id);
 
 	if(!f) {
@@ -1133,27 +1141,54 @@ void ogl_manager::_cmd_pop_settings() {
 	command_settings.pop();
 }
 
-void ogl_manager::_cmd_clear(colorf clear_color, GLenum components) { 
-	glClearColor(clear_color.r, clear_color.g, clear_color.b, clear_color.a);
-	glClear(components);
+void ogl_manager::_cmd_blit_fb(render_command_blit_fb blit) {
+
+	framebuffer* src = select_framebuffer(blit.src);
+	framebuffer* dst = select_framebuffer(blit.dst);
+
+	// TODO(max): get_dim_first is bad and expects something to be attached
+
+	ir2 src_rect, dst_rect;
+	if(blit.src_rect.w && blit.dst_rect.h) {
+		src_rect = blit.src_rect;
+	} else {
+		iv2 dim = blit.src == 0 ? iv2(win->settings.w,win->settings.h) : src->get_dim_first();
+		src_rect = ir2(0,0,dim.x,dim.y);
+	}
+	if(blit.dst_rect.w && blit.dst_rect.h) {
+		dst_rect = blit.dst_rect;
+	} else {
+		iv2 dim = blit.dst == 0 ? iv2(win->settings.w,win->settings.h) : dst->get_dim_first();
+		dst_rect = ir2(0,0,dim.x,dim.y);
+	}
+
+	glBlitNamedFramebuffer(src->handle, dst->handle, 
+		src_rect.x, src_rect.y, src_rect.x + src_rect.w, src_rect.y + src_rect.h,
+		blit.dst_rect.x, blit.dst_rect.y, blit.dst_rect.x + blit.dst_rect.w, blit.dst_rect.y + blit.dst_rect.h,
+		blit.mask, blit.filter);
 }
 
-void ogl_manager::_cmd_set_setting(render_setting setting, bool enable) { 
+void ogl_manager::_cmd_clear(render_command_clear clear) { 
+	glClearColor(clear.col.r, clear.col.g, clear.col.b, clear.col.a);
+	glClear(clear.components);
+}
+
+void ogl_manager::_cmd_set_setting(render_command_setting setting) { 
 
 	cmd_settings* set = command_settings.top();
 
-	switch(setting) {
-	case render_setting::wireframe: set->polygon_line = enable; break;
-	case render_setting::depth_test: set->depth_test = enable; break;
-	case render_setting::aa_lines: set->line_smooth = enable; break;
-	case render_setting::blend: set->blend = enable; break;
-	case render_setting::scissor: set->scissor = enable; break;
-	case render_setting::cull: set->cull_backface = enable; break;
-	case render_setting::msaa: set->multisample = enable; break;
-	case render_setting::aa_shading: set->sample_shading = enable; break;
-	case render_setting::write_depth: set->depth_mask = enable; break;
-	case render_setting::point_size: set->point_size = enable; break;
-	case render_setting::output_srgb: set->output_srgb = enable; break;
+	switch(setting.setting) {
+	case render_setting::wireframe: set->polygon_line = setting.enable; break;
+	case render_setting::depth_test: set->depth_test = setting.enable; break;
+	case render_setting::aa_lines: set->line_smooth = setting.enable; break;
+	case render_setting::blend: set->blend = setting.enable; break;
+	case render_setting::scissor: set->scissor = setting.enable; break;
+	case render_setting::cull: set->cull_backface = setting.enable; break;
+	case render_setting::msaa: set->multisample = setting.enable; break;
+	case render_setting::aa_shading: set->sample_shading = setting.enable; break;
+	case render_setting::write_depth: set->depth_mask = setting.enable; break;
+	case render_setting::point_size: set->point_size = setting.enable; break;
+	case render_setting::output_srgb: set->output_srgb = setting.enable; break;
 	default: break;
 	}
 }
@@ -1218,19 +1253,22 @@ void ogl_manager::execute_command_list(render_command_list* rcl) {
 			_cmd_pop_settings();
 		} break;
 		case cmd_setting: {
-			_cmd_set_setting(cmd->setting, cmd->enable);
+			_cmd_set_setting(cmd->setting);
 		} break;
 		case cmd_clear: {
-			select_framebuffer(cmd->fb_id);
-			_cmd_clear(cmd->clear_color, cmd->clear_components);
+			select_framebuffer(cmd->clear.fb_id);
+			_cmd_clear(cmd->clear);
+		} break;
+		case cmd_blit_fb: {
+			_cmd_blit_fb(cmd->blit);
 		} break;
 		default: {
 			_cmd_set_settings(cmd);
 
 			select_textures(cmd);
-			select_framebuffer(cmd->fb_id);
+			select_framebuffer(cmd->info.fb_id);
 			
-			gpu_object* obj = select_object(cmd->obj_id);
+			gpu_object* obj = select_object(cmd->info.obj_id);
 			draw_context* d = select_ctx(cmd->cmd_id);
 
 			d->shader.send_uniforms(&d->shader, cmd);
@@ -1249,7 +1287,7 @@ void ogl_manager::_cmd_set_settings(render_command* cmd) {
 
 	_cmd_apply_settings();
 
-	ur2 viewport = cmd->viewport.to_u(), scissor = cmd->scissor.to_u();
+	ir2 viewport = cmd->viewport, scissor = cmd->scissor;
 
 	if(viewport.w && viewport.h)
 		glViewport(viewport.x, viewport.y, viewport.w, viewport.h);
@@ -1361,10 +1399,10 @@ void debug_proc(gl_debug_source glsource, gl_debug_type gltype, GLuint id, gl_de
 
 	switch(severity) {
 	case gl_debug_severity::high:
-		// LOG_ERR_F("HIGH OpenGL: % SOURCE: % TYPE: %"_, message, source, type);
+		LOG_ERR_F("HIGH OpenGL: % SOURCE: % TYPE: %"_, message, source, type);
 		break;
 	case gl_debug_severity::medium:
-		// LOG_WARN_F("MED OpenGL: % SOURCE: % TYPE: %"_, message, source, type);
+		LOG_WARN_F("MED OpenGL: % SOURCE: % TYPE: %"_, message, source, type);
 		break;
 	case gl_debug_severity::low:
 		LOG_WARN_F("LOW OpenGL: % SOURCE: % TYPE: %"_, message, source, type);
@@ -1494,6 +1532,7 @@ void ogl_manager::load_global_funcs() {
 	GL_LOAD(glFramebufferTexture2D);
 	GL_LOAD(glFramebufferRenderbuffer);
 	GL_LOAD(glDrawBuffers);
+	GL_LOAD(glBlitNamedFramebuffer);
 
 	GL_LOAD(glGetStringi);
 	GL_LOAD(glGetInteger64v);
@@ -1558,21 +1597,21 @@ render_command render_command::make(draw_cmd_id type) {
 	return ret;
 }
 
-render_command render_command::make(draw_cmd_id type, render_setting setting, bool enable) { 
+render_command render_command::make_set(render_setting setting, bool enable) { 
 
 	render_command ret;
-	ret.cmd_id = type;
-	ret.setting = setting;
-	ret.enable = enable;
+	ret.cmd_id = ogl_manager::cmd_setting;
+	ret.setting.setting = setting;
+	ret.setting.enable = enable;
 	return ret;
 }
 
-render_command render_command::make(draw_cmd_id id, gpu_object_id gpu, u32 key) { 
+render_command render_command::make_cst(draw_cmd_id id, gpu_object_id gpu) { 
 
 	render_command ret;
-	ret.obj_id = gpu;
 	ret.cmd_id = id;
-	ret.sort_key = key;
+	ret.info.obj_id = gpu;
+	ret.info.model = ret.info.view = ret.info.proj = m4::I;
 	return ret;
 }
 
@@ -1615,7 +1654,7 @@ void render_command_list::pop_settings() {
 
 void render_command_list::set_setting(render_setting setting, bool enable) {
 
-	add_command(render_command::make(ogl_manager::cmd_setting, setting, enable));
+	add_command(render_command::make_set(setting, enable));
 }
 
 void render_command_list::add_command(render_command rc) { 

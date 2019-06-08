@@ -23,7 +23,11 @@
 #define EPSILON32 0.00001f
 #define EPSILON64 0.00001
 
-union v2; union uv2; union v3; union iv3; union uv3; union v4; union bv4; union m4; union r2; union ur2;
+union m4; 
+union v4; union bv4; 
+union v2; union uv2; union iv2;
+union v3; union iv3; union uv3; 
+union r2; union ur2; union ir2;
 struct color; struct color3; struct colorf;
 
 u32 mod(u32 l, u32 r);
@@ -89,6 +93,7 @@ v2 operator+(v2 l, v2 r);
 v3 operator+(v3 l, v3 r);
 v4 operator+(v4 l, v4 r);
 uv2 operator+(uv2 l, uv2 r);
+iv2 operator+(iv2 l, iv2 r);
 uv3 operator+(uv3 l, uv3 r);
 iv3 operator+(iv3 l, iv3 r);
 bv4 operator+(bv4 l, bv4 r);
@@ -96,6 +101,7 @@ v2 operator-(v2 l, v2 r);
 v3 operator-(v3 l, v3 r);
 v4 operator-(v4 l, v4 r);
 uv2 operator-(uv2 l, uv2 r);
+iv2 operator-(iv2 l, iv2 r);
 uv3 operator-(uv3 l, uv3 r);
 iv3 operator-(iv3 l, iv3 r);
 bv4 operator-(bv4 l, bv4 r);
@@ -103,6 +109,7 @@ v2 operator*(v2 l, v2 r);
 v3 operator*(v3 l, v3 r);
 v4 operator*(v4 l, v4 r);
 uv2 operator*(uv2 l, uv2 r);
+iv2 operator*(iv2 l, iv2 r);
 uv3 operator*(uv3 l, uv3 r);
 iv3 operator*(iv3 l, iv3 r);
 bv4 operator*(bv4 l, bv4 r);
@@ -111,6 +118,7 @@ v3 operator*(v3 l, f32 r);
 v3 operator*(v3 l, i32 r);
 v4 operator*(v4 l, f32 r);
 uv2 operator*(uv2 l, u32 r);
+iv2 operator*(iv2 l, i32 r);
 uv3 operator*(uv3 l, u32 r);
 iv3 operator*(iv3 l, i32 r);
 v3 operator*(iv3 l, f32 r);
@@ -119,6 +127,7 @@ v2 operator*(f32 l, v2 r);
 v3 operator*(f32 l, v3 r);
 v4 operator*(f32 l, v4 r);
 uv2 operator*(u32 l, uv2 r);
+iv2 operator*(i32 l, iv2 r);
 uv3 operator*(u32 l, uv3 r);
 iv3 operator*(i32 l, iv3 r);
 bv4 operator*(u8 l, bv4 r);
@@ -126,6 +135,7 @@ v2 operator/(v2 l, v2 r);
 v3 operator/(v3 l, v3 r);
 v4 operator/(v4 l, v4 r);
 uv2 operator/(uv2 l, uv2 r);
+iv2 operator/(iv2 l, iv2 r);
 uv3 operator/(uv3 l, uv3 r);
 iv3 operator/(iv3 l, iv3 r);
 bv4 operator/(bv4 l, bv4 r);
@@ -133,6 +143,7 @@ v2 operator/(v2 l, f32 r);
 v3 operator/(v3 l, f32 r);
 v4 operator/(v4 l, f32 r);
 uv2 operator/(uv2 l, u32 r);
+iv2 operator/(iv2 l, i32 r);
 uv3 operator/(uv3 l, u32 r);
 iv3 operator/(iv3 l, i32 r);
 bv4 operator/(bv4 l, u8 r);
@@ -140,6 +151,7 @@ v2 operator/(f32 l, v2 r);
 v3 operator/(f32 l, v3 r);
 v4 operator/(f32 l, v4 r);
 uv2 operator/(u32 l, uv2 r);
+iv2 operator/(i32 l, iv2 r);
 uv3 operator/(u32 l, uv3 r);
 iv3 operator/(i32 l, iv3 r);
 bv4 operator/(u8 l, bv4 r);
@@ -154,12 +166,18 @@ ur2 operator+(ur2 l, uv2 r);
 ur2 operator-(ur2 l, ur2 r);
 ur2 operator-(ur2 l, uv2 r);
 ur2 operator*(ur2 l, u32 r);
+ir2 operator+(ir2 l, ir2 r);
+ir2 operator+(ir2 l, iv2 r);
+ir2 operator-(ir2 l, ir2 r);
+ir2 operator-(ir2 l, iv2 r);
+ir2 operator*(ir2 l, i32 r);
 
 bool inside(r2 l, v2 r);
 bool intersect(r2 l, r2 r);
 
 bool operator==(v2 l, v2 r);
 bool operator==(uv2 l, uv2 r);
+bool operator==(iv2 l, iv2 r);
 bool operator==(v3 l, v3 r);
 bool operator==(iv3 l, iv3 r);
 bool operator==(uv3 l, uv3 r);
@@ -168,11 +186,13 @@ bool operator==(bv4 l, bv4 r);
 bool operator==(m4 l, m4 r);
 bool operator==(r2 l, r2 r);
 bool operator==(ur2 l, ur2 r);
+bool operator==(ir2 l, ir2 r);
 bool operator==(color l, color r);
 bool operator==(color3 l, color3 r);
 bool operator==(colorf l, colorf r);
 bool operator!=(v2 l, v2 r);
 bool operator!=(uv2 l, uv2 r);
+bool operator!=(iv2 l, iv2 r);
 bool operator!=(v3 l, v3 r);
 bool operator!=(iv3 l, iv3 r);
 bool operator!=(uv3 l, uv3 r);
@@ -181,6 +201,7 @@ bool operator!=(bv4 l, bv4 r);
 bool operator!=(m4 l, m4 r);
 bool operator!=(r2 l, r2 r);
 bool operator!=(ur2 l, ur2 r);
+bool operator!=(ir2 l, ir2 r);
 bool operator!=(color l, color r);
 bool operator!=(color3 l, color3 r);
 bool operator!=(colorf l, colorf r);
@@ -193,6 +214,7 @@ bool fudge(v4 l, v4 r);
 #include <ostream>
 std::ostream& operator<<(std::ostream& out, v2 r);
 std::ostream& operator<<(std::ostream& out, uv2 r);
+std::ostream& operator<<(std::ostream& out, iv2 r);
 std::ostream& operator<<(std::ostream& out, v3 r);
 std::ostream& operator<<(std::ostream& out, iv3 r);
 std::ostream& operator<<(std::ostream& out, uv3 r);
@@ -201,6 +223,7 @@ std::ostream& operator<<(std::ostream& out, bv4 r);
 std::ostream& operator<<(std::ostream& out, m4 r);
 std::ostream& operator<<(std::ostream& out, r2 r);
 std::ostream& operator<<(std::ostream& out, ur2 r);
+std::ostream& operator<<(std::ostream& out, ir2 r);
 std::ostream& operator<<(std::ostream& out, color r);
 std::ostream& operator<<(std::ostream& out, color3 r);
 std::ostream& operator<<(std::ostream& out, colorf r);
@@ -430,6 +453,26 @@ union bv4 {
 	bv4& operator=(bv4&& v) {x = v.x; y = v.y; z = v.z; w = v.w; return *this;}
 };
 static_assert(sizeof(bv4) == 4, "sizeof(bv4) != 4");
+
+union ir2 {
+	struct {
+		i32 x, y, w, h;
+	};
+	struct {
+		iv2 xy;
+		iv2 wh;
+	};
+	i32 a[4] = {};
+
+	ir2() {}
+	ir2(i32 _x, i32 _y, i32 _w, i32 _h) {x = _x; y = _y; w = _w; h = _h;}
+	ir2(iv2 _xy, iv2 _wh) {xy = _xy; wh = _wh;}
+	ir2(ir2& r) {*this = r;}
+	ir2(ir2&& r) {*this = r;}
+	ir2& operator=(ir2& r) {x = r.x; y = r.y; w = r.w; h = r.h; return *this;}
+	ir2& operator=(ir2&& r) {x = r.x; y = r.y; w = r.w; h = r.h; return *this;}
+};
+static_assert(sizeof(ir2) == 16, "sizeof(ir2) != 16");
 
 union ur2 {
 	struct {
@@ -1003,6 +1046,32 @@ v4 operator+(v4 l, v4 r) {
 uv2 operator+(uv2 l, uv2 r) {
 	return {l.x + r.x, l.y + r.y};
 }
+
+iv2 operator+(iv2 l, iv2 r) {
+	return {l.x + r.x, l.y + r.y};
+}
+iv2 operator-(iv2 l, iv2 r) {
+	return {l.x - r.x, l.y - r.y};
+}
+iv2 operator*(iv2 l, iv2 r) {
+	return {l.x * r.x, l.y * r.y};
+}
+iv2 operator*(iv2 l, i32 r) {
+	return {l.x * r, l.y * r};
+}
+iv2 operator*(i32 l, iv2 r) {
+	return r * l;
+}
+iv2 operator/(iv2 l, iv2 r) {
+	return {l.x / r.x, l.y / r.y};
+}
+iv2 operator/(iv2 l, i32 r) {
+	return {l.x / r, l.y / r};
+}
+iv2 operator/(i32 l, iv2 r) {
+	return r / l;
+}
+
 uv3 operator+(uv3 l, uv3 r) {
 	return {l.x + r.x, l.y + r.y, l.z + r.z};
 }
@@ -1024,6 +1093,7 @@ v4 operator-(v4 l, v4 r) {
 uv2 operator-(uv2 l, uv2 r) {
 	return {l.x - r.x, l.y - r.y};
 }
+
 uv3 operator-(uv3 l, uv3 r) {
 	return {l.x - r.x, l.y - r.y, l.z - r.z};
 }
@@ -1093,6 +1163,7 @@ v4 operator*(f32 l, v4 r) {
 uv2 operator*(u32 l, uv2 r) {
 	return r * l;
 }
+
 uv3 operator*(u32 l, uv3 r) {
 	return r * l;
 }
@@ -1114,6 +1185,7 @@ v4 operator/(v4 l, v4 r) {
 uv2 operator/(uv2 l, uv2 r) {
 	return {l.x / r.x, l.y / r.y};
 }
+
 uv3 operator/(uv3 l, uv3 r) {
 	return {l.x / r.x, l.y / r.y, l.z / r.z};
 }
@@ -1135,6 +1207,7 @@ v4 operator/(v4 l, f32 r) {
 uv2 operator/(uv2 l, u32 r) {
 	return {l.x / r, l.y / r};
 }
+
 uv3 operator/(uv3 l, u32 r) {
 	return {l.x / r, l.y / r, l.z / r};
 }
@@ -1156,6 +1229,7 @@ v4 operator/(f32 l, v4 r) {
 uv2 operator/(u32 l, uv2 r) {
 	return r / l;
 }
+
 uv3 operator/(u32 l, uv3 r) {
 	return r / l;
 }
@@ -1194,6 +1268,21 @@ ur2 operator-(ur2 l, uv2 r) {
 	return {l.xy - r, l.wh};
 }
 ur2 operator*(ur2 l, u32 r) {
+	return {l.xy, l.wh * r};
+}
+ir2 operator+(ir2 l, ir2 r) {
+	return {l.xy + r.xy, l.wh + r.wh};
+}
+ir2 operator+(ir2 l, iv2 r) {
+	return {l.xy + r, l.wh};
+}
+ir2 operator-(ir2 l, ir2 r) {
+	return {l.xy - r.xy, l.wh - r.wh};
+}
+ir2 operator-(ir2 l, iv2 r) {
+	return {l.xy - r, l.wh};
+}
+ir2 operator*(ir2 l, i32 r) {
 	return {l.xy, l.wh * r};
 }
 
@@ -1241,6 +1330,9 @@ bool operator==(r2 l, r2 r) {
 bool operator==(ur2 l, ur2 r) {
 	return l.x == r.x && l.y == r.y && l.w == r.w && l.h == r.h;
 }
+bool operator==(ir2 l, ir2 r) {
+	return l.x == r.x && l.y == r.y && l.w == r.w && l.h == r.h;
+}
 bool operator==(color l, color r) {
 	return l.r == r.r && l.g == r.g && l.b == r.b && l.a == r.a;
 }
@@ -1278,6 +1370,9 @@ bool operator!=(r2 l, r2 r) {
 	return !(l == r);
 }
 bool operator!=(ur2 l, ur2 r) {
+	return !(l == r);
+}
+bool operator!=(ir2 l, ir2 r) {
 	return !(l == r);
 }
 bool operator!=(color l, color r) {
@@ -1500,6 +1595,10 @@ std::ostream& operator<<(std::ostream& out, r2 r) {
 	return out;
 }
 std::ostream& operator<<(std::ostream& out, ur2 r) {
+	out << "{" << r.x << "," << r.y << "," << r.w << "," << r.h << "}";
+	return out;
+}
+std::ostream& operator<<(std::ostream& out, ir2 r) {
 	out << "{" << r.x << "," << r.y << "," << r.w << "," << r.h << "}";
 	return out;
 }

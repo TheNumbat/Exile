@@ -230,6 +230,7 @@ private:
 
 	void add_target(render_target target);
 	void commit();
+	iv2 get_dim_first();
 
 	void bind();
 };
@@ -314,39 +315,67 @@ struct ogl_settings {
 	f32 anisotropy = 1.0f;
 };
 
-struct render_command {
-	
-	draw_cmd_id cmd_id = 1;
+struct render_command_custom {
+
 	framebuffer_id fb_id = 0;
 	gpu_object_id obj_id = 0;
 	
 	texture_id textures[8] = {};
-
 	void* user_data0 = null;
 	void* user_data1 = null;
-	u32 sort_key = 0;
 
 	m4 model, view, proj;
-	r2 viewport;
-	r2 scissor;
 
 	// triangle index, gets * 3 to compute element index
 	u32 offset = 0, num_tris = 0, start_tri = 0;
+};
+
+struct render_command_clear {
+
+	framebuffer_id fb_id = 0;
+	colorf col;
+	GLbitfield components = 0;
+};
+
+struct render_command_setting {
+
+	bool enable = false;
+	render_setting setting;
+};
+
+struct render_command_blit_fb {
+
+	framebuffer_id src = 0, dst = 0;
+	ir2 src_rect, dst_rect;
+	GLbitfield mask = 0;
+	gl_tex_filter filter;
+};
+
+struct render_command {
+	
+	draw_cmd_id cmd_id = 0;
+	u32 sort_key = 0;
+
+	ir2 viewport, scissor;
 
 	void* callback_data = null;
 	func_ptr<void, void*> callback;
 
-	bool enable = false;
-	render_setting setting;
+	union {
+		render_command_custom info;
+		render_command_clear clear;
+		render_command_setting setting;
+		render_command_blit_fb blit;
+	};
 
-	colorf clear_color;
-	GLbitfield clear_components = 0;
-
-	render_command() {}
+	render_command() {_memset(this, sizeof(render_command), 0);}
+	render_command(render_command& t) {_memcpy(&t, this, sizeof(render_command));}
+	render_command(render_command&& t) {_memcpy(&t, this, sizeof(render_command));}
+	render_command& operator=(const render_command& t) {_memcpy((void*)&t, this, sizeof(render_command)); return *this;}
 
 	static render_command make(draw_cmd_id type);
-	static render_command make(draw_cmd_id type, gpu_object_id gpu, u32 key = 0);
-	static render_command make(draw_cmd_id type, render_setting setting, bool enable);
+	static render_command make_cst(draw_cmd_id type, gpu_object_id gpu);
+	static render_command make_set(render_setting setting, bool enable);
 };
 
 bool operator<=(render_command& first, render_command& second);
@@ -393,11 +422,14 @@ struct render_camera {
 
 struct ogl_manager {
 
-	static const draw_cmd_id cmd_noop 		   = 1;
-	static const draw_cmd_id cmd_push_settings = 2;
-	static const draw_cmd_id cmd_pop_settings  = 3;
-	static const draw_cmd_id cmd_setting       = 4;
-	static const draw_cmd_id cmd_clear         = 5;
+	static const draw_cmd_id cmd_noop 		   = 0;
+	static const draw_cmd_id cmd_push_settings = 1;
+	static const draw_cmd_id cmd_pop_settings  = 2;
+	static const draw_cmd_id cmd_setting       = 3;
+	static const draw_cmd_id cmd_clear         = 4;
+	static const draw_cmd_id cmd_blit_fb 	   = 5;
+
+	static const draw_cmd_id last_intrin_cmd   = 5;
 	
 	ogl_info info;
 	ogl_settings settings;
@@ -467,7 +499,7 @@ private:
 
 	gpu_object_id 	next_gpu_id = 1;
 	texture_id 		next_texture_id = 1;
-	draw_cmd_id 	next_draw_cmd_id = 6;
+	draw_cmd_id 	next_draw_cmd_id = last_intrin_cmd + 1;
 	framebuffer_id  next_framebuffer_id = 1; // 0 is screen
 
 	platform_window* win = null;
@@ -476,9 +508,11 @@ private:
 	void _cmd_pop_settings();
 	void _cmd_push_settings();
 	void _cmd_apply_settings();
-	void _cmd_set_setting(render_setting setting, bool enable);
+	void _cmd_blit_fb(render_command_blit_fb blit);
+	void _cmd_clear(render_command_clear clear);
+	void _cmd_set_setting(render_command_setting setting);
+
 	void _cmd_set_settings(render_command* cmd);
-	void _cmd_clear(colorf clear_color, GLenum components);
 
 	void check_leaked_handles();
 	

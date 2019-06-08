@@ -878,6 +878,7 @@ typedef void (*glBindFramebuffer_t)(gl_framebuffer target, GLuint framebuffer);
 typedef void (*glFramebufferTexture2D_t)(gl_framebuffer target, gl_draw_target attachment, gl_tex_target textarget, GLuint texture, GLint level);
 typedef void (*glFramebufferRenderbuffer_t)(gl_framebuffer target, gl_draw_target attachment, gl_renderbuffer renderbuffertarget, GLuint renderbuffer);
 typedef void (*glDrawBuffers_t)(GLsizei n, gl_draw_target *bufs);
+typedef void (*glBlitNamedFramebuffer_t)(GLuint readFramebuffer, GLuint drawFramebuffer, GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, gl_tex_filter filter);
 
 glIs_t glIsTexture;
 glIs_t glIsBuffer;
@@ -967,3 +968,4 @@ glBindFramebuffer_t 		glBindFramebuffer;
 glFramebufferTexture2D_t 	glFramebufferTexture2D;
 glFramebufferRenderbuffer_t glFramebufferRenderbuffer;
 glDrawBuffers_t 			glDrawBuffers;
+glBlitNamedFramebuffer_t	glBlitNamedFramebuffer;
