@@ -171,6 +171,7 @@ struct render_buffer {
 	friend void make_meta_info();
 
 	static render_buffer make(gl_tex_format format, iv2 dim, i32 samples = 1);
+	void destroy();
 
 private:
 
@@ -315,11 +316,11 @@ struct ogl_settings {
 
 struct render_command {
 	
-	draw_cmd_id cmd_id = -1;
-	framebuffer_id fb_id = -1;
-	gpu_object_id obj_id = -1;
+	draw_cmd_id cmd_id = 1;
+	framebuffer_id fb_id = 0;
+	gpu_object_id obj_id = 0;
 	
-	texture_id textures[8] = {-1, -1, -1, -1, -1, -1, -1, -1};
+	texture_id textures[8] = {};
 
 	void* user_data0 = null;
 	void* user_data1 = null;
@@ -392,10 +393,11 @@ struct render_camera {
 
 struct ogl_manager {
 
-	static const draw_cmd_id cmd_push_settings = 0;
-	static const draw_cmd_id cmd_pop_settings  = 1;
-	static const draw_cmd_id cmd_setting       = 2;
-	static const draw_cmd_id cmd_clear         = 3;
+	static const draw_cmd_id cmd_noop 		   = 1;
+	static const draw_cmd_id cmd_push_settings = 2;
+	static const draw_cmd_id cmd_pop_settings  = 3;
+	static const draw_cmd_id cmd_setting       = 4;
+	static const draw_cmd_id cmd_clear         = 5;
 	
 	ogl_info info;
 	ogl_settings settings;
@@ -465,8 +467,8 @@ private:
 
 	gpu_object_id 	next_gpu_id = 1;
 	texture_id 		next_texture_id = 1;
-	draw_cmd_id 	next_draw_cmd_id = 4;
-	framebuffer_id  next_framebuffer_id = 1;
+	draw_cmd_id 	next_draw_cmd_id = 6;
+	framebuffer_id  next_framebuffer_id = 1; // 0 is screen
 
 	platform_window* win = null;
 	allocator* alloc = null;

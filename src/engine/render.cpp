@@ -516,7 +516,7 @@ void ogl_manager::destroy_texture(texture_id id) {
 
 texture* ogl_manager::select_texture(u32 unit, texture_id id) {  
 
-	if(id == -1) return null;
+	if(id == 0) return null;
 
 	texture* t = textures.try_get(id);
 
@@ -544,7 +544,7 @@ texture* ogl_manager::get_texture(texture_id id) {
 void ogl_manager::select_textures(render_command* cmd) { 
 
 	DO(8) {
-		if(cmd->textures[__i] != -1)
+		if(cmd->textures[__i])
 			select_texture(__i, cmd->textures[__i]);
 	}
 }
@@ -847,6 +847,10 @@ void texture::destroy(allocator* a) {
 	gl_destroy();
 }
 
+void render_buffer::destroy() {
+	gl_destroy();
+}
+
 render_buffer render_buffer::make(gl_tex_format format, iv2 dim, i32 samples) {
 
 	render_buffer ret;
@@ -1058,7 +1062,7 @@ void ogl_manager::destroy_framebuffer(framebuffer_id id) {
 
 framebuffer* ogl_manager::select_framebuffer(framebuffer_id id) {
 
-	if(id == -1) {
+	if(id == 0) {
 		glBindFramebuffer(gl_framebuffer::val, 0);
 		return null;
 	}
@@ -1513,7 +1517,7 @@ void ogl_manager::check_leaked_handles() {
 	#define GL_CHECK(type) if(glIs##type && glIs##type(i) == gl_bool::_true) { LOG_WARN_F("Leaked OpenGL handle % of type %"_, i, #type##_); leaked = true;}
 
 	bool leaked = false;
-	for(GLuint i = 0; i < 10000; i++) {
+	for(GLuint i = 0; i < 100000; i++) {
 		GL_CHECK(Texture);
 		GL_CHECK(Buffer);
 		GL_CHECK(Framebuffer);

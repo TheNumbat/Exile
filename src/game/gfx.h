@@ -243,17 +243,38 @@ struct exile_render_settings {
 	colorf clear_color = colorf(0.8f, 0.8f, 0.8f, 1.0f);
 };
 
-struct basic_target {
+struct world_target_info {
 
+	// NOTE(max): only the buffers + textures use GPU memory,
+	// the rest are reference objects
+
+	// MSAA render target
 	render_buffer depth_buf;
-	render_target col;
-	render_target depth;
-	
-	texture_id 	   tex = -1;
-	framebuffer_id buffer  = -1;
+	texture_id col_buf;
+
+	// resolve and effect double buffering
+	texture_id effect0, effect1;
+	render_buffer effect_depth; // does it work to only have one of these?
+
+	render_target depth_buf_target, col_buf_target;
+	render_target effect0_target, effect1_target, effect_depth_target; 
+
+	framebuffer_id render_ms = 0;
+	framebuffer_id effect0_fb = 0;
+	framebuffer_id effect1_fb = 0;
+
+	bool msaa = true;
+	bool current0 = true;
 
 	void init(iv2 dim, i32 samples);
 	void destroy();
+	
+	void resolve(render_command_list* list); // transfer col_buf to effect buffer if msaa enabled
+	
+	void flip_fb();
+	framebuffer_id world_fb();
+	framebuffer_id get_fb();
+	texture_id get_output();
 };
 
 struct effect_pass {
@@ -277,17 +298,17 @@ struct exile_renderer {
 	void init(allocator* a);
 	void destroy();
 
-	draw_cmd_id cmd_2D_col           = -1;
-	draw_cmd_id cmd_2D_tex           = -1;
-	draw_cmd_id cmd_2D_tex_col       = -1;
-	draw_cmd_id cmd_3D_tex           = -1;
-	draw_cmd_id cmd_3D_tex_instanced = -1;
-	draw_cmd_id cmd_lines            = -1;
-	draw_cmd_id cmd_pointcloud       = -1;
-	draw_cmd_id cmd_cubemap          = -1;
-	draw_cmd_id cmd_chunk            = -1;
-	draw_cmd_id cmd_skydome          = -1;
-	draw_cmd_id cmd_skyfar           = -1;
+	draw_cmd_id cmd_2D_col           = 0;
+	draw_cmd_id cmd_2D_tex           = 0;
+	draw_cmd_id cmd_2D_tex_col       = 0;
+	draw_cmd_id cmd_3D_tex           = 0;
+	draw_cmd_id cmd_3D_tex_instanced = 0;
+	draw_cmd_id cmd_lines            = 0;
+	draw_cmd_id cmd_pointcloud       = 0;
+	draw_cmd_id cmd_cubemap          = 0;
+	draw_cmd_id cmd_chunk            = 0;
+	draw_cmd_id cmd_skydome          = 0;
+	draw_cmd_id cmd_skyfar           = 0;
 
 	exile_render_settings settings;
 
@@ -298,7 +319,7 @@ struct exile_renderer {
 	effect_pass composite, composite_resolve, resolve;
 	effect_pass invert;
 
-	basic_target world_target;
+	world_target_info world_target;
 
 	render_command_list frame_tasks;
 
@@ -348,5 +369,6 @@ CALLBACK void uniforms_resolve(shader_program* prog, render_command* cmd);
 CALLBACK void uniforms_composite(shader_program* prog, render_command* cmd);
 CALLBACK void uniforms_composite_resolve(shader_program* prog, render_command* cmd);
 CALLBACK void uniforms_invert(shader_program* prog, render_command* cmd);
+
 
 
