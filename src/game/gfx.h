@@ -321,7 +321,7 @@ struct exile_renderer {
 
 	world_target_info world_target;
 
-	render_command_list frame_tasks;
+	render_command_list frame_tasks, hud_tasks;
 
 	void hud_2D(gpu_object_id gpu_id);
 

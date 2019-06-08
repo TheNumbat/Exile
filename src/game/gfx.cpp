@@ -12,7 +12,10 @@ void exile_renderer::init(allocator* a) {
 	the_quad.init();
 
 	alloc = a;
+	hud_tasks = render_command_list::make(alloc, 32);
 	frame_tasks = render_command_list::make(alloc, 1024);
+
+	hud_tasks.set_setting(render_setting::depth_test, false);
 }
 
 void exile_renderer::world_skydome(gpu_object_id gpu_id, world_time* time, texture_id sky, m4 view, m4 proj) {
@@ -96,18 +99,12 @@ void exile_renderer::world_lines(gpu_object_id gpu_id, m4 view, m4 proj) {
 
 void exile_renderer::hud_2D(gpu_object_id gpu_id) {
 
-	frame_tasks.push_settings();
-	frame_tasks.set_setting(render_setting::depth_test, false);
-
 	render_command cmd = render_command::make_cst(cmd_2D_col, gpu_id);
 	
-	// cmd.fb_id = hud_target.buffer;
-
 	f32 w = (f32)exile->eng->window.settings.w, h = (f32)exile->eng->window.settings.h;
 	cmd.info.proj = ortho(0, w, h, 0, -1, 1);
 
-	// frame_tasks.add_command(cmd);
-	frame_tasks.pop_settings();
+	hud_tasks.add_command(cmd);
 }
 
 void exile_renderer::world_clear() {
@@ -162,10 +159,14 @@ void exile_renderer::end_frame() {
  	}
 
  	frame_tasks.pop_settings();
- 	
+
 	exile->eng->ogl.execute_command_list(&frame_tasks);
+	exile->eng->ogl.execute_command_list(&hud_tasks);
 
 	frame_tasks.clear();
+	hud_tasks.clear();
+	hud_tasks.set_setting(render_setting::depth_test, false);
+
 	check_recreate();
 }
 
@@ -359,6 +360,7 @@ void exile_renderer::destroy() {
 	composite_resolve.destroy();
 	invert.destroy();
 
+	hud_tasks.destroy();
 	frame_tasks.destroy();
 
 	the_cubemap.destroy();

@@ -6,11 +6,9 @@ Working To-Do:
 		FIX: torchlight AND sunlight removal ?????
 		FIX: framebuffer blitting doesn't work; why ???
 
-		move HUD system to another render pass, kind of like effects but without its own framebuffer
 		glnamed operations
 
 		deferred rendering
-			do we still want MSAA? probably
 			HDR / bloom / god rays / better fog
 			dynamic lights
 			dynamic shadows
