@@ -406,7 +406,9 @@ enum class gl_tex_filter : GLint {
 	nearest_mipmap_nearest    	= 0x2700,
 	linear_mipmap_nearest     	= 0x2701,
 	nearest_mipmap_linear     	= 0x2702,
-	linear_mipmap_linear      	= 0x2703
+	linear_mipmap_linear      	= 0x2703,
+	scaled_resolve_fastest      = 0x90BA,
+	scaled_resolve_nicest       = 0x90BB
 };
 
 enum class gl_tex_swizzle : GLint {
@@ -879,6 +881,7 @@ typedef void (*glFramebufferTexture2D_t)(gl_framebuffer target, gl_draw_target a
 typedef void (*glFramebufferRenderbuffer_t)(gl_framebuffer target, gl_draw_target attachment, gl_renderbuffer renderbuffertarget, GLuint renderbuffer);
 typedef void (*glDrawBuffers_t)(GLsizei n, gl_draw_target *bufs);
 typedef void (*glBlitNamedFramebuffer_t)(GLuint readFramebuffer, GLuint drawFramebuffer, GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, gl_tex_filter filter);
+typedef void (*glBlitFramebuffer_t)(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, gl_tex_filter filter);
 
 glIs_t glIsTexture;
 glIs_t glIsBuffer;
@@ -969,3 +972,4 @@ glFramebufferTexture2D_t 	glFramebufferTexture2D;
 glFramebufferRenderbuffer_t glFramebufferRenderbuffer;
 glDrawBuffers_t 			glDrawBuffers;
 glBlitNamedFramebuffer_t	glBlitNamedFramebuffer;
+glBlitFramebuffer_t 		glBlitFramebuffer;

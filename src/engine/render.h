@@ -127,7 +127,6 @@ struct texture {
 private:
 
 	texture_type type   = texture_type::none;
-	texture_id id 		= 0;
 	GLuint handle 		= 0;
 	
 	gl_tex_target gl_type = gl_tex_target::_2D;

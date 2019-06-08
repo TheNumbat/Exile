@@ -418,7 +418,6 @@ void ogl_manager::destroy() {
 texture_id ogl_manager::add_texture_from_font(asset_store* as, string name, texture_wrap wrap, bool pixelated, bool srgb) { 
 
 	texture t = texture::make_rf(wrap, pixelated, false, settings.anisotropy);
-	t.id = next_texture_id;
 
 	t.rf_info.load(t.handle, as, name, srgb);
 
@@ -443,7 +442,6 @@ texture_id ogl_manager::add_texture_target(iv2 dim, i32 samples, gl_tex_format f
 texture_id ogl_manager::add_texture(asset_store* as, string name, texture_wrap wrap, bool pixelated, bool srgb) { 
 
 	texture t = texture::make_bmp(wrap, pixelated, srgb, settings.anisotropy);
-	t.id = next_texture_id;
 
 	t.bmp_info.load(t.handle, as, name, srgb);
 
@@ -457,7 +455,6 @@ texture_id ogl_manager::add_texture(asset_store* as, string name, texture_wrap w
 texture_id ogl_manager::add_cubemap(asset_store* as, string name, bool srgb) {
 
 	texture t = texture::make_cube(texture_wrap::repeat, false, srgb, settings.anisotropy);
-	t.id = next_texture_id;
 
 	t.cube_info.load_single(t.handle, as, name, srgb);
 
@@ -481,7 +478,6 @@ i32 ogl_manager::get_layers(texture_id tex) {
 texture_id ogl_manager::begin_tex_array(iv3 dim, texture_wrap wrap, bool pixelated, bool srgb, u32 offset) { 
 
 	texture t = texture::make_array(dim, offset, wrap, pixelated, srgb, settings.anisotropy, alloc);
-	t.id = next_texture_id;
 
 	textures.insert(next_texture_id, t);
 
@@ -651,16 +647,8 @@ void texture::set_params() {
 			glTexImage2D(gl_type, 0, target_info.format, target_info.dim.x, target_info.dim.y, 0, gl_pixel_data_format::rgb, gl_pixel_data_type::unsigned_byte, 0);
 		} else {
 			glTexImage2DMultisample(gl_type, target_info.samples, target_info.format, target_info.dim.x, target_info.dim.y, gl_bool::_true);
+			return;
 		}
-		return;
-	}
-
-	if(pixelated) {
-		glTexParameteri(gl_type, gl_tex_param::min_filter, (GLint)gl_tex_filter::nearest);
-		glTexParameteri(gl_type, gl_tex_param::mag_filter, (GLint)gl_tex_filter::nearest);
-	} else {
-		glTexParameteri(gl_type, gl_tex_param::min_filter, (GLint)gl_tex_filter::linear_mipmap_linear);
-		glTexParameteri(gl_type, gl_tex_param::mag_filter, (GLint)gl_tex_filter::linear);
 	}
 
 	if(gl_type == gl_tex_target::cube_map) {
@@ -673,6 +661,15 @@ void texture::set_params() {
 
 	if(gl_type == gl_tex_target::_2D_array) {
 		glTexStorage3D(gl_type, 1, srgb ? gl_tex_format::srgb8_alpha8 : gl_tex_format::rgba8, array_info.dim.x, array_info.dim.y, array_info.dim.z);
+	}
+
+	if (pixelated) {
+		glTexParameteri(gl_type, gl_tex_param::min_filter, (GLint)gl_tex_filter::nearest);
+		glTexParameteri(gl_type, gl_tex_param::mag_filter, (GLint)gl_tex_filter::nearest);
+	}
+	else {
+		glTexParameteri(gl_type, gl_tex_param::min_filter, (GLint)gl_tex_filter::linear_mipmap_linear);
+		glTexParameteri(gl_type, gl_tex_param::mag_filter, (GLint)gl_tex_filter::linear);
 	}
 
 	switch(wrap) {
@@ -811,8 +808,6 @@ void texture::recreate() {
 	glGenTextures(1, &handle);
 	set_params();
 	reload_data();
-
-	LOG_DEBUG_F("Recreated texture %"_, id);
 }
 
 void texture::reload_data() {
@@ -1162,7 +1157,9 @@ void ogl_manager::_cmd_blit_fb(render_command_blit_fb blit) {
 		dst_rect = ir2(0,0,dim.x,dim.y);
 	}
 
-	glBlitNamedFramebuffer(src->handle, dst->handle, 
+	glBindFramebuffer(gl_framebuffer::read, src->handle);
+	glBindFramebuffer(gl_framebuffer::draw, dst->handle);
+	glBlitFramebuffer(
 		src_rect.x, src_rect.y, src_rect.x + src_rect.w, src_rect.y + src_rect.h,
 		blit.dst_rect.x, blit.dst_rect.y, blit.dst_rect.x + blit.dst_rect.w, blit.dst_rect.y + blit.dst_rect.h,
 		blit.mask, blit.filter);
@@ -1408,7 +1405,7 @@ void debug_proc(gl_debug_source glsource, gl_debug_type gltype, GLuint id, gl_de
 		LOG_WARN_F("LOW OpenGL: % SOURCE: % TYPE: %"_, message, source, type);
 		break;
 	case gl_debug_severity::notification:
-		// LOG_OGL_F("NOTF OpenGL: % SOURCE: % TYPE: %"_, message, source, type);
+		LOG_OGL_F("NOTF OpenGL: % SOURCE: % TYPE: %"_, message, source, type);
 		break;
 	}
 }
@@ -1533,6 +1530,7 @@ void ogl_manager::load_global_funcs() {
 	GL_LOAD(glFramebufferRenderbuffer);
 	GL_LOAD(glDrawBuffers);
 	GL_LOAD(glBlitNamedFramebuffer);
+	GL_LOAD(glBlitFramebuffer);
 
 	GL_LOAD(glGetStringi);
 	GL_LOAD(glGetInteger64v);

@@ -125,6 +125,7 @@ void exile_renderer::world_clear() {
 void exile_renderer::end_frame() {
 
 	// run world effects
+	frame_tasks.push_settings();
 	frame_tasks.set_setting(render_setting::depth_test, false);	
 
 	{	
@@ -150,14 +151,18 @@ void exile_renderer::end_frame() {
 		render_command cmd = composite.make_cmd();
 		cmd.info.textures[0] = world_target.get_output();
 		
+		frame_tasks.add_command(cmd);
+
 		// render_command cmd = render_command::make(ogl_manager::cmd_blit_fb);
 		// cmd.blit.src = world_target.get_fb();
 		// cmd.blit.mask = (GLbitfield)gl_clear::color_buffer_bit;
 		// cmd.blit.filter = gl_tex_filter::nearest;
 		
-		frame_tasks.add_command(cmd);
-	}
+		// frame_tasks.add_command(cmd);
+ 	}
 
+ 	frame_tasks.pop_settings();
+ 	
 	exile->eng->ogl.execute_command_list(&frame_tasks);
 
 	frame_tasks.clear();
@@ -232,6 +237,14 @@ void world_target_info::resolve(render_command_list* list) {
 		cmd.info.textures[0] = col_buf;
 		cmd.info.user_data0 = &exile->ren;
 		list->add_command(cmd);
+
+		// render_command cmd = render_command::make(ogl_manager::cmd_blit_fb);
+		// cmd.blit.src = render_ms;
+		// cmd.blit.dst = get_fb();
+		// cmd.blit.mask = (GLbitfield)gl_clear::color_buffer_bit;
+		// cmd.blit.filter = gl_tex_filter::scaled_resolve_fastest;
+		
+		// list->add_command(cmd);
 	}
 }
 
