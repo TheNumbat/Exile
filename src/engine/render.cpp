@@ -871,12 +871,10 @@ void render_buffer::recreate() {
 	glBindRenderbuffer(gl_renderbuffer::val, handle);
 
 	if(samples == 1) {
-		glRenderbufferStorage(gl_renderbuffer::val, format, dim.x, dim.y);
+		glNamedRenderbufferStorage(handle, format, dim.x, dim.y);
 	} else {
-		glRenderbufferStorageMultisample(gl_renderbuffer::val, samples, format, dim.x, dim.y);
+		glNamedRenderbufferStorageMultisample(handle, samples, format, dim.x, dim.y);
 	}
-
-	glBindRenderbuffer(gl_renderbuffer::val, 0);	
 }
 
 void render_buffer::bind() {
@@ -936,6 +934,8 @@ framebuffer framebuffer::make(allocator* a) {
 	framebuffer ret;
 
 	glGenFramebuffers(1, &ret.handle);
+	glBindFramebuffer(gl_framebuffer::val, ret.handle);
+
 	ret.targets = vector<render_target>::make(4, a);
 
 	return ret;
@@ -977,30 +977,28 @@ iv2 framebuffer::get_dim_first() {
 
 void framebuffer::commit() {
 
-	glBindFramebuffer(gl_framebuffer::val, handle);
-	
 	vector<gl_draw_target> target_data = vector<gl_draw_target>::make(targets.size);
 
 	FORVEC(it, targets) {
 		if(it->type == render_target_type::tex) {
-			glFramebufferTexture2D(gl_framebuffer::val, it->target, it->tex->gl_type, it->tex->handle, 0);
+			glNamedFramebufferTexture(handle, it->target, it->tex->handle, 0);
 		} else {
-			glFramebufferRenderbuffer(gl_framebuffer::val, it->target, gl_renderbuffer::val, it->buffer->handle);
+			glNamedFramebufferRenderbuffer(handle, it->target, gl_renderbuffer::val, it->buffer->handle);
 		}
 		if(it->target != gl_draw_target::depth && it->target != gl_draw_target::stencil)
 			target_data.push(it->target);
 	}
 
 	// NOTE(max): this serves as a remapping - location in shader
-	glDrawBuffers(target_data.size, target_data.memory);
+	glNamedFramebufferDrawBuffers(handle, target_data.size, target_data.memory);
 
 	target_data.destroy();
-	glBindFramebuffer(gl_framebuffer::val, 0);
 }
 
 void framebuffer::recreate() {
 
 	glGenFramebuffers(1, &handle);
+	glBindFramebuffer(gl_framebuffer::val, handle);
 
 	FORVEC(it, targets) {
 		it->recreate();
@@ -1531,6 +1529,12 @@ void ogl_manager::load_global_funcs() {
 	GL_LOAD(glDrawBuffers);
 	GL_LOAD(glBlitNamedFramebuffer);
 	GL_LOAD(glBlitFramebuffer);
+	GL_LOAD(glNamedBufferData);
+	GL_LOAD(glNamedFramebufferDrawBuffers);
+	GL_LOAD(glNamedFramebufferTexture);
+	GL_LOAD(glNamedFramebufferRenderbuffer);
+	GL_LOAD(glNamedRenderbufferStorage);
+	GL_LOAD(glNamedRenderbufferStorageMultisample);
 
 	GL_LOAD(glGetStringi);
 	GL_LOAD(glGetInteger64v);

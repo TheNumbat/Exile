@@ -1,12 +1,8 @@
 
 Working To-Do:
 
-[1]	World & Rendering
-		
-		FIX: torchlight AND sunlight removal ?????
-		FIX: framebuffer blitting doesn't work; why ???
-
-		glnamed operations
+	Rendering:
+		FIX: framebuffer blitting doesn't work; why ???	
 
 		deferred rendering
 			HDR / bloom / god rays / better fog
@@ -16,6 +12,11 @@ Working To-Do:
 			chunk culling / visibility query
 			normal mapping
 
+		bindless OGL stuff
+
+	World:
+		FIX: torchlight AND sunlight removal
+			also, calculating per vertex gives us diagonal bleed; think about this
 		add east/west sunlight calculation & day curve use
 
 		sun/moon objects 
@@ -23,13 +24,13 @@ Working To-Do:
 
 		fix place/break block
 		fix waiting for new neighbor meshes
+		
+		chunk paging and persistence
+		world generation framework
 
 	data serialization/deserialization
 	menu / user settings
-
 	movement physics
-	chunk paging and persistence
-	world generation framework
 
 
 

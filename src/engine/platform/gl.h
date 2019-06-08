@@ -858,6 +858,7 @@ typedef void (*glBindBuffer_t)(gl_buf_target target, GLuint buffer);
 typedef void (*glDeleteBuffers_t)(GLsizei n, const GLuint *buffers);
 typedef void (*glGenBuffers_t)(GLsizei n, GLuint *buffers);
 typedef void (*glBufferData_t)(gl_buf_target target, GLsizeiptr size, const void *data, gl_buf_usage usage);
+typedef void (*glNamedBufferData_t)(GLuint name, GLsizeiptr size, const void *data, gl_buf_usage usage);
 
 typedef void (*glVertexAttribPointer_t)(GLuint index, GLint size, gl_vert_attrib_type type, gl_bool normalized, GLsizei stride, const void *pointer);
 typedef void (*glVertexAttribIPointer_t)(GLuint index, GLint size, gl_vert_attrib_type type, GLsizei stride, const void *pointer);
@@ -882,6 +883,12 @@ typedef void (*glFramebufferRenderbuffer_t)(gl_framebuffer target, gl_draw_targe
 typedef void (*glDrawBuffers_t)(GLsizei n, gl_draw_target *bufs);
 typedef void (*glBlitNamedFramebuffer_t)(GLuint readFramebuffer, GLuint drawFramebuffer, GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, gl_tex_filter filter);
 typedef void (*glBlitFramebuffer_t)(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, gl_tex_filter filter);
+
+typedef void (*glNamedFramebufferDrawBuffers_t)(GLuint framebuffer, GLsizei n, const gl_draw_target* bufs);
+typedef void (*glNamedFramebufferTexture_t)(GLuint framebuffer, gl_draw_target attachment, GLuint texture, GLint level);
+typedef void (*glNamedFramebufferRenderbuffer_t)(GLuint framebuffer, gl_draw_target attachment, gl_renderbuffer renderbuffertarget, GLuint renderbuffer);
+typedef void (*glNamedRenderbufferStorage_t)(GLuint buffer, gl_tex_format internalformat, GLsizei width, GLsizei height);
+typedef void (*glNamedRenderbufferStorageMultisample_t)(GLuint buffer, GLsizei samples, gl_tex_format internalformat, GLsizei width, GLsizei height);
 
 glIs_t glIsTexture;
 glIs_t glIsBuffer;
@@ -951,6 +958,7 @@ glBindBuffer_t				glBindBuffer;
 glDeleteBuffers_t			glDeleteBuffers;
 glGenBuffers_t				glGenBuffers;
 glBufferData_t				glBufferData;
+glNamedBufferData_t			glNamedBufferData;
 
 glVertexAttribPointer_t		glVertexAttribPointer;
 glVertexAttribIPointer_t	glVertexAttribIPointer;
@@ -973,3 +981,9 @@ glFramebufferRenderbuffer_t glFramebufferRenderbuffer;
 glDrawBuffers_t 			glDrawBuffers;
 glBlitNamedFramebuffer_t	glBlitNamedFramebuffer;
 glBlitFramebuffer_t 		glBlitFramebuffer;
+
+glNamedFramebufferDrawBuffers_t  		glNamedFramebufferDrawBuffers;
+glNamedFramebufferTexture_t	 	 		glNamedFramebufferTexture;
+glNamedFramebufferRenderbuffer_t 		glNamedFramebufferRenderbuffer;
+glNamedRenderbufferStorage_t			glNamedRenderbufferStorage;
+glNamedRenderbufferStorageMultisample_t	glNamedRenderbufferStorageMultisample;

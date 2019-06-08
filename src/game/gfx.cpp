@@ -427,8 +427,7 @@ CALLBACK void update_mesh_quad(gpu_object* obj, void* data, bool force) {
 	mesh_quad* m = (mesh_quad*)data;
 	if(!force) return;
 
-	glBindBuffer(gl_buf_target::array, obj->vbos[0]);
-	glBufferData(gl_buf_target::array, sizeof(m->vbo_data), m->vbo_data, gl_buf_usage::static_draw);
+	glNamedBufferData(obj->vbos[0], sizeof(m->vbo_data), m->vbo_data, gl_buf_usage::static_draw);
 }
 
 void mesh_quad::init() {
@@ -563,8 +562,7 @@ CALLBACK void update_mesh_pointcloud(gpu_object* obj, void* data, bool force) {
 	mesh_pointcloud* m = (mesh_pointcloud*)data;
 	if(!force && !m->dirty) return;
 
-	glBindBuffer(gl_buf_target::array, obj->vbos[0]);
-	glBufferData(gl_buf_target::array, m->vertices.size * sizeof(v4), m->vertices.size ? m->vertices.memory : null, gl_buf_usage::dynamic_draw);
+	glNamedBufferData(obj->vbos[0], m->vertices.size * sizeof(v4), m->vertices.size ? m->vertices.memory : null, gl_buf_usage::dynamic_draw);
 
 	m->dirty = false;
 }
@@ -574,8 +572,7 @@ CALLBACK void update_mesh_cubemap(gpu_object* obj, void* data, bool force) {
 	mesh_cubemap* m = (mesh_cubemap*)data;
 	if(!force) return;
 
-	glBindBuffer(gl_buf_target::array, obj->vbos[0]);
-	glBufferData(gl_buf_target::array, 36 * sizeof(v3), m->vertices, gl_buf_usage::static_draw);
+	glNamedBufferData(obj->vbos[0], 36 * sizeof(v3), m->vertices, gl_buf_usage::static_draw);
 }
 
 CALLBACK void update_mesh_chunk(gpu_object* obj, void* data, bool force) { 
@@ -583,8 +580,7 @@ CALLBACK void update_mesh_chunk(gpu_object* obj, void* data, bool force) {
 	mesh_chunk* m = (mesh_chunk*)data;
 	if(!force && !m->dirty) return;
 
-	glBindBuffer(gl_buf_target::array, obj->vbos[0]);
-	glBufferData(gl_buf_target::array, m->quads.size * sizeof(chunk_quad), m->quads.size ? m->quads.memory : null, gl_buf_usage::dynamic_draw);
+	glNamedBufferData(obj->vbos[0], m->quads.size * sizeof(chunk_quad), m->quads.size ? m->quads.memory : null, gl_buf_usage::dynamic_draw);
 
 	m->dirty = false;
 }
@@ -594,14 +590,11 @@ CALLBACK void update_mesh_2D_col(gpu_object* obj, void* data, bool force) {
 	mesh_2d_col* m = (mesh_2d_col*)data;
 	if(!force && !m->dirty) return;
 
-	glBindBuffer(gl_buf_target::array, obj->vbos[0]);
-	glBufferData(gl_buf_target::array, m->vertices.size * sizeof(v2), m->vertices.size ? m->vertices.memory : null, gl_buf_usage::dynamic_draw);
+	glNamedBufferData(obj->vbos[0], m->vertices.size * sizeof(v2), m->vertices.size ? m->vertices.memory : null, gl_buf_usage::dynamic_draw);
 
-	glBindBuffer(gl_buf_target::array, obj->vbos[1]);
-	glBufferData(gl_buf_target::array, m->colors.size * sizeof(colorf), m->colors.size ? m->colors.memory : null, gl_buf_usage::dynamic_draw);
+	glNamedBufferData(obj->vbos[1], m->colors.size * sizeof(colorf), m->colors.size ? m->colors.memory : null, gl_buf_usage::dynamic_draw);
 
-	glBindBuffer(gl_buf_target::element_array, obj->vbos[2]);
-	glBufferData(gl_buf_target::element_array, m->elements.size * sizeof(uv3), m->elements.size ? m->elements.memory : null, gl_buf_usage::dynamic_draw);
+	glNamedBufferData(obj->vbos[2], m->elements.size * sizeof(uv3), m->elements.size ? m->elements.memory : null, gl_buf_usage::dynamic_draw);
 
 	m->dirty = false;
 }
@@ -611,14 +604,11 @@ CALLBACK void update_mesh_2D_tex(gpu_object* obj, void* data, bool force) {
 	mesh_2d_tex* m = (mesh_2d_tex*)data;
 	if(!force && !m->dirty) return;
 
-	glBindBuffer(gl_buf_target::array, obj->vbos[0]);
-	glBufferData(gl_buf_target::array, m->vertices.size * sizeof(v2), m->vertices.size ? m->vertices.memory : null, gl_buf_usage::dynamic_draw);
+	glNamedBufferData(obj->vbos[0], m->vertices.size * sizeof(v2), m->vertices.size ? m->vertices.memory : null, gl_buf_usage::dynamic_draw);
 
-	glBindBuffer(gl_buf_target::array, obj->vbos[1]);
-	glBufferData(gl_buf_target::array, m->texCoords.size * sizeof(v2), m->texCoords.size ? m->texCoords.memory : null, gl_buf_usage::dynamic_draw);
+	glNamedBufferData(obj->vbos[1], m->texCoords.size * sizeof(v2), m->texCoords.size ? m->texCoords.memory : null, gl_buf_usage::dynamic_draw);
 
-	glBindBuffer(gl_buf_target::element_array, obj->vbos[2]);
-	glBufferData(gl_buf_target::element_array, m->elements.size * sizeof(uv3), m->elements.size ? m->elements.memory : null, gl_buf_usage::dynamic_draw);
+	glNamedBufferData(obj->vbos[2], m->elements.size * sizeof(uv3), m->elements.size ? m->elements.memory : null, gl_buf_usage::dynamic_draw);
 
 	m->dirty = false;
 }
@@ -628,17 +618,13 @@ CALLBACK void update_mesh_2D_tex_col(gpu_object* obj, void* data, bool force) {
 	mesh_2d_tex_col* m = (mesh_2d_tex_col*)data;
 	if(!force && !m->dirty) return;
 
-	glBindBuffer(gl_buf_target::array, obj->vbos[0]);
-	glBufferData(gl_buf_target::array, m->vertices.size * sizeof(v2), m->vertices.size ? m->vertices.memory : null, gl_buf_usage::dynamic_draw);
+	glNamedBufferData(obj->vbos[0], m->vertices.size * sizeof(v2), m->vertices.size ? m->vertices.memory : null, gl_buf_usage::dynamic_draw);
 
-	glBindBuffer(gl_buf_target::array, obj->vbos[1]);
-	glBufferData(gl_buf_target::array, m->texCoords.size * sizeof(v2), m->texCoords.size ? m->texCoords.memory : null, gl_buf_usage::dynamic_draw);
+	glNamedBufferData(obj->vbos[1], m->texCoords.size * sizeof(v2), m->texCoords.size ? m->texCoords.memory : null, gl_buf_usage::dynamic_draw);
 
-	glBindBuffer(gl_buf_target::array, obj->vbos[2]);
-	glBufferData(gl_buf_target::array, m->colors.size * sizeof(colorf), m->colors.size ? m->colors.memory : null, gl_buf_usage::dynamic_draw);
+	glNamedBufferData(obj->vbos[2], m->colors.size * sizeof(colorf), m->colors.size ? m->colors.memory : null, gl_buf_usage::dynamic_draw);
 
-	glBindBuffer(gl_buf_target::element_array, obj->vbos[3]);
-	glBufferData(gl_buf_target::element_array, m->elements.size * sizeof(uv3), m->elements.size ? m->elements.memory : null, gl_buf_usage::dynamic_draw);
+	glNamedBufferData(obj->vbos[3], m->elements.size * sizeof(uv3), m->elements.size ? m->elements.memory : null, gl_buf_usage::dynamic_draw);
 
 	m->dirty = false;
 }
@@ -648,14 +634,11 @@ CALLBACK void update_mesh_3D_tex(gpu_object* obj, void* data, bool force) {
 	mesh_3d_tex* m = (mesh_3d_tex*)data;
 	if(!force && !m->dirty) return;
 
-	glBindBuffer(gl_buf_target::array, obj->vbos[0]);
-	glBufferData(gl_buf_target::array, m->vertices.size * sizeof(v3), m->vertices.size ? m->vertices.memory : null, gl_buf_usage::dynamic_draw);
+	glNamedBufferData(obj->vbos[0], m->vertices.size * sizeof(v3), m->vertices.size ? m->vertices.memory : null, gl_buf_usage::dynamic_draw);
 
-	glBindBuffer(gl_buf_target::array, obj->vbos[1]);
-	glBufferData(gl_buf_target::array, m->texCoords.size * sizeof(v2), m->texCoords.size ? m->texCoords.memory : null, gl_buf_usage::dynamic_draw);
+	glNamedBufferData(obj->vbos[1], m->texCoords.size * sizeof(v2), m->texCoords.size ? m->texCoords.memory : null, gl_buf_usage::dynamic_draw);
 
-	glBindBuffer(gl_buf_target::element_array, obj->vbos[2]);
-	glBufferData(gl_buf_target::element_array, m->elements.size * sizeof(uv3), m->elements.size ? m->elements.memory : null, gl_buf_usage::dynamic_draw);
+	glNamedBufferData(obj->vbos[2], m->elements.size * sizeof(uv3), m->elements.size ? m->elements.memory : null, gl_buf_usage::dynamic_draw);
 
 	m->dirty = false;
 }
@@ -665,11 +648,9 @@ CALLBACK void update_mesh_lines(gpu_object* obj, void* data, bool force) {
 	mesh_lines* m = (mesh_lines*)data;
 	if(!force && !m->dirty) return;
 
-	glBindBuffer(gl_buf_target::array, obj->vbos[0]);
-	glBufferData(gl_buf_target::array, m->vertices.size * sizeof(v3), m->vertices.size ? m->vertices.memory : null, gl_buf_usage::dynamic_draw);
+	glNamedBufferData(obj->vbos[0], m->vertices.size * sizeof(v3), m->vertices.size ? m->vertices.memory : null, gl_buf_usage::dynamic_draw);
 
-	glBindBuffer(gl_buf_target::array, obj->vbos[1]);
-	glBufferData(gl_buf_target::array, m->colors.size * sizeof(colorf), m->colors.size ? m->colors.memory : null, gl_buf_usage::dynamic_draw);
+	glNamedBufferData(obj->vbos[1], m->colors.size * sizeof(colorf), m->colors.size ? m->colors.memory : null, gl_buf_usage::dynamic_draw);
 
 	m->dirty = false;
 }
@@ -683,8 +664,7 @@ CALLBACK void update_mesh_3D_tex_instanced(gpu_object* obj, void* d, bool force)
 
 	if(force || data->dirty) {
 
-		glBindBuffer(gl_buf_target::array, obj->vbos[0]);
-		glBufferData(gl_buf_target::array, data->data.size * sizeof(v3), data->data.size ? data->data.memory : null, gl_buf_usage::dynamic_draw);
+		glNamedBufferData(obj->vbos[0], data->data.size * sizeof(v3), data->data.size ? data->data.memory : null, gl_buf_usage::dynamic_draw);
 	}
 
 	data->dirty = false;
