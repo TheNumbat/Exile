@@ -2,8 +2,6 @@
 Working To-Do:
 
 	Rendering:
-		FIX: framebuffer blitting doesn't work; why ???	
-
 		deferred rendering
 			HDR / bloom / god rays / better fog
 			dynamic lights

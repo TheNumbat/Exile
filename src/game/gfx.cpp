@@ -127,6 +127,21 @@ void exile_renderer::end_frame() {
 
 	{	
 		world_target.resolve(&frame_tasks);
+
+		// gamma correct
+		{
+			render_command cmd = gamma.make_cmd();
+			
+			cmd.info.textures[0] = world_target.get_output();
+			
+			world_target.flip_fb();
+			cmd.info.fb_id = world_target.get_fb();
+			cmd.info.user_data0 = &settings;
+
+			frame_tasks.add_command(cmd);
+		}
+
+		// silly test inverted colors (applied after gamma)
 		if(settings.invert_effect) {
 
 			render_command cmd = invert.make_cmd();
@@ -142,19 +157,10 @@ void exile_renderer::end_frame() {
 
 	// composite to screen
 	{
-		if(settings.gamma)
-			frame_tasks.set_setting(render_setting::output_srgb, true);
-
-		// render_command cmd = composite.make_cmd();
-		// cmd.info.textures[0] = world_target.get_output();
-		
-		// frame_tasks.add_command(cmd);
-
 		render_command cmd = render_command::make(ogl_manager::cmd_blit_fb);
 		cmd.blit.src = world_target.get_fb();
 		cmd.blit.mask = (GLbitfield)gl_clear::color_buffer_bit;
-		cmd.blit.filter = gl_tex_filter::scaled_resolve_fastest;
-		
+		cmd.blit.filter = gl_tex_filter::scaled_resolve_fastest;		
 		frame_tasks.add_command(cmd);
  	}
 
@@ -233,19 +239,12 @@ void world_target_info::init(iv2 dim, i32 samples) {
 void world_target_info::resolve(render_command_list* list) {
 	
 	if(msaa) {
-		render_command cmd = exile->ren.resolve.make_cmd(); // TODO(max): clean
-		cmd.info.fb_id = get_fb();
-		cmd.info.textures[0] = col_buf;
-		cmd.info.user_data0 = &exile->ren;
+		render_command cmd = render_command::make(ogl_manager::cmd_blit_fb);
+		cmd.blit.src = render_ms;
+		cmd.blit.dst = get_fb();
+		cmd.blit.mask = (GLbitfield)gl_clear::color_buffer_bit;
+		cmd.blit.filter = gl_tex_filter::scaled_resolve_fastest;		
 		list->add_command(cmd);
-
-		// render_command cmd = render_command::make(ogl_manager::cmd_blit_fb);
-		// cmd.blit.src = render_ms;
-		// cmd.blit.dst = get_fb();
-		// cmd.blit.mask = (GLbitfield)gl_clear::color_buffer_bit;
-		// cmd.blit.filter = gl_tex_filter::scaled_resolve_fastest;
-		
-		// list->add_command(cmd);
 	}
 }
 
@@ -324,6 +323,7 @@ void exile_renderer::generate_commands() {
 	composite.init(FPTR(uniforms_composite), "composite.f"_);
 	composite_resolve.init(FPTR(uniforms_composite_resolve), "composite_resolve.f"_);
 	invert.init(FPTR(uniforms_invert), "invert.f"_);
+	gamma.init(FPTR(uniforms_gamma), "gamma.f"_);
 
 	#undef reg
 }
@@ -359,6 +359,7 @@ void exile_renderer::destroy() {
 	composite.destroy();
 	composite_resolve.destroy();
 	invert.destroy();
+	gamma.destroy();
 
 	hud_tasks.destroy();
 	frame_tasks.destroy();
@@ -406,6 +407,14 @@ CALLBACK void uniforms_resolve(shader_program* prog, render_command* cmd) {
 CALLBACK void uniforms_invert(shader_program* prog, render_command* cmd) {
 
 	glUniform1i(prog->location("tex"_), 0);
+}
+
+CALLBACK void uniforms_gamma(shader_program* prog, render_command* cmd) {
+
+	exile_render_settings* set = (exile_render_settings*)cmd->info.user_data0;
+
+	glUniform1i(prog->location("tex"_), 0);
+	glUniform1f(prog->location("gamma"_), set->gamma);
 }
 
 CALLBACK void run_effect(render_command* cmd, gpu_object* gpu) {

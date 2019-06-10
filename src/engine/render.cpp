@@ -1161,14 +1161,9 @@ void ogl_manager::_cmd_blit_fb(render_command_blit_fb blit) {
 		dst_rect = ir2(0,0,dim.x,dim.y);
 	}
 
-	if(src)
-		src->read(gl_draw_target::color_0);
-	else
-		glNamedFramebufferReadBuffer(0, gl_draw_target::color_0);
-
 	glBlitNamedFramebuffer(src ? src->handle : 0, dst ? dst->handle : 0,
 		src_rect.x, src_rect.y, src_rect.x + src_rect.w, src_rect.y + src_rect.h,
-		blit.dst_rect.x, blit.dst_rect.y, blit.dst_rect.x + blit.dst_rect.w, blit.dst_rect.y + blit.dst_rect.h,
+		dst_rect.x, dst_rect.y, dst_rect.x + dst_rect.w, dst_rect.y + dst_rect.h,
 		blit.mask, blit.filter);
 }
 

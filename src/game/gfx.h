@@ -237,7 +237,7 @@ struct exile_render_settings {
 	world_render_settings world_set;
 
 	i32 num_samples = 4;
-	bool gamma = true;
+	f32 gamma = 2.2;
 	bool invert_effect = false;
 
 	colorf clear_color = colorf(0.8f, 0.8f, 0.8f, 1.0f);
@@ -317,7 +317,7 @@ struct exile_renderer {
 	mesh_quad 	 the_quad;
 
 	effect_pass composite, composite_resolve, resolve;
-	effect_pass invert;
+	effect_pass invert, gamma;
 
 	world_target_info world_target;
 
@@ -369,6 +369,7 @@ CALLBACK void uniforms_resolve(shader_program* prog, render_command* cmd);
 CALLBACK void uniforms_composite(shader_program* prog, render_command* cmd);
 CALLBACK void uniforms_composite_resolve(shader_program* prog, render_command* cmd);
 CALLBACK void uniforms_invert(shader_program* prog, render_command* cmd);
+CALLBACK void uniforms_gamma(shader_program* prog, render_command* cmd);
 
 
 
