@@ -145,17 +145,17 @@ void exile_renderer::end_frame() {
 		if(settings.gamma)
 			frame_tasks.set_setting(render_setting::output_srgb, true);
 
-		render_command cmd = composite.make_cmd();
-		cmd.info.textures[0] = world_target.get_output();
-		
-		frame_tasks.add_command(cmd);
-
-		// render_command cmd = render_command::make(ogl_manager::cmd_blit_fb);
-		// cmd.blit.src = world_target.get_fb();
-		// cmd.blit.mask = (GLbitfield)gl_clear::color_buffer_bit;
-		// cmd.blit.filter = gl_tex_filter::nearest;
+		// render_command cmd = composite.make_cmd();
+		// cmd.info.textures[0] = world_target.get_output();
 		
 		// frame_tasks.add_command(cmd);
+
+		render_command cmd = render_command::make(ogl_manager::cmd_blit_fb);
+		cmd.blit.src = world_target.get_fb();
+		cmd.blit.mask = (GLbitfield)gl_clear::color_buffer_bit;
+		cmd.blit.filter = gl_tex_filter::scaled_resolve_fastest;
+		
+		frame_tasks.add_command(cmd);
  	}
 
  	frame_tasks.pop_settings();

@@ -12,6 +12,7 @@ Working To-Do:
 			chunk culling / visibility query
 			normal mapping
 
+		chunk visibility culling - try cpu frustum + occlusion queries
 		bindless OGL stuff
 
 	World:
@@ -127,10 +128,7 @@ Overall To-Do List:
 	OpenGl
 		Shaders
 			preprocessor / shader assets
-		post-processing effects
-		HDR
 		AZDO
-			glNamed operations
 			glMapBuffer?
 			NV command lists -> translate from mine
 			bindless textures / buffers

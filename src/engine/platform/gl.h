@@ -881,7 +881,6 @@ typedef void (*glBindFramebuffer_t)(gl_framebuffer target, GLuint framebuffer);
 typedef void (*glFramebufferTexture2D_t)(gl_framebuffer target, gl_draw_target attachment, gl_tex_target textarget, GLuint texture, GLint level);
 typedef void (*glFramebufferRenderbuffer_t)(gl_framebuffer target, gl_draw_target attachment, gl_renderbuffer renderbuffertarget, GLuint renderbuffer);
 typedef void (*glDrawBuffers_t)(GLsizei n, gl_draw_target *bufs);
-typedef void (*glBlitNamedFramebuffer_t)(GLuint readFramebuffer, GLuint drawFramebuffer, GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, gl_tex_filter filter);
 typedef void (*glBlitFramebuffer_t)(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, gl_tex_filter filter);
 
 typedef void (*glNamedFramebufferDrawBuffers_t)(GLuint framebuffer, GLsizei n, const gl_draw_target* bufs);
@@ -889,6 +888,8 @@ typedef void (*glNamedFramebufferTexture_t)(GLuint framebuffer, gl_draw_target a
 typedef void (*glNamedFramebufferRenderbuffer_t)(GLuint framebuffer, gl_draw_target attachment, gl_renderbuffer renderbuffertarget, GLuint renderbuffer);
 typedef void (*glNamedRenderbufferStorage_t)(GLuint buffer, gl_tex_format internalformat, GLsizei width, GLsizei height);
 typedef void (*glNamedRenderbufferStorageMultisample_t)(GLuint buffer, GLsizei samples, gl_tex_format internalformat, GLsizei width, GLsizei height);
+typedef void (*glBlitNamedFramebuffer_t)(GLuint readFramebuffer, GLuint drawFramebuffer, GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, gl_tex_filter filter);
+typedef void (*glNamedFramebufferReadBuffer_t)(GLuint framebuffer, gl_draw_target mode);
 
 glIs_t glIsTexture;
 glIs_t glIsBuffer;
@@ -987,3 +988,4 @@ glNamedFramebufferTexture_t	 	 		glNamedFramebufferTexture;
 glNamedFramebufferRenderbuffer_t 		glNamedFramebufferRenderbuffer;
 glNamedRenderbufferStorage_t			glNamedRenderbufferStorage;
 glNamedRenderbufferStorageMultisample_t	glNamedRenderbufferStorageMultisample;
+glNamedFramebufferReadBuffer_t			glNamedFramebufferReadBuffer;

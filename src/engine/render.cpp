@@ -299,8 +299,6 @@ ogl_manager ogl_manager::make(platform_window* win, allocator* a) {
 
 	ret.dbg_shader = shader_program::make("shaders/dbg.v"_,"shaders/dbg.f"_, {}, FPTR(uniforms_dbg), a);
 
-	ret.framebuffers.insert(0, {});	
-
 	glBlendFunc(gl_blend_factor::one, gl_blend_factor::one_minus_src_alpha);
 	glDepthFunc(gl_depth_factor::lequal);
 
@@ -1006,8 +1004,11 @@ void framebuffer::recreate() {
 	commit();
 }
 
-void framebuffer::bind() {
+void framebuffer::read(gl_draw_target target) {
+	glNamedFramebufferReadBuffer(handle, target);
+}
 
+void framebuffer::bind() {
 	glBindFramebuffer(gl_framebuffer::val, handle);
 }
 
@@ -1067,6 +1068,11 @@ void ogl_manager::destroy_framebuffer(framebuffer_id id) {
 }
 
 framebuffer* ogl_manager::select_framebuffer(framebuffer_id id) {
+
+	if(id == 0) {
+		glBindFramebuffer(gl_framebuffer::val, 0);
+		return null;
+	}
 
 	framebuffer* f = framebuffers.try_get(id);
 
@@ -1155,9 +1161,8 @@ void ogl_manager::_cmd_blit_fb(render_command_blit_fb blit) {
 		dst_rect = ir2(0,0,dim.x,dim.y);
 	}
 
-	glBindFramebuffer(gl_framebuffer::read, src->handle);
-	glBindFramebuffer(gl_framebuffer::draw, dst->handle);
-	glBlitFramebuffer(
+	src->read(gl_draw_target::color_0);
+	glBlitNamedFramebuffer(src ? src->handle : 0, dst ? dst->handle : 0,
 		src_rect.x, src_rect.y, src_rect.x + src_rect.w, src_rect.y + src_rect.h,
 		blit.dst_rect.x, blit.dst_rect.y, blit.dst_rect.x + blit.dst_rect.w, blit.dst_rect.y + blit.dst_rect.h,
 		blit.mask, blit.filter);
@@ -1535,6 +1540,7 @@ void ogl_manager::load_global_funcs() {
 	GL_LOAD(glNamedFramebufferRenderbuffer);
 	GL_LOAD(glNamedRenderbufferStorage);
 	GL_LOAD(glNamedRenderbufferStorageMultisample);
+	GL_LOAD(glNamedFramebufferReadBuffer);
 
 	GL_LOAD(glGetStringi);
 	GL_LOAD(glGetInteger64v);

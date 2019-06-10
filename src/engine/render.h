@@ -227,6 +227,7 @@ private:
 	void gl_destroy();
 	void recreate();
 
+	void read(gl_draw_target target);
 	void add_target(render_target target);
 	void commit();
 	iv2 get_dim_first();
