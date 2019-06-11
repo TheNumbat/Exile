@@ -221,9 +221,9 @@ struct world_render_settings {
 	
 	bool block_light = true;
 	bool smooth_light = true;
-	float ambient_factor = 0.05f;
+	float ambient_factor = 0.005f;
 	world_light_debug light_debug_mode = world_light_debug::none;
-	v4 ao_curve = v4(0.65f, 0.75f, 0.85f, 1.0f);
+	v4 ao_curve = v4(0.6f, 0.7f, 0.8f, 1.0f);
 
 	bool wireframe = false;
 	bool cull_backface = true;
@@ -237,7 +237,7 @@ struct exile_render_settings {
 	world_render_settings world_set;
 
 	i32 num_samples = 4;
-	f32 gamma = 2.2;
+	f32 gamma = 2.1;
 	bool invert_effect = false;
 
 	colorf clear_color = colorf(0.8f, 0.8f, 0.8f, 1.0f);

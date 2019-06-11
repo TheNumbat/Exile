@@ -61,7 +61,7 @@ void main() {
 			float ao = mix(ao0, ao1, fract(f_uv.y));
 
 			float l = max(t,s);
-			color *= clamp(ambient + ao * l * l, 0.0f, 1.0f);
+			color *= clamp(ambient + ao * pow(l, 3), 0.0f, 1.0f);
 
 		} else {
 
@@ -73,7 +73,7 @@ void main() {
 			float s = float(f_qs) / 15.0f * day_factor;
 
 			float l = max(t,s);
-			color *= clamp(ambient + ao * l * l, 0.0f, 1.0f);
+			color *= clamp(ambient + ao * pow(l, 3), 0.0f, 1.0f);
 		}
 	}
 
