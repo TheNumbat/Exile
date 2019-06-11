@@ -16,7 +16,7 @@ Working To-Do:
 				point (torch) shadows
 				sunlight shadows
 		normal mapping
-		bloom / better fog
+		bloom / better fog (e.g. fog undergound should be dark -- apply lighting to fog)
 		HDR / auto exposure?
 		chunk culling / visibility query
 			try cpu frustum + occlusion queries
