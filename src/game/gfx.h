@@ -245,6 +245,7 @@ struct exile_render_settings {
 	i32 num_samples = 4;
 	f32 gamma = 2.1;
 	bool invert_effect = false;
+	
 
 	exile_deferred_view view =  exile_deferred_view::col;
 
@@ -255,9 +256,6 @@ struct world_target_info {
 
 	// NOTE(max): only the buffers + textures use GPU memory,
 	// the rest are reference objects
-
-	// PLAN: completely separate world deferred process, then always resolve.
-	// may or may not be multisampled.
 
 	// world render target
 	texture_id pos_buf, col_buf, depth_buf, norm_buf;
