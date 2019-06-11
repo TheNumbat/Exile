@@ -205,7 +205,7 @@ void world_target_info::init(iv2 dim, i32 samples) {
 	msaa = samples != 1;
 
 	if(msaa) {
-		col_buf = exile->eng->ogl.add_texture_target(dim, samples, gl_tex_format::rgba16f);
+		col_buf = exile->eng->ogl.add_texture_target(dim, samples, gl_tex_format::rgb16f);
 		col_buf_target = exile->eng->ogl.make_target(gl_draw_target::color_0, col_buf);
 	
 		depth_buf = render_buffer::make(gl_tex_format::depth_component, dim, samples);
@@ -217,8 +217,8 @@ void world_target_info::init(iv2 dim, i32 samples) {
 		exile->eng->ogl.commit_framebuffer(render_ms);
 	}
 
-	effect0 = exile->eng->ogl.add_texture_target(dim, 1, gl_tex_format::rgba16f);
-	effect1 = exile->eng->ogl.add_texture_target(dim, 1, gl_tex_format::rgba16f);
+	effect0 = exile->eng->ogl.add_texture_target(dim, 1, gl_tex_format::rgb16f);
+	effect1 = exile->eng->ogl.add_texture_target(dim, 1, gl_tex_format::rgb16f);
 	effect0_target = exile->eng->ogl.make_target(gl_draw_target::color_0, effect0);
 	effect1_target = exile->eng->ogl.make_target(gl_draw_target::color_0, effect1);
 

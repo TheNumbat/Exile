@@ -3,14 +3,21 @@ Working To-Do:
 
 	Rendering:
 		deferred rendering
-			HDR / bloom / god rays / better fog
 			dynamic lights
+				flashlight
+				dynamic torches
+				sunlight ?
 			dynamic shadows
-			sunlight shadows
-			chunk culling / visibility query
-			normal mapping
-
-		chunk visibility culling - try cpu frustum + occlusion queries
+				directional (flashlight) shadows 
+				point (torch) shadows
+				sunlight shadows
+		normal mapping
+		bloom / better fog
+		HDR / auto exposure?
+		chunk culling / visibility query
+			try cpu frustum + occlusion queries
+		chunk uniform buffers
+		PBR ? probably not
 		bindless OGL stuff
 
 	World:
@@ -19,6 +26,7 @@ Working To-Do:
 		add east/west sunlight calculation & day curve use
 
 		sun/moon objects 
+			god rays
 		spinning sky/stars
 
 		fix place/break block
