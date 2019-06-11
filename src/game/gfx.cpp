@@ -22,7 +22,7 @@ void exile_renderer::world_skydome(gpu_object_id gpu_id, world_time* time, textu
 
 	render_command cmd = render_command::make_cst(cmd_skydome, gpu_id);
 
-	cmd.info.fb_id = world_target.world_fb();
+	cmd.info.fb_id = world_target.world_fb;
 	cmd.info.user_data0 = time;
 	cmd.info.textures[0] = sky;
 
@@ -39,7 +39,7 @@ void exile_renderer::world_stars(gpu_object_id gpu_id, world_time* time, m4 view
 
 	render_command cmd = render_command::make_cst(cmd_pointcloud, gpu_id);
 
-	cmd.info.fb_id = world_target.world_fb();
+	cmd.info.fb_id = world_target.world_fb;
 	cmd.info.user_data0 = time;
 	cmd.info.view = view;
 	cmd.info.proj = proj;
@@ -68,7 +68,7 @@ void exile_renderer::world_chunk(world* w, chunk* c, texture_id blocks, texture_
 
 	render_command cmd = render_command::make_cst(cmd_chunk, c->mesh.gpu);
 
-	cmd.info.fb_id = world_target.world_fb();
+	cmd.info.fb_id = world_target.world_fb;
 	cmd.info.textures[0] = blocks;
 	cmd.info.textures[1] = sky;
 	cmd.info.num_tris = c->mesh_faces;
@@ -89,7 +89,7 @@ void exile_renderer::world_lines(gpu_object_id gpu_id, m4 view, m4 proj) {
 	
 	render_command cmd = render_command::make_cst(cmd_lines, gpu_id);
 
-	cmd.info.fb_id = world_target.world_fb();
+	cmd.info.fb_id = world_target.world_fb;
 
 	cmd.info.view = view;
 	cmd.info.proj = proj;
@@ -111,13 +111,14 @@ void exile_renderer::world_clear() {
 
 	render_command cmd = render_command::make(ogl_manager::cmd_clear);
 	
-	cmd.clear.fb_id = world_target.world_fb();
+	cmd.clear.fb_id = world_target.world_fb;
 	cmd.clear.col = settings.clear_color;
 	cmd.clear.components = (GLbitfield)gl_clear::color_buffer_bit | (GLbitfield)gl_clear::depth_buffer_bit;
 
 	frame_tasks.add_command(cmd);
+	frame_tasks.push_settings();
+	frame_tasks.set_setting(render_setting::blend, false);
 }
-
 
 void exile_renderer::end_frame() {
 
@@ -204,17 +205,25 @@ void world_target_info::init(iv2 dim, i32 samples) {
 
 	msaa = samples != 1;
 
-	if(msaa) {
+	/* make deferred target */ {
 		col_buf = exile->eng->ogl.add_texture_target(dim, samples, gl_tex_format::rgb16f);
 		col_buf_target = exile->eng->ogl.make_target(gl_draw_target::color_0, col_buf);
+
+		pos_buf = exile->eng->ogl.add_texture_target(dim, samples, gl_tex_format::rgb16f);
+		pos_buf_target = exile->eng->ogl.make_target(gl_draw_target::color_1, pos_buf);
+
+		norm_buf = exile->eng->ogl.add_texture_target(dim, samples, gl_tex_format::rgb16f);
+		norm_buf_target = exile->eng->ogl.make_target(gl_draw_target::color_2, norm_buf);
 	
-		depth_buf = render_buffer::make(gl_tex_format::depth_component, dim, samples);
-		depth_buf_target = exile->eng->ogl.make_target(gl_draw_target::depth, &depth_buf);
-		
-		render_ms = exile->eng->ogl.add_framebuffer();
-		exile->eng->ogl.add_target(render_ms, col_buf_target);
-		exile->eng->ogl.add_target(render_ms, depth_buf_target);
-		exile->eng->ogl.commit_framebuffer(render_ms);
+		depth_buf = exile->eng->ogl.add_texture_target(dim, samples, gl_tex_format::depth_component);
+		depth_buf_target = exile->eng->ogl.make_target(gl_draw_target::depth, depth_buf);
+
+		world_fb = exile->eng->ogl.add_framebuffer();
+		exile->eng->ogl.add_target(world_fb, col_buf_target);
+		exile->eng->ogl.add_target(world_fb, pos_buf_target);
+		exile->eng->ogl.add_target(world_fb, norm_buf_target);
+		exile->eng->ogl.add_target(world_fb, depth_buf_target);
+		exile->eng->ogl.commit_framebuffer(world_fb);
 	}
 
 	effect0 = exile->eng->ogl.add_texture_target(dim, 1, gl_tex_format::rgb16f);
@@ -222,34 +231,27 @@ void world_target_info::init(iv2 dim, i32 samples) {
 	effect0_target = exile->eng->ogl.make_target(gl_draw_target::color_0, effect0);
 	effect1_target = exile->eng->ogl.make_target(gl_draw_target::color_0, effect1);
 
-	effect_depth = render_buffer::make(gl_tex_format::depth_component, dim, 1);
-	effect_depth_target = exile->eng->ogl.make_target(gl_draw_target::depth, &effect_depth);
-
 	effect0_fb = exile->eng->ogl.add_framebuffer();
 	exile->eng->ogl.add_target(effect0_fb, effect0_target);
-	exile->eng->ogl.add_target(effect0_fb, effect_depth_target);
 	exile->eng->ogl.commit_framebuffer(effect0_fb);
 
 	effect1_fb = exile->eng->ogl.add_framebuffer();
 	exile->eng->ogl.add_target(effect1_fb, effect1_target);
-	exile->eng->ogl.add_target(effect1_fb, effect_depth_target);
 	exile->eng->ogl.commit_framebuffer(effect1_fb);
 }
 
 void world_target_info::resolve(render_command_list* list) {
 	
-	if(msaa) {
-		render_command cmd = render_command::make(ogl_manager::cmd_blit_fb);
-		cmd.blit.src = render_ms;
-		cmd.blit.dst = get_fb();
-		cmd.blit.mask = (GLbitfield)gl_clear::color_buffer_bit;
-		cmd.blit.filter = gl_tex_filter::scaled_resolve_fastest;		
-		list->add_command(cmd);
-	}
-}
+	render_command cmd = msaa ? exile->ren.defer_ms.make_cmd() : exile->ren.defer.make_cmd();
+	cmd.info.fb_id = get_fb();
 
-framebuffer_id world_target_info::world_fb() {
-	return msaa ? render_ms : get_fb();
+	cmd.info.textures[0] = col_buf;
+	cmd.info.textures[1] = pos_buf;
+	cmd.info.textures[2] = norm_buf;
+	cmd.info.user_data0 = &exile->ren;
+
+	list->add_command(cmd);
+	list->pop_settings();
 }
 
 texture_id world_target_info::get_output() {
@@ -268,22 +270,21 @@ void world_target_info::destroy() {
 
 	exile->eng->ogl.destroy_texture(effect0);
 	exile->eng->ogl.destroy_texture(effect1);
-	effect_depth.destroy();
 
 	exile->eng->ogl.destroy_framebuffer(effect0_fb);
 	exile->eng->ogl.destroy_framebuffer(effect1_fb);
 	
 	effect0 = effect1 = effect0_fb = effect1_fb = -1;
-	effect0_target = effect1_target = effect_depth_target = {};
+	effect0_target = effect1_target = {};
 
-	if(msaa) {
-		depth_buf.destroy();
-		exile->eng->ogl.destroy_texture(col_buf);
-		exile->eng->ogl.destroy_framebuffer(render_ms);
+	exile->eng->ogl.destroy_texture(col_buf);
+	exile->eng->ogl.destroy_texture(pos_buf);
+	exile->eng->ogl.destroy_texture(norm_buf);
+	exile->eng->ogl.destroy_texture(depth_buf);
+	exile->eng->ogl.destroy_framebuffer(world_fb);
 		
-		depth_buf_target = col_buf_target = {};
-		col_buf = render_ms = -1;
-	}
+	pos_buf_target = norm_buf_target = depth_buf_target = col_buf_target = {};
+	pos_buf = norm_buf = col_buf = depth_buf = world_fb = -1;
 }
 
 void exile_renderer::recreate_targets() {
@@ -324,6 +325,8 @@ void exile_renderer::generate_commands() {
 	composite_resolve.init(FPTR(uniforms_composite_resolve), "composite_resolve.f"_);
 	invert.init(FPTR(uniforms_invert), "invert.f"_);
 	gamma.init(FPTR(uniforms_gamma), "gamma.f"_);
+	defer.init(FPTR(uniforms_defer), "defer.f"_);
+	defer_ms.init(FPTR(uniforms_defer_ms), "defer_ms.f"_);
 
 	#undef reg
 }
@@ -360,6 +363,8 @@ void exile_renderer::destroy() {
 	composite_resolve.destroy();
 	invert.destroy();
 	gamma.destroy();
+	defer.destroy();
+	defer_ms.destroy();
 
 	hud_tasks.destroy();
 	frame_tasks.destroy();
@@ -400,6 +405,23 @@ CALLBACK void uniforms_resolve(shader_program* prog, render_command* cmd) {
 	exile_renderer* set = (exile_renderer*)cmd->info.user_data0;
 
 	glUniform1i(prog->location("tex"_), 0);
+	glUniform1i(prog->location("num_samples"_), set->prev_samples);
+	glUniform2f(prog->location("screen_size"_), (f32)set->prev_dim.x, (f32)set->prev_dim.y);
+}
+
+CALLBACK void uniforms_defer(shader_program* prog, render_command* cmd) {
+
+	glUniform1i(prog->location("col_tex"_), 0);
+	glUniform1i(prog->location("pos_tex"_), 1);
+	glUniform1i(prog->location("norm_tex"_), 2);
+}
+
+CALLBACK void uniforms_defer_ms(shader_program* prog, render_command* cmd) {
+
+	uniforms_defer(prog, cmd);
+
+	exile_renderer* set = (exile_renderer*)cmd->info.user_data0;
+
 	glUniform1i(prog->location("num_samples"_), set->prev_samples);
 	glUniform2f(prog->location("screen_size"_), (f32)set->prev_dim.x, (f32)set->prev_dim.y);
 }

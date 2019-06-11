@@ -57,6 +57,7 @@ flat out vec4 f_ao;
 flat out vec4 f_l, f_s;
 out vec2 f_uv;
 out vec3 f_n;
+out vec3 f_pos;
 out float f_ah, f_d;
 
 struct vert {
@@ -129,6 +130,7 @@ void main() {
 	vec3 v3 = unpack(1, 0);
 
 	vec3 m_pos = (m * vec4(v0, 1.0)).xyz;
+	f_pos = m_pos;
 	
 	// Output
 

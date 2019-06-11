@@ -642,7 +642,9 @@ void texture::set_params() {
 
 	if(type == texture_type::target) {
 		if(target_info.samples == 1) {
-			glTexImage2D(gl_type, 0, target_info.format, target_info.dim.x, target_info.dim.y, 0, gl_pixel_data_format::rgb, gl_pixel_data_type::unsigned_byte, 0);
+			glTexImage2D(gl_type, 0, target_info.format, target_info.dim.x, target_info.dim.y, 0, 
+						 target_info.format == gl_tex_format::depth_component ? gl_pixel_data_format::depth_component : gl_pixel_data_format::rgb, 
+						 gl_pixel_data_type::unsigned_byte, 0);
 		} else {
 			glTexImage2DMultisample(gl_type, target_info.samples, target_info.format, target_info.dim.x, target_info.dim.y, gl_bool::_true);
 			return;

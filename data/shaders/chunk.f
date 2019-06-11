@@ -7,8 +7,11 @@ flat in vec4 f_l, f_s;
 in vec2 f_uv;
 in vec3 f_n;
 in float f_ah, f_d;
+in vec3 f_pos;
 
-out vec4 out_color;
+layout (location = 0) out vec4 out_color;
+layout (location = 1) out vec4 out_pos;
+layout (location = 2) out vec4 out_norm;
 
 uniform sampler2DArray blocks_tex;
 uniform sampler2D sky_tex;
@@ -85,5 +88,7 @@ void main() {
 		color = mix(color, sky_color, fog_factor);
 	}
 
-	out_color = vec4(color, sample.a);
+	out_color = vec4(color, 1.0f);
+	out_norm  = vec4(n, 1.0f);
+	out_pos   = vec4(f_pos, 1.0f);
 }

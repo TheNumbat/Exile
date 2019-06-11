@@ -3,6 +3,7 @@ Working To-Do:
 
 	Rendering:
 		deferred rendering
+			why do we need to output vec4s?
 			dynamic lights
 				flashlight
 				dynamic torches

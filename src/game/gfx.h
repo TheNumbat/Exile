@@ -232,6 +232,12 @@ struct world_render_settings {
 	bool dist_fog = false;
 };
 
+enum class exile_deferred_view : u8 {
+	col,
+	pos,
+	norm
+};
+
 struct exile_render_settings {
 
 	world_render_settings world_set;
@@ -239,6 +245,8 @@ struct exile_render_settings {
 	i32 num_samples = 4;
 	f32 gamma = 2.1;
 	bool invert_effect = false;
+
+	exile_deferred_view view =  exile_deferred_view::col;
 
 	colorf clear_color = colorf(0.8f, 0.8f, 0.8f, 1.0f);
 };
@@ -248,22 +256,21 @@ struct world_target_info {
 	// NOTE(max): only the buffers + textures use GPU memory,
 	// the rest are reference objects
 
-	// MSAA render target
-	render_buffer depth_buf;
-	texture_id col_buf;
+	// PLAN: completely separate world deferred process, then always resolve.
+	// may or may not be multisampled.
+
+	// world render target
+	texture_id pos_buf, col_buf, depth_buf, norm_buf;
+	render_target pos_buf_target, depth_buf_target, col_buf_target, norm_buf_target;
+	framebuffer_id world_fb = 0;
 
 	// resolve and effect double buffering
 	texture_id effect0, effect1;
-	render_buffer effect_depth; // does it work to only have one of these?
-
-	render_target depth_buf_target, col_buf_target;
-	render_target effect0_target, effect1_target, effect_depth_target; 
-
-	framebuffer_id render_ms = 0;
+	render_target effect0_target, effect1_target; 
 	framebuffer_id effect0_fb = 0;
 	framebuffer_id effect1_fb = 0;
 
-	bool msaa = true;
+	bool msaa = false;
 	bool current0 = true;
 
 	void init(iv2 dim, i32 samples);
@@ -272,7 +279,6 @@ struct world_target_info {
 	void resolve(render_command_list* list); // transfer col_buf to effect buffer if msaa enabled
 	
 	void flip_fb();
-	framebuffer_id world_fb();
 	framebuffer_id get_fb();
 	texture_id get_output();
 };
@@ -316,8 +322,9 @@ struct exile_renderer {
 	mesh_cubemap the_cubemap;
 	mesh_quad 	 the_quad;
 
-	effect_pass composite, composite_resolve, resolve;
 	effect_pass invert, gamma;
+	effect_pass defer, defer_ms;
+	effect_pass composite, composite_resolve, resolve;
 
 	world_target_info world_target;
 
@@ -370,6 +377,8 @@ CALLBACK void uniforms_composite(shader_program* prog, render_command* cmd);
 CALLBACK void uniforms_composite_resolve(shader_program* prog, render_command* cmd);
 CALLBACK void uniforms_invert(shader_program* prog, render_command* cmd);
 CALLBACK void uniforms_gamma(shader_program* prog, render_command* cmd);
+CALLBACK void uniforms_defer(shader_program* prog, render_command* cmd);
+CALLBACK void uniforms_defer_ms(shader_program* prog, render_command* cmd);
 
 
 
