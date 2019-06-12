@@ -5,8 +5,13 @@ Working To-Do:
 		option to swap between deferred and forward (i.e. no dynamic lights / shadows at all)
 			replace old code
 			go back to renderbuffer for deferred depth buffer; we don't need the texture (can blit depth into next)
+			four paths: forward no msaa, forward msaa, deferred no msaa, deferred msaa 
+				optional FXAA/SMAA effect; use when MSAA is disabled.
 		deferred rendering
 			why do we need to output vec4s?
+			sample coverage - detect complex pixels to do full MSAA shading
+				https://docs.nvidia.com/gameworks/content/gameworkslibrary/graphicssamples/d3d_samples/antialiaseddeferredrendering.htm
+				https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/gl_SampleMaskIn.xhtml
 			dynamic lights
 				flashlight
 				dynamic torches
@@ -17,13 +22,15 @@ Working To-Do:
 				sunlight shadows
 		normal mapping
 		bloom / better fog (e.g. fog undergound should be dark -- apply lighting to fog)
+			https://learnopengl.com/Advanced-Lighting/Bloom
+			http://www.sea-of-memes.com/LetsCode37/LetsCode37.html
 		HDR / auto exposure?
+			https://learnopengl.com/Advanced-Lighting/HDR
 		chunk culling / visibility query
 			try cpu frustum + occlusion queries
 			!!! removing chunk gpu data when it is not being drawn 
 				also cpu data, but that comes later
 		chunk uniform buffers
-		PBR ? probably not
 		bindless OGL stuff
 
 	World:
