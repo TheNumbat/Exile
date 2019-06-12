@@ -2,11 +2,6 @@
 Working To-Do:
 
 	Rendering:
-		option to swap between deferred and forward (i.e. no dynamic lights / shadows at all)
-			replace old code
-			go back to renderbuffer for deferred depth buffer; we don't need the texture (can blit depth into next)
-			four paths: forward no msaa, forward msaa, deferred no msaa, deferred msaa 
-				optional FXAA/SMAA effect; use when MSAA is disabled.
 		deferred rendering
 			why do we need to output vec4s?
 			sample coverage - detect complex pixels to do full MSAA shading
@@ -20,6 +15,7 @@ Working To-Do:
 				directional (flashlight) shadows 
 				point (torch) shadows
 				sunlight shadows
+			optional FXAA/SMAA effect; use when MSAA is disabled.
 		normal mapping
 		bloom / better fog (e.g. fog undergound should be dark -- apply lighting to fog)
 			https://learnopengl.com/Advanced-Lighting/Bloom

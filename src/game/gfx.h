@@ -245,11 +245,24 @@ struct exile_render_settings {
 	i32 num_samples = 4;
 	f32 gamma = 2.1;
 	bool invert_effect = false;
-	
+	bool deferred = true;
 
 	exile_deferred_view view =  exile_deferred_view::col;
 
 	colorf clear_color = colorf(0.8f, 0.8f, 0.8f, 1.0f);
+};
+
+struct world_target_deferred_info {
+	texture_id pos_buf, col_buf, norm_buf;
+	render_buffer depth_buf;
+	render_target pos_buf_target, depth_buf_target, col_buf_target, norm_buf_target;
+	framebuffer_id fb = 0;
+};
+struct world_target_effect_info {
+	texture_id effect0, effect1;
+	render_target effect0_target, effect1_target; 
+	framebuffer_id effect0_fb = 0;
+	framebuffer_id effect1_fb = 0;
 };
 
 struct world_target_info {
@@ -257,26 +270,20 @@ struct world_target_info {
 	// NOTE(max): only the buffers + textures use GPU memory,
 	// the rest are reference objects
 
-	// world render target
-	texture_id pos_buf, col_buf, depth_buf, norm_buf;
-	render_target pos_buf_target, depth_buf_target, col_buf_target, norm_buf_target;
-	framebuffer_id world_fb = 0;
-
-	// resolve and effect double buffering
-	texture_id effect0, effect1;
-	render_target effect0_target, effect1_target; 
-	framebuffer_id effect0_fb = 0;
-	framebuffer_id effect1_fb = 0;
+	world_target_deferred_info d_info;
+	world_target_effect_info e_info;
 
 	bool msaa = false;
+	bool deferred = true;
 	bool current0 = true;
 
-	void init(iv2 dim, i32 samples);
+	void init(iv2 dim, i32 samples, bool deferred);
 	void destroy();
 	
 	void resolve(render_command_list* list); // transfer col_buf to effect buffer if msaa enabled
 	
 	void flip_fb();
+	framebuffer_id world_fb();
 	framebuffer_id get_fb();
 	texture_id get_output();
 };
