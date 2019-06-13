@@ -4,11 +4,15 @@ Working To-Do:
 	Rendering:
 		deferred rendering
 			why do we need to output vec4s?
-			move literally everything out of chunk shaders; just passthrough
+			move literally everything out of chunk shaders; just passthrough then resolve later
 				sample coverage - detect complex pixels to do full MSAA shading
 					https://docs.nvidia.com/gameworks/content/gameworkslibrary/graphicssamples/d3d_samples/antialiaseddeferredrendering.htm
 					https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/gl_SampleMaskIn.xhtml
-				then resolve later
+					https://www.khronos.org/registry/OpenGL/extensions/NV/NV_conservative_raster_underestimation.txt
+						but this only works on newer NVIDIA GPUs? what else do we do?
+					image textures to read/write?
+						http://docs.gl/gl4/glBindImageTexture
+					do we even need to do this?
 			dynamic lights
 				flashlight
 				dynamic torches

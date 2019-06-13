@@ -1,6 +1,8 @@
 
 #version 400 core
 
+// #extension GL_NV_conservative_raster_underestimation : enable
+
 flat in uint f_t, f_ql, f_qs;
 flat in vec4 f_ao;
 flat in vec4 f_l, f_s;
@@ -12,7 +14,7 @@ in vec3 f_pos;
 layout (location = 0) out vec4 out_color;
 layout (location = 1) out vec4 out_pos;
 layout (location = 2) out vec4 out_norm;
-layout (location = 3) out float out_coverage;
+layout (location = 3) out int out_coverage;
 
 uniform sampler2DArray blocks_tex;
 uniform sampler2D sky_tex;
@@ -20,6 +22,7 @@ uniform sampler2D sky_tex;
 uniform bool do_fog;
 uniform bool do_light;
 uniform bool smooth_light;
+uniform bool sample_shading;
 uniform int debug_light;
 
 uniform float render_distance;
@@ -92,6 +95,11 @@ void main() {
 	out_color = vec4(color, 1.0f);
 	out_norm  = vec4(n, 1.0f);
 	out_pos   = vec4(f_pos, 1.0f);
-	
-	out_coverage = gl_SampleMaskIn[0] == 0xf ? 0.0f : 1.0f;
+
+	if(sample_shading) {
+		// out_coverage = gl_FragFullyCoveredNV ? 0 : 1; 
+		// out_coverage = (gl_SampleMaskIn[0] >> gl_SampleID) == 1 ? 0 : 1;
+	} else {
+		out_coverage = gl_SampleMaskIn[0] == 0xf ? 0 : 1;
+	}
 }

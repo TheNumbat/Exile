@@ -8,7 +8,7 @@ out vec4 color;
 uniform sampler2D col_tex;
 uniform sampler2D pos_tex;
 uniform sampler2D norm_tex;
-uniform sampler2D coverage_tex;
+uniform isampler2D coverage_tex;
 
 uniform int debug_show;
 
@@ -26,7 +26,7 @@ void main() {
 	} else if(debug_show == 2) {
 		color = vec4(abs(n), 1.0f);
 	} else {
-		color = cov == 0.0f ? vec4(0.0f, 0.0f, 0.0f, 1.0f) : vec4(1.0f);
+		color = cov == 0 ? vec4(0.0f, 0.0f, 0.0f, 1.0f) : vec4(1.0f);
 	}
 }
 

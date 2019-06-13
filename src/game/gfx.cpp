@@ -30,7 +30,10 @@ void exile_renderer::world_skydome(gpu_object_id gpu_id, world_time* time, textu
 	cmd.info.view = view;
 	cmd.info.proj = proj;
 
+	frame_tasks.push_settings();
+	frame_tasks.set_setting(render_setting::depth_test, false);
 	frame_tasks.add_command(cmd);
+	frame_tasks.pop_settings();
 }
 
 void exile_renderer::world_stars(gpu_object_id gpu_id, world_time* time, m4 view, m4 proj) {
@@ -113,7 +116,7 @@ void exile_renderer::world_clear() {
 	frame_tasks.push_settings();
 	frame_tasks.set_setting(render_setting::blend, false);
 	frame_tasks.set_setting(render_setting::dither, false);
-	
+
 	render_command cmd = render_command::make(ogl_manager::cmd_clear);
 	
 	cmd.clear.fb_id = world_target.world_fb();
@@ -135,18 +138,18 @@ void exile_renderer::world_clear() {
 		cmd.clear.target = gl_draw_target::color_1;
 		cmd.clear.clear_data = &settings.p_n_clear_color;
 
-		// frame_tasks.add_command(cmd);
+		frame_tasks.add_command(cmd);
 
 		cmd.clear.target = gl_draw_target::color_2;
 		cmd.clear.clear_data = &settings.p_n_clear_color;
 
-		// frame_tasks.add_command(cmd);
+		frame_tasks.add_command(cmd);
 
 		cmd.clear.target = gl_draw_target::color_3;
-		cmd.clear.data_type = clear_data_type::ui;
+		cmd.clear.data_type = clear_data_type::i;
 		cmd.clear.clear_data = &settings.coverage_clear;
 
-		// frame_tasks.add_command(cmd);
+		frame_tasks.add_command(cmd);
 	}
 }
 
@@ -248,7 +251,7 @@ void world_target_info::init(iv2 dim, i32 samples, bool def) {
 		d_info.norm_buf = exile->eng->ogl.add_texture_target(dim, samples, gl_tex_format::rgb16f, gl_pixel_data_format::rgb);
 		d_info.norm_buf_target = exile->eng->ogl.make_target(gl_draw_target::color_2, d_info.norm_buf);
 
-		d_info.coverage_buf = exile->eng->ogl.add_texture_target(dim, samples, gl_tex_format::r8, gl_pixel_data_format::red);
+		d_info.coverage_buf = exile->eng->ogl.add_texture_target(dim, samples, gl_tex_format::r32f, gl_pixel_data_format::red);
 		d_info.coverage_buf_target = exile->eng->ogl.make_target(gl_draw_target::color_3, d_info.coverage_buf);
 	}
 
@@ -579,6 +582,7 @@ CALLBACK void uniforms_mesh_chunk(shader_program* prog, render_command* cmd) {
 	glUniform1i(prog->location("do_fog"_), set->dist_fog);
 	glUniform1i(prog->location("do_light"_), set->block_light);
 	glUniform1i(prog->location("smooth_light"_), set->smooth_light);
+	glUniform1i(prog->location("sample_shading"_), set->sample_shading);
 	glUniform1i(prog->location("debug_light"_), (i32)set->light_debug_mode);
 
 	glUniform1f(prog->location("day_01"_), time->day_01());

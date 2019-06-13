@@ -253,7 +253,7 @@ struct exile_render_settings {
 	colorf clear_color = colorf(0.8f, 0.8f, 0.8f, 1.0f);
 	colorf p_n_clear_color = colorf(0.0f, 0.0f, 0.0f, 0.0f);
 	f32 depth_clear = 1.0f;
-	u32 coverage_clear = 0;
+	i32 coverage_clear = 0;
 };
 
 struct world_target_deferred_info {
