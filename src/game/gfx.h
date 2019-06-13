@@ -232,10 +232,11 @@ struct world_render_settings {
 	bool dist_fog = false;
 };
 
-enum class exile_deferred_view : u8 {
-	col,
-	pos,
-	norm
+enum class exile_deferred_view : i32 {
+	col  = 0,
+	pos  = 1,
+	norm = 2,
+	coverage = 3
 };
 
 struct exile_render_settings {
@@ -250,12 +251,15 @@ struct exile_render_settings {
 	exile_deferred_view view =  exile_deferred_view::col;
 
 	colorf clear_color = colorf(0.8f, 0.8f, 0.8f, 1.0f);
+	colorf p_n_clear_color = colorf(0.0f, 0.0f, 0.0f, 0.0f);
+	f32 depth_clear = 1.0f;
+	u32 coverage_clear = 0;
 };
 
 struct world_target_deferred_info {
-	texture_id pos_buf, col_buf, norm_buf;
+	texture_id pos_buf, col_buf, norm_buf, coverage_buf;
 	render_buffer depth_buf;
-	render_target pos_buf_target, depth_buf_target, col_buf_target, norm_buf_target;
+	render_target pos_buf_target, depth_buf_target, col_buf_target, norm_buf_target, coverage_buf_target;
 	framebuffer_id fb = 0;
 };
 struct world_target_effect_info {

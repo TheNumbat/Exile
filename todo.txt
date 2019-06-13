@@ -4,9 +4,11 @@ Working To-Do:
 	Rendering:
 		deferred rendering
 			why do we need to output vec4s?
-			sample coverage - detect complex pixels to do full MSAA shading
-				https://docs.nvidia.com/gameworks/content/gameworkslibrary/graphicssamples/d3d_samples/antialiaseddeferredrendering.htm
-				https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/gl_SampleMaskIn.xhtml
+			move literally everything out of chunk shaders; just passthrough
+				sample coverage - detect complex pixels to do full MSAA shading
+					https://docs.nvidia.com/gameworks/content/gameworkslibrary/graphicssamples/d3d_samples/antialiaseddeferredrendering.htm
+					https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/gl_SampleMaskIn.xhtml
+				then resolve later
 			dynamic lights
 				flashlight
 				dynamic torches

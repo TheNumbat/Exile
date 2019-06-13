@@ -1,5 +1,5 @@
 
-#version 330 core
+#version 400 core
 
 flat in uint f_t, f_ql, f_qs;
 flat in vec4 f_ao;
@@ -12,6 +12,7 @@ in vec3 f_pos;
 layout (location = 0) out vec4 out_color;
 layout (location = 1) out vec4 out_pos;
 layout (location = 2) out vec4 out_norm;
+layout (location = 3) out float out_coverage;
 
 uniform sampler2DArray blocks_tex;
 uniform sampler2D sky_tex;
@@ -29,11 +30,11 @@ void main() {
 
 	vec3 uvt = vec3(f_uv, f_t);
 
-	vec4 sample = texture(blocks_tex, uvt);
+	vec4 tex_sample = texture(blocks_tex, uvt);
 
 	vec3 n = normalize(f_n);
 
-	vec3 color = sample.rgb;
+	vec3 color = tex_sample.rgb;
 
 	if(do_light) {
 
@@ -91,4 +92,6 @@ void main() {
 	out_color = vec4(color, 1.0f);
 	out_norm  = vec4(n, 1.0f);
 	out_pos   = vec4(f_pos, 1.0f);
+	
+	out_coverage = gl_SampleMaskIn[0] == 0xf ? 0.0f : 1.0f;
 }

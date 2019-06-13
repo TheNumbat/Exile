@@ -426,9 +426,9 @@ texture_id ogl_manager::add_texture_from_font(asset_store* as, string name, text
 	return next_texture_id++;
 }
 
-texture_id ogl_manager::add_texture_target(iv2 dim, i32 samples, gl_tex_format format, bool pixelated) { 
+texture_id ogl_manager::add_texture_target(iv2 dim, i32 samples, gl_tex_format format, gl_pixel_data_format pixel, bool pixelated) { 
 
-	texture t = texture::make_target(dim, samples, format, pixelated);
+	texture t = texture::make_target(dim, samples, format, pixel, pixelated);
 
 	textures.insert(next_texture_id, t);
 
@@ -619,7 +619,7 @@ texture texture::make_array(iv3 dim, u32 offset, texture_wrap wrap, bool pixelat
 	return ret;
 }
 
-texture texture::make_target(iv2 dim, i32 samples, gl_tex_format format, bool pixelated) {
+texture texture::make_target(iv2 dim, i32 samples, gl_tex_format format, gl_pixel_data_format pixel, bool pixelated) {
 
 	texture ret;
 	ret.type = texture_type::target;
@@ -629,6 +629,7 @@ texture texture::make_target(iv2 dim, i32 samples, gl_tex_format format, bool pi
 	ret.target_info.dim = dim;
 	ret.target_info.samples = samples;
 	ret.target_info.format = format;
+	ret.target_info.pixel = pixel;
 
 	glGenTextures(1, &ret.handle);
 	ret.set_params();
@@ -643,8 +644,7 @@ void texture::set_params() {
 	if(type == texture_type::target) {
 		if(target_info.samples == 1) {
 			glTexImage2D(gl_type, 0, target_info.format, target_info.dim.x, target_info.dim.y, 0, 
-						 target_info.format == gl_tex_format::depth_component ? gl_pixel_data_format::depth_component : gl_pixel_data_format::rgb, 
-						 gl_pixel_data_type::unsigned_byte, 0);
+						 target_info.pixel, gl_pixel_data_type::unsigned_byte, 0);
 		} else {
 			glTexImage2DMultisample(gl_type, target_info.samples, target_info.format, target_info.dim.x, target_info.dim.y, gl_bool::_true);
 			return;
@@ -1134,7 +1134,11 @@ draw_context* ogl_manager::select_ctx(draw_cmd_id id) {
 
 void ogl_manager::_cmd_push_settings() { 
 
-	command_settings.push(cmd_settings());
+	cmd_settings* top = command_settings.top();
+	if(top)
+		command_settings.push(*top);
+	else
+		command_settings.push(cmd_settings());
 }
 
 void ogl_manager::_cmd_pop_settings() { 
@@ -1170,8 +1174,31 @@ void ogl_manager::_cmd_blit_fb(render_command_blit_fb blit) {
 }
 
 void ogl_manager::_cmd_clear(render_command_clear clear) { 
-	glClearColor(clear.col.r, clear.col.g, clear.col.b, clear.col.a);
-	glClear(clear.components);
+
+	if(clear.components) {
+		glClearColor(clear.col.r, clear.col.g, clear.col.b, clear.col.a);
+		glClear(clear.components);
+	} else {
+
+		framebuffer* fb = select_framebuffer(clear.fb_id);
+
+		if(clear.target == gl_draw_target::depth) {
+			LOG_ASSERT(clear.data_type == clear_data_type::f);
+			glClearNamedFramebufferfv(fb->handle, gl_clear_buffer::depth, 0, (GLfloat*)clear.clear_data);
+		} else if(clear.target == gl_draw_target::stencil) {
+			LOG_ASSERT(clear.data_type == clear_data_type::i);
+			glClearNamedFramebufferiv(fb->handle, gl_clear_buffer::stencil, 0, (GLint*)clear.clear_data);
+		} else {
+			i32 i = (GLenum)clear.target - (GLenum)gl_draw_target::color_0;
+			if(clear.data_type == clear_data_type::i) {
+				glClearNamedFramebufferiv(fb->handle, gl_clear_buffer::color_, i, (GLint*)clear.clear_data);
+			} else if(clear.data_type == clear_data_type::ui) {
+				glClearNamedFramebufferuiv(fb->handle, gl_clear_buffer::color_, i, (GLuint*)clear.clear_data);
+			} else {
+				glClearNamedFramebufferfv(fb->handle, gl_clear_buffer::color_, i, (GLfloat*)clear.clear_data);
+			}
+		}
+	}
 }
 
 void ogl_manager::_cmd_set_setting(render_command_setting setting) { 
@@ -1183,6 +1210,7 @@ void ogl_manager::_cmd_set_setting(render_command_setting setting) {
 	case render_setting::depth_test: set->depth_test = setting.enable; break;
 	case render_setting::aa_lines: set->line_smooth = setting.enable; break;
 	case render_setting::blend: set->blend = setting.enable; break;
+	case render_setting::dither: set->dither = setting.enable; break;
 	case render_setting::scissor: set->scissor = setting.enable; break;
 	case render_setting::cull: set->cull_backface = setting.enable; break;
 	case render_setting::msaa: set->multisample = setting.enable; break;
@@ -1229,6 +1257,7 @@ void ogl_manager::_cmd_apply_settings() {
 	set->depth_test 	? glEnable(gl_capability::depth_test) : glDisable(gl_capability::depth_test);
 	set->line_smooth 	? glEnable(gl_capability::line_smooth) : glDisable(gl_capability::line_smooth);
 	set->blend 			? glEnable(gl_capability::blend) : glDisable(gl_capability::blend);
+	set->dither 		? glEnable(gl_capability::dither) : glDisable(gl_capability::dither);
 	set->scissor 		? glEnable(gl_capability::scissor_test) : glDisable(gl_capability::scissor_test);
 	set->cull_backface 	? glEnable(gl_capability::cull_face) : glDisable(gl_capability::cull_face);
 	set->multisample 	? glEnable(gl_capability::multisample) : glDisable(gl_capability::multisample);
@@ -1257,6 +1286,7 @@ void ogl_manager::execute_command_list(render_command_list* rcl) {
 			_cmd_set_setting(cmd->setting);
 		} break;
 		case cmd_clear: {
+			_cmd_set_settings(cmd);
 			select_framebuffer(cmd->clear.fb_id);
 			_cmd_clear(cmd->clear);
 		} break;
@@ -1542,6 +1572,9 @@ void ogl_manager::load_global_funcs() {
 	GL_LOAD(glNamedRenderbufferStorage);
 	GL_LOAD(glNamedRenderbufferStorageMultisample);
 	GL_LOAD(glNamedFramebufferReadBuffer);
+	GL_LOAD(glClearNamedFramebufferiv);
+	GL_LOAD(glClearNamedFramebufferuiv);
+	GL_LOAD(glClearNamedFramebufferfv);
 
 	GL_LOAD(glGetStringi);
 	GL_LOAD(glGetInteger64v);

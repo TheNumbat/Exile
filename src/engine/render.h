@@ -108,6 +108,7 @@ struct texture_rf_info {
 
 struct texture_target_info {
 	gl_tex_format format = gl_tex_format::rgba8;
+	gl_pixel_data_format pixel = gl_pixel_data_format::rgb;
 	i32 samples = 1;
 	iv2 dim;
 };
@@ -147,7 +148,7 @@ private:
 	static texture make_rf(texture_wrap wrap, bool pixelated, bool srgb, f32 aniso);
 	static texture make_bmp(texture_wrap wrap, bool pixelated, bool srgb, f32 aniso);
 	static texture make_array(iv3 dim, u32 idx_offset, texture_wrap wrap, bool pixelated, bool srgb, f32 aniso, allocator* a);
-	static texture make_target(iv2 dim, i32 samples, gl_tex_format format, bool pixelated);
+	static texture make_target(iv2 dim, i32 samples, gl_tex_format format, gl_pixel_data_format pixel, bool pixelated);
 	void destroy(allocator* a);
 	void gl_destroy();
 
@@ -288,6 +289,7 @@ enum class render_setting : u8 {
 	depth_test,
 	aa_lines,
 	blend,
+	dither,
 	scissor,
 	cull,
 	msaa,
@@ -302,6 +304,7 @@ struct cmd_settings {
 	bool depth_test = true;
 	bool line_smooth = true;
 	bool blend = true;
+	bool dither = true;
 	bool scissor = true;
 	bool cull_backface = false;
 	bool multisample = true;
@@ -330,11 +333,22 @@ struct render_command_custom {
 	u32 offset = 0, num_tris = 0, start_tri = 0;
 };
 
+enum class clear_data_type : u8 {
+	i,
+	ui,
+	f
+};
+
 struct render_command_clear {
 
 	framebuffer_id fb_id = 0;
+
+	gl_draw_target target;
+	clear_data_type data_type;
+	void* clear_data = null;
+	
 	colorf col;
-	GLbitfield components = 0;
+	GLbitfield components = 0; // zero -> use target
 };
 
 struct render_command_setting {
@@ -451,7 +465,7 @@ struct ogl_manager {
 
  	// Textures
 	texture_id add_cubemap(asset_store* as, string name, bool srgb);
- 	texture_id add_texture_target(iv2 dim, i32 samples, gl_tex_format format, bool pixelated = true);
+ 	texture_id add_texture_target(iv2 dim, i32 samples, gl_tex_format format, gl_pixel_data_format pixel, bool pixelated = true);
 	texture_id add_texture(asset_store* as, string name, texture_wrap wrap = texture_wrap::repeat, bool pixelated = false, bool srgb = true);
 	texture_id add_texture_from_font(asset_store* as, string name, texture_wrap wrap = texture_wrap::repeat, bool pixelated = false, bool srgb = false);
 

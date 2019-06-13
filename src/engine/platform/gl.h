@@ -251,6 +251,13 @@ enum class gl_capability : GLenum {
 	program_point_size        	= 0x8642
 };
 
+enum class gl_clear_buffer : GLenum {
+	color_        = 0x1800,
+	depth         = 0x1801,
+	stencil       = 0x1802,
+	depth_stencil = 0x84F9
+};
+
 enum class gl_clear : GLbitfield {
 	depth_buffer_bit      		= 0x00000100,
 	stencil_buffer_bit    		= 0x00000400,
@@ -891,6 +898,11 @@ typedef void (*glNamedRenderbufferStorageMultisample_t)(GLuint buffer, GLsizei s
 typedef void (*glBlitNamedFramebuffer_t)(GLuint readFramebuffer, GLuint drawFramebuffer, GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, gl_tex_filter filter);
 typedef void (*glNamedFramebufferReadBuffer_t)(GLuint framebuffer, gl_draw_target mode);
 
+typedef void (*glClearNamedFramebufferiv_t)(GLuint framebuffer, gl_clear_buffer buffer, GLint drawbuffer, const GLint *value);
+typedef void (*glClearNamedFramebufferuiv_t)(GLuint framebuffer, gl_clear_buffer buffer, GLint drawbuffer, const GLuint *value); 
+typedef void (*glClearNamedFramebufferfv_t)(GLuint framebuffer, gl_clear_buffer buffer, GLint drawbuffer, const GLfloat *value);
+
+
 glIs_t glIsTexture;
 glIs_t glIsBuffer;
 glIs_t glIsFramebuffer;
@@ -989,3 +1001,7 @@ glNamedFramebufferRenderbuffer_t 		glNamedFramebufferRenderbuffer;
 glNamedRenderbufferStorage_t			glNamedRenderbufferStorage;
 glNamedRenderbufferStorageMultisample_t	glNamedRenderbufferStorageMultisample;
 glNamedFramebufferReadBuffer_t			glNamedFramebufferReadBuffer;
+
+glClearNamedFramebufferiv_t		glClearNamedFramebufferiv;
+glClearNamedFramebufferuiv_t	glClearNamedFramebufferuiv;
+glClearNamedFramebufferfv_t		glClearNamedFramebufferfv;

@@ -11,6 +11,9 @@ uniform vec2 screen_size;
 uniform sampler2DMS col_tex;
 uniform sampler2DMS pos_tex;
 uniform sampler2DMS norm_tex;
+uniform sampler2DMS coverage_tex;
+
+uniform int debug_show;
 
 vec4 texture_ms(sampler2DMS tex, ivec2 coord) {
 
@@ -27,7 +30,16 @@ void main() {
 	ivec2 coord = ivec2(f_uv * screen_size);
 	
 	vec3 c = texture_ms(col_tex, coord).rgb;
+	float cov = texelFetch(coverage_tex, coord, 0).r;
 
-	color = vec4(c, 1.0f);
+	if(debug_show == 0) {	
+		color = vec4(c, 1.0f);
+	} else if(debug_show == 1) {
+		color = vec4(texelFetch(pos_tex, coord, 0).rgb, 1.0f);
+	} else if(debug_show == 2) {
+		color = vec4(abs(texelFetch(norm_tex, coord, 0).rgb), 1.0f);
+	} else {
+		color = cov == 0.0f ? vec4(0.0f, 0.0f, 0.0f, 1.0f) : vec4(1.0f);
+	}
 }
 
