@@ -2,17 +2,9 @@
 Working To-Do:
 
 	Rendering:
+		https://developer.nvidia.com/gameworks-vulkan-and-opengl-samples
 		deferred rendering
 			why do we need to output vec4s?
-			move literally everything out of chunk shaders; just passthrough then resolve later
-				sample coverage - detect complex pixels to do full MSAA shading
-					https://docs.nvidia.com/gameworks/content/gameworkslibrary/graphicssamples/d3d_samples/antialiaseddeferredrendering.htm
-					https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/gl_SampleMaskIn.xhtml
-					https://www.khronos.org/registry/OpenGL/extensions/NV/NV_conservative_raster_underestimation.txt
-						but this only works on newer NVIDIA GPUs? what else do we do?
-					image textures to read/write?
-						http://docs.gl/gl4/glBindImageTexture
-					do we even need to do this?
 			dynamic lights
 				flashlight
 				dynamic torches
@@ -22,16 +14,18 @@ Working To-Do:
 				point (torch) shadows
 				sunlight shadows
 			optional FXAA/SMAA effect; use when MSAA is disabled.
+		chunk culling / visibility / draw optimizations
+			try cpu frustum + occlusion queries
+			!!! removing chunk gpu data when it is not being drawn 
+				also cpu data, but that comes later
+			Chunk Multidrawinderect !!!! also uniform buffers !!!!
+
 		normal mapping
 		bloom / better fog (e.g. fog undergound should be dark -- apply lighting to fog)
 			https://learnopengl.com/Advanced-Lighting/Bloom
 			http://www.sea-of-memes.com/LetsCode37/LetsCode37.html
 		HDR / auto exposure?
 			https://learnopengl.com/Advanced-Lighting/HDR
-		chunk culling / visibility query
-			try cpu frustum + occlusion queries
-			!!! removing chunk gpu data when it is not being drawn 
-				also cpu data, but that comes later
 		chunk uniform buffers
 		bindless OGL stuff
 

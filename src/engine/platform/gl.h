@@ -881,6 +881,7 @@ typedef void (*glRenderbufferStorageMultisample_t)(gl_renderbuffer target, GLsiz
 typedef void (*glDeleteRenderbuffers_t)(GLsizei n, GLuint *renderbuffers);
 
 typedef void (*glTexImage2DMultisample_t)(gl_tex_target target, GLsizei samples, gl_tex_format internalformat, GLsizei width, GLsizei height, gl_bool fixedsamplelocations);
+typedef void (*glClearTexImage_t)(GLuint texture, GLint level, gl_pixel_data_format format, gl_pixel_data_type type, const void * data);
 
 typedef void (*glGenFramebuffers_t)(GLsizei n, GLuint *ids);
 typedef void (*glDeleteFramebuffers_t)(GLsizei n, GLuint *framebuffers);
@@ -985,6 +986,7 @@ glRenderbufferStorageMultisample_t	glRenderbufferStorageMultisample;
 glDeleteRenderbuffers_t				glDeleteRenderbuffers;
 
 glTexImage2DMultisample_t 	glTexImage2DMultisample;
+glClearTexImage_t			glClearTexImage;
 
 glGenFramebuffers_t 		glGenFramebuffers;
 glDeleteFramebuffers_t 		glDeleteFramebuffers;

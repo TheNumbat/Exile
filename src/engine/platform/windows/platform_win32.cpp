@@ -1810,11 +1810,13 @@ platform_error win32_create_window(platform_window* window) {
 	TRY_VERSION(4, 1);
 	TRY_VERSION(4, 0);
 	TRY_VERSION(3, 3);
-	TRY_VERSION(3, 2);
-	TRY_VERSION(3, 1);
-	TRY_VERSION(3, 0);
-	TRY_VERSION(2, 1);
-	TRY_VERSION(2, 0);
+	
+	// Too old, don't want to support for anything, really.
+	// TRY_VERSION(3, 2);
+	// TRY_VERSION(3, 1);
+	// TRY_VERSION(3, 0);
+	// TRY_VERSION(2, 1);
+	// TRY_VERSION(2, 0);
 
 #undef TRY_VERSION
 

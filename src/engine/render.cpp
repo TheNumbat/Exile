@@ -1173,32 +1173,37 @@ void ogl_manager::_cmd_blit_fb(render_command_blit_fb blit) {
 		blit.mask, blit.filter);
 }
 
-void ogl_manager::_cmd_clear(render_command_clear clear) { 
+void ogl_manager::_cmd_clear(render_command_clear clear) {
+	glClearColor(clear.col.r, clear.col.g, clear.col.b, clear.col.a);
+	glClear(clear.components);
+}
 
-	if(clear.components) {
-		glClearColor(clear.col.r, clear.col.g, clear.col.b, clear.col.a);
-		glClear(clear.components);
+void ogl_manager::_cmd_clear_target(render_command_clear_target clear) { 
+
+	framebuffer* fb = select_framebuffer(clear.fb_id);
+
+	if(clear.target == gl_draw_target::depth) {
+		LOG_ASSERT(clear.data_type == clear_data_type::f);
+		glClearNamedFramebufferfv(fb->handle, gl_clear_buffer::depth, 0, (GLfloat*)clear.clear_data);
+	} else if(clear.target == gl_draw_target::stencil) {
+		LOG_ASSERT(clear.data_type == clear_data_type::i);
+		glClearNamedFramebufferiv(fb->handle, gl_clear_buffer::stencil, 0, (GLint*)clear.clear_data);
 	} else {
-
-		framebuffer* fb = select_framebuffer(clear.fb_id);
-
-		if(clear.target == gl_draw_target::depth) {
-			LOG_ASSERT(clear.data_type == clear_data_type::f);
-			glClearNamedFramebufferfv(fb->handle, gl_clear_buffer::depth, 0, (GLfloat*)clear.clear_data);
-		} else if(clear.target == gl_draw_target::stencil) {
-			LOG_ASSERT(clear.data_type == clear_data_type::i);
-			glClearNamedFramebufferiv(fb->handle, gl_clear_buffer::stencil, 0, (GLint*)clear.clear_data);
+		i32 i = (GLenum)clear.target - (GLenum)gl_draw_target::color_0;
+		if(clear.data_type == clear_data_type::i) {
+			glClearNamedFramebufferiv(fb->handle, gl_clear_buffer::color_, i, (GLint*)clear.clear_data);
+		} else if(clear.data_type == clear_data_type::ui) {
+			glClearNamedFramebufferuiv(fb->handle, gl_clear_buffer::color_, i, (GLuint*)clear.clear_data);
 		} else {
-			i32 i = (GLenum)clear.target - (GLenum)gl_draw_target::color_0;
-			if(clear.data_type == clear_data_type::i) {
-				glClearNamedFramebufferiv(fb->handle, gl_clear_buffer::color_, i, (GLint*)clear.clear_data);
-			} else if(clear.data_type == clear_data_type::ui) {
-				glClearNamedFramebufferuiv(fb->handle, gl_clear_buffer::color_, i, (GLuint*)clear.clear_data);
-			} else {
-				glClearNamedFramebufferfv(fb->handle, gl_clear_buffer::color_, i, (GLfloat*)clear.clear_data);
-			}
+			glClearNamedFramebufferfv(fb->handle, gl_clear_buffer::color_, i, (GLfloat*)clear.clear_data);
 		}
 	}
+}
+
+void ogl_manager::_cmd_clear_tex(render_command_clear_tex clear) {
+
+	texture* tx = select_texture(0, clear.tex);
+	glClearTexImage(tx->handle, 0, clear.format, clear.type, clear.clear_data);
 }
 
 void ogl_manager::_cmd_set_setting(render_command_setting setting) { 
@@ -1275,26 +1280,34 @@ void ogl_manager::execute_command_list(render_command_list* rcl) {
 
 	FORVEC(cmd, rcl->commands) {
 
+		_cmd_set_settings(cmd);
+
 		switch(cmd->cmd_id) {
-		case cmd_push_settings: {
+		case draw_cmd::push_settings: {
 			_cmd_push_settings();
 		} break;
-		case cmd_pop_settings: {
+		case draw_cmd::pop_settings: {
 			_cmd_pop_settings();
 		} break;
-		case cmd_setting: {
+		case draw_cmd::setting: {
 			_cmd_set_setting(cmd->setting);
 		} break;
-		case cmd_clear: {
-			_cmd_set_settings(cmd);
+		case draw_cmd::clear: {
 			select_framebuffer(cmd->clear.fb_id);
 			_cmd_clear(cmd->clear);
 		} break;
-		case cmd_blit_fb: {
+		case draw_cmd::clear_target: {
+			select_framebuffer(cmd->clear.fb_id);
+			_cmd_clear_target(cmd->clear_target);
+		} break;
+		case draw_cmd::clear_tex: {
+			select_framebuffer(cmd->clear.fb_id);
+			_cmd_clear_tex(cmd->clear_tex);
+		} break;
+		case draw_cmd::blit_fb: {
 			_cmd_blit_fb(cmd->blit);
 		} break;
 		default: {
-			_cmd_set_settings(cmd);
 
 			select_textures(cmd);
 			select_framebuffer(cmd->info.fb_id);
@@ -1575,6 +1588,7 @@ void ogl_manager::load_global_funcs() {
 	GL_LOAD(glClearNamedFramebufferiv);
 	GL_LOAD(glClearNamedFramebufferuiv);
 	GL_LOAD(glClearNamedFramebufferfv);
+	GL_LOAD(glClearTexImage);
 
 	GL_LOAD(glGetStringi);
 	GL_LOAD(glGetInteger64v);
@@ -1642,7 +1656,7 @@ render_command render_command::make(draw_cmd_id type) {
 render_command render_command::make_set(render_setting setting, bool enable) { 
 
 	render_command ret;
-	ret.cmd_id = ogl_manager::cmd_setting;
+	ret.cmd_id = (draw_cmd_id)draw_cmd::setting;
 	ret.setting.setting = setting;
 	ret.setting.enable = enable;
 	return ret;
@@ -1686,12 +1700,12 @@ void render_command_list::destroy() {
 
 void render_command_list::push_settings() {
 
-	add_command(render_command::make(ogl_manager::cmd_push_settings));
+	add_command(render_command::make((draw_cmd_id)draw_cmd::push_settings));
 }
 
 void render_command_list::pop_settings() {
 
-	add_command(render_command::make(ogl_manager::cmd_pop_settings));
+	add_command(render_command::make((draw_cmd_id)draw_cmd::pop_settings));
 }
 
 void render_command_list::set_setting(render_setting setting, bool enable) {

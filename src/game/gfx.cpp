@@ -114,43 +114,17 @@ void exile_renderer::hud_2D(gpu_object_id gpu_id) {
 void exile_renderer::world_clear() {
 
 	frame_tasks.push_settings();
-	frame_tasks.set_setting(render_setting::blend, false);
-	frame_tasks.set_setting(render_setting::dither, false);
 
-	render_command cmd = render_command::make(ogl_manager::cmd_clear);
-	
-	cmd.clear.fb_id = world_target.world_fb();
-	
-	cmd.clear.data_type = clear_data_type::f;
-	
-	cmd.clear.target = gl_draw_target::color_0;
-	cmd.clear.clear_data = &settings.clear_color;
-
-	frame_tasks.add_command(cmd);
-
-	cmd.clear.target = gl_draw_target::depth;
-	cmd.clear.clear_data = &settings.depth_clear;
-
-	frame_tasks.add_command(cmd);
-
-	if(world_target.deferred) {
-
-		cmd.clear.target = gl_draw_target::color_1;
-		cmd.clear.clear_data = &settings.p_n_clear_color;
-
-		frame_tasks.add_command(cmd);
-
-		cmd.clear.target = gl_draw_target::color_2;
-		cmd.clear.clear_data = &settings.p_n_clear_color;
-
-		frame_tasks.add_command(cmd);
-
-		cmd.clear.target = gl_draw_target::color_3;
-		cmd.clear.data_type = clear_data_type::i;
-		cmd.clear.clear_data = &settings.coverage_clear;
+	{
+		render_command cmd = render_command::make((draw_cmd_id)draw_cmd::clear);
+		
+		cmd.clear.fb_id = world_target.world_fb();
+		cmd.clear.components = (GLbitfield)gl_clear::depth_buffer_bit;
 
 		frame_tasks.add_command(cmd);
 	}
+
+	// the color buffers just get cleared by the sky-dome, so whatever
 }
 
 void exile_renderer::end_frame() {
@@ -191,7 +165,7 @@ void exile_renderer::end_frame() {
 
 	// composite to screen
 	{
-		render_command cmd = render_command::make(ogl_manager::cmd_blit_fb);
+		render_command cmd = render_command::make((draw_cmd_id)draw_cmd::blit_fb);
 		cmd.blit.src = world_target.get_fb();
 		cmd.blit.mask = (GLbitfield)gl_clear::color_buffer_bit;
 		cmd.blit.filter = gl_tex_filter::scaled_resolve_fastest;		
@@ -250,9 +224,6 @@ void world_target_info::init(iv2 dim, i32 samples, bool def) {
 
 		d_info.norm_buf = exile->eng->ogl.add_texture_target(dim, samples, gl_tex_format::rgb16f, gl_pixel_data_format::rgb);
 		d_info.norm_buf_target = exile->eng->ogl.make_target(gl_draw_target::color_2, d_info.norm_buf);
-
-		d_info.coverage_buf = exile->eng->ogl.add_texture_target(dim, samples, gl_tex_format::r32f, gl_pixel_data_format::red);
-		d_info.coverage_buf_target = exile->eng->ogl.make_target(gl_draw_target::color_3, d_info.coverage_buf);
 	}
 
 	d_info.depth_buf = render_buffer::make(gl_tex_format::depth_component, dim, samples);
@@ -263,7 +234,6 @@ void world_target_info::init(iv2 dim, i32 samples, bool def) {
 	if(deferred) {
 		exile->eng->ogl.add_target(d_info.fb, d_info.pos_buf_target);
 		exile->eng->ogl.add_target(d_info.fb, d_info.norm_buf_target);
-		exile->eng->ogl.add_target(d_info.fb, d_info.coverage_buf_target);
 	}
 	exile->eng->ogl.add_target(d_info.fb, d_info.depth_buf_target);
 	exile->eng->ogl.commit_framebuffer(d_info.fb);
@@ -295,7 +265,6 @@ void world_target_info::resolve(render_command_list* list) {
 	cmd.info.textures[0] = d_info.col_buf;
 	cmd.info.textures[1] = d_info.pos_buf;
 	cmd.info.textures[2] = d_info.norm_buf;
-	cmd.info.textures[3] = d_info.coverage_buf;
 	cmd.info.user_data0 = &exile->ren;
 
 	list->add_command(cmd);
@@ -334,13 +303,12 @@ void world_target_info::destroy() {
 	if(deferred) {
 		exile->eng->ogl.destroy_texture(d_info.pos_buf);
 		exile->eng->ogl.destroy_texture(d_info.norm_buf);
-		exile->eng->ogl.destroy_texture(d_info.coverage_buf);
 	}
 	exile->eng->ogl.destroy_framebuffer(d_info.fb);
-			
+
 	d_info.depth_buf = {};
-	d_info.pos_buf_target = d_info.norm_buf_target = d_info.depth_buf_target = d_info.col_buf_target = d_info.coverage_buf_target = {};
-	d_info.pos_buf = d_info.norm_buf = d_info.col_buf = d_info.coverage_buf = d_info.fb = 0;
+	d_info.pos_buf_target = d_info.norm_buf_target = d_info.depth_buf_target = d_info.col_buf_target = {};
+	d_info.pos_buf = d_info.norm_buf = d_info.col_buf = d_info.fb = 0;
 }
 
 void exile_renderer::recreate_targets() {
@@ -473,7 +441,6 @@ CALLBACK void uniforms_defer(shader_program* prog, render_command* cmd) {
 	glUniform1i(prog->location("col_tex"_), 0);
 	glUniform1i(prog->location("pos_tex"_), 1);
 	glUniform1i(prog->location("norm_tex"_), 2);
-	glUniform1i(prog->location("coverage_tex"_), 3);
 	glUniform1i(prog->location("debug_show"_), (i32)set->settings.view);
 }
 

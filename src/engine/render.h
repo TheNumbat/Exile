@@ -339,16 +339,26 @@ enum class clear_data_type : u8 {
 	f
 };
 
-struct render_command_clear {
+struct render_command_clear_target {
 
 	framebuffer_id fb_id = 0;
-
 	gl_draw_target target;
 	clear_data_type data_type;
 	void* clear_data = null;
-	
+};
+
+struct render_command_clear_tex {
+	texture_id tex = 0;
+	gl_pixel_data_format format;
+	gl_pixel_data_type type;
+	void* clear_data = null;
+};
+
+struct render_command_clear {
+
+	framebuffer_id fb_id = 0;
 	colorf col;
-	GLbitfield components = 0; // zero -> use target
+	GLbitfield components = 0;
 };
 
 struct render_command_setting {
@@ -378,8 +388,10 @@ struct render_command {
 	union {
 		render_command_custom info;
 		render_command_clear clear;
-		render_command_setting setting;
 		render_command_blit_fb blit;
+		render_command_setting setting;
+		render_command_clear_tex clear_tex;
+		render_command_clear_target clear_target;
 	};
 
 	render_command() {_memset(this, sizeof(render_command), 0);}
@@ -434,16 +446,20 @@ struct render_camera {
 	m4 view_no_translate();
 };
 
+enum class draw_cmd : draw_cmd_id {
+	noop = 0,
+	push_settings,
+	pop_settings,
+	setting,
+	clear,
+	clear_target,
+	clear_tex,
+	blit_fb,
+
+	first_custom_cmd
+};
+
 struct ogl_manager {
-
-	static const draw_cmd_id cmd_noop 		   = 0;
-	static const draw_cmd_id cmd_push_settings = 1;
-	static const draw_cmd_id cmd_pop_settings  = 2;
-	static const draw_cmd_id cmd_setting       = 3;
-	static const draw_cmd_id cmd_clear         = 4;
-	static const draw_cmd_id cmd_blit_fb 	   = 5;
-
-	static const draw_cmd_id last_intrin_cmd   = 5;
 	
 	ogl_info info;
 	ogl_settings settings;
@@ -513,7 +529,7 @@ private:
 
 	gpu_object_id 	next_gpu_id = 1;
 	texture_id 		next_texture_id = 1;
-	draw_cmd_id 	next_draw_cmd_id = last_intrin_cmd + 1;
+	draw_cmd_id 	next_draw_cmd_id = (draw_cmd_id)draw_cmd::first_custom_cmd;
 	framebuffer_id  next_framebuffer_id = 1; // 0 is screen
 
 	platform_window* win = null;
@@ -524,6 +540,8 @@ private:
 	void _cmd_apply_settings();
 	void _cmd_blit_fb(render_command_blit_fb blit);
 	void _cmd_clear(render_command_clear clear);
+	void _cmd_clear_tex(render_command_clear_tex clear);
+	void _cmd_clear_target(render_command_clear_target clear);
 	void _cmd_set_setting(render_command_setting setting);
 
 	void _cmd_set_settings(render_command* cmd);
