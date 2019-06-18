@@ -1,4 +1,9 @@
 
+Render Pipeline
+
+	chunks -> color (no lighting) rgb8, positions rgb16, normals rg16, tsao rgb16, depth d24
+
+
 Chunk Staging
 
 	populated -> generated -> lit[sync neighbors] -> meshed[sync neighbors]

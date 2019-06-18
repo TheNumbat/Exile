@@ -228,7 +228,6 @@ struct world_render_settings {
 	bool wireframe = false;
 	bool cull_backface = true;
 	bool sample_shading = true;
-
 	bool dist_fog = false;
 };
 
@@ -251,6 +250,9 @@ struct exile_render_settings {
 
 	colorf clear_color = colorf(0.8f, 0.8f, 0.8f, 1.0f);
 	colorf norm_pos_clear_color = colorf(0.0f, 0.0f, 0.0f, 0.0f);
+
+	bool dynamic_light = false;
+	v3 light_col = v3(1.0f, 1.0f, 1.0f);
 };
 
 struct world_target_deferred_info {

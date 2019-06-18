@@ -266,6 +266,7 @@ void world_target_info::resolve(render_command_list* list) {
 	cmd.info.textures[1] = d_info.pos_buf;
 	cmd.info.textures[2] = d_info.norm_buf;
 	cmd.info.user_data0 = &exile->ren;
+	cmd.info.user_data1 = &exile->w.p;
 
 	list->add_command(cmd);
 	list->pop_settings();
@@ -437,11 +438,16 @@ CALLBACK void uniforms_resolve(shader_program* prog, render_command* cmd) {
 CALLBACK void uniforms_defer(shader_program* prog, render_command* cmd) {
 
 	exile_renderer* set = (exile_renderer*)cmd->info.user_data0;
+	player* p = (player*)cmd->info.user_data1;
 
 	glUniform1i(prog->location("col_tex"_), 0);
 	glUniform1i(prog->location("pos_tex"_), 1);
 	glUniform1i(prog->location("norm_tex"_), 2);
+	glUniform1i(prog->location("do_light"_), set->settings.dynamic_light);
 	glUniform1i(prog->location("debug_show"_), (i32)set->settings.view);
+
+	glUniform3fv(prog->location("light_pos"_), 1, p->camera.pos.a);
+	glUniform3fv(prog->location("light_col"_), 1, set->settings.light_col.a);
 }
 
 CALLBACK void uniforms_defer_ms(shader_program* prog, render_command* cmd) {

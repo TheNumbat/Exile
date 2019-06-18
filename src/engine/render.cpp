@@ -1562,6 +1562,7 @@ void ogl_manager::load_global_funcs() {
 	GL_LOAD(glUniform1i);
 	GL_LOAD(glUniform2i);
 	GL_LOAD(glUniform4fv);
+	GL_LOAD(glUniform3fv);
 	GL_LOAD(glBindSampler);
 	GL_LOAD(glUniform2f);
 	GL_LOAD(glGenRenderbuffers);

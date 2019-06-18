@@ -2,32 +2,48 @@
 Working To-Do:
 
 	Rendering:
-		https://developer.nvidia.com/gameworks-vulkan-and-opengl-samples
-		deferred rendering
-			why do we need to output vec4s?
-			dynamic lights
-				flashlight
-				dynamic torches
-				sunlight ?
-			dynamic shadows
-				directional (flashlight) shadows 
-				point (torch) shadows
-				sunlight shadows
-			optional FXAA/SMAA effect; use when MSAA is disabled.
-		chunk culling / visibility / draw optimizations
-			try cpu frustum + occlusion queries
-			!!! removing chunk gpu data when it is not being drawn 
-				also cpu data, but that comes later
-			Chunk Multidrawinderect !!!! also uniform buffers !!!!
+		do we honestly even need deferred rendering? [No] we can just limit global lights to a couple; per-chunk can be culled by max-light-radius
 
-		normal mapping
+		[features]
+		remove deferred lol
+		dynamic lights
+			flashlight
+			dynamic torches
+			sunlight ?
+		dynamic shadows
+			directional (flashlight) shadows 
+			point (torch) shadows
+			sunlight shadows
+		optional FXAA/SMAA effect; use when MSAA is disabled ? maybe not if we don't use deferred
+		specular textures, normal mapping, etc.
+			stuff like shiny ore
 		bloom / better fog (e.g. fog undergound should be dark -- apply lighting to fog)
 			https://learnopengl.com/Advanced-Lighting/Bloom
 			http://www.sea-of-memes.com/LetsCode37/LetsCode37.html
 		HDR / auto exposure?
 			https://learnopengl.com/Advanced-Lighting/HDR
+		
+		WHEN DONE, WRITE A BLOG POST !
+			updated world lighting, torch + sun + dynamics
+			pipeline setup, gamma, bloom, hdr, exposure
+				trying forward, deferred, then settling on sort-of-clustered forward
+			shadowing, fog
+			materials/specular textures/normal mapping/etc.
+
+		[performance/structure]
+		chunk culling / visibility / draw optimizations
+			try cpu frustum + occlusion queries
+				defer the queries a few frames?
+			!!! removing chunk gpu data when it is not being drawn 
+				also cpu data, but that comes later
 		chunk uniform buffers
 		bindless OGL stuff
+		move OpenGL to another thread - should be pretty easy through gfx
+			reduce state calls; maybe sorting via key system?
+			lockless task buffers? 
+			can we thread generating the chunk command list?
+			Chunk Multidrawinderect !!!! also uniform buffers !!!!
+
 
 	World:
 		FIX: torchlight AND sunlight removal
