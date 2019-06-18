@@ -211,10 +211,13 @@ struct world;
 struct chunk;
 struct world_time;
 
-enum class world_light_debug : i32 {
-	none = 0,
+
+enum class exile_component_view : i32 {
+	col  = 0,
 	torch,
-	sun
+	sun,
+	pos,
+	norm
 };
 
 struct world_render_settings {
@@ -222,19 +225,16 @@ struct world_render_settings {
 	bool block_light = true;
 	bool smooth_light = true;
 	float ambient_factor = 0.005f;
-	world_light_debug light_debug_mode = world_light_debug::none;
 	v4 ao_curve = v4(0.6f, 0.7f, 0.8f, 1.0f);
 
 	bool wireframe = false;
 	bool cull_backface = true;
 	bool sample_shading = true;
 	bool dist_fog = false;
-};
 
-enum class exile_deferred_view : i32 {
-	col  = 0,
-	pos  = 1,
-	norm = 2
+	bool dynamic_light = true;
+	exile_component_view view =  exile_component_view::col;
+	v3 light_col = v3(1.0f, 1.0f, 1.0f);
 };
 
 struct exile_render_settings {
@@ -244,24 +244,15 @@ struct exile_render_settings {
 	i32 num_samples = 4;
 	f32 gamma = 2.1;
 	bool invert_effect = false;
-	bool deferred = true;
-
-	exile_deferred_view view =  exile_deferred_view::col;
-
-	colorf clear_color = colorf(0.8f, 0.8f, 0.8f, 1.0f);
-	colorf norm_pos_clear_color = colorf(0.0f, 0.0f, 0.0f, 0.0f);
-
-	bool dynamic_light = false;
-	v3 light_col = v3(1.0f, 1.0f, 1.0f);
 };
 
-struct world_target_deferred_info {
-	texture_id pos_buf, col_buf, norm_buf;
+struct world_buffers {
+	texture_id col_buf;
 	render_buffer depth_buf;
-	render_target pos_buf_target, depth_buf_target, col_buf_target, norm_buf_target;
+	render_target col_buf_target, depth_buf_target;
 	framebuffer_id fb = 0;
 };
-struct world_target_effect_info {
+struct effect_buffers {
 	texture_id effect0, effect1;
 	render_target effect0_target, effect1_target; 
 	framebuffer_id effect0_fb = 0;
@@ -273,14 +264,13 @@ struct world_target_info {
 	// NOTE(max): only the buffers + textures use GPU memory,
 	// the rest are reference objects
 
-	world_target_deferred_info d_info;
-	world_target_effect_info e_info;
+	world_buffers  world_info;
+	effect_buffers effect_info;
 
 	bool msaa = false;
-	bool deferred = true;
 	bool current0 = true;
 
-	void init(iv2 dim, i32 samples, bool deferred);
+	void init(iv2 dim, i32 samples);
 	void destroy();
 	
 	void resolve(render_command_list* list); // transfer col_buf to effect buffer if msaa enabled
@@ -331,7 +321,6 @@ struct exile_renderer {
 	mesh_quad 	 the_quad;
 
 	effect_pass invert, gamma;
-	effect_pass defer, defer_ms;
 	effect_pass composite, composite_resolve, resolve;
 
 	world_target_info world_target;
@@ -385,8 +374,6 @@ CALLBACK void uniforms_composite(shader_program* prog, render_command* cmd);
 CALLBACK void uniforms_composite_resolve(shader_program* prog, render_command* cmd);
 CALLBACK void uniforms_invert(shader_program* prog, render_command* cmd);
 CALLBACK void uniforms_gamma(shader_program* prog, render_command* cmd);
-CALLBACK void uniforms_defer(shader_program* prog, render_command* cmd);
-CALLBACK void uniforms_defer_ms(shader_program* prog, render_command* cmd);
 
 
 

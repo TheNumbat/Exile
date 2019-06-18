@@ -5,11 +5,10 @@ Working To-Do:
 		do we honestly even need deferred rendering? [No] we can just limit global lights to a couple; per-chunk can be culled by max-light-radius
 
 		[features]
-		remove deferred lol
 		dynamic lights
-			flashlight
-			dynamic torches
-			sunlight ?
+			flashlight (directional lights)
+			dynamic torches (only the nearest ones?)
+			specularity (and textures?)
 		dynamic shadows
 			directional (flashlight) shadows 
 			point (torch) shadows
