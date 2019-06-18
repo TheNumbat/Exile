@@ -515,6 +515,9 @@ CALLBACK void uniforms_mesh_chunk(shader_program* prog, render_command* cmd) {
 	glUniform4fv(prog->location("ao_curve"_), 1, set->ao_curve.a);
 	glUniform3fv(prog->location("light_col"_), 1, set->light_col.a);
 
+	v3 light_transform = set->light_pos - w->p.camera.pos;
+	glUniform3fv(prog->location("light_pos"_), 1, light_transform.a);
+
 	glUniformMatrix4fv(prog->location("mvp"_), 1, gl_bool::_false, mvp.a);
 	glUniformMatrix4fv(prog->location("m"_), 1, gl_bool::_false, mv.a);
 }

@@ -18,13 +18,16 @@ uniform bool do_fog;
 uniform bool do_light;
 uniform bool smooth_light;
 uniform bool dynamic_light;
-uniform vec3 light_col;
 
+uniform vec3 light_col;
+uniform vec3 light_pos;
 uniform int debug_light;
 
 uniform float render_distance;
 uniform float day_01;
 uniform float ambient;
+
+const float PI = 3.14159265f;
 
 void main() {
 
@@ -85,18 +88,20 @@ void main() {
 	if(dynamic_light) {
 		vec3 p = f_pos;
 		vec3 n = normalize(f_n);
-		
-		vec3 v = normalize(p);
-		vec3 l = -v;
-		vec3 r = reflect(-l, n);
+		vec3 v = normalize(-p);
+		vec3 l = normalize(light_pos-p);
+		vec3 h = normalize(l + v);
 
-		float dist = length(p);
+		float dist = length(light_pos-p);
 		float a = min(1.0f / (dist * dist), 1.0f);
 
 		float diff = max(dot(n,l), 0.0f);
 		total_light += diff * light_col * a;
-		
-		float spec = pow(max(dot(l,r), 0.0), 32);
+			
+		float shine = 32.0f;
+		float energy = (8.0f + shine) / (8.0f * PI); 
+   		float spec = 0.5f * energy * pow(max(dot(n, h), 0.0), shine);
+
 		total_light += spec * light_col * a;
 	}
 
