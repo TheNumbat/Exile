@@ -85,7 +85,7 @@ void main() {
 
 	total_light *= ao;
 
-	if(dynamic_light) {
+	if(dynamic_light && smooth_light) {
 		vec3 p = f_pos;
 		vec3 n = normalize(f_n);
 		vec3 v = normalize(-p);
@@ -98,7 +98,7 @@ void main() {
 		float diff = max(dot(n,l), 0.0f);
 		total_light += diff * light_col * a;
 			
-		float shine = 32.0f;
+		float shine = 64.0f;
 		float energy = (8.0f + shine) / (8.0f * PI); 
    		float spec = 0.5f * energy * pow(max(dot(n, h), 0.0), shine);
 

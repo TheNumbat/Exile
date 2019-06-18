@@ -235,7 +235,7 @@ struct world_render_settings {
 	bool dynamic_light = true;
 	exile_component_view view =  exile_component_view::col;
 	v3 light_col = v3(1.0f, 1.0f, 1.0f);
-	v3 light_pos = v3(-7.6f, 62.0f, 8.5f);
+	v3 light_pos = v3(0.5f, 48.5f, 16.5f);
 };
 
 struct exile_render_settings {

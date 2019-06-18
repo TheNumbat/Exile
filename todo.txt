@@ -2,33 +2,28 @@
 Working To-Do:
 
 	Rendering:
-		do we honestly even need deferred rendering? [No] we can just limit global lights to a couple; per-chunk can be culled by max-light-radius
-
 		[features]
+		honestly move back to deferred without maintaining forward path as well
 		dynamic lights
+			dynamic torches (build lists per chunk)
 			flashlight (directional lights)
-			dynamic torches (only the nearest ones?)
-			specularity (and textures?)
+			specular textures
+				stuff like shiny ore
+			normal map/heightmap textures
+			reflective textures?
+				screen space reflections
 		dynamic shadows
-			directional (flashlight) shadows 
+			directional (flashlight) shadows
 			point (torch) shadows
 			sunlight shadows
+
 		optional FXAA/SMAA effect; use when MSAA is disabled ? maybe not if we don't use deferred
-		specular textures, normal mapping, etc.
-			stuff like shiny ore
 		bloom / better fog (e.g. fog undergound should be dark -- apply lighting to fog)
 			https://learnopengl.com/Advanced-Lighting/Bloom
 			http://www.sea-of-memes.com/LetsCode37/LetsCode37.html
-		HDR / auto exposure?
+		HDR / auto exposure? yes tbh POGU
 			https://learnopengl.com/Advanced-Lighting/HDR
 		
-		WHEN DONE, WRITE A BLOG POST !
-			updated world lighting, torch + sun + dynamics
-			pipeline setup, gamma, bloom, hdr, exposure
-				trying forward, deferred, then settling on sort-of-clustered forward
-			shadowing, fog
-			materials/specular textures/normal mapping/etc.
-
 		[performance/structure]
 		chunk culling / visibility / draw optimizations
 			try cpu frustum + occlusion queries
@@ -42,7 +37,6 @@ Working To-Do:
 			lockless task buffers? 
 			can we thread generating the chunk command list?
 			Chunk Multidrawinderect !!!! also uniform buffers !!!!
-
 
 	World:
 		FIX: torchlight AND sunlight removal
@@ -63,7 +57,13 @@ Working To-Do:
 	menu / user settings
 	movement physics
 
-
+[Rendering Blog Post]
+	updated world lighting, torch + sun + dynamics
+	pipeline setup, gamma, bloom, hdr, exposure
+		trying forward, deferred, then settling on sort-of-clustered forward?
+	shadowing, fog
+	materials/specular textures/normal mapping/etc.
+	optimizations, chunk culling, openGL bindless/UBO/etc.
 
 Relatively unimportant bugs:
 	something may be wrong with light/sunlight propagation or smooth calculation that causes AO
