@@ -124,6 +124,8 @@ void exile_renderer::world_clear() {
 		frame_tasks.add_command(cmd);
 	}
 
+	frame_tasks.set_setting(render_setting::blend, false);
+
 	// the color buffers just get cleared by the sky-dome, so whatever
 }
 
@@ -214,14 +216,26 @@ void world_target_info::init(iv2 dim, i32 samples) {
 
 	msaa = samples != 1;
 
-	world_info.col_buf = exile->eng->ogl.add_texture_target(dim, samples, gl_tex_format::rgb16f, gl_pixel_data_format::rgb);
+	world_info.col_buf = exile->eng->ogl.add_texture_target(dim, samples, gl_tex_format::rgb8, gl_pixel_data_format::rgb);
 	world_info.col_buf_target = exile->eng->ogl.make_target(gl_draw_target::color_0, world_info.col_buf);
+
+	world_info.pos_buf = exile->eng->ogl.add_texture_target(dim, samples, gl_tex_format::rgb16f, gl_pixel_data_format::rgb);
+	world_info.pos_buf_target = exile->eng->ogl.make_target(gl_draw_target::color_1, world_info.pos_buf);
+
+	world_info.norm_buf = exile->eng->ogl.add_texture_target(dim, samples, gl_tex_format::rg16f, gl_pixel_data_format::rg);
+	world_info.norm_buf_target = exile->eng->ogl.make_target(gl_draw_target::color_2, world_info.norm_buf);
+
+	world_info.light_buf = exile->eng->ogl.add_texture_target(dim, samples, gl_tex_format::rgb16f, gl_pixel_data_format::rgb);
+	world_info.light_buf_target = exile->eng->ogl.make_target(gl_draw_target::color_3, world_info.light_buf);
 
 	world_info.depth_buf = render_buffer::make(gl_tex_format::depth_component, dim, samples);
 	world_info.depth_buf_target = exile->eng->ogl.make_target(gl_draw_target::depth, &world_info.depth_buf);
 
 	world_info.fb = exile->eng->ogl.add_framebuffer();
 	exile->eng->ogl.add_target(world_info.fb, world_info.col_buf_target);
+	exile->eng->ogl.add_target(world_info.fb, world_info.pos_buf_target);
+	exile->eng->ogl.add_target(world_info.fb, world_info.norm_buf_target);
+	exile->eng->ogl.add_target(world_info.fb, world_info.light_buf_target);
 	exile->eng->ogl.add_target(world_info.fb, world_info.depth_buf_target);
 	exile->eng->ogl.commit_framebuffer(world_info.fb);
 
@@ -247,6 +261,9 @@ void world_target_info::resolve(render_command_list* list) {
 	cmd.info.fb_id = get_fb();
 
 	cmd.info.textures[0] = world_info.col_buf;
+	cmd.info.textures[1] = world_info.pos_buf;
+	cmd.info.textures[2] = world_info.norm_buf;
+	cmd.info.textures[3] = world_info.light_buf;
 	cmd.info.user_data0 = &exile->ren;
 	cmd.info.user_data1 = &exile->w.p;
 
@@ -283,11 +300,16 @@ void world_target_info::destroy() {
 
 	world_info.depth_buf.destroy();
 	exile->eng->ogl.destroy_texture(world_info.col_buf);
+	exile->eng->ogl.destroy_texture(world_info.pos_buf);
+	exile->eng->ogl.destroy_texture(world_info.norm_buf);
+	exile->eng->ogl.destroy_texture(world_info.light_buf);
 	exile->eng->ogl.destroy_framebuffer(world_info.fb);
 
 	world_info.depth_buf = {};
-	world_info.depth_buf_target = world_info.col_buf_target = {};
-	world_info.col_buf = world_info.fb = 0;
+	world_info.depth_buf_target = world_info.col_buf_target = world_info.pos_buf_target =
+		world_info.norm_buf_target = world_info.light_buf_target = {};
+	world_info.col_buf = world_info.pos_buf = world_info.norm_buf = 
+		world_info.light_buf = world_info.fb = 0;
 }
 
 void exile_renderer::recreate_targets() {
@@ -323,11 +345,13 @@ void exile_renderer::generate_commands() {
 	reg(2D_tex_col, mesh_2D_tex_col, "mesh/");
 	reg(3D_tex_instanced, mesh_3D_tex_instanced, "mesh/");
 
+	defer.init(FPTR(uniforms_defer), "defer.f"_);
+	gamma.init(FPTR(uniforms_gamma), "gamma.f"_);
+	invert.init(FPTR(uniforms_invert), "invert.f"_);
 	resolve.init(FPTR(uniforms_resolve), "resolve.f"_);
+	defer_ms.init(FPTR(uniforms_defer_ms), "defer_ms.f"_);
 	composite.init(FPTR(uniforms_composite), "composite.f"_);
 	composite_resolve.init(FPTR(uniforms_composite_resolve), "composite_resolve.f"_);
-	invert.init(FPTR(uniforms_invert), "invert.f"_);
-	gamma.init(FPTR(uniforms_gamma), "gamma.f"_);
 
 	#undef reg
 }
@@ -406,6 +430,14 @@ CALLBACK void uniforms_resolve(shader_program* prog, render_command* cmd) {
 	glUniform1i(prog->location("tex"_), 0);
 	glUniform1i(prog->location("num_samples"_), set->prev_samples);
 	glUniform2f(prog->location("screen_size"_), (f32)set->prev_dim.x, (f32)set->prev_dim.y);
+}
+
+CALLBACK void uniforms_defer(shader_program* prog, render_command* cmd) {
+
+}
+
+CALLBACK void uniforms_defer_ms(shader_program* prog, render_command* cmd) {
+	
 }
 
 CALLBACK void uniforms_invert(shader_program* prog, render_command* cmd) {

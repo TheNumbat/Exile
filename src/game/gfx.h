@@ -12,6 +12,7 @@ struct chunk_quad {
 	u8 l3, l2, l1, l0;
 	u8 s3, s2, s1, s0;
 };
+// TODO(max): 32 byte alignment might be slightly faster
 static_assert(sizeof(chunk_quad) == 28, "chunk_quad size != 28");
 
 struct mesh_chunk {
@@ -234,7 +235,7 @@ struct world_render_settings {
 
 	bool dynamic_light = true;
 	exile_component_view view =  exile_component_view::col;
-	v3 light_col = v3(1.0f, 1.0f, 1.0f);
+	v3 light_col = v3(0.5f, 0.5f, 0.5f);
 	v3 light_pos = v3(0.5f, 48.5f, 16.5f);
 };
 
@@ -248,9 +249,9 @@ struct exile_render_settings {
 };
 
 struct world_buffers {
-	texture_id col_buf;
+	texture_id col_buf, pos_buf, norm_buf, light_buf;
 	render_buffer depth_buf;
-	render_target col_buf_target, depth_buf_target;
+	render_target col_buf_target, depth_buf_target, pos_buf_target, norm_buf_target, light_buf_target;
 	framebuffer_id fb = 0;
 };
 struct effect_buffers {
@@ -322,6 +323,7 @@ struct exile_renderer {
 	mesh_quad 	 the_quad;
 
 	effect_pass invert, gamma;
+	effect_pass defer, defer_ms;
 	effect_pass composite, composite_resolve, resolve;
 
 	world_target_info world_target;
@@ -370,11 +372,10 @@ decl_mesh(3D_tex_instanced);
 decl_mesh(lines);
 decl_mesh(pointcloud);
 
+CALLBACK void uniforms_gamma(shader_program* prog, render_command* cmd);
+CALLBACK void uniforms_defer(shader_program* prog, render_command* cmd);
+CALLBACK void uniforms_invert(shader_program* prog, render_command* cmd);
 CALLBACK void uniforms_resolve(shader_program* prog, render_command* cmd);
+CALLBACK void uniforms_defer_ms(shader_program* prog, render_command* cmd);
 CALLBACK void uniforms_composite(shader_program* prog, render_command* cmd);
 CALLBACK void uniforms_composite_resolve(shader_program* prog, render_command* cmd);
-CALLBACK void uniforms_invert(shader_program* prog, render_command* cmd);
-CALLBACK void uniforms_gamma(shader_program* prog, render_command* cmd);
-
-
-

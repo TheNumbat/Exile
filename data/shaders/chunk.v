@@ -58,7 +58,6 @@ flat out vec4 f_l, f_s;
 out vec2 f_uv;
 out vec3 f_n;
 out vec3 f_pos;
-out float f_ah, f_d;
 
 struct vert {
 	vec3 pos;
@@ -145,8 +144,5 @@ void main() {
 	f_ql = q.ql;
 	f_qs = q.qs;
 	f_ao = q.ao;
-	
-	f_ah = 0.5f * (m_pos.y / length(m_pos)) + 0.5f;
-	f_d = length(m_pos.xz);
 }
 
