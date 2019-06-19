@@ -124,8 +124,6 @@ void exile_renderer::world_clear() {
 		frame_tasks.add_command(cmd);
 	}
 
-	frame_tasks.set_setting(render_setting::blend, false);
-
 	// the color buffers just get cleared by the sky-dome, so whatever
 }
 
@@ -216,15 +214,17 @@ void world_target_info::init(iv2 dim, i32 samples) {
 
 	msaa = samples != 1;
 
-	world_info.col_buf = exile->eng->ogl.add_texture_target(dim, samples, gl_tex_format::rgb8, gl_pixel_data_format::rgb);
+	world_info.col_buf = exile->eng->ogl.add_texture_target(dim, samples, gl_tex_format::rgba8, gl_pixel_data_format::rgb);
 	world_info.col_buf_target = exile->eng->ogl.make_target(gl_draw_target::color_0, world_info.col_buf);
 
 	world_info.pos_buf = exile->eng->ogl.add_texture_target(dim, samples, gl_tex_format::rgb16f, gl_pixel_data_format::rgb);
 	world_info.pos_buf_target = exile->eng->ogl.make_target(gl_draw_target::color_1, world_info.pos_buf);
 
-	world_info.norm_buf = exile->eng->ogl.add_texture_target(dim, samples, gl_tex_format::rg16f, gl_pixel_data_format::rg);
+	world_info.norm_buf = exile->eng->ogl.add_texture_target(dim, samples, gl_tex_format::rg16_snorm, gl_pixel_data_format::rg);
 	world_info.norm_buf_target = exile->eng->ogl.make_target(gl_draw_target::color_2, world_info.norm_buf);
 
+	// TODO(max): if we can swap back to rgb16 (instead of float), we will have precision in 0..1
+	// currently the only reason it's not is to encode z-sign, and maybe some more data?
 	world_info.light_buf = exile->eng->ogl.add_texture_target(dim, samples, gl_tex_format::rgb16f, gl_pixel_data_format::rgb);
 	world_info.light_buf_target = exile->eng->ogl.make_target(gl_draw_target::color_3, world_info.light_buf);
 
@@ -256,7 +256,7 @@ void world_target_info::init(iv2 dim, i32 samples) {
 void world_target_info::resolve(render_command_list* list) {
 	
 	render_command cmd;
-	cmd = msaa ? exile->ren.resolve.make_cmd() : exile->ren.composite.make_cmd();
+	cmd = msaa ? exile->ren.defer_ms.make_cmd() : exile->ren.defer.make_cmd();
 
 	cmd.info.fb_id = get_fb();
 
@@ -264,8 +264,9 @@ void world_target_info::resolve(render_command_list* list) {
 	cmd.info.textures[1] = world_info.pos_buf;
 	cmd.info.textures[2] = world_info.norm_buf;
 	cmd.info.textures[3] = world_info.light_buf;
+	cmd.info.textures[4] = exile->w.env.sky_texture;
 	cmd.info.user_data0 = &exile->ren;
-	cmd.info.user_data1 = &exile->w.p;
+	cmd.info.user_data1 = &exile->w;
 
 	list->add_command(cmd);
 	list->pop_settings();
@@ -434,10 +435,37 @@ CALLBACK void uniforms_resolve(shader_program* prog, render_command* cmd) {
 
 CALLBACK void uniforms_defer(shader_program* prog, render_command* cmd) {
 
+	world_render_settings* set = &((exile_renderer*)cmd->info.user_data0)->settings.world_set;
+	// world* w = (world*)cmd->info.user_data1;
+	// world_time* time = &w->time;
+
+	glUniform1i(prog->location("col_tex"_), 0);
+	glUniform1i(prog->location("pos_tex"_), 1);
+	glUniform1i(prog->location("norm_tex"_), 2);
+	glUniform1i(prog->location("light_tex"_), 3);
+	glUniform1i(prog->location("sky_tex"_), 4);
+
+	glUniform1i(prog->location("debug_show"_), (i32)set->view);
+
+	// glUniform1i(prog->location("do_fog"_), set->dist_fog);
+	// glUniform1i(prog->location("do_light"_), set->block_light);
+	// glUniform1i(prog->location("dynamic_light"_), set->dynamic_light);
+	// glUniform1f(prog->location("day_01"_), time->day_01());
+	// glUniform1f(prog->location("ambient"_), set->ambient_factor);
+	// glUniform1f(prog->location("render_distance"_), (f32)w->settings.view_distance * chunk::wid);
+	// glUniform3fv(prog->location("light_col"_), 1, set->light_col.a);
+	// v3 light_transform = set->light_pos - w->p.camera.pos;
+	// glUniform3fv(prog->location("light_pos"_), 1, light_transform.a);
 }
 
 CALLBACK void uniforms_defer_ms(shader_program* prog, render_command* cmd) {
 	
+	uniforms_defer(prog, cmd);
+
+	exile_renderer* set = (exile_renderer*)cmd->info.user_data0;
+
+	glUniform1i(prog->location("num_samples"_), set->prev_samples);
+	glUniform2f(prog->location("screen_size"_), (f32)set->prev_dim.x, (f32)set->prev_dim.y);
 }
 
 CALLBACK void uniforms_invert(shader_program* prog, render_command* cmd) {
@@ -523,35 +551,20 @@ CALLBACK void uniforms_mesh_cubemap(shader_program* prog, render_command* cmd) {
 CALLBACK void uniforms_mesh_chunk(shader_program* prog, render_command* cmd) { 
 
 	world* w = (world*)cmd->info.user_data0;
-	world_time* time = &w->time;
+
 	world_render_settings* set = (world_render_settings*)cmd->info.user_data1;
 	
+	m4 m = w->p.camera.offset() * cmd->info.model;
 	m4 mvp = cmd->info.proj * cmd->info.view * cmd->info.model;
-	m4 mv = w->p.camera.offset() * cmd->info.model;
 
 	glUniform1i(prog->location("blocks_tex"_), 0);
-	glUniform1i(prog->location("sky_tex"_), 1);
-
-	glUniform1i(prog->location("do_fog"_), set->dist_fog);
-	glUniform1i(prog->location("do_light"_), set->block_light);
 	glUniform1i(prog->location("smooth_light"_), set->smooth_light);
-	glUniform1i(prog->location("dynamic_light"_), set->dynamic_light);
-	
-	glUniform1i(prog->location("debug_light"_), (i32)set->view);
-
-	glUniform1f(prog->location("day_01"_), time->day_01());
-	glUniform1f(prog->location("ambient"_), set->ambient_factor);
 	glUniform1f(prog->location("units_per_voxel"_), (f32)chunk::units_per_voxel);
-	glUniform1f(prog->location("render_distance"_), (f32)w->settings.view_distance * chunk::wid);
 
 	glUniform4fv(prog->location("ao_curve"_), 1, set->ao_curve.a);
-	glUniform3fv(prog->location("light_col"_), 1, set->light_col.a);
 
-	v3 light_transform = set->light_pos - w->p.camera.pos;
-	glUniform3fv(prog->location("light_pos"_), 1, light_transform.a);
-
+	glUniformMatrix4fv(prog->location("m"_), 1, gl_bool::_false, m.a);
 	glUniformMatrix4fv(prog->location("mvp"_), 1, gl_bool::_false, mvp.a);
-	glUniformMatrix4fv(prog->location("m"_), 1, gl_bool::_false, mv.a);
 }
 
 CALLBACK void uniforms_mesh_2D_col(shader_program* prog, render_command* cmd) { 

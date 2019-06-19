@@ -97,6 +97,7 @@ enum class gl_tex_format : GLint {
 	rgb8_snorm          		= 0x8F96,
 	rgb10						= 0x8052,
 	rgb12						= 0x8053,
+	rgb16						= 0x8054,
 	rgb16_snorm         		= 0x8F9A,
 	rgba2						= 0x8055,
 	rgba4						= 0x8056,

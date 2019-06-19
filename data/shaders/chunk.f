@@ -22,12 +22,14 @@ void main() {
 	vec3 uvt = vec3(f_uv, f_t);
 	
 	out_color = texture(blocks_tex, uvt);
-	out_norm = vec4(normalize(f_n), 1.0f);
 	out_pos = vec4(f_pos, 1.0f);
-
+	
 	float ao0 = mix(f_ao.x, f_ao.y, fract(f_uv.x));
 	float ao1 = mix(f_ao.z, f_ao.w, fract(f_uv.x));
-	out_light.z = mix(ao0, ao1, fract(f_uv.y));
+	out_light.w = 1.0f;
+
+	out_norm = vec4(normalize(f_n), 1.0f);
+	out_light.z = (2.0f * step(0.0f, f_n.z) - 1.0f) * mix(ao0, ao1, fract(f_uv.y));
 
 	if(smooth_light) {
 

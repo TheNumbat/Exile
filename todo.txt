@@ -3,7 +3,10 @@ Working To-Do:
 
 	Rendering:
 		[features]
-		honestly move back to deferred without maintaining forward path as well
+		re-implement lighting + ao + dynamic in deferred shader
+		finish single sample shader
+		move sky texture sampling into deferred entirely? (bad without float with gamma)
+
 		dynamic lights
 			dynamic torches (build lists per chunk)
 			flashlight (directional lights)

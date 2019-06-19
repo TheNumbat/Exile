@@ -217,6 +217,7 @@ enum class exile_component_view : i32 {
 	col  = 0,
 	torch,
 	sun,
+	ao,
 	pos,
 	norm
 };
@@ -275,7 +276,8 @@ struct world_target_info {
 	void init(iv2 dim, i32 samples);
 	void destroy();
 	
-	void resolve(render_command_list* list); // transfer col_buf to effect buffer if msaa enabled
+	// transfers scene to current effect buffer
+	void resolve(render_command_list* list);
 	
 	void flip_fb();
 	framebuffer_id world_fb();
