@@ -4,15 +4,6 @@
 layout (location = 0) in uvec4 v_data;
 layout (location = 1) in uvec3 q_data;
 
-// x z v u 
-// x z v u 
-// x z v u
-// x z v u 
-// y y 
-// y y
-// t ao l0
-// l1 l2 l3 
-
 uniform vec4 ao_curve;
 uniform float units_per_voxel;
 

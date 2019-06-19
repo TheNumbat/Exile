@@ -6,9 +6,6 @@ uniform sampler2D tex;
 uniform float day_01;
 
 layout (location = 0) out vec4 out_color;
-layout (location = 1) out vec4 out_pos;
-layout (location = 2) out vec4 out_norm;
-layout (location = 3) out vec4 out_light;
 
 void main() {
 

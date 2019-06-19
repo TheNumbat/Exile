@@ -224,17 +224,19 @@ enum class exile_component_view : i32 {
 
 struct world_render_settings {
 	
-	bool block_light = true;
-	bool smooth_light = true;
 	float ambient_factor = 0.005f;
 	v4 ao_curve = v4(0.6f, 0.7f, 0.8f, 1.0f);
 
 	bool wireframe = false;
 	bool cull_backface = true;
 	bool sample_shading = true;
-	bool dist_fog = false;
-
+	
+	bool dist_fog = true;
+	bool block_light = true;
+	bool smooth_light = true;
 	bool dynamic_light = true;
+	bool ambient_occlusion = true;
+
 	exile_component_view view =  exile_component_view::col;
 	v3 light_col = v3(0.5f, 0.5f, 0.5f);
 	v3 light_pos = v3(0.5f, 48.5f, 16.5f);
