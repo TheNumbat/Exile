@@ -6,6 +6,10 @@
 // NOTE(max): adapted from Ginger Bill's public domain C libraries
 // https://github.com/gingerBill/gb/blob/master/gb.h#L2564
 
+#ifndef DLL_IMPORT
+#define DLL_IMPORT extern "C" __declspec(dllimport)
+#endif
+
 #define FAR
 #define NEAR
 #define APIENTRY 		FAR __stdcall

@@ -14,7 +14,7 @@
 #include <locale>
 #include <string>
 
-#include "../engine/util/basic_types.h"
+#include "../engine/basic.h"
 
 using namespace std;
 
@@ -221,6 +221,11 @@ CXChildVisitResult parse_struct_or_union(CXCursor c, CXCursor parent, CXClientDa
 			}
 		}
 
+		if(type.kind == CXType_FunctionProto || 
+		   type.kind == CXType_FunctionNoProto || 
+		   type.kind == CXType_Void)
+			return CXChildVisit_Continue;
+
 		current_struct_def.members.push_back({circular,c});
 		try_add_template_dep(type);
 
@@ -273,6 +278,7 @@ CXChildVisitResult do_parse(CXCursor c) {
 	case CXCursor_ClassTemplate:
 	case CXCursor_UnionDecl:
 	case CXCursor_StructDecl: {
+
 		current_struct_def = struct_def();
 		current_struct_def.this_ = c;
 
@@ -355,7 +361,11 @@ CXChildVisitResult do_parse(CXCursor c) {
 }
 
 void output_pre(ofstream& fout) {
-	fout << endl << "#define STRING2(...) #__VA_ARGS__##_" << endl
+	fout << "#define META_NO_IMPL" << endl
+		 << "#include <meta_files.h>" << endl << endl
+		 << "#define unsignedint unsigned int" << endl
+		 << "#define unsignedlonglong unsigned long long" << endl
+		 << "#define STRING2(...) #__VA_ARGS__##_" << endl
 		 << "#define STRING(...) STRING2(__VA_ARGS__)" << endl
 		 << "void make_meta_info() { PROF_FUNC " << endl << endl;
 }
@@ -474,13 +484,14 @@ void output_struct(ofstream& fout, const struct_def& s) {
 		 << "\t\tthis_type_info.type_type = Type::_struct;" << endl
 		 << "\t\tthis_type_info.size = sizeof(" << name << ");" << endl
 		 << "\t\tthis_type_info.name = \"" << name << "\"_;" << endl
-		 << "\t\tthis_type_info.hash = (type_id)typeid(" << name << ").hash_code();" << endl
-		 << "\t\tthis_type_info._struct.member_count = " << s.members.size() << ";" << endl;
+		 << "\t\tthis_type_info.hash = (type_id)typeid(" << name << ").hash_code();" << endl;
 
 	u32 idx = 0;
 	for(auto& member : s.members) {
 		auto mem_name = str(clang_getCursorSpelling(member.second));
 		auto mem_type_name = str(clang_getTypeSpelling(clang_getCursorType(member.second)));
+
+		if(mem_name == "" || mem_name == "private" || mem_name == "public" || mem_name == "operator") continue;
 
 		fout << "\t\tthis_type_info._struct.member_types[" << idx << "] = TYPEINFO(" << mem_type_name << ") ? TYPEINFO(" << mem_type_name << ")->hash : 0;" << endl
 			 << "\t\tthis_type_info._struct.member_names[" << idx << "] = \"" << mem_name << "\"_;" << endl
@@ -489,6 +500,8 @@ void output_struct(ofstream& fout, const struct_def& s) {
 
 		idx++;
 	}
+
+	fout << "\t\tthis_type_info._struct.member_count = " << idx << ";" << endl;
 
 	fout << "\t\ttype_table.insert(this_type_info.hash, this_type_info, false);" << endl
 		 << "\t}();" << endl << endl;
@@ -513,7 +526,7 @@ void output_template_struct(ofstream& fout, const struct_def& s, const map<strin
 				auto type_str = str(clang_getTypeSpelling(entry->second));
 				remove_all_whitespace(type_str);
 
-				fout << "#define " << entry->first << " " << type_str << endl;
+				fout << "#define " << entry->first << " " << type_str << endl << endl;
 			}
 		}
 

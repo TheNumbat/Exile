@@ -1,4 +1,10 @@
 
+#include "dbg.h"
+#include "util/threadstate.h"
+#include "imgui.h"
+#include "engine.h"
+
+static dbg_manager* global_dbg = null;
 
 #ifdef PROFILE
 func_scope::func_scope(code_context context, string name) {

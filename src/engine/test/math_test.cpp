@@ -18,10 +18,10 @@ i32 main() {
 	{
 		testeq(sqrt(4.0f), 2.0f);
 		test(isnan(sqrt(-1.0f)));
-		testeq(abs(1.0f), 1.0f);
-		testeq(abs(-1.0f), 1.0f);
-		testeq(abs(1.0), 1.0);
-		testeq(abs(-1.0), 1.0);	
+		testeq(absv(1.0f), 1.0f);
+		testeq(absv(-1.0f), 1.0f);
+		testeq(absv(1.0), 1.0);
+		testeq(absv(-1.0), 1.0);	
 		testeq(round(0.5f), 1.0f);
 		testeq(round(0.49f), 0.0f);
 		testeq(round(-0.5f), -1.0f);
@@ -34,17 +34,17 @@ i32 main() {
 		testeq(floor(-0.5f), -1.0f);
 		testeq(sin(0.0f), 0.0f);
 		testeq(sin(PI32 / 2.0f), 1.0f);
-		test(abs(sin(PI32)) < 0.0001f);
+		test(absv(sin(PI32)) < 0.0001f);
 		testeq(cos(0.0f), 1.0f);
-		test(abs(cos(PI32 / 2.0f)) < 0.0001f);
+		test(absv(cos(PI32 / 2.0f)) < 0.0001f);
 		testeq(cos(PI32), -1.0f);
 		testeq(tan(0.0f), 0.0f);
-		test(abs(tan(PI32 / 2.0f)) > 1000);
-		test(abs(tan(PI32)) < 0.0001f);
+		test(absv(tan(PI32 / 2.0f)) > 1000);
+		test(absv(tan(PI32)) < 0.0001f);
 	}
 	{
 		testeq(sqrt({1.0f, 4.0f, 9.0f, 16.0f}), v4(1.0f, 2.0f, 3.0f, 4.0f));
-		testeq(abs({-1.0f, 2.0f, -3.0f, 4.0f}), v4(1.0f, 2.0f, 3.0f, 4.0f));
+		testeq(absv({-1.0f, 2.0f, -3.0f, 4.0f}), v4(1.0f, 2.0f, 3.0f, 4.0f));
 		testeq(round({0.51f, 0.49f, -0.51f, -0.49f}), v4(1.0f, 0.0f, -1.0f, 0.0f));
 		testeq(ceil({0.51f, 0.49f, -0.51f, -0.49f}), v4(1.0f, 1.0f, 0.0f, 0.0f));
 		testeq(floor({0.51f, 0.49f, -0.51f, -0.49f}), v4(0.0f, 0.0f, -1.0f, -1.0f));

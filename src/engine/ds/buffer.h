@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include "../util/fptr.h"
+
 template<typename T, u32 size>
 struct buffer {
 

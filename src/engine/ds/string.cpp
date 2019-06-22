@@ -1,4 +1,11 @@
 
+#include "string.h"
+#include "alloc.h"
+#include "../util/reflect.h"
+#include "../util/threadstate.h"
+#include "../log.h"
+#include "../math.h"
+
 string::operator const char*() {
 	return c_str;
 }

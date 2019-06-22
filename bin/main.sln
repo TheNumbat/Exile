@@ -1,15 +1,14 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29009.5
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{911E67C6-3D85-4FCE-B560-20A9C3E3FF48}") = "main", "main.exe", "{E72553EF-BEB6-4170-A2D9-AE0EEE504C99}"
+Project("{911E67C6-3D85-4FCE-B560-20A9C3E3FF48}") = "main", "..\build\main.exe", "{6597C267-C15A-4F68-803F-8380EB044522}"
 	ProjectSection(DebuggerProjectSystem) = preProject
 		PortSupplier = 00000000-0000-0000-0000-000000000000
-		Executable = w:\build\main.exe
+		Executable = C:\Users\Max\Code\exile\build\main.exe
 		RemoteMachine = NUMBAT-DESKTOP
-		StartingDirectory = w:\data
-		Arguments = 
+		StartingDirectory = C:\Users\Max\Code\exile\data
 		Environment = Default
 		LaunchingEngine = 00000000-0000-0000-0000-000000000000
 		UseLegacyDebugEngines = No
@@ -22,9 +21,12 @@ Global
 		Release|x64 = Release|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{E72553EF-BEB6-4170-A2D9-AE0EEE504C99}.Release|x64.ActiveCfg = Release|x64
+		{6597C267-C15A-4F68-803F-8380EB044522}.Release|x64.ActiveCfg = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {8CA661AD-6EA8-4944-B461-C9AAA89D60C3}
 	EndGlobalSection
 EndGlobal

@@ -1,18 +1,44 @@
 
 #pragma once
 
+#include "vector.h"
+
 // don't store addresses of elements in a map - at all. Pls.
 
 // if the map is filled beyond this load factor, it will try to grow
 const f32 MAP_MAX_LOAD_FACTOR = 0.9f;
 
 // from Thomas Wang, http://burtleburtle.net/bob/hash/integer.html
-inline u32 hash(u32 key);
-inline u32 hash(i32 key);
-inline u32 hash(u64 key);
-inline u32 hash(u8 key);
-inline u32 hash(u16 key);
-inline u32 hash(void* key);
+inline u32 hash(u32 key) { 
+    key = (key ^ 61) ^ (key >> 16);
+    key = key + (key << 3);
+    key = key ^ (key >> 4);
+    key = key * 0x27d4eb2d;
+    key = key ^ (key >> 15);
+    return key;
+}
+inline u32 hash(u64 key) { 
+	key = (~key) + (key << 21); // key = (key << 21) - key - 1;
+	key = key ^ (key >> 24);
+	key = (key + (key << 3)) + (key << 8); // key * 265
+	key = key ^ (key >> 14);
+	key = (key + (key << 2)) + (key << 4); // key * 21
+	key = key ^ (key >> 28);
+	key = key + (key << 31);
+	return key >> 32;
+}
+inline u32 hash(void* key) { 
+	return hash(*(u64*)&key);
+}
+inline u32 hash(i32 key) { 
+	return hash(*(u32*)&key);
+}
+inline u32 hash(u8 key) { 
+	return hash((u32)key);
+}
+inline u32 hash(u16 key) { 
+	return hash((u32)key);
+}
 
 // map foreach
 #define FORMAP(it,m) for(auto it = (m).contents.memory; it != (m).contents.memory + (m).contents.capacity; it++) if(ELEMENT_OCCUPIED(*it))
@@ -49,8 +75,76 @@ struct map {
 	
 	void destroy();
 	
-	V* insert(K key, V value, bool grow_if_needed = true);
-	V* insert_if_unique(K key, V value, bool grow_if_needed = true);
+	V* insert(K key, V value, bool grow_if_needed = true) {
+		if(size >= contents.capacity * MAP_MAX_LOAD_FACTOR) {
+			if(grow_if_needed) {
+				grow_rehash(); // this is super expensive, avoid at all costs
+			} else {
+				return null;
+			}
+		}
+
+		map_element<K,V> ele;
+
+		ELEMENT_SET_HASH_BUCKET(ele, hash_func(key) & (contents.capacity - 1));
+		ele.key 		= key;
+		ele.value 		= value;
+		ELEMENT_SET_OCCUPIED(ele);
+
+		// robin hood open addressing
+
+		u32 index = ELEMENT_HASH_BUCKET(ele);
+		u32 probe_length = 0;
+		map_element<K,V>* placed_adr = null;
+		for(;;) {
+			if(ELEMENT_OCCUPIED(*contents.get(index))) {
+
+				i32 occupied_probe_length = index - ELEMENT_HASH_BUCKET(*contents.get(index));
+				if(occupied_probe_length < 0) {
+					occupied_probe_length += contents.capacity;
+				}
+
+				if((u32)occupied_probe_length < probe_length) {
+
+					map_element<K,V>* to_swap = contents.get(index);
+					if(!placed_adr) {
+						placed_adr = to_swap;
+					}
+
+					map_element<K,V> temp = *to_swap;
+					*to_swap = ele;
+					ele = temp;
+
+					probe_length = occupied_probe_length;
+				} 
+
+				probe_length++;
+				index++;
+				if (index == contents.capacity) {
+					index = 0;
+				}
+
+				if(probe_length > max_probe) {
+					max_probe = probe_length;
+				}
+			} else {
+				*contents.get(index) = ele;
+				size++;
+
+				if(placed_adr) {
+					return &placed_adr->value;
+				}
+				return &(contents.get(index)->value);
+			}
+		}
+	}
+	V* insert_if_unique(K key, V value, bool grow_if_needed = true) {
+		V* result = try_get(key);
+		if(!result) {
+			return insert(key, value, grow_if_needed);
+		}
+		return result;
+	}
 	bool try_erase(K key);
 	void erase(K key);
 	void clear();

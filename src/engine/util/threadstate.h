@@ -1,6 +1,11 @@
 
-
 #pragma once
+
+#include "../ds/stack.h"
+#include "../ds/string.h"
+#include "../ds/queue.h"
+#include "../ds/alloc.h"
+#include "../dbg.h"
 
 #define MAX_CONTEXT_DEPTH 16
 

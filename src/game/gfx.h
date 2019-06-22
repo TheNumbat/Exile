@@ -1,6 +1,10 @@
 
 #pragma once
 
+#include <engine/basic.h>
+#include <engine/ds/vector.h>
+#include <engine/render.h>
+
 struct chunk_quad {
 
 	u8  z_1, x_1, z_0, x_0;
@@ -247,7 +251,7 @@ struct exile_render_settings {
 	world_render_settings world_set;
 
 	i32 num_samples = 4;
-	f32 gamma = 2.1;
+	f32 gamma = 2.1f;
 	bool invert_effect = false;
 };
 

@@ -1,4 +1,8 @@
 
+#include "threadstate.h"
+#include "../ds/string.h"
+#include "context.h"
+
 template<typename... Targs>
 void _begin_thread(string fmt, allocator* alloc, code_context start, Targs... args) {
 

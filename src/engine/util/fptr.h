@@ -1,6 +1,9 @@
 
 #pragma once
 
+#include "../ds/string.h"
+#include "../platform/platform_api.h"
+
 struct _FPTR {
 	void* func;
 	string name;

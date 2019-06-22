@@ -1,49 +1,7 @@
 
-inline u32 hash(u32 key) { 
+#include "map.h"
 
-    key = (key ^ 61) ^ (key >> 16);
-    key = key + (key << 3);
-    key = key ^ (key >> 4);
-    key = key * 0x27d4eb2d;
-    key = key ^ (key >> 15);
-    
-    return key;
-}
 
-inline u32 hash(u64 key) { 
-
-	// return (u32)(key >> 32 ^ key);
-
-	key = (~key) + (key << 21); // key = (key << 21) - key - 1;
-	key = key ^ (key >> 24);
-	key = (key + (key << 3)) + (key << 8); // key * 265
-	key = key ^ (key >> 14);
-	key = (key + (key << 2)) + (key << 4); // key * 21
-	key = key ^ (key >> 28);
-	key = key + (key << 31);
-	return key >> 32;
-}
-
-inline u32 hash(void* key) { 
-
-	// NOTE(max): this better be compiled as 64 bit lol
-	return hash(*(u64*)&key);
-}
-
-inline u32 hash(i32 key) { 
-
-	return hash(*(u32*)&key);
-}
-
-inline u32 hash(u8 key) { 
-
-	return hash((u32)key);
-}
-
-inline u32 hash(u16 key) { 
-
-	return hash((u32)key);
-}
 
 template<typename K, typename V, u32(*hash_func)(K) = hash>
 map<K,V,hash_func> map<K,V,hash_func>::make(u32 capacity) { 
@@ -123,87 +81,6 @@ void map<K,V,hash_func>::trim_rehash() {
 	}
 
 	temp.destroy();
-}
-
-template<typename K, typename V, u32(*hash_func)(K) = hash>
-V* map<K,V,hash_func>::insert(K key, V value, bool grow_if_needed) { 
-	
-	if(size >= contents.capacity * MAP_MAX_LOAD_FACTOR) {
-
-		if(grow_if_needed) {
-			grow_rehash(); // this is super expensive, avoid at all costs
-		} else {
-			LOG_DEBUG_ASSERT(!"Map needs to grow, but not allowed!");
-			return null;
-		}
-	}
-
-	map_element<K,V> ele;
-
-	ELEMENT_SET_HASH_BUCKET(ele, hash_func(key) & (contents.capacity - 1));
-	ele.key 		= key;
-	ele.value 		= value;
-	ELEMENT_SET_OCCUPIED(ele);
-
-	// robin hood open addressing
-
-	u32 index = ELEMENT_HASH_BUCKET(ele);
-	u32 probe_length = 0;
-	map_element<K,V>* placed_adr = null;
-	for(;;) {
-		if(ELEMENT_OCCUPIED(*contents.get(index))) {
-
-			i32 occupied_probe_length = index - ELEMENT_HASH_BUCKET(*contents.get(index));
-			if(occupied_probe_length < 0) {
-				occupied_probe_length += contents.capacity;
-			}
-
-			if((u32)occupied_probe_length < probe_length) {
-
-				map_element<K,V>* to_swap = contents.get(index);
-				if(!placed_adr) {
-					placed_adr = to_swap;
-				}
-
-				map_element<K,V> temp = *to_swap;
-				*to_swap = ele;
-				ele = temp;
-
-				probe_length = occupied_probe_length;
-			} 
-
-			probe_length++;
-			index++;
-			if (index == contents.capacity) {
-				index = 0;
-			}
-
-			if(probe_length > max_probe) {
-				max_probe = probe_length;
-			}
-		} else {
-			*contents.get(index) = ele;
-			size++;
-
-			if(placed_adr) {
-				return &placed_adr->value;
-			}
-			return &(contents.get(index)->value);
-		}
-	}
-}
-
-template<typename K, typename V, u32(*hash_func)(K) = hash>
-V* map<K,V,hash_func>::insert_if_unique(K key, V value, bool grow_if_needed) { 
-	
-	V* result = try_get(key);
-	
-	if(!result) {
-		
-		return insert(key, value, grow_if_needed);
-	}
-	
-	return result;
 }
 
 template<typename K, typename V, u32(*hash_func)(K) = hash>

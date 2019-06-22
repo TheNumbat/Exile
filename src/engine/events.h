@@ -1,6 +1,11 @@
 
 #pragma once
 
+#include "basic.h"
+#include "util/fptr.h"
+#include "ds/queue.h"
+#include "ds/map.h"
+
 struct engine;
 
 typedef u32 evt_handler_id;

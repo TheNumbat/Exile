@@ -1,4 +1,39 @@
 
+#include "exile.h"
+#include "console.h"
+
+static exile_state* exile = null;
+
+void* start_up_game(engine* e) {
+	exile = new (e->platform->heap_alloc(sizeof(exile_state))) exile_state;
+	exile->eng = e;
+	exile->init();
+	return exile;
+}
+
+void gl_reload_game(void* game) {
+	exile->gl_reload();
+}
+
+void run_game(void* game) {
+	exile->update();
+	exile->render();
+}
+
+void shut_down_game(void* game) {
+	exile->destroy();
+	exile->eng->platform->heap_free(exile);
+}
+
+void unload_game(engine* e, void* game) {
+	exile->w.thread_pool.stop_all();
+}
+
+void reload_game(engine* e, void* game) {
+	exile = (exile_state*)game;
+	exile->w.thread_pool.start_all();
+}
+
 void exile_state::init() { PROF_FUNC
 
 	a_general = MAKE_PLATFORM_ALLOCATOR("game_general"_);

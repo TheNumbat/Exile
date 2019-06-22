@@ -1,6 +1,18 @@
 
 #pragma once
 
+#include "basic.h"
+#include "ds/string.h"
+#include "ds/array.h"
+#include "ds/buffer.h"
+#include "ds/alloc.h"
+#include "ds/vector.h"
+#include "ds/queue.h"
+#include "util/context.h"
+
+struct log_manager;
+extern log_manager*  global_log;
+
 // currently, each message enqueue allocates one arena to hold
 // a copy of the message, the thread context stack, and the thread name. 
 // the arena is freed after the message is output.

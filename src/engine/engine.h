@@ -1,6 +1,12 @@
 
 #pragma once
 
+#include "log.h"
+#include "render.h"
+#include "dbg.h"
+#include "events.h"
+#include "imgui.h"
+
 struct engine {
 
 	log_manager log;

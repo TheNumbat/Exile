@@ -1,6 +1,11 @@
 
 #pragma once
 
+#include "math.h"
+#include "asset.h"
+#include "ds/stack.h"
+#include "platform/gl.h"
+
 v2 size_text(asset* font, string text_utf8, f32 point);
 
 typedef i32 texture_id;
@@ -561,5 +566,5 @@ private:
 };
 
 CALLBACK void ogl_apply(void* eng);
-CALLBACK void uniforms_dbg(shader_program* prog, render_command* rc, render_command_list* rcl) {};
+CALLBACK void uniforms_dbg(shader_program* prog, render_command* rc, render_command_list* rcl);
 void debug_proc(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userPointer);

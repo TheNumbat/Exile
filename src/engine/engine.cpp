@@ -1,4 +1,9 @@
 
+#include "engine.h"
+#include "util/threadstate.h"
+
+static platform_api* global_api = null;
+
 EXPORT engine* start_up(platform_api* api) { 
 
 	engine* state = new(api->heap_alloc(sizeof(engine))) engine;

@@ -1,6 +1,9 @@
 
 #pragma once
 
+#include "../basic.h"
+#include "alloc.h"
+
 // array foreach
 #define FORARR(it,a) u32 __##it = 0; for(auto it = (a).memory; it != (a).memory + (a).capacity; __##it++, it++)
 

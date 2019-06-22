@@ -1,4 +1,9 @@
 
+#include "render.h"
+#include "log.h"
+#include "util/threadstate.h"
+#include "engine.h"
+
 v2 size_text(asset* font, string text_utf8, f32 point) { 
 
 	v2 ret;
@@ -40,7 +45,7 @@ void shader_source::load() {
 	do {
 		itr++;
 		error = global_api->create_file(&source_file, path, platform_file_open_op::existing);
-	} while (error.error == PLATFORM_SHARING_ERROR && itr < 100000);
+	} while (error.error == WIN32_SHARING_ERROR && itr < 100000);
 
 	if(!error.good) {
 		LOG_ERR_F("Failed to load shader source %"_, path);
@@ -277,6 +282,8 @@ void ogl_manager::try_reload_programs() {
 	}
 	dbg_shader.try_refresh();
 }
+
+CALLBACK void uniforms_dbg(shader_program* prog, render_command* rc, render_command_list* rcl) {}
 
 ogl_manager ogl_manager::make(platform_window* win, allocator* a) { 
 

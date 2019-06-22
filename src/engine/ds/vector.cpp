@@ -1,4 +1,6 @@
 
+#include "vector.h"
+
 template<typename T> 
 void vector<T>::clear() { 
 	size = 0;

@@ -1,4 +1,6 @@
 
+#include "array.h"
+
 template<typename T> 
 u32 array<T>::len() { 
 

@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include "alloc.h"
+
 // don't take addresses of elements in a vector, they will be invalidated if the vector grows
 
 // Vector foreach

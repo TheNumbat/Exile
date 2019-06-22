@@ -1,6 +1,9 @@
 
 #pragma once
 
+#include "../basic.h"
+#include "../ds/string.h"
+
 #define CTX_FILE_LEN	64
 #define CTX_FUN_LEN		128
 

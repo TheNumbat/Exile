@@ -1,4 +1,6 @@
 
+#include "stack.h"
+
 template<typename T>
 void stack<T>::destroy() { 
 
