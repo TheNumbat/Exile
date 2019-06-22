@@ -1,6 +1,10 @@
 
 #pragma once
 
+#include "ds/array.h"
+#include "ds/alloc.h"
+#include "ds/map.h"
+
 // Asset file structure
 
 // asset_file_header

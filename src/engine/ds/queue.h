@@ -1,6 +1,9 @@
 
 #pragma once
 
+#include "../basic.h"
+#include "alloc.h"
+
 // queue foreach
 #define FORQ_BEGIN(it,q) 	if((q).start != UINT32_MAX){u32 __##it = (q).start; do {auto it = &(q).memory[__##it];
 #define FORQ_END(it,q) 		++__##it %= (q).capacity;} while(__##it != (q).end);}

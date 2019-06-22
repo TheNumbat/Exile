@@ -1,6 +1,9 @@
 
 #pragma once
 
+#include "../basic.h"
+#include "alloc.h"
+
 #define FORHEAP_LINEAR(it,v) for(auto it = (v).memory; it != (v).memory + (v).size; it++)
 
 template<typename T, bool(comp)(T,T) = gt>

@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include "vector.h"
+
 template<typename T>
 struct stack {
 	vector<T> contents;

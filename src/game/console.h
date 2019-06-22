@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include <engine/ds/string.h>
+
 struct exile;
 void setup_console_commands();
 

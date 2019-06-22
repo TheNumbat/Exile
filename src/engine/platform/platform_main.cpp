@@ -3,21 +3,12 @@
 
 #pragma warning(disable : 4007)
 
-#include "../util/basic_types.h"
+#include "../basic.h"
 #include "platform_strings.h"
-#include "platform_strings.cpp"
 #include "platform_api.h"
 
 #ifdef TEST_NET_ZERO_ALLOCS
 i32 global_num_allocs = 0;
-#endif
-
-#ifdef PLATFORM_SDL
-#include "sdl/platform_sdl.cpp"
-#elif defined(_WIN32)
-#include "windows/platform_win32.cpp"
-#else
-#error Unsupported Platform
 #endif
 
 // here we treat game_state* as void* so this doesn't have to know anything about the game
@@ -63,8 +54,8 @@ i32 main(i32 argc, char** argv) {
 
 	i32 idx = string_last_slash(exe_path);
 	exe_folder 	  = make_substring(exe_path, 0, idx + 1, api.heap_alloc);
-	dll_path 	  = make_cat_string(exe_folder, string_literal("game.dll"), api.heap_alloc);
-	temp_dll_path = make_cat_string(exe_folder, string_literal("game_temp.dll"), api.heap_alloc);
+	dll_path 	  = make_cat_string(exe_folder, string_literal("exile.dll"), api.heap_alloc);
+	temp_dll_path = make_cat_string(exe_folder, string_literal("exile_temp.dll"), api.heap_alloc);
 	
 	free_string(exe_path, api.heap_free);
 
@@ -119,7 +110,7 @@ bool load_lib() {
 	do {
 		itr++;
 		err = api.copy_file(dll_path, temp_dll_path, true);
-	} while(err.error == PLATFORM_SHARING_ERROR && itr < 100000);
+	} while(err.error == WIN32_SHARING_ERROR && itr < 100000);
 
 	err = api.load_library(&game_dll, temp_dll_path);
 	if(!err.good) {

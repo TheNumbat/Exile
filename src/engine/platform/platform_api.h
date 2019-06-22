@@ -4,15 +4,17 @@
 
 #define EXTERN extern "C"
 
-#ifdef _MSC_VER
+#ifndef DLL_EXPORT
 #define DLL_EXPORT EXTERN __declspec(dllexport)
+#endif
+#ifndef DLL_IMPORT
 #define DLL_IMPORT EXTERN __declspec(dllimport)
-#elif defined(__GNUC__)
-#define DLL_EXPORT EXTERN __attribute__((dllexport))
-#define DLL_IMPORT EXTERN __attribute__((dllimport))
-#else
+#endif
+#ifndef _MSC_VER
 #error unsupported compiler?
 #endif
+
+#include "../basic.h"
 
 // Defined per platform
 struct platform_window_internal;
@@ -22,13 +24,12 @@ struct platform_thread;
 struct platform_semaphore;
 struct platform_mutex;
 struct platform_file;
+struct platform_api;
 typedef u32 platform_thread_id;
-extern u32 PLATFORM_SHARING_ERROR;
-bool operator==(platform_file first, platform_file second);
 
-#ifdef PLATFORM_SDL
-#include "sdl/platform_sdl_api.h"
-#elif defined(_WIN32)
+extern platform_api* global_api;
+
+#ifdef _WIN32
 #include "windows/platform_win32_api.h"
 #else
 #error Unsupported Platform
@@ -401,5 +402,3 @@ struct platform_api {
 platform_api platform_build_api();
 void platform_test_api();
 void platform_shutdown();
-
-#include "gl.h"

@@ -1,4 +1,10 @@
 
+#include "log.h"
+#include "log_html.h"
+#include "util/threadstate.h"
+
+log_manager* global_log = null;
+
 log_manager log_manager::make(allocator* a) { 
 
 	log_manager ret;

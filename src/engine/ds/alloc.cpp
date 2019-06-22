@@ -1,4 +1,8 @@
 
+#include "alloc.h"
+#include "../log.h"
+#include "../math.h"
+
 inline u32 hash(allocator a) { 
 
 	return hash(a.name());

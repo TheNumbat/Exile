@@ -1,6 +1,9 @@
 
 #pragma once
 
+#include "../util/fptr.h"
+#include "../util/context.h"
+
 #define ALLOC_NAME_LEN 16
 
 struct allocator {

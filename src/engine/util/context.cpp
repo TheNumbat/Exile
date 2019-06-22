@@ -1,4 +1,8 @@
 
+#include "context.h"
+#include "../ds/map.h"
+#include "../log.h"
+
 inline u32 hash(code_context c) { 
 
 	return hash(c.function()) ^ hash(c.file()) ^ hash(c.line);

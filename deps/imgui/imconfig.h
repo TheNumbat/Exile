@@ -1,24 +1,17 @@
 
 #pragma once
 
-//---- Define attributes of all API symbols declarations, e.g. for DLL under Windows.
-//#define IMGUI_API __declspec( dllexport )
-//#define IMGUI_API __declspec( dllimport )
+#include <engine/math.h>
+
+#ifdef _WIN32
+#include "../src/engine/platform/windows/windows.h"
+#endif
 
 #define IMGUI_DISABLE_OBSOLETE_FUNCTIONS
-
-//---- Don't implement demo windows functionality (ShowDemoWindow()/ShowStyleEditor()/ShowUserGuide() methods will be empty)
-//---- It is very strongly recommended to NOT disable the demo windows during development. Please read the comments in imgui_demo.cpp.
-//#define IMGUI_DISABLE_DEMO_WINDOWS
-
-//---- Don't implement some functions to reduce linkage requirements.
-//#define IMGUI_DISABLE_WIN32_DEFAULT_CLIPBOARD_FUNCTIONS   // [Win32] Don't implement default clipboard handler. Won't use and link with OpenClipboard/GetClipboardData/CloseClipboard etc.
-//#define IMGUI_DISABLE_WIN32_DEFAULT_IME_FUNCTIONS         // [Win32] Don't implement default IME handler. Won't use and link with ImmGetContext/ImmSetCompositionWindow.
-//#define IMGUI_DISABLE_FORMAT_STRING_FUNCTIONS             // Don't implement ImFormatString/ImFormatStringV so you can implement them yourself if you don't want to link with vsnprintf.
 #define IMGUI_DISABLE_MATH_FUNCTIONS                      // Don't implement ImFabs/ImSqrt/ImPow/ImFmod/ImCos/ImSin/ImAcos/ImAtan2 wrapper so you can implement them yourself. Declare your prototypes in imconfig.h.
 #define IMGUI_DISABLE_DEFAULT_ALLOCATORS                  // Don't implement default allocators calling malloc()/free(). You will need to call ImGui::SetAllocatorFunctions().
 
-#define ImFabs  abs
+#define ImFabs  absv
 #define ImSqrt  sqrt
 #define ImPow   pow
 #define ImFmod  mod
@@ -46,6 +39,3 @@
 #define IM_VEC4_CLASS_EXTRA                                                 \
         ImVec4(const v4& f) { x = f.x; y = f.y; z = f.z; w = f.w; }     \
         operator v4() const { return v4(x,y,z,w); }
-
-//---- Use 32-bit vertex indices (default is 16-bit) to allow meshes with more than 64K vertices. Render function needs to support it.
-//#define ImDrawIdx unsigned int

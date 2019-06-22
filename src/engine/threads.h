@@ -1,6 +1,9 @@
 
 #pragma once
 
+#include "ds/heap.h"
+#include "ds/array.h"
+
 template<typename E>
 struct atomic_enum {
 

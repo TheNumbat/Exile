@@ -1,6 +1,12 @@
 
 #pragma once
 
+#include <imgui/imgui.h>
+#include "ds/string.h"
+#include "ds/map.h"
+#include "platform/gl.h"
+#include "asset.h"
+
 namespace ImGui {
 
 	bool InputText(string label, string buf, ImGuiInputTextFlags flags = 0, ImGuiTextEditCallback callback = null, void* user_data = null);
@@ -65,28 +71,5 @@ struct imgui_manager {
 void* imgui_alloc(u64 size, void* data);
 void imgui_free(void* mem, void* data);
 
-const GLchar* imgui_vertex_shader =
-	"#version 330\n"
-    "uniform mat4 ProjMtx;\n"
-    "in vec2 Position;\n"
-    "in vec2 UV;\n"
-    "in vec4 Color;\n"
-    "out vec2 Frag_UV;\n"
-    "out vec4 Frag_Color;\n"
-    "void main()\n"
-    "{\n"
-    "	Frag_UV = UV;\n"
-    "	Frag_Color = Color;\n"
-    "	gl_Position = ProjMtx * vec4(Position.xy,0,1);\n"
-    "}\n";
-
-const GLchar* imgui_fragment_shader =
-	"#version 330\n"
-    "uniform sampler2D Texture;\n"
-    "in vec2 Frag_UV;\n"
-    "in vec4 Frag_Color;\n"
-    "out vec4 Out_Color;\n"
-    "void main()\n"
-    "{\n"
-    "	Out_Color = Frag_Color * texture( Texture, Frag_UV.st);\n"
-    "}\n";
+extern const GLchar* imgui_vertex_shader;
+extern const GLchar* imgui_fragment_shader;

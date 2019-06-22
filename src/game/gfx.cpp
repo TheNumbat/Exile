@@ -1,6 +1,10 @@
 
 // TODO(max): remove all OpenGL calls; abstract into renderer system
 
+#include "gfx.h"
+#include "exile.h"
+#include <engine/util/threadstate.h>
+
 void exile_renderer::init(allocator* a) {
 	
 	exile->eng->dbg.store.add_var("render/settings"_, &settings);
@@ -1297,7 +1301,7 @@ void mesh_pointcloud::push_points(v3 center, f32 r, i32 points, f32 jitter) {
 		f32 ct = cos(th), st = sin(th), sp = sin(ph);
 		v3 point = v3(r * ct * sp, r * y, r * st * sp) + jitter * rand_unit();
 
-		vertices.push(v4(point, 2.0f * abs(randf())));
+		vertices.push(v4(point, 2.0f * absv(randf())));
 	}
 
 	dirty = true;

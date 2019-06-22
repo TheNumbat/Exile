@@ -1,4 +1,6 @@
 
+#include "heap.h"
+
 template<typename T, bool(comp)(T,T)>
 heap<T,comp> heap<T,comp>::make(u32 capacity, allocator* alloc) { 
 

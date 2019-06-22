@@ -1,4 +1,7 @@
 
+#include "console.h"
+#include "exile.h"
+
 void setup_console_commands() {
 
 	exile->eng->dbg.console.add_command("exit"_, FPTR(console_exit), exile->eng);

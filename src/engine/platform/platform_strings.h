@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include "../basic.h"
+
 struct string {
 	char* c_str = null;
 	u32 cap	    = 0;	// capacity

@@ -1,4 +1,8 @@
 
+#include "events.h"
+#include "dbg.h"
+#include "engine.h"
+
 evt_manager evt_manager::make(allocator* a) { 
 	
 	evt_manager ret;

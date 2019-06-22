@@ -1,4 +1,10 @@
 
+#include "exile.h"
+#include "world.h"
+#include <engine/imgui.h>
+#include <engine/dbg.h>
+#include <engine/util/threadstate.h>
+
 CALLBACK void world_debug_ui(world* w) { 
 
 	if(ImGui::SmallButton("Regenerate"_)) {
@@ -326,8 +332,8 @@ float check_pirority(super_job* j, void* param) {
 
 	v3 center = c->pos.center_xz();
 
-	if(abs(center.x - p->camera.pos.x) > (f32)(w->settings.view_distance + 1) * chunk::wid ||
-	   abs(center.z - p->camera.pos.z) > (f32)(w->settings.view_distance + 1) * chunk::wid) {
+	if(absv(center.x - p->camera.pos.x) > (f32)(w->settings.view_distance + 1) * chunk::wid ||
+	   absv(center.z - p->camera.pos.z) > (f32)(w->settings.view_distance + 1) * chunk::wid) {
 		return -FLT_MAX;
 	}
 
@@ -1153,6 +1159,17 @@ light_at chunk::l_at(iv3 block) {
 u8 block_light::first_u8() {
 
 	return (s0 << 4) | (t >= 15 ? 15 : t);
+}
+
+void light_gather::operator+=(light_at l) {
+	if(l.solid) return;
+	t += l.light.t; 
+	s0 += l.light.s0;
+	contrib++;
+}
+
+bool operator==(light_gather l, light_gather r) {
+	return l.t==r.t && l.s0==r.s0;
 }
 
 light_gather chunk::gather_l(iv3 vert) {

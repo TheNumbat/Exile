@@ -1,51 +1,40 @@
 {
-    "folders":
-    [
-        {
-            "path": "w:"
-        }
-    ],
-    "settings":
-    {
-        "tab_size": 4
-    },
-    "build_systems":
-    [
-        {
-            "shell_cmd": "build -O2",
-            "file_regex": "^[.\\\\/]*([a-z]?:?[\\w.\\\\/]+)[(:]([0-9]+)[):]([0-9]+)?:?(.*)$",
-            "variants":
-            [
+	"folders":
+	[
+		{
+			"path": ".."
+		}
+	],
+	"settings":
+	{
+		"tab_size": 4
+	},
+	"build_systems":
+	[
+		{
+			"name": "Build Exile",
+			"shell_cmd": "build",
+			"encoding": "UTF-8",
+			"working_dir": "${project_path}/..",
+			"file_regex": "^[.\\\\/]*([A-Z]?:?[\\w.\\\\/]+)[(:]([0-9]+)[):]([0-9]+)?:?(.*)$",
+			"variants": [
                 {
                     "name": "Run",
-                    "shell_cmd": "run",
+                    "shell_cmd": "pushd data && ..\\build\\main.exe",
                     "encoding": "UTF-8"
                 },
                 {
-                    "name": "Clean Build",
-                    "shell_cmd": "clean && build -O2",
-                    "file_regex": "^[.\\\\/]*([a-z]?:?[\\w.\\\\/]+)[(:]([0-9]+)[):]([0-9]+)?:?(.*)$"
-                },
-                {
                     "name": "Debug",
-                    "shell_cmd": "build -Od",
-                    "file_regex": "^[.\\\\/]*([a-z]?:?[\\w.\\\\/]+)[(:]([0-9]+)[):]([0-9]+)?:?(.*)$"
+                    "shell_cmd": "devenv bin\\main.sln",
+                    "encoding": "UTF-8"
                 },
                 {
-                    "name": "Dev",
-                    "shell_cmd": "dev"
+                    "name": "Clean",
+                    "shell_cmd": "rm -r build/",
+                    "encoding": "UTF-8"
                 },
-                {
-                    "name": "Build SDL",
-                    "shell_cmd": "build -O2 SDL",
-                    "file_regex": "^[.\\\\/]*([a-z]?:?[\\w.\\\\/]+)[(:]([0-9]+)[):]([0-9]+)?:?(.*)$"
-                },
-                {
-                    "name": "Clean Build SDL",
-                    "shell_cmd": "clean && build -O2 SDL",
-                    "file_regex": "^[.\\\\/]*([a-z]?:?[\\w.\\\\/]+)[(:]([0-9]+)[):]([0-9]+)?:?(.*)$"
-                },
-            ]
-        }
-    ]
+			]
+		}
+	]
 }
+

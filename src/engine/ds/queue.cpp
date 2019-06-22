@@ -1,4 +1,6 @@
 
+#include "queue.h"
+
 template<typename T>
 void queue<T>::destroy() { 
 

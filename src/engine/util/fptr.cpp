@@ -1,4 +1,6 @@
 
+#include "fptr.h"
+
 void func_ptr_state::reload_all() { 
 	for(u32 i = 0; i < num_ptrs; i++) {
 		CHECKED(get_proc_address, &all_ptrs[i].func, this_dll, all_ptrs[i].name);

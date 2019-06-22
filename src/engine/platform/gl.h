@@ -1,4 +1,17 @@
-// OpenGL 
+
+#pragma once
+
+#ifndef DLL_EXPORT
+#define DLL_EXPORT extern "C" __declspec(dllexport)
+#endif
+#ifndef DLL_IMPORT
+#define DLL_IMPORT extern "C" __declspec(dllimport)
+#endif
+#ifndef _MSC_VER
+#error unsupported compiler?
+#endif
+
+#include <stddef.h>
 
 typedef unsigned int GLenum;
 typedef unsigned char GLboolean;
@@ -444,26 +457,6 @@ enum class gl_shader_param : GLenum {
 	shader_type             	= 0x8B4F
 };
 
-enum class wgl_context : int {
-	major_version_arb     		= 0x2091,
-	minor_version_arb     		= 0x2092,
-	flags_arb             		= 0x2094,
-	forward_compatible_bit_arb 	= 0x0002,
-	profile_mask_arb      		= 0x9126,
-	core_profile_bit_arb  		= 0x0001,
-	sample_buffers_arb          = 0x2041,
-	samples_arb                 = 0x2042,
-	draw_to_window_arb          = 0x2001,
-	support_opengl_arb          = 0x2010,
-	double_buffer_arb           = 0x2011,
-	pixel_type_arb              = 0x2013,
-	color_bits_arb              = 0x2014,
-	depth_bits_arb              = 0x2022,
-	stencil_bits_arb            = 0x2023,
-	alpha_bits_arb              = 0x201B,
-	type_rgba_arb               = 0x202B
-};
-
 enum class gl_get : GLenum {
 	active_texture                            = 0x84E0,
 	aliased_line_width_range                  = 0x846E,
@@ -770,6 +763,7 @@ enum class gl_framebuffer : GLenum {
 	draw = 0x8CA9
 };
 
+
 DLL_IMPORT const GLubyte* glGetString(gl_info name);
 
 DLL_IMPORT void glDeleteTextures(GLsizei n, const GLuint *textures);
@@ -906,107 +900,102 @@ typedef void (*glClearNamedFramebufferuiv_t)(GLuint framebuffer, gl_clear_buffer
 typedef void (*glClearNamedFramebufferfv_t)(GLuint framebuffer, gl_clear_buffer buffer, GLint drawbuffer, const GLfloat *value);
 
 
-glIs_t glIsTexture;
-glIs_t glIsBuffer;
-glIs_t glIsFramebuffer;
-glIs_t glIsRenderbuffer;
-glIs_t glIsVertexArray;
-glIs_t glIsShader;
-glIs_t glIsProgram;
-glIs_t glIsProgramPipeline;
-glIs_t glIsQuery;
+extern glIs_t glIsTexture;
+extern glIs_t glIsBuffer;
+extern glIs_t glIsFramebuffer;
+extern glIs_t glIsRenderbuffer;
+extern glIs_t glIsVertexArray;
+extern glIs_t glIsShader;
+extern glIs_t glIsProgram;
+extern glIs_t glIsProgramPipeline;
+extern glIs_t glIsQuery;
 
-glGetStringi_t      glGetStringi;
-glGetInteger64v_t   glGetInteger64v;
-glGetBooleani_v_t   glGetBooleani_v;
-glGetDoublei_v_t    glGetDoublei_v;
-glGetFloati_v_t     glGetFloati_v;
-glGetIntegeri_v_t   glGetIntegeri_v;
-glGetInteger64i_v_t glGetInteger64i_v;
+extern glGetStringi_t      glGetStringi;
+extern glGetInteger64v_t   glGetInteger64v;
+extern glGetBooleani_v_t   glGetBooleani_v;
+extern glGetDoublei_v_t    glGetDoublei_v;
+extern glGetFloati_v_t     glGetFloati_v;
+extern glGetIntegeri_v_t   glGetIntegeri_v;
+extern glGetInteger64i_v_t glGetInteger64i_v;
 
-glDrawArraysInstanced_t 			glDrawArraysInstanced;
-glDrawElementsInstanced_t 			glDrawElementsInstanced;
-glDrawElementsInstancedBaseVertex_t glDrawElementsInstancedBaseVertex;
-glVertexAttribDivisor_t				glVertexAttribDivisor;
+extern glDrawArraysInstanced_t 				glDrawArraysInstanced;
+extern glDrawElementsInstanced_t 			glDrawElementsInstanced;
+extern glDrawElementsInstancedBaseVertex_t 	glDrawElementsInstancedBaseVertex;
+extern glVertexAttribDivisor_t				glVertexAttribDivisor;
 
-glDebugMessageCallback_t 	glDebugMessageCallback;
-glDebugMessageInsert_t		glDebugMessageInsert;
-glDebugMessageControl_t		glDebugMessageControl;
+extern glDebugMessageCallback_t 	glDebugMessageCallback;
+extern glDebugMessageInsert_t		glDebugMessageInsert;
+extern glDebugMessageControl_t		glDebugMessageControl;
 
-glAttachShader_t  			glAttachShader;
-glCompileShader_t 			glCompileShader;
-glCreateProgram_t 			glCreateProgram;
-glCreateShader_t  			glCreateShader;
-glDeleteProgram_t 			glDeleteProgram;
-glDeleteShader_t  			glDeleteShader;
-glLinkProgram_t   			glLinkProgram;
-glShaderSource_t  			glShaderSource;
-glUseProgram_t    			glUseProgram;
-glGetShaderiv_t 			glGetShaderiv;
-glGetShaderInfoLog_t		glGetShaderInfoLog;
-glGetShaderSource_t 		glGetShaderSource;
-glMinSampleShading_t		glMinSampleShading;
+extern glAttachShader_t  		glAttachShader;
+extern glCompileShader_t 		glCompileShader;
+extern glCreateProgram_t 		glCreateProgram;
+extern glCreateShader_t  		glCreateShader;
+extern glDeleteProgram_t 		glDeleteProgram;
+extern glDeleteShader_t  		glDeleteShader;
+extern glLinkProgram_t   		glLinkProgram;
+extern glShaderSource_t  		glShaderSource;
+extern glUseProgram_t    		glUseProgram;
+extern glGetShaderiv_t 			glGetShaderiv;
+extern glGetShaderInfoLog_t		glGetShaderInfoLog;
+extern glGetShaderSource_t 		glGetShaderSource;
+extern glMinSampleShading_t		glMinSampleShading;
 
-glGetUniformLocation_t 		glGetUniformLocation;
-glGetAttribLocation_t		glGetAttribLocation;
-glUniformMatrix4fv_t   		glUniformMatrix4fv;
-glUniform1f_t				glUniform1f;
-glUniform2f_t				glUniform2f;
-glUniform1i_t				glUniform1i;
-glUniform2i_t				glUniform2i;
-glUniform4fv_t 				glUniform4fv;
-glUniform3fv_t				glUniform3fv;
+extern glGetUniformLocation_t 		glGetUniformLocation;
+extern glGetAttribLocation_t		glGetAttribLocation;
+extern glUniformMatrix4fv_t   		glUniformMatrix4fv;
+extern glUniform1f_t				glUniform1f;
+extern glUniform2f_t				glUniform2f;
+extern glUniform1i_t				glUniform1i;
+extern glUniform2i_t				glUniform2i;
+extern glUniform4fv_t 				glUniform4fv;
+extern glUniform3fv_t				glUniform3fv;
+extern glGenerateMipmap_t			glGenerateMipmap;
+extern glActiveTexture_t			glActiveTexture;
+extern glCreateTextures_t			glCreateTextures;
+extern glBindTextureUnit_t			glBindTextureUnit;
+extern glTexParameterIiv_t 			glTexParameterIiv;
+extern glTexStorage3D_t 			glTexStorage3D;
+extern glTexSubImage3D_t			glTexSubImage3D;
+extern glBindSampler_t				glBindSampler;
 
-glGenerateMipmap_t			glGenerateMipmap;
-glActiveTexture_t			glActiveTexture;
-glCreateTextures_t			glCreateTextures;
-glBindTextureUnit_t			glBindTextureUnit;
-glTexParameterIiv_t 		glTexParameterIiv;
-glTexStorage3D_t 			glTexStorage3D;
-glTexSubImage3D_t			glTexSubImage3D;
-glBindSampler_t				glBindSampler;
+extern glBindVertexArray_t    		glBindVertexArray; 		
+extern glDeleteVertexArrays_t 		glDeleteVertexArrays;
+extern glGenVertexArrays_t    		glGenVertexArrays;
+extern glBlendEquation_t			glBlendEquation;
+extern glBindBuffer_t				glBindBuffer;
+extern glDeleteBuffers_t			glDeleteBuffers;
+extern glGenBuffers_t				glGenBuffers;
+extern glBufferData_t				glBufferData;
+extern glNamedBufferData_t			glNamedBufferData;
+extern glVertexAttribPointer_t		glVertexAttribPointer;
+extern glVertexAttribIPointer_t		glVertexAttribIPointer;
+extern glEnableVertexAttribArray_t 	glEnableVertexAttribArray;
+extern glDrawElementsBaseVertex_t	glDrawElementsBaseVertex;
 
-glBindVertexArray_t    		glBindVertexArray; 		
-glDeleteVertexArrays_t 		glDeleteVertexArrays;
-glGenVertexArrays_t    		glGenVertexArrays;
-glBlendEquation_t			glBlendEquation;
+extern glGenRenderbuffers_t					glGenRenderbuffers;
+extern glBindRenderbuffer_t					glBindRenderbuffer;
+extern glRenderbufferStorage_t				glRenderbufferStorage;
+extern glRenderbufferStorageMultisample_t	glRenderbufferStorageMultisample;
+extern glDeleteRenderbuffers_t				glDeleteRenderbuffers;
+extern glTexImage2DMultisample_t 			glTexImage2DMultisample;
+extern glClearTexImage_t					glClearTexImage;
 
-glBindBuffer_t				glBindBuffer;
-glDeleteBuffers_t			glDeleteBuffers;
-glGenBuffers_t				glGenBuffers;
-glBufferData_t				glBufferData;
-glNamedBufferData_t			glNamedBufferData;
+extern glGenFramebuffers_t 			glGenFramebuffers;
+extern glDeleteFramebuffers_t 		glDeleteFramebuffers;
+extern glBindFramebuffer_t 			glBindFramebuffer;
+extern glFramebufferTexture2D_t 	glFramebufferTexture2D;
+extern glFramebufferRenderbuffer_t 	glFramebufferRenderbuffer;
+extern glDrawBuffers_t 				glDrawBuffers;
+extern glBlitNamedFramebuffer_t		glBlitNamedFramebuffer;
+extern glBlitFramebuffer_t 			glBlitFramebuffer;
 
-glVertexAttribPointer_t		glVertexAttribPointer;
-glVertexAttribIPointer_t	glVertexAttribIPointer;
-glEnableVertexAttribArray_t glEnableVertexAttribArray;
-glDrawElementsBaseVertex_t	glDrawElementsBaseVertex;
-
-glGenRenderbuffers_t				glGenRenderbuffers;
-glBindRenderbuffer_t				glBindRenderbuffer;
-glRenderbufferStorage_t				glRenderbufferStorage;
-glRenderbufferStorageMultisample_t	glRenderbufferStorageMultisample;
-glDeleteRenderbuffers_t				glDeleteRenderbuffers;
-
-glTexImage2DMultisample_t 	glTexImage2DMultisample;
-glClearTexImage_t			glClearTexImage;
-
-glGenFramebuffers_t 		glGenFramebuffers;
-glDeleteFramebuffers_t 		glDeleteFramebuffers;
-glBindFramebuffer_t 		glBindFramebuffer;
-glFramebufferTexture2D_t 	glFramebufferTexture2D;
-glFramebufferRenderbuffer_t glFramebufferRenderbuffer;
-glDrawBuffers_t 			glDrawBuffers;
-glBlitNamedFramebuffer_t	glBlitNamedFramebuffer;
-glBlitFramebuffer_t 		glBlitFramebuffer;
-
-glNamedFramebufferDrawBuffers_t  		glNamedFramebufferDrawBuffers;
-glNamedFramebufferTexture_t	 	 		glNamedFramebufferTexture;
-glNamedFramebufferRenderbuffer_t 		glNamedFramebufferRenderbuffer;
-glNamedRenderbufferStorage_t			glNamedRenderbufferStorage;
-glNamedRenderbufferStorageMultisample_t	glNamedRenderbufferStorageMultisample;
-glNamedFramebufferReadBuffer_t			glNamedFramebufferReadBuffer;
-
-glClearNamedFramebufferiv_t		glClearNamedFramebufferiv;
-glClearNamedFramebufferuiv_t	glClearNamedFramebufferuiv;
-glClearNamedFramebufferfv_t		glClearNamedFramebufferfv;
+extern glNamedFramebufferDrawBuffers_t  		glNamedFramebufferDrawBuffers;
+extern glNamedFramebufferTexture_t	 	 		glNamedFramebufferTexture;
+extern glNamedFramebufferRenderbuffer_t 		glNamedFramebufferRenderbuffer;
+extern glNamedRenderbufferStorage_t				glNamedRenderbufferStorage;
+extern glNamedRenderbufferStorageMultisample_t	glNamedRenderbufferStorageMultisample;
+extern glNamedFramebufferReadBuffer_t			glNamedFramebufferReadBuffer;
+extern glClearNamedFramebufferiv_t				glClearNamedFramebufferiv;
+extern glClearNamedFramebufferuiv_t				glClearNamedFramebufferuiv;
+extern glClearNamedFramebufferfv_t				glClearNamedFramebufferfv;

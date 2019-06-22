@@ -1,6 +1,14 @@
 
 #pragma once
 
+#include "util/reflect.h"
+#include "log.h"
+
+#include <imgui/imgui.h>
+
+struct dbg_manager;
+extern dbg_manager* global_dbg;
+
 // TODO(max): this is kind of evil
 #ifdef _MSC_VER
 #define POST_MSG(m) {(m).time = __rdtsc(); bool prev = this_thread_data.startup; this_thread_data.startup = true; this_thread_data.dbg_queue.push(m); this_thread_data.startup = prev;}

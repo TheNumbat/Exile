@@ -1,4 +1,6 @@
 
+#include "platform_strings.h"
+
 bool streql(string l, string r) {
 
 	if(l.len != r.len) {

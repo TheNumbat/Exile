@@ -1,4 +1,7 @@
 
+#include "threads.h"
+#include "util/threadstate.h"
+
 template<typename E>
 void atomic_enum<E>::set(E val) {
 

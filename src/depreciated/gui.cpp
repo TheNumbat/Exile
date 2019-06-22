@@ -197,7 +197,7 @@ gui_font* gui_select_best_font_scale() {
 	f32 defl = ggui->style.font_size;
 	f32 min_off = FLT_MAX;
 	FORVEC(it, ggui->fonts) {
-		f32 off = abs(defl - it->font->font.point);
+		f32 off = absv(defl - it->font->font.point);
 		if(off < min_off) {
 			min_off = off;
 			f = it;

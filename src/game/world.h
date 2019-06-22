@@ -1,6 +1,12 @@
 
 #pragma once
 
+#include <engine/basic.h>
+#include <engine/util/fptr.h>
+#include <engine/threads.h>
+#include <engine/ds/queue.h>
+#include "gfx.h"
+
 struct chunk;
 
 // -x is east, +x is west
@@ -33,7 +39,7 @@ struct block_meta {
 };
 
 struct chunk_pos {
-	i32 x = 0, y = 0, z = 0;
+	i32 x = 0; i32 y = 0; i32 z = 0;
 
 	chunk_pos(i32 _x = 0, i32 _y = 0, i32 _z = 0);
 	static chunk_pos from_abs(v3 pos);
@@ -65,14 +71,9 @@ struct light_gather {
 	u8 s0 = 0;
 	u8 contrib = 0;
 	
-	void operator+=(light_at l) {
-		if(l.solid) return;
-		t += l.light.t; 
-		s0 += l.light.s0;
-		contrib++;
-	}
+	void operator+=(light_at l);
 };
-bool operator==(light_gather l, light_gather r) {return l.t==r.t && l.s0==r.s0;}
+bool operator==(light_gather l, light_gather r);
 
 struct mesh_face {
 	
