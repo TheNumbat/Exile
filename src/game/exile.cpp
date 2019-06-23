@@ -42,7 +42,7 @@ void exile_state::init() { PROF_FUNC
 	a_render = MAKE_PLATFORM_ALLOCATOR("game_render"_);
 
 	store = asset_store::make(&a_assets);
-	store.load("assets/game.asset"_);
+	store.load("game.asset"_);
 
 	setup_console_commands();
 

@@ -20,7 +20,7 @@
 			"variants": [
                 {
                     "name": "Run",
-                    "shell_cmd": "run build\\main.exe",
+                    "shell_cmd": "pushd data && ..\\build\\main.exe",
                     "encoding": "UTF-8"
                 },
                 {

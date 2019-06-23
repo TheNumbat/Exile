@@ -2,7 +2,6 @@
 project('exile', 'cpp')
 
 # To-Do 
-# 	shaders as assets
 # 	SDL platform layer
 #	add compile flags / release / debug
 # 	re-write metaprogram
@@ -33,6 +32,8 @@ custom_target('assets',
   			   input : 'data/assets/game.txt',
   			   build_by_default: true,
   			   command : [asset_builder, '@INPUT@', '@OUTPUT@'])
+
+run_command('cp', 'build/game.asset', 'data/game.asset', env: environment())
 
 # Build meta-program
 

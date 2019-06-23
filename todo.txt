@@ -24,6 +24,7 @@ Working To-Do:
 			https://learnopengl.com/Advanced-Lighting/HDR
 		
 		[performance/structure]
+		shaders as assets
 		chunk culling / visibility / draw optimizations
 			try cpu frustum + occlusion queries
 				defer the queries a few frames?
