@@ -29,8 +29,10 @@ typedef u32 platform_thread_id;
 
 extern platform_api* global_api;
 
-#ifdef _WIN32
+#ifdef PLATFORM_WIN32
 #include "windows/platform_win32_api.h"
+#elif defined(PLATFORM_SDL)
+#include "SDL/platform_sdl_api.h"
 #else
 #error Unsupported Platform
 #endif

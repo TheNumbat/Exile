@@ -113,7 +113,7 @@ void asset_store::load(string file) {
 	do {
 		itr++;
 		error = global_api->create_file(&store_file, file, platform_file_open_op::existing);
-	} while(error.error == WIN32_SHARING_ERROR && itr < 100000);
+	} while(error.error == PLT_SHARING_ERROR && itr < 100000);
 
 	if(!error.good) {
 		LOG_ERR_F("Failed to open asset store %, error %"_, file, error.error);

@@ -29,7 +29,6 @@
 
 #define BUILDER
 
-#include "../engine/basic.h"
 #include "../engine/asset.h"
 
 struct def_asset_image {

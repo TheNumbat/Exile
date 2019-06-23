@@ -1,7 +1,7 @@
 
 #include "platform_win32.h"
 
-#ifdef TEST_NET_ZERO_ALLOCS
+#ifdef CHECK_NO_LEAKS
 #define win32_heap_alloc win32_heap_alloc_net
 #define win32_heap_free win32_heap_free_net
 #endif
@@ -757,7 +757,7 @@ platform_error win32_get_bin_path(string* path) {
 	return ret;
 }
 
-#ifdef TEST_NET_ZERO_ALLOCS
+#ifdef CHECK_NO_LEAKS
 void* win32_heap_alloc_net(u64 bytes) {
 
 	HANDLE heap = GetProcessHeap();

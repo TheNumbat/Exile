@@ -12,7 +12,7 @@
 #include <unistd.h>
 #endif
 
-#ifdef TEST_NET_ZERO_ALLOCS
+#ifdef CHECK_NO_LEAKS
 #define sdl_heap_alloc sdl_heap_alloc_net
 #define sdl_heap_free sdl_heap_free_net
 #endif
@@ -55,6 +55,7 @@ void platform_test_api() {
 	sdl_atomic_exchange(&val, 10);
 	printf("val: %llu\n", val);
 
+#ifdef CHECK_NO_LEAKS
 	printf("count: %d\n", global_num_allocs);
 	string path;
 	err = sdl_get_bin_path(&path);
@@ -63,6 +64,7 @@ void platform_test_api() {
 	puts(path.c_str);
 	free_string(path, &sdl_heap_free);
 	printf("count: %d\n", global_num_allocs);
+#endif
 
 	string time = sdl_time_string();
 	printf("%s\n", time.c_str);
@@ -1065,7 +1067,7 @@ platform_error sdl_write_stdout_str(string str) {
 	return ret;
 }
 
-#ifdef TEST_NET_ZERO_ALLOCS
+#ifdef CHECK_NO_LEAKS
 void* sdl_heap_alloc_net(u64 bytes) {
 
 	SDL_AtomicAdd((SDL_atomic_t*)&global_num_allocs, 1);

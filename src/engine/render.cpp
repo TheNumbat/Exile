@@ -45,7 +45,7 @@ void shader_source::load() {
 	do {
 		itr++;
 		error = global_api->create_file(&source_file, path, platform_file_open_op::existing);
-	} while (error.error == WIN32_SHARING_ERROR && itr < 100000);
+	} while (error.error == PLT_SHARING_ERROR && itr < 100000);
 
 	if(!error.good) {
 		LOG_ERR_F("Failed to load shader source %"_, path);
@@ -1609,10 +1609,12 @@ void ogl_manager::load_global_funcs() {
 	#undef GL_LOAD
 	#undef GL_IS_LOAD
 
+#ifdef GL_CHECKS
 	glEnable(gl_capability::debug_output);
 	glEnable(gl_capability::debug_output_synchronous);
 	glDebugMessageCallback(debug_proc, null);
 	glDebugMessageControl(gl_debug_source::dont_care, gl_debug_type::dont_care, gl_debug_severity::dont_care, 0, null, gl_bool::_true);
+#endif
 }
 
 void ogl_manager::check_leaked_handles() {

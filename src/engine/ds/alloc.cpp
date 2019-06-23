@@ -2,6 +2,7 @@
 #include "alloc.h"
 #include "../log.h"
 #include "../math.h"
+#include "../dbg.h"
 
 u32 hash(allocator a) { 
 

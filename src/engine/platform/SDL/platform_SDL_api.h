@@ -5,7 +5,7 @@
 #define stat _stat
 #endif
 
-u32 PLATFORM_SHARING_ERROR = UINT32_MAX;
+#define PLT_SHARING_ERROR UINT32_MAX
 
 struct platform_window_internal {
 	bool focused = false;
@@ -48,7 +48,3 @@ struct platform_file {
 	// Opaque
 	SDL_RWops* ops = null;
 };
-
-bool operator==(platform_file first, platform_file second) {
-	return first.ops == second.ops;
-}
