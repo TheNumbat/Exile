@@ -82,12 +82,12 @@ string operator "" _(const char* str, size_t s);
 char uppercase(char c);
 bool whitespace(char c);
 
-inline u32 hash(string one, string two);
-inline u32 hash(string str);
+u32 hash(string one, string two);
+u32 hash(string str);
 constexpr u32 const_hash(const char* str);
 bool operator==(string first, string second);
-inline bool operator==(string first, const char* second);
-inline bool operator==(const char* first, string second);
+bool operator==(string first, const char* second);
+bool operator==(const char* first, string second);
 bool strcmp(string first, string second);
 bool operator<=(string first, string second);
 
@@ -99,11 +99,11 @@ u32 size_stringf(string fmt, Targs... args);
 // don't worry about these Kappa b
 
 template<typename T, typename... Targs> 
-inline T&  get_pack_first(T& val, Targs... args);
-inline u32 get_pack_first();
+T&  get_pack_first(T& val, Targs... args);
+u32 get_pack_first();
 template<typename T, typename... Targs>
-inline u32 _string_printf_fwd(string out, u32 idx, string fmt, bool size, T val, Targs... args);
-inline u32 _string_printf_fwd(string out, u32 idx, string fmt, bool size);
+u32 _string_printf_fwd(string out, u32 idx, string fmt, bool size, T val, Targs... args);
+u32 _string_printf_fwd(string out, u32 idx, string fmt, bool size);
 
 template<typename T, typename... Targs>
 u32 _string_printf(string out, u32 idx, string fmt, bool size, T& value, Targs... args);

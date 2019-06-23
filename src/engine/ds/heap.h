@@ -51,4 +51,3 @@ struct locking_heap : public heap<T, comp> {
 	bool try_pop(T* out);
 	void renew(float (*eval)(T,void*), void* param);
 };
-

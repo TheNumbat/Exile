@@ -57,3 +57,5 @@ struct locking_queue : public queue<T> {
 	bool try_pop(T* out);
 	bool empty();
 };
+
+

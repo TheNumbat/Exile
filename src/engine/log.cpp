@@ -2,6 +2,7 @@
 #include "log.h"
 #include "log_html.h"
 #include "util/threadstate.h"
+#include "dbg.h"
 
 log_manager* global_log = null;
 
@@ -157,51 +158,6 @@ void log_manager::print_footer(log_out* output) {
 		output->file.write((void*)log_html_footer.c_str, log_html_footer.len - 1);
 		output->file.flush();
 	}
-}
-
-template<typename... Targs> 
-void log_manager::msgf(string fmt, log_level level, code_context context, Targs... args) { 
-
-	log_message lmsg;
-
-	u32 msg_len = size_stringf(fmt, args...);
-	u32 arena_size = msg_len + this_thread_data.name.len + this_thread_data.context_depth * sizeof(string);
-	
-	arena_allocator arena = MAKE_ARENA("msg"_, arena_size, alloc);
-
-	PUSH_ALLOC(&arena) {
-
-		lmsg.msg = string::makef(msg_len, fmt, args...);
-
-		lmsg.publisher = context;
-		lmsg.level = level;
-
-		lmsg.context_stack = array<string>::make_memory(this_thread_data.context_depth, malloc(sizeof(string) * this_thread_data.context_depth));
-		lmsg.thread_name = string::make_copy(this_thread_data.name);
-		_memcpy(this_thread_data.context_stack, lmsg.context_stack.memory, sizeof(string) * this_thread_data.context_depth);
-
-		lmsg.arena = arena;
-		message_queue.push(lmsg);
-		
-		global_api->signal_semaphore(&logging_semaphore, 1);
-
-#ifdef BLOCK_OR_EXIT_ON_ERROR
-		if(level == log_level::error) {
-
-			if(global_api->is_debugging()) {
-				global_api->debug_break();
-			}
-			global_api->join_thread(&logging_thread, -1);
-		}
-#endif
-		if(level == log_level::fatal) {
-			if(global_api->is_debugging()) {
-				global_api->debug_break();
-			}
-			global_api->join_thread(&logging_thread, -1);
-		}
-
-	} POP_ALLOC();
 }
 
 void log_manager::msg(string msg, log_level level, code_context context) { 

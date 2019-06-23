@@ -2,6 +2,7 @@
 #pragma once
 
 #include "vector.h"
+#include "../math.h"
 
 // don't store addresses of elements in a map - at all. Pls.
 
@@ -39,7 +40,6 @@ inline u32 hash(u8 key) {
 inline u32 hash(u16 key) { 
 	return hash((u32)key);
 }
-
 // map foreach
 #define FORMAP(it,m) for(auto it = (m).contents.memory; it != (m).contents.memory + (m).contents.capacity; it++) if(ELEMENT_OCCUPIED(*it))
 
@@ -75,76 +75,8 @@ struct map {
 	
 	void destroy();
 	
-	V* insert(K key, V value, bool grow_if_needed = true) {
-		if(size >= contents.capacity * MAP_MAX_LOAD_FACTOR) {
-			if(grow_if_needed) {
-				grow_rehash(); // this is super expensive, avoid at all costs
-			} else {
-				return null;
-			}
-		}
-
-		map_element<K,V> ele;
-
-		ELEMENT_SET_HASH_BUCKET(ele, hash_func(key) & (contents.capacity - 1));
-		ele.key 		= key;
-		ele.value 		= value;
-		ELEMENT_SET_OCCUPIED(ele);
-
-		// robin hood open addressing
-
-		u32 index = ELEMENT_HASH_BUCKET(ele);
-		u32 probe_length = 0;
-		map_element<K,V>* placed_adr = null;
-		for(;;) {
-			if(ELEMENT_OCCUPIED(*contents.get(index))) {
-
-				i32 occupied_probe_length = index - ELEMENT_HASH_BUCKET(*contents.get(index));
-				if(occupied_probe_length < 0) {
-					occupied_probe_length += contents.capacity;
-				}
-
-				if((u32)occupied_probe_length < probe_length) {
-
-					map_element<K,V>* to_swap = contents.get(index);
-					if(!placed_adr) {
-						placed_adr = to_swap;
-					}
-
-					map_element<K,V> temp = *to_swap;
-					*to_swap = ele;
-					ele = temp;
-
-					probe_length = occupied_probe_length;
-				} 
-
-				probe_length++;
-				index++;
-				if (index == contents.capacity) {
-					index = 0;
-				}
-
-				if(probe_length > max_probe) {
-					max_probe = probe_length;
-				}
-			} else {
-				*contents.get(index) = ele;
-				size++;
-
-				if(placed_adr) {
-					return &placed_adr->value;
-				}
-				return &(contents.get(index)->value);
-			}
-		}
-	}
-	V* insert_if_unique(K key, V value, bool grow_if_needed = true) {
-		V* result = try_get(key);
-		if(!result) {
-			return insert(key, value, grow_if_needed);
-		}
-		return result;
-	}
+	V* insert(K key, V value, bool grow_if_needed = true);
+	V* insert_if_unique(K key, V value, bool grow_if_needed = true);
 	bool try_erase(K key);
 	void erase(K key);
 	void clear();

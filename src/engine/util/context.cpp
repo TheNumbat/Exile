@@ -3,8 +3,7 @@
 #include "../ds/map.h"
 #include "../log.h"
 
-inline u32 hash(code_context c) { 
-
+u32 hash(code_context c) {
 	return hash(c.function()) ^ hash(c.file()) ^ hash(c.line);
 }
 
@@ -24,7 +23,7 @@ string code_context::path() {
 	return string::from_c_str(c_file);
 }
 
-inline code_context _make_context(string file, string function, i32 line) {
+code_context _make_context(string file, string function, i32 line) {
 
 	code_context ret;
 

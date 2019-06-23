@@ -1,27 +1,12 @@
 
 #include "threadstate.h"
-#include "../ds/string.h"
+#include "reflect.h"
 #include "context.h"
 
-template<typename... Targs>
-void _begin_thread(string fmt, allocator* alloc, code_context start, Targs... args) {
+#include "../ds/string.h"
+#include "../dbg.h"
 
-	this_thread_data.alloc_stack = stack<allocator*>::make(8, alloc);
-
-	this_thread_data.dbg_queue = queue<dbg_msg>::make(4096, alloc);
-
-	this_thread_data.scratch_arena = MAKE_ARENA("scratch"_, MEGABYTES(8), alloc);
-	PUSH_ALLOC(&this_thread_data.scratch_arena);
-
-	make_type_table(alloc);
-	
-	this_thread_data.start_context = start;
-	this_thread_data.name = string::makef(fmt, alloc, args...);
-
-	rand_init(hash(this_thread_data.name));
-	
-	this_thread_data.startup = false;
-}
+thread_local thread_data this_thread_data;
 
 void end_thread() { 
 

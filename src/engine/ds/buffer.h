@@ -21,5 +21,12 @@ struct buffer {
 	void flush();
 };
 
-CALLBACK void write_file_wrapper(platform_file file, void* mem, u32 len);
-CALLBACK void write_stdout_wrapper(u8 ignore, void* mem, u32 len);
+CALLBACK inline void write_file_wrapper(platform_file file, void* mem, u32 len) { 
+	CHECKED(write_file, &file, mem, len);
+}
+
+CALLBACK inline void write_stdout_wrapper(u8 ignore, void* mem, u32 len) { 
+	CHECKED(write_stdout, mem, len);
+}
+
+#include "buffer.inl"

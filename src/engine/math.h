@@ -9,6 +9,22 @@
 #include <intrin.h>
 #endif
 
+#ifndef IN_MATH_IMPL
+#define sqrt _sqrt
+#define absv _absv
+#define round _round
+#define ceil _ceil
+#define floor _floor
+#define sin _sin
+#define cos _cos
+#define tan _tan
+#define asin _asin
+#define acos _acos
+#define atan _atan
+#define atan2 _atan2
+#define pow _pow
+#endif
+
 #define PI32 3.14159265358979323846264338327950288f
 #define PI64 3.14159265358979323846264338327950288
 #define TAU32 (2.0f*PI32) 
@@ -585,16 +601,4 @@ const color RED   = color(255, 0, 0, 255);
 const color GREEN = color(0, 255, 0, 255);
 const color BLUE  = color(0, 0, 255, 255);
 
-#define sqrt _sqrt
-#define absv _absv
-#define round _round
-#define ceil _ceil
-#define floor _floor
-#define sin _sin
-#define cos _cos
-#define tan _tan
-#define asin _asin
-#define acos _acos
-#define atan _atan
-#define atan2 _atan2
-#define pow _pow
+

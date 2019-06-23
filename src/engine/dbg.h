@@ -370,3 +370,87 @@ bool prof_sort_heir(profile_node* l, profile_node* r);
 bool prof_sort_self(profile_node* l, profile_node* r);
 bool prof_sort_calls(profile_node* l, profile_node* r);
 bool operator<=(addr_info l, addr_info r);
+
+template<typename T>
+void dbg_value_store::add_val(string path, T* val) { 
+
+	dbg_value* value = &value_store;
+	path.len--;
+
+	for(;;) {
+		
+		string key;
+		i32 slash = path.first_slash();
+		if(slash != -1) {
+			key  = path.substring(0, (u32)slash - 1);
+			path = path.substring((u32)slash + 1, path.len);
+		} else {
+			key = path;
+			if(!value->sec.children.try_get(key))
+				value->sec.children.insert(string::make_copy(key, alloc), dbg_value::make_view(any::make(val)));
+			break;
+		}
+
+		dbg_value* next = value->sec.children.try_get(key);
+		if(!next) value = value->sec.children.insert(string::make_copy(key, alloc), dbg_value::make_sec(alloc));
+		else if (next->type != dbg_value_class::section) break;
+		else value = next;
+	}
+}
+
+template<typename T>
+void dbg_value_store::add_var(string path, T* val) { 
+
+	dbg_value* value = &value_store;
+	path.len--;
+
+	for(;;) {
+		
+		string key;
+		i32 slash = path.first_slash();
+		if(slash != -1) {
+			key  = path.substring(0, (u32)slash - 1);
+			path = path.substring((u32)slash + 1, path.len);
+		} else {
+			key = path;
+			if(!value->sec.children.try_get(key))
+				value->sec.children.insert(string::make_copy(key, alloc), dbg_value::make_edit(any::make(val)));
+			break;
+		}
+
+		dbg_value* next = value->sec.children.try_get(key);
+		if(!next) value = value->sec.children.insert(string::make_copy(key, alloc), dbg_value::make_sec(alloc));
+		else if (next->type != dbg_value_class::section) break;
+		else value = next;
+	}
+}
+
+template<typename T>
+T dbg_value_store::get_var(string path) { 
+
+	dbg_value* value = &value_store;
+	path.len--;
+
+	for(;;) {
+		
+		string key;
+		i32 slash = path.first_slash();
+		if(slash != -1) {
+			key  = path.substring(0, (u32)slash - 1);
+			path = path.substring((u32)slash + 1, path.len);
+		} else {
+			key = path;
+			value = value->children.try_get(key);
+			break;
+		}
+
+		value = value->children.try_get(key);
+		if(!value) return null;
+	}
+
+	LOG_DEBUG_ASSERT(value->type == dbg_value_class::value);
+	LOG_DEBUG_ASSERT(value->info == TYPEINFO(T));
+	return *(T*)value->value;
+}
+
+
