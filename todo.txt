@@ -1,6 +1,22 @@
 
 Working To-Do:
 
+	~~~~~~ Rewrite Meta-Program ~~~~~~~~~
+		Moving build systems and updating libclang totally broke it, so
+		why don't we take the chance to make it actually robust and
+		more useful?
+		However, this will probably take a week, so putting rendering
+		features on hold for now.
+		Still want to finish all rendering features + at least explore
+		the performance/structure enhancements by August
+		August, want to finish world interaction upgrades.
+		By the end of the semester, general polish for releasable demo.
+		Future: iterate on world and QoL features, and begin actual game-play
+			Really want to learn networking/support multi-player
+			Maybe modding, but first a from-scratch playable multi-player core 
+			demo survival a-la Minecraft beta (but with really nice looking graphics)
+			would be great
+
 	Rendering:
 		[features]
 		dynamic lights
@@ -23,6 +39,11 @@ Working To-Do:
 		HDR / auto exposure? yes tbh POGU
 			https://learnopengl.com/Advanced-Lighting/HDR
 		
+		[later features]
+		transparent blocks, animated blocks (e.g. waving foliage)
+		water animation / liquid system
+		entity animation
+
 		[performance/structure]
 		shaders as assets
 		chunk culling / visibility / draw optimizations
