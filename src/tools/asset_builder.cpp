@@ -6,7 +6,6 @@
 #include <fstream>
 #include <vector>
 #include <algorithm>
-using namespace std;
 
 #pragma warning(disable : 4007)
 
@@ -30,28 +29,28 @@ using namespace std;
 
 #define BUILDER
 
-#include "../engine/util/basic_types.h"
+#include "../engine/basic.h"
 #include "../engine/asset.h"
 
 struct def_asset_image {
-	string name;
-	string file;
+	std::string name;
+	std::string file;
 };
 
 struct def_asset_ttf_font {
-	string name;
-	string file;
+	std::string name;
+	std::string file;
 };
 
 struct def_asset_raster_font {
 	struct range {
 		u32 start, end;
 	};
-	string name;
-	string file;
+	std::string name;
+	std::string file;
 	i32 point;
 	i32 width, height;
-	vector<range> ranges;
+	std::vector<range> ranges;
 	bool write_out = false;
 };
 
@@ -74,28 +73,28 @@ struct def_asset {
 };
 
 struct def_file_structure {
-	vector<def_asset> assets;
+	std::vector<def_asset> assets;
 };
 
 bool control_char(char c) {
 	return c == '\r' || c == '\n' || c == '\t' || c == ' ' || c == ':' || c == ',';
 }
 
-void eat_control(ifstream& in) {
+void eat_control(std::ifstream& in) {
 
 	while(control_char((char)in.peek())) {
 		in.get();
 	}
 }
 
-def_file_structure build_def_file(ifstream& in) {
+def_file_structure build_def_file(std::ifstream& in) {
 
 	def_file_structure ret;
 
 	while(in.good()) {
 
 		eat_control(in);
-		string type;
+		std::string type;
 		getline(in, type, '{');
 		type.erase(type.find_last_not_of(" \n\r\t") + 1);
 
@@ -109,11 +108,11 @@ def_file_structure build_def_file(ifstream& in) {
 			eat_control(in);
 
 			while(in.peek() != '}') {
-				string field;
+				std::string field;
 				in >> field;
 				if(field == "name") {
 
-					string name;
+					std::string name;
 					eat_control(in);
 					getline(in, name, ',');
 					eat_control(in);
@@ -122,7 +121,7 @@ def_file_structure build_def_file(ifstream& in) {
 
 				} else if(field == "file") {
 
-					string file;
+					std::string file;
 					eat_control(in);
 					getline(in, file, ',');
 					eat_control(in);
@@ -139,11 +138,11 @@ def_file_structure build_def_file(ifstream& in) {
 
 			while(in.peek() != '}') {
 
-				string field;
+				std::string field;
 				in >> field;
 				if(field == "name") {
 
-					string name;
+					std::string name;
 					eat_control(in);
 					getline(in, name, ',');
 					eat_control(in);
@@ -152,7 +151,7 @@ def_file_structure build_def_file(ifstream& in) {
 
 				} else if(field == "write_out") {
 
-					string write_out;
+					std::string write_out;
 					eat_control(in);
 					getline(in, write_out, ',');
 					eat_control(in);
@@ -163,7 +162,7 @@ def_file_structure build_def_file(ifstream& in) {
 
 				} else if(field == "file") {
 
-					string file;
+					std::string file;
 					eat_control(in);
 					getline(in, file, ',');
 					eat_control(in);
@@ -216,12 +215,12 @@ def_file_structure build_def_file(ifstream& in) {
 			eat_control(in);
 
 			while(in.peek() != '}') {
-				string field;
+				std::string field;
 				in >> field;
 
 				if(field == "name") {
 
-					string name;
+					std::string name;
 					eat_control(in);
 					getline(in, name, ',');
 					eat_control(in);
@@ -230,7 +229,7 @@ def_file_structure build_def_file(ifstream& in) {
 
 				} else if(field == "file") {
 
-					string file;
+					std::string file;
 					eat_control(in);
 					getline(in, file, ',');
 					eat_control(in);
@@ -250,25 +249,25 @@ def_file_structure build_def_file(ifstream& in) {
 int main(int argc, char** argv) {
 
 	if(argc < 3) {
-		cout << "You must pass an input and output file name!" << endl;
+		std::cout << "You must pass an input and output file name!" << std::endl;
 		return 1;
 	}
 
-	ifstream def_file(argv[1]);
+	std::ifstream def_file(argv[1]);
 
 	if(!def_file.good()) {
-		cout << "Failed to open file " << argv[1] << endl;
+		std::cout << "Failed to open file " << argv[1] << std::endl;
 		return 1;
 	}
 
-	ofstream assets_out(argv[2], ios::binary);
+	std::ofstream assets_out(argv[2], std::ios::binary);
 	
 	if(!assets_out.good()) {
-		cout << "Failed to create file " << argv[2] << endl;
+		std::cout << "Failed to create file " << argv[2] << std::endl;
 		return 1;
 	}
 
-	string rel_path(argv[2]);
+	std::string rel_path(argv[1]);
 	rel_path = rel_path.substr(0, rel_path.find_last_of("/\\") + 1);
 
 	def_file_structure def = build_def_file(def_file);
@@ -326,11 +325,11 @@ int main(int argc, char** argv) {
 
 			file_asset_ttf_font asset_font;
 
-			ifstream font_in(rel_path + def_asset.ttf_font.file, ios::binary | ios::ate);
-			streamsize file_size = font_in.tellg();
-			font_in.seekg(0, ios::beg);
+			std::ifstream font_in(rel_path + def_asset.ttf_font.file, std::ios::binary | std::ios::ate);
+			std::streamsize file_size = font_in.tellg();
+			font_in.seekg(0, std::ios::beg);
 
-			vector<char> data((u32)file_size);
+			std::vector<char> data((u32)file_size);
 			font_in.read(data.data(), file_size);
 
 			asset_header.next = sizeof(file_asset_header) + sizeof(file_asset_ttf_font) + file_size;
@@ -347,11 +346,11 @@ int main(int argc, char** argv) {
 
 			file_asset_raster_font asset_font;
 
-			ifstream font_in(rel_path + def_asset.raster_font.file, ios::binary | ios::ate);
-			streamsize size = font_in.tellg();
-			font_in.seekg(0, ios::beg);
+			std::ifstream font_in(rel_path + def_asset.raster_font.file, std::ios::binary | std::ios::ate);
+			std::streamsize size = font_in.tellg();
+			font_in.seekg(0, std::ios::beg);
 
-			vector<char> data((u32)size);
+			std::vector<char> data((u32)size);
 			font_in.read(data.data(), size);
 
 			stbtt_fontinfo font_info;
@@ -365,7 +364,7 @@ int main(int argc, char** argv) {
 
 			u32 pixel_stride =  def_asset.raster_font.width;
 			u32 pixel_size = pixel_stride * def_asset.raster_font.height;
-			u8* baked_bitmap = (u8*)malloc(pixel_size);
+			u8* baked_bitmap = new u8[pixel_size];
 			memset(baked_bitmap, 0, pixel_size);
 
 			// Two pixel-padding needed for scaling (likely because of FP rounding error)
@@ -373,12 +372,12 @@ int main(int argc, char** argv) {
 			stbtt_PackSetOversampling(&pack_context, 1, 1);
 
 			u32 total_packedchars = 0;
-			vector<stbtt_packedchar*> packedchars;	
+			std::vector<stbtt_packedchar*> packedchars;	
 			for(u32 ri = 0; ri < def_asset.raster_font.ranges.size(); ri++) {
 			
 				i32 cp_num = def_asset.raster_font.ranges[ri].end - def_asset.raster_font.ranges[ri].start + 1;
 
-				stbtt_packedchar* row = (stbtt_packedchar*)malloc(cp_num * sizeof(stbtt_packedchar));
+				stbtt_packedchar* row = new stbtt_packedchar[cp_num];
 				memset(row, 0, cp_num * sizeof(stbtt_packedchar));
 				packedchars.push_back(row);
 				total_packedchars += cp_num;
@@ -400,7 +399,7 @@ int main(int argc, char** argv) {
 			asset_font.height		= def_asset.raster_font.height;
 			asset_font.point 		= (f32)def_asset.raster_font.point;
 
-			vector<file_glyph_data> glyph_data;
+			std::vector<file_glyph_data> glyph_data;
 			for(u32 ri = 0; ri < def_asset.raster_font.ranges.size(); ri++) {
 
 				def_asset_raster_font::range& r = def_asset.raster_font.ranges[ri];
@@ -430,7 +429,7 @@ int main(int argc, char** argv) {
 			assets_out.write((char*)glyph_data.data(), sizeof(file_glyph_data) * glyph_data.size());
 			
 			u32 out_size = pixel_size;
-			u8* texture_out = (u8*)malloc(out_size);
+			u8* texture_out = new u8[out_size];
 			memset(texture_out, 0, out_size);
 			u8* texture_out_place = texture_out;
 			u8* bake_last = baked_bitmap + pixel_size - pixel_stride;
@@ -441,10 +440,10 @@ int main(int argc, char** argv) {
 			}
 			assets_out.write((char*)texture_out, out_size);
 
-			free(texture_out);
-			free(baked_bitmap);
+			delete[] texture_out;
+			delete[] baked_bitmap;
 			for(stbtt_packedchar* pc : packedchars)
-				free(pc);
+				delete[] pc;
 		}
 	}
 

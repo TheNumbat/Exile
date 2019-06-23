@@ -362,7 +362,10 @@ CXChildVisitResult do_parse(CXCursor c) {
 
 void output_pre(ofstream& fout) {
 	fout << "#define META_NO_IMPL" << endl
-		 << "#include <meta_files.h>" << endl << endl
+		 << "#include <engine/dbg.h>" << endl
+		 << "#include <engine/ds/map.h>" << endl
+		 << "#include <engine/ds/map.inl>" << endl
+		 << "#include <meta_input.h>" << endl << endl
 		 << "#define unsignedint unsigned int" << endl
 		 << "#define unsignedlonglong unsigned long long" << endl
 		 << "#define STRING2(...) #__VA_ARGS__##_" << endl

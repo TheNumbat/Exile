@@ -102,6 +102,8 @@ f64 float_as_f64(void* val, _type_info* info) {
 
 string enum_to_string(i64 val, _type_info* info) { 
 
+	if (!info) return "UNDEF"_;
+
 	string name;
 
 	u32 low = 0, high = info->_enum.member_count;
@@ -274,8 +276,4 @@ void make_type_table(allocator* alloc) {
 	}
 
 	make_meta_info();
-
-	// dirty hack
-	TYPEINFO(profile_node*)->name = "profile_node"_;
-	TYPEINFO(profile_node*)->_ptr.to = TYPEINFO(profile_node)->hash;
 }

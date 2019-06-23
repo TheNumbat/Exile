@@ -22,7 +22,7 @@ struct func_ptr_state {
 	void reload_all();
 };
 
-static func_ptr_state* global_func = null;
+extern func_ptr_state* global_func;
 
 template<typename T, typename... args>
 struct func_ptr {

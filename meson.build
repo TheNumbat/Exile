@@ -2,10 +2,7 @@
 project('exile', 'cpp')
 
 # To-Do 
-#	change format away from unity, test with and without
-# 	delete compile.*, old_compile.*, meta_files.h
-# 	build asset builder
-#	run asset builder
+# 	shaders as assets
 # 	SDL platform layer
 #	add compile flags / release / debug
 # 	re-write metaprogram
@@ -25,6 +22,18 @@ if host_system == 'windows'
 	add_global_arguments('/Zc:offsetof-', language : 'cpp')
 endif
 
+# Build asset builder
+
+asset_builder = executable('asset', 'src/tools/asset_builder.cpp', 
+							include_directories : inc_dir, 
+							native : true)
+
+custom_target('assets',
+  			   output : 'game.asset',
+  			   input : 'data/assets/game.txt',
+  			   build_by_default: true,
+  			   command : [asset_builder, '@INPUT@', '@OUTPUT@'])
+
 # Build meta-program
 
 clang_dir = join_paths(project_dir, 'deps/clang-c')
@@ -42,7 +51,7 @@ clang_dll = configure_file(
 	copy : true)
 
 gen_src = custom_target('meta_output',
-                        input : 'src/meta_files.h',
+                        input : 'src/meta_input.h',
                         output : 'meta_types.cpp',
                         command : [meta_compiler, '@INPUT@'])
 
@@ -77,8 +86,6 @@ game_sources = [
 	gen_src]
 
 game_dependencies = []
-game_dependencies += dependency('threads')
-
 if host_system == 'windows'
 	game_dependencies += cc.find_library('opengl32')
 endif
