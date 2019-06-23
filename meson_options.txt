@@ -4,5 +4,6 @@ option('zero_arena', type : 'boolean', value : false, description : 'Clear Temp 
 option('check_plt', type : 'boolean', value : true, description : 'Validate Platform Functions')
 option('profile', type : 'boolean', value : true, description : 'Perform Function Timing')
 option('leak_check', type : 'boolean', value : true, description : 'Validate Net Zero Allocations on Close')
+option('gl_check', type : 'boolean', value : true, description : 'Enable OpenGL Debug Messaging')
 option('fast_close', type : 'boolean', value : false, description : 'Close Without Waiting for Jobs')
 option('platform', type : 'combo', choices : ['win32', 'sdl'], value : 'win32')

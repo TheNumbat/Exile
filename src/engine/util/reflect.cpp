@@ -276,4 +276,8 @@ void make_type_table(allocator* alloc) {
 	}
 
 	make_meta_info();
+
+	// TODO(max): dirty hack @rewrite-meta
+	TYPEINFO(profile_node*)->name = "profile_node"_;
+	TYPEINFO(profile_node*)->_ptr.to = TYPEINFO(profile_node)->hash;
 }

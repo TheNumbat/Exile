@@ -366,8 +366,6 @@ void output_pre(ofstream& fout) {
 		 << "#include <engine/ds/map.h>" << endl
 		 << "#include <engine/ds/map.inl>" << endl
 		 << "#include <meta_input.h>" << endl << endl
-		 << "#define unsignedint unsigned int" << endl
-		 << "#define unsignedlonglong unsigned long long" << endl
 		 << "#define STRING2(...) #__VA_ARGS__##_" << endl
 		 << "#define STRING(...) STRING2(__VA_ARGS__)" << endl
 		 << "void make_meta_info() { PROF_FUNC " << endl << endl;
