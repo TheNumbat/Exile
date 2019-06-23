@@ -108,7 +108,7 @@ namespace ImGui {
 
 	template<typename S>
 	void EditAny(string label, S* val, bool open) { 
-
+		
 		Edit_T(label, val, TYPEINFO(S), open);
 	}
 	
@@ -116,6 +116,8 @@ namespace ImGui {
 	void EnumCombo(string label, E* val, ImGuiComboFlags flags) { 
 
 		_type_info* info = TYPEINFO(E);
+		if(!info) return;
+		
 		LOG_DEBUG_ASSERT(info->type_type == Type::_enum);
 
 		EnumCombo_T(label, val, info, flags);

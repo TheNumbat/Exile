@@ -46,6 +46,8 @@ namespace ImGui {
 
 	void EnumCombo_T(string label, void* val, _type_info* info, ImGuiComboFlags flags) { 
 
+		if(!info) return;
+
 		_type_info* base = TYPEINFO_H(info->_enum.base_type);
 		i64 ival = int_as_i64(val, base);
 
@@ -70,6 +72,8 @@ namespace ImGui {
 	}
 
 	void View_T(string label, void* val, _type_info* info, bool open) { 
+
+		if(!info) return;
 
 		if(info->type_type != Type::_array && info->type_type != Type::_struct) {
 			Text("%s", label.c_str); SameLine();
@@ -177,6 +181,8 @@ namespace ImGui {
 	}
 
 	void Edit_T(string label, void* val, _type_info* info, bool open) { 
+
+		if(!info) return;
 
 		switch(info->type_type) {
 		case Type::_int: {
