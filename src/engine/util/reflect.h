@@ -137,3 +137,5 @@ string enum_to_string(i64 val, _type_info* info);
 i64 int_as_i64(void* val, _type_info* info);
 void int_from_i64(i64 val, void* i, _type_info* info);
 f64 float_as_f64(void* val, _type_info* info);
+
+#include "reflect.inl"

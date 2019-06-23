@@ -1,56 +1,11 @@
 
 #include "threads.h"
 #include "util/threadstate.h"
-
-template<typename E>
-void atomic_enum<E>::set(E val) {
-
-	global_api->atomic_exchange(&value, (u64)val);
-}
-
-template<typename E>
-E atomic_enum<E>::get() {
-
-	return (E)value;
-}
+#include "dbg.h"
 
 bool gt(super_job* l, super_job* r) { 
 	if(l->priority_class == r->priority_class) return l->priority > r->priority;
 	return l->priority_class > r->priority_class;
-}
-
-template<typename T>
-future<T> future<T>::make() {
-
-	future<T> ret;
-
-	global_api->create_mutex(&ret.mut, false);
-	global_api->create_semaphore(&ret.sem, 0, INT_MAX);
-
-	return ret;
-}
-
-template<typename T>
-void future<T>::destroy() {
-
-	global_api->destroy_mutex(&mut);
-	global_api->destroy_semaphore(&sem);
-}
-
-template<typename T>
-T future<T>::wait() {
-
-	global_api->wait_semaphore(&sem, -1);
-	return val;
-}
-
-template<typename T>
-void future<T>::set(T v) {
-
-	global_api->aquire_mutex(&mut);
-	val = v;
-	global_api->release_mutex(&mut);
-	CHECKED(signal_semaphore, &sem, 1);
 }
 
 threadpool threadpool::make(i32 num_threads_) { 
@@ -94,63 +49,6 @@ void threadpool::destroy() {
 void threadpool::renew_priorities(f32 (*eval)(super_job*, void*), void* param) { 
 
 	jobs.renew(eval, param);
-}
-
-template<>
-void heap<super_job*,gt>::renew(f32 (*eval)(super_job*, void*), void* param) { 
-
-	heap<super_job*,gt> h = heap<super_job*,gt>::make(capacity);
-
-	FORHEAP_LINEAR(it, *this) {
-
-		super_job* j = *it;
-
-		j->priority = eval(j, param);
-
-		if(j->priority > -FLT_MAX) {
-			h.push(j);
-		} else {
-			
-			if(j->cancel)
-				j->cancel(j->data);
-
-			// NOTE(max): only works because the elements are allocated with the same allocator passed to the heap (in threadpool)
-			PUSH_ALLOC(alloc) {
-				free(j, j->my_size);
-			} POP_ALLOC();
-		}
-	}
-   
-	_memcpy(h.memory, memory, h.size * sizeof(super_job*));
-	size = h.size;
-	h.destroy();
-}
-
-template<typename T>
-void threadpool::queue_job(future<T>* fut, job_work<T> work, void* data, f32 priority, i32 priority_class, _FPTR* cancel) { 
-
-	PUSH_ALLOC(alloc);
-
-	job<T>* j = NEW(job<T>);
-	j->priority = priority;
-	j->priority_class = priority_class;
-	j->future = fut;
-	j->work = work;
-	j->data = data;
-	j->cancel.set(cancel);
-
-#ifdef NO_CONCURRENT_JOBS
-	j->do_work();
-	free(j, j->my_size);
-	POP_ALLOC();
-#else
-
-	jobs.push(j);
-
-	CHECKED(signal_semaphore, &jobs_semaphore, 1);
-
-	POP_ALLOC();
-#endif
 }
 
 void threadpool::queue_job(job_work<void> work, void* data, f32 priority, i32 priority_class, _FPTR* cancel) {

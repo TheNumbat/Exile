@@ -5,9 +5,10 @@
 #include "../ds/string.h"
 #include "../ds/queue.h"
 #include "../ds/alloc.h"
-#include "../dbg.h"
 
 #define MAX_CONTEXT_DEPTH 16
+
+struct dbg_msg;
 
 struct thread_data {
 	stack<allocator*> alloc_stack;
@@ -24,8 +25,29 @@ struct thread_data {
 	arena_allocator scratch_arena;
 };
 
-static thread_local thread_data this_thread_data;
+extern thread_local thread_data this_thread_data;
 
 #define begin_thread(fmt, a, ...) _begin_thread(fmt, a, CONTEXT, ##__VA_ARGS__);
 template<typename... Targs> void _begin_thread(string fmt, allocator* alloc, code_context start, Targs... args);
 void end_thread();
+
+template<typename... Targs>
+void _begin_thread(string fmt, allocator* alloc, code_context start, Targs... args) {
+
+	this_thread_data.alloc_stack = stack<allocator*>::make(8, alloc);
+
+	this_thread_data.dbg_queue = queue<dbg_msg>::make(4096, alloc);
+
+	this_thread_data.scratch_arena = MAKE_ARENA("scratch"_, MEGABYTES(8), alloc);
+	PUSH_ALLOC(&this_thread_data.scratch_arena);
+
+	make_type_table(alloc);
+	
+	this_thread_data.start_context = start;
+	this_thread_data.name = string::makef(fmt, alloc, args...);
+
+	rand_init(hash(this_thread_data.name));
+	
+	this_thread_data.startup = false;
+}
+

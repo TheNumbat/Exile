@@ -2,7 +2,7 @@
 #include "exile.h"
 #include "console.h"
 
-static exile_state* exile = null;
+exile_state* exile = null;
 
 void* start_up_game(engine* e) {
 	exile = new (e->platform->heap_alloc(sizeof(exile_state))) exile_state;

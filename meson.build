@@ -67,13 +67,6 @@ engine_sources = [
 	'src/engine/imgui.cpp',
 	'src/engine/ds/alloc.cpp',
 	'src/engine/ds/string.cpp',
-	'src/engine/ds/vector.cpp',
-	'src/engine/ds/stack.cpp',
-	'src/engine/ds/array.cpp',
-	'src/engine/ds/queue.cpp',
-	'src/engine/ds/map.cpp',
-	'src/engine/ds/buffer.cpp',
-	'src/engine/ds/heap.cpp',
 	'src/engine/math.cpp',
 	'src/engine/platform/gl.cpp']
 game_sources = [

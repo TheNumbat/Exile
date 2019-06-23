@@ -2,7 +2,7 @@
 #include "engine.h"
 #include "util/threadstate.h"
 
-static platform_api* global_api = null;
+platform_api* global_api = null;
 
 EXPORT engine* start_up(platform_api* api) { 
 

@@ -1,6 +1,7 @@
 
 #include "asset.h"
 #include "util/threadstate.h"
+#include "log.h"
 
 asset_store asset_store::make(allocator* a) { 
 

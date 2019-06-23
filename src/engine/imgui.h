@@ -73,3 +73,51 @@ void imgui_free(void* mem, void* data);
 
 extern const GLchar* imgui_vertex_shader;
 extern const GLchar* imgui_fragment_shader;
+
+namespace ImGui {
+	template<typename V>
+	void MapCombo(string label, map<string,V> options, V* val, ImGuiComboFlags flags) { 
+
+		string preview;
+		FORMAP(it, options) {
+			if(it->value == *val) {
+				preview = it->key;
+			}
+		}
+
+		if(BeginCombo(label, preview, flags)) {
+			
+			FORMAP(it, options) {
+				bool selected = it->value == *val;
+				if(Selectable(it->key, selected)) {
+					*val = it->value;
+				}
+				if(selected) {
+					SetItemDefaultFocus();
+				}
+			}
+			EndCombo();
+		}
+	}
+
+	template<typename S>
+	void ViewAny(string label, S val, bool open) { 
+
+		View_T(label, &val, TYPEINFO(S), open);
+	}
+
+	template<typename S>
+	void EditAny(string label, S* val, bool open) { 
+
+		Edit_T(label, val, TYPEINFO(S), open);
+	}
+	
+	template<typename E>
+	void EnumCombo(string label, E* val, ImGuiComboFlags flags) { 
+
+		_type_info* info = TYPEINFO(E);
+		LOG_DEBUG_ASSERT(info->type_type == Type::_enum);
+
+		EnumCombo_T(label, val, info, flags);
+	}
+}

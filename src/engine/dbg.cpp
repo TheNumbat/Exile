@@ -4,7 +4,7 @@
 #include "imgui.h"
 #include "engine.h"
 
-static dbg_manager* global_dbg = null;
+dbg_manager* global_dbg = null;
 
 #ifdef PROFILE
 func_scope::func_scope(code_context context, string name) {
@@ -1144,88 +1144,6 @@ void dbg_value_store::add_ele(string path, _FPTR* callback, void* param) {
 		else if (next->type != dbg_value_class::section) break;
 		else value = next;
 	}
-}
-
-template<typename T>
-void dbg_value_store::add_val(string path, T* val) { 
-
-	dbg_value* value = &value_store;
-	path.len--;
-
-	for(;;) {
-		
-		string key;
-		i32 slash = path.first_slash();
-		if(slash != -1) {
-			key  = path.substring(0, (u32)slash - 1);
-			path = path.substring((u32)slash + 1, path.len);
-		} else {
-			key = path;
-			if(!value->sec.children.try_get(key))
-				value->sec.children.insert(string::make_copy(key, alloc), dbg_value::make_view(any::make(val)));
-			break;
-		}
-
-		dbg_value* next = value->sec.children.try_get(key);
-		if(!next) value = value->sec.children.insert(string::make_copy(key, alloc), dbg_value::make_sec(alloc));
-		else if (next->type != dbg_value_class::section) break;
-		else value = next;
-	}
-}
-
-template<typename T>
-void dbg_value_store::add_var(string path, T* val) { 
-
-	dbg_value* value = &value_store;
-	path.len--;
-
-	for(;;) {
-		
-		string key;
-		i32 slash = path.first_slash();
-		if(slash != -1) {
-			key  = path.substring(0, (u32)slash - 1);
-			path = path.substring((u32)slash + 1, path.len);
-		} else {
-			key = path;
-			if(!value->sec.children.try_get(key))
-				value->sec.children.insert(string::make_copy(key, alloc), dbg_value::make_edit(any::make(val)));
-			break;
-		}
-
-		dbg_value* next = value->sec.children.try_get(key);
-		if(!next) value = value->sec.children.insert(string::make_copy(key, alloc), dbg_value::make_sec(alloc));
-		else if (next->type != dbg_value_class::section) break;
-		else value = next;
-	}
-}
-
-template<typename T>
-T dbg_value_store::get_var(string path) { 
-
-	dbg_value* value = &value_store;
-	path.len--;
-
-	for(;;) {
-		
-		string key;
-		i32 slash = path.first_slash();
-		if(slash != -1) {
-			key  = path.substring(0, (u32)slash - 1);
-			path = path.substring((u32)slash + 1, path.len);
-		} else {
-			key = path;
-			value = value->children.try_get(key);
-			break;
-		}
-
-		value = value->children.try_get(key);
-		if(!value) return null;
-	}
-
-	LOG_DEBUG_ASSERT(value->type == dbg_value_class::value);
-	LOG_DEBUG_ASSERT(value->info == TYPEINFO(T));
-	return *(T*)value->value;
 }
 
 CALLBACK void dbg_reup_window(void* e) { 

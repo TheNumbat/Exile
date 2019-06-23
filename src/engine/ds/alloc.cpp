@@ -3,7 +3,7 @@
 #include "../log.h"
 #include "../math.h"
 
-inline u32 hash(allocator a) { 
+u32 hash(allocator a) { 
 
 	return hash(a.name());
 }
@@ -82,7 +82,7 @@ CALLBACK void* platform_reallocate(void* mem, u64 sz, u64 bytes, u64 align, allo
 	return ret;
 }
 
-inline platform_allocator make_platform_allocator(string name, code_context context) { 
+platform_allocator make_platform_allocator(string name, code_context context) { 
 
 	platform_allocator ret;
 	
@@ -137,7 +137,7 @@ void arena_reset(arena_allocator* a, code_context context) {
 #endif
 }
 
-inline void arena_destroy(arena_allocator* a, code_context context) { 
+void arena_destroy(arena_allocator* a, code_context context) { 
 
 	LOG_DEBUG_ASSERT(a->memory != null);
 	if(a->memory) {

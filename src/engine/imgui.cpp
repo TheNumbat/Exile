@@ -44,15 +44,6 @@ namespace ImGui {
 		return TextUnformatted(text.c_str, text.c_str + text.len - 1);
 	}
 
-	template<typename E>
-	void EnumCombo(string label, E* val, ImGuiComboFlags flags) { 
-
-		_type_info* info = TYPEINFO(E);
-		LOG_DEBUG_ASSERT(info->type_type == Type::_enum);
-
-		EnumCombo_T(label, val, info, flags);
-	}
-
 	void EnumCombo_T(string label, void* val, _type_info* info, ImGuiComboFlags flags) { 
 
 		_type_info* base = TYPEINFO_H(info->_enum.base_type);
@@ -71,43 +62,6 @@ namespace ImGui {
 			}
 			EndCombo();
 		}
-	}
-
-	template<typename V>
-	void MapCombo(string label, map<string,V> options, V* val, ImGuiComboFlags flags) { 
-
-		string preview;
-		FORMAP(it, options) {
-			if(it->value == *val) {
-				preview = it->key;
-			}
-		}
-
-		if(BeginCombo(label, preview, flags)) {
-			
-			FORMAP(it, options) {
-				bool selected = it->value == *val;
-				if(Selectable(it->key, selected)) {
-					*val = it->value;
-				}
-				if(selected) {
-					SetItemDefaultFocus();
-				}
-			}
-			EndCombo();
-		}
-	}
-
-	template<typename S>
-	void ViewAny(string label, S val, bool open) { 
-
-		View_T(label, &val, TYPEINFO(S), open);
-	}
-
-	template<typename S>
-	void EditAny(string label, S* val, bool open) { 
-
-		Edit_T(label, val, TYPEINFO(S), open);
 	}
 
 	constexpr u32 const_hash(const char* str) {

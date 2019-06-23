@@ -1,4 +1,5 @@
 
+#define IN_MATH_IMPL
 #include "math.h"
 
 v3 iv3::to_f() {return v3(x, y, z);}
