@@ -166,10 +166,12 @@ void do_msg(log_thread_param* data, log_message msg);
 // TODO(max): this is stupid
 #ifndef META_NO_IMPL
 #include "ds/vector.inl"
+#include "ds/buffer.inl"
 #include "ds/stack.inl"
 #include "ds/queue.inl"
 #include "ds/map.inl"
 #include "ds/string.inl"
+#include "ds/array.inl"
 #include "ds/heap.inl"
 #include "util/threadstate.h"
 

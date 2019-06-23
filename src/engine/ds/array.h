@@ -26,4 +26,4 @@ struct array {
 	T* get(u32 idx);
 };
 
-#include "array.inl"
+

@@ -7,7 +7,7 @@
 #include "platform_strings.h"
 #include "platform_api.h"
 
-#ifdef TEST_NET_ZERO_ALLOCS
+#ifdef CHECK_NO_LEAKS
 i32 global_num_allocs = 0;
 #endif
 
@@ -38,10 +38,6 @@ bool load_funcs();
 bool try_reload();
 
 i32 main(i32 argc, char** argv) {
-
-#ifdef PLATFORM_TEST
-	platform_test_api();
-#endif
 
 	api = platform_build_api();
 	api.your_dll = &game_dll;
@@ -93,7 +89,7 @@ i32 main(i32 argc, char** argv) {
 	free_string(dll_path, api.heap_free);
 	free_string(temp_dll_path, api.heap_free);
 
-#ifdef TEST_NET_ZERO_ALLOCS
+#ifdef CHECK_NO_LEAKS
 	if(global_num_allocs) {
 	 	api.debug_break();	
 	}
@@ -110,7 +106,7 @@ bool load_lib() {
 	do {
 		itr++;
 		err = api.copy_file(dll_path, temp_dll_path, true);
-	} while(err.error == WIN32_SHARING_ERROR && itr < 100000);
+	} while(err.error == PLT_SHARING_ERROR && itr < 100000);
 
 	err = api.load_library(&game_dll, temp_dll_path);
 	if(!err.good) {

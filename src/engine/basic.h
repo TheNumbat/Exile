@@ -1,22 +1,9 @@
 
 #pragma once
 
-#ifndef RELEASE
-	#ifdef CHECKS
-		#define BOUNDS_CHECK
-		#define BLOCK_OR_EXIT_ON_ERROR
-		// #define ZERO_ARENA
-		#define CHECKED(func, ...) {platform_error err = global_api->func(__VA_ARGS__); if(!err.good) LOG_ERR_F("Error %:\"%\" in %"_, err.error, err.error_message, #func##_);}
-	#endif
-#endif
-
-#ifdef RELEASE
-#ifdef PROFILE
-	#undef PROFILE
-#endif
-#endif
-
-#ifndef CHECKED
+#ifndef CHECK_PLT
+#define CHECKED(func, ...) {platform_error err = global_api->func(__VA_ARGS__); if(!err.good) LOG_ERR_F("Error %:\"%\" in %"_, err.error, err.error_message, #func##_);}
+#else
 #define CHECKED(func, ...) global_api->func(__VA_ARGS__);
 #endif
 

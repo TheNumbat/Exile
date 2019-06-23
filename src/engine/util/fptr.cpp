@@ -1,5 +1,6 @@
 
 #include "fptr.h"
+#include "../log.h"
 
 func_ptr_state* global_func = null;
 

@@ -2,13 +2,10 @@
 project('exile', 'cpp')
 
 # To-Do 
-# 	SDL platform layer
-#	add compile flags / release / debug
 # 	re-write metaprogram
 # 	linux/macos build
-# 	maybe add testing infra
 
-# Constants
+# Constants & Setup
 
 project_dir  = meson.current_source_dir() 
 build_dir    = meson.current_build_dir() 
@@ -17,15 +14,50 @@ cc = meson.get_compiler('cpp')
 host_system = host_machine.system()
 inc_dir = include_directories('deps', 'src')
 
+game_cpp_args = []
+all_cpp_args = []
+
+if get_option('buildtype') != 'release'
+	if get_option('bounds_check') 
+		game_cpp_args += '-DBOUNDS_CHECK' 
+	endif
+	if get_option('block_on_err') 
+		game_cpp_args += '-DBLOCK_OR_EXIT_ON_ERROR' 
+	endif
+	if get_option('zero_arena') 
+		game_cpp_args += '-DZERO_ARENA' 
+	endif
+	if get_option('check_plt') 
+		game_cpp_args += '-DCHECK_PLT' 
+	endif
+	if get_option('profile') 
+		game_cpp_args += '-DPROFILE' 
+	endif
+	if get_option('fast_close') 
+		game_cpp_args += '-DFAST_CLOSE' 
+	endif
+	if get_option('leak_check') 
+		game_cpp_args += '-DCHECK_NO_LEAKS' 
+	endif
+endif
+
+if get_option('platform') == 'win32'
+	all_cpp_args += '-DPLATFORM_WIN32'
+elif get_option('platform') == 'sdl'
+	all_cpp_args += '-DPLATFORM_SDL'
+endif
+
 if host_system == 'windows'
-	add_global_arguments('/Zc:offsetof-', language : 'cpp')
+	game_cpp_args += ['-Zc:offsetof-', '-fp:fast', '-GR-', '-EHa-', '-Oi', 
+			          '-MP', '-FC', '-D_HAS_EXCEPTIONS=0']
+	all_cpp_args += ['-wd4201', '-wd4100']
 endif
 
 # Build asset builder
 
 asset_builder = executable('asset', 'src/tools/asset_builder.cpp', 
 							include_directories : inc_dir, 
-							native : true)
+							native : true, cpp_args : all_cpp_args)
 
 custom_target('assets',
   			   output : 'game.asset',
@@ -44,12 +76,11 @@ libclang = cc.find_library('libclang', dirs : clang_dir)
 meta_compiler = executable('meta', 'src/tools/meta.cpp', 
 							include_directories : inc_dir, 
 							dependencies : libclang, 
-							native : true)
+							native : true, cpp_args : all_cpp_args)
 
-clang_dll = configure_file(
-	input: 'deps/clang-c/libclang.dll',
-	output: 'libclang.dll',
-	copy : true)
+if host_system == 'windows'
+	configure_file(input: 'deps/clang-c/libclang.dll', output: 'libclang.dll', copy : true)
+endif
 
 gen_src = custom_target('meta_output',
                         input : 'src/meta_input.h',
@@ -93,17 +124,35 @@ endif
 
 shared_library('exile', [game_sources, imgui_sources, engine_sources], 
 	include_directories : inc_dir,
-	dependencies : game_dependencies)
+	dependencies : game_dependencies,
+	cpp_args : [all_cpp_args, game_cpp_args])
 
 # Build main EXE
 
 main_sources = ['src/engine/platform/platform_main.cpp', 'src/engine/platform/platform_strings.cpp']
 main_dependencies = []
+main_cpp_args = []
+main_link_args = []
 
 if host_system == 'windows'
 	main_dependencies += cc.find_library('opengl32')
+endif
+
+if get_option('platform') == 'win32'
 	main_sources += 'src/engine/platform/windows/platform_win32.cpp'
+elif get_option('platform') == 'sdl'
+	main_sources += 'src/engine/platform/sdl/platform_sdl.cpp'
+	sdl_dir = join_paths(project_dir, 'deps/SDL2/lib')
+	main_dependencies += cc.find_library('SDL2', dirs : sdl_dir)
+	if host_system == 'windows'
+		main_dependencies += cc.find_library('SDL2main', dirs : sdl_dir)
+		main_link_args += '-SUBSYSTEM:console'
+		configure_file(input: 'deps/SDL2/lib/SDL2.dll', output: 'SDL2.dll', copy : true)
+	endif
 endif
 
 executable('main', main_sources,
-	dependencies : main_dependencies)
+	dependencies : main_dependencies,
+	include_directories : inc_dir,
+	link_args : main_link_args,
+	cpp_args : [main_cpp_args, all_cpp_args])

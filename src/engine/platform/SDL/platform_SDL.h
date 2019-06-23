@@ -1,11 +1,8 @@
 
 #pragma once
 
-/*
-void platform_shutdown();
-void platform_test_api()
-platform_api platform_build_api();
-*/
+#include "../platform_strings.h"
+#include "../platform_api.h"
 
 bool 		   sdl_window_focused(platform_window* win);	
 platform_error sdl_swap_buffers(platform_window* window);

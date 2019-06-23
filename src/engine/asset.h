@@ -1,9 +1,7 @@
 
 #pragma once
 
-#include "ds/array.h"
-#include "ds/alloc.h"
-#include "ds/map.h"
+#include "basic.h"
 
 // Asset file structure
 
@@ -80,6 +78,11 @@ struct asset_file_header {
 #pragma pack(pop)
 
 #ifndef BUILDER
+
+#include "ds/array.h"
+#include "ds/alloc.h"
+#include "ds/map.h"
+
 typedef file_glyph_data glyph_data; // is this OK to be packed?
 
 struct _asset_bitmap {

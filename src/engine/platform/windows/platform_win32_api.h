@@ -7,7 +7,7 @@
 #error __cpuid
 #endif
 
-#define WIN32_SHARING_ERROR 32
+#define PLT_SHARING_ERROR 32
 
 enum class wgl_context : int {
 	major_version_arb     		= 0x2091,
