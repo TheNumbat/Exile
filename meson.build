@@ -132,7 +132,6 @@ shared_library('exile', [game_sources, imgui_sources, engine_sources],
 main_sources = ['src/engine/platform/platform_main.cpp', 'src/engine/platform/platform_strings.cpp']
 main_dependencies = []
 main_cpp_args = []
-main_link_args = []
 
 if host_system == 'windows'
 	main_dependencies += cc.find_library('opengl32')
@@ -146,7 +145,6 @@ elif get_option('platform') == 'sdl'
 	main_dependencies += cc.find_library('SDL2', dirs : sdl_dir)
 	if host_system == 'windows'
 		main_dependencies += cc.find_library('SDL2main', dirs : sdl_dir)
-		main_link_args += '-SUBSYSTEM:console'
 		configure_file(input: 'deps/SDL2/lib/SDL2.dll', output: 'SDL2.dll', copy : true)
 	endif
 endif
@@ -154,5 +152,4 @@ endif
 executable('main', main_sources,
 	dependencies : main_dependencies,
 	include_directories : inc_dir,
-	link_args : main_link_args,
 	cpp_args : [main_cpp_args, all_cpp_args])
