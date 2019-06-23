@@ -30,9 +30,9 @@ enum class asset_type : u8 {
 	bitmap,
 	ttf_font,
 	raster_font,
+	shader
 	// mesh?
 	// audio?
-	// shader?
 	// cfg?
 };
 

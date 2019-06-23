@@ -3,10 +3,12 @@ build/
 .vs/
 x64/
 Debug/
+
+*.asset
 bin/*.db
 bin/.vs
 bin/*.opendb
 bin/project.sublime-workspace
 data/log_*
-data/assets/*.asset
+log_*
 imgui.ini
