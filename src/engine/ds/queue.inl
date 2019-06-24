@@ -1,4 +1,5 @@
 
+#pragma once
 #include "queue.h"
 
 template<typename T>

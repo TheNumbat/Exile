@@ -164,7 +164,7 @@ i32 log_proc(void* data_);
 void do_msg(log_thread_param* data, log_message msg);
 
 // TODO(max): this is stupid
-#ifndef META_NO_IMPL
+#ifndef COMPILING_META_TYPES
 #include "ds/vector.inl"
 #include "ds/buffer.inl"
 #include "ds/stack.inl"

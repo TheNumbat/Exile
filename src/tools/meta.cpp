@@ -1,697 +1,390 @@
 
-#include <clang-c/Index.h>
-
 #include <iostream>
 #include <fstream>
-#include <vector>
-#include <functional>
-#include <map>
 #include <string>
+#include <unordered_map>
 #include <algorithm>
-#include <sstream>
-#include <iterator>
-#include <cctype>
-#include <locale>
-#include <string>
 
-#include "../engine/basic.h"
+#include <clang-c/Index.h>
 
-using namespace std;
+std::ofstream log_out;
 
-struct enum_def {
-	string name;
-	CXCursor this_;
-	CXType underlying;
-	struct member {
-		string name;
-		i64 value;
-	};
-	vector<member> members;
-};
-struct struct_def {
-	string name;
-	CXCursor this_;
-	vector<pair<bool,CXCursor>> members;
-
-	bool is_template 		= false;
-	bool is_explicit_inst 	= false;
-	bool noreflect		 	= false;
-	vector<string> template_type_params;
-
-	vector<function<void(ofstream&)>> templ_deps;
-	vector<function<void(ofstream&)>> arr_deps;
-	vector<function<void(ofstream&)>> ptr_deps;
-};
-
-// NOTE(max): I realized that instead of the whole done system I could've just used
-// 			  map_insert_if_unique, which would have been a _lot_ simpler. However,
-//			  this works robustly (so far...), so I won't change it. I will use it
-// 			  for array meta gen, though.
-
-// using dictionaries would be faster, but we need to preserve ordering (could sort based on monotonic ID but w/e)
-// also, this is already fast enough, it's a small portion of the full build time
-vector<pair<struct_def, map<string, CXType>>> done;
-vector<struct_def> structs;
-struct_def current_struct_def;
-vector<enum_def> enums;
-enum_def current_enum_def;
-vector<function<void(ofstream&)>> var_parm_deps;
-
-vector<CXType> current_instantiation;
-
-// string utility, because the STL is so fully featured
-void trim(string &s);
-template<typename Out> void split(const string &s, char delim, Out result);
-vector<string> split(const string &s, char delim);
-ostream& operator<<(ostream& stream, const CXString& str);
-string str(CXString cx_str);
-
-bool operator==(const CXType& one, const CXType& two);
-bool is_fwd_decl(CXCursor c);
-
-CXChildVisitResult parse_enum(CXCursor c, CXCursor parent, CXClientData client_data);
-CXChildVisitResult parse_struct_or_union(CXCursor c, CXCursor parent, CXClientData client_data);
-CXChildVisitResult do_parse(CXCursor c);
-void try_add_template_dep(CXType type);
-
-void output_pre(ofstream& fout);
-void output_post(ofstream& fout);
-void output_func(ofstream& fout, CXType type, CXCursor func);
-void output_array(ofstream& fout, CXType type);
-void output_enum(ofstream& fout, const enum_def& e);
-void output_struct(ofstream& fout, const struct_def& s);
-void output_template_struct(ofstream& fout, const struct_def& s, const map<string, CXType>& trans);
-map<string, CXType> make_translation(const struct_def& s, const vector<CXType>& inst);
-void print_templ_struct(ofstream& fout, const struct_def& s, const map<string, CXType>& trans);
-
-
-bool operator==(const CXType& one, const CXType& two) {
-	return memcmp(&one, &two, sizeof(one)) == 0;
-}
-
-void trim(string &s) {
-    s.erase(s.begin(), find_if(s.begin(), s.end(), [](unsigned char ch) {
-        return !isspace(ch);
-    }));
-    s.erase(find_if(s.rbegin(), s.rend(), [](unsigned char ch) {
-        return !isspace(ch);
-    }).base(), s.end());
-}
-
-template<typename Out>
-void split(const string &s, char delim, Out result) {
-    stringstream ss;
-    ss.str(s);
-    string item;
-    while (getline(ss, item, delim)) {
-        *(result++) = item;
-    }
-}
-
-vector<string> split(const string &s, char delim) {
-    vector<string> elems;
-    split(s, delim, back_inserter(elems));
-    return elems;
-}
-
-void remove_all_whitespace(string& s) {
-	for(u32 i = 0; i < s.size(); i++) {
-		if(isspace(s[i])) {
-			s.erase(i, 1);
-			i--;
-		}
-	}
-}
-
-ostream& operator<<(ostream& stream, const CXString& str) {
+std::ostream& operator<<(std::ostream& stream, const CXString& str) {
 	stream << clang_getCString(str);
 	clang_disposeString(str);
 	return stream;
 }
 
-string str(CXString cx_str) {
-	string str(clang_getCString(cx_str));
+std::string to_string(CXString cx_str) {
+	std::string str(clang_getCString(cx_str));
 	clang_disposeString(cx_str);
 	return str;
 }
 
-bool is_fwd_decl(CXCursor c) {
-	return clang_isCursorDefinition(c) == 0;
+void print_basic_types(std::ofstream& fout) {
+
+	fout << R"STR(
+	{
+		_type_info void_t;
+		void_t.type_type 		= Type::_void;
+		void_t.size				= 0;
+		void_t.name 			= "void"_;
+		void_t._int.is_signed 	= true;
+		void_t.hash = (type_id)typeid(void).hash_code();
+		type_table.insert(void_t.hash, void_t, false);
+	}
+	{
+		_type_info char_t;
+		char_t.type_type 		= Type::_int;
+		char_t.size				= sizeof(char);
+		char_t.name 			= "char"_;
+		char_t._int.is_signed 	= true;
+		char_t.hash = (type_id)typeid(char).hash_code();
+		type_table.insert(char_t.hash, char_t, false);
+	}
+	{
+		_type_info u8_t;
+		u8_t.type_type 		= Type::_int;
+		u8_t.size			= sizeof(u8);
+		u8_t.name 			= "u8"_;
+		u8_t._int.is_signed = false;
+		u8_t.hash = (type_id)typeid(u8).hash_code();
+		type_table.insert(u8_t.hash, u8_t, false);
+	}
+	{
+		_type_info i8_t;
+		i8_t.type_type 		= Type::_int;
+		i8_t.size			= sizeof(i8);
+		i8_t.name 			= "i8"_;
+		i8_t._int.is_signed = true;
+		i8_t.hash = (type_id)typeid(i8).hash_code();
+		type_table.insert(i8_t.hash, i8_t, false);
+	}
+	{
+		_type_info u16_t;
+		u16_t.type_type 		= Type::_int;
+		u16_t.size				= sizeof(u16);
+		u16_t.name 				= "u16"_;
+		u16_t._int.is_signed 	= false;
+		u16_t.hash = (type_id)typeid(u16).hash_code();
+		type_table.insert(u16_t.hash, u16_t, false);
+	}
+	{
+		_type_info i16_t;
+		i16_t.type_type 		= Type::_int;
+		i16_t.size				= sizeof(i16);
+		i16_t.name 				= "i16"_;
+		i16_t._int.is_signed 	= true;
+		i16_t.hash = (type_id)typeid(i16).hash_code();
+		type_table.insert(i16_t.hash, i16_t, false);
+	}
+	{
+		_type_info u32_t;
+		u32_t.type_type 		= Type::_int;
+		u32_t.size				= sizeof(u32);
+		u32_t.name 				= "u32"_;
+		u32_t._int.is_signed 	= false;
+		u32_t.hash = (type_id)typeid(u32).hash_code();
+		type_table.insert(u32_t.hash, u32_t, false);
+	}
+	{
+		_type_info i32_t;
+		i32_t.type_type 		= Type::_int;
+		i32_t.size				= sizeof(i32);
+		i32_t.name 				= "i32"_;
+		i32_t._int.is_signed 	= true;
+		i32_t.hash = (type_id)typeid(i32).hash_code();
+		type_table.insert(i32_t.hash, i32_t, false);
+	}
+	{
+		_type_info u64_t;
+		u64_t.type_type 		= Type::_int;
+		u64_t.size				= sizeof(u64);
+		u64_t.name 				= "u64"_;
+		u64_t._int.is_signed 	= false;
+		u64_t.hash = (type_id)typeid(u64).hash_code();
+		type_table.insert(u64_t.hash, u64_t, false);
+	}
+	{
+		_type_info i64_t;
+		i64_t.type_type 		= Type::_int;
+		i64_t.size				= sizeof(i64);
+		i64_t.name 				= "i64"_;
+		i64_t._int.is_signed 	= true;
+		i64_t.hash = (type_id)typeid(i64).hash_code();
+		type_table.insert(i64_t.hash, i64_t, false);
+	}
+	{
+		_type_info f32_t;
+		f32_t.type_type 		= Type::_float;
+		f32_t.size				= sizeof(f32);
+		f32_t.name 				= "f32"_;
+		f32_t._int.is_signed 	= true;
+		f32_t.hash = (type_id)typeid(f32).hash_code();
+		type_table.insert(f32_t.hash, f32_t, false);
+	}
+	{
+		_type_info f64_t;
+		f64_t.type_type 		= Type::_float;
+		f64_t.size				= sizeof(f64);
+		f64_t.name 				= "f64"_;
+		f64_t._int.is_signed 	= true;
+		f64_t.hash = (type_id)typeid(f64).hash_code();
+		type_table.insert(f64_t.hash, f64_t, false);
+	}
+	{
+		_type_info bool_t;
+		bool_t.type_type 		= Type::_bool;
+		bool_t.size				= sizeof(bool);
+		bool_t.name 			= "bool"_;
+		bool_t._int.is_signed 	= true;
+		bool_t.hash = (type_id)typeid(bool).hash_code();
+		type_table.insert(bool_t.hash, bool_t, false);
+	}
+	{
+		_type_info string_t;
+		string_t.type_type 		= Type::_string;
+		string_t.size			= sizeof(string);
+		string_t.name 			= "string"_;
+		string_t.hash = (type_id)typeid(string).hash_code();
+		type_table.insert(string_t.hash, string_t, false);
+	}
+	)STR" << std::endl;
+}
+
+enum class def_types {
+	_enum,
+};
+
+struct data_type_enum {
+	struct member {
+		std::string name;
+		uint64_t value;
+	};
+
+	std::string name;
+	bool is_class;
+	CXType underlying_type;
+	std::vector<member> members;
+};
+
+struct data_type {
+	def_types type;
+	
+	data_type_enum _enum;
+};
+
+struct data_type_id {
+	std::string name;
+};
+bool operator==(const data_type_id& l, const data_type_id& r) {
+	return l.name == r.name;
+}
+
+namespace std {
+	template <>
+	struct hash<data_type_id> {
+		std::size_t operator()(const data_type_id& k) const {
+			return hash<string>()(k.name);
+		}
+	};
+}
+
+struct g_parse_data {
+	int recurse_level = 0;
+	std::unordered_map<data_type_id, data_type> type_graph;
+	data_type_id current;
+};
+g_parse_data g_data;
+
+struct do_indent{};
+std::ostream& operator<<(std::ostream& stream, const do_indent&) {
+	for(int i = 0; i < g_data.recurse_level; i++) stream << "\t";
+	return stream;
 }
 
 CXChildVisitResult parse_enum(CXCursor c, CXCursor parent, CXClientData client_data) {
 
-	if(c.kind == CXCursor_EnumConstantDecl) {
+	CXCursorKind kind = c.kind;
+	log_out << do_indent{} << "Parsing Cursor: " << clang_getCursorSpelling(c) << std::endl
+			<< do_indent{} << "Kind: " << clang_getCursorKindSpelling(kind) << std::endl;
+	g_data.recurse_level++;
 
-		enum_def::member member;
-		member.value = clang_getEnumConstantDeclValue(c);
-		member.name  = str(clang_getCursorSpelling(c));
+	data_type& type = g_data.type_graph[g_data.current];
 
-		current_enum_def.members.push_back(member);
+	switch(kind) {
+	case CXCursor_EnumConstantDecl: {
+		data_type_enum::member member;
+		member.value = clang_getEnumConstantDeclUnsignedValue(c);
+		member.name  = to_string(clang_getCursorSpelling(c));
 
-	} else {
-		
-		// cout << c.kind << " " << clang_getCursorSpelling(c) << endl;
+		log_out << do_indent{} << "Name: " << member.name << std::endl
+				<< do_indent{} << "value: " << member.value << std::endl;
+
+		type._enum.members.push_back(member);
+	} break;
 	}
 
+	g_data.recurse_level--;
+	return CXChildVisit_Recurse;
+}
+
+CXChildVisitResult traversal_enum(CXCursor c, CXCursor parent, CXClientData client_data) {
+
+	if(!clang_isCursorDefinition(c)) {
+		log_out << do_indent{} << "Forward declaration; continuing" << std::endl;	
+		g_data.recurse_level--;
+		return CXChildVisit_Continue;
+	}
+
+	std::string name = to_string(clang_getCursorSpelling(c));
+	log_out << do_indent{} << "Parsing enum definition " << name << std::endl;
+
+	data_type_id id{name};
+	data_type type;
+	type.type = def_types::_enum;
+
+	type._enum.name = name;
+	type._enum.is_class = clang_EnumDecl_isScoped(c);
+	type._enum.underlying_type = clang_getEnumDeclIntegerType(c);
+
+	log_out << do_indent{} << "Name: " << type._enum.name << std::endl
+			<< do_indent{} << "is_class: " << type._enum.is_class << std::endl
+			<< do_indent{} << "underlying_type: " << clang_getTypeSpelling(type._enum.underlying_type) << std::endl;
+
+	g_data.type_graph.insert({id, type});
+	g_data.current = id;
+
+	clang_visitChildren(c, parse_enum, client_data);
+
+	g_data.recurse_level--;
 	return CXChildVisit_Continue;
 }
 
-void try_add_template_dep(CXType type) {
-	i32 num_args = clang_Type_getNumTemplateArguments(type);
-	if(num_args != -1 && !current_struct_def.is_template) {
-		auto instname = str(clang_getTypeSpelling(type));
+CXChildVisitResult traversal(CXCursor c, CXCursor parent, CXClientData client_data) {
 
-		instname = instname.substr(0, instname.find_first_of("<"));
-		auto entry = find_if(structs.begin(), structs.end(), [instname](struct_def& def) -> bool { return instname == def.name; });
-		if(entry != structs.end()) {
-			vector<CXType> instantiation;
-
-			for(u32 i = 0; i < (u32)num_args; i++) {
-				instantiation.push_back(clang_Type_getTemplateArgumentAsType(type, i));
-			}
-
-			auto def = *entry;
-			current_struct_def.templ_deps.push_back([instantiation, def](ofstream& fout) -> void { output_template_struct(fout, def, make_translation(def, instantiation)); });
-		}
-	}
-}
-
-CXChildVisitResult attr_visit(CXCursor cursor, CXCursor parent, CXClientData data) {
-    if (clang_isAttribute(cursor.kind)) {
-        *(CXCursor*)data = cursor;
-        return CXChildVisit_Break;
-    }
-    return CXChildVisit_Continue;
-}
-
-CXCursor first_attr(const CXCursor& c) {
-    CXCursor attr;
-    unsigned visit_result = clang_visitChildren(c, attr_visit, &attr);
-    if (!visit_result) // attribute not found
-        attr = clang_getNullCursor();
-    return attr;
-}
-
-CXChildVisitResult parse_struct_or_union(CXCursor c, CXCursor parent, CXClientData client_data) {
-
-	if(c.kind == CXCursor_FieldDecl) {
-		
-		bool circular = false;
-		CXCursor attr = first_attr(c);
-		if(!clang_Cursor_isNull(attr)) {
-			auto annotation = str(clang_getCursorSpelling(attr));
-			if(annotation == "circular") {
-				circular = true;
-			}
-		}
-
-		auto type = clang_getCursorType(c);
-		if(type.kind == CXType_ConstantArray) {
-			current_struct_def.arr_deps.push_back([type](ofstream& fout) -> void {output_array(fout, type);});
-		}
-
-		if(type.kind == CXType_Pointer) {
-			auto ptr_type = clang_getPointeeType(type);
-			if(clang_getNumArgTypes(ptr_type) != -1) {
-				current_struct_def.ptr_deps.push_back([ptr_type, c](ofstream& fout) -> void {output_func(fout, ptr_type, c);});						
-			} else {
-			
-				try_add_template_dep(ptr_type);
-			}
-		}
-
-		if(type.kind == CXType_FunctionProto || 
-		   type.kind == CXType_FunctionNoProto || 
-		   type.kind == CXType_Void)
-			return CXChildVisit_Continue;
-
-		current_struct_def.members.push_back({circular,c});
-		try_add_template_dep(type);
-
-	} else if(clang_Cursor_isAnonymous(c)) {
-		
-		struct_def temp = current_struct_def;
-		current_struct_def = struct_def();
-		
-		clang_visitChildren(c, parse_struct_or_union, nullptr);
-
-		temp.members.insert(temp.members.end(), current_struct_def.members.begin(), current_struct_def.members.end());
-
-		current_struct_def = temp;
-		
-	} else if(c.kind == CXCursor_TypeRef) {
-
-		current_struct_def.is_explicit_inst = true;
-		current_instantiation.push_back(clang_getCursorType(c));
-
-	} else if(c.kind == CXCursor_TemplateTypeParameter) {
-
-		current_struct_def.is_template = true;
-		auto type_arg = str(clang_getCursorSpelling(c));
-
-		current_struct_def.template_type_params.push_back(type_arg);
-
-	} else if(c.kind == CXCursor_AnnotateAttr) {
-
-		auto annotation = str(clang_getCursorSpelling(c));
-		if(annotation == "noreflect") {
-			current_struct_def.noreflect = true;
-		}
-
-	} else {
-
-		// cout << c.kind << " " << clang_getCursorSpelling(c) << " " << clang_getTypeSpelling(clang_getCursorType(c)) << endl;
-	}
-	return CXChildVisit_Continue;
-}
-
-CXChildVisitResult do_parse(CXCursor c) {
-
-	if(is_fwd_decl(c)) return CXChildVisit_Continue;
-
-	switch(c.kind) {
-	case CXCursor_ClassTemplatePartialSpecialization: {
-		// ignore this, it's only _get_type_info<T*> and it'd mess with stuff
+	if(clang_Location_isInSystemHeader(clang_getCursorLocation(c))) {
 		return CXChildVisit_Continue;
-	} break; 
-	case CXCursor_ClassTemplate:
-	case CXCursor_UnionDecl:
-	case CXCursor_StructDecl: {
+	}
 
-		current_struct_def = struct_def();
-		current_struct_def.this_ = c;
+	CXCursorKind kind = c.kind;
+	log_out << do_indent{} << "Parsing Cursor: " << clang_getCursorSpelling(c) << std::endl
+			<< do_indent{} << "Kind: " << clang_getCursorKindSpelling(kind) << std::endl;
+	g_data.recurse_level++;
 
-		auto name = str(clang_getCursorSpelling(c));
-		if(!name.size()) return CXChildVisit_Continue;
-		current_struct_def.name = name;
+	if(clang_isPreprocessing(kind)) {
 
-		clang_visitChildren(c, parse_struct_or_union, nullptr);
-
-		if(current_struct_def.is_explicit_inst) {
-			
-			auto _current_instantiation = move(current_instantiation);
-			auto entry = find_if(structs.begin(), structs.end(), [name](struct_def& def) -> bool { return name == def.name; });
-			if(entry != structs.end()) {
-				struct_def def = *entry;
-				entry->templ_deps.push_back([_current_instantiation, def](ofstream& fout) -> void { output_template_struct(fout, def, make_translation(def, _current_instantiation)); });
-			}
-			current_instantiation.clear();
-		} else if(!current_struct_def.noreflect) {
-			structs.push_back(current_struct_def);
-		}
-
-		return CXChildVisit_Continue;
-	} break;
-	case CXCursor_EnumDecl: {
+		log_out << do_indent{} << "Preprocessor; continuing" << std::endl;
 		
-		current_enum_def = enum_def();
-		current_enum_def.this_ = c;
-		current_enum_def.underlying = clang_getEnumDeclIntegerType(c);
-
-		auto name = str(clang_getCursorSpelling(c));
-		if(!name.size()) return CXChildVisit_Continue;
-		current_enum_def.name = name;
-
-		clang_visitChildren(c, parse_enum, nullptr);
-
-		// sort values for binary search - stable so we can choose the first/last name for the value when printing
-		stable_sort(current_enum_def.members.begin(), current_enum_def.members.end(), [](auto& l, auto& r) -> bool { return l.value < r.value; });
-		enums.push_back(current_enum_def);
-
+		g_data.recurse_level--;
 		return CXChildVisit_Continue;
-	} break;
-	case CXCursor_VarDecl:
-	case CXCursor_ParmDecl: {
-		auto type = clang_getCursorType(c);
-		if(clang_Type_getNumTemplateArguments(type) != -1) {
-			auto name = str(clang_getTypeSpelling(type));
-			auto idx = name.find_first_of("<");
 
-			if(idx != string::npos) {
-				name = name.substr(0, idx);
+	} else if(clang_isUnexposed(kind)) {
 
-				vector<CXType> instantiation;
-				for(i32 i = 0; i < clang_Type_getNumTemplateArguments(type); i++) {
-					instantiation.push_back(clang_Type_getTemplateArgumentAsType(type, i));
-				}
+		log_out << do_indent{} << "Unexposed; continuing" << std::endl;
 
-				auto entry = find_if(structs.begin(), structs.end(), [name](struct_def& def) -> bool { return name == def.name; });
-				if(entry != structs.end()) {
-					struct_def def = *entry;
-					auto translation = make_translation(def, instantiation);
-
-					bool fully_specified = true;
-					for(auto& e : translation) {
-						if(clang_Type_getSizeOf(e.second) == CXTypeLayoutError_Dependent) {
-							fully_specified = false;
-						}
-					}
-					if(fully_specified)
-						var_parm_deps.push_back([translation, def](ofstream& fout) -> void {output_template_struct(fout, def, translation);});
-				}
-			}
-		}
+		g_data.recurse_level--;
 		return CXChildVisit_Continue;
-	} break;
-	default: {
-		return CXChildVisit_Recurse;
-	} break;
-	}
-}
 
-void output_pre(ofstream& fout) {
-	fout << "#define META_NO_IMPL" << endl
-		 << "#include <engine/dbg.h>" << endl
-		 << "#include <engine/ds/map.h>" << endl
-		 << "#include <engine/ds/map.inl>" << endl
-		 << "#include <meta_input.h>" << endl << endl
-		 << "#define STRING2(...) #__VA_ARGS__##_" << endl
-		 << "#define STRING(...) STRING2(__VA_ARGS__)" << endl
-		 << "void make_meta_info() { PROF_FUNC " << endl << endl;
-}
+	} else if(clang_isInvalid(kind)) {
+	
+		log_out << do_indent{} << "Invalid; continuing" << std::endl;	
 
-void output_post(ofstream& fout) {
-	fout << "}" << endl;
-}
-
-void output_func(ofstream& fout, CXType type, CXCursor func) {
-
-	auto ret = str(clang_getTypeSpelling(clang_getResultType(type)));
-	auto signature = str(clang_getTypeSpelling(type));
-	auto num_args = (u32)clang_getNumArgTypes(type);
-	auto name = str(clang_getCursorSpelling(func));
-
-	fout << "\t[]() -> void {" << endl
-		 << "\t\t_type_info this_type_info;" << endl
-		 << "\t\tthis_type_info.type_type = Type::_func;" << endl
-		 << "\t\tthis_type_info.size = sizeof(void(*)());" << endl
-		 << "\t\tthis_type_info.hash = (type_id)typeid(" << signature << ").hash_code();" << endl
-		 << "\t\tthis_type_info.name = \"" << name << "\"_;" << endl
-		 << "\t\tthis_type_info._func.signature = STRING(" << signature << ");" << endl
-		 << "\t\tthis_type_info._func.return_type = TYPEINFO(" << ret << ") ? TYPEINFO(" << ret << ")->hash : 0;" << endl
-		 << "\t\tthis_type_info._func.param_count = " << num_args << ";" << endl;
-
-	for(u32 i = 0; i < num_args; i++) {
-		auto arg = str(clang_getTypeSpelling(clang_getArgType(type, i)));
-
-		fout << "\t\tthis_type_info._func.param_types[" << i << "] = TYPEINFO(" << arg << ") ? TYPEINFO(" << arg << ")->hash : 0;" << endl;
+		g_data.recurse_level--;
+		return CXChildVisit_Continue;
 	}
 
-	fout << "\t\ttype_table.insert_if_unique(this_type_info.hash, this_type_info, false);" << endl
-		 << "\t}();" << endl << endl;
-}
-
-void output_array(ofstream& fout, CXType type) {
-
-	auto ele_type = clang_getArrayElementType(type);
-	if(ele_type.kind == CXType_ConstantArray) {
-		output_array(fout, ele_type);
+	switch(kind) {
+	case CXCursor_EnumDecl: return traversal_enum(c, parent, client_data);
 	}
 
-	auto name = str(clang_getTypeSpelling(type));
-	auto base = str(clang_getTypeSpelling(ele_type));
-
-	fout << "\t[]() -> void {" << endl
-		 << "\t\t_type_info this_type_info;" << endl
-		 << "\t\tthis_type_info.type_type = Type::_array;" << endl
-		 << "\t\tthis_type_info.size = sizeof(" << name << ");" << endl
-		 << "\t\tthis_type_info.name = STRING(" << name << ");" << endl
-		 << "\t\tthis_type_info.hash = (type_id)typeid(" << name << ").hash_code();" << endl
-		 << "\t\tthis_type_info._array.of = TYPEINFO(" << base << ") ? TYPEINFO(" << base << ")->hash : 0;" << endl
-		 << "\t\tthis_type_info._array.length = " << clang_getNumElements(type) << ";" << endl
-		 << "\t\ttype_table.insert_if_unique(this_type_info.hash, this_type_info, false);" << endl
-		 << "\t}();" << endl << endl;
+	g_data.recurse_level--;
+	return CXChildVisit_Recurse;
 }
 
-void output_enum(ofstream& fout, const enum_def& e) {
+void print_enum(std::ofstream& fout, data_type_enum type) {
 
-	auto& name = e.name;
-	auto type = str(clang_getTypeSpelling(e.underlying));
+	std::string underlying_name = to_string(clang_getTypeSpelling(type.underlying_type));
+	log_out << "OUTPUT: enum " << type.name << " : " << underlying_name << std::endl;
 
-	if(e.members.size() > 256) {
-		cout << "enum " << name << " has too many members!" << endl;
+	if(type.members.size() > 256) {
+		log_out << "WARNING: enum " << type.name << " has too many members, skipping!" << std::endl;
 		return;
 	}
 
-	fout << "\t[]() -> void {" << endl
-		 << "\t\t_type_info this_type_info;" << endl
-		 << "\t\tthis_type_info.type_type = Type::_enum;" << endl
-		 << "\t\tthis_type_info.size = sizeof(" << type << ");" << endl
-		 << "\t\tthis_type_info.name = \"" << name << "\"_;" << endl
-		 << "\t\tthis_type_info.hash = (type_id)typeid(" << name << ").hash_code();" << endl
-		 << "\t\tthis_type_info._enum.member_count = " << e.members.size() << ";" << endl
-		 << "\t\tthis_type_info._enum.base_type = TYPEINFO(" << type << ") ? TYPEINFO(" << type << ")->hash : 0;" << endl;
+	fout << "\t[]() -> void {" << std::endl
+		 << "\t\t_type_info this_type_info;" << std::endl
+		 << "\t\tthis_type_info.type_type = Type::_enum;" << std::endl
+		 << "\t\tthis_type_info.size = sizeof(" << type.name << ");" << std::endl
+		 << "\t\tthis_type_info.name = \"" << type.name << "\"_;" << std::endl
+		 << "\t\tthis_type_info.hash = (type_id)typeid(" << type.name << ").hash_code();" << std::endl
+		 << "\t\tthis_type_info._enum.member_count = " << type.members.size() << ";" << std::endl
+		 << "\t\tthis_type_info._enum.base_type = TYPEINFO(" << underlying_name << ") ? TYPEINFO(" << underlying_name << ")->hash : 0;" << std::endl;
 
-	u32 idx = 0;
-	for(auto& member : e.members) {
-		fout << "\t\tthis_type_info._enum.member_names[" << idx << "] = \"" << member.name << "\"_;" << endl
-			 << "\t\tthis_type_info._enum.member_values[" << idx << "] = " << member.value << ";" << endl;
+	std::stable_sort(type.members.begin(), type.members.end(), 
+		[](const data_type_enum::member& l, const data_type_enum::member& r) -> bool {return l.value < r.value;});
+
+	int idx = 0;
+	for(auto member : type.members) {
+		fout << "\t\tthis_type_info._enum.member_names[" << idx << "] = \"" << member.name << "\"_;" << std::endl
+			 << "\t\tthis_type_info._enum.member_values[" << idx << "] = " << member.value << ";" << std::endl;
 		idx++;
 	}
 
-	fout << "\t\ttype_table.insert(this_type_info.hash, this_type_info, false);" << endl
-		 << "\t}();" << endl << endl;
+	fout << "\t\ttype_table.insert(this_type_info.hash, this_type_info, false);" << std::endl
+		 << "\t}();" << std::endl << std::endl;
 }
 
-void output_struct(ofstream& fout, const struct_def& s) {
+void print_results(std::ofstream& fout) {
 
-	auto& name = s.name;
-	if(find_if(done.begin(), done.end(), [&](const auto& val) -> bool {return val.first.name == s.name;}) != done.end()) return;
-
-	auto type = clang_getCursorType(s.this_);
-
-	if(s.members.size() > 96) {
-		cout << "struct " << name << " has too many members!" << endl;
-		return;
+	for(auto entry : g_data.type_graph) {
+		if(entry.second.type == def_types::_enum) {
+			print_enum(fout, entry.second._enum);
+		}
 	}
-
-	for(auto& f : s.templ_deps) {
-		f(fout);
-	}
-
-	if(s.is_template) return;
-
-	for(auto& f : s.arr_deps) {
-		f(fout);
-	}
-	for(auto& f : s.ptr_deps) {
-		f(fout);
-	}
-
-	fout << "\t[]() -> void {" << endl;
-
-	fout << "\t\t_type_info this_type_info;" << endl
-		 << "\t\tthis_type_info.type_type = Type::_struct;" << endl
-		 << "\t\tthis_type_info.size = sizeof(" << name << ");" << endl
-		 << "\t\tthis_type_info.name = \"" << name << "\"_;" << endl
-		 << "\t\tthis_type_info.hash = (type_id)typeid(" << name << ").hash_code();" << endl;
-
-	u32 idx = 0;
-	for(auto& member : s.members) {
-		auto mem_name = str(clang_getCursorSpelling(member.second));
-		auto mem_type_name = str(clang_getTypeSpelling(clang_getCursorType(member.second)));
-
-		if(mem_name == "" || mem_name == "private" || mem_name == "public" || mem_name == "operator") continue;
-
-		fout << "\t\tthis_type_info._struct.member_types[" << idx << "] = TYPEINFO(" << mem_type_name << ") ? TYPEINFO(" << mem_type_name << ")->hash : 0;" << endl
-			 << "\t\tthis_type_info._struct.member_names[" << idx << "] = \"" << mem_name << "\"_;" << endl
-			 << "\t\tthis_type_info._struct.member_offsets[" << idx << "] = offsetof(" << name << "," << mem_name << ");" << endl
-			 << "\t\tthis_type_info._struct.member_circular[" << idx << "] = " << member.first << ";" << endl;
-
-		idx++;
-	}
-
-	fout << "\t\tthis_type_info._struct.member_count = " << idx << ";" << endl;
-
-	fout << "\t\ttype_table.insert(this_type_info.hash, this_type_info, false);" << endl
-		 << "\t}();" << endl << endl;
-
-	done.push_back({s, {}});
 }
 
-void output_template_struct(ofstream& fout, const struct_def& s, const map<string, CXType>& translation) {
-	
-	if(find_if(done.begin(), done.end(), [&](const auto& val) -> bool {return val.first.name == s.name && val.second == translation;}) != done.end()) return;
+int main(int argc, char** argv) {
 
-	auto name = str(clang_getCursorSpelling(s.this_));
-
-	if(s.is_template) {
-
-		for(auto& t : s.template_type_params) {
-
-			auto entry = translation.find(t);
-			if(entry != translation.end()) {
-				fout << "#pragma push_macro(\"" << entry->first << "\")" << endl;
-
-				auto type_str = str(clang_getTypeSpelling(entry->second));
-				remove_all_whitespace(type_str);
-
-				fout << "#define " << entry->first << " " << type_str << endl << endl;
-			}
-		}
-
-		for(auto& f : s.arr_deps) {
-			f(fout);
-		}
-		for(auto& f : s.ptr_deps) {
-			f(fout);
-		}
-
-		for(auto& member : s.members) {
-			auto mem_type = clang_getCursorType(member.second);
-			i32 mem_templ_args = clang_Type_getNumTemplateArguments(mem_type);
-			if(mem_templ_args != -1) {
-				auto mem_name = str(clang_getTypeSpelling(mem_type));
-				mem_name = mem_name.substr(0, mem_name.find_first_of("<"));
-
-				auto entry = find_if(structs.begin(), structs.end(), [mem_name](struct_def& def) -> bool { return mem_name == def.name; });
-
-				map<string, CXType> mem_translation;
-				u32 idx = 0;
-				for(auto& mem_param : entry->template_type_params) {
-					
-					auto mem_arg_type = clang_Type_getTemplateArgumentAsType(mem_type, idx);
-					auto mem_entry = translation.find(mem_param);
-
-					if(clang_Type_getNumTemplateArguments(mem_arg_type) != -1) {
-						auto mem_arg_type_name = str(clang_getTypeSpelling(mem_arg_type));
-						mem_arg_type_name = mem_arg_type_name.substr(0, mem_arg_type_name.find_first_of("<"));
-						auto mem_arg_entry = find_if(structs.begin(), structs.end(), [mem_arg_type_name](struct_def& def) -> bool { return mem_arg_type_name == def.name; });
-						output_template_struct(fout, *mem_arg_entry, translation);
-					}
-
-					if(mem_entry != translation.end()) {
-						mem_arg_type = mem_entry->second;
-					}
-
-					mem_translation.insert({mem_param, mem_arg_type});
-					idx++;
-				}
-				for(auto& trans : translation) {
-					mem_translation.insert(trans);
-				}
-				output_template_struct(fout, *entry, mem_translation);
-			}
-		}
-
-		print_templ_struct(fout, s, translation);
-
-		for(auto& t : s.template_type_params) {
-
-			auto entry = translation.find(t);
-			if(entry != translation.end()) {
-				fout << "#pragma pop_macro(\"" << entry->first << "\")" << endl;
-			}
-		}
-
-		done.push_back({s, translation});
-	}
-	fout << endl;
-}
-
-map<string, CXType> make_translation(const struct_def& s, const vector<CXType>& instantiation) {
-	
-	map<string, CXType> translation;
-	for(auto type_param : s.template_type_params) {
-		trim(type_param);
-		u32 index = 0;
-		for(;; index++) {
-			if(s.template_type_params[index] == type_param) {
-				break;
-			}
-		}
-		translation.insert({type_param, instantiation[index]});
-	}
-	return translation;
-}
-
-void print_templ_struct(ofstream& fout, const struct_def& s, const map<string, CXType>& translation) {
-
-	auto& name = s.name;
-	auto type = clang_getCursorType(s.this_);
-
-	fout << "\t[]() -> void {" << endl;
-
-	string qual_name = name + "<";
-	for(u32 idx = 0; idx < s.template_type_params.size(); idx++) {
-		
-		qual_name += s.template_type_params[idx];
-		if(idx != s.template_type_params.size() - 1) {
-			qual_name += ",";
-		}
-	}
-	qual_name += ">";
-
-	fout << "\t\t_type_info this_type_info;" << endl
-		 << "\t\tthis_type_info.type_type = Type::_struct;" << endl
-		 << "\t\tthis_type_info.size = sizeof(" << qual_name << ");" << endl
-		 << "\t\tthis_type_info.name = \"" << name << "\"_;" << endl
-		 << "\t\tthis_type_info.hash = (type_id)typeid(" << qual_name << ").hash_code();" << endl
-		 << "\t\tthis_type_info._struct.member_count = " << s.members.size() << ";" << endl;
-
-	fout << "#define __" << name << "__ " << qual_name << endl;
-	u32 idx = 0;
-	for(auto& member : s.members) {
-		auto mem_name = str(clang_getCursorSpelling(member.second));
-		auto mem_type_name = str(clang_getTypeSpelling(clang_getCursorType(member.second)));
-
-		fout << "\t\tthis_type_info._struct.member_types[" << idx << "] = TYPEINFO(" << mem_type_name << ") ? TYPEINFO(" << mem_type_name << ")->hash : 0;" << endl
-			 << "\t\tthis_type_info._struct.member_names[" << idx << "] = \"" << mem_name << "\"_;" << endl
-			 << "\t\tthis_type_info._struct.member_offsets[" << idx << "] = offsetof(__" << name << "__, " << mem_name << ");" << endl
-			 << "\t\tthis_type_info._struct.member_circular[" << idx << "] = " << member.first << ";" << endl;
-
-		idx++;
-	}
-	fout << "#undef __" << name << "__" << endl;
-
-	fout << "\t\ttype_table.insert(this_type_info.hash, this_type_info, false);" << endl
-		 << "\t}();" << endl << endl;
-}
-
-i32 main(i32 argc, char** argv) {
-
-	if(argc < 2) {
-		cout << "Incorrect usage." << endl;
+	if(argc < 3) {
+		std::cout << "Must provide input and output file." << std::endl;
 		return -1;
 	}
 
-	auto index = clang_createIndex(0, 0);
-	auto unit = clang_parseTranslationUnit(index, argv[1], argv + 2, argc - 2, nullptr, 0, CXTranslationUnit_DetailedPreprocessingRecord | CXTranslationUnit_KeepGoing);
+	std::string in_file(argv[1]);
+	std::string out_file(argv[2]);
+	log_out.open("meta.log");
 
-	if (unit == nullptr) {
-		cout << "Unable to parse translation unit." << endl;
-		return -1;
-	}
+	// Parse input
+	{
+		auto index = clang_createIndex(0, 0);
+		auto unit = clang_parseTranslationUnit(index, in_file.c_str(), argv + 3, argc - 3, nullptr, 0, 
+			CXTranslationUnit_DetailedPreprocessingRecord | CXTranslationUnit_KeepGoing);
 
-	auto cursor = clang_getTranslationUnitCursor(unit);
-	clang_visitChildren(cursor,
-	[](CXCursor c, CXCursor parent, CXClientData client_data) {
-
-		if(clang_Location_isInSystemHeader(clang_getCursorLocation(c))) {
-			return CXChildVisit_Continue;
+		if (unit == nullptr) {
+			std::cout << "Unable to parse translation unit." << std::endl;
+			return -1;
 		}
 
-		do_parse(c);
-		return CXChildVisit_Recurse;
-	}, nullptr);
+		auto cursor = clang_getTranslationUnitCursor(unit);
+		clang_visitChildren(cursor, traversal, nullptr);
 
-	ofstream fout("meta_types.cpp");
-	output_pre(fout);
-	for(auto& e : enums) {
-		output_enum(fout, e);
+		clang_disposeTranslationUnit(unit);
+		clang_disposeIndex(index);
 	}
-	for(auto& s : structs) {
-		output_struct(fout, s);
-	}
-	for(auto& f : var_parm_deps) {
-		f(fout);
-	}
-	output_post(fout);
-	fout.close();
 
-	clang_disposeTranslationUnit(unit);
-	clang_disposeIndex(index);
+	{ // Do output 
+		std::ofstream fout(out_file);
+
+		fout << "#define COMPILING_META_TYPES" << std::endl
+			 << "#include \"" << in_file << "\"" << std::endl << std::endl
+			 << "void make_meta_info() {  " << std::endl;
+
+		print_basic_types(fout);
+		print_results(fout);
+
+		fout << "}" << std::endl << std::endl;
+	}
 
 	return 0;
 }

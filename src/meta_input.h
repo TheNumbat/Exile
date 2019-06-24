@@ -1,4 +1,8 @@
 
+#include "engine/dbg.h"
+#include "engine/ds/map.h"
+#include "engine/ds/map.inl"
+#include "engine/ds/vector.inl"
 #include "engine/basic.h"
 #include "engine/math.h"
 #include "engine/ds/string.h"
@@ -29,7 +33,7 @@
 #include "game/exile.h"
 #include "engine/platform/platform_api.h"
 
-#ifndef META_NO_IMPL
+#ifndef COMPILING_META_TYPES
 #include "engine/util/fptr.cpp"
 #include "engine/util/context.cpp"
 #include "engine/util/threadstate.cpp"
@@ -46,7 +50,7 @@
 #include "engine/ds/alloc.cpp"
 #include "engine/ds/string.cpp"
 #include "engine/ds/string.inl"
-#include "engine/ds/vector.cpp"
+#include "engine/ds/vector.inl"
 #include "engine/ds/stack.inl"
 #include "engine/ds/array.inl"
 #include "engine/ds/queue.inl"
