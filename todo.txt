@@ -1,6 +1,7 @@
 
 Working To-Do:
 
+	Update README with meson instructions
 	~~~~~~ Rewrite Meta-Program ~~~~~~~~~
 		Moving build systems and updating libclang totally broke it, so
 		why don't we take the chance to make it actually robust and
