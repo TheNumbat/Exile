@@ -164,7 +164,9 @@ struct data_type_enum {
 
 	std::string name;
 	bool is_class;
+	CXType my_type;
 	CXType underlying_type;
+	std::vector<CXType> type_path;
 	std::vector<member> members;
 };
 
@@ -192,13 +194,14 @@ namespace std {
 
 struct g_parse_data {
 	int recurse_level = 0;
+	CXCursor top_level;
 	std::unordered_map<data_type_id, data_type> type_graph;
 	data_type_id current;
 };
 g_parse_data g_data;
 
-struct do_indent{};
-std::ostream& operator<<(std::ostream& stream, const do_indent&) {
+struct idt{};
+std::ostream& operator<<(std::ostream& stream, const idt&) {
 	for(int i = 0; i < g_data.recurse_level; i++) stream << "\t";
 	return stream;
 }
@@ -206,9 +209,8 @@ std::ostream& operator<<(std::ostream& stream, const do_indent&) {
 CXChildVisitResult parse_enum(CXCursor c, CXCursor parent, CXClientData client_data) {
 
 	CXCursorKind kind = c.kind;
-	log_out << do_indent{} << "Parsing Cursor: " << clang_getCursorSpelling(c) << std::endl
-			<< do_indent{} << "Kind: " << clang_getCursorKindSpelling(kind) << std::endl;
-	g_data.recurse_level++;
+	log_out << idt{} << "Parsing Cursor: " << clang_getCursorSpelling(c) << std::endl
+			<< idt{} << "Kind: " << clang_getCursorKindSpelling(kind) << std::endl;
 
 	data_type& type = g_data.type_graph[g_data.current];
 
@@ -218,46 +220,69 @@ CXChildVisitResult parse_enum(CXCursor c, CXCursor parent, CXClientData client_d
 		member.value = clang_getEnumConstantDeclUnsignedValue(c);
 		member.name  = to_string(clang_getCursorSpelling(c));
 
-		log_out << do_indent{} << "Name: " << member.name << std::endl
-				<< do_indent{} << "value: " << member.value << std::endl;
+		log_out << idt{} << "Name: " << member.name << std::endl
+				<< idt{} << "value: " << member.value << std::endl;
 
 		type._enum.members.push_back(member);
 	} break;
 	}
 
-	g_data.recurse_level--;
-	return CXChildVisit_Recurse;
+	return CXChildVisit_Continue;
+}
+
+bool cursor_is_record_def(CXCursor c) {
+	if(!clang_isCursorDefinition(c)) return false;
+	CXCursorKind kind = c.kind;
+	return kind == CXCursor_StructDecl ||
+		   kind == CXCursor_UnionDecl  ||
+		   kind == CXCursor_ClassDecl  ||
+		   kind == CXCursor_EnumDecl;
+}
+
+bool cursor_is_type_accessible(CXCursor c) {
+	while(!clang_equalCursors(c, g_data.top_level)) {
+		if(!cursor_is_record_def(c)) {
+			return false;
+		}
+		c = clang_getCursorLexicalParent(c);
+	}
+	return true;
 }
 
 CXChildVisitResult traversal_enum(CXCursor c, CXCursor parent, CXClientData client_data) {
 
 	if(!clang_isCursorDefinition(c)) {
-		log_out << do_indent{} << "Forward declaration; continuing" << std::endl;	
-		g_data.recurse_level--;
+		log_out << idt{} << "Forward declaration; continuing" << std::endl;	
+		return CXChildVisit_Continue;
+	} else if(!cursor_is_type_accessible(c)) {
+		log_out << idt{} << "Enum declaration inaccessible; continuing" << std::endl;
 		return CXChildVisit_Continue;
 	}
 
 	std::string name = to_string(clang_getCursorSpelling(c));
-	log_out << do_indent{} << "Parsing enum definition " << name << std::endl;
+	log_out << idt{} << "Parsing enum definition " << name << std::endl;
 
 	data_type_id id{name};
 	data_type type;
 	type.type = def_types::_enum;
 
 	type._enum.name = name;
+	type._enum.my_type = clang_getCursorType(c);
 	type._enum.is_class = clang_EnumDecl_isScoped(c);
 	type._enum.underlying_type = clang_getEnumDeclIntegerType(c);
 
-	log_out << do_indent{} << "Name: " << type._enum.name << std::endl
-			<< do_indent{} << "is_class: " << type._enum.is_class << std::endl
-			<< do_indent{} << "underlying_type: " << clang_getTypeSpelling(type._enum.underlying_type) << std::endl;
+	log_out << idt{} << "Name: " << type._enum.name << std::endl
+			<< idt{} << "is_class: " << type._enum.is_class << std::endl
+			<< idt{} << "underlying_type: " << clang_getTypeSpelling(type._enum.underlying_type) << std::endl
+			<< idt{} << "my_type: " << clang_getTypeSpelling(type._enum.my_type) << std::endl;
 
 	g_data.type_graph.insert({id, type});
 	g_data.current = id;
 
+	g_data.recurse_level++;
 	clang_visitChildren(c, parse_enum, client_data);
-
 	g_data.recurse_level--;
+
 	return CXChildVisit_Continue;
 }
 
@@ -268,38 +293,36 @@ CXChildVisitResult traversal(CXCursor c, CXCursor parent, CXClientData client_da
 	}
 
 	CXCursorKind kind = c.kind;
-	log_out << do_indent{} << "Parsing Cursor: " << clang_getCursorSpelling(c) << std::endl
-			<< do_indent{} << "Kind: " << clang_getCursorKindSpelling(kind) << std::endl;
-	g_data.recurse_level++;
+	log_out << idt{} << "Parsing Cursor: " << clang_getCursorSpelling(c) << std::endl
+			<< idt{} << "Kind: " << clang_getCursorKindSpelling(kind) << std::endl;
 
 	if(clang_isPreprocessing(kind)) {
 
-		log_out << do_indent{} << "Preprocessor; continuing" << std::endl;
-		
-		g_data.recurse_level--;
+		log_out << idt{} << "Preprocessor; continuing" << std::endl;
 		return CXChildVisit_Continue;
 
 	} else if(clang_isUnexposed(kind)) {
 
-		log_out << do_indent{} << "Unexposed; continuing" << std::endl;
-
-		g_data.recurse_level--;
+		log_out << idt{} << "Unexposed; continuing" << std::endl;
 		return CXChildVisit_Continue;
 
 	} else if(clang_isInvalid(kind)) {
 	
-		log_out << do_indent{} << "Invalid; continuing" << std::endl;	
-
-		g_data.recurse_level--;
+		log_out << idt{} << "Invalid; continuing" << std::endl;	
 		return CXChildVisit_Continue;
 	}
 
+	g_data.recurse_level++;
+
+	CXChildVisitResult result = CXChildVisit_Recurse;
+
 	switch(kind) {
-	case CXCursor_EnumDecl: return traversal_enum(c, parent, client_data);
+	case CXCursor_EnumDecl: result = traversal_enum(c, parent, client_data); break;
 	}
 
-	g_data.recurse_level--;
-	return CXChildVisit_Recurse;
+	g_data.recurse_level--;	
+
+	return result;
 }
 
 void print_enum(std::ofstream& fout, data_type_enum type) {
@@ -312,12 +335,14 @@ void print_enum(std::ofstream& fout, data_type_enum type) {
 		return;
 	}
 
+	std::string type_name = to_string(clang_getTypeSpelling(type.my_type));
+
 	fout << "\t[]() -> void {" << std::endl
 		 << "\t\t_type_info this_type_info;" << std::endl
 		 << "\t\tthis_type_info.type_type = Type::_enum;" << std::endl
-		 << "\t\tthis_type_info.size = sizeof(" << type.name << ");" << std::endl
+		 << "\t\tthis_type_info.size = " << clang_Type_getSizeOf(type.my_type) << ";" << std::endl
 		 << "\t\tthis_type_info.name = \"" << type.name << "\"_;" << std::endl
-		 << "\t\tthis_type_info.hash = (type_id)typeid(" << type.name << ").hash_code();" << std::endl
+		 << "\t\tthis_type_info.hash = (type_id)typeid(" << type_name << ").hash_code();" << std::endl
 		 << "\t\tthis_type_info._enum.member_count = " << type.members.size() << ";" << std::endl
 		 << "\t\tthis_type_info._enum.base_type = TYPEINFO(" << underlying_name << ") ? TYPEINFO(" << underlying_name << ")->hash : 0;" << std::endl;
 
@@ -357,8 +382,8 @@ int main(int argc, char** argv) {
 
 	// Parse input
 	{
-		auto index = clang_createIndex(0, 0);
-		auto unit = clang_parseTranslationUnit(index, in_file.c_str(), argv + 3, argc - 3, nullptr, 0, 
+		CXIndex index = clang_createIndex(0, 0);
+		CXTranslationUnit unit = clang_parseTranslationUnit(index, in_file.c_str(), argv + 3, argc - 3, nullptr, 0, 
 			CXTranslationUnit_DetailedPreprocessingRecord | CXTranslationUnit_KeepGoing);
 
 		if (unit == nullptr) {
@@ -366,24 +391,26 @@ int main(int argc, char** argv) {
 			return -1;
 		}
 
-		auto cursor = clang_getTranslationUnitCursor(unit);
+		CXCursor cursor = clang_getTranslationUnitCursor(unit);
+		g_data.top_level = cursor;
+
 		clang_visitChildren(cursor, traversal, nullptr);
+
+		{ // Do output 
+			std::ofstream fout(out_file);
+
+			fout << "#define COMPILING_META_TYPES" << std::endl
+				 << "#include \"" << in_file << "\"" << std::endl << std::endl
+				 << "void make_meta_info() {  " << std::endl;
+
+			print_basic_types(fout);
+			print_results(fout);
+
+			fout << "}" << std::endl << std::endl;
+		}
 
 		clang_disposeTranslationUnit(unit);
 		clang_disposeIndex(index);
-	}
-
-	{ // Do output 
-		std::ofstream fout(out_file);
-
-		fout << "#define COMPILING_META_TYPES" << std::endl
-			 << "#include \"" << in_file << "\"" << std::endl << std::endl
-			 << "void make_meta_info() {  " << std::endl;
-
-		print_basic_types(fout);
-		print_results(fout);
-
-		fout << "}" << std::endl << std::endl;
 	}
 
 	return 0;
