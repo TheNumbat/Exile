@@ -32,6 +32,12 @@ struct Type_bool_info {};
 struct Type_ptr_info {
 	type_id to = 0;
 };
+struct Type_func_info {
+	string 		signature;
+	type_id 	return_type			= 0;
+	type_id 	param_types[16] 	= {};
+	u32 		param_count 		= 0;
+};
 struct Type_array_info {
 	type_id of 		= 0;
 	u64 	length 	= 0;
@@ -40,7 +46,6 @@ struct Type_struct_info {
 	type_id		member_types[96]	= {};
 	string 		member_names[96];
 	u32 		member_offsets[96]	= {};
-	u8 			member_circular[96] = {};
 	u32 		member_count		= 0;
 };
 struct Type_enum_info {
@@ -64,6 +69,7 @@ struct _type_info {
 		Type_float_info  _float;
 		Type_bool_info   _bool;
 		Type_ptr_info    _ptr;
+		Type_func_info 	 _func;
 		Type_array_info	 _array;
 		Type_struct_info _struct;
 		Type_enum_info   _enum;

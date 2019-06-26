@@ -49,15 +49,29 @@ struct s {
 	};
 
 	e_in_s LULw;
+
+	e_in_s e_array[5];
+
+	bool (*test)(int i) = null;
 };
+
+struct r;
 
 struct f {
 	ec yes = ec::two;
 };
 
-int func() {
+template<typename E>
+struct EEEE {
+	void func(bool (*yes)(E)) {}
+};
+
+int func(int arr[7]) {
 	enum func_enum {
 		yes
 	};
-	return 0;
+	ec (*test3)(s i) = null;
+	EEEE<int> eeeeeee;
+	int array[5];
+	return array[0];
 }

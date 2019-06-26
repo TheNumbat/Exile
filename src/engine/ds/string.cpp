@@ -117,6 +117,10 @@ u32 string::write_type(u32 idx, void* val, _type_info* info, bool size) {
 		idx = write_ptr(idx, val, info, size);
 	} break;
 
+	case Type::_func: {
+		idx = write(idx, info->_func.signature, size);
+	} break;
+
 	case Type::_array: {
 		idx = write_static_array(idx, val, info, size);
 	} break;
@@ -417,7 +421,7 @@ u32 string::write_any_struct(u32 idx, void* val, _type_info* info, bool size) {
 		_type_info* member = TYPEINFO_H(info->_struct.member_types[j]);
 		u8* place = (u8*)val + info->_struct.member_offsets[j];
 
-		if(member && !info->_struct.member_circular[j]) {
+		if(member) {
 			if(member->type_type == Type::_string) {
 				idx = write(idx, '\"', size);
 			}
