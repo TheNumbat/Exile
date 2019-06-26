@@ -88,7 +88,7 @@ endif
 gen_src = custom_target('meta_output',
                         input : 'src/tools/meta_test.cpp',
                         output : 'meta_types.cpp',
-                        command : [meta_compiler, '@INPUT@', '@OUTPUT@'])
+                        command : [meta_compiler, '@INPUT@', '@OUTPUT@', '-I../src/'])
 
 # Build Game DLL
 
