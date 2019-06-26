@@ -155,7 +155,9 @@ void print_basic_types(std::ofstream& fout) {
 
 enum class def_types {
 	_enum,
-	_struct
+	_struct,
+	_array,
+	_func_ptr
 };
 
 bool operator==(const CXType& l, const CXType& r) {
@@ -182,15 +184,29 @@ struct data_type_struct {
 	std::vector<field> fields;
 };
 
+struct data_type_array {
+	int64_t length = 0;
+	CXType underlying_type;
+};
+
+struct data_type_func_ptr {
+	CXType func_type;
+	CXType return_type;
+	std::vector<CXType> param_types;
+};
+
 struct data_type {
 	def_types type;
 	
 	std::string name;
 	CXType my_type;
+	CXSourceLocation loc;
 	bool output = false;
 
 	data_type_enum _enum;
 	data_type_struct _struct;
+	data_type_array _array;
+	data_type_func_ptr _func_ptr;
 };
 
 namespace std {
@@ -245,6 +261,51 @@ CXChildVisitResult parse_enum(CXCursor c, CXCursor parent, CXClientData client_d
 	return CXChildVisit_Continue;
 }
 
+void try_add_func_ptr(CXCursor c) {
+
+	CXType type = clang_getCursorType(c);
+
+	if(g_data.type_graph.find(type) != g_data.type_graph.end()) return;
+
+	CXType func_type = clang_getPointeeType(type);
+
+	data_type dt;
+	dt.type = def_types::_func_ptr;
+	dt.name = to_string(clang_getTypeSpelling(type));
+	dt.my_type = type;
+	dt.loc = clang_getCursorLocation(c);
+
+	log_out << idt{} << "Found new function pointer " << dt.name << std::endl;
+	
+	dt._func_ptr.func_type = func_type;
+	dt._func_ptr.return_type = clang_getResultType(func_type);
+	for(int i = 0; i < clang_getNumArgTypes(func_type); i++) {
+		dt._func_ptr.param_types.push_back(clang_getArgType(func_type, i));
+	}
+
+	g_data.type_graph.insert({type, dt});
+}
+
+void try_add_static_array(CXCursor c) {
+
+	CXType type = clang_getCursorType(c);
+
+	if(g_data.type_graph.find(type) != g_data.type_graph.end()) return;
+
+	data_type dt;
+	dt.type = def_types::_array;
+	dt.name = to_string(clang_getTypeSpelling(type));
+	dt.my_type = type;
+	dt.loc = clang_getCursorLocation(c);
+
+	log_out << idt{} << "Found new array " << dt.name << std::endl;
+
+	dt._array.length = clang_getArraySize(type);
+	dt._array.underlying_type = clang_getArrayElementType(type);
+
+	g_data.type_graph.insert({type, dt});
+}
+
 CXChildVisitResult parse_struct(CXCursor c, CXCursor parent, CXClientData client_data) {
 
 	CXCursorKind kind = c.kind;
@@ -264,6 +325,20 @@ CXChildVisitResult parse_struct(CXCursor c, CXCursor parent, CXClientData client
 				<< idt{} << "type: " << clang_getTypeSpelling(field.id) << std::endl;
 
 		type._struct.fields.push_back(field);
+
+		// Add reflect info for static array and function pointer types
+		// Note that normal pointers are taken care of at runtime;
+		// the pointer type is dynamically added and points to the correct
+		// definitions.
+		if(field.id.kind == CXType_ConstantArray) {
+			try_add_static_array(c);
+		} else if(field.id.kind == CXType_Pointer) {
+
+			CXType pointed_to = clang_getPointeeType(field.id);
+			if(clang_getNumArgTypes(pointed_to) != -1) {
+				try_add_func_ptr(c);
+			}
+		}
 	} break;
 	case CXCursor_EnumDecl: {
 		if(!clang_Cursor_isAnonymous(c))
@@ -325,6 +400,7 @@ CXChildVisitResult traversal_struct(CXCursor c, CXCursor parent, CXClientData cl
 	type.type = def_types::_struct;
 	type.name = name;
 	type.my_type = clang_getCursorType(c);
+	type.loc = clang_getCursorLocation(c);
 
 	log_out << idt{} << "Name: " << type.name << std::endl
 			<< idt{} << "my_type: " << clang_getTypeSpelling(type.my_type) << std::endl;
@@ -358,6 +434,7 @@ CXChildVisitResult traversal_enum(CXCursor c, CXCursor parent, CXClientData clie
 	type.type = def_types::_enum;
 	type.name = name;
 	type.my_type = clang_getCursorType(c);
+	type.loc = clang_getCursorLocation(c);
 
 	type._enum.is_class = clang_EnumDecl_isScoped(c);
 	type._enum.underlying_type = clang_getEnumDeclIntegerType(c);
@@ -375,6 +452,23 @@ CXChildVisitResult traversal_enum(CXCursor c, CXCursor parent, CXClientData clie
 	g_data.recurse_level--;
 
 	g_data.current.pop();
+
+	return CXChildVisit_Continue;
+}
+
+CXChildVisitResult traversal_dependency(CXCursor c, CXCursor parent, CXClientData client_data) {
+
+	CXType type = clang_getCursorType(c);
+
+	if(type.kind == CXType_ConstantArray) {
+		try_add_static_array(c);
+	} else if(type.kind == CXType_Pointer) {
+
+		CXType pointed_to = clang_getPointeeType(type);
+		if(clang_getNumArgTypes(pointed_to) != -1) {
+			try_add_func_ptr(c);
+		}
+	}
 
 	return CXChildVisit_Continue;
 }
@@ -418,11 +512,26 @@ CXChildVisitResult traversal(CXCursor c, CXCursor parent, CXClientData client_da
 	case CXCursor_UnionDecl:
 	case CXCursor_ClassDecl:
 	case CXCursor_StructDecl: result = traversal_struct(c, parent, client_data); break;
+	case CXCursor_VarDecl:
+	case CXCursor_ParmDecl: result = traversal_dependency(c, parent, client_data); break;
+
+	// TODO(max):
+	case CXCursor_ClassTemplate: result = CXChildVisit_Continue; break;
 	}
 
 	g_data.recurse_level--;	
 
 	return result;
+}
+
+void print_loc_ref(std::ofstream& fout, CXSourceLocation loc) {
+
+	CXFile file;
+	unsigned int line;
+
+	clang_getExpansionLocation(loc, &file, &line, nullptr, nullptr);
+
+	fout << "\t// from " << clang_getFileName(file) << ":" << line << std::endl;
 }
 
 void print_struct(std::ofstream& fout, data_type& dt) {
@@ -433,6 +542,11 @@ void print_struct(std::ofstream& fout, data_type& dt) {
 	}
 
 	data_type_struct& type = dt._struct;
+
+	if(type.fields.size() > 96) {
+		std::cout << "WARNING: struct " << dt.name << " has too many fields, skipping!" << std::endl;
+		return;
+	}
 
 	for(auto field : type.fields) {
 		auto entry = g_data.type_graph.find(field.id);
@@ -450,10 +564,12 @@ void print_struct(std::ofstream& fout, data_type& dt) {
 
 	std::string type_name = to_string(clang_getTypeSpelling(dt.my_type));
 
+	print_loc_ref(fout, dt.loc);
+
 	fout << "\t[]() -> void {" << std::endl
 		 << "\t\t_type_info this_type_info;" << std::endl
 		 << "\t\tthis_type_info.type_type = Type::_struct;" << std::endl
-		 << "\t\tthis_type_info.size = " << clang_Type_getSizeOf(dt.my_type) << ";" << std::endl
+		 << "\t\tthis_type_info.size = sizeof(" << clang_getTypeSpelling(dt.my_type) << ");" << std::endl
 		 << "\t\tthis_type_info.name = \"" << dt.name << "\"_;" << std::endl
 		 << "\t\tthis_type_info.hash = (type_id)typeid(" << type_name << ").hash_code();" << std::endl;
 
@@ -484,20 +600,22 @@ void print_enum(std::ofstream& fout, data_type& dt) {
 
 	data_type_enum& type = dt._enum;
 
-	std::string underlying_name = to_string(clang_getTypeSpelling(type.underlying_type));
-	log_out << "OUTPUT: enum " << dt.name << " : " << underlying_name << std::endl;
-
 	if(type.members.size() > 256) {
-		log_out << "WARNING: enum " << dt.name << " has too many members, skipping!" << std::endl;
+		std::cout << "WARNING: enum " << dt.name << " has too many members, skipping!" << std::endl;
 		return;
 	}
 
+	std::string underlying_name = to_string(clang_getTypeSpelling(type.underlying_type));
+	log_out << "OUTPUT: enum " << dt.name << " : " << underlying_name << std::endl;
+
 	std::string type_name = to_string(clang_getTypeSpelling(dt.my_type));
+
+	print_loc_ref(fout, dt.loc);
 
 	fout << "\t[]() -> void {" << std::endl
 		 << "\t\t_type_info this_type_info;" << std::endl
 		 << "\t\tthis_type_info.type_type = Type::_enum;" << std::endl
-		 << "\t\tthis_type_info.size = " << clang_Type_getSizeOf(dt.my_type) << ";" << std::endl
+		 << "\t\tthis_type_info.size = sizeof(" << clang_getTypeSpelling(dt.my_type) << ");" << std::endl
 		 << "\t\tthis_type_info.name = \"" << dt.name << "\"_;" << std::endl
 		 << "\t\tthis_type_info.hash = (type_id)typeid(" << type_name << ").hash_code();" << std::endl
 		 << "\t\tthis_type_info._enum.member_count = " << type.members.size() << ";" << std::endl
@@ -519,10 +637,106 @@ void print_enum(std::ofstream& fout, data_type& dt) {
 	dt.output = true;
 }
 
+void print_array(std::ofstream& fout, data_type& dt) {
+
+	if(dt.output) {
+		log_out << "OUTPUT: already seen enum " << dt.name << std::endl;
+		return;
+	}
+
+	data_type_array& type = dt._array;
+
+	auto entry = g_data.type_graph.find(type.underlying_type);
+	if(entry != g_data.type_graph.end()) {
+		print_data_type(fout, entry->second);
+	}
+
+	log_out << "OUTPUT: array " << dt.name << std::endl;
+
+	std::string type_name = to_string(clang_getTypeSpelling(dt.my_type));
+	std::string base_type_name = to_string(clang_getTypeSpelling(type.underlying_type));
+
+	print_loc_ref(fout, dt.loc);
+	
+	fout << "\t[]() -> void {" << std::endl
+		 << "\t\t_type_info this_type_info;" << std::endl
+		 << "\t\tthis_type_info.type_type = Type::_array;" << std::endl
+		 << "\t\tthis_type_info.size = sizeof(" << type_name << ");" << std::endl
+		 << "\t\tthis_type_info.name = \"" << dt.name << "\"_;" << std::endl
+		 << "\t\tthis_type_info.hash = (type_id)typeid(" << type_name << ").hash_code();" << std::endl
+		 << "\t\tthis_type_info._array.of = TYPEINFO(" << base_type_name << ") ? TYPEINFO(" << base_type_name << ")->hash : 0;" << std::endl
+		 << "\t\tthis_type_info._array.length = " << type.length << ";" << std::endl
+		 << "\t\ttype_table.insert_if_unique(this_type_info.hash, this_type_info, false);" << std::endl
+		 << "\t}();" << std::endl << std::endl;
+
+	dt.output = true;	
+}
+
+void print_func_ptr(std::ofstream& fout, data_type& dt) {
+
+	if(dt.output) {
+		log_out << "OUTPUT: already seen func_ptr " << dt.name << std::endl;
+		return;
+	}
+
+	data_type_func_ptr& type = dt._func_ptr;
+
+	if(type.param_types.size() > 16) {
+		std::cout << "WARNING: func_ptr " << dt.name << " has too many parameters, skipping!" << std::endl;
+		return;
+	}
+
+	auto entry = g_data.type_graph.find(type.return_type);
+	if(entry != g_data.type_graph.end()) {
+		print_data_type(fout, entry->second);
+	}
+	for(auto param : type.param_types) {
+		auto p_entry = g_data.type_graph.find(param);
+		if(p_entry != g_data.type_graph.end()) {
+			print_data_type(fout, p_entry->second);
+		}
+
+		// TODO(max) : FIX FIX FIX
+		if(to_string(clang_getTypeSpelling(param)) == "T") return;
+	}
+
+	log_out << "OUTPUT: func_ptr " << dt.name << std::endl;
+
+	std::string ptr_type_name = to_string(clang_getTypeSpelling(dt.my_type));
+	std::string func_type_name = to_string(clang_getTypeSpelling(type.func_type));
+	std::string return_type_name = to_string(clang_getTypeSpelling(type.return_type));
+
+	print_loc_ref(fout, dt.loc);
+
+	fout << "\t[]() -> void {" << std::endl
+		 << "\t\t_type_info this_type_info;" << std::endl
+		 << "\t\tthis_type_info.type_type = Type::_func;" << std::endl
+		 << "\t\tthis_type_info.size = sizeof(" << ptr_type_name << ");" << std::endl
+		 << "\t\tthis_type_info.hash = (type_id)typeid(" << ptr_type_name << ").hash_code();" << std::endl
+		 << "\t\tthis_type_info.name = \"" << func_type_name << "\"_;" << std::endl
+		 << "\t\tthis_type_info._func.signature = \"" << func_type_name << "\"_;" << std::endl
+		 << "\t\tthis_type_info._func.return_type = TYPEINFO(" << return_type_name << ") ? TYPEINFO(" << return_type_name << ")->hash : 0;" << std::endl
+		 << "\t\tthis_type_info._func.param_count = " << type.param_types.size() << ";" << std::endl;
+
+	int i = 0;
+	for(auto param : type.param_types) {
+		std::string param_type_name = to_string(clang_getTypeSpelling(param));
+		fout << "\t\tthis_type_info._func.param_types[" << i << "] = TYPEINFO(" << param_type_name << ") ? TYPEINFO(" << param_type_name << ")->hash : 0;" << std::endl;
+		i++;
+	}
+
+	fout << "\t\ttype_table.insert_if_unique(this_type_info.hash, this_type_info, false);" << std::endl
+		 << "\t}();" << std::endl << std::endl;
+
+	dt.output = true;
+}
+
 void print_data_type(std::ofstream& fout, data_type& dt) {
 	switch(dt.type) {
 	case def_types::_enum: print_enum(fout, dt); break;
 	case def_types::_struct: print_struct(fout, dt); break;
+	case def_types::_array: print_array(fout, dt); break;
+	case def_types::_func_ptr: print_func_ptr(fout, dt); break;
 	} 
 }
 

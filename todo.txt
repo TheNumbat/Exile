@@ -3,9 +3,9 @@ Working To-Do:
 
 	Update README with meson instructions
 	Metaprogram:
-		re-implement static arrays
-		re-implement function pointers
-		take into account variable declarations^
+		improve dependency outputs
+		detect circular dependency + output fixes
+		^^don't do pointers at runtime, actually...
 		re-implement templated introspection
 
 	Still want to finish all rendering features + at least explore
