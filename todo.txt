@@ -2,21 +2,21 @@
 Working To-Do:
 
 	Update README with meson instructions
-	~~~~~~ Rewrite Meta-Program ~~~~~~~~~
-		Moving build systems and updating libclang totally broke it, so
-		why don't we take the chance to make it actually robust and
-		more useful?
-		However, this will probably take a week, so putting rendering
-		features on hold for now.
-		Still want to finish all rendering features + at least explore
-		the performance/structure enhancements by August
-		August, want to finish world interaction upgrades.
-		By the end of the semester, general polish for releasable demo.
-		Future: iterate on world and QoL features, and begin actual game-play
-			Really want to learn networking/support multi-player
-			Maybe modding, but first a from-scratch playable multi-player core 
-			demo survival a-la Minecraft beta (but with really nice looking graphics)
-			would be great
+	Metaprogram:
+		re-implement static arrays
+		re-implement function pointers
+		take into account variable declarations^
+		re-implement templated introspection
+
+	Still want to finish all rendering features + at least explore
+	the performance/structure enhancements by August
+	August, want to finish world interaction upgrades.
+	By the end of the semester, general polish for releasable demo.
+	Future: iterate on world and QoL features, and begin actual game-play
+		Really want to learn networking/support multi-player
+		Maybe modding, but first a from-scratch playable multi-player core 
+		demo survival a-la Minecraft beta (but with really nice looking graphics)
+		would be great
 
 	Rendering:
 		[features]

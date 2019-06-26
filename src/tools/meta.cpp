@@ -463,7 +463,7 @@ void print_struct(std::ofstream& fout, data_type& dt) {
 
 		fout << "\t\tthis_type_info._struct.member_types[" << idx << "] = TYPEINFO(" << member_type << ") ? TYPEINFO(" << member_type << ")->hash : 0;" << std::endl
 			 << "\t\tthis_type_info._struct.member_names[" << idx << "] = \"" << field.name << "\"_;" << std::endl
-			 << "\t\tthis_type_info._struct.member_offsets[" << idx << "] = " << clang_Type_getOffsetOf(dt.my_type, field.name.c_str()) / 8 << ";" << std::endl;
+			 << "\t\tthis_type_info._struct.member_offsets[" << idx << "] = offsetof(" << clang_getTypeSpelling(dt.my_type) << ", " << field.name << ");" << std::endl;
 		idx++;
 	}
 
