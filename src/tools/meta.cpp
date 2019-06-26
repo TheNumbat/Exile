@@ -2,6 +2,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <stack>
 #include <unordered_map>
 #include <algorithm>
 
@@ -154,49 +155,59 @@ void print_basic_types(std::ofstream& fout) {
 
 enum class def_types {
 	_enum,
+	_struct
 };
+
+bool operator==(const CXType& l, const CXType& r) {
+	return clang_equalTypes(l, r);
+}
 
 struct data_type_enum {
 	struct member {
 		std::string name;
 		uint64_t value;
 	};
-
-	std::string name;
 	bool is_class;
-	CXType my_type;
 	CXType underlying_type;
-	std::vector<CXType> type_path;
 	std::vector<member> members;
+};
+
+struct data_type_struct {
+	struct field {
+		std::string name;
+		CXType id;
+		CXCursor cursor;
+	};
+	bool no_reflect = false;
+	std::vector<field> fields;
 };
 
 struct data_type {
 	def_types type;
 	
-	data_type_enum _enum;
-};
-
-struct data_type_id {
 	std::string name;
+	CXType my_type;
+	bool output = false;
+
+	data_type_enum _enum;
+	data_type_struct _struct;
 };
-bool operator==(const data_type_id& l, const data_type_id& r) {
-	return l.name == r.name;
-}
 
 namespace std {
 	template <>
-	struct hash<data_type_id> {
-		std::size_t operator()(const data_type_id& k) const {
-			return hash<string>()(k.name);
+	struct hash<CXType> {
+		std::size_t operator()(const CXType& k) const {
+			return hash<string>()(to_string(clang_getTypeSpelling(k)));
 		}
 	};
 }
 
 struct g_parse_data {
+	bool parsing = false;
 	int recurse_level = 0;
 	CXCursor top_level;
-	std::unordered_map<data_type_id, data_type> type_graph;
-	data_type_id current;
+	std::unordered_map<CXType, data_type> type_graph;
+	std::stack<CXType> current;
 };
 g_parse_data g_data;
 
@@ -206,13 +217,17 @@ std::ostream& operator<<(std::ostream& stream, const idt&) {
 	return stream;
 }
 
+void print_data_type(std::ofstream& fout, data_type& dt);
+CXChildVisitResult traversal_enum(CXCursor c, CXCursor parent, CXClientData client_data);
+CXChildVisitResult traversal_struct(CXCursor c, CXCursor parent, CXClientData client_data);
+
 CXChildVisitResult parse_enum(CXCursor c, CXCursor parent, CXClientData client_data) {
 
 	CXCursorKind kind = c.kind;
 	log_out << idt{} << "Parsing Cursor: " << clang_getCursorSpelling(c) << std::endl
 			<< idt{} << "Kind: " << clang_getCursorKindSpelling(kind) << std::endl;
 
-	data_type& type = g_data.type_graph[g_data.current];
+	data_type& type = g_data.type_graph[g_data.current.top()];
 
 	switch(kind) {
 	case CXCursor_EnumConstantDecl: {
@@ -220,10 +235,54 @@ CXChildVisitResult parse_enum(CXCursor c, CXCursor parent, CXClientData client_d
 		member.value = clang_getEnumConstantDeclUnsignedValue(c);
 		member.name  = to_string(clang_getCursorSpelling(c));
 
-		log_out << idt{} << "Name: " << member.name << std::endl
+		log_out << idt{} << "name: " << member.name << std::endl
 				<< idt{} << "value: " << member.value << std::endl;
 
 		type._enum.members.push_back(member);
+	} break;
+	}
+
+	return CXChildVisit_Continue;
+}
+
+CXChildVisitResult parse_struct(CXCursor c, CXCursor parent, CXClientData client_data) {
+
+	CXCursorKind kind = c.kind;
+	log_out << idt{} << "Parsing Cursor: " << clang_getCursorSpelling(c) << std::endl
+			<< idt{} << "Kind: " << clang_getCursorKindSpelling(kind) << std::endl;
+
+	data_type& type = g_data.type_graph[g_data.current.top()];
+
+	switch(kind) {
+	case CXCursor_FieldDecl: {
+		data_type_struct::field field;
+		field.name  = to_string(clang_getCursorSpelling(c));
+		field.id = clang_getCursorType(c);
+		field.cursor = c;
+
+		log_out << idt{} << "name: " << field.name << std::endl
+				<< idt{} << "type: " << clang_getTypeSpelling(field.id) << std::endl;
+
+		type._struct.fields.push_back(field);
+	} break;
+	case CXCursor_EnumDecl: {
+		if(!clang_Cursor_isAnonymous(c))
+			traversal_enum(c, parent, client_data);
+	} break;
+	case CXCursor_UnionDecl:
+	case CXCursor_ClassDecl:
+	case CXCursor_StructDecl: {
+		if(clang_Cursor_isAnonymous(c)) {
+			clang_visitChildren(c, parse_struct, client_data);
+		} else {
+			traversal_struct(c, parent, client_data);
+		}
+	} break;
+	case CXCursor_AnnotateAttr: {
+		std::string annotation = to_string(clang_getCursorSpelling(c));
+		if(annotation == "noreflect") {
+			type._struct.no_reflect = true;
+		}
 	} break;
 	}
 
@@ -249,6 +308,39 @@ bool cursor_is_type_accessible(CXCursor c) {
 	return true;
 }
 
+CXChildVisitResult traversal_struct(CXCursor c, CXCursor parent, CXClientData client_data) {
+
+	if(!clang_isCursorDefinition(c)) {
+		log_out << idt{} << "Forward declaration; continuing" << std::endl;	
+		return CXChildVisit_Continue;
+	} else if(!cursor_is_type_accessible(c)) {
+		log_out << idt{} << "Enum declaration inaccessible; continuing" << std::endl;
+		return CXChildVisit_Continue;
+	}
+
+	std::string name = to_string(clang_getCursorSpelling(c));
+	log_out << idt{} << "Parsing struct definition " << name << std::endl;
+
+	data_type type;
+	type.type = def_types::_struct;
+	type.name = name;
+	type.my_type = clang_getCursorType(c);
+
+	log_out << idt{} << "Name: " << type.name << std::endl
+			<< idt{} << "my_type: " << clang_getTypeSpelling(type.my_type) << std::endl;
+
+	g_data.type_graph.insert({type.my_type, type});
+	g_data.current.push(type.my_type);
+
+	g_data.recurse_level++;
+	clang_visitChildren(c, parse_struct, client_data);
+	g_data.recurse_level--;
+
+	g_data.current.pop();
+
+	return CXChildVisit_Continue;
+}
+
 CXChildVisitResult traversal_enum(CXCursor c, CXCursor parent, CXClientData client_data) {
 
 	if(!clang_isCursorDefinition(c)) {
@@ -262,26 +354,27 @@ CXChildVisitResult traversal_enum(CXCursor c, CXCursor parent, CXClientData clie
 	std::string name = to_string(clang_getCursorSpelling(c));
 	log_out << idt{} << "Parsing enum definition " << name << std::endl;
 
-	data_type_id id{name};
 	data_type type;
 	type.type = def_types::_enum;
+	type.name = name;
+	type.my_type = clang_getCursorType(c);
 
-	type._enum.name = name;
-	type._enum.my_type = clang_getCursorType(c);
 	type._enum.is_class = clang_EnumDecl_isScoped(c);
 	type._enum.underlying_type = clang_getEnumDeclIntegerType(c);
 
-	log_out << idt{} << "Name: " << type._enum.name << std::endl
+	log_out << idt{} << "name: " << type.name << std::endl
 			<< idt{} << "is_class: " << type._enum.is_class << std::endl
 			<< idt{} << "underlying_type: " << clang_getTypeSpelling(type._enum.underlying_type) << std::endl
-			<< idt{} << "my_type: " << clang_getTypeSpelling(type._enum.my_type) << std::endl;
+			<< idt{} << "my_type: " << clang_getTypeSpelling(type.my_type) << std::endl;
 
-	g_data.type_graph.insert({id, type});
-	g_data.current = id;
+	g_data.type_graph.insert({type.my_type, type});
+	g_data.current.push(type.my_type);
 
 	g_data.recurse_level++;
 	clang_visitChildren(c, parse_enum, client_data);
 	g_data.recurse_level--;
+
+	g_data.current.pop();
 
 	return CXChildVisit_Continue;
 }
@@ -289,6 +382,10 @@ CXChildVisitResult traversal_enum(CXCursor c, CXCursor parent, CXClientData clie
 CXChildVisitResult traversal(CXCursor c, CXCursor parent, CXClientData client_data) {
 
 	if(clang_Location_isInSystemHeader(clang_getCursorLocation(c))) {
+		return CXChildVisit_Continue;
+	} else if(!g_data.parsing) {
+		if(c.kind == CXCursor_EnumDecl && to_string(clang_getCursorSpelling(c)) == "META_START_PARSING_HERE") 
+			g_data.parsing = true;
 		return CXChildVisit_Continue;
 	}
 
@@ -318,6 +415,9 @@ CXChildVisitResult traversal(CXCursor c, CXCursor parent, CXClientData client_da
 
 	switch(kind) {
 	case CXCursor_EnumDecl: result = traversal_enum(c, parent, client_data); break;
+	case CXCursor_UnionDecl:
+	case CXCursor_ClassDecl:
+	case CXCursor_StructDecl: result = traversal_struct(c, parent, client_data); break;
 	}
 
 	g_data.recurse_level--;	
@@ -325,23 +425,80 @@ CXChildVisitResult traversal(CXCursor c, CXCursor parent, CXClientData client_da
 	return result;
 }
 
-void print_enum(std::ofstream& fout, data_type_enum type) {
+void print_struct(std::ofstream& fout, data_type& dt) {
 
-	std::string underlying_name = to_string(clang_getTypeSpelling(type.underlying_type));
-	log_out << "OUTPUT: enum " << type.name << " : " << underlying_name << std::endl;
-
-	if(type.members.size() > 256) {
-		log_out << "WARNING: enum " << type.name << " has too many members, skipping!" << std::endl;
+	if(dt.output) {
+		log_out << "OUTPUT: already seen struct " << dt.name << std::endl;
 		return;
 	}
 
-	std::string type_name = to_string(clang_getTypeSpelling(type.my_type));
+	data_type_struct& type = dt._struct;
+
+	for(auto field : type.fields) {
+		auto entry = g_data.type_graph.find(field.id);
+		if(entry != g_data.type_graph.end()) {
+			print_data_type(fout, entry->second);
+		}
+	}
+
+	log_out << "OUTPUT: struct " << dt.name << std::endl;
+
+	if(type.no_reflect) {
+		dt.output = true;
+		return;
+	}
+
+	std::string type_name = to_string(clang_getTypeSpelling(dt.my_type));
+
+	fout << "\t[]() -> void {" << std::endl
+		 << "\t\t_type_info this_type_info;" << std::endl
+		 << "\t\tthis_type_info.type_type = Type::_struct;" << std::endl
+		 << "\t\tthis_type_info.size = " << clang_Type_getSizeOf(dt.my_type) << ";" << std::endl
+		 << "\t\tthis_type_info.name = \"" << dt.name << "\"_;" << std::endl
+		 << "\t\tthis_type_info.hash = (type_id)typeid(" << type_name << ").hash_code();" << std::endl;
+
+	int idx = 0;
+	for(auto field : type.fields) {
+		std::string member_type = to_string(clang_getTypeSpelling(field.id));
+
+		fout << "\t\tthis_type_info._struct.member_types[" << idx << "] = TYPEINFO(" << member_type << ") ? TYPEINFO(" << member_type << ")->hash : 0;" << std::endl
+			 << "\t\tthis_type_info._struct.member_names[" << idx << "] = \"" << field.name << "\"_;" << std::endl
+			 << "\t\tthis_type_info._struct.member_offsets[" << idx << "] = " << clang_Type_getOffsetOf(dt.my_type, field.name.c_str()) / 8 << ";" << std::endl;
+		idx++;
+	}
+
+	fout << "\t\tthis_type_info._struct.member_count = " << idx << ";" << std::endl;
+
+	fout << "\t\ttype_table.insert(this_type_info.hash, this_type_info, false);" << std::endl
+		 << "\t}();" << std::endl << std::endl;
+
+	dt.output = true;
+}
+
+void print_enum(std::ofstream& fout, data_type& dt) {
+
+	if(dt.output) {
+		log_out << "OUTPUT: already seen enum " << dt.name << std::endl;
+		return;
+	}
+
+	data_type_enum& type = dt._enum;
+
+	std::string underlying_name = to_string(clang_getTypeSpelling(type.underlying_type));
+	log_out << "OUTPUT: enum " << dt.name << " : " << underlying_name << std::endl;
+
+	if(type.members.size() > 256) {
+		log_out << "WARNING: enum " << dt.name << " has too many members, skipping!" << std::endl;
+		return;
+	}
+
+	std::string type_name = to_string(clang_getTypeSpelling(dt.my_type));
 
 	fout << "\t[]() -> void {" << std::endl
 		 << "\t\t_type_info this_type_info;" << std::endl
 		 << "\t\tthis_type_info.type_type = Type::_enum;" << std::endl
-		 << "\t\tthis_type_info.size = " << clang_Type_getSizeOf(type.my_type) << ";" << std::endl
-		 << "\t\tthis_type_info.name = \"" << type.name << "\"_;" << std::endl
+		 << "\t\tthis_type_info.size = " << clang_Type_getSizeOf(dt.my_type) << ";" << std::endl
+		 << "\t\tthis_type_info.name = \"" << dt.name << "\"_;" << std::endl
 		 << "\t\tthis_type_info.hash = (type_id)typeid(" << type_name << ").hash_code();" << std::endl
 		 << "\t\tthis_type_info._enum.member_count = " << type.members.size() << ";" << std::endl
 		 << "\t\tthis_type_info._enum.base_type = TYPEINFO(" << underlying_name << ") ? TYPEINFO(" << underlying_name << ")->hash : 0;" << std::endl;
@@ -358,14 +515,21 @@ void print_enum(std::ofstream& fout, data_type_enum type) {
 
 	fout << "\t\ttype_table.insert(this_type_info.hash, this_type_info, false);" << std::endl
 		 << "\t}();" << std::endl << std::endl;
+
+	dt.output = true;
+}
+
+void print_data_type(std::ofstream& fout, data_type& dt) {
+	switch(dt.type) {
+	case def_types::_enum: print_enum(fout, dt); break;
+	case def_types::_struct: print_struct(fout, dt); break;
+	} 
 }
 
 void print_results(std::ofstream& fout) {
 
-	for(auto entry : g_data.type_graph) {
-		if(entry.second.type == def_types::_enum) {
-			print_enum(fout, entry.second._enum);
-		}
+	for(auto& entry : g_data.type_graph) {
+		print_data_type(fout, entry.second);
 	}
 }
 
@@ -390,6 +554,11 @@ int main(int argc, char** argv) {
 			std::cout << "Unable to parse translation unit." << std::endl;
 			return -1;
 		}
+
+	    for (unsigned int i = 0; i < clang_getNumDiagnostics(unit); i++) {
+	        CXDiagnostic diagnostic = clang_getDiagnostic(unit, i);
+	        log_out << "DIAG: " << clang_getDiagnosticSpelling(diagnostic) << std::endl;
+	    }
 
 		CXCursor cursor = clang_getTranslationUnitCursor(unit);
 		g_data.top_level = cursor;

@@ -132,10 +132,6 @@ namespace ImGui {
 			}
 		} break;
 
-		case Type::_func: {
-			Text(info->_func.signature);
-		} break;
-
 		// TODO(max): specializations for data structures
 		case Type::_struct: {
 			u32 name = const_hash(info->name.c_str);
@@ -236,10 +232,6 @@ namespace ImGui {
 				}
 				TreePop();
 			}
-		} break;
-
-		case Type::_func: {
-			Text(info->_func.signature);
 		} break;
 
 		// TODO(max): specializations for data structures

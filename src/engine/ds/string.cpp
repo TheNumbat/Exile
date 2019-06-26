@@ -121,10 +121,6 @@ u32 string::write_type(u32 idx, void* val, _type_info* info, bool size) {
 		idx = write_static_array(idx, val, info, size);
 	} break;
 
-	case Type::_func: {
-		idx = write(idx, info->_func.signature, size);
-	} break;
-
 	case Type::_struct: {
 		idx = write_struct(idx, val, info, size);
 	} break;
