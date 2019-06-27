@@ -5,8 +5,6 @@
 #include <engine/ds/vector.inl>
 #include <engine/util/reflect.h>
 
-enum META_START_PARSING_HERE {};
-
 // include all game files and stuff
 
 enum e : unsigned char {
@@ -55,8 +53,6 @@ struct s {
 	bool (*test)(int i) = null;
 };
 
-struct r;
-
 struct f {
 	ec yes = ec::two;
 };
@@ -70,8 +66,14 @@ int func(int arr[7]) {
 	enum func_enum {
 		yes
 	};
+	e arrrs[10];
+	e one;
+	ec two;
+	s::e_in_s three;
 	ec (*test3)(s i) = null;
 	EEEE<int> eeeeeee;
 	int array[5];
 	return array[0];
 }
+
+struct r{};
