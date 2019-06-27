@@ -86,7 +86,7 @@ if host_system == 'windows'
 endif
 
 gen_src = custom_target('meta_output',
-                        input : 'src/meta_input.h',
+                        input : 'src/tools/meta_test.cpp',
                         output : 'meta_types.cpp',
                         command : [meta_compiler, '@INPUT@', '@OUTPUT@', '-I../src/', '-xc++', all_cpp_args])
 
