@@ -21,6 +21,7 @@ std::string to_string(CXString cx_str) {
 
 struct type_data {
 	bool output = false;
+	std::vector<CXCursor> references;
 };
 
 namespace std {
@@ -54,6 +55,7 @@ CXChildVisitResult traversal(CXCursor c, CXCursor parent, CXClientData client_da
 	   c.kind == CXCursor_CStyleCastExpr || c.kind == CXCursor_MemberRefExpr) {
 
 		type_data data;
+		data.references.push_back(c);
 		types.insert({clang_getCursorType(c), data});
 	}
 
@@ -138,6 +140,8 @@ void print_record(CXType type) {
 	CXCursor decl = clang_getTypeDeclaration(type);
 	
 	std::string name = to_string(clang_getCursorSpelling(decl));
+	if(name == "string") return;
+
 	std::string type_name = to_string(clang_getTypeSpelling(type));
 
 	fout << "\t[]() -> void {" << std::endl
@@ -191,7 +195,15 @@ void print_data_type(CXType type, type_data& data) {
 		return;
 	}
 
-	log_out << "Type: " << clang_getTypeSpelling(type) << std::endl;
+	log_out << "Type: " << clang_getTypeSpelling(type) << std::endl
+			<< "references: ";
+	for(CXCursor c : data.references) {
+		CXSourceLocation loc = clang_getCursorLocation(c);
+		CXFile file; unsigned int line;
+		clang_getExpansionLocation(loc, &file, &line, nullptr, nullptr);
+		log_out << clang_getFileName(file) << ":" << line << ", ";
+	}
+	log_out << std::endl;
 
 	switch(type.kind) {
 	
@@ -201,9 +213,15 @@ void print_data_type(CXType type, type_data& data) {
 
 	case CXType_Elaborated: {
 		CXType named = clang_Type_getNamedType(type);
-		type_data named_data;
-		print_data_type(named, named_data);
-		types.insert({named, named_data});
+		auto entry = types.find(named);
+		if(entry != types.end()) {
+			print_data_type(entry->first, entry->second);
+		} else {
+			type_data named_data;
+			named_data.references.insert(named_data.references.begin(), data.references.begin(), data.references.end());
+			print_data_type(named, named_data);
+			types.insert({named, named_data});
+		}
 	} break;
 
 	default: {
