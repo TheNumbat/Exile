@@ -14,7 +14,7 @@ Goals:
 
 ### Build
 
-Install [meson](https://mesonbuild.com/Getting-meson.html) and [ninja](https://mesonbuild.com/Getting-meson.html) if necessary.
+Install [meson](https://mesonbuild.com/Getting-meson.html) and [ninja](https://github.com/ninja-build/ninja/releases) if necessary.
 In the top level directory:
 
 ```
