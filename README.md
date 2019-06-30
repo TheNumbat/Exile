@@ -12,6 +12,29 @@ Goals:
    - Smooth multiplayer and efficient servers
    - Flexible &amp; powerful modding support
 
+### Build
+
+Install [meson](https://mesonbuild.com/Getting-meson.html) and [ninja](https://mesonbuild.com/Getting-meson.html) if necessary.
+In the top level directory:
+
+```
+meson build
+meson configure build -D buildtype=debugoptimized
+ninja -C build
+```
+
+### Run
+
+In the top level directory:
+
+```
+cd data
+..\build\main.exe
+```
+### Screenshots
+![shot1](https://i.imgur.com/rZDhSEM.png)
+![shot1](https://i.imgur.com/hirAEHY.png)
+
 ### Tools
 - Engine & Game:
   - C+: C with member functions, function/operator overloading, lambdas, and templates (no STL, no exceptions, minimal RAII, minimal inheritance)
@@ -24,10 +47,6 @@ Goals:
 - Metaprogram:
   - libclang for C++ parsing
   - C++14/STL
-
-### Screenshots
-![shot1](https://i.imgur.com/rZDhSEM.png)
-![shot1](https://i.imgur.com/hirAEHY.png)
 
 ### Current Features
 
