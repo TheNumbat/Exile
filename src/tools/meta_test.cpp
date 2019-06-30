@@ -1,11 +1,10 @@
 
+#if 1
 #include <engine/dbg.h>
 #include <engine/ds/map.h>
 #include <engine/ds/map.inl>
 #include <engine/ds/vector.inl>
 #include <engine/util/reflect.h>
-
-// include all game files and stuff
 
 enum e : unsigned char {
 	e_three = 2,
@@ -61,19 +60,17 @@ template<typename E>
 struct EEEE {
 	void func(bool (*yes)(E)) {}
 };
+#endif
 
-int func(int arr[7]) {
-	enum func_enum {
-		yes
-	};
-	e arrrs[10];
-	e one;
-	ec two;
-	s::e_in_s three;
-	ec (*test3)(s i) = null;
-	EEEE<int> eeeeeee;
-	int array[5];
-	return array[0];
+struct stackoverflow0;
+
+struct stackoverflow1 {
+	stackoverflow0* next;
+};
+struct stackoverflow0 {
+	stackoverflow1* next;
+};
+
+void func() {
+	stackoverflow0 LOL;
 }
-
-struct r{};

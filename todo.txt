@@ -3,10 +3,6 @@ Working To-Do:
 
 	Update README with meson instructions
 	Metaprogram:
-		struct dependencies
-		pointers + dependencies
-		function pointers + dependencies
-		detect circular dependency + output fixes
 		re-implement template introspection
 
 	Still want to finish all rendering features + at least explore

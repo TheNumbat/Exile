@@ -83,6 +83,14 @@ void map<K,V,hash_func>::trim_rehash() {
 }
 
 template<typename K, typename V, u32(*hash_func)(K) = hash>
+V* map<K,V,hash_func>::get_or_insert_blank(K key) {
+
+	V* ret = try_get(key);
+	if(ret) return ret;
+	return insert(key, V());
+}
+
+template<typename K, typename V, u32(*hash_func)(K) = hash>
 V* map<K,V,hash_func>::insert(K key, V value, bool grow_if_needed) { 
 	
 	if(size >= contents.capacity * MAP_MAX_LOAD_FACTOR) {

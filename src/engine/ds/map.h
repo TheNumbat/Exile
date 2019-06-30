@@ -83,6 +83,7 @@ struct map {
 
 	V* get(K key);
 	V* try_get(K key);
+	V* get_or_insert_blank(K key);
 
 	// this is expensive, avoid at all costs. Try to create maps with enough capacity in the first place.
 	// it will allocate & free another map-sized block for copying from the map's allocator
