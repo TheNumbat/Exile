@@ -9,11 +9,9 @@
 
 #ifdef __clang__
 #define NOREFLECT __attribute__((annotate("noreflect")))
-#define CIRCULAR __attribute__((annotate("circular")))
 #define RENAME(name) __attribute__((annotate(#name)))
 #else
 #define NOREFLECT
-#define CIRCULAR
 #define RENAME(name)
 #endif
 

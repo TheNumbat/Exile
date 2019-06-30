@@ -135,7 +135,7 @@ struct profile_node {
 	u32 calls = 0;
 
 	vector<profile_node*> children;
-	CIRCULAR profile_node* parent = null;
+	profile_node* parent = null;
 };
 
 struct alloc_frame_profile {

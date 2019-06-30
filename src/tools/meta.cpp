@@ -8,8 +8,11 @@
 #include <clang-c/Index.h>
 
 std::ostream& operator<<(std::ostream& stream, const CXString& str) {
-	stream << clang_getCString(str);
-	clang_disposeString(str);
+	const char* c_str = clang_getCString(str);
+	if(c_str) {
+		stream << c_str;
+		clang_disposeString(str);
+	}
 	return stream;
 }
 
@@ -20,8 +23,17 @@ std::string to_string(CXString cx_str) {
 }
 
 struct type_data {
-	bool output = false;
+	bool done = false;
+	
+	bool in_progress_out = false;
+	bool in_progress_exp = false;
+
+	bool unexposed = false; // true -> unexposed, false -> maybe unexposed, check with function
 	std::vector<CXCursor> references;
+
+	type_data(CXType type) {
+		unexposed = type.kind == CXType_Unexposed;
+	}
 };
 
 namespace std {
@@ -38,9 +50,74 @@ bool operator==(const CXType& l, const CXType& r) {
 }
 
 std::unordered_map<CXType, type_data> types;
+std::vector<CXType> back_patches;
 std::ofstream log_out, fout;
 
-void print_data_type(CXType type, type_data& data);
+void print_data_type_help(CXType type, CXType parent);
+
+void clear_in_progress_out() {
+	for(auto& entry : types) {
+		entry.second.in_progress_out = false;
+	}
+}
+
+void clear_in_progress_exp() {
+	for(auto& entry : types) {
+		entry.second.in_progress_exp = false;
+	}
+}
+
+void ensure_in_graph(CXType type) {
+
+	auto entry = types.find(type);
+	if(entry == types.end()) {
+		type_data data(type);
+		types.insert({type, data});
+	} 
+}
+
+void ensure_deps_in_graph_help(CXType type) {
+
+	ensure_in_graph(type);
+	auto entry = types.find(type);
+
+	if(entry->second.in_progress_exp) return;
+	entry->second.in_progress_exp = true;
+
+	switch(type.kind) {
+	case CXType_Pointer: ensure_deps_in_graph_help(clang_getPointeeType(type)); break;
+	case CXType_ConstantArray: ensure_deps_in_graph_help(clang_getArrayElementType(type)); break;
+	case CXType_Record: {
+		clang_Type_visitFields(type, [](CXCursor c, CXClientData data) -> CXVisitorResult {
+			ensure_deps_in_graph_help(clang_getCursorType(c));
+			return CXVisit_Continue;
+		}, nullptr);
+	} break;
+	case CXType_FunctionProto: {
+		ensure_deps_in_graph_help(clang_getResultType(type));
+		for(int i = 0; i < clang_getNumArgTypes(type); i++) {
+			ensure_deps_in_graph_help(clang_getArgType(type, i));
+		}
+	} break;
+	}
+}
+
+void ensure_deps_in_graph(CXType type) {
+
+	ensure_deps_in_graph_help(type);
+	clear_in_progress_exp();
+}
+
+void print_dep_type(CXType type, CXType parent) {
+	
+	auto entry = types.find(type);
+	if(entry != types.end()) {
+		print_data_type_help(entry->first, parent);
+	} else {
+		log_out << "WARN: dependency type " << clang_getTypeSpelling(type) << " for "
+				<< clang_getTypeSpelling(parent) <<  " not found in graph!!" << std::endl;
+	}
+}
 
 CXChildVisitResult traversal(CXCursor c, CXCursor parent, CXClientData client_data) {
 
@@ -54,15 +131,16 @@ CXChildVisitResult traversal(CXCursor c, CXCursor parent, CXClientData client_da
 	if(c.kind == CXCursor_VarDecl || c.kind == CXCursor_ParmDecl ||
 	   c.kind == CXCursor_CStyleCastExpr || c.kind == CXCursor_MemberRefExpr) {
 
-		type_data data;
+		CXType type = clang_getCursorType(c);
+		type_data data(type);
 		data.references.push_back(c);
-		types.insert({clang_getCursorType(c), data});
+		types.insert({type, data});
 	}
 
 	return CXChildVisit_Recurse;
 }
 
-CXChildVisitResult parse_enum(CXCursor c, CXCursor parent, CXClientData client_data) {
+CXChildVisitResult print_enum_field(CXCursor c, CXCursor parent, CXClientData client_data) {
 
 	int* i = (int*)client_data;
 
@@ -80,6 +158,64 @@ CXChildVisitResult parse_enum(CXCursor c, CXCursor parent, CXClientData client_d
 	return CXChildVisit_Continue;
 }
 
+bool type_is_unexposed_help(CXType type) {
+
+	auto entry = types.find(type);
+	if(entry->second.unexposed) return true;
+
+	if(entry->second.in_progress_exp) return entry->second.unexposed;
+	entry->second.in_progress_exp = true;
+
+	switch(type.kind) {
+	case CXType_Pointer: {
+		entry->second.unexposed = type_is_unexposed_help(clang_getPointeeType(type)); 
+	} break;
+
+	case CXType_ConstantArray: {
+		entry->second.unexposed = type_is_unexposed_help(clang_getArrayElementType(type));
+	} break;
+
+	case CXType_Record: {
+		bool unexposed = false;
+		clang_Type_visitFields(type, [](CXCursor c, CXClientData data) -> CXVisitorResult {
+			bool* unexposed = (bool*)data;
+			*unexposed = *unexposed || type_is_unexposed_help(clang_getCursorType(c));
+			return CXVisit_Continue;
+		}, &unexposed);
+		entry->second.unexposed = unexposed;
+	} break;
+
+	case CXType_FunctionProto: {
+		bool unexposed = type_is_unexposed_help(clang_getResultType(type));
+		for(int i = 0; i < clang_getNumArgTypes(type); i++) {
+			unexposed = unexposed || type_is_unexposed_help(clang_getArgType(type, i));
+		}
+		entry->second.unexposed = unexposed;
+	} break;
+	}
+
+	return entry->second.unexposed;
+}
+
+bool type_is_unexposed(CXType type) {
+
+	bool result = type_is_unexposed_help(type);
+	clear_in_progress_exp();
+	return result;
+}
+
+int count_enum_fields(CXType type) {
+
+	CXCursor decl = clang_getTypeDeclaration(type);
+
+	int num = 0;
+	clang_visitChildren(decl, [](CXCursor c, CXCursor parent, CXClientData data) -> CXChildVisitResult {
+		if(c.kind == CXCursor_EnumConstantDecl) (*(int*)data)++;
+		return CXChildVisit_Continue;
+	}, &num);
+	return num;
+}
+
 void print_enum(CXType type) {
 
 	CXCursor decl = clang_getTypeDeclaration(type);
@@ -88,6 +224,10 @@ void print_enum(CXType type) {
 	std::string name = to_string(clang_getCursorSpelling(decl));
 	std::string type_name = to_string(clang_getTypeSpelling(type));
 	std::string underlying_name = to_string(clang_getTypeSpelling(underlying));
+
+	if(count_enum_fields(type) > 256) {
+		log_out << "WARN: enum " << type_name << " has too many fields, skipping!" << std::endl;
+	}
 
 	fout << "\t[]() -> void {" << std::endl
 		 << "\t\t_type_info this_type_info;" << std::endl
@@ -99,10 +239,11 @@ void print_enum(CXType type) {
 
 	int i = 0;
 
-	clang_visitChildren(decl, parse_enum, &i);
+	clang_visitChildren(decl, print_enum_field, &i);
 	
 	fout << "\t\tthis_type_info._enum.member_count = " << i << ";" << std::endl
-		 << "\t\ttype_table.insert(this_type_info.hash, this_type_info, false);" << std::endl
+		 << "\t\t_type_info* val = type_table.get_or_insert_blank(this_type_info.hash);" << std::endl
+		 << "\t\t*val = this_type_info;" << std::endl
 		 << "\t}();" << std::endl << std::endl;		 
 }
 
@@ -135,14 +276,62 @@ CXVisitorResult print_field(CXCursor c, CXClientData client_data) {
 	return CXVisit_Continue;
 }
 
-void print_record(CXType type) {
+CXChildVisitResult check_noreflect(CXCursor c, CXCursor parent, CXClientData client_data) {
+
+	bool* data = (bool*)client_data;
+
+	if(c.kind == CXCursor_AnnotateAttr) {
+
+		std::string attribute = to_string(clang_getCursorSpelling(c));
+
+		if(attribute == "noreflect") {
+			*data = true;
+			return CXChildVisit_Break;
+		}
+	}
+
+	return CXChildVisit_Continue;
+}
+
+int count_fields(CXType type) {
+
+	int num = 0;
+	clang_Type_visitFields(type, [](CXCursor c, CXClientData data) -> CXVisitorResult {
+		(*(int*)data)++;
+		return CXVisit_Continue;
+	}, &num);
+	return num;
+}
+
+void print_record(CXType type, bool just_print = false) {
 
 	CXCursor decl = clang_getTypeDeclaration(type);
-	
-	std::string name = to_string(clang_getCursorSpelling(decl));
-	if(name == "string") return;
 
+	if(clang_Cursor_isAnonymous(decl)) return;
+
+	bool no_reflect = false;
+	clang_visitChildren(decl, check_noreflect, &no_reflect);
+
+	if(no_reflect) return;
+
+	if(!just_print) {
+		clang_Type_visitFields(type, [](CXCursor c, CXClientData data) -> CXVisitorResult {
+			
+			CXType field = clang_getCursorType(c);
+			CXCursor decl = clang_getTypeDeclaration(field);
+			if(!(field.kind == CXType_Record && clang_Cursor_isAnonymous(decl))) {
+				print_dep_type(field, *(CXType*)data);
+			}
+			return CXVisit_Continue;
+		}, &type);
+	}
+
+	std::string name = to_string(clang_getCursorSpelling(decl));
 	std::string type_name = to_string(clang_getTypeSpelling(type));
+
+	if(count_fields(type) > 96) {
+		log_out << "WARN: struct " << type_name << " has too many fields, skipping!" << std::endl;
+	}
 
 	fout << "\t[]() -> void {" << std::endl
 		 << "\t\t_type_info this_type_info;" << std::endl
@@ -157,20 +346,92 @@ void print_record(CXType type) {
 	clang_Type_visitFields(type, print_field, &data);
 	
 	fout << "\t\tthis_type_info._struct.member_count = " << data.i << ";" << std::endl
-		 << "\t\ttype_table.insert(this_type_info.hash, this_type_info, false);" << std::endl
+		 << "\t\t_type_info* val = type_table.get_or_insert_blank(this_type_info.hash);" << std::endl
+		 << "\t\t*val = this_type_info;" << std::endl
 		 << "\t}();" << std::endl << std::endl;
 }
 
-void print_array(CXType type) {
+void print_func_pointer(CXType type, bool just_print = false) {
+
+	CXType func = clang_getPointeeType(type);
+	CXType ret = clang_getResultType(func);
+
+	if(!just_print) {
+		print_dep_type(ret, func);
+		for(int i = 0; i < clang_getNumArgTypes(func); i++) {
+			CXType param = clang_getArgType(func, i);
+			print_dep_type(param, func);
+		}
+	}
+
+	std::string ptr_type_name = to_string(clang_getTypeSpelling(type));
+	std::string func_type_name = to_string(clang_getTypeSpelling(func));
+	std::string return_type_name = to_string(clang_getTypeSpelling(ret));
+
+	if(clang_getNumArgTypes(func) > 16) {
+		log_out << "WARN: function pointer " << func_type_name << " has too many arguments, skipping!" << std::endl;
+	}
+
+	fout << "\t[]() -> void {" << std::endl
+		 << "\t\t_type_info this_type_info;" << std::endl
+		 << "\t\tthis_type_info.type_type = Type::_func;" << std::endl
+		 << "\t\tthis_type_info.size = sizeof(" << ptr_type_name << ");" << std::endl
+		 << "\t\tthis_type_info.hash = (type_id)typeid(" << ptr_type_name << ").hash_code();" << std::endl
+		 << "\t\tthis_type_info.name = \"" << func_type_name << "\"_;" << std::endl
+		 << "\t\tthis_type_info._func.signature = \"" << func_type_name << "\"_;" << std::endl
+		 << "\t\tthis_type_info._func.return_type = TYPEINFO(" << return_type_name << ") ? TYPEINFO(" << return_type_name << ")->hash : 0;" << std::endl
+		 << "\t\tthis_type_info._func.param_count = " << clang_getNumArgTypes(func) << ";" << std::endl;
+
+	for(int i = 0; i < clang_getNumArgTypes(func); i++) {
+		
+		CXType param = clang_getArgType(func, i);
+		std::string param_type_name = to_string(clang_getTypeSpelling(param));
+
+		fout << "\t\tthis_type_info._func.param_types[" << i << "] = TYPEINFO(" << param_type_name << ") ? TYPEINFO(" << param_type_name << ")->hash : 0;" << std::endl;
+	}
+
+	fout << "\t\t_type_info* val = type_table.get_or_insert_blank(this_type_info.hash);" << std::endl
+		 << "\t\t*val = this_type_info;" << std::endl
+		 << "\t}();" << std::endl << std::endl;	
+}
+
+void print_pointer(CXType type, bool just_print = false) {
+
+	CXType to = clang_getPointeeType(type);
+
+	if(clang_getNumArgTypes(type) != -1) {
+		print_func_pointer(type, just_print);
+		return;
+	}
+
+	if(!just_print) {
+		print_dep_type(to, type);
+	}
+
+	std::string type_name = to_string(clang_getTypeSpelling(type));
+	std::string to_name = to_string(clang_getTypeSpelling(to));
+
+	fout << "\t[]() -> void {" << std::endl
+		 << "\t\t_type_info this_type_info;" << std::endl
+		 << "\t\tthis_type_info.type_type = Type::_ptr;" << std::endl
+		 << "\t\tthis_type_info.size = sizeof(" << type_name << ");" << std::endl
+		 << "\t\tthis_type_info.name = \"" << to_name << "\"_;" << std::endl
+		 << "\t\tthis_type_info.hash = (type_id)typeid(" << type_name << ").hash_code();" << std::endl
+		 << "\t\tthis_type_info._ptr.to = TYPEINFO(" << to_name << ") ? TYPEINFO(" << to_name << ")->hash : 0;" << std::endl
+		 << "\t\t_type_info* val = type_table.get_or_insert_blank(this_type_info.hash);" << std::endl
+		 << "\t\t*val = this_type_info;" << std::endl
+		 << "\t}();" << std::endl << std::endl;
+}
+
+void print_array(CXType type, bool just_print = false) {
 
 	CXCursor decl = clang_getTypeDeclaration(type);
 
 	CXType underlying = clang_getArrayElementType(type);
 	int64_t length = clang_getArraySize(type);
 
-	auto entry = types.find(underlying);
-	if(entry != types.end()) {
-		print_data_type(entry->first, entry->second);
+	if(!just_print) {
+		print_dep_type(underlying, type);
 	}
 
 	std::string type_name = to_string(clang_getTypeSpelling(type));
@@ -184,19 +445,29 @@ void print_array(CXType type) {
 		 << "\t\tthis_type_info.hash = (type_id)typeid(" << type_name << ").hash_code();" << std::endl
 		 << "\t\tthis_type_info._array.of = TYPEINFO(" << base_type_name << ") ? TYPEINFO(" << base_type_name << ")->hash : 0;" << std::endl
 		 << "\t\tthis_type_info._array.length = " << length << ";" << std::endl
-		 << "\t\ttype_table.insert_if_unique(this_type_info.hash, this_type_info, false);" << std::endl
+		 << "\t\t_type_info* val = type_table.get_or_insert_blank(this_type_info.hash);" << std::endl
+		 << "\t\t*val = this_type_info;" << std::endl
 		 << "\t}();" << std::endl << std::endl;
 }
 
-void print_data_type(CXType type, type_data& data) {
+void print_data_type_help(CXType type, CXType parent) {
 
-	if(data.output) {
+	auto entry = types.find(type);
+	if(entry == types.end()) return;
+	type_data& data = entry->second;
+
+	if(data.in_progress_out) {
+		back_patches.push_back(parent);
+		return;
+	}
+	if(data.done) {
 		log_out << "Already seen type: " << clang_getTypeSpelling(type) << std::endl;
 		return;
 	}
+	data.in_progress_out = true;
 
 	log_out << "Type: " << clang_getTypeSpelling(type) << std::endl
-			<< "references: ";
+			<< "\treferences: ";
 	for(CXCursor c : data.references) {
 		CXSourceLocation loc = clang_getCursorLocation(c);
 		CXFile file; unsigned int line;
@@ -205,23 +476,22 @@ void print_data_type(CXType type, type_data& data) {
 	}
 	log_out << std::endl;
 
+	if(type_is_unexposed(type)) {
+		log_out << "\tunexposed at some level, continuing" << std::endl;
+		data.done = true;
+		return;
+	}
+
 	switch(type.kind) {
 	
 	case CXType_Enum: print_enum(type); break;
 	case CXType_Record: print_record(type); break;
 	case CXType_ConstantArray: print_array(type); break;
+	case CXType_Pointer: print_pointer(type); break;
 
 	case CXType_Elaborated: {
 		CXType named = clang_Type_getNamedType(type);
-		auto entry = types.find(named);
-		if(entry != types.end()) {
-			print_data_type(entry->first, entry->second);
-		} else {
-			type_data named_data;
-			named_data.references.insert(named_data.references.begin(), data.references.begin(), data.references.end());
-			print_data_type(named, named_data);
-			types.insert({named, named_data});
-		}
+		print_dep_type(named, type);
 	} break;
 
 	default: {
@@ -229,13 +499,34 @@ void print_data_type(CXType type, type_data& data) {
 	} break;
 	}
 
-	data.output = true;
+	data.done = true;
+}
+
+void resolve_patches() {
+	for(CXType type : back_patches) {
+		switch(type.kind) {
+		case CXType_Record: print_record(type, true); break;
+		case CXType_ConstantArray: print_array(type, true); break;
+		case CXType_Pointer: print_pointer(type, true); break;
+		}
+	}
+	back_patches.clear();
+}
+
+void print_data_type(CXType type) {
+
+	print_data_type_help(type, type);
+	clear_in_progress_out();
+	resolve_patches();
 }
 
 void print_results() {
 
 	for(auto& entry : types) {
-		print_data_type(entry.first, entry.second);
+		ensure_deps_in_graph(entry.first);
+	}
+	for(auto& entry : types) {
+		print_data_type(entry.first);
 	}
 }
 

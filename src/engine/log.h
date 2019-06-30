@@ -163,7 +163,8 @@ struct log_manager {
 i32 log_proc(void* data_);
 void do_msg(log_thread_param* data, log_message msg);
 
-// TODO(max): this is stupid
+#include "util/threadstate.h"
+
 #ifndef COMPILING_META_TYPES
 #include "ds/vector.inl"
 #include "ds/buffer.inl"
@@ -173,7 +174,6 @@ void do_msg(log_thread_param* data, log_message msg);
 #include "ds/string.inl"
 #include "ds/array.inl"
 #include "ds/heap.inl"
-#include "util/threadstate.h"
 
 template<typename... Targs> 
 void log_manager::msgf(string fmt, log_level level, code_context context, Targs... args) { 

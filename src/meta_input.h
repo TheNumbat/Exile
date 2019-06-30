@@ -1,5 +1,4 @@
 
-enum META_START_PARSING_HERE {};
 #include "engine/dbg.h"
 #include "engine/ds/map.h"
 #include "engine/ds/map.inl"
