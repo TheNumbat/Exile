@@ -104,10 +104,9 @@ void clang_Type_visitFields_NotBroken(CXType type, CXFieldVisitor visitor, CXCli
 	
 	if(type.kind == CXType_Unexposed) {
 		decl = clang_getSpecializedCursorTemplate(decl);
-		clang_visitChildren(decl, gather_fields, &fields);
-	} else {
-		clang_visitChildren(decl, gather_fields, &fields);
 	}
+
+	clang_visitChildren(decl, gather_fields, &fields);
 
 	for(CXCursor f : fields) {
 		visitor(f, client_data);
@@ -527,7 +526,7 @@ bool type_is_not_specified(CXType type) {
 	std::string pretty = to_string(clang_getCursorPrettyPrinted(declc, policy));
 
 	bool result = false;
-	if(pretty.substr(0, 11) == "template <t") result = true;
+	if(pretty.length() > 10 && pretty.substr(0, 10) == "template <" && pretty[10] != '>') result = true;
 
 	clang_PrintingPolicy_dispose(policy);
 
