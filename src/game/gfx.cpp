@@ -456,6 +456,10 @@ CALLBACK void uniforms_defer(shader_program* prog, render_command* cmd) {
 	glUniform1i(prog->location("dynamic_light"_), set->dynamic_light);
 	glUniform1i(prog->location("ambient_occlusion"_), set->ambient_occlusion);
 	glUniform1f(prog->location("render_distance"_), (f32)w->settings.view_distance * chunk::wid);
+
+	glUniform3fv(prog->location("light_col"_), 1, set->light_col.a);
+	v3 light_transform = set->light_pos - w->p.camera.pos;
+	glUniform3fv(prog->location("light_pos"_), 1, light_transform.a);
 }
 
 CALLBACK void uniforms_defer_ms(shader_program* prog, render_command* cmd) {
