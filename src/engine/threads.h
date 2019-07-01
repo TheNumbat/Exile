@@ -35,7 +35,7 @@ public:
 };
 
 template<>
-struct NOREFLECT future<void> {};
+struct future<void> {};
 
 template<typename T>
 using job_work = T(*)(void*);
@@ -61,7 +61,7 @@ struct job : super_job {
 };
 
 template<>
-struct NOREFLECT job<void> : super_job {
+struct job<void> : super_job {
 	job() { my_size = sizeof(job<void>); };
 	job_work<void> work;
 	void do_work() { work(data); }

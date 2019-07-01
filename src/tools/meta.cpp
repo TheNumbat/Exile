@@ -76,6 +76,36 @@ void ensure_in_graph(CXType type) {
 	} 
 }
 
+CXChildVisitResult gather_fields(CXCursor c, CXCursor parent, CXClientData client_data) {
+
+	std::vector<CXCursor>* data = (std::vector<CXCursor>*)client_data;
+
+	switch(c.kind) {
+	case CXCursor_FieldDecl: {
+		data->push_back(c);
+	} break;
+	case CXCursor_UnionDecl:
+	case CXCursor_ClassDecl:
+	case CXCursor_StructDecl: {
+		if(clang_Cursor_isAnonymous(c)) {
+			clang_visitChildren(c, gather_fields, client_data);
+		}
+	} break;
+	}
+
+	return CXChildVisit_Recurse;
+}
+
+void clang_Type_visitFields_NotBroken(CXType type, CXFieldVisitor visitor, CXClientData client_data) {
+
+	std::vector<CXCursor> fields;
+	clang_visitChildren(clang_getTypeDeclaration(type), gather_fields, &fields);
+
+	for(CXCursor f : fields) {
+		visitor(f, client_data);
+	}
+}
+
 void ensure_deps_in_graph_help(CXType type) {
 
 	ensure_in_graph(type);
@@ -88,7 +118,7 @@ void ensure_deps_in_graph_help(CXType type) {
 	case CXType_Pointer: ensure_deps_in_graph_help(clang_getPointeeType(type)); break;
 	case CXType_ConstantArray: ensure_deps_in_graph_help(clang_getArrayElementType(type)); break;
 	case CXType_Record: {
-		clang_Type_visitFields(type, [](CXCursor c, CXClientData data) -> CXVisitorResult {
+		clang_Type_visitFields_NotBroken(type, [](CXCursor c, CXClientData data) -> CXVisitorResult {
 			ensure_deps_in_graph_help(clang_getCursorType(c));
 			return CXVisit_Continue;
 		}, nullptr);
@@ -137,6 +167,18 @@ CXChildVisitResult traversal(CXCursor c, CXCursor parent, CXClientData client_da
 		types.insert({type, data});
 	}
 
+	if(c.kind == CXCursor_StructDecl || c.kind == CXCursor_UnionDecl || 
+	   c.kind == CXCursor_ClassDecl) {
+
+		if(clang_isCursorDefinition(c)) {
+			
+			CXType type = clang_getCursorType(c);
+			type_data data(type);
+			data.references.push_back(c);
+			types.insert({type, data});
+		}
+	}
+
 	return CXChildVisit_Recurse;
 }
 
@@ -177,7 +219,7 @@ bool type_is_unexposed_help(CXType type) {
 
 	case CXType_Record: {
 		bool unexposed = false;
-		clang_Type_visitFields(type, [](CXCursor c, CXClientData data) -> CXVisitorResult {
+		clang_Type_visitFields_NotBroken(type, [](CXCursor c, CXClientData data) -> CXVisitorResult {
 			bool* unexposed = (bool*)data;
 			*unexposed = *unexposed || type_is_unexposed_help(clang_getCursorType(c));
 			return CXVisit_Continue;
@@ -260,7 +302,8 @@ CXVisitorResult print_field(CXCursor c, CXClientData client_data) {
 	CXCursor decl = clang_getTypeDeclaration(type);
 
 	if(clang_Cursor_isAnonymous(decl) && type.kind == CXType_Record) {
-		clang_Type_visitFields(type, print_field, client_data);
+
+		clang_Type_visitFields_NotBroken(type, print_field, client_data);
 		return CXVisit_Continue;
 	}
 
@@ -296,7 +339,7 @@ CXChildVisitResult check_noreflect(CXCursor c, CXCursor parent, CXClientData cli
 int count_fields(CXType type) {
 
 	int num = 0;
-	clang_Type_visitFields(type, [](CXCursor c, CXClientData data) -> CXVisitorResult {
+	clang_Type_visitFields_NotBroken(type, [](CXCursor c, CXClientData data) -> CXVisitorResult {
 		(*(int*)data)++;
 		return CXVisit_Continue;
 	}, &num);
@@ -315,7 +358,7 @@ void print_record(CXType type, bool just_print = false) {
 	if(no_reflect) return;
 
 	if(!just_print) {
-		clang_Type_visitFields(type, [](CXCursor c, CXClientData data) -> CXVisitorResult {
+		clang_Type_visitFields_NotBroken(type, [](CXCursor c, CXClientData data) -> CXVisitorResult {
 			
 			CXType field = clang_getCursorType(c);
 			CXCursor decl = clang_getTypeDeclaration(field);
@@ -343,7 +386,7 @@ void print_record(CXType type, bool just_print = false) {
 	field_client data;
 	data.outer = type_name;
 
-	clang_Type_visitFields(type, print_field, &data);
+	clang_Type_visitFields_NotBroken(type, print_field, &data);
 	
 	fout << "\t\tthis_type_info._struct.member_count = " << data.i << ";" << std::endl
 		 << "\t\t_type_info* val = type_table.get_or_insert_blank(this_type_info.hash);" << std::endl
