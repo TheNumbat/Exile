@@ -78,7 +78,7 @@ void main() {
 				
 			float shine = 64.0f;
 			float energy = (8.0f + shine) / (8.0f * PI); 
-	   		float spec = 0.5f * energy * pow(max(dot(n, h), 0.0), shine);
+	   		float spec = energy * pow(max(dot(n, h), 0.0), shine);
 
 			light_gather += spec * light_col * a;
 		}

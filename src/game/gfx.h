@@ -216,6 +216,10 @@ struct world;
 struct chunk;
 struct world_time;
 
+struct dynamic_torch {
+	v3 pos;
+	f32 power = 1.0f;
+};
 
 enum class exile_component_view : i32 {
 	col  = 0,

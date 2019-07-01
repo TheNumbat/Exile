@@ -1,20 +1,25 @@
 
 Working To-Do:
 
-	Still want to finish all rendering features + at least explore
-	the performance/structure enhancements by August
-	August, want to finish world interaction upgrades.
-	By the end of the semester, general polish for releasable demo.
+	- Want to finish all rendering features + at least explore the performance/structure enhancements by August
+	- Want to finish world interaction upgrades before going back to school
+	- By the end of first semester, finish general polish for releasable demo.
+
 	Future: iterate on world and QoL features, and begin actual game-play
 		Really want to learn networking/support multi-player
 		Maybe modding, but first a from-scratch playable multi-player core 
-		demo survival a-la Minecraft beta (but with really nice looking graphics)
-		would be great
+		Demo survival a-la Minecraft beta (but with really nice looking graphics) would be great
 
 	Rendering:
 		[features]
 		dynamic lights
 			dynamic torches (build lists per chunk)
+				extract dynamic lighting into another pass
+					is this before or after the baked lighting pass?
+				render instanced spheres to calculate lights; blend
+					gets rid of passing all into shader
+				add to defer no ms (actually just do shader includes)
+
 			flashlight (directional lights)
 			specular textures
 				stuff like shiny ore
@@ -47,6 +52,10 @@ Working To-Do:
 				also cpu data, but that comes later
 		chunk uniform buffers
 		bindless OGL stuff
+		look into Forward+ rendering or Tile Deferred / Tiled Forward 
+			this is even better for supporting tons of small-radius lights
+			not that much better than deferred for large lights, though, so this depends on the dynamic
+			radius of torches 
 		move OpenGL to another thread - should be pretty easy through gfx
 			reduce state calls; maybe sorting via key system?
 			lockless task buffers? 
