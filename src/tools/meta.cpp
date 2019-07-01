@@ -93,7 +93,7 @@ CXChildVisitResult gather_fields(CXCursor c, CXCursor parent, CXClientData clien
 	} break;
 	}
 
-	return CXChildVisit_Recurse;
+	return CXChildVisit_Continue;
 }
 
 void clang_Type_visitFields_NotBroken(CXType type, CXFieldVisitor visitor, CXClientData client_data) {
@@ -300,12 +300,6 @@ CXVisitorResult print_field(CXCursor c, CXClientData client_data) {
 
 	CXType type = clang_getCursorType(c);
 	CXCursor decl = clang_getTypeDeclaration(type);
-
-	if(clang_Cursor_isAnonymous(decl) && type.kind == CXType_Record) {
-
-		clang_Type_visitFields_NotBroken(type, print_field, client_data);
-		return CXVisit_Continue;
-	}
 
 	std::string name  = to_string(clang_getCursorSpelling(c));
 	std::string type_name = to_string(clang_getTypeSpelling(type));
