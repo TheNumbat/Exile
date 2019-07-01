@@ -90,12 +90,20 @@ struct any {
 extern thread_local map<type_id,_type_info> type_table;
 
 #define TYPEINFO(...) _get_type_info<__VA_ARGS__>::get_type_info()
+#define TYPEINFO_GET_HASH(...) _get_type_info<__VA_ARGS__>::get_type_info_hash()
+
 #define TYPENAME(...) TYPEINFO(__VA_ARGS__)->name
 #define TYPEINFO_H(h) (h ? type_table.try_get(h) : 0)
+
 template<typename T>
 struct _get_type_info { 
 	static _type_info* get_type_info() {
 		return type_table.try_get((type_id)typeid(T).hash_code());
+	}
+	static type_id get_type_info_hash() {
+		_type_info* data = get_type_info();
+		if(data) return data->hash;
+		return 0;
 	}
 };
 
@@ -123,6 +131,11 @@ struct _get_type_info<T*> {
 		
 		ptr_t.hash = (type_id)typeid(T*).hash_code();
 		return type_table.insert(ptr_t.hash, ptr_t, false);
+	}
+	static type_id get_type_info_hash() {
+		_type_info* data = get_type_info();
+		if(data) return data->hash;
+		return 0;
 	}
 };
 

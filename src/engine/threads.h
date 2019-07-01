@@ -53,7 +53,7 @@ struct super_job {
 bool gt(super_job* l, super_job* r);
 
 template<typename T>
-struct job : super_job {
+struct NOREFLECT job : super_job {
 	job() { my_size = sizeof(job<T>); };
 	future<T>* future = null;
 	job_work<T> work  = null;
@@ -61,7 +61,7 @@ struct job : super_job {
 };
 
 template<>
-struct job<void> : super_job {
+struct NOREFLECT job<void> : super_job {
 	job() { my_size = sizeof(job<void>); };
 	job_work<void> work;
 	void do_work() { work(data); }

@@ -5,7 +5,7 @@
 #include "../log.h"
 
 template<typename T, u32 size>
-struct buffer {
+struct NOREFLECT buffer {
 
 	u8 buf[size] = {};
 	u32 used = 0;

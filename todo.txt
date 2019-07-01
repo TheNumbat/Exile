@@ -1,10 +1,6 @@
 
 Working To-Do:
 
-	Update README with meson instructions
-	Metaprogram:
-		re-implement template introspection
-
 	Still want to finish all rendering features + at least explore
 	the performance/structure enhancements by August
 	August, want to finish world interaction upgrades.

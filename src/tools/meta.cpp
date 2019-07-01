@@ -99,7 +99,15 @@ CXChildVisitResult gather_fields(CXCursor c, CXCursor parent, CXClientData clien
 void clang_Type_visitFields_NotBroken(CXType type, CXFieldVisitor visitor, CXClientData client_data) {
 
 	std::vector<CXCursor> fields;
-	clang_visitChildren(clang_getTypeDeclaration(type), gather_fields, &fields);
+
+	CXCursor decl = clang_getTypeDeclaration(type);
+	
+	if(type.kind == CXType_Unexposed) {
+		decl = clang_getSpecializedCursorTemplate(decl);
+		clang_visitChildren(decl, gather_fields, &fields);
+	} else {
+		clang_visitChildren(decl, gather_fields, &fields);
+	}
 
 	for(CXCursor f : fields) {
 		visitor(f, client_data);
@@ -277,7 +285,7 @@ void print_enum(CXType type) {
 		 << "\t\tthis_type_info.size = sizeof(" << type_name << ");" << std::endl
 		 << "\t\tthis_type_info.name = \"" << name << "\"_;" << std::endl
 		 << "\t\tthis_type_info.hash = (type_id)typeid(" << type_name << ").hash_code();" << std::endl
-		 << "\t\tthis_type_info._enum.base_type = TYPEINFO(" << underlying_name << ") ? TYPEINFO(" << underlying_name << ")->hash : 0;" << std::endl;
+		 << "\t\tthis_type_info._enum.base_type = TYPEINFO_GET_HASH(" << underlying_name << ");" << std::endl;
 
 	int i = 0;
 
@@ -292,6 +300,7 @@ void print_enum(CXType type) {
 struct field_client {
 	int i = 0;
 	std::string outer;
+	bool unexposed = false;
 };
 
 CXVisitorResult print_field(CXCursor c, CXClientData client_data) {
@@ -304,9 +313,16 @@ CXVisitorResult print_field(CXCursor c, CXClientData client_data) {
 	std::string name  = to_string(clang_getCursorSpelling(c));
 	std::string type_name = to_string(clang_getTypeSpelling(type));
 
-	fout << "\t\tthis_type_info._struct.member_types[" << data->i << "] = TYPEINFO(" << type_name << ") ? TYPEINFO(" << type_name << ")->hash : 0;" << std::endl
-		 << "\t\tthis_type_info._struct.member_names[" << data->i << "] = \"" << name << "\"_;" << std::endl
-		 << "\t\tthis_type_info._struct.member_offsets[" << data->i << "] = offsetof(" << data->outer << ", " << name << ");" << std::endl;
+	std::string total = "&" + data->outer + "::" + name;
+
+	fout << "\t\tthis_type_info._struct.member_names[" << data->i << "] = \"" << name << "\"_;" << std::endl;
+
+	if(data->unexposed)
+		fout << "\t\tthis_type_info._struct.member_types[" << data->i << "] = TYPEINFO_GET_HASH(decltype(get_member_type(" << total << ")));" << std::endl
+			 << "\t\tthis_type_info._struct.member_offsets[" << data->i << "] = (u32)offset_of<decltype(get_class_type(" << total << ")),decltype(get_member_type(" << total << "))," << total << ">();" << std::endl;
+	else
+		fout << "\t\tthis_type_info._struct.member_types[" << data->i << "] = TYPEINFO_GET_HASH(" << type_name << ");" << std::endl
+			 << "\t\tthis_type_info._struct.member_offsets[" << data->i << "] = offsetof(" << data->outer << ", " << name << ");" << std::endl;
 
 	data->i++;
 
@@ -346,6 +362,10 @@ void print_record(CXType type, bool just_print = false) {
 
 	if(clang_Cursor_isAnonymous(decl)) return;
 
+	while(clang_getCursorType(decl).kind == CXType_Unexposed) {
+		decl = clang_getSpecializedCursorTemplate(decl);
+	}
+	
 	bool no_reflect = false;
 	clang_visitChildren(decl, check_noreflect, &no_reflect);
 
@@ -379,6 +399,7 @@ void print_record(CXType type, bool just_print = false) {
 
 	field_client data;
 	data.outer = type_name;
+	data.unexposed = type.kind == CXType_Unexposed;
 
 	clang_Type_visitFields_NotBroken(type, print_field, &data);
 	
@@ -386,6 +407,11 @@ void print_record(CXType type, bool just_print = false) {
 		 << "\t\t_type_info* val = type_table.get_or_insert_blank(this_type_info.hash);" << std::endl
 		 << "\t\t*val = this_type_info;" << std::endl
 		 << "\t}();" << std::endl << std::endl;
+}
+
+void print_unexposed_record(CXType type, bool just_print = false) {
+
+	print_record(type, just_print);
 }
 
 void print_func_pointer(CXType type, bool just_print = false) {
@@ -416,7 +442,7 @@ void print_func_pointer(CXType type, bool just_print = false) {
 		 << "\t\tthis_type_info.hash = (type_id)typeid(" << ptr_type_name << ").hash_code();" << std::endl
 		 << "\t\tthis_type_info.name = \"" << func_type_name << "\"_;" << std::endl
 		 << "\t\tthis_type_info._func.signature = \"" << func_type_name << "\"_;" << std::endl
-		 << "\t\tthis_type_info._func.return_type = TYPEINFO(" << return_type_name << ") ? TYPEINFO(" << return_type_name << ")->hash : 0;" << std::endl
+		 << "\t\tthis_type_info._func.return_type = TYPEINFO_GET_HASH(" << return_type_name << ");" << std::endl
 		 << "\t\tthis_type_info._func.param_count = " << clang_getNumArgTypes(func) << ";" << std::endl;
 
 	for(int i = 0; i < clang_getNumArgTypes(func); i++) {
@@ -424,7 +450,7 @@ void print_func_pointer(CXType type, bool just_print = false) {
 		CXType param = clang_getArgType(func, i);
 		std::string param_type_name = to_string(clang_getTypeSpelling(param));
 
-		fout << "\t\tthis_type_info._func.param_types[" << i << "] = TYPEINFO(" << param_type_name << ") ? TYPEINFO(" << param_type_name << ")->hash : 0;" << std::endl;
+		fout << "\t\tthis_type_info._func.param_types[" << i << "] = TYPEINFO_GET_HASH(" << param_type_name << ");" << std::endl;
 	}
 
 	fout << "\t\t_type_info* val = type_table.get_or_insert_blank(this_type_info.hash);" << std::endl
@@ -454,7 +480,7 @@ void print_pointer(CXType type, bool just_print = false) {
 		 << "\t\tthis_type_info.size = sizeof(" << type_name << ");" << std::endl
 		 << "\t\tthis_type_info.name = \"" << to_name << "\"_;" << std::endl
 		 << "\t\tthis_type_info.hash = (type_id)typeid(" << type_name << ").hash_code();" << std::endl
-		 << "\t\tthis_type_info._ptr.to = TYPEINFO(" << to_name << ") ? TYPEINFO(" << to_name << ")->hash : 0;" << std::endl
+		 << "\t\tthis_type_info._ptr.to = TYPEINFO_GET_HASH(" << to_name << ");" << std::endl
 		 << "\t\t_type_info* val = type_table.get_or_insert_blank(this_type_info.hash);" << std::endl
 		 << "\t\t*val = this_type_info;" << std::endl
 		 << "\t}();" << std::endl << std::endl;
@@ -480,11 +506,32 @@ void print_array(CXType type, bool just_print = false) {
 		 << "\t\tthis_type_info.size = sizeof(" << type_name << ");" << std::endl
 		 << "\t\tthis_type_info.name = \"" << type_name << "\"_;" << std::endl
 		 << "\t\tthis_type_info.hash = (type_id)typeid(" << type_name << ").hash_code();" << std::endl
-		 << "\t\tthis_type_info._array.of = TYPEINFO(" << base_type_name << ") ? TYPEINFO(" << base_type_name << ")->hash : 0;" << std::endl
+		 << "\t\tthis_type_info._array.of = TYPEINFO_GET_HASH(" << base_type_name << ");" << std::endl
 		 << "\t\tthis_type_info._array.length = " << length << ";" << std::endl
 		 << "\t\t_type_info* val = type_table.get_or_insert_blank(this_type_info.hash);" << std::endl
 		 << "\t\t*val = this_type_info;" << std::endl
 		 << "\t}();" << std::endl << std::endl;
+}
+
+bool type_is_not_specified(CXType type) {
+
+	while(type.kind == CXType_Pointer) type = clang_getPointeeType(type);
+
+	CXCursor declc = clang_getTypeDeclaration(type);
+	if(declc.kind == CXCursor_NoDeclFound) return true;
+
+	CXPrintingPolicy policy = clang_getCursorPrintingPolicy(declc);
+
+	clang_PrintingPolicy_setProperty(policy, CXPrintingPolicy_FullyQualifiedName, true);
+
+	std::string pretty = to_string(clang_getCursorPrettyPrinted(declc, policy));
+
+	bool result = false;
+	if(pretty.substr(0, 11) == "template <t") result = true;
+
+	clang_PrintingPolicy_dispose(policy);
+
+	return result;
 }
 
 void print_data_type_help(CXType type, CXType parent) {
@@ -514,14 +561,18 @@ void print_data_type_help(CXType type, CXType parent) {
 	log_out << std::endl;
 
 	if(type_is_unexposed(type)) {
-		log_out << "\tunexposed at some level, continuing" << std::endl;
-		data.done = true;
-		return;
+		log_out << "\ttype is unexposed" << std::endl;
+		if(type_is_not_specified(type)) {
+			log_out << "\ttype is not instantiated, continuing" << std::endl;
+			data.done = true;
+			return;
+		}
 	}
 
 	switch(type.kind) {
 	
 	case CXType_Enum: print_enum(type); break;
+	case CXType_Unexposed: print_unexposed_record(type); break;
 	case CXType_Record: print_record(type); break;
 	case CXType_ConstantArray: print_array(type); break;
 	case CXType_Pointer: print_pointer(type); break;
@@ -698,6 +749,20 @@ void print_basic_types() {
 	)STR" << std::endl;
 }
 
+void print_header(std::string in_file) {
+
+fout << "#define COMPILING_META_TYPES" << std::endl
+				 << "#include \"" << in_file << "\"" << std::endl << std::endl
+				 << R"STR(template <typename T, typename M> M get_member_type(M T::*);
+template <typename T, typename M> T get_class_type(M T::*);
+template <typename T, typename R, R T::*M>
+constexpr u64 offset_of() {
+    return reinterpret_cast<u64>(&(((T*)0)->*M));
+})STR"
+	<< std::endl << std::endl
+	<< "void make_meta_info() {  " << std::endl;
+}
+
 int main(int argc, char** argv) {
 
 	if(argc < 3) {
@@ -733,10 +798,7 @@ int main(int argc, char** argv) {
 		clang_visitChildren(cursor, traversal, nullptr);
 
 		{ // Do output 
-			fout << "#define COMPILING_META_TYPES" << std::endl
-				 << "#include \"" << in_file << "\"" << std::endl << std::endl
-				 << "void make_meta_info() {  " << std::endl;
-
+			print_header(in_file);
 			print_basic_types();
 			print_results();
 
