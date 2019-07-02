@@ -14,6 +14,7 @@ void exile_renderer::init(allocator* a) {
 
 	the_cubemap.init();
 	the_quad.init();
+	lighting_quads.init(a);
 
 	alloc = a;
 	hud_tasks = render_command_list::make(alloc, 32);
@@ -187,6 +188,8 @@ void exile_renderer::end_frame() {
 	hud_tasks.push_settings();
 	hud_tasks.set_setting(render_setting::depth_test, false);
 
+	lighting_quads.clear();
+
 	check_recreate();
 }
 
@@ -259,7 +262,10 @@ void world_target_info::init(iv2 dim, i32 samples) {
 
 void world_target_info::resolve(render_command_list* list) {
 	
-	render_command cmd = render_command::make_cst(msaa ? exile->ren.cmd_defer_light_ms : exile->ren.cmd_defer_light, exile->ren.the_quad.gpu);
+	v3 light_pos = exile->ren.settings.world_set.light_pos - exile->w.p.camera.pos;
+	exile->ren.lighting_quads.push(r2(-1.0f, -1.0f, 2.0f, 2.0f), light_pos, exile->ren.settings.world_set.light_col);
+
+	render_command cmd = render_command::make_cst(msaa ? exile->ren.cmd_defer_light_ms : exile->ren.cmd_defer_light, exile->ren.lighting_quads.gpu);
 
 	cmd.info.fb_id = get_fb();
 
@@ -409,6 +415,7 @@ void exile_renderer::destroy() {
 
 	the_cubemap.destroy();
 	the_quad.destroy();
+	lighting_quads.destroy();
 }
 
 void exile_renderer::destroy_targets() {
@@ -448,7 +455,13 @@ CALLBACK void uniforms_resolve(shader_program* prog, render_command* cmd) {
 }
 
 CALLBACK void run_defer(render_command* cmd, gpu_object* gpu) {
-	glDrawArrays(gl_draw_mode::triangles, 0, 6);
+
+	mesh_light_list* m = (mesh_light_list*)gpu->data;
+
+	if(cmd->info.user_flags)
+		glDrawArraysInstanced(gl_draw_mode::triangle_strip, 0, 4, 1);
+	else
+		glDrawArraysInstancedBaseInstance(gl_draw_mode::triangle_strip, 0, 4, m->data.size - 1, 1);
 }
 
 CALLBACK void uniforms_defer(shader_program* prog, render_command* cmd) {
@@ -473,10 +486,6 @@ CALLBACK void uniforms_defer(shader_program* prog, render_command* cmd) {
 	glUniform1i(prog->location("dynamic_light"_), set->dynamic_light);
 	glUniform1i(prog->location("ambient_occlusion"_), set->ambient_occlusion);
 	glUniform1f(prog->location("render_distance"_), (f32)w->settings.view_distance * chunk::wid);
-
-	glUniform3fv(prog->location("light_col"_), 1, set->light_col.a);
-	v3 light_transform = set->light_pos - w->p.camera.pos;
-	glUniform3fv(prog->location("light_pos"_), 1, light_transform.a);
 }
 
 CALLBACK void uniforms_defer_ms(shader_program* prog, render_command* cmd) {
@@ -504,6 +513,59 @@ CALLBACK void uniforms_gamma(shader_program* prog, render_command* cmd) {
 
 CALLBACK void run_effect(render_command* cmd, gpu_object* gpu) {
 	glDrawArrays(gl_draw_mode::triangles, 0, 6);
+}
+
+void mesh_light_list::push(r2 r, v3 p, v3 c) {
+
+	data.push(light_data{r,p,c});
+	dirty = true;
+}
+
+void mesh_light_list::init(allocator* alloc) {
+
+	if(!alloc) alloc = CURRENT_ALLOC();
+
+	data = vector<light_data>::make(32, alloc);
+	gpu = exile->eng->ogl.add_object(FPTR(setup_mesh_light_list), FPTR(update_mesh_light_list), this);	
+
+	push(r2(-1.0f, -1.0f, 2.0f, 2.0f), v3{}, v3{});
+}
+
+void mesh_light_list::destroy() {
+
+	data.destroy();
+	exile->eng->ogl.destroy_object(gpu);
+}
+
+void mesh_light_list::clear() {
+
+	data.clear();
+	push(r2(-1.0f, -1.0f, 2.0f, 2.0f), v3{}, v3{});
+}
+
+CALLBACK void setup_mesh_light_list(gpu_object* obj) {
+
+	glBindBuffer(gl_buf_target::array, obj->vbos[0]);	
+
+	glVertexAttribPointer(0, 4, gl_vert_attrib_type::_float, gl_bool::_false, sizeof(light_data), (GLvoid*)(0));
+	glVertexAttribPointer(1, 3, gl_vert_attrib_type::_float, gl_bool::_false, sizeof(light_data), (GLvoid*)(4 * sizeof(GLfloat)));
+	glVertexAttribPointer(2, 3, gl_vert_attrib_type::_float, gl_bool::_false, sizeof(light_data), (GLvoid*)(7 * sizeof(GLfloat)));
+	glVertexAttribDivisor(0, 1);
+	glVertexAttribDivisor(1, 1);
+	glVertexAttribDivisor(2, 1);
+	glEnableVertexAttribArray(0);
+	glEnableVertexAttribArray(1);
+	glEnableVertexAttribArray(2);
+}
+
+CALLBACK void update_mesh_light_list(gpu_object* obj, void* data, bool force) {
+
+	mesh_light_list* m = (mesh_light_list*)data;
+	if(!force && !m->dirty) return;
+
+	glNamedBufferData(obj->vbos[0], m->data.size * sizeof(light_data), m->data.size ? m->data.memory : null, gl_buf_usage::dynamic_draw);
+
+	m->dirty = false;
 }
 
 CALLBACK void setup_mesh_quad(gpu_object* obj) {

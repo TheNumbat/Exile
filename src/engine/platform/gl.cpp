@@ -20,6 +20,7 @@ glGetIntegeri_v_t   glGetIntegeri_v;
 glGetInteger64i_v_t glGetInteger64i_v;
 
 glDrawArraysInstanced_t 			glDrawArraysInstanced;
+glDrawArraysInstancedBaseInstance_t	glDrawArraysInstancedBaseInstance;
 glDrawElementsInstanced_t 			glDrawElementsInstanced;
 glDrawElementsInstancedBaseVertex_t glDrawElementsInstancedBaseVertex;
 glVertexAttribDivisor_t				glVertexAttribDivisor;

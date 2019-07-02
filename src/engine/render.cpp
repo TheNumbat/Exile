@@ -1613,6 +1613,7 @@ void ogl_manager::load_global_funcs() {
 	GL_IS_LOAD(glIsQuery);
 
 	GL_LOAD(glDrawArraysInstanced);
+	GL_LOAD(glDrawArraysInstancedBaseInstance);
 	GL_LOAD(glMinSampleShading);
 	GL_LOAD(glBlendEquation);
 	GL_LOAD(glDebugMessageCallback);

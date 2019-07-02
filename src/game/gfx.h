@@ -83,6 +83,28 @@ struct mesh_cubemap {
 	void destroy();
 };
 
+#pragma pack(push, 1)
+struct light_data {
+	r2 rect;
+	v3 pos;
+	v3 col;
+};
+#pragma pack(pop)
+
+struct mesh_light_list {
+	vector<light_data> data;
+
+	gpu_object_id gpu = -1;
+	bool dirty = false;
+
+	void init(allocator* alloc = null);
+	void destroy();
+	void clear();
+	void push(r2 r, v3 pos, v3 col);
+};
+CALLBACK void setup_mesh_light_list(gpu_object* obj);
+CALLBACK void update_mesh_light_list(gpu_object* obj, void* data, bool force);
+
 struct mesh_quad {
 	const v4 vbo_data[6] = {
 	    {-1.0f,  1.0f,  0.0f, 1.0f},
@@ -335,6 +357,7 @@ struct exile_renderer {
 	// NOTE(max): these should be static, but hot reloading
 	mesh_cubemap the_cubemap;
 	mesh_quad 	 the_quad;
+	mesh_light_list lighting_quads;
 
 	effect_pass invert, gamma;
 	effect_pass composite, composite_resolve, resolve;

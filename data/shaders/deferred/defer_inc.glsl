@@ -1,10 +1,10 @@
 
+flat in vec3 f_lcol;
+flat in vec3 f_lpos;
+
 uniform float day_01;
 uniform float ambient;
 uniform float render_distance;
-
-uniform vec3 light_col;
-uniform vec3 light_pos;
 
 uniform bool block_light;
 uniform bool ambient_occlusion;
@@ -50,7 +50,7 @@ vec3 calculate_light_dynamic(vec3 pos, vec3 norm) {
 	if(dynamic_light) {
 		vec3 v = normalize(-pos);
 		
-		vec3 l = light_pos-pos;
+		vec3 l = f_lpos-pos;
 		float dist = length(l);
 		l = normalize(l);
 		
@@ -59,13 +59,13 @@ vec3 calculate_light_dynamic(vec3 pos, vec3 norm) {
 		float a = min(1.0f / pow(dist,3), 1.0f);
 
 		float diff = max(dot(norm,l), 0.0f);
-		light_gather += diff * light_col * a;
+		light_gather += diff * f_lcol * a;
 			
 		float shine = 64.0f;
 		float energy = (8.0f + shine) / (8.0f * PI); 
    		float spec = energy * pow(max(dot(norm, h), 0.0), shine);
 
-		light_gather = spec * light_col * a;
+		light_gather = spec * f_lcol * a;
 	}
 
 	return light_gather;
