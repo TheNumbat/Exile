@@ -316,11 +316,27 @@ void ogl_manager::reload_texture_assets() {
 }
 
 void ogl_manager::try_reload_programs() { 
+
+	dbg_shader.try_refresh();
+
+	// TODO(max): include dependencies instead of reloading everything
+
+	bool any_includes = false;
 	FORVEC(it, shader_includes) {
 		if(it->try_refresh()) {
 			LOG_DEBUG_F("Reloaded shader include %"_, it->name);
+			any_includes = true;
 		}
 	}
+	if(any_includes) {
+		LOG_DEBUG_F("Reloading all programs to use new include..."_);
+		FORMAP(it, commands) {
+			it->value.shader.gl_destroy();
+			it->value.shader.recreate();
+		}
+		return;
+	}
+
 	FORMAP(it, commands) {
 		if(it->value.shader.try_refresh()) {
 
@@ -330,7 +346,6 @@ void ogl_manager::try_reload_programs() {
 				LOG_DEBUG_F("Reloaded program % with files %, %"_, it->key, it->value.shader.vertex.path, it->value.shader.fragment.path);
 		}
 	}
-	dbg_shader.try_refresh();
 }
 
 CALLBACK void uniforms_dbg(shader_program* prog, render_command* rc, render_command_list* rcl) {}
