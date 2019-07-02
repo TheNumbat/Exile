@@ -16,6 +16,7 @@ typedef i32 framebuffer_id;
 struct shader_source {
 
 	friend struct shader_program;
+	friend struct shader_include;
 	friend struct ogl_manager;
 	friend void make_meta_info();
 
@@ -44,9 +45,9 @@ struct shader_program {
 private:
 
 	GLuint handle = 0;
+
 	shader_source vertex, geometry, fragment;
 	func_ptr<void, shader_program*, render_command*> send_uniforms;
-	// tessellation control, evaluation, geometry
 
 	static shader_program make(string vert, string frag, string geom, _FPTR* uniforms, allocator* a);
 	void destroy();
@@ -58,6 +59,24 @@ private:
 	bool check_compile(string name, GLuint shader);
 	
 	void bind();
+};
+
+struct shader_include {
+
+	friend struct ogl_manager;
+	friend void make_meta_info();
+
+private:
+
+	string name;
+	shader_source source;
+
+	static shader_include make(string path, allocator* a);
+	void destroy();
+	void gl_destroy();
+	void recreate();
+
+	bool try_refresh();
 };
 
 enum class texture_wrap : u8 {
@@ -484,6 +503,8 @@ struct ogl_manager {
 	draw_cmd_id add_command(_FPTR* run, _FPTR* uniforms, string v, string f, string g = {});
 	void rem_command(draw_cmd_id id);
 
+	void add_include(string path);
+
  	// Textures
 	texture_id add_cubemap(asset_store* as, string name, bool srgb);
  	texture_id add_texture_target(iv2 dim, i32 samples, gl_tex_format format, gl_pixel_data_format pixel, bool pixelated = true);
@@ -521,11 +542,14 @@ struct ogl_manager {
 
 private:
 
+	vector<shader_include> shader_includes;
+
 	map<texture_id, texture> textures;
-	map<gpu_object_id, gpu_object> objects; // TODO(max): there are a few orders of magnitude more of these than
-											// the other things, do we really want to put them all in one map?
 	map<draw_cmd_id, draw_context> commands;
 	map<framebuffer_id, framebuffer> framebuffers;
+
+	map<gpu_object_id, gpu_object> objects; // TODO(max): there are a few orders of magnitude more of these than
+											// the other things, do we really want to put them all in one map?
 
 	ogl_settings 		prev_settings;
 	stack<cmd_settings> command_settings;

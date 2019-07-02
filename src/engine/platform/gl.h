@@ -763,6 +763,9 @@ enum class gl_framebuffer : GLenum {
 	draw = 0x8CA9
 };
 
+enum class gl_named_string_arb : GLenum {
+	shader_include = 0x8DAE
+};
 
 DLL_IMPORT const GLubyte* glGetString(gl_info name);
 
@@ -899,6 +902,9 @@ typedef void (*glClearNamedFramebufferiv_t)(GLuint framebuffer, gl_clear_buffer 
 typedef void (*glClearNamedFramebufferuiv_t)(GLuint framebuffer, gl_clear_buffer buffer, GLint drawbuffer, const GLuint *value); 
 typedef void (*glClearNamedFramebufferfv_t)(GLuint framebuffer, gl_clear_buffer buffer, GLint drawbuffer, const GLfloat *value);
 
+typedef void (*glNamedStringARB_t)(gl_named_string_arb type, GLint namelen, const GLchar* name, GLint stringlen, const GLchar* string);
+typedef void (*glDeleteNamedStringARB_t)(GLint namelen, const GLchar* name);
+typedef void (*glCompileShaderIncludeARB_t)(GLuint shader, GLsizei count, const GLchar* const* path, const GLint* length);
 
 extern glIs_t glIsTexture;
 extern glIs_t glIsBuffer;
@@ -999,3 +1005,7 @@ extern glNamedFramebufferReadBuffer_t			glNamedFramebufferReadBuffer;
 extern glClearNamedFramebufferiv_t				glClearNamedFramebufferiv;
 extern glClearNamedFramebufferuiv_t				glClearNamedFramebufferuiv;
 extern glClearNamedFramebufferfv_t				glClearNamedFramebufferfv;
+
+extern glNamedStringARB_t			glNamedStringARB;
+extern glDeleteNamedStringARB_t		glDeleteNamedStringARB;
+extern glCompileShaderIncludeARB_t	glCompileShaderIncludeARB;

@@ -100,3 +100,7 @@ glNamedFramebufferReadBuffer_t			glNamedFramebufferReadBuffer;
 glClearNamedFramebufferiv_t				glClearNamedFramebufferiv;
 glClearNamedFramebufferuiv_t			glClearNamedFramebufferuiv;
 glClearNamedFramebufferfv_t				glClearNamedFramebufferfv;
+
+glNamedStringARB_t			glNamedStringARB;
+glDeleteNamedStringARB_t	glDeleteNamedStringARB;
+glCompileShaderIncludeARB_t	glCompileShaderIncludeARB;

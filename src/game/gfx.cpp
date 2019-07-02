@@ -200,7 +200,7 @@ void exile_renderer::generate_targets() {
 
 void effect_pass::init(_FPTR* uniforms, string frag) {
 
-	cmd_id = exile->eng->ogl.add_command(FPTR(run_effect), uniforms, "shaders/effects/effect.v"_, string::makef("shaders/effects/%"_, frag));
+	cmd_id = exile->eng->ogl.add_command(FPTR(run_effect), uniforms, "shaders/effects/effect.v"_, string::makef("shaders/%"_, frag));
 }
 
 void effect_pass::destroy() {
@@ -331,6 +331,8 @@ void exile_renderer::check_recreate() {
 }
 
 void exile_renderer::generate_commands() { 
+
+	exile->eng->ogl.add_include("shaders/deferred/defer_inc.glsl"_);
 	
 	#define reg(cmdn, name, path) cmd_##cmdn = exile->eng->ogl.add_command(FPTR(run_##name), FPTR(uniforms_##name), \
 											   "shaders/" path #cmdn ".v"_, "shaders/" path #cmdn ".f"_);
@@ -349,13 +351,14 @@ void exile_renderer::generate_commands() {
 	reg(2D_tex_col, mesh_2D_tex_col, "mesh/");
 	reg(3D_tex_instanced, mesh_3D_tex_instanced, "mesh/");
 
-	defer.init(FPTR(uniforms_defer), "defer.f"_);
-	gamma.init(FPTR(uniforms_gamma), "gamma.f"_);
-	invert.init(FPTR(uniforms_invert), "invert.f"_);
-	resolve.init(FPTR(uniforms_resolve), "resolve.f"_);
-	defer_ms.init(FPTR(uniforms_defer_ms), "defer_ms.f"_);
-	composite.init(FPTR(uniforms_composite), "composite.f"_);
-	composite_resolve.init(FPTR(uniforms_composite_resolve), "composite_resolve.f"_);
+	gamma.init(FPTR(uniforms_gamma), "effects/gamma.f"_);
+	invert.init(FPTR(uniforms_invert), "effects/invert.f"_);
+	resolve.init(FPTR(uniforms_resolve), "effects/resolve.f"_);
+	composite.init(FPTR(uniforms_composite), "effects/composite.f"_);
+	composite_resolve.init(FPTR(uniforms_composite_resolve), "effects/composite_resolve.f"_);
+	
+	defer.init(FPTR(uniforms_defer), "deferred/defer.f"_);
+	defer_ms.init(FPTR(uniforms_defer_ms), "deferred/defer_ms.f"_);
 
 	#undef reg
 }

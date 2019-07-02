@@ -90,6 +90,45 @@ bool shader_source::try_refresh() {
 	return false;
 }
 
+shader_include shader_include::make(string path, allocator* a) {
+
+	shader_include ret;
+
+	ret.source = shader_source::make(path, a);
+	ret.name = string::makef("/%"_, a, path);
+
+    ret.recreate();
+
+    return ret;
+}
+
+void shader_include::destroy() {
+
+	name.destroy(source.alloc);
+	gl_destroy();
+	source.destroy();
+}
+
+void shader_include::gl_destroy() {
+
+	glDeleteNamedStringARB(-1, name.c_str);
+}
+
+void shader_include::recreate() {
+
+	glNamedStringARB(gl_named_string_arb::shader_include, -1, name.c_str, -1, source.source.c_str);
+}
+
+bool shader_include::try_refresh() {
+
+	if(source.try_refresh()) {
+		gl_destroy();
+		recreate();		
+		return true;
+	}
+	return false;
+}
+
 shader_program shader_program::make(string vert, string frag, string geom, _FPTR* uniforms, allocator* a) { 
 
 	shader_program ret;
@@ -235,6 +274,9 @@ void ogl_manager::gl_begin_reload() {
 	FORMAP(it, textures) {
 		it->value.gl_destroy();
 	}
+	FORVEC(it, shader_includes) {
+		it->gl_destroy();
+	}
 
 	info.destroy();
 	check_leaked_handles();
@@ -258,6 +300,9 @@ void ogl_manager::gl_end_reload() {
 	FORMAP(it, framebuffers) {
 		it->value.recreate();
 	}
+	FORVEC(it, shader_includes) {
+		it->recreate();
+	}
 
 	glBlendFunc(gl_blend_factor::one, gl_blend_factor::one_minus_src_alpha);
 	glDepthFunc(gl_depth_factor::lequal);
@@ -271,6 +316,11 @@ void ogl_manager::reload_texture_assets() {
 }
 
 void ogl_manager::try_reload_programs() { 
+	FORVEC(it, shader_includes) {
+		if(it->try_refresh()) {
+			LOG_DEBUG_F("Reloaded shader include %"_, it->name);
+		}
+	}
 	FORMAP(it, commands) {
 		if(it->value.shader.try_refresh()) {
 
@@ -296,6 +346,8 @@ ogl_manager ogl_manager::make(platform_window* win, allocator* a) {
 	ret.commands = map<draw_cmd_id, draw_context>::make(32, a);
 	ret.objects = map<gpu_object_id, gpu_object>::make(2048, a);
 	ret.framebuffers = map<framebuffer_id, framebuffer>::make(32, a);
+
+	ret.shader_includes = vector<shader_include>::make(16, a);
 	
 	ret.command_settings = stack<cmd_settings>::make(4, a);
 	ret.command_settings.push(cmd_settings());
@@ -303,6 +355,10 @@ ogl_manager ogl_manager::make(platform_window* win, allocator* a) {
 	ret.load_global_funcs();
 	ret.info = ogl_info::make(ret.alloc);
 	LOG_DEBUG_F("GL %.% %"_, ret.info.major, ret.info.minor, ret.info.renderer);
+
+	if(!ret.info.extensions.find("GL_ARB_shading_language_include"_)) {
+		LOG_FATAL("Failed to load extension GL_ARB_shading_language_include! This won't work."_);
+	}
 
 	ret.dbg_shader = shader_program::make("shaders/dbg.v"_,"shaders/dbg.f"_, {}, FPTR(uniforms_dbg), a);
 
@@ -408,7 +464,11 @@ void ogl_manager::destroy() {
 	FORMAP(it, framebuffers) {
 		it->value.destroy();
 	}
+	FORVEC(it, shader_includes) {
+		it->destroy();
+	}
 
+	shader_includes.destroy();
 	dbg_shader.destroy();
 	textures.destroy();
 	commands.destroy();
@@ -1109,6 +1169,11 @@ void ogl_manager::rem_command(draw_cmd_id id) {
 	return;
 }
 
+void ogl_manager::add_include(string path) {
+
+	shader_includes.push(shader_include::make(path, alloc));
+}
+
 draw_cmd_id ogl_manager::add_command(_FPTR* run, _FPTR* uniforms, string v, string f, string g) { 
 
 	draw_context d;
@@ -1597,6 +1662,9 @@ void ogl_manager::load_global_funcs() {
 	GL_LOAD(glClearNamedFramebufferuiv);
 	GL_LOAD(glClearNamedFramebufferfv);
 	GL_LOAD(glClearTexImage);
+	GL_LOAD(glNamedStringARB);
+	GL_LOAD(glDeleteNamedStringARB);
+	GL_LOAD(glCompileShaderIncludeARB);
 
 	GL_LOAD(glGetStringi);
 	GL_LOAD(glGetInteger64v);

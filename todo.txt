@@ -18,7 +18,6 @@ Working To-Do:
 					is this before or after the baked lighting pass?
 				render instanced spheres to calculate lights; blend
 					gets rid of passing all into shader
-				add to defer no ms (actually just do shader includes)
 
 			flashlight (directional lights)
 			specular textures
