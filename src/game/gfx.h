@@ -327,6 +327,8 @@ struct exile_renderer {
 	draw_cmd_id cmd_chunk            = 0;
 	draw_cmd_id cmd_skydome          = 0;
 	draw_cmd_id cmd_skyfar           = 0;
+	draw_cmd_id cmd_defer_light	 	 = 0;
+	draw_cmd_id cmd_defer_light_ms	 = 0;
 
 	exile_render_settings settings;
 
@@ -335,7 +337,6 @@ struct exile_renderer {
 	mesh_quad 	 the_quad;
 
 	effect_pass invert, gamma;
-	effect_pass defer, defer_ms;
 	effect_pass composite, composite_resolve, resolve;
 
 	world_target_info world_target;
@@ -385,9 +386,11 @@ decl_mesh(lines);
 decl_mesh(pointcloud);
 
 CALLBACK void uniforms_gamma(shader_program* prog, render_command* cmd);
-CALLBACK void uniforms_defer(shader_program* prog, render_command* cmd);
 CALLBACK void uniforms_invert(shader_program* prog, render_command* cmd);
 CALLBACK void uniforms_resolve(shader_program* prog, render_command* cmd);
-CALLBACK void uniforms_defer_ms(shader_program* prog, render_command* cmd);
 CALLBACK void uniforms_composite(shader_program* prog, render_command* cmd);
 CALLBACK void uniforms_composite_resolve(shader_program* prog, render_command* cmd);
+
+CALLBACK void run_defer(render_command* cmd, gpu_object* gpu);
+CALLBACK void uniforms_defer(shader_program* prog, render_command* cmd);
+CALLBACK void uniforms_defer_ms(shader_program* prog, render_command* cmd);

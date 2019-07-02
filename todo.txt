@@ -13,11 +13,8 @@ Working To-Do:
 	Rendering:
 		[features]
 		dynamic lights
+			render quads to calculate lights
 			dynamic torches (build lists per chunk)
-				extract dynamic lighting into another pass
-					is this before or after the baked lighting pass?
-				render instanced spheres to calculate lights; blend
-					gets rid of passing all into shader
 
 			flashlight (directional lights)
 			specular textures
@@ -35,6 +32,7 @@ Working To-Do:
 			https://learnopengl.com/Advanced-Lighting/Bloom
 			http://www.sea-of-memes.com/LetsCode37/LetsCode37.html
 		HDR / auto exposure? yes tbh POGU
+			make sun way brighter than torches and have auto exposure drown them out
 			https://learnopengl.com/Advanced-Lighting/HDR
 		
 		[later features]

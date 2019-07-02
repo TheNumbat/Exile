@@ -104,8 +104,8 @@ shader_include shader_include::make(string path, allocator* a) {
 
 void shader_include::destroy() {
 
-	name.destroy(source.alloc);
 	gl_destroy();
+	name.destroy(source.alloc);
 	source.destroy();
 }
 
@@ -304,7 +304,7 @@ void ogl_manager::gl_end_reload() {
 		it->recreate();
 	}
 
-	glBlendFunc(gl_blend_factor::one, gl_blend_factor::one_minus_src_alpha);
+	glBlendFunc(gl_blend_factor::src_alpha, gl_blend_factor::one_minus_src_alpha);
 	glDepthFunc(gl_depth_factor::lequal);
 }
 
@@ -377,7 +377,7 @@ ogl_manager ogl_manager::make(platform_window* win, allocator* a) {
 
 	ret.dbg_shader = shader_program::make("shaders/dbg.v"_,"shaders/dbg.f"_, {}, FPTR(uniforms_dbg), a);
 
-	glBlendFunc(gl_blend_factor::one, gl_blend_factor::one_minus_src_alpha);
+	glBlendFunc(gl_blend_factor::src_alpha, gl_blend_factor::one_minus_src_alpha);
 	glDepthFunc(gl_depth_factor::lequal);
 
 	return ret;
@@ -1298,18 +1298,18 @@ void ogl_manager::_cmd_set_setting(render_command_setting setting) {
 	cmd_settings* set = command_settings.top();
 
 	switch(setting.setting) {
-	case render_setting::wireframe: set->polygon_line = setting.enable; break;
-	case render_setting::depth_test: set->depth_test = setting.enable; break;
-	case render_setting::aa_lines: set->line_smooth = setting.enable; break;
-	case render_setting::blend: set->blend = setting.enable; break;
-	case render_setting::dither: set->dither = setting.enable; break;
-	case render_setting::scissor: set->scissor = setting.enable; break;
-	case render_setting::cull: set->cull_backface = setting.enable; break;
-	case render_setting::msaa: set->multisample = setting.enable; break;
-	case render_setting::aa_shading: set->sample_shading = setting.enable; break;
-	case render_setting::write_depth: set->depth_mask = setting.enable; break;
-	case render_setting::point_size: set->point_size = setting.enable; break;
-	case render_setting::output_srgb: set->output_srgb = setting.enable; break;
+	case render_setting::wireframe: set->polygon_line = setting.data; break;
+	case render_setting::depth_test: set->depth_test = setting.data; break;
+	case render_setting::aa_lines: set->line_smooth = setting.data; break;
+	case render_setting::blend: set->blend = (blend_mode)setting.data; break;
+	case render_setting::dither: set->dither = setting.data; break;
+	case render_setting::scissor: set->scissor = setting.data; break;
+	case render_setting::cull: set->cull_backface = setting.data; break;
+	case render_setting::msaa: set->multisample = setting.data; break;
+	case render_setting::aa_shading: set->sample_shading = setting.data; break;
+	case render_setting::write_depth: set->depth_mask = setting.data; break;
+	case render_setting::point_size: set->point_size = setting.data; break;
+	case render_setting::output_srgb: set->output_srgb = setting.data; break;
 	default: break;
 	}
 }
@@ -1348,7 +1348,6 @@ void ogl_manager::_cmd_apply_settings() {
 	set->polygon_line 	? glPolygonMode(gl_poly::front_and_back, gl_poly_mode::line) : glPolygonMode(gl_poly::front_and_back, gl_poly_mode::fill);
 	set->depth_test 	? glEnable(gl_capability::depth_test) : glDisable(gl_capability::depth_test);
 	set->line_smooth 	? glEnable(gl_capability::line_smooth) : glDisable(gl_capability::line_smooth);
-	set->blend 			? glEnable(gl_capability::blend) : glDisable(gl_capability::blend);
 	set->dither 		? glEnable(gl_capability::dither) : glDisable(gl_capability::dither);
 	set->scissor 		? glEnable(gl_capability::scissor_test) : glDisable(gl_capability::scissor_test);
 	set->cull_backface 	? glEnable(gl_capability::cull_face) : glDisable(gl_capability::cull_face);
@@ -1357,6 +1356,16 @@ void ogl_manager::_cmd_apply_settings() {
 	set->point_size		? glEnable(gl_capability::program_point_size) : glDisable(gl_capability::program_point_size);
 	set->depth_mask 	? glDepthMask(gl_bool::_true) : glDepthMask(gl_bool::_false);
 	set->output_srgb 	? glEnable(gl_capability::framebuffer_srgb) : glDisable(gl_capability::framebuffer_srgb);
+
+	switch(set->blend) {
+	case blend_mode::none: 	glDisable(gl_capability::blend); break;
+	case blend_mode::alpha:	glEnable(gl_capability::blend); 
+							glBlendFunc(gl_blend_factor::src_alpha, gl_blend_factor::one_minus_src_alpha);
+							break;
+	case blend_mode::add:	glEnable(gl_capability::blend); 
+							glBlendFunc(gl_blend_factor::src_alpha, gl_blend_factor::dst_alpha);
+							break;
+	}
 
 	if(set->sample_shading && info.check_version(4,0)) {
 		glMinSampleShading(1.0f);
@@ -1462,7 +1471,7 @@ void ogl_manager::dbg_render_texture_fullscreen(texture_id id) {
 
 	glViewport(0, 0, win->settings.w, win->settings.h);
 	glEnable(gl_capability::blend);
-	glBlendFunc(gl_blend_factor::one, gl_blend_factor::one_minus_src_alpha);
+	glBlendFunc(gl_blend_factor::src_alpha, gl_blend_factor::one_minus_src_alpha);
 
 	glDrawArrays(gl_draw_mode::triangles, 0, 6);
 	
@@ -1746,12 +1755,12 @@ render_command render_command::make(draw_cmd_id type) {
 	return ret;
 }
 
-render_command render_command::make_set(render_setting setting, bool enable) { 
+render_command render_command::make_set(render_setting setting, u8 data) { 
 
 	render_command ret;
 	ret.cmd_id = (draw_cmd_id)draw_cmd::setting;
 	ret.setting.setting = setting;
-	ret.setting.enable = enable;
+	ret.setting.data = data;
 	return ret;
 }
 
@@ -1801,9 +1810,9 @@ void render_command_list::pop_settings() {
 	add_command(render_command::make((draw_cmd_id)draw_cmd::pop_settings));
 }
 
-void render_command_list::set_setting(render_setting setting, bool enable) {
+void render_command_list::set_setting(render_setting setting, u8 data) {
 
-	add_command(render_command::make_set(setting, enable));
+	add_command(render_command::make_set(setting, data));
 }
 
 void render_command_list::add_command(render_command rc) { 

@@ -16,14 +16,15 @@ uniform sampler2DMS norm_tex;
 uniform sampler2DMS light_tex;
 
 uniform int debug_show;
+uniform bool base_run;
 
 #include </shaders/deferred/defer_inc.glsl>
 
-vec4 get_normal(ivec2 coord, int sample, float z) {
-	vec4 n = texelFetch(norm_tex, coord, sample);
+vec3 get_normal(ivec2 coord, int sample, float z) {
+	vec3 n = texelFetch(norm_tex, coord, sample).xyz;
 	float s = sign(z);
 	n.z = s * sqrt(1.0f - dot(n.xy, n.xy));
-	return vec4(n.xyz, length(n.xyz) / num_samples);
+	return n;
 }
 
 void main() {
@@ -37,12 +38,19 @@ void main() {
 		vec3 col = texelFetch(col_tex, coord, i).rgb;
 		vec3 light = texelFetch(light_tex, coord, i).xyz;
 		vec3 pos = texelFetch(pos_tex, coord, i).xyz;
-		vec4 norm = get_normal(coord, i, light.z);
+		vec3 norm = get_normal(coord, i, light.z);
 	
-		vec4 result = calculate_light(col, pos, light, norm);
+		vec3 result;
+		if(base_run)
+			result = calculate_light_base(pos, light, norm);
+		else
+			result = calculate_light_dynamic(pos, norm);
+		
+		result *= col;
 
 		total_col += result.xyz;
-		opacity += result.w;
+
+		opacity += calculate_fog_op(pos, length(norm) / num_samples);
 	}	
 
 	total_col /= float(num_samples);

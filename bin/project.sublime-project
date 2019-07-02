@@ -30,7 +30,7 @@
                 },
                 {
                     "name": "Clean",
-                    "shell_cmd": "rm -r build/",
+                    "shell_cmd": "rm -r build/ && meson build && meson configure build -Dbuildtype=debugoptimized -Dwarning_level=3",
                     "encoding": "UTF-8"
                 },
 			]

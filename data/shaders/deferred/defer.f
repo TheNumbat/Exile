@@ -13,6 +13,7 @@ uniform sampler2D norm_tex;
 uniform sampler2D light_tex;
 
 uniform int debug_show;
+uniform bool base_run;
 
 #include </shaders/deferred/defer_inc.glsl>
 
@@ -24,24 +25,31 @@ void main() {
 	
 	float s = sign(light.z);
 
-	vec4 norm = texture(norm_tex, f_uv);
+	vec3 norm = texture(norm_tex, f_uv).xyz;
 	norm.z = s * sqrt(1.0f - dot(norm.xy, norm.xy));
-	norm.w = length(norm.xyz);
+	
+	float op = calculate_fog_op(pos, length(norm));
 
-	vec4 result = calculate_light(col, pos, light, norm);
+	vec3 result;  
+	if(base_run)
+		result = calculate_light_base(pos, light, norm);
+	else
+		result = calculate_light_dynamic(pos, norm);
+
+	result *= col;
 
 	if(debug_show == 0) {	
-		color = vec4(result);
+		color = vec4(result, op);
 	} else if(debug_show == 1) {
-		color = vec4(vec3(pow(light.x, 3)), result.w);
+		color = vec4(vec3(pow(light.x, 3)), op);
 	} else if(debug_show == 2) {
-		color = vec4(vec3(pow(light.y, 3)), result.w);
+		color = vec4(vec3(pow(light.y, 3)), op);
 	} else if(debug_show == 3) {
-		color = vec4(vec3(pow(abs(light.z), 3)), result.w);
+		color = vec4(vec3(pow(abs(light.z), 3)), op);
 	} else if(debug_show == 4) {
-		color = vec4(pos, result.w);
+		color = vec4(pos, op);
 	} else if(debug_show == 5) {
-		color = vec4(abs(norm.xyz), result.w);
+		color = vec4(abs(norm.xyz), op);
 	} 
 }
 

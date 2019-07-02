@@ -200,7 +200,7 @@ void exile_renderer::generate_targets() {
 
 void effect_pass::init(_FPTR* uniforms, string frag) {
 
-	cmd_id = exile->eng->ogl.add_command(FPTR(run_effect), uniforms, "shaders/effects/effect.v"_, string::makef("shaders/%"_, frag));
+	cmd_id = exile->eng->ogl.add_command(FPTR(run_effect), uniforms, "shaders/effects/effect.v"_, string::makef("shaders/effects/%"_, frag));
 }
 
 void effect_pass::destroy() {
@@ -218,7 +218,7 @@ void world_target_info::init(iv2 dim, i32 samples) {
 
 	msaa = samples != 1;
 
-	world_info.col_buf = exile->eng->ogl.add_texture_target(dim, samples, gl_tex_format::rgba8, gl_pixel_data_format::rgb);
+	world_info.col_buf = exile->eng->ogl.add_texture_target(dim, samples, gl_tex_format::rgb8, gl_pixel_data_format::rgb);
 	world_info.col_buf_target = exile->eng->ogl.make_target(gl_draw_target::color_0, world_info.col_buf);
 
 	world_info.pos_buf = exile->eng->ogl.add_texture_target(dim, samples, gl_tex_format::rgb16f, gl_pixel_data_format::rgb);
@@ -259,8 +259,7 @@ void world_target_info::init(iv2 dim, i32 samples) {
 
 void world_target_info::resolve(render_command_list* list) {
 	
-	render_command cmd;
-	cmd = msaa ? exile->ren.defer_ms.make_cmd() : exile->ren.defer.make_cmd();
+	render_command cmd = render_command::make_cst(msaa ? exile->ren.cmd_defer_light_ms : exile->ren.cmd_defer_light, exile->ren.the_quad.gpu);
 
 	cmd.info.fb_id = get_fb();
 
@@ -271,7 +270,16 @@ void world_target_info::resolve(render_command_list* list) {
 	cmd.info.user_data0 = &exile->ren;
 	cmd.info.user_data1 = &exile->w;
 
+	cmd.info.user_flags = 1;
 	list->add_command(cmd);
+
+	list->push_settings();
+
+	list->set_setting(render_setting::blend, (u8)blend_mode::add);
+
+	cmd.info.user_flags = 0;
+	list->add_command(cmd);
+
 	list->pop_settings();
 }
 
@@ -351,15 +359,15 @@ void exile_renderer::generate_commands() {
 	reg(2D_tex_col, mesh_2D_tex_col, "mesh/");
 	reg(3D_tex_instanced, mesh_3D_tex_instanced, "mesh/");
 
-	gamma.init(FPTR(uniforms_gamma), "effects/gamma.f"_);
-	invert.init(FPTR(uniforms_invert), "effects/invert.f"_);
-	resolve.init(FPTR(uniforms_resolve), "effects/resolve.f"_);
-	composite.init(FPTR(uniforms_composite), "effects/composite.f"_);
-	composite_resolve.init(FPTR(uniforms_composite_resolve), "effects/composite_resolve.f"_);
-	
-	defer.init(FPTR(uniforms_defer), "deferred/defer.f"_);
-	defer_ms.init(FPTR(uniforms_defer_ms), "deferred/defer_ms.f"_);
+	cmd_defer_light = exile->eng->ogl.add_command(FPTR(run_defer), FPTR(uniforms_defer), "shaders/deferred/defer.v"_, "shaders/deferred/defer.f"_);
+	cmd_defer_light_ms = exile->eng->ogl.add_command(FPTR(run_defer), FPTR(uniforms_defer_ms), "shaders/deferred/defer.v"_, "shaders/deferred/defer_ms.f"_);
 
+	gamma.init(FPTR(uniforms_gamma), "gamma.f"_);
+	invert.init(FPTR(uniforms_invert), "invert.f"_);
+	resolve.init(FPTR(uniforms_resolve), "resolve.f"_);
+	composite.init(FPTR(uniforms_composite), "composite.f"_);
+	composite_resolve.init(FPTR(uniforms_composite_resolve), "composite_resolve.f"_);
+	
 	#undef reg
 }
 
@@ -439,6 +447,10 @@ CALLBACK void uniforms_resolve(shader_program* prog, render_command* cmd) {
 	glUniform2f(prog->location("screen_size"_), (f32)set->prev_dim.x, (f32)set->prev_dim.y);
 }
 
+CALLBACK void run_defer(render_command* cmd, gpu_object* gpu) {
+	glDrawArrays(gl_draw_mode::triangles, 0, 6);
+}
+
 CALLBACK void uniforms_defer(shader_program* prog, render_command* cmd) {
 
 	world_render_settings* set = &((exile_renderer*)cmd->info.user_data0)->settings.world_set;
@@ -449,6 +461,8 @@ CALLBACK void uniforms_defer(shader_program* prog, render_command* cmd) {
 	glUniform1i(prog->location("pos_tex"_), 1);
 	glUniform1i(prog->location("norm_tex"_), 2);
 	glUniform1i(prog->location("light_tex"_), 3);
+
+	glUniform1i(prog->location("base_run"_), cmd->info.user_flags);
 
 	glUniform1f(prog->location("day_01"_), time->day_01());
 	glUniform1i(prog->location("debug_show"_), (i32)set->view);

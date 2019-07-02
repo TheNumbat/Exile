@@ -307,6 +307,12 @@ private:
 	shader_program shader;
 };
 
+enum class blend_mode : u8 {
+	none,
+	alpha,
+	add
+};
+
 enum class render_setting : u8 {
 	none,
 	wireframe,
@@ -327,7 +333,6 @@ struct cmd_settings {
 	bool polygon_line = false;
 	bool depth_test = true;
 	bool line_smooth = true;
-	bool blend = true;
 	bool dither = true;
 	bool scissor = true;
 	bool cull_backface = false;
@@ -336,6 +341,7 @@ struct cmd_settings {
 	bool depth_mask = true;
 	bool point_size = false;
 	bool output_srgb = false;
+	blend_mode blend = blend_mode::alpha;
 };
 
 struct ogl_settings {
@@ -350,6 +356,7 @@ struct render_command_custom {
 	texture_id textures[8] = {};
 	void* user_data0 = null;
 	void* user_data1 = null;
+	u16   user_flags = 0;
 
 	m4 model, view, proj;
 
@@ -387,7 +394,7 @@ struct render_command_clear {
 
 struct render_command_setting {
 
-	bool enable = false;
+	u8 data = 0;
 	render_setting setting;
 };
 
@@ -425,7 +432,7 @@ struct render_command {
 
 	static render_command make(draw_cmd_id type);
 	static render_command make_cst(draw_cmd_id type, gpu_object_id gpu);
-	static render_command make_set(render_setting setting, bool enable);
+	static render_command make_set(render_setting setting, u8 data);
 };
 
 bool operator<=(render_command& first, render_command& second);
@@ -441,7 +448,7 @@ struct render_command_list {
 
 	void push_settings();
 	void pop_settings();
-	void set_setting(render_setting setting, bool enable);
+	void set_setting(render_setting setting, u8 data);
 };
 
 enum class camera_mode : u8 {
