@@ -3,7 +3,10 @@
 
 #extension GL_ARB_shading_language_include : enable
 
-in vec2 f_uv;
+uniform vec2 screen_size;
+
+flat in int instance_id;
+uniform int num_instances;
 
 out vec4 color;
 
@@ -15,9 +18,12 @@ uniform sampler2D light_tex;
 uniform int debug_show;
 uniform bool base_run;
 
+#include </shaders/util.glsl>
 #include </shaders/deferred/defer_inc.glsl>
 
 void main() {
+
+	vec2 f_uv = gl_FragCoord.xy / screen_size;
 
 	vec3 col = texture(col_tex, f_uv).rgb;
 	vec3 light = texture(light_tex, f_uv).xyz;
@@ -50,6 +56,9 @@ void main() {
 		color = vec4(pos, op);
 	} else if(debug_show == 5) {
 		color = vec4(abs(norm.xyz), op);
-	} 
+	} else if(debug_show == 6) {
+		float f = float(instance_id) / float(num_instances);
+		color = vec4(scalar_to_color(f), 1.0f / float(num_instances));
+	}
 }
 

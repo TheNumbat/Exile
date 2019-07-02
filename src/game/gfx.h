@@ -249,7 +249,8 @@ enum class exile_component_view : i32 {
 	sun,
 	ao,
 	pos,
-	norm
+	norm,
+	quads
 };
 
 struct world_render_settings {

@@ -8,7 +8,6 @@ in vec2 f_uv;
 out vec4 color;
 
 uniform int num_samples;
-uniform vec2 screen_size;
 
 uniform sampler2DMS col_tex;
 uniform sampler2DMS pos_tex;
@@ -18,6 +17,10 @@ uniform sampler2DMS light_tex;
 uniform int debug_show;
 uniform bool base_run;
 
+flat in int instance_id;
+uniform int num_instances;
+
+#include </shaders/util.glsl>
 #include </shaders/deferred/defer_inc.glsl>
 
 vec3 get_normal(ivec2 coord, int sample, float z) {
@@ -29,7 +32,7 @@ vec3 get_normal(ivec2 coord, int sample, float z) {
 
 void main() {
 
-	ivec2 coord = ivec2(f_uv * screen_size);
+	ivec2 coord = ivec2(gl_FragCoord.xy);
 	vec3 total_col = vec3(0.0f);
 	float opacity = 0.0f;
 
@@ -68,6 +71,9 @@ void main() {
 	} else if(debug_show == 5) {
 		vec3 n = get_normal(coord, 0, texelFetch(light_tex, coord, 0).z).xyz;
 		color = vec4(abs(n), opacity);
-	} 
+	} else if(debug_show == 6) {
+		float f = float(instance_id) / float(num_instances);
+		color = vec4(scalar_to_color(f), 1.0f / float(num_instances));
+	}
 }
 

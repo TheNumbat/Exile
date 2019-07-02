@@ -264,6 +264,9 @@ void world_target_info::resolve(render_command_list* list) {
 	
 	v3 light_pos = exile->ren.settings.world_set.light_pos - exile->w.p.camera.pos;
 	exile->ren.lighting_quads.push(r2(-1.0f, -1.0f, 2.0f, 2.0f), light_pos, exile->ren.settings.world_set.light_col);
+	exile->ren.lighting_quads.push(r2(-0.8f, -0.8f, 2.0f, 2.0f), light_pos, v3{});
+	exile->ren.lighting_quads.push(r2(-0.6f, -0.6f, 2.0f, 2.0f), light_pos, v3{});
+	exile->ren.lighting_quads.push(r2(-0.4f, -0.4f, 2.0f, 2.0f), light_pos, v3{});
 
 	render_command cmd = render_command::make_cst(msaa ? exile->ren.cmd_defer_light_ms : exile->ren.cmd_defer_light, exile->ren.lighting_quads.gpu);
 
@@ -284,6 +287,7 @@ void world_target_info::resolve(render_command_list* list) {
 	list->set_setting(render_setting::blend, (u8)blend_mode::add);
 
 	cmd.info.user_flags = 0;
+	cmd.info.num_tris = exile->ren.lighting_quads.data.size - 1;
 	list->add_command(cmd);
 
 	list->pop_settings();
@@ -346,6 +350,7 @@ void exile_renderer::check_recreate() {
 
 void exile_renderer::generate_commands() { 
 
+	exile->eng->ogl.add_include("shaders/util.glsl"_);
 	exile->eng->ogl.add_include("shaders/deferred/defer_inc.glsl"_);
 	
 	#define reg(cmdn, name, path) cmd_##cmdn = exile->eng->ogl.add_command(FPTR(run_##name), FPTR(uniforms_##name), \
@@ -456,17 +461,16 @@ CALLBACK void uniforms_resolve(shader_program* prog, render_command* cmd) {
 
 CALLBACK void run_defer(render_command* cmd, gpu_object* gpu) {
 
-	mesh_light_list* m = (mesh_light_list*)gpu->data;
-
 	if(cmd->info.user_flags)
 		glDrawArraysInstanced(gl_draw_mode::triangle_strip, 0, 4, 1);
 	else
-		glDrawArraysInstancedBaseInstance(gl_draw_mode::triangle_strip, 0, 4, m->data.size - 1, 1);
+		glDrawArraysInstancedBaseInstance(gl_draw_mode::triangle_strip, 0, 4, cmd->info.num_tris, 1);
 }
 
 CALLBACK void uniforms_defer(shader_program* prog, render_command* cmd) {
 
-	world_render_settings* set = &((exile_renderer*)cmd->info.user_data0)->settings.world_set;
+	exile_renderer* ren = (exile_renderer*)cmd->info.user_data0;
+	world_render_settings* set = &ren->settings.world_set;
 	world* w = (world*)cmd->info.user_data1;
 	world_time* time = &w->time;
 
@@ -476,6 +480,7 @@ CALLBACK void uniforms_defer(shader_program* prog, render_command* cmd) {
 	glUniform1i(prog->location("light_tex"_), 3);
 
 	glUniform1i(prog->location("base_run"_), cmd->info.user_flags);
+	glUniform1i(prog->location("num_instances"_), cmd->info.num_tris);
 
 	glUniform1f(prog->location("day_01"_), time->day_01());
 	glUniform1i(prog->location("debug_show"_), (i32)set->view);
@@ -486,6 +491,8 @@ CALLBACK void uniforms_defer(shader_program* prog, render_command* cmd) {
 	glUniform1i(prog->location("dynamic_light"_), set->dynamic_light);
 	glUniform1i(prog->location("ambient_occlusion"_), set->ambient_occlusion);
 	glUniform1f(prog->location("render_distance"_), (f32)w->settings.view_distance * chunk::wid);
+
+	glUniform2f(prog->location("screen_size"_), (f32)ren->prev_dim.x, (f32)ren->prev_dim.y);
 }
 
 CALLBACK void uniforms_defer_ms(shader_program* prog, render_command* cmd) {
@@ -495,7 +502,6 @@ CALLBACK void uniforms_defer_ms(shader_program* prog, render_command* cmd) {
 	exile_renderer* set = (exile_renderer*)cmd->info.user_data0;
 
 	glUniform1i(prog->location("num_samples"_), set->prev_samples);
-	glUniform2f(prog->location("screen_size"_), (f32)set->prev_dim.x, (f32)set->prev_dim.y);
 }
 
 CALLBACK void uniforms_invert(shader_program* prog, render_command* cmd) {

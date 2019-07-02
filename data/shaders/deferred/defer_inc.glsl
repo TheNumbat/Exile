@@ -40,6 +40,7 @@ vec3 calculate_light_base(vec3 pos, vec3 light, vec3 norm) {
 		light_gather *= abs(light.z);
 	}
 
+	return vec3(0.0f);
 	return ambient + light_gather;
 }
 

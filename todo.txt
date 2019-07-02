@@ -13,6 +13,12 @@ Working To-Do:
 	Rendering:
 		[features]
 		dynamic lights
+			light rendering
+				change the light buffer to light accumulation; calculate base in forward pass
+				get rid of base_pass; just accumulate light 
+				add another pass to multiply albedo and light together?
+				debug having multiple light quads
+
 			render quads to calculate lights
 			dynamic torches (build lists per chunk)
 
