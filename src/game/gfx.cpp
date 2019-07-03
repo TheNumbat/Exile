@@ -224,7 +224,7 @@ void world_target_info::init(iv2 dim, i32 samples) {
 	world_info.pos_buf = exile->eng->ogl.add_texture_target(dim, samples, gl_tex_format::rgb16f, gl_pixel_data_format::rgb);
 	world_info.pos_buf_target = exile->eng->ogl.make_target(gl_draw_target::color_1, world_info.pos_buf);
 
-	world_info.norm_buf = exile->eng->ogl.add_texture_target(dim, samples, gl_tex_format::rgb16f, gl_pixel_data_format::rgb);
+	world_info.norm_buf = exile->eng->ogl.add_texture_target(dim, samples, gl_tex_format::rgb16_snorm, gl_pixel_data_format::rgb);
 	world_info.norm_buf_target = exile->eng->ogl.make_target(gl_draw_target::color_2, world_info.norm_buf);
 
 	world_info.light_buf = exile->eng->ogl.add_texture_target(dim, samples, gl_tex_format::rgb16f, gl_pixel_data_format::rgb);
@@ -286,6 +286,7 @@ void world_target_info::resolve(render_command_list* list) {
 		cmd.info.textures[0] = world_info.pos_buf;
 		cmd.info.textures[1] = world_info.col_buf;
 		cmd.info.textures[2] = world_info.light_buf;
+		cmd.info.textures[3] = world_info.norm_buf;
 		cmd.info.user_data0 = &exile->ren;
 		cmd.info.user_data1 = &exile->w;
 		list->add_command(cmd);
@@ -446,14 +447,18 @@ CALLBACK void uniforms_composite(shader_program* prog, render_command* cmd) {
 
 CALLBACK void uniforms_comp_light(shader_program* prog, render_command* cmd) {
 
-	exile_renderer* set = (exile_renderer*)cmd->info.user_data0;
+	exile_renderer* ren = (exile_renderer*)cmd->info.user_data0;
+	world_render_settings* set = &ren->settings.world_set;
+
 	world* w = (world*)cmd->info.user_data1;
 
 	glUniform1i(prog->location("pos_tex"_), 0);
 	glUniform1i(prog->location("col_tex"_), 1);
 	glUniform1i(prog->location("light_tex"_), 2);
+	glUniform1i(prog->location("norm_tex"_), 3);
 
-	glUniform1i(prog->location("sky_fog"_), set->settings.world_set.dist_fog);
+	glUniform1i(prog->location("sky_fog"_), set->dist_fog);
+	glUniform1i(prog->location("debug_show"_), (i32)set->view);
 	glUniform1f(prog->location("render_distance"_), (f32)w->settings.view_distance * chunk::wid);
 }
 
@@ -495,10 +500,8 @@ CALLBACK void uniforms_defer(shader_program* prog, render_command* cmd) {
 
 	glUniform1i(prog->location("pos_tex"_), 0);
 	glUniform1i(prog->location("norm_tex"_), 1);
-
-	glUniform1i(prog->location("num_instances"_), cmd->info.num_tris);
 	glUniform1i(prog->location("debug_show"_), (i32)set->view);
-	
+	glUniform1i(prog->location("num_instances"_), cmd->info.num_tris);
 	glUniform1i(prog->location("dynamic_light"_), set->dynamic_light);
 	glUniform2f(prog->location("screen_size"_), (f32)ren->prev_dim.x, (f32)ren->prev_dim.y);
 }
@@ -655,6 +658,7 @@ CALLBACK void uniforms_mesh_chunk(shader_program* prog, render_command* cmd) {
 	glUniform1f(prog->location("units_per_voxel"_), (f32)chunk::units_per_voxel);
 
 	glUniform1f(prog->location("day_01"_), w->time.day_01());
+	glUniform1i(prog->location("debug_show"_), (i32)set->view);
 	glUniform1f(prog->location("ambient"_), set->ambient_factor);
 	glUniform1i(prog->location("block_light"_), set->block_light);
 	glUniform1i(prog->location("ambient_occlusion"_), set->ambient_occlusion);

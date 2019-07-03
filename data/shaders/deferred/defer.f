@@ -30,6 +30,8 @@ void main() {
 
 	norm.z = sign(norm.z) * sqrt(1.0f - alpha);
 	
-	light = vec4(calculate_light_dynamic(pos, norm, shine), 1.0f);
+	if(debug_show != 5 && debug_show != 6 && debug_show != 7) {
+		light = vec4(calculate_light_dynamic(pos, norm, shine), 1.0f);
+	}
 }
 

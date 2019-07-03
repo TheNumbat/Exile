@@ -244,10 +244,16 @@ struct dynamic_torch {
 };
 
 enum class exile_component_view : i32 {
-	col  = 0,
+	none = 0,
+	albedo,
 	pos,
 	norm,
-	quads
+	
+	all_light,
+	torch,
+	sun,
+	ao,
+	dynamic
 };
 
 struct world_render_settings {
@@ -265,7 +271,7 @@ struct world_render_settings {
 	bool dynamic_light = true;
 	bool ambient_occlusion = true;
 
-	exile_component_view view =  exile_component_view::col;
+	exile_component_view view =  exile_component_view::none;
 	v3 light_col = v3(0.5f, 0.5f, 0.5f);
 	v3 light_pos = v3(0.5f, 48.5f, 16.5f);
 };

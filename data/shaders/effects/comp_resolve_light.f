@@ -8,9 +8,12 @@ uniform int num_samples;
 uniform sampler2DMS pos_tex;
 uniform sampler2DMS col_tex;
 uniform sampler2DMS light_tex;
+uniform sampler2DMS norm_tex;
 
 uniform float render_distance;
 uniform bool sky_fog;
+
+uniform int debug_show;
 
 void main() {
 
@@ -31,6 +34,20 @@ void main() {
 		result.w *= 1.0f - step(length(pos), 0.0f);
 	}
 
-	color = result / float(num_samples);
+	result /= float(num_samples);
+
+	if(debug_show == 0) {
+		color = result;
+	} else if(debug_show == 1) {
+		color = vec4(texelFetch(col_tex, coord, 0).xyz, 1.0f);
+	} else if(debug_show == 2) {
+		color = vec4(texelFetch(pos_tex, coord, 0).xyz, 1.0f);
+	} else if(debug_show == 3) {
+		vec3 norm = texelFetch(norm_tex, coord, 0).xyz;
+		norm.z = sign(norm.z) * sqrt(1.0f - dot(norm.xy, norm.xy));
+		color = vec4(abs(norm), 1.0f);
+	} else {
+		color = vec4(texelFetch(light_tex, coord, 0).xyz, 1.0f);
+	}
 }
 

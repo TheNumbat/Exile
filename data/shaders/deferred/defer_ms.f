@@ -12,10 +12,9 @@ uniform int num_samples;
 uniform sampler2DMS pos_tex;
 uniform sampler2DMS norm_tex;
 
-uniform int debug_show;
-
 flat in int instance_id;
 uniform int num_instances;
+uniform int debug_show;
 
 #include </shaders/util.glsl>
 #include </shaders/deferred/defer_inc.glsl>
@@ -31,12 +30,14 @@ void main() {
 		vec3 norm = texelFetch(norm_tex, coord, i).xyz;
 	
 		float alpha = dot(norm.xy, norm.xy);
-		float shine = abs(norm.z);
+		float shine = 1.0f / abs(norm.z);
 		norm.z = sign(norm.z) * sqrt(1.0f - alpha);
-	
+
 		result += calculate_light_dynamic(pos, norm, shine);
 	}	
 
-	light = vec4(result /= float(num_samples), 1.0f);
+	if(debug_show != 5 && debug_show != 6 && debug_show != 7) {
+		light = vec4(result /= float(num_samples), 1.0f);
+	}
 }
 

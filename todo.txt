@@ -15,12 +15,8 @@ Working To-Do:
 	Rendering:
 		[features]
 		dynamic lights
-			light rendering
-				add back torch/sun/ao/quad/norm/pos debug views
-				add back lines / forward render after test with depth buffer?
-				change light falloff
-				debug having multiple light quads
-
+			add back lines / forward render after test with depth buffer?
+			change light falloff
 			dynamic torches (build lists per chunk)
 
 			flashlight (directional lights)
