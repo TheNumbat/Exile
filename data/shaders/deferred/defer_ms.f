@@ -1,5 +1,5 @@
 
-#version 330 core
+#version 400 core
 
 #extension GL_ARB_shading_language_include : enable
 
@@ -23,6 +23,7 @@ void main() {
 
 	ivec2 coord = ivec2(gl_FragCoord.xy);
 	vec3 result = vec3(0.0f);
+	int i = gl_SampleID;
 
 	for(int i = 0; i < num_samples; i++) {
 		

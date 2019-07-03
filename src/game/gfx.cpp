@@ -123,9 +123,12 @@ void exile_renderer::world_clear() {
 	{
 		render_command cmd = render_command::make((draw_cmd_id)draw_cmd::clear);
 		
-		cmd.clear.fb_id = world_target.world_fb();
 		cmd.clear.components = (GLbitfield)gl_clear::color_buffer_bit | (GLbitfield)gl_clear::depth_buffer_bit;
 
+		cmd.clear.fb_id = world_target.world_fb();
+		world_tasks.add_command(cmd);
+		
+		cmd.clear.fb_id = world_target.get_fb();
 		world_tasks.add_command(cmd);
 	}
 }
@@ -267,6 +270,7 @@ void world_target_info::resolve(render_command_list* list) {
 	{ // Update light accumulation with dynamic lights
 		render_command cmd = render_command::make_cst(msaa ? exile->ren.cmd_defer_light_ms : exile->ren.cmd_defer_light, exile->ren.lighting_quads.gpu);
 
+
 		cmd.info.fb_id = world_info.light_target;
 		cmd.info.textures[0] = world_info.pos_buf;
 		cmd.info.textures[1] = world_info.norm_buf;
@@ -282,13 +286,17 @@ void world_target_info::resolve(render_command_list* list) {
 	{ // Composite and resolve albedo + accumulated light to effect buffer
 		render_command cmd = msaa ? exile->ren.comp_resolve_light.make_cmd() : exile->ren.comp_light.make_cmd();
 
-		cmd.info.fb_id = get_fb();
 		cmd.info.textures[0] = world_info.pos_buf;
 		cmd.info.textures[1] = world_info.col_buf;
 		cmd.info.textures[2] = world_info.light_buf;
 		cmd.info.textures[3] = world_info.norm_buf;
+		cmd.info.textures[4] = get_output();
 		cmd.info.user_data0 = &exile->ren;
 		cmd.info.user_data1 = &exile->w;
+
+		flip_fb();
+		cmd.info.fb_id = get_fb();
+
 		list->add_command(cmd);
 	}
 }
@@ -456,6 +464,7 @@ CALLBACK void uniforms_comp_light(shader_program* prog, render_command* cmd) {
 	glUniform1i(prog->location("col_tex"_), 1);
 	glUniform1i(prog->location("light_tex"_), 2);
 	glUniform1i(prog->location("norm_tex"_), 3);
+	glUniform1i(prog->location("env_tex"_), 4);
 
 	glUniform1i(prog->location("sky_fog"_), set->dist_fog);
 	glUniform1i(prog->location("debug_show"_), (i32)set->view);

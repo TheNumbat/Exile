@@ -50,7 +50,7 @@ void main() {
 	vec2 norm_xy = normalize(f_n).xy;
 	float norm_sign = 2.0f * step(0.0f, f_n.z) - 1.0f;
 
-	float shiny = 1.0f / 16.0f; // TODO(max): materials
+	float shiny = 1.0f / 32.0f; // TODO(max): materials
 	out_norm = vec4(norm_xy, norm_sign * shiny, 1.0f);
 	
 	float ao0 = mix(f_ao.x, f_ao.y, fract(f_uv.x));
