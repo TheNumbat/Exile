@@ -1851,7 +1851,7 @@ void render_camera::move(i32 dx, i32 dy, f32 sens) {
 
 m4 render_camera::proj(f32 ar) {
 
-	return project(fov, ar, 0.1f, 2000.0f);
+	return project(fov, ar, 0.001f, 2000.0f);
 }
 
 m4 render_camera::view() { 

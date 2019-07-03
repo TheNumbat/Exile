@@ -270,7 +270,6 @@ void world_target_info::resolve(render_command_list* list) {
 	{ // Update light accumulation with dynamic lights
 		render_command cmd = render_command::make_cst(msaa ? exile->ren.cmd_defer_light_ms : exile->ren.cmd_defer_light, exile->ren.lighting_quads.gpu);
 
-
 		cmd.info.fb_id = world_info.light_target;
 		cmd.info.textures[0] = world_info.pos_buf;
 		cmd.info.textures[1] = world_info.norm_buf;
@@ -278,6 +277,7 @@ void world_target_info::resolve(render_command_list* list) {
 		cmd.info.num_tris = exile->ren.lighting_quads.data.size;
 
 		list->push_settings();
+		list->set_setting(render_setting::aa_shading, true);
 		list->set_setting(render_setting::blend, (u8)blend_mode::add);
 		list->add_command(cmd);
 		list->pop_settings();
@@ -380,7 +380,7 @@ void exile_renderer::generate_commands() {
 	reg(3D_tex_instanced, mesh_3D_tex_instanced, "mesh/");
 
 	cmd_defer_light = exile->eng->ogl.add_command(FPTR(run_defer), FPTR(uniforms_defer), "shaders/deferred/defer.v"_, "shaders/deferred/defer.f"_);
-	cmd_defer_light_ms = exile->eng->ogl.add_command(FPTR(run_defer), FPTR(uniforms_defer_ms), "shaders/deferred/defer.v"_, "shaders/deferred/defer_ms.f"_);
+	cmd_defer_light_ms = exile->eng->ogl.add_command(FPTR(run_defer), FPTR(uniforms_defer), "shaders/deferred/defer.v"_, "shaders/deferred/defer_ms.f"_);
 
 	gamma.init(FPTR(uniforms_gamma), "gamma.f"_);
 	invert.init(FPTR(uniforms_invert), "invert.f"_);
@@ -512,16 +512,6 @@ CALLBACK void uniforms_defer(shader_program* prog, render_command* cmd) {
 	glUniform1i(prog->location("debug_show"_), (i32)set->view);
 	glUniform1i(prog->location("num_instances"_), cmd->info.num_tris);
 	glUniform1i(prog->location("dynamic_light"_), set->dynamic_light);
-	glUniform2f(prog->location("screen_size"_), (f32)ren->prev_dim.x, (f32)ren->prev_dim.y);
-}
-
-CALLBACK void uniforms_defer_ms(shader_program* prog, render_command* cmd) {
-	
-	uniforms_defer(prog, cmd);
-
-	exile_renderer* set = (exile_renderer*)cmd->info.user_data0;
-
-	glUniform1i(prog->location("num_samples"_), set->prev_samples);
 }
 
 CALLBACK void uniforms_invert(shader_program* prog, render_command* cmd) {

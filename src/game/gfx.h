@@ -425,4 +425,3 @@ CALLBACK void uniforms_comp_resolve_light(shader_program* prog, render_command* 
 
 CALLBACK void run_defer(render_command* cmd, gpu_object* gpu);
 CALLBACK void uniforms_defer(shader_program* prog, render_command* cmd);
-CALLBACK void uniforms_defer_ms(shader_program* prog, render_command* cmd);

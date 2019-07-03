@@ -28,7 +28,6 @@ void main() {
 		
 		vec3 col = texelFetch(col_tex, coord, i).xyz * texelFetch(light_tex, coord, i).xyz;
 		vec3 pos = texelFetch(pos_tex, coord, i).xyz;
-		vec3 norm = texelFetch(norm_tex, coord, i).xyz;
 
 		float sky_factor = 0.0f;
 		if(sky_fog) {
