@@ -245,9 +245,6 @@ struct dynamic_torch {
 
 enum class exile_component_view : i32 {
 	col  = 0,
-	torch,
-	sun,
-	ao,
 	pos,
 	norm,
 	quads
@@ -286,7 +283,9 @@ struct world_buffers {
 	texture_id col_buf, pos_buf, norm_buf, light_buf;
 	render_buffer depth_buf;
 	render_target col_buf_target, depth_buf_target, pos_buf_target, norm_buf_target, light_buf_target;
-	framebuffer_id fb = 0;
+	
+	framebuffer_id chunk_target = 0;
+	framebuffer_id light_target = 0;
 };
 struct effect_buffers {
 	texture_id effect0, effect1;
@@ -362,10 +361,11 @@ struct exile_renderer {
 
 	effect_pass invert, gamma;
 	effect_pass composite, composite_resolve, resolve;
+	effect_pass comp_resolve_light, comp_light;
 
 	world_target_info world_target;
 
-	render_command_list frame_tasks, hud_tasks;
+	render_command_list world_tasks, hud_tasks;
 
 	void hud_2D(gpu_object_id gpu_id);
 
@@ -413,7 +413,9 @@ CALLBACK void uniforms_gamma(shader_program* prog, render_command* cmd);
 CALLBACK void uniforms_invert(shader_program* prog, render_command* cmd);
 CALLBACK void uniforms_resolve(shader_program* prog, render_command* cmd);
 CALLBACK void uniforms_composite(shader_program* prog, render_command* cmd);
+CALLBACK void uniforms_comp_light(shader_program* prog, render_command* cmd);
 CALLBACK void uniforms_composite_resolve(shader_program* prog, render_command* cmd);
+CALLBACK void uniforms_comp_resolve_light(shader_program* prog, render_command* cmd);
 
 CALLBACK void run_defer(render_command* cmd, gpu_object* gpu);
 CALLBACK void uniforms_defer(shader_program* prog, render_command* cmd);

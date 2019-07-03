@@ -1,14 +1,11 @@
 
 #version 330 core
 
-in vec2 f_uv;
-
 out vec4 color;
 
 uniform int num_samples;
 uniform int num_textures;
 uniform sampler2DMS textures[8];
-uniform vec2 screen_size;
 
 vec4 texture_ms(int idx, ivec2 coord) {
 
@@ -24,7 +21,7 @@ void main() {
 
 	//TODO(max): this is totally not the right way to blend
 
-	ivec2 coord = ivec2(f_uv * screen_size);
+	ivec2 coord = ivec2(gl_FragCoord.xy);
 	
 	vec4 col = texture_ms(0, coord);
 

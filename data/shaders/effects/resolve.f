@@ -7,11 +7,10 @@ out vec4 color;
 
 uniform int num_samples;
 uniform sampler2DMS tex;
-uniform vec2 screen_size;
 
 void main() {
 
-	ivec2 coord = ivec2(f_uv * screen_size);
+	ivec2 coord = ivec2(gl_FragCoord);
 	
 	color = vec4(0.0f);
 
