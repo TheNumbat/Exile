@@ -183,6 +183,8 @@ CXChildVisitResult traversal(CXCursor c, CXCursor parent, CXClientData client_da
 			type_data data(type);
 			data.references.push_back(c);
 			types.insert({type, data});
+
+			log_out << "traversal type: " << clang_getTypeSpelling(type) << std::endl;
 		}
 	}
 

@@ -283,7 +283,7 @@ int main(int argc, char** argv) {
 
 		if(def_asset.type == asset_type::bitmap) {
 
-			asset_header.type = asset_type::bitmap;
+			asset_header.type = (u8)asset_type::bitmap;
 			memcpy(asset_header.name, def_asset.image.name.c_str(), def_asset.image.name.size() + 1);
 
 			file_asset_bitmap asset_bitmap;
@@ -319,7 +319,7 @@ int main(int argc, char** argv) {
 
 		} else if(def_asset.type == asset_type::ttf_font) {
 
- 			asset_header.type = asset_type::ttf_font;
+ 			asset_header.type = (u8)asset_type::ttf_font;
 			memcpy(asset_header.name, def_asset.ttf_font.name.c_str(), def_asset.ttf_font.name.size() + 1);
 
 			file_asset_ttf_font asset_font;
@@ -340,7 +340,7 @@ int main(int argc, char** argv) {
 
 		} else if(def_asset.type == asset_type::raster_font) {
 
-			asset_header.type = asset_type::raster_font;
+			asset_header.type = (u8)asset_type::raster_font;
 			memcpy(asset_header.name, def_asset.raster_font.name.c_str(), def_asset.raster_font.name.size() + 1);			
 
 			file_asset_raster_font asset_font;

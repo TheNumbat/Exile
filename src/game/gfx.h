@@ -248,12 +248,12 @@ enum class exile_component_view : i32 {
 	albedo,
 	pos,
 	norm,
-	
 	all_light,
 	torch,
 	sun,
 	ao,
-	dynamic
+	dynamic,
+	light_quad
 };
 
 struct world_render_settings {

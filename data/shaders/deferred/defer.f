@@ -30,8 +30,10 @@ void main() {
 
 	norm.z = sign(norm.z) * sqrt(1.0f - alpha);
 	
-	if(debug_show != 5 && debug_show != 6 && debug_show != 7) {
+	if(debug_show == 9) {
+		light = vec4(scalar_to_color(float(instance_id) / float(num_instances)), 1.0f / float(num_instances));
+	} else if(debug_show != 5 && debug_show != 6 && debug_show != 7) {
 		light = vec4(calculate_light_dynamic(pos, norm, shine), 1.0f);
-	}
+	} 
 }
 

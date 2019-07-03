@@ -143,7 +143,7 @@ void asset_store::load(string file) {
 			asset a;
 			a.name = string::from_c_str(current_asset->name);
 
-			if(current_asset->type == asset_type::bitmap) {
+			if(current_asset->type == (u8)asset_type::bitmap) {
 
 				a.type = asset_type::bitmap;
 
@@ -155,7 +155,7 @@ void asset_store::load(string file) {
 
 				assets.insert(a.name, a);
 
-			} else if(current_asset->type == asset_type::ttf_font) {
+			} else if(current_asset->type == (u8)asset_type::ttf_font) {
 
 				a.type = asset_type::ttf_font;
 
@@ -167,7 +167,7 @@ void asset_store::load(string file) {
 
 				assets.insert(a.name, a);
 
-			} else if(current_asset->type == asset_type::raster_font) {
+			} else if(current_asset->type == (u8)asset_type::raster_font) {
 
 				a.type = asset_type::raster_font;
 

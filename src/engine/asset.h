@@ -23,17 +23,6 @@
 // file_glyph_data[num_glyphs]
 // bitmap memory
 
-enum class asset_type : u8 {
-	none,
-	bitmap,
-	ttf_font,
-	raster_font,
-	shader
-	// mesh?
-	// audio?
-	// cfg?
-};
-
 #pragma pack(push, 1)
 struct file_glyph_data {
 	u32 codepoint = 0; // sorted by this
@@ -67,7 +56,7 @@ struct file_asset_bitmap {
 };
 
 struct file_asset_header {
-	asset_type type = asset_type::none;
+	u8 type 		= 0;
 	char name[128] 	= {};
 	u64 next 		= 0; // byte offset from start of file_asset
 };
@@ -76,6 +65,17 @@ struct asset_file_header {
 	u32 num_assets = 0;
 };
 #pragma pack(pop)
+
+enum class asset_type : u8 {
+	none,
+	bitmap,
+	ttf_font,
+	raster_font,
+	shader
+	// mesh?
+	// audio?
+	// cfg?
+};
 
 #ifndef BUILDER
 
