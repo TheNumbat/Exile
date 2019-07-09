@@ -14,6 +14,7 @@ Working To-Do:
 		[features]
 		dynamic lights
 			add back lines / forward render after test with depth buffer?
+				use depth texture to detect skybox instead of zero position
 			change light falloff
 			look at sample rate shading again; marking pixels as complex
 

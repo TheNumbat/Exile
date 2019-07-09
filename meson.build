@@ -68,7 +68,7 @@ custom_target('assets',
   			   build_by_default: true,
   			   command : [asset_builder, '@INPUT@', '@OUTPUT@'])
 
-run_command('cp', 'build/game.asset', 'data/game.asset', env: environment())
+run_command('cp', 'build/game.asset', 'data/game.asset')
 
 # Build meta-program
 
