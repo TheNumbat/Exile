@@ -6,11 +6,12 @@ out vec4 color;
 
 uniform int num_samples;
 
-uniform sampler2DMS pos_tex;
 uniform sampler2DMS col_tex;
 uniform sampler2DMS light_tex;
-uniform sampler2DMS norm_tex;
+uniform sampler2DMS depth_tex;
 uniform sampler2D 	env_tex;
+uniform sampler2DMS norm_tex;
+uniform sampler2DMS pos_tex;
 
 uniform float render_distance;
 uniform bool sky_fog;
@@ -29,12 +30,12 @@ void main() {
 		vec3 col = texelFetch(col_tex, coord, i).xyz * texelFetch(light_tex, coord, i).xyz;
 		vec3 pos = texelFetch(pos_tex, coord, i).xyz;
 
-		float sky_factor = 0.0f;
+		float sky_factor = step(1.0f, texelFetch(depth_tex, coord, i).x);
 		if(sky_fog) {
-			sky_factor = step(0.001f, length(pos)) * smoothstep(1.0f, 0.9f, length(pos.xz) / render_distance);
+			sky_factor += smoothstep(0.9f, 1.0f, length(pos.xz) / render_distance);
 		}
 
-		result += mix(sky, col, sky_factor);
+		result += mix(col, sky, min(sky_factor, 1.0f));
 	}
 
 	result /= float(num_samples);

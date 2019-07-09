@@ -233,8 +233,8 @@ void world_target_info::init(iv2 dim, i32 samples) {
 	world_info.light_buf = exile->eng->ogl.add_texture_target(dim, samples, gl_tex_format::rgb16f, gl_pixel_data_format::rgb);
 	world_info.light_buf_target = exile->eng->ogl.make_target(gl_draw_target::color_3, world_info.light_buf);
 
-	world_info.depth_buf = render_buffer::make(gl_tex_format::depth_component, dim, samples);
-	world_info.depth_buf_target = exile->eng->ogl.make_target(gl_draw_target::depth, &world_info.depth_buf);
+	world_info.depth_buf = exile->eng->ogl.add_texture_target(dim, samples, gl_tex_format::depth_component, gl_pixel_data_format::depth_component);
+	world_info.depth_buf_target = exile->eng->ogl.make_target(gl_draw_target::depth, world_info.depth_buf);
 
 	world_info.chunk_target = exile->eng->ogl.add_framebuffer();
 	exile->eng->ogl.add_target(world_info.chunk_target, world_info.col_buf_target);
@@ -286,11 +286,14 @@ void world_target_info::resolve(render_command_list* list) {
 	{ // Composite and resolve albedo + accumulated light to effect buffer
 		render_command cmd = msaa ? exile->ren.comp_resolve_light.make_cmd() : exile->ren.comp_light.make_cmd();
 
-		cmd.info.textures[0] = world_info.pos_buf;
-		cmd.info.textures[1] = world_info.col_buf;
-		cmd.info.textures[2] = world_info.light_buf;
-		cmd.info.textures[3] = world_info.norm_buf;
-		cmd.info.textures[4] = get_output();
+		cmd.info.textures[0] = world_info.col_buf;
+		cmd.info.textures[1] = world_info.light_buf;
+		cmd.info.textures[2] = world_info.depth_buf;
+		cmd.info.textures[3] = get_output();
+		
+		cmd.info.textures[4] = world_info.pos_buf;
+		cmd.info.textures[5] = world_info.norm_buf;
+		
 		cmd.info.user_data0 = &exile->ren;
 		cmd.info.user_data1 = &exile->w;
 
@@ -328,7 +331,7 @@ void world_target_info::destroy() {
 	effect_info.effect0 = effect_info.effect1 = effect_info.effect0_fb = effect_info.effect1_fb = 0;
 	effect_info.effect0_target = effect_info.effect1_target = {};
 
-	world_info.depth_buf.destroy();
+	exile->eng->ogl.destroy_texture(world_info.depth_buf);
 	exile->eng->ogl.destroy_texture(world_info.col_buf);
 	exile->eng->ogl.destroy_texture(world_info.pos_buf);
 	exile->eng->ogl.destroy_texture(world_info.norm_buf);
@@ -336,10 +339,9 @@ void world_target_info::destroy() {
 	exile->eng->ogl.destroy_framebuffer(world_info.chunk_target);
 	exile->eng->ogl.destroy_framebuffer(world_info.light_target);
 
-	world_info.depth_buf = {};
 	world_info.depth_buf_target = world_info.col_buf_target = world_info.pos_buf_target =
 		world_info.norm_buf_target = world_info.light_buf_target = {};
-	world_info.col_buf = world_info.pos_buf = world_info.norm_buf = 
+	world_info.depth_buf = world_info.col_buf = world_info.pos_buf = world_info.norm_buf = 
 		world_info.light_buf = world_info.chunk_target = world_info.light_target = 0;
 }
 
@@ -460,11 +462,12 @@ CALLBACK void uniforms_comp_light(shader_program* prog, render_command* cmd) {
 
 	world* w = (world*)cmd->info.user_data1;
 
-	glUniform1i(prog->location("pos_tex"_), 0);
-	glUniform1i(prog->location("col_tex"_), 1);
-	glUniform1i(prog->location("light_tex"_), 2);
-	glUniform1i(prog->location("norm_tex"_), 3);
-	glUniform1i(prog->location("env_tex"_), 4);
+	glUniform1i(prog->location("col_tex"_), 0);
+	glUniform1i(prog->location("light_tex"_), 1);
+	glUniform1i(prog->location("depth_tex"_), 2);
+	glUniform1i(prog->location("env_tex"_), 3);
+	glUniform1i(prog->location("pos_tex"_), 4);
+	glUniform1i(prog->location("norm_tex"_), 5);
 
 	glUniform1i(prog->location("sky_fog"_), set->dist_fog);
 	glUniform1i(prog->location("debug_show"_), (i32)set->view);

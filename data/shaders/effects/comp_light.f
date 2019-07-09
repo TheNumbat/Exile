@@ -4,11 +4,12 @@
 in vec2 f_uv;
 out vec4 color;
 
-uniform sampler2D pos_tex;
 uniform sampler2D col_tex;
 uniform sampler2D light_tex;
-uniform sampler2D norm_tex;
+uniform sampler2D depth_tex;
 uniform sampler2D env_tex;
+uniform sampler2D norm_tex;
+uniform sampler2D pos_tex;
 
 uniform float render_distance;
 uniform bool sky_fog;
@@ -22,12 +23,11 @@ void main() {
 	vec3 col = texture(col_tex, f_uv).rgb;
 	vec3 sky = texture(env_tex, f_uv).rgb;
 
-	float sky_factor = 0.0f;
+	float sky_factor = step(1.0f, texture(depth_tex, f_uv).x);
 	if(sky_fog) {
-		sky_factor = step(0.001f, length(pos)) * smoothstep(1.0f, 0.9f, length(pos.xz) / render_distance);
+		sky_factor *= smoothstep(0.9f, 1.0f, length(pos.xz) / render_distance);
 	}
-
-	vec3 result = mix(sky, light * col, sky_factor);
+	vec3 result = mix(col * light, sky, sky_factor);
 
 	if(debug_show == 0) {
 		color = vec4(result, 1.0f);

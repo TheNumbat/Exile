@@ -286,8 +286,7 @@ struct exile_render_settings {
 };
 
 struct world_buffers {
-	texture_id col_buf, pos_buf, norm_buf, light_buf;
-	render_buffer depth_buf;
+	texture_id col_buf, pos_buf, norm_buf, light_buf, depth_buf;
 	render_target col_buf_target, depth_buf_target, pos_buf_target, norm_buf_target, light_buf_target;
 	
 	framebuffer_id chunk_target = 0;
