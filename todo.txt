@@ -13,7 +13,6 @@ Working To-Do:
 	Rendering:
 		[features]
 		dynamic lights
-			add back lines / forward render after test with depth buffer
 			think more about how we integrate the environment texture w/ the lighting pipeline
 
 			change light falloff

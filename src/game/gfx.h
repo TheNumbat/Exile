@@ -253,7 +253,8 @@ enum class exile_component_view : i32 {
 	sun,
 	ao,
 	dynamic,
-	light_quad
+	light_quad,
+	depth
 };
 
 struct world_render_settings {
@@ -282,6 +283,7 @@ struct exile_render_settings {
 
 	i32 num_samples = 4;
 	f32 gamma = 2.1f;
+	bool enable_gamma = true;
 	bool invert_effect = false;
 };
 
@@ -370,7 +372,8 @@ struct exile_renderer {
 
 	world_target_info world_target;
 
-	render_command_list world_tasks, hud_tasks;
+	// TODO(max): combine to one list and sort
+	render_command_list world_tasks, hud_tasks, debug_geom;
 
 	void hud_2D(gpu_object_id gpu_id);
 

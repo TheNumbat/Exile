@@ -18,10 +18,8 @@ void exile_renderer::init(allocator* a) {
 
 	alloc = a;
 	hud_tasks = render_command_list::make(alloc, 32);
+	debug_geom = render_command_list::make(alloc, 32);
 	world_tasks = render_command_list::make(alloc, 1024);
-
-	hud_tasks.push_settings();
-	hud_tasks.set_setting(render_setting::depth_test, false);
 }
 
 void exile_renderer::world_skydome(gpu_object_id gpu_id, world_time* time, texture_id sky, m4 view, m4 proj) {
@@ -35,16 +33,10 @@ void exile_renderer::world_skydome(gpu_object_id gpu_id, world_time* time, textu
 	cmd.info.view = view;
 	cmd.info.proj = proj;
 
-	world_tasks.push_settings();
-	world_tasks.set_setting(render_setting::depth_test, false);
 	world_tasks.add_command(cmd);
-	world_tasks.pop_settings();
 }
 
 void exile_renderer::world_stars(gpu_object_id gpu_id, world_time* time, m4 view, m4 proj) {
-
-	world_tasks.push_settings();
-	world_tasks.set_setting(render_setting::point_size, true);
 
 	render_command cmd = render_command::make_cst(cmd_pointcloud, gpu_id);
 
@@ -54,7 +46,6 @@ void exile_renderer::world_stars(gpu_object_id gpu_id, world_time* time, m4 view
 	cmd.info.proj = proj;
 
 	world_tasks.add_command(cmd);
-	world_tasks.pop_settings();
 }
 
 void exile_renderer::world_begin_chunks() {
@@ -98,12 +89,10 @@ void exile_renderer::world_lines(gpu_object_id gpu_id, m4 view, m4 proj) {
 	
 	render_command cmd = render_command::make_cst(cmd_lines, gpu_id);
 
-	cmd.info.fb_id = world_target.world_fb();
-
 	cmd.info.view = view;
 	cmd.info.proj = proj;
 	
-	world_tasks.add_command(cmd);
+	debug_geom.add_command(cmd);
 }
 
 void exile_renderer::hud_2D(gpu_object_id gpu_id) {
@@ -118,17 +107,17 @@ void exile_renderer::hud_2D(gpu_object_id gpu_id) {
 
 void exile_renderer::world_clear() {
 
-	world_tasks.push_settings();
-
 	{
 		render_command cmd = render_command::make((draw_cmd_id)draw_cmd::clear);
 		
-		cmd.clear.components = (GLbitfield)gl_clear::color_buffer_bit | (GLbitfield)gl_clear::depth_buffer_bit;
+		cmd.clear.components = (GLbitfield)gl_clear::color_buffer_bit;
+
+		cmd.clear.fb_id = world_target.get_fb();
+		world_tasks.add_command(cmd);
+
+		cmd.clear.components |= (GLbitfield)gl_clear::depth_buffer_bit;
 
 		cmd.clear.fb_id = world_target.world_fb();
-		world_tasks.add_command(cmd);
-		
-		cmd.clear.fb_id = world_target.get_fb();
 		world_tasks.add_command(cmd);
 	}
 }
@@ -136,14 +125,11 @@ void exile_renderer::world_clear() {
 void exile_renderer::end_frame() {
 
 	// run world effects
-	world_tasks.push_settings();
-	world_tasks.set_setting(render_setting::depth_test, false);	
-
 	{	
 		world_target.resolve(&world_tasks);
 
 		// gamma correct
-		{
+		if(settings.enable_gamma) {
 			render_command cmd = gamma.make_cmd();
 			
 			cmd.info.textures[0] = world_target.get_output();
@@ -174,22 +160,31 @@ void exile_renderer::end_frame() {
 		render_command cmd = render_command::make((draw_cmd_id)draw_cmd::blit_fb);
 		cmd.blit.src = world_target.get_fb();
 		cmd.blit.mask = (GLbitfield)gl_clear::color_buffer_bit;
-		cmd.blit.filter = gl_tex_filter::scaled_resolve_fastest;		
+		cmd.blit.filter = gl_tex_filter::scaled_resolve_fastest;
+		world_tasks.add_command(cmd);
+ 	}
+	{
+		render_command cmd = render_command::make((draw_cmd_id)draw_cmd::blit_fb);
+		cmd.blit.src = world_target.world_fb();
+		cmd.blit.mask = (GLbitfield)gl_clear::depth_buffer_bit;
+		cmd.blit.filter = gl_tex_filter::nearest;
 		world_tasks.add_command(cmd);
  	}
 
- 	world_tasks.pop_settings();
-	exile->eng->ogl.execute_command_list(&world_tasks);
-	world_tasks.clear();
-	lighting_quads.clear();
-
- 	hud_tasks.pop_settings();
-	exile->eng->ogl.execute_command_list(&hud_tasks);
-	
-	hud_tasks.clear();
-	hud_tasks.push_settings();
-	hud_tasks.set_setting(render_setting::depth_test, false);
-
+ 	// execute frame
+	{
+		exile->eng->ogl.execute_command_list(&world_tasks);
+		world_tasks.clear();
+		lighting_quads.clear();
+	}
+	{
+		exile->eng->ogl.execute_command_list(&debug_geom);
+		debug_geom.clear();
+	}
+	{
+		exile->eng->ogl.execute_command_list(&hud_tasks);
+		hud_tasks.clear();
+	}
 	check_recreate();
 }
 
@@ -430,6 +425,7 @@ void exile_renderer::destroy() {
 	invert.destroy();
 	gamma.destroy();
 
+	debug_geom.destroy();
 	hud_tasks.destroy();
 	world_tasks.destroy();
 
@@ -627,24 +623,18 @@ CALLBACK void uniforms_mesh_skydome(shader_program* prog, render_command* cmd) {
 
 	world_time* time = (world_time*)cmd->info.user_data0;
 
-	GLint tloc = prog->location("transform"_);
-	GLint dloc = prog->location("day_01"_);
-	GLint sloc = prog->location("tex"_);
-
 	m4 transform = cmd->info.proj * cmd->info.view * cmd->info.model;
 
-	glUniform1i(sloc, 0);
-	glUniform1f(dloc, time->day_01());
-	glUniformMatrix4fv(tloc, 1, gl_bool::_false, transform.a);
+	glUniform1i(prog->location("tex"_), 0);
+	glUniform1f(prog->location("day_01"_), time->day_01());
+	glUniformMatrix4fv(prog->location("transform"_), 1, gl_bool::_false, transform.a);
 }
 
 CALLBACK void uniforms_mesh_cubemap(shader_program* prog, render_command* cmd) { 
 
-	GLint loc = prog->location("transform"_);
-
 	m4 transform = cmd->info.proj * cmd->info.view * cmd->info.model;
 
-	glUniformMatrix4fv(loc, 1, gl_bool::_false, transform.a);
+	glUniformMatrix4fv(prog->location("transform"_), 1, gl_bool::_false, transform.a);
 }
 
 CALLBACK void uniforms_mesh_chunk(shader_program* prog, render_command* cmd) { 

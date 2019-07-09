@@ -339,7 +339,7 @@ struct cmd_settings {
 	bool multisample = true;
 	bool sample_shading = false;
 	bool depth_mask = true;
-	bool point_size = false;
+	bool point_size = true;
 	bool output_srgb = false;
 	blend_mode blend = blend_mode::alpha;
 };

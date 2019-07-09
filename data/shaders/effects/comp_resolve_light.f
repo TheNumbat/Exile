@@ -50,6 +50,8 @@ void main() {
 		vec3 norm = texelFetch(norm_tex, coord, 0).xyz;
 		norm.z = sign(norm.z) * sqrt(1.0f - dot(norm.xy, norm.xy));
 		color = vec4(abs(norm), 1.0f);
+	} else if(debug_show == 10) {
+		color = vec4(vec3(texelFetch(depth_tex, coord, 0).x), 1.0f);
 	} else {
 		color = vec4(texelFetch(light_tex, coord, 0).xyz, 1.0f);
 	}
