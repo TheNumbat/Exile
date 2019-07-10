@@ -305,7 +305,8 @@ void ogl_manager::gl_end_reload() {
 	}
 
 	glBlendFunc(gl_blend_factor::src_alpha, gl_blend_factor::one_minus_src_alpha);
-	glDepthFunc(gl_depth_factor::lequal);
+	glDepthFunc(gl_depth_factor::greater);
+	glClearDepth(0.0);
 }
 
 void ogl_manager::reload_texture_assets() { 
@@ -378,7 +379,8 @@ ogl_manager ogl_manager::make(platform_window* win, allocator* a) {
 	ret.dbg_shader = shader_program::make("shaders/dbg.v"_,"shaders/dbg.f"_, {}, FPTR(uniforms_dbg), a);
 
 	glBlendFunc(gl_blend_factor::src_alpha, gl_blend_factor::one_minus_src_alpha);
-	glDepthFunc(gl_depth_factor::lequal);
+	glDepthFunc(gl_depth_factor::greater);
+	glClearDepth(0.0);
 
 	return ret;
 }
@@ -1851,7 +1853,7 @@ void render_camera::move(i32 dx, i32 dy, f32 sens) {
 
 m4 render_camera::proj(f32 ar) {
 
-	return project(fov, ar, 0.001f, 2000.0f);
+	return project(fov, ar, far, near);
 }
 
 m4 render_camera::view() { 

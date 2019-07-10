@@ -974,7 +974,7 @@ __forceinline __m128 Mat2MulAdj(__m128 vec1, __m128 vec2)
 		_mm_sub_ps(_mm_mul_ps(                     vec1, VecSwizzle(vec2, 3,0,3,0)),
 		           _mm_mul_ps(VecSwizzle(vec1, 1,0,3,2), VecSwizzle(vec2, 2,1,2,1)));
 }
-m4 invert(const m4& inM)
+m4 invert(m4 inM)
 {
 	__m128 A = VecShuffle_0101(inM.packed[0], inM.packed[1]);
 	__m128 B = VecShuffle_2323(inM.packed[0], inM.packed[1]);

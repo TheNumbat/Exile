@@ -2,6 +2,7 @@
 Working To-Do:
 
 	- Want to finish all rendering features + at least explore the performance/structure enhancements by August
+		when this is done, write really really long post about everything in the graphics pipe
 	- Want to finish world interaction upgrades before going back to school
 	- By the end of first semester, finish general polish for releasable demo.
 
@@ -13,6 +14,11 @@ Working To-Do:
 	Rendering:
 		[features]
 		dynamic lights
+			fix depth buffer precision
+				also do this in comp light
+				remove pos texture
+				update defer.f comp_light.f
+				fix depth blitting pass \/
 			separate light pass to stay in MSAA land
 				then do forward pass before blitting to effect targets
 

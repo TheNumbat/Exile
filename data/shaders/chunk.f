@@ -1,6 +1,8 @@
 
 #version 330 core
 
+#extension GL_ARB_shading_language_include : enable
+
 flat in uint f_t, f_ql, f_qs;
 flat in vec4 f_ao;
 flat in vec4 f_l, f_s;
@@ -22,6 +24,8 @@ uniform bool block_light;
 uniform bool ambient_occlusion;
 
 uniform int debug_show;
+
+#include </shaders/util.glsl>
 
 vec3 calculate_light_base(vec3 light) {
 
@@ -46,12 +50,9 @@ void main() {
 	
 	out_color = texture(blocks_tex, uvt);
 	out_pos = vec4(f_pos, 1.0f);
-	
-	vec2 norm_xy = normalize(f_n).xy;
-	float norm_sign = 2.0f * step(0.0f, f_n.z) - 1.0f;
 
 	float shiny = 1.0f / 32.0f; // TODO(max): materials
-	out_norm = vec4(norm_xy, norm_sign * shiny, 1.0f);
+	out_norm = vec4(pack_norm(f_n, shiny), 1.0f);
 	
 	float ao0 = mix(f_ao.x, f_ao.y, fract(f_uv.x));
 	float ao1 = mix(f_ao.z, f_ao.w, fract(f_uv.x));

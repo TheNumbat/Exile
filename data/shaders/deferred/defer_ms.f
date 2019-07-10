@@ -4,11 +4,12 @@
 #extension GL_ARB_shading_language_include : enable
 
 flat in int instance_id;
+in vec3 f_view;
 
 out vec4 light;
 
-uniform sampler2DMS pos_tex;
 uniform sampler2DMS norm_tex;
+uniform sampler2DMS depth_tex;
 
 uniform int num_instances;
 uniform int debug_show;
@@ -23,13 +24,13 @@ void main() {
 	int i = gl_SampleID;
 			gl_SampleMask[0] = 1 << i;
 	
-	vec3 pos = texelFetch(pos_tex, coord, i).xyz;
-	vec3 norm = texelFetch(norm_tex, coord, i).xyz;
+	vec3 norm_packed = texelFetch(norm_tex, coord, i).xyz;
+	float depth = texelFetch(depth_tex, coord, i).x;
 	
-	float alpha = dot(norm.xy, norm.xy);
-	float shine = 1.0f / abs(norm.z);
-	norm.z = sign(norm.z) * sqrt(1.0f - alpha);
+	float shine = 1.0f / abs(norm_packed.z);
+	vec3 norm = unpack_norm(norm_packed);
 
+	vec3 pos = calc_pos(f_view, depth);
 	vec3 result = calculate_light_dynamic(pos, norm, shine);
 
 	if(debug_show == 9) {

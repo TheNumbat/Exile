@@ -89,6 +89,7 @@ enum class gl_tex_param : GLenum {
 };
 
 enum class gl_tex_format : GLint {
+	depth_component32f          = 0x8CAC,
 	depth_component				= 0x1902,
 	depth_stencil        		= 0x84F9,
 	red							= 0x1903,
@@ -786,6 +787,7 @@ DLL_IMPORT void glEnable(gl_capability cap);
 DLL_IMPORT void glDisable(gl_capability cap);
 
 DLL_IMPORT void glClear(GLbitfield mask);
+DLL_IMPORT void glClearDepth(GLdouble value);
 DLL_IMPORT void glClearColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha);
 DLL_IMPORT void glViewport(GLint x, GLint y, GLsizei width, GLsizei height);
 DLL_IMPORT void glDepthMask(gl_bool enable);
