@@ -33,7 +33,7 @@ void exile_renderer::world_skydome(gpu_object_id gpu_id, world_time* time, textu
 	cmd.info.view = view;
 	cmd.info.proj = proj;
 
-	// world_tasks.add_command(cmd);
+	world_tasks.add_command(cmd);
 }
 
 void exile_renderer::world_stars(gpu_object_id gpu_id, world_time* time, m4 view, m4 proj) {
@@ -45,7 +45,7 @@ void exile_renderer::world_stars(gpu_object_id gpu_id, world_time* time, m4 view
 	cmd.info.view = view;
 	cmd.info.proj = proj;
 
-	// world_tasks.add_command(cmd);
+	world_tasks.add_command(cmd);
 }
 
 void exile_renderer::world_begin_chunks() {
@@ -178,11 +178,11 @@ void exile_renderer::end_frame() {
 		lighting_quads.clear();
 	}
 	{
-		// exile->eng->ogl.execute_command_list(&debug_geom);
+		exile->eng->ogl.execute_command_list(&debug_geom);
 		debug_geom.clear();
 	}
 	{
-		// exile->eng->ogl.execute_command_list(&hud_tasks);
+		exile->eng->ogl.execute_command_list(&hud_tasks);
 		hud_tasks.clear();
 	}
 	check_recreate();

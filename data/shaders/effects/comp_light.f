@@ -23,11 +23,12 @@ void main() {
 	vec3 col = texture(col_tex, f_uv).rgb;
 	vec3 sky = texture(env_tex, f_uv).rgb;
 
-	float sky_factor = step(1.0f, texture(depth_tex, f_uv).x);
+	float sky_factor = texture(depth_tex, f_uv).x == 0.0f ? 1.0f : 0.0f;
 	if(sky_fog) {
-		sky_factor *= smoothstep(0.9f, 1.0f, length(pos.xz) / render_distance);
+		sky_factor += smoothstep(0.9f, 1.0f, length(pos.xz) / render_distance);
 	}
-	vec3 result = mix(col * light, sky, sky_factor);
+
+	vec3 result = mix(col * light, sky, min(sky_factor, 1.0f));
 
 	if(debug_show == 0) {
 		color = vec4(result, 1.0f);

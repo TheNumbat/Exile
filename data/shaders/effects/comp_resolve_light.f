@@ -30,7 +30,7 @@ void main() {
 		vec3 col = texelFetch(col_tex, coord, i).xyz * texelFetch(light_tex, coord, i).xyz;
 		vec3 pos = texelFetch(pos_tex, coord, i).xyz;
 
-		float sky_factor = step(1.0f, texelFetch(depth_tex, coord, i).x);
+		float sky_factor = texelFetch(depth_tex, coord, i).x == 0.0f ? 1.0f : 0.0f;
 		if(sky_fog) {
 			sky_factor += smoothstep(0.9f, 1.0f, length(pos.xz) / render_distance);
 		}

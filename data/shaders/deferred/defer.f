@@ -3,13 +3,14 @@
 
 #extension GL_ARB_shading_language_include : enable
 
-in vec2 f_uv;
 flat in int instance_id;
+in vec2 f_uv;
+in vec3 f_view;
 
 out vec4 light;
 
-uniform sampler2D pos_tex;
 uniform sampler2D norm_tex;
+uniform sampler2D depth_tex;
 
 uniform int num_instances;
 uniform int debug_show;
@@ -19,15 +20,15 @@ uniform int debug_show;
 
 void main() {
 
-	vec3 pos = texture(pos_tex, f_uv).xyz;
-	vec3 norm = texture(norm_tex, f_uv).xyz;
+	vec3 norm_packed = texture(norm_tex, f_uv).xyz;
+	float depth = texture(depth_tex, f_uv).x;
 	
-	float alpha = dot(norm.xy, norm.xy);
-	float shine = 1.0f / abs(norm.z);
-	norm.z = sign(norm.z) * sqrt(1.0f - alpha);
+	float shine = 1.0f / abs(norm_packed.z);
+	vec3 norm = unpack_norm(norm_packed);
 
+	vec3 pos = calc_pos(f_view, depth);
 	vec3 result = calculate_light_dynamic(pos, norm, shine);
-	
+
 	if(debug_show == 9) {
 		light = vec4(scalar_to_color(float(instance_id) / float(num_instances)), 1.0f / float(num_instances));
 	} else if(debug_show != 5 && debug_show != 6 && debug_show != 7) {

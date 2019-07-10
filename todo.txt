@@ -15,10 +15,9 @@ Working To-Do:
 		[features]
 		dynamic lights
 			fix depth buffer precision
-				also do this in comp light
+				also do this in comp light & no ms
 				remove pos texture
-				update defer.f comp_light.f
-				fix depth blitting pass \/
+				fix blit & forward pass pass \/
 			separate light pass to stay in MSAA land
 				then do forward pass before blitting to effect targets
 
