@@ -14,10 +14,9 @@ Working To-Do:
 	Rendering:
 		[features]
 		dynamic lights
-			fix depth buffer precision
-				fix blit & forward pass pass \/
+			fix blit & forward pass pass \/
 			separate light pass to stay in MSAA land
-				then do forward pass before blitting to effect targets
+				then do forward pass before blitting to effect targets (renders debug geometry with MSAA too)
 
 			change light falloff
 			dynamic torches (build lists per chunk)
