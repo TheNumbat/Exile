@@ -13,14 +13,12 @@ Working To-Do:
 	Rendering:
 		[features]
 		dynamic lights
-			think more about how we integrate the environment texture w/ the lighting pipeline
+			separate light pass to stay in MSAA land
+				then do forward pass before blitting to effect targets
 
 			change light falloff
-			look at sample rate shading again; marking pixels as complex
-
 			dynamic torches (build lists per chunk)
 				calculate screen bounding quads
-
 			flashlight (directional lights)
 			
 			specular textures
@@ -48,22 +46,26 @@ Working To-Do:
 
 		[performance/structure]
 		shaders as assets
+		think more about how we integrate the environment texture w/ the lighting pipeline
+		look at sample rate shading again; marking pixels as complex
+		reduce state changes
+			diff state instead of setting everything
+			set up sorting system for commands based on state
+			uniform buffers
+			multidrawindirect for chunks; begin_chunks finish_chunks generate one command together
 		chunk culling / visibility / draw optimizations
 			try cpu frustum + occlusion queries
 				defer the queries a few frames?
 			!!! removing chunk gpu data when it is not being drawn 
 				also cpu data, but that comes later
-		chunk uniform buffers
 		bindless OGL stuff
 		look into Forward+ rendering or Tile Deferred / Tiled Forward 
 			this is even better for supporting tons of small-radius lights
 			not that much better than deferred for large lights, though, so this depends on the dynamic
 			radius of torches 
 		move OpenGL to another thread - should be pretty easy through gfx
-			reduce state calls; maybe sorting via key system?
 			lockless task buffers? 
 			can we thread generating the chunk command list?
-			Chunk Multidrawinderect !!!! also uniform buffers !!!!
 
 	World:
 		FIX: torchlight AND sunlight removal
