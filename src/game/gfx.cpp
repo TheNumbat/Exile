@@ -48,7 +48,13 @@ void exile_renderer::world_stars(gpu_object_id gpu_id, world_time* time, m4 view
 	world_tasks.add_command(cmd);
 }
 
-void exile_renderer::world_begin_chunks() {
+void exile_renderer::world_begin_chunks(world* w) {
+
+	// TODO(max): move this somewhere else?
+	f32 ar = (f32)exile->eng->window.settings.w / (f32)exile->eng->window.settings.h;
+	proj_info.ivp = inverse(w->p.camera.proj(ar) * w->p.camera.view_no_translate());
+	proj_info.proj_a = w->p.camera.near / (w->p.camera.near - w->p.camera.far);
+	proj_info.proj_b = (-w->p.camera.near * w->p.camera.far) / (w->p.camera.near - w->p.camera.far);
 
 	world_tasks.push_settings();
 	if(settings.world_set.wireframe)
@@ -201,6 +207,11 @@ void effect_pass::init(_FPTR* uniforms, string frag) {
 	cmd_id = exile->eng->ogl.add_command(FPTR(run_effect), uniforms, "shaders/effects/effect.v"_, string::makef("shaders/effects/%"_, frag));
 }
 
+void effect_pass::init(_FPTR* uniforms, string vert, string frag) {
+
+	cmd_id = exile->eng->ogl.add_command(FPTR(run_effect), uniforms, string::makef("shaders/%"_, vert), string::makef("shaders/%"_, frag));
+}
+
 void effect_pass::destroy() {
 
 	exile->eng->ogl.rem_command(cmd_id);
@@ -219,9 +230,6 @@ void world_target_info::init(iv2 dim, i32 samples) {
 	world_info.col_buf = exile->eng->ogl.add_texture_target(dim, samples, gl_tex_format::rgb8, gl_pixel_data_format::rgb);
 	world_info.col_buf_target = exile->eng->ogl.make_target(gl_draw_target::color_0, world_info.col_buf);
 
-	world_info.pos_buf = exile->eng->ogl.add_texture_target(dim, samples, gl_tex_format::rgb16f, gl_pixel_data_format::rgb);
-	world_info.pos_buf_target = exile->eng->ogl.make_target(gl_draw_target::color_1, world_info.pos_buf);
-
 	world_info.norm_buf = exile->eng->ogl.add_texture_target(dim, samples, gl_tex_format::rgb16_snorm, gl_pixel_data_format::rgb);
 	world_info.norm_buf_target = exile->eng->ogl.make_target(gl_draw_target::color_2, world_info.norm_buf);
 
@@ -233,7 +241,6 @@ void world_target_info::init(iv2 dim, i32 samples) {
 
 	world_info.chunk_target = exile->eng->ogl.add_framebuffer();
 	exile->eng->ogl.add_target(world_info.chunk_target, world_info.col_buf_target);
-	exile->eng->ogl.add_target(world_info.chunk_target, world_info.pos_buf_target);
 	exile->eng->ogl.add_target(world_info.chunk_target, world_info.norm_buf_target);
 	exile->eng->ogl.add_target(world_info.chunk_target, world_info.light_buf_target);
 	exile->eng->ogl.add_target(world_info.chunk_target, world_info.depth_buf_target);
@@ -269,7 +276,6 @@ void world_target_info::resolve(render_command_list* list) {
 		cmd.info.textures[0] = world_info.norm_buf;
 		cmd.info.textures[1] = world_info.depth_buf;
 		cmd.info.user_data0 = &exile->ren;
-		cmd.info.user_data1 = &exile->w;
 		cmd.info.num_tris = exile->ren.lighting_quads.data.size;
 
 		list->push_settings();
@@ -285,10 +291,8 @@ void world_target_info::resolve(render_command_list* list) {
 		cmd.info.textures[0] = world_info.col_buf;
 		cmd.info.textures[1] = world_info.light_buf;
 		cmd.info.textures[2] = world_info.depth_buf;
-		cmd.info.textures[3] = get_output();
-		
-		cmd.info.textures[4] = world_info.pos_buf;
-		cmd.info.textures[5] = world_info.norm_buf;
+		cmd.info.textures[3] = get_output();		
+		cmd.info.textures[4] = world_info.norm_buf;
 		
 		cmd.info.user_data0 = &exile->ren;
 		cmd.info.user_data1 = &exile->w;
@@ -329,15 +333,14 @@ void world_target_info::destroy() {
 
 	exile->eng->ogl.destroy_texture(world_info.depth_buf);
 	exile->eng->ogl.destroy_texture(world_info.col_buf);
-	exile->eng->ogl.destroy_texture(world_info.pos_buf);
 	exile->eng->ogl.destroy_texture(world_info.norm_buf);
 	exile->eng->ogl.destroy_texture(world_info.light_buf);
 	exile->eng->ogl.destroy_framebuffer(world_info.chunk_target);
 	exile->eng->ogl.destroy_framebuffer(world_info.light_target);
 
-	world_info.depth_buf_target = world_info.col_buf_target = world_info.pos_buf_target =
+	world_info.depth_buf_target = world_info.col_buf_target = 
 		world_info.norm_buf_target = world_info.light_buf_target = {};
-	world_info.depth_buf = world_info.col_buf = world_info.pos_buf = world_info.norm_buf = 
+	world_info.depth_buf = world_info.col_buf = world_info.norm_buf = 
 		world_info.light_buf = world_info.chunk_target = world_info.light_target = 0;
 }
 
@@ -358,7 +361,6 @@ void exile_renderer::check_recreate() {
 void exile_renderer::generate_commands() { 
 
 	exile->eng->ogl.add_include("shaders/util.glsl"_);
-	exile->eng->ogl.add_include("shaders/deferred/defer_inc.glsl"_);
 	
 	#define reg(cmdn, name, path) cmd_##cmdn = exile->eng->ogl.add_command(FPTR(run_##name), FPTR(uniforms_##name), \
 											   "shaders/" path #cmdn ".v"_, "shaders/" path #cmdn ".f"_);
@@ -380,13 +382,14 @@ void exile_renderer::generate_commands() {
 	cmd_defer_light = exile->eng->ogl.add_command(FPTR(run_defer), FPTR(uniforms_defer), "shaders/deferred/defer.v"_, "shaders/deferred/defer.f"_);
 	cmd_defer_light_ms = exile->eng->ogl.add_command(FPTR(run_defer), FPTR(uniforms_defer), "shaders/deferred/defer.v"_, "shaders/deferred/defer_ms.f"_);
 
+	comp_light.init(FPTR(uniforms_comp_light), "deferred/comp.v"_, "deferred/comp_light.f"_);
+	comp_resolve_light.init(FPTR(uniforms_comp_resolve_light), "deferred/comp.v"_, "deferred/comp_resolve_light.f"_);
+
 	gamma.init(FPTR(uniforms_gamma), "gamma.f"_);
 	invert.init(FPTR(uniforms_invert), "invert.f"_);
 	resolve.init(FPTR(uniforms_resolve), "resolve.f"_);
 	composite.init(FPTR(uniforms_composite), "composite.f"_);
 	composite_resolve.init(FPTR(uniforms_composite_resolve), "composite_resolve.f"_);
-	comp_resolve_light.init(FPTR(uniforms_comp_resolve_light), "comp_resolve_light.f"_);
-	comp_light.init(FPTR(uniforms_comp_light), "comp_light.f"_);
 	
 	#undef reg
 }
@@ -463,8 +466,11 @@ CALLBACK void uniforms_comp_light(shader_program* prog, render_command* cmd) {
 	glUniform1i(prog->location("light_tex"_), 1);
 	glUniform1i(prog->location("depth_tex"_), 2);
 	glUniform1i(prog->location("env_tex"_), 3);
-	glUniform1i(prog->location("pos_tex"_), 4);
-	glUniform1i(prog->location("norm_tex"_), 5);
+	glUniform1i(prog->location("norm_tex"_), 4);
+
+	glUniform1f(prog->location("proj_a"_), ren->proj_info.proj_a);
+	glUniform1f(prog->location("proj_b"_), ren->proj_info.proj_b);
+	glUniformMatrix4fv(prog->location("ivp"_), 1, gl_bool::_false, ren->proj_info.ivp.a);
 
 	glUniform1i(prog->location("sky_fog"_), set->dist_fog);
 	glUniform1i(prog->location("debug_show"_), (i32)set->view);
@@ -506,20 +512,13 @@ CALLBACK void uniforms_defer(shader_program* prog, render_command* cmd) {
 
 	exile_renderer* ren = (exile_renderer*)cmd->info.user_data0;
 	world_render_settings* set = &ren->settings.world_set;
-	world* w = (world*)cmd->info.user_data1;
 
 	glUniform1i(prog->location("norm_tex"_), 0);
 	glUniform1i(prog->location("depth_tex"_), 1);
 
-	f32 ar = (f32)exile->eng->window.settings.w / (f32)exile->eng->window.settings.h;
-	m4 p = w->p.camera.proj(ar);
-	m4 ivp = invert(p * w->p.camera.view_no_translate());
-	f32 proj_a = w->p.camera.near / (w->p.camera.near - w->p.camera.far);
-	f32 proj_b = (-w->p.camera.near * w->p.camera.far) / (w->p.camera.near - w->p.camera.far);
-
-	glUniform1f(prog->location("proj_a"_), proj_a);
-	glUniform1f(prog->location("proj_b"_), proj_b);
-	glUniformMatrix4fv(prog->location("ivp"_), 1, gl_bool::_false, ivp.a);
+	glUniform1f(prog->location("proj_a"_), ren->proj_info.proj_a);
+	glUniform1f(prog->location("proj_b"_), ren->proj_info.proj_b);
+	glUniformMatrix4fv(prog->location("ivp"_), 1, gl_bool::_false, ren->proj_info.ivp.a);
 
 	glUniform1i(prog->location("debug_show"_), (i32)set->view);
 	glUniform1i(prog->location("num_instances"_), cmd->info.num_tris);

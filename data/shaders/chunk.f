@@ -8,12 +8,10 @@ flat in vec4 f_ao;
 flat in vec4 f_l, f_s;
 in vec2 f_uv;
 in vec3 f_n;
-in vec3 f_pos;
 
 layout (location = 0) out vec4 out_color;
-layout (location = 1) out vec4 out_pos;
-layout (location = 2) out vec4 out_norm;
-layout (location = 3) out vec4 out_light;
+layout (location = 1) out vec4 out_norm;
+layout (location = 2) out vec4 out_light;
 
 uniform sampler2DArray blocks_tex;
 
@@ -49,7 +47,6 @@ void main() {
 	vec3 uvt = vec3(f_uv, f_t);
 	
 	out_color = texture(blocks_tex, uvt);
-	out_pos = vec4(f_pos, 1.0f);
 
 	float shiny = 1.0f / 32.0f; // TODO(max): materials
 	out_norm = vec4(pack_norm(f_n, shiny), 1.0f);

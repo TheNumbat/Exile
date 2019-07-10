@@ -288,8 +288,8 @@ struct exile_render_settings {
 };
 
 struct world_buffers {
-	texture_id col_buf, pos_buf, norm_buf, light_buf, depth_buf;
-	render_target col_buf_target, depth_buf_target, pos_buf_target, norm_buf_target, light_buf_target;
+	texture_id col_buf, norm_buf, light_buf, depth_buf;
+	render_target col_buf_target, depth_buf_target, norm_buf_target, light_buf_target;
 	
 	framebuffer_id chunk_target = 0;
 	framebuffer_id light_target = 0;
@@ -299,6 +299,11 @@ struct effect_buffers {
 	render_target effect0_target, effect1_target; 
 	framebuffer_id effect0_fb = 0;
 	framebuffer_id effect1_fb = 0;
+};
+
+struct world_proj_info {
+	m4 ivp;
+	f32 proj_a, proj_b;
 };
 
 struct world_target_info {
@@ -329,6 +334,7 @@ struct effect_pass {
 	draw_cmd_id cmd_id = -1;
 
 	void init(_FPTR* uniforms, string frag);
+	void init(_FPTR* uniforms, string vert, string frag);
 	void destroy();
 
 	render_command make_cmd();
@@ -374,6 +380,7 @@ struct exile_renderer {
 
 	// TODO(max): combine to one list and sort
 	render_command_list world_tasks, hud_tasks, debug_geom;
+	world_proj_info proj_info;
 
 	void hud_2D(gpu_object_id gpu_id);
 
@@ -382,7 +389,7 @@ struct exile_renderer {
 	void world_stars(gpu_object_id gpu_id, world_time* time, m4 view, m4 proj);
 	void world_skydome(gpu_object_id gpu_id, world_time* time, texture_id sky, m4 view, m4 proj);
 	
-	void world_begin_chunks();
+	void world_begin_chunks(world* w);
 	// NOTE(max): this assumes the chunk mesh object is long-lived
 	void world_chunk(world* w, chunk* c, texture_id blocks, texture_id sky, m4 model, m4 view, m4 proj);
 	void world_finish_chunks();

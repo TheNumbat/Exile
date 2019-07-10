@@ -254,7 +254,7 @@ v4 operator*(m4 l, v4 r);
 m4 operator*(m4 l, f32 r);
 m4 operator/(m4 l, f32 r);
 m4 transpose(m4 m);
-m4 invert(m4 m);
+m4 inverse(m4 m);
 m4 ortho(f32 l, f32 r, f32 b, f32 t, f32 n, f32 f);
 m4 project(f32 fov, f32 ar, f32 n, f32 f);
 m4 translate(v3 v);

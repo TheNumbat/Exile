@@ -15,7 +15,6 @@ uniform int num_instances;
 uniform int debug_show;
 
 #include </shaders/util.glsl>
-#include </shaders/deferred/defer_inc.glsl>
 
 void main() {
 
