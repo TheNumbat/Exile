@@ -351,19 +351,14 @@ struct exile_renderer {
 	void init(allocator* a);
 	void destroy();
 
-	draw_cmd_id cmd_2D_col           = 0;
-	draw_cmd_id cmd_2D_tex           = 0;
-	draw_cmd_id cmd_2D_tex_col       = 0;
-	draw_cmd_id cmd_3D_tex           = 0;
-	draw_cmd_id cmd_3D_tex_instanced = 0;
-	draw_cmd_id cmd_lines            = 0;
-	draw_cmd_id cmd_pointcloud       = 0;
-	draw_cmd_id cmd_cubemap          = 0;
-	draw_cmd_id cmd_chunk            = 0;
-	draw_cmd_id cmd_skydome          = 0;
-	draw_cmd_id cmd_skyfar           = 0;
-	draw_cmd_id cmd_defer_light	 	 = 0;
-	draw_cmd_id cmd_defer_light_ms	 = 0;
+	draw_cmd_id cmd_2D_col           = 0, cmd_2D_tex      = 0,
+                cmd_2D_tex_col       = 0, cmd_3D_tex      = 0,
+                cmd_3D_tex_instanced = 0, cmd_lines       = 0;
+
+	draw_cmd_id cmd_pointcloud       = 0, cmd_cubemap     = 0,
+                cmd_chunk            = 0, cmd_skydome     = 0,
+                cmd_skyfar           = 0, cmd_defer_light = 0,
+                cmd_defer_light_ms	 = 0;
 
 	exile_render_settings settings;
 

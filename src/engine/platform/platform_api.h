@@ -32,12 +32,12 @@ extern platform_api* global_api;
 #ifdef PLATFORM_WIN32
 #include "windows/platform_win32_api.h"
 #elif defined(PLATFORM_SDL)
-#include "SDL/platform_sdl_api.h"
+#include "SDL/platform_SDL_api.h"
 #else
 #error Unsupported Platform
 #endif
 
-enum platform_window_mode : u8 {
+enum class platform_window_mode : u8 {
 	windowed,
 	fullscreen,
 };

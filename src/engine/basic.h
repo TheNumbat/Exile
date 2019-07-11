@@ -9,10 +9,8 @@
 
 #ifdef __clang__
 #define NOREFLECT __attribute__((annotate("noreflect")))
-#define RENAME(name) __attribute__((annotate(#name)))
 #else
 #define NOREFLECT
-#define RENAME(name)
 #endif
 
 #ifdef _MSC_VER

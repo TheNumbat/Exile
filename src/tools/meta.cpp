@@ -340,6 +340,7 @@ CXChildVisitResult check_noreflect(CXCursor c, CXCursor parent, CXClientData cli
 
 		if(attribute == "noreflect") {
 			*data = true;
+			log_out << "type is noreflect" << std::endl;
 			return CXChildVisit_Break;
 		}
 	}
@@ -470,6 +471,11 @@ void print_pointer(CXType type, bool just_print = false) {
 
 	if(!just_print) {
 		print_dep_type(to, type);
+		if(to.kind == CXType_Record) {
+			bool no_reflect = false;
+			clang_visitChildren(clang_getTypeDeclaration(to), check_noreflect, &no_reflect);
+			if(no_reflect) return;
+		}
 	}
 
 	std::string type_name = to_string(clang_getTypeSpelling(type));
