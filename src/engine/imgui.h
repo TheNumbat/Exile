@@ -1,7 +1,9 @@
 
 #pragma once
 
+#ifndef __clang__
 #include <imgui/imgui.h>
+#endif
 #include "ds/string.h"
 #include "ds/map.h"
 #include "platform/gl.h"

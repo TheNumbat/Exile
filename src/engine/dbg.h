@@ -3,8 +3,7 @@
 
 #include "util/reflect.h"
 #include "log.h"
-
-#include <imgui/imgui.h>
+#include "imgui.h"
 
 struct dbg_manager;
 extern dbg_manager* global_dbg;

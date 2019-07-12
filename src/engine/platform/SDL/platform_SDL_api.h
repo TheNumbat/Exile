@@ -1,5 +1,7 @@
 
+#ifndef __clang__
 #include <SDL2/SDL.h>
+#endif
 #include <sys/stat.h>
 #ifdef WIN32
 #define stat _stat
