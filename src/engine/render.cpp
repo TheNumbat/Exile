@@ -303,10 +303,6 @@ void ogl_manager::gl_end_reload() {
 	FORVEC(it, shader_includes) {
 		it->recreate();
 	}
-
-	glBlendFunc(gl_blend_factor::src_alpha, gl_blend_factor::one_minus_src_alpha);
-	glDepthFunc(gl_depth_factor::greater);
-	glClearDepth(0.0);
 }
 
 void ogl_manager::reload_texture_assets() { 
@@ -377,10 +373,6 @@ ogl_manager ogl_manager::make(platform_window* win, allocator* a) {
 	}
 
 	ret.dbg_shader = shader_program::make("shaders/dbg.v"_,"shaders/dbg.f"_, {}, FPTR(uniforms_dbg), a);
-
-	glBlendFunc(gl_blend_factor::src_alpha, gl_blend_factor::one_minus_src_alpha);
-	glDepthFunc(gl_depth_factor::greater);
-	glClearDepth(0.0);
 
 	return ret;
 }
@@ -1263,6 +1255,7 @@ void ogl_manager::_cmd_blit_fb(render_command_blit_fb blit) {
 }
 
 void ogl_manager::_cmd_clear(render_command_clear clear) {
+	glClearDepth(clear.depth);
 	glClearColor(clear.col.r, clear.col.g, clear.col.b, clear.col.a);
 	glClear(clear.components);
 }
@@ -1301,9 +1294,11 @@ void ogl_manager::_cmd_set_setting(render_command_setting setting) {
 
 	switch(setting.setting) {
 	case render_setting::wireframe: set->polygon_line = setting.data; break;
+	case render_setting::poly_offset: set->poly_offset = setting.data; break;
 	case render_setting::depth_test: set->depth_test = setting.data; break;
 	case render_setting::aa_lines: set->line_smooth = setting.data; break;
 	case render_setting::blend: set->blend = (blend_mode)setting.data; break;
+	case render_setting::depth: set->depth = (gl_depth_factor)setting.data; break;
 	case render_setting::dither: set->dither = setting.data; break;
 	case render_setting::scissor: set->scissor = setting.data; break;
 	case render_setting::cull: set->cull_backface = setting.data; break;
@@ -1358,6 +1353,10 @@ void ogl_manager::_cmd_apply_settings() {
 	set->point_size		? glEnable(gl_capability::program_point_size) : glDisable(gl_capability::program_point_size);
 	set->depth_mask 	? glDepthMask(gl_bool::_true) : glDepthMask(gl_bool::_false);
 	set->output_srgb 	? glEnable(gl_capability::framebuffer_srgb) : glDisable(gl_capability::framebuffer_srgb);
+	set->poly_offset 	? glEnable(gl_capability::polygon_offset_fill) : glDisable(gl_capability::polygon_offset_fill);
+
+	glPolygonOffset(-1.0f, -1.0f);
+	glDepthFunc(set->depth);
 
 	switch(set->blend) {
 	case blend_mode::none: 	glDisable(gl_capability::blend); break;
@@ -1758,7 +1757,7 @@ render_command render_command::make(draw_cmd_id type) {
 	return ret;
 }
 
-render_command render_command::make_set(render_setting setting, u8 data) { 
+render_command render_command::make_set(render_setting setting, u32 data) { 
 
 	render_command ret;
 	ret.cmd_id = (draw_cmd_id)draw_cmd::setting;
@@ -1813,7 +1812,7 @@ void render_command_list::pop_settings() {
 	add_command(render_command::make((draw_cmd_id)draw_cmd::pop_settings));
 }
 
-void render_command_list::set_setting(render_setting setting, u8 data) {
+void render_command_list::set_setting(render_setting setting, u32 data) {
 
 	add_command(render_command::make_set(setting, data));
 }

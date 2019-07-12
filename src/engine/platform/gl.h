@@ -779,6 +779,7 @@ DLL_IMPORT void glTexParameterf(gl_tex_target target, gl_tex_param pname, GLfloa
 DLL_IMPORT void glBindTexture(gl_tex_target target, GLuint handle);
 DLL_IMPORT void glGenTextures(GLsizei n, GLuint* textures);
 
+DLL_IMPORT void glPolygonOffset(GLfloat factor, GLfloat units);
 DLL_IMPORT void glBlendFunc(gl_blend_factor sfactor, gl_blend_factor dfactor);
 DLL_IMPORT void glDepthFunc(gl_depth_factor factor);
 typedef void (*glBlendEquation_t)(gl_blend_mode mode);

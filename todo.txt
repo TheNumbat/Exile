@@ -14,15 +14,11 @@ Working To-Do:
 	Rendering:
 		[features]
 		dynamic lights
-			fix blit & forward pass pass \/
-			separate light pass to stay in MSAA land
-				then do forward pass before blitting to effect targets (renders debug geometry with MSAA too)
-
-			change light falloff
 			dynamic torches (build lists per chunk)
 				calculate screen bounding quads
 			flashlight (directional lights)
 			
+			change light falloff
 			specular textures
 				stuff like shiny ore
 			normal map/heightmap textures

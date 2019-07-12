@@ -18,7 +18,6 @@ void exile_renderer::init(allocator* a) {
 
 	alloc = a;
 	hud_tasks = render_command_list::make(alloc, 32);
-	debug_geom = render_command_list::make(alloc, 32);
 	world_tasks = render_command_list::make(alloc, 1024);
 }
 
@@ -48,7 +47,7 @@ void exile_renderer::world_stars(gpu_object_id gpu_id, world_time* time, m4 view
 	world_tasks.add_command(cmd);
 }
 
-void exile_renderer::world_begin_chunks(world* w) {
+void exile_renderer::world_begin_chunks(world* w, bool offset) {
 
 	// TODO(max): move this somewhere else?
 	f32 ar = (f32)exile->eng->window.settings.w / (f32)exile->eng->window.settings.h;
@@ -63,6 +62,8 @@ void exile_renderer::world_begin_chunks(world* w) {
 		world_tasks.set_setting(render_setting::cull, true);
 	if(settings.world_set.sample_shading)
 		world_tasks.set_setting(render_setting::aa_shading, true);
+	if(offset)
+		world_tasks.set_setting(render_setting::poly_offset, true);
 }
 
 void exile_renderer::world_finish_chunks() {
@@ -95,10 +96,14 @@ void exile_renderer::world_lines(gpu_object_id gpu_id, m4 view, m4 proj) {
 	
 	render_command cmd = render_command::make_cst(cmd_lines, gpu_id);
 
+	cmd.info.fb_id = world_target.world_fb();
 	cmd.info.view = view;
 	cmd.info.proj = proj;
 	
-	debug_geom.add_command(cmd);
+	world_tasks.push_settings();
+	world_tasks.set_setting(render_setting::depth, (u32)gl_depth_factor::gequal);
+	world_tasks.add_command(cmd);
+	world_tasks.pop_settings();
 }
 
 void exile_renderer::hud_2D(gpu_object_id gpu_id) {
@@ -124,6 +129,7 @@ void exile_renderer::world_clear() {
 		cmd.clear.components |= (GLbitfield)gl_clear::depth_buffer_bit;
 
 		cmd.clear.fb_id = world_target.world_fb();
+		cmd.clear.depth = 0.0f;
 		world_tasks.add_command(cmd);
 	}
 }
@@ -169,23 +175,12 @@ void exile_renderer::end_frame() {
 		cmd.blit.filter = gl_tex_filter::scaled_resolve_fastest;
 		world_tasks.add_command(cmd);
  	}
-	{
-		render_command cmd = render_command::make((draw_cmd_id)draw_cmd::blit_fb);
-		cmd.blit.src = world_target.world_fb();
-		cmd.blit.mask = (GLbitfield)gl_clear::depth_buffer_bit;
-		cmd.blit.filter = gl_tex_filter::nearest;
-		// world_tasks.add_command(cmd);
- 	}
 
  	// execute frame
 	{
 		exile->eng->ogl.execute_command_list(&world_tasks);
 		world_tasks.clear();
 		lighting_quads.clear();
-	}
-	{
-		exile->eng->ogl.execute_command_list(&debug_geom);
-		debug_geom.clear();
 	}
 	{
 		exile->eng->ogl.execute_command_list(&hud_tasks);
@@ -429,7 +424,6 @@ void exile_renderer::destroy() {
 	invert.destroy();
 	gamma.destroy();
 
-	debug_geom.destroy();
 	hud_tasks.destroy();
 	world_tasks.destroy();
 

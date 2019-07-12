@@ -319,6 +319,8 @@ enum class render_setting : u8 {
 	depth_test,
 	aa_lines,
 	blend,
+	depth,
+	poly_offset,
 	dither,
 	scissor,
 	cull,
@@ -331,6 +333,7 @@ enum class render_setting : u8 {
 
 struct cmd_settings {
 	bool polygon_line = false;
+	bool poly_offset = false;
 	bool depth_test = true;
 	bool line_smooth = true;
 	bool dither = true;
@@ -342,6 +345,7 @@ struct cmd_settings {
 	bool point_size = true;
 	bool output_srgb = false;
 	blend_mode blend = blend_mode::alpha;
+	gl_depth_factor depth = gl_depth_factor::greater;
 };
 
 struct ogl_settings {
@@ -389,12 +393,13 @@ struct render_command_clear {
 
 	framebuffer_id fb_id = 0;
 	colorf col;
+	f32 depth = 0.0f;
 	GLbitfield components = 0;
 };
 
 struct render_command_setting {
 
-	u8 data = 0;
+	u32 data = 0;
 	render_setting setting;
 };
 
@@ -432,7 +437,7 @@ struct render_command {
 
 	static render_command make(draw_cmd_id type);
 	static render_command make_cst(draw_cmd_id type, gpu_object_id gpu);
-	static render_command make_set(render_setting setting, u8 data);
+	static render_command make_set(render_setting setting, u32 data);
 };
 
 bool operator<=(render_command& first, render_command& second);
@@ -448,7 +453,7 @@ struct render_command_list {
 
 	void push_settings();
 	void pop_settings();
-	void set_setting(render_setting setting, u8 data);
+	void set_setting(render_setting setting, u32 data);
 };
 
 enum class camera_mode : u8 {

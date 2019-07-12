@@ -462,7 +462,7 @@ void world::render_chunks() { PROF_FUNC
 
 	thread_pool.renew_priorities(check_pirority, this);
 
-	exile->ren.world_begin_chunks(this);
+	exile->ren.world_begin_chunks(this, settings.draw_chunk_corners);
 
 	{PROF_SCOPE("Build Render List"_);
 

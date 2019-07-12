@@ -389,7 +389,7 @@ struct exile_renderer {
 	void world_stars(gpu_object_id gpu_id, world_time* time, m4 view, m4 proj);
 	void world_skydome(gpu_object_id gpu_id, world_time* time, texture_id sky, m4 view, m4 proj);
 	
-	void world_begin_chunks(world* w);
+	void world_begin_chunks(world* w, bool offset);
 	// NOTE(max): this assumes the chunk mesh object is long-lived
 	void world_chunk(world* w, chunk* c, texture_id blocks, texture_id sky, m4 model, m4 view, m4 proj);
 	void world_finish_chunks();
