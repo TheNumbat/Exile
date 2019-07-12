@@ -89,6 +89,22 @@ void exile_renderer::world_chunk(world* w, chunk* c, texture_id blocks, texture_
 	cmd.callback = FPTR(unlock_chunk);
 	cmd.callback_data = c;
 
+	if(c->pos.x == 0 && c->pos.z == 0) {
+
+	FORVEC(it, c->lights) {
+		m4 trans = proj * view;
+		v4 light_pos = model * v4(it->pos, 1.0f);
+
+		v4 trc = trans * (light_pos + v4(v3(settings.light_radius), 0.0f));
+		v4 blc = trans * (light_pos - v4(v3(settings.light_radius), 0.0f));
+
+		trc /= trc.w;
+		blc /= blc.w;
+ 
+		lighting_quads.push(r2(blc.xy, trc.xy - blc.xy), light_pos.xyz, it->col / 16.0f);
+	}
+	}
+
 	world_tasks.add_command(cmd);
 }
 
@@ -113,7 +129,10 @@ void exile_renderer::hud_2D(gpu_object_id gpu_id) {
 	f32 w = (f32)exile->eng->window.settings.w, h = (f32)exile->eng->window.settings.h;
 	cmd.info.proj = ortho(0, w, h, 0, -1, 1);
 
+	hud_tasks.push_settings();
+	hud_tasks.set_setting(render_setting::depth_test, false);
 	hud_tasks.add_command(cmd);
+	hud_tasks.pop_settings();
 }
 
 void exile_renderer::world_clear() {
@@ -261,9 +280,6 @@ void world_target_info::init(iv2 dim, i32 samples) {
 
 void world_target_info::resolve(render_command_list* list) {
 	
-	v3 light_pos = exile->ren.settings.light_pos - exile->w.p.camera.pos;
-	exile->ren.lighting_quads.push(r2(-1.0f, -1.0f, 2.0f, 2.0f), light_pos, exile->ren.settings.light_col);
-
 	{ // Update light accumulation with dynamic lights
 		render_command cmd = render_command::make_cst(msaa ? exile->ren.cmd_defer_light_ms : exile->ren.cmd_defer_light, exile->ren.lighting_quads.gpu);
 

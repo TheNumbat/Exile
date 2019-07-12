@@ -11,13 +11,15 @@ Working To-Do:
 		Maybe modding, but first a from-scratch playable multi-player core 
 		Demo survival a-la Minecraft beta (but with really nice looking graphics) would be great
 
+	leak check broke
+
 	Rendering:
 		[features]
 		dynamic lights
-			dynamic torches (build lists per chunk)
-				calculate screen bounding quads
+			calculate screen bounding quads
 			flashlight (directional lights)
-			
+			gonna need some chunk culling
+
 			change light falloff
 			specular textures
 				stuff like shiny ore

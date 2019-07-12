@@ -33,7 +33,8 @@ void main() {
 	vec3 result = calculate_light_dynamic(pos, norm, shine);
 
 	if(debug_show == 9) {
-		light = vec4(scalar_to_color(float(instance_id) / float(num_instances)), 1.0f / float(num_instances));
+		vec3 quad = scalar_to_color(float(instance_id) / float(num_instances));
+		light = vec4(result * quad, 1.0f / float(num_instances));
 	} else if(debug_show != 5 && debug_show != 6 && debug_show != 7) {
 		light = vec4(result, 1.0f);
 	}

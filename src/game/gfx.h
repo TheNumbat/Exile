@@ -238,11 +238,6 @@ struct world;
 struct chunk;
 struct world_time;
 
-struct dynamic_torch {
-	v3 pos;
-	f32 power = 1.0f;
-};
-
 enum class exile_component_view : i32 {
 	none = 0,
 	albedo,
@@ -266,15 +261,15 @@ struct render_settings {
 	bool cull_backface = true;
 	bool sample_shading = true;
 	
-	bool dist_fog = true;
+	bool dist_fog = false;
 	bool block_light = true;
 	bool smooth_light = true;
 	bool dynamic_light = true;
 	bool ambient_occlusion = true;
 
 	exile_component_view view =  exile_component_view::none;
-	v3 light_col = v3(0.5f, 0.5f, 0.5f);
-	v3 light_pos = v3(0.5f, 48.5f, 16.5f);
+
+	f32 light_radius = 4.0f;
 
 	i32 num_samples = 4;
 	f32 gamma = 2.1f;
@@ -374,7 +369,7 @@ struct exile_renderer {
 	world_target_info world_target;
 
 	// TODO(max): combine to one list and sort
-	render_command_list world_tasks, hud_tasks, debug_geom;
+	render_command_list world_tasks, hud_tasks;
 	world_proj_info proj_info;
 
 	void hud_2D(gpu_object_id gpu_id);

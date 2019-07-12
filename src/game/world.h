@@ -44,6 +44,7 @@ struct chunk_pos {
 	chunk_pos(i32 _x = 0, i32 _y = 0, i32 _z = 0);
 	static chunk_pos from_abs(v3 pos);
 
+	v3 offset();
 	v3 center_xz();
 	chunk_pos operator+(chunk_pos other);
 	chunk_pos operator-(chunk_pos other);
@@ -133,6 +134,11 @@ struct light_rem_node {
 	chunk* owner = null;
 };
 
+struct dynamic_torch {
+	v3 pos;
+	v3 col;
+};
+
 static iv3 g_directions[] = {{-1, 0, 0}, {0, -1, 0}, {0, 0, -1}, {1, 0, 0}, {0, 1, 0}, {0, 0, 1}};
 struct chunk {
 
@@ -146,8 +152,9 @@ struct chunk {
 	block_id blocks[wid][wid][hei] = {};
 	block_light light[wid][wid][hei] = {};
 
+	vector<dynamic_torch> lights;
 	atomic_enum<chunk_stage> state;
-	locking_queue<light_work> lighting_updates;	
+	locking_queue<light_work> lighting_updates;
 	
 	platform_mutex swap_mut;
 	mesh_chunk mesh;
@@ -206,7 +213,7 @@ struct player {
 struct world_settings {
 
 	f32 gravity = 0.0f;
-	i32 view_distance = 4;
+	i32 view_distance = 0;
 	i32 max_light_propogation = 1;
 	bool respect_cam = true;
 	bool draw_chunk_corners = false;

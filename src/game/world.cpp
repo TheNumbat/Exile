@@ -415,8 +415,9 @@ void world::set_block(iv3 pos, block_id id) {
 void world::place_light(iv3 pos, u8 intensity) {
 
 	block_node local = world_to_canonical(pos);
-	if(local.owner)
+	if(local.owner) {
 		local.owner->place_light(local.pos, intensity);
+	}
 }
 
 void world::rem_light(iv3 pos) {
@@ -623,6 +624,11 @@ chunk_pos chunk_pos::from_abs(v3 pos) {
 	return ret;
 }
 
+v3 chunk_pos::offset() {
+
+	return v3(x * chunk::wid, y * chunk::hei, z * chunk::wid);
+}
+
 v3 chunk_pos::center_xz() { 
 
 	return v3(x * chunk::wid + chunk::wid / 2.0f, 0.0f, z * chunk::wid + chunk::wid / 2.0f);
@@ -654,6 +660,7 @@ void chunk::init(world* _w, chunk_pos p, allocator* a) {
 	
 	exile->eng->platform->create_mutex(&swap_mut, false);
 	lighting_updates = locking_queue<light_work>::make(4, alloc);
+	lights = vector<dynamic_torch>::make(32, alloc);
 }
 
 void chunk::set_block(iv3 p, block_id id) {
@@ -680,6 +687,12 @@ void chunk::place_light(iv3 p, u8 i) {
 	u.intensity = i;
 
 	lighting_updates.push(u);
+
+	dynamic_torch t;
+	t.pos = p.to_f() + v3(0.5f, 0.5f, 0.5f);
+	t.col = v3((f32)i);
+
+	lights.push(t);
 }
 
 void chunk::rem_light(iv3 p) { 
@@ -706,6 +719,7 @@ chunk* chunk::make_new(world* w, chunk_pos p, allocator* a) {
 
 void chunk::destroy() { 
 
+	lights.destroy();
 	lighting_updates.destroy();
 	mesh.destroy();
 	exile->eng->platform->destroy_mutex(&swap_mut);

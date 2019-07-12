@@ -840,8 +840,9 @@ m4 operator*(m4 l, m4 r) {
 }
 v4 operator*(m4 l, v4 r) {
     v4 ret;
+    m4 lt = transpose(l);
     for(i32 i = 0; i < 4; i++)
-        ret[i] = dot(l.columns[i], r);
+        ret[i] = dot(lt.columns[i], r);
     return ret;
 }
 m4 operator*(m4 l, f32 r) {
@@ -926,15 +927,12 @@ m4 lookAt(v3 pos, v3 at, v3 up) {
     ret[0][0] =  S.x;
     ret[0][1] =  U.x;
     ret[0][2] = -F.x;
-
     ret[1][0] =  S.y;
     ret[1][1] =  U.y;
     ret[1][2] = -F.y;
-
     ret[2][0] =  S.z;
     ret[2][1] =  U.z;
     ret[2][2] = -F.z;
-
     ret[3][0] = -dot(S, pos);
     ret[3][1] = -dot(U, pos);
     ret[3][2] =  dot(F, pos);
