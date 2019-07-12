@@ -7,7 +7,7 @@
 
 void exile_renderer::init(allocator* a) {
 	
-	exile->eng->dbg.store.add_var("render/settings"_, &settings);
+	exile->eng->dbg.store.add_var("render"_, &settings);
 	
 	generate_commands();
 	generate_targets();
@@ -56,11 +56,11 @@ void exile_renderer::world_begin_chunks(world* w, bool offset) {
 	proj_info.proj_b = (-w->p.camera.near * w->p.camera.far) / (w->p.camera.near - w->p.camera.far);
 
 	world_tasks.push_settings();
-	if(settings.world_set.wireframe)
+	if(settings.wireframe)
 		world_tasks.set_setting(render_setting::wireframe, true);
-	if(settings.world_set.cull_backface)
+	if(settings.cull_backface)
 		world_tasks.set_setting(render_setting::cull, true);
-	if(settings.world_set.sample_shading)
+	if(settings.sample_shading)
 		world_tasks.set_setting(render_setting::aa_shading, true);
 	if(offset)
 		world_tasks.set_setting(render_setting::poly_offset, true);
@@ -80,7 +80,7 @@ void exile_renderer::world_chunk(world* w, chunk* c, texture_id blocks, texture_
 	cmd.info.textures[1] = sky;
 	cmd.info.num_tris = c->mesh_faces;
 	cmd.info.user_data0 = w;
-	cmd.info.user_data1 = &settings.world_set;
+	cmd.info.user_data1 = &settings;
 
 	cmd.info.model = model;
 	cmd.info.view = view;
@@ -261,8 +261,8 @@ void world_target_info::init(iv2 dim, i32 samples) {
 
 void world_target_info::resolve(render_command_list* list) {
 	
-	v3 light_pos = exile->ren.settings.world_set.light_pos - exile->w.p.camera.pos;
-	exile->ren.lighting_quads.push(r2(-1.0f, -1.0f, 2.0f, 2.0f), light_pos, exile->ren.settings.world_set.light_col);
+	v3 light_pos = exile->ren.settings.light_pos - exile->w.p.camera.pos;
+	exile->ren.lighting_quads.push(r2(-1.0f, -1.0f, 2.0f, 2.0f), light_pos, exile->ren.settings.light_col);
 
 	{ // Update light accumulation with dynamic lights
 		render_command cmd = render_command::make_cst(msaa ? exile->ren.cmd_defer_light_ms : exile->ren.cmd_defer_light, exile->ren.lighting_quads.gpu);
@@ -452,7 +452,7 @@ CALLBACK void uniforms_composite(shader_program* prog, render_command* cmd) {
 CALLBACK void uniforms_comp_light(shader_program* prog, render_command* cmd) {
 
 	exile_renderer* ren = (exile_renderer*)cmd->info.user_data0;
-	world_render_settings* set = &ren->settings.world_set;
+	render_settings* set = &ren->settings;
 
 	world* w = (world*)cmd->info.user_data1;
 
@@ -505,7 +505,7 @@ CALLBACK void run_defer(render_command* cmd, gpu_object* gpu) {
 CALLBACK void uniforms_defer(shader_program* prog, render_command* cmd) {
 
 	exile_renderer* ren = (exile_renderer*)cmd->info.user_data0;
-	world_render_settings* set = &ren->settings.world_set;
+	render_settings* set = &ren->settings;
 
 	glUniform1i(prog->location("norm_tex"_), 0);
 	glUniform1i(prog->location("depth_tex"_), 1);
@@ -526,7 +526,7 @@ CALLBACK void uniforms_invert(shader_program* prog, render_command* cmd) {
 
 CALLBACK void uniforms_gamma(shader_program* prog, render_command* cmd) {
 
-	exile_render_settings* set = (exile_render_settings*)cmd->info.user_data0;
+	render_settings* set = (render_settings*)cmd->info.user_data0;
 
 	glUniform1i(prog->location("tex"_), 0);
 	glUniform1f(prog->location("gamma"_), set->gamma);
@@ -646,7 +646,7 @@ CALLBACK void uniforms_mesh_cubemap(shader_program* prog, render_command* cmd) {
 CALLBACK void uniforms_mesh_chunk(shader_program* prog, render_command* cmd) { 
 
 	world* w = (world*)cmd->info.user_data0;
-	world_render_settings* set = (world_render_settings*)cmd->info.user_data1;
+	render_settings* set = (render_settings*)cmd->info.user_data1;
 
 	m4 m = w->p.camera.offset() * cmd->info.model;
 	m4 mvp = cmd->info.proj * cmd->info.view * cmd->info.model;

@@ -257,7 +257,7 @@ enum class exile_component_view : i32 {
 	depth
 };
 
-struct world_render_settings {
+struct render_settings {
 	
 	float ambient_factor = 0.005f;
 	v4 ao_curve = v4(0.6f, 0.7f, 0.8f, 1.0f);
@@ -275,11 +275,6 @@ struct world_render_settings {
 	exile_component_view view =  exile_component_view::none;
 	v3 light_col = v3(0.5f, 0.5f, 0.5f);
 	v3 light_pos = v3(0.5f, 48.5f, 16.5f);
-};
-
-struct exile_render_settings {
-
-	world_render_settings world_set;
 
 	i32 num_samples = 4;
 	f32 gamma = 2.1f;
@@ -365,7 +360,7 @@ struct exile_renderer {
 	draw_cmd_id cmd_defer_light	 	 = 0;
 	draw_cmd_id cmd_defer_light_ms	 = 0;
 
-	exile_render_settings settings;
+	render_settings settings;
 
 	// NOTE(max): these should be static, but hot reloading
 	mesh_cubemap the_cubemap;
