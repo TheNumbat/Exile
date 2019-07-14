@@ -1,8 +1,8 @@
 
-uniform float proj_a, proj_b; 
+uniform float near; 
 
 vec3 calc_pos(vec3 view, float depth) {
-	float linear = proj_b / (depth - proj_a);
+	float linear = near / depth;
 	return view * linear;
 }
 

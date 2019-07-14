@@ -1613,6 +1613,7 @@ void ogl_manager::load_global_funcs() {
 	GL_IS_LOAD(glIsProgramPipeline);
 	GL_IS_LOAD(glIsQuery);
 
+	GL_LOAD(glClipControl);
 	GL_LOAD(glDrawArraysInstanced);
 	GL_LOAD(glDrawArraysInstancedBaseInstance);
 	GL_LOAD(glMinSampleShading);
@@ -1703,6 +1704,8 @@ void ogl_manager::load_global_funcs() {
 	#undef GL_LOAD
 	#undef GL_IS_LOAD
 
+	glClipControl(gl_clip_origin::lower_left, gl_clip_range::zero_to_one);
+	
 #ifdef GL_CHECKS
 	glEnable(gl_capability::debug_output);
 	glEnable(gl_capability::debug_output_synchronous);
@@ -1852,7 +1855,7 @@ void render_camera::move(i32 dx, i32 dy, f32 sens) {
 
 m4 render_camera::proj(f32 ar) {
 
-	return project(fov, ar, far, near);
+	return project(fov, ar, near);
 }
 
 m4 render_camera::view() { 
@@ -1873,20 +1876,6 @@ m4 render_camera::offset() {
 
 	if(mode == camera_mode::third) {
 		return translate(2.0f * front - offset3rd);
-	}
-
-	return m4::I;
-}
-
-m4 render_camera::view_no_translate() { 
-
-	switch(mode) {
-	case camera_mode::first: {
-		return lookAt({}, front, up);
-	} break;
-	case camera_mode::third: {
-		return lookAt({}, reach * front - (-2.0f * front + offset3rd), up);
-	} break;
 	}
 
 	return m4::I;

@@ -51,9 +51,8 @@ void exile_renderer::world_begin_chunks(world* w, bool offset) {
 
 	// TODO(max): move this somewhere else?
 	f32 ar = (f32)exile->eng->window.settings.w / (f32)exile->eng->window.settings.h;
-	proj_info.ivp = inverse(w->p.camera.proj(ar) * w->p.camera.view_no_translate());
-	proj_info.proj_a = w->p.camera.near / (w->p.camera.near - w->p.camera.far);
-	proj_info.proj_b = (-w->p.camera.near * w->p.camera.far) / (w->p.camera.near - w->p.camera.far);
+	proj_info.ivp = inverse(w->p.camera.proj(ar) * w->p.camera.view_pos_origin());
+	proj_info.near = w->p.camera.near;
 
 	world_tasks.push_settings();
 	if(settings.wireframe)
@@ -69,6 +68,42 @@ void exile_renderer::world_begin_chunks(world* w, bool offset) {
 void exile_renderer::world_finish_chunks() {
 
 	world_tasks.pop_settings();
+}
+
+void exile_renderer::calculate_light_quad(m4 m, m4 vp, v3 pos3, v3 col) {
+	
+	v4 pos = m * v4(pos3, 1.0f);
+	f32 r = settings.light_radius;
+
+	v4 _0 = vp * (pos + v4(r, r, r, 0.0f));
+	v4 _1 = vp * (pos + v4(-r, r, r, 0.0f));
+	v4 _2 = vp * (pos + v4(r, -r, r, 0.0f));
+	v4 _3 = vp * (pos + v4(r, r, -r, 0.0f));
+	v4 _4 = vp * (pos + v4(-r, -r, r, 0.0f));
+	v4 _5 = vp * (pos + v4(r, -r, -r, 0.0f));
+	v4 _6 = vp * (pos + v4(-r, r, -r, 0.0f));
+	v4 _7 = vp * (pos + v4(-r, -r, -r, 0.0f));
+
+	_0 /= _0.w; _1 /= _1.w; _2 /= _2.w; _3 /= _3.w; 
+	_4 /= _4.w; _5 /= _5.w; _6 /= _6.w; _7 /= _7.w;
+
+	f32 dmin = min(min(min(_0.z,_1.z),min(_2.z,_3.z)),
+				   min(min(_4.z,_5.z),min(_6.z,_7.z)));
+	f32 dmax = max(max(max(_0.z,_1.z),max(_2.z,_3.z)),
+				   max(max(_4.z,_5.z),max(_6.z,_7.z)));
+
+	// cull volume if 'nearest' point is behind us
+	if(dmin > 1.0f) return;
+	if(dmax < 0.0f) return;
+
+	v2 minc, maxc;
+
+	minc = minv2(minv2(minv2(_0.xy,_1.xy),minv2(_2.xy,_3.xy)),
+				 minv2(minv2(_4.xy,_5.xy),minv2(_6.xy,_7.xy)));
+	maxc = maxv2(maxv2(maxv2(_0.xy,_1.xy),maxv2(_2.xy,_3.xy)),
+				 maxv2(maxv2(_4.xy,_5.xy),maxv2(_6.xy,_7.xy)));
+
+	lighting_quads.push(r2(minc, maxc - minc), pos.xyz, col / 16.0f);
 }
 
 void exile_renderer::world_chunk(world* w, chunk* c, texture_id blocks, texture_id sky, m4 model, m4 view, m4 proj) {
@@ -89,20 +124,9 @@ void exile_renderer::world_chunk(world* w, chunk* c, texture_id blocks, texture_
 	cmd.callback = FPTR(unlock_chunk);
 	cmd.callback_data = c;
 
-	if(c->pos.x == 0 && c->pos.z == 0) {
-
 	FORVEC(it, c->lights) {
-		m4 trans = proj * view;
-		v4 light_pos = model * v4(it->pos, 1.0f);
-
-		v4 trc = trans * (light_pos + v4(v3(settings.light_radius), 0.0f));
-		v4 blc = trans * (light_pos - v4(v3(settings.light_radius), 0.0f));
-
-		trc /= trc.w;
-		blc /= blc.w;
- 
-		lighting_quads.push(r2(blc.xy, trc.xy - blc.xy), light_pos.xyz, it->col / 16.0f);
-	}
+		m4 vp = proj * view;
+		calculate_light_quad(model, vp, it->pos, it->col);
 	}
 
 	world_tasks.add_command(cmd);
@@ -153,40 +177,30 @@ void exile_renderer::world_clear() {
 	}
 }
 
+void effect_pass::effect(render_command_list* list) {
+
+	render_command cmd = make_cmd();
+			
+	cmd.info.textures[0] = exile->ren.world_target.get_output();
+	
+	exile->ren.world_target.flip_fb();
+	cmd.info.fb_id = exile->ren.world_target.get_fb();
+	cmd.info.user_data0 = &exile->ren.settings;
+
+	list->add_command(cmd);
+}
+
 void exile_renderer::end_frame() {
 
-	// run world effects
-	{	
-		world_target.resolve(&world_tasks);
+	world_target.resolve(&world_tasks);
 
-		// gamma correct
-		if(settings.enable_gamma) {
-			render_command cmd = gamma.make_cmd();
-			
-			cmd.info.textures[0] = world_target.get_output();
-			
-			world_target.flip_fb();
-			cmd.info.fb_id = world_target.get_fb();
-			cmd.info.user_data0 = &settings;
-
-			world_tasks.add_command(cmd);
-		}
-
-		// silly test inverted colors (applied after gamma)
-		if(settings.invert_effect) {
-
-			render_command cmd = invert.make_cmd();
-			
-			cmd.info.textures[0] = world_target.get_output();
-			
-			world_target.flip_fb();
-			cmd.info.fb_id = world_target.get_fb();
-
-			world_tasks.add_command(cmd);
-		}
+	if(settings.enable_gamma) {
+		gamma.effect(&world_tasks);
+	}
+	if(settings.invert_effect) {
+		invert.effect(&world_tasks);
 	}
 
-	// composite to screen
 	{
 		render_command cmd = render_command::make((draw_cmd_id)draw_cmd::blit_fb);
 		cmd.blit.src = world_target.get_fb();
@@ -194,8 +208,6 @@ void exile_renderer::end_frame() {
 		cmd.blit.filter = gl_tex_filter::scaled_resolve_fastest;
 		world_tasks.add_command(cmd);
  	}
-
- 	// execute frame
 	{
 		exile->eng->ogl.execute_command_list(&world_tasks);
 		world_tasks.clear();
@@ -356,7 +368,7 @@ void world_target_info::destroy() {
 }
 
 void exile_renderer::recreate_targets() {
-	destroy_targets();
+	world_target.destroy();
 	generate_targets();
 }
 
@@ -373,8 +385,8 @@ void exile_renderer::generate_commands() {
 
 	exile->eng->ogl.add_include("shaders/util.glsl"_);
 	
-	#define reg(cmdn, name, path) cmd_##cmdn = exile->eng->ogl.add_command(FPTR(run_##name), FPTR(uniforms_##name), \
-											   "shaders/" path #cmdn ".v"_, "shaders/" path #cmdn ".f"_);
+#define reg(cmdn, name, path) cmd_##cmdn = exile->eng->ogl.add_command(FPTR(run_##name), FPTR(uniforms_##name), \
+										   "shaders/" path #cmdn ".v"_, "shaders/" path #cmdn ".f"_);
  
 	reg(chunk, mesh_chunk, "");
 	reg(cubemap, mesh_cubemap, "");
@@ -390,6 +402,8 @@ void exile_renderer::generate_commands() {
 	reg(2D_tex_col, mesh_2D_tex_col, "mesh/");
 	reg(3D_tex_instanced, mesh_3D_tex_instanced, "mesh/");
 
+#undef reg
+
 	cmd_defer_light = exile->eng->ogl.add_command(FPTR(run_defer), FPTR(uniforms_defer), "shaders/deferred/defer.v"_, "shaders/deferred/defer.f"_);
 	cmd_defer_light_ms = exile->eng->ogl.add_command(FPTR(run_defer), FPTR(uniforms_defer), "shaders/deferred/defer.v"_, "shaders/deferred/defer_ms.f"_);
 
@@ -401,37 +415,29 @@ void exile_renderer::generate_commands() {
 	resolve.init(FPTR(uniforms_resolve), "resolve.f"_);
 	composite.init(FPTR(uniforms_composite), "composite.f"_);
 	composite_resolve.init(FPTR(uniforms_composite_resolve), "composite_resolve.f"_);
-	
-	#undef reg
 }
 
 void exile_renderer::destroy() {
 
-	exile->eng->ogl.rem_command(cmd_2D_col);
-	exile->eng->ogl.rem_command(cmd_2D_tex);
-	exile->eng->ogl.rem_command(cmd_2D_tex_col);
-	exile->eng->ogl.rem_command(cmd_3D_tex);
-	exile->eng->ogl.rem_command(cmd_3D_tex_instanced);
-	exile->eng->ogl.rem_command(cmd_lines);
-	exile->eng->ogl.rem_command(cmd_pointcloud);
-	exile->eng->ogl.rem_command(cmd_cubemap);
-	exile->eng->ogl.rem_command(cmd_chunk);
-	exile->eng->ogl.rem_command(cmd_skydome);
-	exile->eng->ogl.rem_command(cmd_skyfar);
+#define rem(n) exile->eng->ogl.rem_command(n); n = 0;
 
-	cmd_2D_col           = 0;
-	cmd_2D_tex           = 0;
-	cmd_2D_tex_col       = 0;
-	cmd_3D_tex           = 0;
-	cmd_3D_tex_instanced = 0;
-	cmd_lines            = 0;
-	cmd_pointcloud       = 0;
-	cmd_cubemap          = 0;
-	cmd_chunk            = 0;
-	cmd_skydome          = 0;
-	cmd_skyfar           = 0;
+	rem(cmd_2D_col);
+	rem(cmd_2D_tex);
+	rem(cmd_2D_tex_col);
+	rem(cmd_3D_tex);
+	rem(cmd_3D_tex_instanced);
+	rem(cmd_lines);
+	rem(cmd_pointcloud);
+	rem(cmd_cubemap);
+	rem(cmd_chunk);
+	rem(cmd_skydome);
+	rem(cmd_skyfar);
+	rem(cmd_defer_light);
+	rem(cmd_defer_light_ms);
 
-	destroy_targets();
+#undef rem
+
+	world_target.destroy();
 	resolve.destroy();
 	composite.destroy();
 	composite_resolve.destroy();
@@ -446,11 +452,6 @@ void exile_renderer::destroy() {
 	the_cubemap.destroy();
 	the_quad.destroy();
 	lighting_quads.destroy();
-}
-
-void exile_renderer::destroy_targets() {
-
-	world_target.destroy();
 }
 
 CALLBACK void uniforms_composite(shader_program* prog, render_command* cmd) {
@@ -478,8 +479,7 @@ CALLBACK void uniforms_comp_light(shader_program* prog, render_command* cmd) {
 	glUniform1i(prog->location("env_tex"_), 3);
 	glUniform1i(prog->location("norm_tex"_), 4);
 
-	glUniform1f(prog->location("proj_a"_), ren->proj_info.proj_a);
-	glUniform1f(prog->location("proj_b"_), ren->proj_info.proj_b);
+	glUniform1f(prog->location("near"_), ren->proj_info.near);
 	glUniformMatrix4fv(prog->location("ivp"_), 1, gl_bool::_false, ren->proj_info.ivp.a);
 
 	glUniform1i(prog->location("sky_fog"_), set->dist_fog);
@@ -526,8 +526,7 @@ CALLBACK void uniforms_defer(shader_program* prog, render_command* cmd) {
 	glUniform1i(prog->location("norm_tex"_), 0);
 	glUniform1i(prog->location("depth_tex"_), 1);
 
-	glUniform1f(prog->location("proj_a"_), ren->proj_info.proj_a);
-	glUniform1f(prog->location("proj_b"_), ren->proj_info.proj_b);
+	glUniform1f(prog->location("near"_), ren->proj_info.near);
 	glUniformMatrix4fv(prog->location("ivp"_), 1, gl_bool::_false, ren->proj_info.ivp.a);
 
 	glUniform1i(prog->location("debug_show"_), (i32)set->view);

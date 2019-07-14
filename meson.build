@@ -2,7 +2,6 @@
 project('exile', 'cpp')
 
 # To-Do 
-# 	re-write metaprogram
 # 	linux/macos build
 
 # Constants & Setup

@@ -768,6 +768,16 @@ enum class gl_named_string_arb : GLenum {
 	shader_include = 0x8DAE
 };
 
+enum class gl_clip_origin : GLenum {
+	lower_left = 0x8CA1,
+	upper_left = 0x8CA2
+};
+
+enum class gl_clip_range : GLenum {
+	negative_one_to_one = 0x935E,
+	zero_to_one         = 0x935F
+};
+
 DLL_IMPORT const GLubyte* glGetString(gl_info name);
 
 DLL_IMPORT void glDeleteTextures(GLsizei n, const GLuint *textures);
@@ -909,6 +919,10 @@ typedef void (*glClearNamedFramebufferfv_t)(GLuint framebuffer, gl_clear_buffer 
 typedef void (*glNamedStringARB_t)(gl_named_string_arb type, GLint namelen, const GLchar* name, GLint stringlen, const GLchar* string);
 typedef void (*glDeleteNamedStringARB_t)(GLint namelen, const GLchar* name);
 typedef void (*glCompileShaderIncludeARB_t)(GLuint shader, GLsizei count, const GLchar* const* path, const GLint* length);
+
+typedef void (*glClipControl_t)(gl_clip_origin origin, gl_clip_range range);
+
+extern glClipControl_t glClipControl;
 
 extern glIs_t glIsTexture;
 extern glIs_t glIsBuffer;

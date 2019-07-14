@@ -2,7 +2,6 @@
 #version 330 core
 
 layout (location = 0) in vec4 quad;
-
 layout (location = 1) in vec3 v_lpos;
 layout (location = 2) in vec3 v_lcol;
 

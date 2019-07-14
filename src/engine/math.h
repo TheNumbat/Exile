@@ -36,7 +36,7 @@
 #define min(x,y) ((x) < (y) ? (x) : (y))
 #define max(x,y) ((x) < (y) ? (y) : (x))
 #define min3(x,y,z) (min(min(x,y), z))
-#define max3(x,y,z) (min(min(x,y), z))
+#define max3(x,y,z) (max(max(x,y), z))
 
 #define EPSILON32 0.00001f
 #define EPSILON64 0.00001
@@ -97,6 +97,9 @@ f32 len(v2 v);
 f32 len(v3 v);
 f32 len(v4 v);
 f32 min_reset(v3 v);
+v2 minv2(v2 l, v2 r);
+v2 maxv2(v2 l, v2 r);
+bool all_less(v3 v, f32 c);
 
 v2 norm(v2 v);
 v3 norm(v3 v);
@@ -256,7 +259,7 @@ m4 operator/(m4 l, f32 r);
 m4 transpose(m4 m);
 m4 inverse(m4 m);
 m4 ortho(f32 l, f32 r, f32 b, f32 t, f32 n, f32 f);
-m4 project(f32 fov, f32 ar, f32 n, f32 f);
+m4 project(f32 fov, f32 ar, f32 n);
 m4 translate(v3 v);
 m4 rotate(f32 a, v3 axis);
 m4 scale(v3 s);

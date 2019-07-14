@@ -448,7 +448,7 @@ void world_environment::destroy() {
 void world_environment::render(player* p, world_time* t) { PROF_FUNC
 
 	m4 mproj = p->camera.proj((f32)exile->eng->window.settings.w / (f32)exile->eng->window.settings.h);
-	m4 view_no_trans = p->camera.view_no_translate();
+	m4 view_no_trans = p->camera.view_pos_origin();
 
 	exile->ren.world_skydome(sky.gpu, t, sky_texture, view_no_trans, mproj);
 	exile->ren.world_stars(stars.gpu, t, view_no_trans, mproj);
@@ -748,7 +748,7 @@ void chunk::do_gen() { PROF_FUNC
 				blocks[x][z][y] = block_id::stone;
 			}
 
-			if(x % 16 == 0 && z % 16 == 0) {
+			if(x == 0 && z == 0 && pos.x == 0 && pos.z == 0) {
 				blocks[x][z][height] = block_id::torch;
 				place_light(iv3(x, height, z), 16);
 			} else {

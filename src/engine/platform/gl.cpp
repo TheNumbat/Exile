@@ -1,6 +1,8 @@
 
 #include "gl.h"
 
+glClipControl_t glClipControl;
+
 glIs_t glIsTexture;
 glIs_t glIsBuffer;
 glIs_t glIsFramebuffer;

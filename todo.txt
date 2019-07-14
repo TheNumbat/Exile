@@ -12,6 +12,7 @@ Working To-Do:
 		Demo survival a-la Minecraft beta (but with really nice looking graphics) would be great
 
 	leak check broke
+	can we remove depth/stencil from win32 pixel format?
 
 	Rendering:
 		[features]

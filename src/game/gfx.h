@@ -269,7 +269,7 @@ struct render_settings {
 
 	exile_component_view view =  exile_component_view::none;
 
-	f32 light_radius = 4.0f;
+	f32 light_radius = 2.0f;
 
 	i32 num_samples = 4;
 	f32 gamma = 2.1f;
@@ -293,7 +293,7 @@ struct effect_buffers {
 
 struct world_proj_info {
 	m4 ivp;
-	f32 proj_a, proj_b;
+	f32 near;
 };
 
 struct world_target_info {
@@ -328,6 +328,7 @@ struct effect_pass {
 	void destroy();
 
 	render_command make_cmd();
+	void effect(render_command_list* list);
 };
 CALLBACK void run_effect(render_command* cmd, gpu_object* gpu);		
 CALLBACK void setup_mesh_quad(gpu_object* obj);
@@ -382,8 +383,9 @@ struct exile_renderer {
 	void generate_commands();
 	void generate_targets();
 	void recreate_targets();
-	void destroy_targets();
 	void check_recreate();
+
+	void calculate_light_quad(m4 m, m4 vp, v3 pos, v3 col);
 
 	iv2 prev_dim;
 	i32 prev_samples = 0;

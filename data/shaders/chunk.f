@@ -48,7 +48,7 @@ void main() {
 	
 	out_color = texture(blocks_tex, uvt);
 
-	float shiny = 1.0f / 8.0f; // TODO(max): materials
+	float shiny = 1.0f / 32.0f; // TODO(max): materials
 	out_norm = vec4(pack_norm(f_n, shiny), 1.0f);
 	
 	float ao0 = mix(f_ao.x, f_ao.y, fract(f_uv.x));

@@ -417,6 +417,16 @@ f32 len(v4 v) {
 	return _sqrt(lensq(v));
 }
 
+bool all_less(v3 v, f32 c) {
+	return v.x < c && v.y < c && v.z < c;
+}
+v2 minv2(v2 l, v2 r) {
+	return v2(min(l.x,r.x),min(l.y,r.y));
+}
+v2 maxv2(v2 l, v2 r) {
+	return v2(max(l.x,r.x),max(l.y,r.y));
+}
+
 f32 min_reset(v3 v) {
 	if(isinf(v.x) || isnan(v.x)) v.x = 0.0f;
 	if(isinf(v.y) || isnan(v.x)) v.y = 0.0f;
@@ -874,15 +884,17 @@ m4 ortho(f32 l, f32 r, f32 b, f32 t, f32 n, f32 f) {
     ret[3][2] = - n / (f - n);
     return ret;
 }
-m4 project(f32 fov, f32 ar, f32 n, f32 f) {
-	m4 ret;
-    f32 to2 = _tan(RADIANS(fov) / 2.0f);
-    ret[0][0] = 1.0f / (to2 * ar);
-    ret[1][1] = 1.0f / to2;
-    ret[2][3] = -1.0f;    
-    ret[2][2] = (n + f) / (n - f);
-    ret[3][2] = (2.0f * f * n) / (n - f);
+
+m4 project(f32 fov, f32 ar, f32 n)
+{
+    float f = 1.0f / _tan(RADIANS(fov) / 2.0f);
+    m4 ret;
+    ret[0][0] = f / ar;
+    ret[1][1] = f;
+    ret[2][2] = 0.0f;
     ret[3][3] = 0.0f;
+    ret[3][2] = n;
+    ret[2][3] = -1.0f;
     return ret;
 }
 m4 translate(v3 v) {

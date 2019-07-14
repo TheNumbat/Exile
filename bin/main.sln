@@ -6,9 +6,9 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{911E67C6-3D85-4FCE-B560-20A9C3E3FF48}") = "main", "..\build\main.exe", "{A7ED15C8-F972-45B6-A205-63000BF71150}"
 	ProjectSection(DebuggerProjectSystem) = preProject
 		PortSupplier = 00000000-0000-0000-0000-000000000000
-		Executable = C:\Users\mslater\Code\exile\build\main.exe
+		Executable = C:\Users\Max\Code\exile\build\main.exe
 		RemoteMachine = NUMBAT-DESKTOP
-		StartingDirectory = C:\Users\mslater\Code\exile\data
+		StartingDirectory = C:\Users\Max\Code\exile\data
 		Environment = Default
 		LaunchingEngine = 00000000-0000-0000-0000-000000000000
 		UseLegacyDebugEngines = No
@@ -21,7 +21,7 @@ Global
 		Release|x64 = Release|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{A7ED15C8-F972-45B6-A205-63000BF71150}.Release|x64.ActiveCfg = Release|x64
+		{A7ED15C8-F972-45B6-A205-63000BF71150}.Release|x64.ActiveCfg = Release
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

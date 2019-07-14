@@ -468,7 +468,7 @@ struct render_camera {
 
 	v3 offset3rd = v3(0, 1, 0);
 	f32 reach = 5.0f;
-	f32 near = 0.01f, far = 2000.0f;
+	f32 near = 0.01f;
 
 	camera_mode mode = camera_mode::first;
 
@@ -480,7 +480,6 @@ struct render_camera {
 	m4 proj(f32 ar);
 	m4 offset();
 	m4 view_pos_origin();
-	m4 view_no_translate();
 };
 
 enum class draw_cmd : draw_cmd_id {
