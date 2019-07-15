@@ -213,7 +213,7 @@ struct player {
 struct world_settings {
 
 	f32 gravity = 0.0f;
-	i32 view_distance = 0;
+	i32 view_distance = 1;
 	i32 max_light_propogation = 1;
 	bool respect_cam = true;
 	bool draw_chunk_corners = false;

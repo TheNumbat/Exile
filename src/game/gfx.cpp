@@ -87,21 +87,15 @@ void exile_renderer::calculate_light_quad(m4 m, m4 vp, v3 pos3, v3 col) {
 	_0 /= _0.w; _1 /= _1.w; _2 /= _2.w; _3 /= _3.w; 
 	_4 /= _4.w; _5 /= _5.w; _6 /= _6.w; _7 /= _7.w;
 
-	f32 dmin = min(min(min(_0.z,_1.z),min(_2.z,_3.z)),
-				   min(min(_4.z,_5.z),min(_6.z,_7.z)));
 	f32 dmax = max(max(max(_0.z,_1.z),max(_2.z,_3.z)),
 				   max(max(_4.z,_5.z),max(_6.z,_7.z)));
-
-	// cull volume if 'nearest' point is behind us
-	if(dmin > 1.0f) return;
+	// get rid of volumes entirely behind us
 	if(dmax < 0.0f) return;
 
-	v2 minc, maxc;
-
-	minc = minv2(minv2(minv2(_0.xy,_1.xy),minv2(_2.xy,_3.xy)),
-				 minv2(minv2(_4.xy,_5.xy),minv2(_6.xy,_7.xy)));
-	maxc = maxv2(maxv2(maxv2(_0.xy,_1.xy),maxv2(_2.xy,_3.xy)),
-				 maxv2(maxv2(_4.xy,_5.xy),maxv2(_6.xy,_7.xy)));
+	v2 minc = minv2(minv2(minv2(_0.xy,_1.xy),minv2(_2.xy,_3.xy)),
+				    minv2(minv2(_4.xy,_5.xy),minv2(_6.xy,_7.xy)));
+	v2 maxc = maxv2(maxv2(maxv2(_0.xy,_1.xy),maxv2(_2.xy,_3.xy)),
+				    maxv2(maxv2(_4.xy,_5.xy),maxv2(_6.xy,_7.xy)));
 
 	lighting_quads.push(r2(minc, maxc - minc), pos.xyz, col / 16.0f);
 }
