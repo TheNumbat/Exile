@@ -2,6 +2,7 @@
 #include "platform_win32.h"
 
 #ifdef CHECK_NO_LEAKS
+i32 global_num_allocs = 0;
 #define win32_heap_alloc win32_heap_alloc_net
 #define win32_heap_free win32_heap_free_net
 #endif
@@ -1587,9 +1588,9 @@ platform_error win32_wgl_setup() {
 		1, 
 		PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER,
 		PFD_TYPE_RGBA, 
-		24, 8, 0, 8, 0, 8, 0, 8, 0,
+		24, 8, 0, 8, 0, 8, 0, 0, 0,
 		0, 0, 0, 0, 0,
-		24, 8, 0, 0, 0, 0, 0, 0
+		0, 0, 0, 0, 0, 0, 0, 0
 	};
 
 	int pixel_index = ChoosePixelFormat(temp_device_context, &pixel_format);
@@ -1768,9 +1769,9 @@ platform_error win32_create_window(platform_window* window) {
 		(i32)wgl_context::double_buffer_arb,  1,
 		(i32)wgl_context::pixel_type_arb,	  (i32)wgl_context::type_rgba_arb,
 		(i32)wgl_context::color_bits_arb,	  24,
-		(i32)wgl_context::alpha_bits_arb, 	  8,
-		(i32)wgl_context::depth_bits_arb,	  24,
-		(i32)wgl_context::stencil_bits_arb,	  8,
+		(i32)wgl_context::alpha_bits_arb, 	  0,
+		(i32)wgl_context::depth_bits_arb,	  0,
+		(i32)wgl_context::stencil_bits_arb,	  0,
 		(i32)wgl_context::sample_buffers_arb, window->settings.samples > 1 ? 1 : 0,
 		(i32)wgl_context::samples_arb,		  window->settings.samples > 1 ? window->settings.samples : 0,
 		0,

@@ -14,6 +14,7 @@ host_system = host_machine.system()
 inc_dir = include_directories('deps', 'src')
 
 game_cpp_args = []
+main_cpp_args = []
 all_cpp_args = []
 
 if get_option('buildtype') != 'release'
@@ -35,11 +36,11 @@ if get_option('buildtype') != 'release'
 	if get_option('fast_close') 
 		game_cpp_args += '-DFAST_CLOSE' 
 	endif
-	if get_option('leak_check') 
-		game_cpp_args += '-DCHECK_NO_LEAKS' 
-	endif
 	if get_option('gl_check') 
 		game_cpp_args += '-DGL_CHECKS' 
+	endif
+	if get_option('leak_check') 
+		main_cpp_args += '-DCHECK_NO_LEAKS' 
 	endif
 endif
 
@@ -134,7 +135,6 @@ shared_library('exile', [game_sources, imgui_sources, engine_sources],
 
 main_sources = ['src/engine/platform/platform_main.cpp', 'src/engine/platform/platform_strings.cpp']
 main_dependencies = []
-main_cpp_args = []
 
 if host_system == 'windows'
 	main_dependencies += cc.find_library('opengl32')

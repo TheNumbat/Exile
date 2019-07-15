@@ -7,10 +7,6 @@
 #include "platform_strings.h"
 #include "platform_api.h"
 
-#ifdef CHECK_NO_LEAKS
-i32 global_num_allocs = 0;
-#endif
-
 // here we treat game_state* as void* so this doesn't have to know anything about the game
 typedef void* (*startup_type)(platform_api*);
 typedef bool  (*main_loop_type)(void*);
@@ -92,6 +88,8 @@ i32 main(i32 argc, char** argv) {
 #ifdef CHECK_NO_LEAKS
 	if(global_num_allocs) {
 	 	api.debug_break();	
+	} else {
+		api.write_stdout_str(string_literal("Zero net allocations achieved\n"));
 	}
 #endif
 

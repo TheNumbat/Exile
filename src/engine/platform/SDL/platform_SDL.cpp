@@ -13,6 +13,7 @@
 #endif
 
 #ifdef CHECK_NO_LEAKS
+i32 global_num_allocs = 0;
 #define sdl_heap_alloc sdl_heap_alloc_net
 #define sdl_heap_free sdl_heap_free_net
 #endif

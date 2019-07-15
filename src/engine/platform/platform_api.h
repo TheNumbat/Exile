@@ -16,6 +16,10 @@
 
 #include "../basic.h"
 
+#ifdef CHECK_NO_LEAKS
+extern i32 global_num_allocs;
+#endif
+
 // Defined per platform
 struct platform_window_internal;
 struct platform_dll;
