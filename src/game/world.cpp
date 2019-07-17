@@ -752,7 +752,7 @@ void chunk::do_gen() { PROF_FUNC
 				blocks[x][z][height] = block_id::torch;
 				place_light(iv3(x, height, z), 16);
 			} else {
-				// blocks[x][z][height] = block_id::stone_slab;
+				blocks[x][z][height] = block_id::stone_slab;
 			}
 		}
 	}
