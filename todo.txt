@@ -14,7 +14,7 @@ Working To-Do:
 	Rendering:
 		[features]
 		dynamic lights
-			calculate screen bounding quads
+			swap to light volumes
 			flashlight (directional lights)
 			gonna need some chunk culling
 

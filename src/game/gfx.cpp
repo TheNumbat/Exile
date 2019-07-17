@@ -14,7 +14,7 @@ void exile_renderer::init(allocator* a) {
 
 	the_cubemap.init();
 	the_quad.init();
-	lighting_quads.init(a);
+	lights.init(a);
 
 	alloc = a;
 	hud_tasks = render_command_list::make(alloc, 32);
@@ -51,7 +51,8 @@ void exile_renderer::world_begin_chunks(world* w, bool offset) {
 
 	// TODO(max): move this somewhere else?
 	f32 ar = (f32)exile->eng->window.settings.w / (f32)exile->eng->window.settings.h;
-	proj_info.ivp = inverse(w->p.camera.proj(ar) * w->p.camera.view_pos_origin());
+	proj_info.vp = w->p.camera.proj(ar) * w->p.camera.view_pos_origin();
+	proj_info.ivp = inverse(proj_info.vp);
 	proj_info.near = w->p.camera.near;
 
 	world_tasks.push_settings();
@@ -97,7 +98,8 @@ void exile_renderer::calculate_light_quad(m4 m, m4 vp, v3 pos3, v3 col) {
 	v2 maxc = maxv2(maxv2(maxv2(_0.xy,_1.xy),maxv2(_2.xy,_3.xy)),
 				    maxv2(maxv2(_4.xy,_5.xy),maxv2(_6.xy,_7.xy)));
 
-	lighting_quads.push(r2(minc, maxc - minc), pos.xyz, col / 16.0f);
+	r2 ret = r2(minc, maxc - minc);
+	(void)ret;
 }
 
 void exile_renderer::world_chunk(world* w, chunk* c, texture_id blocks, texture_id sky, m4 model, m4 view, m4 proj) {
@@ -119,8 +121,7 @@ void exile_renderer::world_chunk(world* w, chunk* c, texture_id blocks, texture_
 	cmd.callback_data = c;
 
 	FORVEC(it, c->lights) {
-		m4 vp = proj * view;
-		calculate_light_quad(model, vp, it->pos, it->col);
+		lights.push(it->pos - w->p.camera.pos, it->col);
 	}
 
 	world_tasks.add_command(cmd);
@@ -205,7 +206,7 @@ void exile_renderer::end_frame() {
 	{
 		exile->eng->ogl.execute_command_list(&world_tasks);
 		world_tasks.clear();
-		lighting_quads.clear();
+		lights.clear();
 	}
 	{
 		exile->eng->ogl.execute_command_list(&hud_tasks);
@@ -268,6 +269,7 @@ void world_target_info::init(iv2 dim, i32 samples) {
 
 	world_info.light_target = exile->eng->ogl.add_framebuffer();
 	exile->eng->ogl.add_target(world_info.light_target, world_info.light_buf_target);
+	exile->eng->ogl.add_target(world_info.light_target, world_info.depth_buf_target);
 	exile->eng->ogl.commit_framebuffer(world_info.light_target);
 
 	effect_info.effect0 = exile->eng->ogl.add_texture_target(dim, 1, gl_tex_format::rgb16f, gl_pixel_data_format::rgb);
@@ -287,15 +289,17 @@ void world_target_info::init(iv2 dim, i32 samples) {
 void world_target_info::resolve(render_command_list* list) {
 	
 	{ // Update light accumulation with dynamic lights
-		render_command cmd = render_command::make_cst(msaa ? exile->ren.cmd_defer_light_ms : exile->ren.cmd_defer_light, exile->ren.lighting_quads.gpu);
+		render_command cmd = render_command::make_cst(msaa ? exile->ren.cmd_defer_light_ms : exile->ren.cmd_defer_light, exile->ren.lights.gpu);
 
 		cmd.info.fb_id = world_info.light_target;
 		cmd.info.textures[0] = world_info.norm_buf;
 		cmd.info.textures[1] = world_info.depth_buf;
 		cmd.info.user_data0 = &exile->ren;
-		cmd.info.num_tris = exile->ren.lighting_quads.data.size;
+		cmd.info.num_tris = exile->ren.lights.lights.size;
 
 		list->push_settings();
+		list->set_setting(render_setting::write_depth, false);
+		list->set_setting(render_setting::cull, true);
 		list->set_setting(render_setting::aa_shading, true);
 		list->set_setting(render_setting::blend, (u8)blend_mode::add);
 		list->add_command(cmd);
@@ -445,7 +449,7 @@ void exile_renderer::destroy() {
 
 	the_cubemap.destroy();
 	the_quad.destroy();
-	lighting_quads.destroy();
+	lights.destroy();
 }
 
 CALLBACK void uniforms_composite(shader_program* prog, render_command* cmd) {
@@ -509,7 +513,9 @@ CALLBACK void uniforms_resolve(shader_program* prog, render_command* cmd) {
 
 CALLBACK void run_defer(render_command* cmd, gpu_object* gpu) {
 
-	glDrawArraysInstanced(gl_draw_mode::triangle_strip, 0, 4, cmd->info.num_tris);
+	mesh_light_list* m = (mesh_light_list*)gpu->data;
+
+	glDrawElementsInstanced(gl_draw_mode::triangles, m->elems.size * 3, gl_index_type::unsigned_int, null, cmd->info.num_tris);
 }
 
 CALLBACK void uniforms_defer(shader_program* prog, render_command* cmd) {
@@ -521,6 +527,7 @@ CALLBACK void uniforms_defer(shader_program* prog, render_command* cmd) {
 	glUniform1i(prog->location("depth_tex"_), 1);
 
 	glUniform1f(prog->location("near"_), ren->proj_info.near);
+	glUniformMatrix4fv(prog->location("vp"_), 1, gl_bool::_false, ren->proj_info.vp.a);
 	glUniformMatrix4fv(prog->location("ivp"_), 1, gl_bool::_false, ren->proj_info.ivp.a);
 
 	glUniform1i(prog->location("debug_show"_), (i32)set->view);
@@ -545,9 +552,9 @@ CALLBACK void run_effect(render_command* cmd, gpu_object* gpu) {
 	glDrawArrays(gl_draw_mode::triangles, 0, 6);
 }
 
-void mesh_light_list::push(r2 r, v3 p, v3 c) {
+void mesh_light_list::push(v3 p, v3 c) {
 
-	data.push(light_data{r,p,c});
+	lights.push(light_data{p,c});
 	dirty = true;
 }
 
@@ -555,34 +562,49 @@ void mesh_light_list::init(allocator* alloc) {
 
 	if(!alloc) alloc = CURRENT_ALLOC();
 
-	data = vector<light_data>::make(32, alloc);
+	lights = vector<light_data>::make(512, alloc);
+	verts = vector<v3>::make(16, alloc);
+	elems = vector<uv3>::make(32, alloc);
+
+	sphere();
 	gpu = exile->eng->ogl.add_object(FPTR(setup_mesh_light_list), FPTR(update_mesh_light_list), this);	
 }
 
 void mesh_light_list::destroy() {
 
-	data.destroy();
+	lights.destroy();
+	verts.destroy();
+	elems.destroy();
 	exile->eng->ogl.destroy_object(gpu);
 }
 
 void mesh_light_list::clear() {
 
-	data.clear();
+	lights.clear();
 }
 
 CALLBACK void setup_mesh_light_list(gpu_object* obj) {
 
-	glBindBuffer(gl_buf_target::array, obj->vbos[0]);	
+	mesh_light_list* m = (mesh_light_list*)obj->data;
 
-	glVertexAttribPointer(0, 4, gl_vert_attrib_type::_float, gl_bool::_false, sizeof(light_data), (GLvoid*)(0));
-	glVertexAttribPointer(1, 3, gl_vert_attrib_type::_float, gl_bool::_false, sizeof(light_data), (GLvoid*)(4 * sizeof(GLfloat)));
-	glVertexAttribPointer(2, 3, gl_vert_attrib_type::_float, gl_bool::_false, sizeof(light_data), (GLvoid*)(7 * sizeof(GLfloat)));
-	glVertexAttribDivisor(0, 1);
+	glBindBuffer(gl_buf_target::array, obj->vbos[0]);
+
+	glVertexAttribPointer(0, 3, gl_vert_attrib_type::_float, gl_bool::_false, sizeof(v3), (GLvoid*)0);
+	glEnableVertexAttribArray(0);
+
+	glBindBuffer(gl_buf_target::array, obj->vbos[1]);
+
+	glVertexAttribPointer(1, 3, gl_vert_attrib_type::_float, gl_bool::_false, sizeof(light_data), (GLvoid*)(0 * sizeof(GLfloat)));
+	glVertexAttribPointer(2, 3, gl_vert_attrib_type::_float, gl_bool::_false, sizeof(light_data), (GLvoid*)(3 * sizeof(GLfloat)));
 	glVertexAttribDivisor(1, 1);
 	glVertexAttribDivisor(2, 1);
-	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);
 	glEnableVertexAttribArray(2);
+
+	glBindBuffer(gl_buf_target::element_array, obj->vbos[2]);
+
+	glNamedBufferData(obj->vbos[0], m->verts.size * sizeof(v3), m->verts.size ? m->verts.memory : null, gl_buf_usage::static_draw);
+	glNamedBufferData(obj->vbos[2], m->elems.size * sizeof(uv3), m->elems.size ? m->elems.memory : null, gl_buf_usage::static_draw);
 }
 
 CALLBACK void update_mesh_light_list(gpu_object* obj, void* data, bool force) {
@@ -590,7 +612,12 @@ CALLBACK void update_mesh_light_list(gpu_object* obj, void* data, bool force) {
 	mesh_light_list* m = (mesh_light_list*)data;
 	if(!force && !m->dirty) return;
 
-	glNamedBufferData(obj->vbos[0], m->data.size * sizeof(light_data), m->data.size ? m->data.memory : null, gl_buf_usage::dynamic_draw);
+	glNamedBufferData(obj->vbos[1], m->lights.size * sizeof(light_data), m->lights.size ? m->lights.memory : null, gl_buf_usage::dynamic_draw);
+
+	if(force) {
+		glNamedBufferData(obj->vbos[0], m->verts.size * sizeof(v3), m->verts.size ? m->verts.memory : null, gl_buf_usage::static_draw);
+		glNamedBufferData(obj->vbos[2], m->elems.size * sizeof(uv3), m->elems.size ? m->elems.memory : null, gl_buf_usage::dynamic_draw);
+	}
 
 	m->dirty = false;
 }
@@ -953,8 +980,6 @@ CALLBACK void setup_mesh_chunk(gpu_object* obj) {
 
 CALLBACK void setup_mesh_2D_col(gpu_object* obj) { 
 
-	glBindVertexArray(obj->vao);
-
 	glBindBuffer(gl_buf_target::array, obj->vbos[0]);
 	glVertexAttribPointer(0, 2, gl_vert_attrib_type::_float, gl_bool::_false, sizeof(v2), (void*)0);
 	glEnableVertexAttribArray(0);
@@ -964,13 +989,9 @@ CALLBACK void setup_mesh_2D_col(gpu_object* obj) {
 	glEnableVertexAttribArray(1);
 	
 	glBindBuffer(gl_buf_target::element_array, obj->vbos[2]);
-
-	glBindVertexArray(0);
 }
 
 CALLBACK void setup_mesh_2D_tex(gpu_object* obj) { 
-
-	glBindVertexArray(obj->vao);
 
 	glBindBuffer(gl_buf_target::array, obj->vbos[0]);
 	glVertexAttribPointer(0, 2, gl_vert_attrib_type::_float, gl_bool::_false, sizeof(v2), (void*)0);
@@ -981,13 +1002,9 @@ CALLBACK void setup_mesh_2D_tex(gpu_object* obj) {
 	glEnableVertexAttribArray(1);
 	
 	glBindBuffer(gl_buf_target::element_array, obj->vbos[2]);
-
-	glBindVertexArray(0);
 }
 
 CALLBACK void setup_mesh_2D_tex_col(gpu_object* obj) { 
-
-	glBindVertexArray(obj->vao);
 
 	glBindBuffer(gl_buf_target::array, obj->vbos[0]);
 	glVertexAttribPointer(0, 2, gl_vert_attrib_type::_float, gl_bool::_false, sizeof(v2), (void*)0);
@@ -1002,13 +1019,9 @@ CALLBACK void setup_mesh_2D_tex_col(gpu_object* obj) {
 	glEnableVertexAttribArray(2);
 
 	glBindBuffer(gl_buf_target::element_array, obj->vbos[3]);
-
-	glBindVertexArray(0);
 }
 
 CALLBACK void setup_mesh_3D_tex(gpu_object* obj) { 
-
-	glBindVertexArray(obj->vao);
 
 	glBindBuffer(gl_buf_target::array, obj->vbos[0]);
 	glVertexAttribPointer(0, 3, gl_vert_attrib_type::_float, gl_bool::_false, sizeof(v3), (void*)0);
@@ -1019,25 +1032,17 @@ CALLBACK void setup_mesh_3D_tex(gpu_object* obj) {
 	glEnableVertexAttribArray(1);
 
 	glBindBuffer(gl_buf_target::element_array, obj->vbos[2]);
-
-	glBindVertexArray(0);
 }
 
 CALLBACK void setup_mesh_3D_tex_instanced(gpu_object* obj) { 
-
-	glBindVertexArray(obj->vao);
 
 	glBindBuffer(gl_buf_target::array, obj->vbos[0]);
 	glVertexAttribPointer(2, 3, gl_vert_attrib_type::_float, gl_bool::_false, sizeof(v3), (void*)0);
 	glVertexAttribDivisor(2, 1);
 	glEnableVertexAttribArray(2);
-
-	glBindVertexArray(0);
 }
 
 CALLBACK void setup_mesh_lines(gpu_object* obj) { 
-
-	glBindVertexArray(obj->vao);
 
 	glBindBuffer(gl_buf_target::array, obj->vbos[0]);
 	glVertexAttribPointer(0, 3, gl_vert_attrib_type::_float, gl_bool::_false, sizeof(v3), (void*)0);
@@ -1046,8 +1051,6 @@ CALLBACK void setup_mesh_lines(gpu_object* obj) {
 	glBindBuffer(gl_buf_target::array, obj->vbos[1]);
 	glVertexAttribPointer(1, 4, gl_vert_attrib_type::_float, gl_bool::_false, sizeof(colorf), (void*)0);
 	glEnableVertexAttribArray(1);
-	
-	glBindVertexArray(0);
 }
 
 void mesh_pointcloud::init(allocator* alloc) {
@@ -1449,6 +1452,46 @@ void mesh_3d_tex::push_dome(v3 center, f32 r, i32 divisions) {
 			elements.push(uv3(idx1, idxp, idxp1));
 		}
 	}
+
+	dirty = true;
+}
+void mesh_light_list::sphere() { 
+	
+	f32 t = (1.0f + sqrt(5.0f)) / 2.0f;
+
+	verts.push(v3(-1.0f,  t,  0.0f));
+	verts.push(v3( 1.0f,  t,  0.0f));
+	verts.push(v3(-1.0f, -t,  0.0f));
+	verts.push(v3( 1.0f, -t,  0.0f));
+	verts.push(v3( 0.0f, -1.0f,  t));
+	verts.push(v3( 0.0f,  1.0f,  t));
+	verts.push(v3( 0.0f, -1.0f, -t));
+	verts.push(v3( 0.0f,  1.0f, -t));
+	verts.push(v3( t,  0.0f, -1.0f));
+	verts.push(v3( t,  0.0f,  1.0f));
+	verts.push(v3(-t,  0.0f, -1.0f));
+	verts.push(v3(-t,  0.0f,  1.0f));
+
+	elems.push(uv3(0, 11, 5));
+	elems.push(uv3(0, 5, 1));
+	elems.push(uv3(0, 1, 7));
+	elems.push(uv3(0, 7, 10));
+	elems.push(uv3(0, 10, 11));
+	elems.push(uv3(1, 5, 9));
+	elems.push(uv3(5, 11, 4));
+	elems.push(uv3(11, 10, 2));
+	elems.push(uv3(10, 7, 6));
+	elems.push(uv3(7, 1, 8));
+	elems.push(uv3(3, 9, 4));
+	elems.push(uv3(3, 4, 2));
+	elems.push(uv3(3, 2, 6));
+	elems.push(uv3(3, 6, 8));
+	elems.push(uv3(3, 8, 9));
+	elems.push(uv3(4, 9, 5));
+	elems.push(uv3(2, 4, 11));
+	elems.push(uv3(6, 2, 10));
+	elems.push(uv3(8, 6, 7));
+	elems.push(uv3(9, 8, 1));
 
 	dirty = true;
 }

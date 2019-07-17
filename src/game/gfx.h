@@ -85,14 +85,15 @@ struct mesh_cubemap {
 
 #pragma pack(push, 1)
 struct light_data {
-	r2 rect;
 	v3 pos;
 	v3 col;
 };
 #pragma pack(pop)
 
 struct mesh_light_list {
-	vector<light_data> data;
+	vector<light_data> lights;
+	vector<v3> verts;
+	vector<uv3> elems;
 
 	gpu_object_id gpu = -1;
 	bool dirty = false;
@@ -100,7 +101,8 @@ struct mesh_light_list {
 	void init(allocator* alloc = null);
 	void destroy();
 	void clear();
-	void push(r2 r, v3 pos, v3 col);
+	void sphere();
+	void push(v3 pos, v3 col);
 };
 CALLBACK void setup_mesh_light_list(gpu_object* obj);
 CALLBACK void update_mesh_light_list(gpu_object* obj, void* data, bool force);
@@ -292,7 +294,7 @@ struct effect_buffers {
 };
 
 struct world_proj_info {
-	m4 ivp;
+	m4 ivp, vp;
 	f32 near;
 };
 
@@ -356,7 +358,7 @@ struct exile_renderer {
 	// NOTE(max): these should be static, but hot reloading
 	mesh_cubemap the_cubemap;
 	mesh_quad 	 the_quad;
-	mesh_light_list lighting_quads;
+	mesh_light_list lights;
 
 	effect_pass invert, gamma;
 	effect_pass composite, composite_resolve, resolve;
