@@ -13,7 +13,7 @@
 	[
 		{
 			"name": "Build Exile",
-			"shell_cmd": "build",
+			"shell_cmd": "ninja -C build",
 			"encoding": "UTF-8",
 			"working_dir": "${project_path}/..",
 			"file_regex": "^[.\\\\/]*([A-Z]?:?[\\w.\\\\/]+)[(:]([0-9]+)[):]([0-9]+)?:?(.*)$",
