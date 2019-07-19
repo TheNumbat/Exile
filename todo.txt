@@ -14,56 +14,55 @@ Working To-Do:
 	Rendering:
 		[features]
 		dynamic lights
-			calculate screen bounding quads
-			flashlight (directional lights)
-			gonna need some chunk culling
+			stencil light volumes
+			flashlight (spotlights)
+			sunlight (directional)
 
-			change light falloff
-			specular textures
-				stuff like shiny ore
+			change light falloff - see UE4 doc
+			specular textures (e.g. ore)
 			normal map/heightmap textures
-			reflective textures?
-				screen space reflections
-		dynamic shadows
-			directional (flashlight) shadows
-			point (torch) shadows
-			sunlight shadows
+			reflective textures / screen space reflections
+			randomized textures / procedural specular/normal/reflective textures
 
-		optional FXAA/SMAA effect; use when MSAA is disabled ? maybe not if we don't use deferred
-		bloom / better fog (e.g. fog undergound should be dark -- apply lighting to fog)
-			https://learnopengl.com/Advanced-Lighting/Bloom
+		dynamic shadows
+			spotlight shadows
+			point light shadows
+			directional light shadows
+			
+		better fog (e.g. fog undergound should be dark -- apply lighting to fog)
 			http://www.sea-of-memes.com/LetsCode37/LetsCode37.html
-		HDR / auto exposure? yes tbh POGU
+		bloom
+			https://learnopengl.com/Advanced-Lighting/Bloom
+		HDR / auto exposure?
+			God Rays
 			make sun way brighter than torches and have auto exposure drown them out
 			https://learnopengl.com/Advanced-Lighting/HDR
+		optional FXAA/SMAA effects
 		
-		[later features]
-		transparent blocks, animated blocks (e.g. waving foliage)
-		water animation / liquid system
-		entity animation
+		transparent blocks
+		animated blocks (e.g. waving foliage)
+		water shaders
 
 		[performance/structure]
 		shaders as assets
-		think more about how we integrate the environment texture w/ the lighting pipeline
 		look at sample rate shading again; marking pixels as complex
 		reduce state changes
 			diff state instead of setting everything
 			set up sorting system for commands based on state
 			uniform buffers
 			multidrawindirect for chunks; begin_chunks finish_chunks generate one command together
-		chunk culling / visibility / draw optimizations
+		!!!! chunk culling / visibility / draw optimizations
 			try cpu frustum + occlusion queries
-				defer the queries a few frames?
-			!!! removing chunk gpu data when it is not being drawn 
-				also cpu data, but that comes later
+			defer the queries a few frames?
+			removing chunk gpu data when it is not being drawn 
+			also cpu data, but that comes later
 		bindless OGL stuff
-		look into Forward+ rendering or Tile Deferred / Tiled Forward 
-			this is even better for supporting tons of small-radius lights
-			not that much better than deferred for large lights, though, so this depends on the dynamic
-			radius of torches 
 		move OpenGL to another thread - should be pretty easy through gfx
 			lockless task buffers? 
 			can we thread generating the chunk command list?
+		look into Forward+ rendering or Tile Deferred / Tiled Forward 
+			this is even better for supporting tons of small-radius lights
+			not that much better than deferred for large lights, though, so this depends on the dynamic radius of torches 
 
 	World:
 		FIX: torchlight AND sunlight removal
@@ -71,7 +70,6 @@ Working To-Do:
 		add east/west sunlight calculation & day curve use
 
 		sun/moon objects 
-			god rays
 		spinning sky/stars
 
 		fix place/break block
@@ -79,6 +77,8 @@ Working To-Do:
 		
 		chunk paging and persistence
 		world generation framework
+			look into procgen 
+			look into WaveFunctionCollapse structure generation
 
 	data serialization/deserialization
 	menu / user settings
