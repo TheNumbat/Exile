@@ -17,9 +17,9 @@ void main() {
 
 	float r = max(v_lcol.x,max(v_lcol.y,v_lcol.z));	
 
-	vec3 vert = 2.0f * r * v_vert + v_lpos;
+	vec3 vert = v_vert + v_lpos;
 
-	vec4 ndc = vp * vec4(vert - v_lpos, 1.0f);
+	vec4 ndc = vp * vec4(vert, 1.0f);
 
 	gl_Position = ndc;
 

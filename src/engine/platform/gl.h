@@ -89,8 +89,10 @@ enum class gl_tex_param : GLenum {
 };
 
 enum class gl_tex_format : GLint {
-	depth_component32f          = 0x8CAC,
-	depth_component				= 0x1902,
+	depth24_stencil8 			= 0x88F0,
+	depth32f_stencil8 			= 0x8CAD,
+	depth32f          			= 0x8CAC,
+	depth						= 0x1902,
 	depth_stencil        		= 0x84F9,
 	red							= 0x1903,
 	rg                   		= 0x8227,

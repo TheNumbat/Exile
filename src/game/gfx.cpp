@@ -257,7 +257,7 @@ void world_target_info::init(iv2 dim, i32 samples) {
 	world_info.light_buf = exile->eng->ogl.add_texture_target(dim, samples, gl_tex_format::rgb16f, gl_pixel_data_format::rgb);
 	world_info.light_buf_target = exile->eng->ogl.make_target(gl_draw_target::color_3, world_info.light_buf);
 
-	world_info.depth_buf = exile->eng->ogl.add_texture_target(dim, samples, gl_tex_format::depth_component32f, gl_pixel_data_format::depth_component);
+	world_info.depth_buf = exile->eng->ogl.add_texture_target(dim, samples, gl_tex_format::depth32f_stencil8, gl_pixel_data_format::depth_component);
 	world_info.depth_buf_target = exile->eng->ogl.make_target(gl_draw_target::depth, world_info.depth_buf);
 
 	world_info.chunk_target = exile->eng->ogl.add_framebuffer();
@@ -513,9 +513,7 @@ CALLBACK void uniforms_resolve(shader_program* prog, render_command* cmd) {
 
 CALLBACK void run_defer(render_command* cmd, gpu_object* gpu) {
 
-	mesh_light_list* m = (mesh_light_list*)gpu->data;
-
-	glDrawElementsInstanced(gl_draw_mode::triangles, m->elems.size * 3, gl_index_type::unsigned_int, null, cmd->info.num_tris);
+	glDrawElementsInstanced(gl_draw_mode::triangles, mesh_light_list::nelems, gl_index_type::unsigned_int, null, cmd->info.num_tris);
 }
 
 CALLBACK void uniforms_defer(shader_program* prog, render_command* cmd) {
@@ -563,18 +561,14 @@ void mesh_light_list::init(allocator* alloc) {
 	if(!alloc) alloc = CURRENT_ALLOC();
 
 	lights = vector<light_data>::make(512, alloc);
-	verts = vector<v3>::make(16, alloc);
-	elems = vector<uv3>::make(32, alloc);
 
-	sphere();
 	gpu = exile->eng->ogl.add_object(FPTR(setup_mesh_light_list), FPTR(update_mesh_light_list), this);	
+	exile->eng->ogl.object_trigger_update(gpu, this, true);
 }
 
 void mesh_light_list::destroy() {
 
 	lights.destroy();
-	verts.destroy();
-	elems.destroy();
 	exile->eng->ogl.destroy_object(gpu);
 }
 
@@ -584,8 +578,6 @@ void mesh_light_list::clear() {
 }
 
 CALLBACK void setup_mesh_light_list(gpu_object* obj) {
-
-	mesh_light_list* m = (mesh_light_list*)obj->data;
 
 	glBindBuffer(gl_buf_target::array, obj->vbos[0]);
 
@@ -602,9 +594,6 @@ CALLBACK void setup_mesh_light_list(gpu_object* obj) {
 	glEnableVertexAttribArray(2);
 
 	glBindBuffer(gl_buf_target::element_array, obj->vbos[2]);
-
-	glNamedBufferData(obj->vbos[0], m->verts.size * sizeof(v3), m->verts.size ? m->verts.memory : null, gl_buf_usage::static_draw);
-	glNamedBufferData(obj->vbos[2], m->elems.size * sizeof(uv3), m->elems.size ? m->elems.memory : null, gl_buf_usage::static_draw);
 }
 
 CALLBACK void update_mesh_light_list(gpu_object* obj, void* data, bool force) {
@@ -615,8 +604,8 @@ CALLBACK void update_mesh_light_list(gpu_object* obj, void* data, bool force) {
 	glNamedBufferData(obj->vbos[1], m->lights.size * sizeof(light_data), m->lights.size ? m->lights.memory : null, gl_buf_usage::dynamic_draw);
 
 	if(force) {
-		glNamedBufferData(obj->vbos[0], m->verts.size * sizeof(v3), m->verts.size ? m->verts.memory : null, gl_buf_usage::static_draw);
-		glNamedBufferData(obj->vbos[2], m->elems.size * sizeof(uv3), m->elems.size ? m->elems.memory : null, gl_buf_usage::dynamic_draw);
+		glNamedBufferData(obj->vbos[0], sizeof(m->verts), m->verts, gl_buf_usage::static_draw);
+		glNamedBufferData(obj->vbos[2], sizeof(m->elems), m->elems, gl_buf_usage::static_draw);
 	}
 
 	m->dirty = false;
@@ -1452,46 +1441,6 @@ void mesh_3d_tex::push_dome(v3 center, f32 r, i32 divisions) {
 			elements.push(uv3(idx1, idxp, idxp1));
 		}
 	}
-
-	dirty = true;
-}
-void mesh_light_list::sphere() { 
-	
-	f32 t = (1.0f + sqrt(5.0f)) / 2.0f;
-
-	verts.push(v3(-1.0f,  t,  0.0f));
-	verts.push(v3( 1.0f,  t,  0.0f));
-	verts.push(v3(-1.0f, -t,  0.0f));
-	verts.push(v3( 1.0f, -t,  0.0f));
-	verts.push(v3( 0.0f, -1.0f,  t));
-	verts.push(v3( 0.0f,  1.0f,  t));
-	verts.push(v3( 0.0f, -1.0f, -t));
-	verts.push(v3( 0.0f,  1.0f, -t));
-	verts.push(v3( t,  0.0f, -1.0f));
-	verts.push(v3( t,  0.0f,  1.0f));
-	verts.push(v3(-t,  0.0f, -1.0f));
-	verts.push(v3(-t,  0.0f,  1.0f));
-
-	elems.push(uv3(0, 11, 5));
-	elems.push(uv3(0, 5, 1));
-	elems.push(uv3(0, 1, 7));
-	elems.push(uv3(0, 7, 10));
-	elems.push(uv3(0, 10, 11));
-	elems.push(uv3(1, 5, 9));
-	elems.push(uv3(5, 11, 4));
-	elems.push(uv3(11, 10, 2));
-	elems.push(uv3(10, 7, 6));
-	elems.push(uv3(7, 1, 8));
-	elems.push(uv3(3, 9, 4));
-	elems.push(uv3(3, 4, 2));
-	elems.push(uv3(3, 2, 6));
-	elems.push(uv3(3, 6, 8));
-	elems.push(uv3(3, 8, 9));
-	elems.push(uv3(4, 9, 5));
-	elems.push(uv3(2, 4, 11));
-	elems.push(uv3(6, 2, 10));
-	elems.push(uv3(8, 6, 7));
-	elems.push(uv3(9, 8, 1));
 
 	dirty = true;
 }

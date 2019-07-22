@@ -14,7 +14,8 @@ Working To-Do:
 	Rendering:
 		[features]
 		dynamic lights
-			swap to light volumes
+			swap to light volumes + stencil trick
+				LOD tesselation of sphere?
 			flashlight (directional lights)
 			gonna need some chunk culling
 
