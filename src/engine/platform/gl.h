@@ -1,17 +1,8 @@
 
 #pragma once
 
-#ifndef DLL_EXPORT
-#define DLL_EXPORT extern "C" __declspec(dllexport)
-#endif
-#ifndef DLL_IMPORT
-#define DLL_IMPORT extern "C" __declspec(dllimport)
-#endif
-#ifndef _MSC_VER
-#error unsupported compiler?
-#endif
-
 #include <stddef.h>
+#include "../basic.h"
 
 typedef unsigned int GLenum;
 typedef unsigned char GLboolean;

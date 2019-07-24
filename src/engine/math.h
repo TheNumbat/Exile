@@ -7,6 +7,8 @@
 #include <stdlib.h>
 #ifdef _MSC_VER
 #include <intrin.h>
+#elif defined(__clang__)
+#include <smmintrin.h>
 #endif
 
 #ifndef IN_MATH_IMPL
@@ -429,7 +431,7 @@ union v4 {
 	};
 	struct {
 		v3 xyz;
-		f32 w;
+		f32 _w;
 	};
 	f32 a[4] = {};
 	__m128 packed;

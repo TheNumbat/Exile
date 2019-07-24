@@ -965,20 +965,20 @@ m4 lookAt(v3 pos, v3 at, v3 up) {
 #define VecShuffle(vec1, vec2, x,y,z,w)    _mm_shuffle_ps(vec1, vec2, MakeShuffleMask(x,y,z,w))
 #define VecShuffle_0101(vec1, vec2)        _mm_movelh_ps(vec1, vec2)
 #define VecShuffle_2323(vec1, vec2)        _mm_movehl_ps(vec2, vec1)
-__forceinline __m128 Mat2Mul(__m128 vec1, __m128 vec2)
+inline __m128 Mat2Mul(__m128 vec1, __m128 vec2)
 {
 	return
 		_mm_add_ps(_mm_mul_ps(                     vec1, VecSwizzle(vec2, 0,3,0,3)),
 		           _mm_mul_ps(VecSwizzle(vec1, 1,0,3,2), VecSwizzle(vec2, 2,1,2,1)));
 }
-__forceinline __m128 Mat2AdjMul(__m128 vec1, __m128 vec2)
+inline __m128 Mat2AdjMul(__m128 vec1, __m128 vec2)
 {
 	return
 		_mm_sub_ps(_mm_mul_ps(VecSwizzle(vec1, 3,3,0,0), vec2),
 		           _mm_mul_ps(VecSwizzle(vec1, 1,1,2,2), VecSwizzle(vec2, 2,3,0,1)));
 
 }
-__forceinline __m128 Mat2MulAdj(__m128 vec1, __m128 vec2)
+inline __m128 Mat2MulAdj(__m128 vec1, __m128 vec2)
 {
 	return
 		_mm_sub_ps(_mm_mul_ps(                     vec1, VecSwizzle(vec2, 3,0,3,0)),

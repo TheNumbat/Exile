@@ -243,7 +243,7 @@ pool_allocator make_pool_allocator(string name, u64 page_size, allocator* backin
 	return ret;
 }
 
-void _memcpy(void* source, void* dest, u64 size) {
+void _memcpy(const void* source, void* dest, u64 size) {
 
 #ifdef _MSC_VER
 	__movsb((u8*)dest, (u8*)source, size);

@@ -3,6 +3,7 @@
 
 #include "gfx.h"
 #include "exile.h"
+#include <engine/platform/gl.h>
 #include <engine/util/threadstate.h>
 
 void exile_renderer::init(allocator* a) {

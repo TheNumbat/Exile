@@ -46,6 +46,7 @@ struct super_job {
 	void* data 	  		= null;
 	u64 my_size			= 0;
 	func_ptr<void,void*> cancel;
+	virtual ~super_job() {}
 	virtual void do_work() = 0; // NOTE(max): pretty sure this is the only way to make this work...and it breaks hot reloading.
 								//  		  AS A RESULT we need to make sure the threadpool queue is empty before reloading
 };
@@ -68,7 +69,7 @@ struct NOREFLECT job<void> : super_job {
 };
 
 struct worker_param {
-	locking_heap<super_job*,gt>* job_queue 	= null;
+	locking_heap<super_job*>* job_queue 	= null;
 	platform_semaphore* jobs_semaphore 		= null;
 	allocator* alloc 				   		= null;
 	bool online			   	       			= false;
@@ -78,7 +79,7 @@ struct threadpool {
 	i32 num_threads 	= 0;
 	bool online    		= false;
 
-	locking_heap<super_job*,gt> jobs;		
+	locking_heap<super_job*> jobs;		
 
 	array<platform_thread> 	threads;
 	array<worker_param> 	worker_data;
@@ -148,36 +149,6 @@ void future<T>::set(T v) {
 	val = v;
 	global_api->release_mutex(&mut);
 	CHECKED(signal_semaphore, &sem, 1);
-}
-
-template<>
-void heap<super_job*,gt>::renew(f32 (*eval)(super_job*, void*), void* param) { 
-
-	heap<super_job*,gt> h = heap<super_job*,gt>::make(capacity);
-
-	FORHEAP_LINEAR(it, *this) {
-
-		super_job* j = *it;
-
-		j->priority = eval(j, param);
-
-		if(j->priority > -FLT_MAX) {
-			h.push(j);
-		} else {
-			
-			if(j->cancel)
-				j->cancel(j->data);
-
-			// NOTE(max): only works because the elements are allocated with the same allocator passed to the heap (in threadpool)
-			PUSH_ALLOC(alloc) {
-				free(j, j->my_size);
-			} POP_ALLOC();
-		}
-	}
-   
-	_memcpy(h.memory, memory, h.size * sizeof(super_job*));
-	size = h.size;
-	h.destroy();
 }
 
 template<typename T>

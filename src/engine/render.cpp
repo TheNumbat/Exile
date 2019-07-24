@@ -906,6 +906,7 @@ void texture::reload_data() {
 	case texture_type::cube: {
 		cube_info.load_single(handle, cube_info.info.store, cube_info.info.name, srgb);
 	} break;
+	default: break;
 	}
 }
 
@@ -1379,7 +1380,7 @@ void ogl_manager::execute_command_list(render_command_list* rcl) {
 
 		_cmd_set_settings(cmd);
 
-		switch(cmd->cmd_id) {
+		switch((draw_cmd)cmd->cmd_id) {
 		case draw_cmd::push_settings: {
 			_cmd_push_settings();
 		} break;
@@ -1506,6 +1507,7 @@ void debug_proc(gl_debug_source glsource, gl_debug_type gltype, GLuint id, gl_de
 	case gl_debug_source::other:
 		source = "Other"_;
 		break;
+	case gl_debug_source::dont_care: break;
 	}
 
 	switch(gltype) {
@@ -1536,6 +1538,7 @@ void debug_proc(gl_debug_source glsource, gl_debug_type gltype, GLuint id, gl_de
 	case gl_debug_type::other:
 		type = "Other"_;
 		break;
+	case gl_debug_type::dont_care: break;
 	}
 
 	switch(severity) {
@@ -1551,6 +1554,7 @@ void debug_proc(gl_debug_source glsource, gl_debug_type gltype, GLuint id, gl_de
 	case gl_debug_severity::notification:
 		LOG_OGL_F("NOTF OpenGL: % SOURCE: % TYPE: %"_, message, source, type);
 		break;
+	case gl_debug_severity::dont_care: break;
 	}
 }
 

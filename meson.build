@@ -1,8 +1,7 @@
 
-project('exile', 'cpp')
+project('exile', 'cpp', default_options : ['cpp_std=c++14'])
 
-# To-Do 
-# 	linux/macos build
+# Linux deps : libclang-dev, libsdl2-dev
 
 # Constants & Setup
 
@@ -12,6 +11,10 @@ build_dir    = meson.current_build_dir()
 cc = meson.get_compiler('cpp')
 host_system = host_machine.system()
 inc_dir = include_directories('deps', 'src')
+
+if host_system == 'linux'
+	assert(cc.get_id() == 'clang', 'only clang supported on linux')
+endif
 
 game_cpp_args = []
 main_cpp_args = []
@@ -54,6 +57,10 @@ if host_system == 'windows'
 	game_cpp_args += ['-Zc:offsetof-', '-fp:fast', '-GR-', '-EHa-', '-Oi', 
 			          '-MP', '-FC', '-D_HAS_EXCEPTIONS=0']
 	all_cpp_args += ['-wd4201', '-wd4100']
+elif host_system == 'linux'
+	all_cpp_args += ['-fdeclspec', '-Wno-format-security', '-Wno-non-pod-varargs', 
+					 '-Wno-unused-function', '-Wno-unused-const-variable', 
+					 '-Wno-format', '-Wno-invalid-offsetof', '-msse4.1']
 endif
 
 # Build asset builder
@@ -72,24 +79,25 @@ run_command('cp', 'build/game.asset', 'data/game.asset')
 
 # Build meta-program
 
-clang_dir = join_paths(project_dir, 'deps/clang-c')
+libclang = []
 
+clang_dir = join_paths(project_dir, 'deps/clang-c')
 libclang = cc.find_library('libclang', dirs : clang_dir)
+
+if host_system == 'windows'
+	configure_file(input: 'deps/clang-c/libclang.dll', output: 'libclang.dll', copy : true)
+endif
 
 meta_compiler = executable('meta', 'src/tools/meta.cpp', 
 							include_directories : inc_dir, 
 							dependencies : libclang, 
 							native : true, cpp_args : all_cpp_args)
 
-if host_system == 'windows'
-	configure_file(input: 'deps/clang-c/libclang.dll', output: 'libclang.dll', copy : true)
-endif
-
 gen_src = custom_target('meta_output',
                         input : 'src/meta_input.h',
                         output : 'meta_types.cpp',
                         build_by_default : true, build_always_stale : true,
-                        command : [meta_compiler, '@INPUT@', '@OUTPUT@', '-I../src/', '-I../deps/', '-xc++', all_cpp_args])
+                        command : [meta_compiler, '@INPUT@', '@OUTPUT@', '-I../src/', '-I../deps/', '-xc++', '-DRUNNING_META', all_cpp_args])
 
 # Build Game DLL
 
@@ -122,8 +130,11 @@ game_sources = [
 	gen_src]
 
 game_dependencies = []
+
 if host_system == 'windows'
 	game_dependencies += cc.find_library('opengl32')
+elif host_system == 'linux'
+	game_dependencies += dependency('gl')
 endif
 
 shared_library('exile', [game_sources, imgui_sources, engine_sources], 
@@ -143,12 +154,15 @@ endif
 if get_option('platform') == 'win32'
 	main_sources += 'src/engine/platform/windows/platform_win32.cpp'
 elif get_option('platform') == 'sdl'
-	main_sources += 'src/engine/platform/sdl/platform_sdl.cpp'
-	sdl_dir = join_paths(project_dir, 'deps/SDL2/lib')
-	main_dependencies += cc.find_library('SDL2', dirs : sdl_dir)
+	main_sources += 'src/engine/platform/SDL/platform_SDL.cpp'
+
 	if host_system == 'windows'
+		sdl_dir = join_paths(project_dir, 'deps/SDL2/lib')
+		main_dependencies += cc.find_library('SDL2', dirs : sdl_dir)
 		main_dependencies += cc.find_library('SDL2main', dirs : sdl_dir)
 		configure_file(input: 'deps/SDL2/lib/SDL2.dll', output: 'SDL2.dll', copy : true)
+	elif host_system == 'linux'
+		main_dependencies += dependency('sdl2')
 	endif
 endif
 

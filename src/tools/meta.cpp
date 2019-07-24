@@ -2,10 +2,12 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <vector>
 #include <unordered_map>
 #include <algorithm>
 
 #include <clang-c/Index.h>
+#include <clang-c/CXString.h>
 
 std::ostream& operator<<(std::ostream& stream, const CXString& str) {
 	const char* c_str = clang_getCString(str);
@@ -26,7 +28,8 @@ struct type_data {
 	bool done = false;
 	
 	bool in_progress_out = false;
-	bool in_progress_exp = false;
+	bool in_progress_grf = false;
+	bool in_progress_unx = false;
 
 	bool unexposed = false; // true -> unexposed, false -> maybe unexposed, check with function
 	std::vector<CXCursor> references;
@@ -61,9 +64,15 @@ void clear_in_progress_out() {
 	}
 }
 
-void clear_in_progress_exp() {
+void clear_in_progress_grf() {
 	for(auto& entry : types) {
-		entry.second.in_progress_exp = false;
+		entry.second.in_progress_grf = false;
+	}
+}
+
+void clear_in_progress_unx() {
+	for(auto& entry : types) {
+		entry.second.in_progress_unx = false;
 	}
 }
 
@@ -91,6 +100,7 @@ CXChildVisitResult gather_fields(CXCursor c, CXCursor parent, CXClientData clien
 			clang_visitChildren(c, gather_fields, client_data);
 		}
 	} break;
+	default: break;
 	}
 
 	return CXChildVisit_Continue;
@@ -118,8 +128,8 @@ void ensure_deps_in_graph_help(CXType type) {
 	ensure_in_graph(type);
 	auto entry = types.find(type);
 
-	if(entry->second.in_progress_exp) return;
-	entry->second.in_progress_exp = true;
+	if(entry->second.in_progress_grf) return;
+	entry->second.in_progress_grf = true;
 
 	switch(type.kind) {
 	case CXType_Pointer: ensure_deps_in_graph_help(clang_getPointeeType(type)); break;
@@ -136,13 +146,14 @@ void ensure_deps_in_graph_help(CXType type) {
 			ensure_deps_in_graph_help(clang_getArgType(type, i));
 		}
 	} break;
+	default: break;
 	}
 }
 
 void ensure_deps_in_graph(CXType type) {
 
 	ensure_deps_in_graph_help(type);
-	clear_in_progress_exp();
+	clear_in_progress_grf();
 }
 
 void print_dep_type(CXType type, CXType parent) {
@@ -211,11 +222,13 @@ CXChildVisitResult print_enum_field(CXCursor c, CXCursor parent, CXClientData cl
 
 bool type_is_unexposed_help(CXType type) {
 
+	ensure_deps_in_graph(type);
+
 	auto entry = types.find(type);
 	if(entry->second.unexposed) return true;
 
-	if(entry->second.in_progress_exp) return entry->second.unexposed;
-	entry->second.in_progress_exp = true;
+	if(entry->second.in_progress_unx) return entry->second.unexposed;
+	entry->second.in_progress_unx = true;
 
 	switch(type.kind) {
 	case CXType_Pointer: {
@@ -243,6 +256,8 @@ bool type_is_unexposed_help(CXType type) {
 		}
 		entry->second.unexposed = unexposed;
 	} break;
+
+	default: break;
 	}
 
 	return entry->second.unexposed;
@@ -251,7 +266,7 @@ bool type_is_unexposed_help(CXType type) {
 bool type_is_unexposed(CXType type) {
 
 	bool result = type_is_unexposed_help(type);
-	clear_in_progress_exp();
+	clear_in_progress_unx();
 	return result;
 }
 
@@ -309,7 +324,6 @@ CXVisitorResult print_field(CXCursor c, CXClientData client_data) {
 	field_client* data = (field_client*)client_data;
 
 	CXType type = clang_getCursorType(c);
-	CXCursor decl = clang_getTypeDeclaration(type);
 
 	std::string name  = to_string(clang_getCursorSpelling(c));
 	std::string type_name = to_string(clang_getTypeSpelling(type));
@@ -495,8 +509,6 @@ void print_pointer(CXType type, bool just_print = false) {
 
 void print_array(CXType type, bool just_print = false) {
 
-	CXCursor decl = clang_getTypeDeclaration(type);
-
 	CXType underlying = clang_getArrayElementType(type);
 	int64_t length = clang_getArraySize(type);
 
@@ -603,6 +615,7 @@ void resolve_patches() {
 		case CXType_Record: print_record(type, true); break;
 		case CXType_ConstantArray: print_array(type, true); break;
 		case CXType_Pointer: print_pointer(type, true); break;
+		default: break;
 		}
 	}
 	back_patches.clear();

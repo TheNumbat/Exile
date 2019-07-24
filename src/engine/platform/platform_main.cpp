@@ -1,7 +1,9 @@
 
 // platform layer setup + game code loading/reloading
 
+#ifdef _MSC_VER
 #pragma warning(disable : 4007)
+#endif
 
 #include "../basic.h"
 #include "platform_strings.h"

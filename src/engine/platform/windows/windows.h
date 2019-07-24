@@ -6,10 +6,6 @@
 // NOTE(max): adapted from Ginger Bill's public domain C libraries
 // https://github.com/gingerBill/gb/blob/master/gb.h#L2564
 
-#ifndef DLL_IMPORT
-#define DLL_IMPORT extern "C" __declspec(dllimport)
-#endif
-
 #define FAR
 #define NEAR
 #define APIENTRY 		FAR __stdcall
@@ -99,11 +95,13 @@ typedef LRESULT (WINCALLBACK* WNDPROC)(HWND, UINT, WPARAM, LPARAM);
 #if defined(_WIN64)
 typedef unsigned __int64 ULONG_PTR;
 typedef signed __int64 LONG_PTR;
-#else
+#elif defined(_WIN32)
 typedef unsigned long ULONG_PTR;
 typedef signed long LONG_PTR;
-#error "Windows x86 is probably broken"
+#else
+#error "_WIN32 or _WIN64 not defined in windows.h"
 #endif
+
 typedef ULONG_PTR DWORD_PTR;
 
 typedef struct tagRECT {

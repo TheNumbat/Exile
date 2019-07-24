@@ -61,7 +61,7 @@ struct map_element {
 	u32 occupied_and_bucket = 0;
 };
 
-template<typename K, typename V, u32(hash_func)(K) = hash>
+template<typename K, typename V>
 struct map {
 	vector<map_element<K, V>> contents;
 	u32 size	 		= 0;				// always a power of two so mod is only a bit-and
@@ -70,8 +70,8 @@ struct map {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-	static map<K,V,hash_func> make(u32 capacity = 16);
-	static map<K,V,hash_func> make(u32 capacity, allocator* a);
+	static map<K,V> make(u32 capacity = 16);
+	static map<K,V> make(u32 capacity, allocator* a);
 	
 	void destroy();
 	

@@ -5,6 +5,8 @@
 #include "../ds/string.h"
 #include "../ds/queue.h"
 #include "../ds/alloc.h"
+#include "../math.h"
+#include "../util/reflect.h"
 
 #define MAX_CONTEXT_DEPTH 16
 
