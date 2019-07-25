@@ -51,13 +51,13 @@ void platform_test_api() {
 	printf("log cpus: %d\n", sdl_get_num_cpus());
 	printf("phy cpus: %d\n", sdl_get_phys_cpus());
 
-	printf("perfc: %lu\n", sdl_get_perfcount());
-	printf("perff: %lu\n", sdl_get_perfcount_freq());
+	printf("perfc: %llu\n", sdl_get_perfcount());
+	printf("perff: %llu\n", sdl_get_perfcount_freq());
 
 	u64 val = 0;
-	printf("val: %lu\n", val);
+	printf("val: %llu\n", val);
 	sdl_atomic_exchange(&val, 10);
-	printf("val: %lu\n", val);
+	printf("val: %llu\n", val);
 
 #ifdef CHECK_NO_LEAKS
 	printf("count: %d\n", global_num_allocs);

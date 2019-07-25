@@ -13,7 +13,7 @@ host_system = host_machine.system()
 inc_dir = include_directories('deps', 'src')
 
 if host_system == 'linux'
-	assert(cc.get_id() == 'clang', 'only clang supported on linux')
+	assert(cc.get_id() == 'clang', 'only clang++ supported on linux')
 endif
 
 game_cpp_args = []
