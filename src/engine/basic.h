@@ -1,7 +1,7 @@
 
 #pragma once
 
-#ifndef CHECK_PLT
+#ifdef CHECK_PLT
 #define CHECKED(func, ...) {platform_error err = global_api->func(__VA_ARGS__); if(!err.good) LOG_ERR_F("Error %:\"%\" in %"_, err.error, err.error_message, #func##_);}
 #else
 #define CHECKED(func, ...) global_api->func(__VA_ARGS__);

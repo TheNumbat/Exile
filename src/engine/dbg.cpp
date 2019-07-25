@@ -501,7 +501,8 @@ void dbg_console::UI(platform_window* window) { PROF_FUNC
 				switch(it->lvl) {
 				case log_level::console: col = ImColor(1.0f,0.78f,0.58f,1.0f); break;
 				case log_level::warn: col = ImColor(1.0f,0.4f,0.4f,1.0f); break;
-				case log_level::error: col = ImColor(1.0f,0.0f,0.0f,1.0f); break;
+				case log_level::error: col = ImColor(0.8f,0.0f,0.0f,1.0f); break;
+				case log_level::fatal: col = ImColor(1.0f,0.0f,0.0f,1.0f); break;
 				default: col = col * 0.7f; break;
 				}
 

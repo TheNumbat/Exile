@@ -204,16 +204,12 @@ void log_manager::msgf(string fmt, log_level level, code_context context, Targs.
 #ifdef BLOCK_OR_EXIT_ON_ERROR
 		if(level == log_level::error) {
 			global_api->join_thread(&logging_thread, -1);
-			if(global_api->is_debugging()) {
-				global_api->debug_break();
-			}
+			global_api->debug_break();
 		}
 #endif
 		if(level == log_level::fatal) {
 			global_api->join_thread(&logging_thread, -1);
-			if(global_api->is_debugging()) {
-				global_api->debug_break();
-			}
+			global_api->debug_break();
 		}
 
 	} POP_ALLOC();
