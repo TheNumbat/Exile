@@ -339,12 +339,20 @@ u64 sdl_get_perfcount_freq() {
 	return SDL_GetPerformanceFrequency();
 }
 
-// no good platform-independent way to do this...could be done but it's not worth it
+#if !defined(_MSC_VER) && !defined(__clang__)
+#include <signal.h>
+#endif
+
 void sdl_debug_break() {
-#ifdef MSC_VER
+#ifdef _MSC_VER
 	__debugbreak();
+#elif defined(__clang__)
+	__builtin_trap();
+#else
+	raise(SIGTRAP);
 #endif
 }
+
 bool sdl_is_debugging() {
 	return false;
 }
@@ -925,14 +933,12 @@ platform_error sdl_copy_file(string source, string dest, bool overwrite) {
 	
 	ret = sdl_create_file(&s, source, platform_file_open_op::existing);
 	if(!ret.good) {
-		sdl_close_file(&s);
 		return ret;
 	}
 
 	ret = sdl_create_file(&d, dest, platform_file_open_op::cleared);
 	if(!ret.good) {
 		sdl_close_file(&s);
-		sdl_close_file(&d);
 		return ret;
 	}
 
@@ -1063,7 +1069,7 @@ platform_error sdl_write_stdout(void* mem, u32 len) {
 #ifdef _MSC_VER
 	_write(1, mem, len);
 #else
-	write(STDOUT_FILENO, mem, len);
+	write(1, mem, len);
 #endif
 	
 	fflush(stdout);

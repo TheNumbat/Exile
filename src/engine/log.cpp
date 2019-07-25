@@ -185,18 +185,17 @@ void log_manager::msg(string msg, log_level level, code_context context) {
 
 #ifdef BLOCK_OR_EXIT_ON_ERROR
 		if(level == log_level::error) {
-
+			global_api->join_thread(&logging_thread, -1);
 			if(global_api->is_debugging()) {
 				global_api->debug_break();
 			}
-			global_api->join_thread(&logging_thread, -1);
 		}
 #endif
 		if(level == log_level::fatal) {
+			global_api->join_thread(&logging_thread, -1);
 			if(global_api->is_debugging()) {
 				global_api->debug_break();
 			}
-			global_api->join_thread(&logging_thread, -1);
 		}
 
 	} POP_ALLOC();
@@ -295,7 +294,7 @@ i32 log_proc(void* data_) {
 
 		log_message msg;
 		while(data->message_queue->try_pop(&msg)) {
-			do_msg(data, msg);
+			if(do_msg(data, msg)) break;
 		}
 
 		global_dbg->profiler.collate();
@@ -313,7 +312,7 @@ i32 log_proc(void* data_) {
 	return 0;
 }
 
-void do_msg(log_thread_param* data, log_message msg) {
+bool do_msg(log_thread_param* data, log_message msg) {
 
 	if(msg.msg.c_str != null) {
 		
@@ -341,13 +340,15 @@ void do_msg(log_thread_param* data, log_message msg) {
 
 #ifdef BLOCK_OR_EXIT_ON_ERROR
 		if(msg.level == log_level::error) {
-			exit(1);
+			return true;
 		}
 #endif
 		if(msg.level == log_level::fatal) {
-			exit(1);
+			return true;
 		}
 
 		DESTROY_ARENA(&msg.arena);
 	}
+
+	return false;
 }

@@ -33,9 +33,14 @@ typedef unsigned short USHORT;
 typedef unsigned long ULONG;
 typedef unsigned long long ULONGLONG;
 
-/* ?????????? This is what it needs to be...but this isn't how it is in the default headers */
+// TODO(max): \/ not sure if correct
+#ifdef _WIN64
 typedef ULONGLONG WPARAM;
 typedef LONGLONG LPARAM;
+#elif defined(_WIN32)
+typedef ULONG WPARAM;
+typedef LONG LPARAM;
+#endif
 
 typedef DWORD* PDWORD;
 typedef DWORD* LPDWORD;

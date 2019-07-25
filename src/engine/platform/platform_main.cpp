@@ -48,9 +48,15 @@ i32 main(i32 argc, char** argv) {
 
 	i32 idx = string_last_slash(exe_path);
 	exe_folder 	  = make_substring(exe_path, 0, idx + 1, api.heap_alloc);
+
+#ifdef _WIN32
 	dll_path 	  = make_cat_string(exe_folder, string_literal("exile.dll"), api.heap_alloc);
 	temp_dll_path = make_cat_string(exe_folder, string_literal("exile_temp.dll"), api.heap_alloc);
-	
+#elif defined(__linux__)
+	dll_path 	  = make_cat_string(exe_folder, string_literal("libexile.so"), api.heap_alloc);
+	temp_dll_path = make_cat_string(exe_folder, string_literal("libexile_temp.so"), api.heap_alloc);
+#endif
+
 	free_string(exe_path, api.heap_free);
 
 	if(!load_lib()) {

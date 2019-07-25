@@ -1030,7 +1030,7 @@ m4 inverse(m4 inM)
 	return r;
 }
 
-// TODO(max): replace c lib stuff
+// TODO(max): replace c lib random stuff
 void rand_init(u32 seed) {
 	srand(seed);
 }
