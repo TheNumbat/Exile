@@ -3,6 +3,7 @@
 
 #include "ds/heap.h"
 #include "ds/array.h"
+#include "log.h"
 #include "util/threadstate.h"
 
 template<typename E>

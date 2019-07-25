@@ -378,7 +378,7 @@ u64 win32_get_perfcount_freq() {
 }
 
 void win32_debug_break() {
-	__debugbreak();	
+	__debugbreak();
 }
 
 bool win32_is_debugging() {

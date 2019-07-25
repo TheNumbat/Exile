@@ -44,7 +44,7 @@ void platform_test_api() {
 
 #define CHECK_ERR if(!err.good) {printf("ERROR: %s", err.error_message.c_str); exit(1);}
 
-	platform_error err;
+	platform_error err; (void)err;
 
 	puts("Hello World!");
 
@@ -339,21 +339,22 @@ u64 sdl_get_perfcount_freq() {
 	return SDL_GetPerformanceFrequency();
 }
 
-#if !defined(_MSC_VER) && !defined(__clang__)
+#ifdef __linux__
 #include <signal.h>
 #endif
 
 void sdl_debug_break() {
-#ifdef _MSC_VER
+#ifdef _WIN32
 	__debugbreak();
-#elif defined(__clang__)
-	__builtin_trap();
+#elif defined(__linux__)
+    raise(SIGTRAP);
 #else
-	raise(SIGTRAP);
+	#error Unsupported platform
 #endif
 }
 
 bool sdl_is_debugging() {
+	// TODO(max): do we care?
 	return false;
 }
 

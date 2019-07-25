@@ -49,7 +49,6 @@ void shader_source::load() {
 
 	if(!error.good) {
 		LOG_ERR_F("Failed to load shader source %"_, path);
-		CHECKED(close_file, &source_file);
 		return;
 	}
 

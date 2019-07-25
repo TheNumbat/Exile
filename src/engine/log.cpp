@@ -186,16 +186,12 @@ void log_manager::msg(string msg, log_level level, code_context context) {
 #ifdef BLOCK_OR_EXIT_ON_ERROR
 		if(level == log_level::error) {
 			global_api->join_thread(&logging_thread, -1);
-			if(global_api->is_debugging()) {
-				global_api->debug_break();
-			}
+			global_api->debug_break();
 		}
 #endif
 		if(level == log_level::fatal) {
 			global_api->join_thread(&logging_thread, -1);
-			if(global_api->is_debugging()) {
-				global_api->debug_break();
-			}
+			global_api->debug_break();
 		}
 
 	} POP_ALLOC();
@@ -294,11 +290,13 @@ i32 log_proc(void* data_) {
 
 		log_message msg;
 		while(data->message_queue->try_pop(&msg)) {
-			if(do_msg(data, msg)) break;
+			if(do_msg(data, msg)) goto stop;
 		}
 
 		global_dbg->profiler.collate();
 	}
+
+	stop:
 
 	FORVEC(it, *data->out) {
 		if(it->type != log_out_type::custom) {
@@ -338,6 +336,8 @@ bool do_msg(log_thread_param* data, log_message msg) {
 		} POP_ALLOC();
 		RESET_ARENA(data->scratch);
 
+		DESTROY_ARENA(&msg.arena);
+
 #ifdef BLOCK_OR_EXIT_ON_ERROR
 		if(msg.level == log_level::error) {
 			return true;
@@ -346,8 +346,6 @@ bool do_msg(log_thread_param* data, log_message msg) {
 		if(msg.level == log_level::fatal) {
 			return true;
 		}
-
-		DESTROY_ARENA(&msg.arena);
 	}
 
 	return false;
