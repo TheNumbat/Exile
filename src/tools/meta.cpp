@@ -111,7 +111,7 @@ void clang_Type_visitFields_NotBroken(CXType type, CXFieldVisitor visitor, CXCli
 	std::vector<CXCursor> fields;
 
 	CXCursor decl = clang_getTypeDeclaration(type);
-	
+
 	if(type.kind == CXType_Unexposed) {
 		decl = clang_getSpecializedCursorTemplate(decl);
 	}
@@ -340,7 +340,6 @@ CXVisitorResult print_field(CXCursor c, CXClientData client_data) {
 			 << "\t\tthis_type_info._struct.member_offsets[" << data->i << "] = offsetof(" << data->outer << ", " << name << ");" << std::endl;
 
 	data->i++;
-
 	return CXVisit_Continue;
 }
 
@@ -349,7 +348,7 @@ CXChildVisitResult check_noreflect(CXCursor c, CXCursor parent, CXClientData cli
 	bool* data = (bool*)client_data;
 
 	if(c.kind == CXCursor_AnnotateAttr) {
-
+		
 		std::string attribute = to_string(clang_getCursorSpelling(c));
 
 		if(attribute == "noreflect") {
@@ -423,11 +422,6 @@ void print_record(CXType type, bool just_print = false) {
 		 << "\t\t_type_info* val = type_table.get_or_insert_blank(this_type_info.hash);" << std::endl
 		 << "\t\t*val = this_type_info;" << std::endl
 		 << "\t}();" << std::endl << std::endl;
-}
-
-void print_unexposed_record(CXType type, bool just_print = false) {
-
-	print_record(type, just_print);
 }
 
 void print_func_pointer(CXType type, bool just_print = false) {
@@ -591,7 +585,7 @@ void print_data_type_help(CXType type, CXType parent) {
 	switch(type.kind) {
 	
 	case CXType_Enum: print_enum(type); break;
-	case CXType_Unexposed: print_unexposed_record(type); break;
+	case CXType_Unexposed:
 	case CXType_Record: print_record(type); break;
 	case CXType_ConstantArray: print_array(type); break;
 	case CXType_Pointer: print_pointer(type); break;

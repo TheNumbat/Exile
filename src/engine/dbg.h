@@ -8,8 +8,11 @@
 struct dbg_manager;
 extern dbg_manager* global_dbg;
 
-#define POST_MSG(m) {(m).time = __rdtsc(); 	\
-					 this_thread_data.dbg_queue.push(m);}
+ #define POST_MSG(m) {(m).time = __rdtsc(); 				\
+ 					 bool prev = this_thread_data.startup;	\
+ 					 this_thread_data.startup = true; 		\
+					 this_thread_data.dbg_queue.push(m);	\
+ 					 this_thread_data.startup = prev;}
 
 #ifdef PROFILE
 	

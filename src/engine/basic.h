@@ -10,16 +10,20 @@
 #define EXTERNC extern "C"
 #define CALLBACK DLL_EXPORT
 
-#ifdef _MSC_VER
+#ifdef RUNNING_META
+	#define NOREFLECT __attribute__((annotate("noreflect")))
+#else
 	#define NOREFLECT
+#endif
+
+#ifdef _MSC_VER
 	#define __FUNCNAME__ __FUNCTION__
 	#define DLL_EXPORT EXTERNC __declspec(dllexport)
-	#define DLL_IMPORT __declspec(dllimport)
+	#define DLL_IMPORT EXTERNC __declspec(dllimport)
 #elif defined(__clang__)
-	#define NOREFLECT __attribute__((annotate("noreflect")))
 	#define __FUNCNAME__ __func__
-	#define DLL_EXPORT __attribute__((visibility("default")))
-	#define DLL_IMPORT
+	#define DLL_EXPORT EXTERNC __attribute__((visibility("default")))
+	#define DLL_IMPORT EXTERNC
 #else
 	#error Unsupported compiler
 #endif
