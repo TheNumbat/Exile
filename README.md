@@ -15,11 +15,26 @@ Goals:
 ### Build
 
 Install [meson](https://mesonbuild.com/Getting-meson.html) and [ninja](https://github.com/ninja-build/ninja/releases) if necessary.
-In the top level directory:
+
+Commands are run in the repository root.
+
+Windows:
 
 ```
 meson build
 meson configure build -D buildtype=debugoptimized
+ninja -C build
+```
+
+Linux - ubuntu/debian (probably works, but only with clang):
+
+```
+sudo apt install clang libclang-dev libsdl2-dev ninja-build
+pip3 install meson
+```
+```
+CXX=clang++ meson build
+meson configure build -D buildtype=debugoptimized -D platform=sdl
 ninja -C build
 ```
 
