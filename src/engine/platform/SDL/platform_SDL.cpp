@@ -6,10 +6,13 @@
 #include <malloc.h>
 #include <assert.h>
 #include <time.h>
+
 #ifdef _MSC_VER
 #include <io.h>
 #else
 #include <unistd.h>
+#include <cpuid.h>
+#include <errno.h>
 #endif
 
 #ifdef CHECK_NO_LEAKS
@@ -48,13 +51,13 @@ void platform_test_api() {
 	printf("log cpus: %d\n", sdl_get_num_cpus());
 	printf("phy cpus: %d\n", sdl_get_phys_cpus());
 
-	printf("perfc: %llu\n", sdl_get_perfcount());
-	printf("perff: %llu\n", sdl_get_perfcount_freq());
+	printf("perfc: %lu\n", sdl_get_perfcount());
+	printf("perff: %lu\n", sdl_get_perfcount_freq());
 
 	u64 val = 0;
-	printf("val: %llu\n", val);
+	printf("val: %lu\n", val);
 	sdl_atomic_exchange(&val, 10);
-	printf("val: %llu\n", val);
+	printf("val: %lu\n", val);
 
 #ifdef CHECK_NO_LEAKS
 	printf("count: %d\n", global_num_allocs);
@@ -273,6 +276,7 @@ bool sdl_mousedown(platform_mouseflag button) {
 	case platform_mouseflag::x2click: {
 		return (mask & SDL_BUTTON_X2MASK) != 0;
 	} break;
+	default: break;
 	}
 
 	return false;
@@ -283,14 +287,15 @@ i32 sdl_get_phys_cpus() {
 	i32 cpus = sdl_get_num_cpus();
 	bool HT = false;
 
-#ifdef _MSC_VER
 	i32 cpuinfo[4];
+
+#ifdef _MSC_VER
 	__cpuid(cpuinfo, 1);
+#elif defined(__clang__)
+	__cpuid(1, cpuinfo[0], cpuinfo[1], cpuinfo[2], cpuinfo[3]);
+#endif
 	
 	HT = (cpuinfo[3] & (1 << 28)) > 0;
-#else
-#error Fix this
-#endif
 
 	return HT ? cpus / 2 : cpus;
 }
@@ -334,12 +339,20 @@ u64 sdl_get_perfcount_freq() {
 	return SDL_GetPerformanceFrequency();
 }
 
-// no good platform-independent way to do this...could be done but it's not worth it
+#if !defined(_MSC_VER) && !defined(__clang__)
+#include <signal.h>
+#endif
+
 void sdl_debug_break() {
-#ifdef MSC_VER
+#ifdef _MSC_VER
 	__debugbreak();
+#elif defined(__clang__)
+	__builtin_trap();
+#else
+	raise(SIGTRAP);
 #endif
 }
+
 bool sdl_is_debugging() {
 	return false;
 }
@@ -378,6 +391,7 @@ void sdl_set_cursor(platform_window* window, platform_cursor c) {
 		cursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_WAIT);
 		break;
 	}
+	default: break;
 	}
 
 	SDL_SetCursor(cursor);
@@ -917,29 +931,32 @@ platform_error sdl_copy_file(string source, string dest, bool overwrite) {
 
 	platform_file d, s;
 	
-	// this is why defer {} is good...
-
 	ret = sdl_create_file(&s, source, platform_file_open_op::existing);
-	if(!ret.good) goto close;
+	if(!ret.good) {
+		return ret;
+	}
 
 	ret = sdl_create_file(&d, dest, platform_file_open_op::cleared);
-	if(!ret.good) goto close;
+	if(!ret.good) {
+		sdl_close_file(&s);
+		return ret;
+	}
 
 	u32 s_size = sdl_file_size(&s);
 
 	void* contents = sdl_heap_alloc(s_size);
 
 	ret = sdl_read_file(&s, contents, s_size);
-	if(!ret.good) goto free_close;
+	if(!ret.good) {
+		sdl_heap_free(contents);
+		sdl_close_file(&s);
+		sdl_close_file(&d);
+		return ret;
+	}
 
 	ret = sdl_write_file(&d, contents, s_size);
 
-	free_close:
-
 	sdl_heap_free(contents);
-
-	close:
-
 	sdl_close_file(&s);
 	sdl_close_file(&d);
 	return ret;
@@ -986,7 +1003,7 @@ platform_error sdl_create_file(platform_file* file, string path, platform_file_o
 	if(file->ops == null) {
 		ret.good = false;
 		ret.error_message = str(SDL_GetError());
-		return ret;		
+		return ret;
 	}
 
 	file->path = path;
@@ -1052,7 +1069,7 @@ platform_error sdl_write_stdout(void* mem, u32 len) {
 #ifdef _MSC_VER
 	_write(1, mem, len);
 #else
-	write(stdout, mem, len);
+	write(1, mem, len);
 #endif
 	
 	fflush(stdout);
@@ -1254,7 +1271,12 @@ string sdl_time_string() {
 
 	time_t raw = time(null);
 	struct tm info;
+
+#ifdef _MSC_VER
 	localtime_s(&info, &raw);
+#elif defined(__clang__)
+	localtime_r(&raw, &info);
+#endif
 
 	string ret = make_string(9, &sdl_heap_alloc);
 

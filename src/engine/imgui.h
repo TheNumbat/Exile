@@ -1,11 +1,13 @@
 
 #pragma once
 
-#ifndef __clang__
+#ifndef RUNNING_META
 #include <imgui/imgui.h>
 #endif
 #include "ds/string.h"
 #include "ds/map.h"
+#include "log.h"
+#include "util/reflect.h"
 #include "platform/gl.h"
 #include "asset.h"
 

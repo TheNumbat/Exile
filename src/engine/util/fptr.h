@@ -51,5 +51,5 @@ _FPTR* FPTR_STR(string name);
 void setup_fptrs();
 void cleanup_fptrs();
 
-#define FPTR(name) _fptr(&name, #name##_)
+#define FPTR(name) _fptr((void*)&name, #name##_)
 

@@ -243,13 +243,14 @@ pool_allocator make_pool_allocator(string name, u64 page_size, allocator* backin
 	return ret;
 }
 
-void _memcpy(void* source, void* dest, u64 size) {
+// TODO(max): intrinsics on clang
+
+void _memcpy(const void* source, void* dest, u64 size) {
 
 #ifdef _MSC_VER
 	__movsb((u8*)dest, (u8*)source, size);
 #else
 
-	// TODO(max): LUL this is dumb
 	u8* csource = (u8*)source;
 	u8* cdest   = (u8*)dest;
 

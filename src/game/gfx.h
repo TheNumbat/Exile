@@ -83,16 +83,52 @@ struct mesh_cubemap {
 	void destroy();
 };
 
-#pragma pack(push, 1)
 struct light_data {
-	r2 rect;
 	v3 pos;
 	v3 col;
 };
-#pragma pack(pop)
 
 struct mesh_light_list {
-	vector<light_data> data;
+	vector<light_data> lights;
+	
+	const f32 t = (1.0f + sqrtf(5.0f)) / 2.0f;
+	static const i32 nelems = 60;
+	const v3 verts[12] = {
+		{-1.0f,  t,  0.0f},
+		{ 1.0f,  t,  0.0f},
+		{-1.0f, -t,  0.0f},
+		{ 1.0f, -t,  0.0f},
+		{ 0.0f, -1.0f,  t},
+		{ 0.0f,  1.0f,  t},
+		{ 0.0f, -1.0f, -t},
+		{ 0.0f,  1.0f, -t},
+		{ t,  0.0f, -1.0f},
+		{ t,  0.0f,  1.0f},
+		{-t,  0.0f, -1.0f},
+		{-t,  0.0f,  1.0f}
+	};
+	const uv3 elems[nelems/3] = {
+		{0, 11, 5},
+		{0, 5, 1},
+		{0, 1, 7},
+		{0, 7, 10},
+		{0, 10, 11},
+		{1, 5, 9},
+		{5, 11, 4},
+		{11, 10, 2},
+		{10, 7, 6},
+		{7, 1, 8},
+		{3, 9, 4},
+		{3, 4, 2},
+		{3, 2, 6},
+		{3, 6, 8},
+		{3, 8, 9},
+		{4, 9, 5},
+		{2, 4, 11},
+		{6, 2, 10},
+		{8, 6, 7},
+		{9, 8, 1}
+	};
 
 	gpu_object_id gpu = -1;
 	bool dirty = false;
@@ -100,7 +136,7 @@ struct mesh_light_list {
 	void init(allocator* alloc = null);
 	void destroy();
 	void clear();
-	void push(r2 r, v3 pos, v3 col);
+	void push(v3 pos, v3 col);
 };
 CALLBACK void setup_mesh_light_list(gpu_object* obj);
 CALLBACK void update_mesh_light_list(gpu_object* obj, void* data, bool force);
@@ -292,7 +328,7 @@ struct effect_buffers {
 };
 
 struct world_proj_info {
-	m4 ivp;
+	m4 ivp, vp;
 	f32 near;
 };
 
@@ -356,7 +392,7 @@ struct exile_renderer {
 	// NOTE(max): these should be static, but hot reloading
 	mesh_cubemap the_cubemap;
 	mesh_quad 	 the_quad;
-	mesh_light_list lighting_quads;
+	mesh_light_list lights;
 
 	effect_pass invert, gamma;
 	effect_pass composite, composite_resolve, resolve;

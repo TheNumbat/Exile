@@ -2,16 +2,16 @@
 #pragma once
 #include "map.h"
 
-template<typename K, typename V, u32(*hash_func)(K) = hash>
-map<K,V,hash_func> map<K,V,hash_func>::make(u32 capacity) { 
+template<typename K, typename V>
+map<K,V> map<K,V>::make(u32 capacity) { 
 	
-	return map<K,V,hash_func>::make(capacity, CURRENT_ALLOC());
+	return map<K,V>::make(capacity, CURRENT_ALLOC());
 }
 
-template<typename K, typename V, u32(*hash_func)(K) = hash>
-map<K,V,hash_func> map<K,V,hash_func>::make(u32 capacity, allocator* a) { 
+template<typename K, typename V>
+map<K,V> map<K,V>::make(u32 capacity, allocator* a) { 
 	
-	map<K,V,hash_func> ret;
+	map<K,V> ret;
 
 	capacity = last_pow_two(capacity) == capacity ? capacity : next_pow_two(capacity);
 
@@ -21,8 +21,8 @@ map<K,V,hash_func> map<K,V,hash_func>::make(u32 capacity, allocator* a) {
 	return ret;
 }
 
-template<typename K, typename V, u32(*hash_func)(K) = hash>
-void map<K,V,hash_func>::destroy() { 
+template<typename K, typename V>
+void map<K,V>::destroy() { 
 	
 	contents.destroy();
 
@@ -30,8 +30,8 @@ void map<K,V,hash_func>::destroy() {
 	alloc = null;
 }
 
-template<typename K, typename V, u32(*hash_func)(K) = hash>
-void map<K,V,hash_func>::clear() { 
+template<typename K, typename V>
+void map<K,V>::clear() { 
 	
 	FORVECCAP(it, contents) {
 		ELEMENT_CLEAR_OCCUPIED(*it);
@@ -42,8 +42,8 @@ void map<K,V,hash_func>::clear() {
 	max_probe = 0;
 }
 
-template<typename K, typename V, u32(*hash_func)(K) = hash>
-void map<K,V,hash_func>::grow_rehash() { 	
+template<typename K, typename V>
+void map<K,V>::grow_rehash() { 	
 	
 	vector<map_element<K,V>> temp = vector<map_element<K,V>>::make_copy(contents);
 
@@ -62,8 +62,8 @@ void map<K,V,hash_func>::grow_rehash() {
 	temp.destroy();
 }
 
-template<typename K, typename V, u32(*hash_func)(K) = hash> 
-void map<K,V,hash_func>::trim_rehash() { 
+template<typename K, typename V> 
+void map<K,V>::trim_rehash() { 
 
 	vector<map_element<K,V>> temp = vector<map_element<K,V>>::make_copy(contents);
 
@@ -82,16 +82,16 @@ void map<K,V,hash_func>::trim_rehash() {
 	temp.destroy();
 }
 
-template<typename K, typename V, u32(*hash_func)(K) = hash>
-V* map<K,V,hash_func>::get_or_insert_blank(K key) {
+template<typename K, typename V>
+V* map<K,V>::get_or_insert_blank(K key) {
 
 	V* ret = try_get(key);
 	if(ret) return ret;
 	return insert(key, V());
 }
 
-template<typename K, typename V, u32(*hash_func)(K) = hash>
-V* map<K,V,hash_func>::insert(K key, V value, bool grow_if_needed) { 
+template<typename K, typename V>
+V* map<K,V>::insert(K key, V value, bool grow_if_needed) { 
 	
 	if(size >= contents.capacity * MAP_MAX_LOAD_FACTOR) {
 
@@ -105,7 +105,7 @@ V* map<K,V,hash_func>::insert(K key, V value, bool grow_if_needed) {
 
 	map_element<K,V> ele;
 
-	ELEMENT_SET_HASH_BUCKET(ele, hash_func(key) & (contents.capacity - 1));
+	ELEMENT_SET_HASH_BUCKET(ele, hash(key) & (contents.capacity - 1));
 	ele.key 		= key;
 	ele.value 		= value;
 	ELEMENT_SET_OCCUPIED(ele);
@@ -158,8 +158,8 @@ V* map<K,V,hash_func>::insert(K key, V value, bool grow_if_needed) {
 	}
 }
 
-template<typename K, typename V, u32(*hash_func)(K) = hash>
-V* map<K,V,hash_func>::insert_if_unique(K key, V value, bool grow_if_needed) { 
+template<typename K, typename V>
+V* map<K,V>::insert_if_unique(K key, V value, bool grow_if_needed) { 
 	
 	V* result = try_get(key);
 	
@@ -171,8 +171,8 @@ V* map<K,V,hash_func>::insert_if_unique(K key, V value, bool grow_if_needed) {
 	return result;
 }
 
-template<typename K, typename V, u32(*hash_func)(K) = hash>
-V* map<K,V,hash_func>::get(K key) { 
+template<typename K, typename V>
+V* map<K,V>::get(K key) { 
 
 	V* result = try_get(key);
 	LOG_ASSERT(result != null);
@@ -180,8 +180,8 @@ V* map<K,V,hash_func>::get(K key) {
 	return result;
 }
 
-template<typename K, typename V, u32(*hash_func)(K) = hash>
-V* map<K,V,hash_func>::try_get(K key) { 	// can return null
+template<typename K, typename V>
+V* map<K,V>::try_get(K key) { 	// can return null
 
 	if (size == 0) {
 		return null;
@@ -189,7 +189,7 @@ V* map<K,V,hash_func>::try_get(K key) { 	// can return null
 
 	u32 hash_bucket;
 
-	hash_bucket = hash_func(key) & (contents.capacity - 1);
+	hash_bucket = hash(key) & (contents.capacity - 1);
 
 	u32 index = hash_bucket;
 	u32 probe_length = 0;
@@ -212,12 +212,12 @@ V* map<K,V,hash_func>::try_get(K key) { 	// can return null
 	}
 }
 
-template<typename K, typename V, u32(*hash_func)(K) = hash>
-bool map<K,V,hash_func>::try_erase(K key) { 
+template<typename K, typename V>
+bool map<K,V>::try_erase(K key) { 
 	
 	u32 hash_bucket;
 
-	hash_bucket = hash_func(key) & (contents.capacity - 1);
+	hash_bucket = hash(key) & (contents.capacity - 1);
 
 	u32 index = hash_bucket;
 	u32 probe_length = 0;
@@ -243,8 +243,8 @@ bool map<K,V,hash_func>::try_erase(K key) {
 	}
 }
 
-template<typename K, typename V, u32(*hash_func)(K) = hash>
-void map<K,V,hash_func>::erase(K key) { 
+template<typename K, typename V>
+void map<K,V>::erase(K key) { 
 
 	LOG_ASSERT(try_erase(key));
 }

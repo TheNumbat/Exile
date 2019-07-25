@@ -14,9 +14,12 @@ Working To-Do:
 	Rendering:
 		[features]
 		dynamic lights
-			stencil light volumes
+			swap to light volumes + stencil trick
+				LOD tesselation of sphere?
+			
 			flashlight (spotlights)
 			sunlight (directional)
+			gonna need some chunk culling
 
 			change light falloff - see UE4 doc
 			specular textures (e.g. ore)

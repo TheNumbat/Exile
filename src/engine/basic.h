@@ -7,28 +7,33 @@
 #define CHECKED(func, ...) global_api->func(__VA_ARGS__);
 #endif
 
-#ifdef __clang__
-#define NOREFLECT __attribute__((annotate("noreflect")))
+#define EXTERNC extern "C"
+#define CALLBACK DLL_EXPORT
+
+#ifdef RUNNING_META
+	#define NOREFLECT __attribute__((annotate("noreflect")))
 #else
-#define NOREFLECT
+	#define NOREFLECT
 #endif
 
 #ifdef _MSC_VER
-#define __FUNCNAME__ __FUNCTION__
-#define EXPORT extern "C" __declspec(dllexport)
-#elif defined(__GNUC__)
-#define __FUNCNAME__ __PRETTY_FUNCTION__
-#define EXPORT extern "C" __attribute__((dllexport))
+	#define __FUNCNAME__ __FUNCTION__
+	#define DLL_EXPORT EXTERNC __declspec(dllexport)
+	#define DLL_IMPORT EXTERNC __declspec(dllimport)
+#elif defined(__clang__)
+	#define __FUNCNAME__ __func__
+	#define DLL_EXPORT EXTERNC __attribute__((visibility("default")))
+	#define DLL_IMPORT EXTERNC
 #else
-#define __FUNCNAME__ __func__
+	#error Unsupported compiler
 #endif
-#define CALLBACK EXPORT
 
 #include <stdint.h>
 #include <float.h>
 #include <limits.h>
 #include <stddef.h>
 #include <typeinfo>
+#include <new>
 
 typedef uint8_t 	u8;
 typedef int8_t 		i8;

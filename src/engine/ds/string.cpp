@@ -138,6 +138,8 @@ u32 string::write_type(u32 idx, void* val, _type_info* info, bool size) {
 			idx = write(idx, *(string*)val, size);
 		}
 	} break;
+
+	default: break;
 	}
 	return idx;
 }
@@ -342,8 +344,11 @@ constexpr u32 const_hash(const char* str) {
     return *str ? (u32)(*str) + 33 * const_hash(str + 1) : 5381;
 }
 
+#ifdef _MSC_VER
 #pragma warning(push)
 #pragma warning(disable : 4307)
+#endif
+
 u32 string::write_struct(u32 idx, void* val, _type_info* info, bool size) { 
 
 	u32 name = const_hash(info->name.c_str);
@@ -409,7 +414,10 @@ u32 string::write_struct(u32 idx, void* val, _type_info* info, bool size) {
 
 	return idx;
 }
+
+#ifdef _MSC_VER
 #pragma warning(pop)
+#endif
 
 u32 string::write_any_struct(u32 idx, void* val, _type_info* info, bool size) {  
 	idx = write(idx, info->name, size);

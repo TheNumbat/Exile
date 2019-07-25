@@ -2,18 +2,6 @@
 
 #pragma once
 
-#define EXTERN extern "C"
-
-#ifndef DLL_EXPORT
-#define DLL_EXPORT EXTERN __declspec(dllexport)
-#endif
-#ifndef DLL_IMPORT
-#define DLL_IMPORT EXTERN __declspec(dllimport)
-#endif
-#ifndef _MSC_VER
-#error unsupported compiler?
-#endif
-
 #include "../basic.h"
 
 #ifdef CHECK_NO_LEAKS

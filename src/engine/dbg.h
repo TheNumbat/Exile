@@ -8,15 +8,13 @@
 struct dbg_manager;
 extern dbg_manager* global_dbg;
 
-// TODO(max): this is kind of evil
-#ifdef _MSC_VER
-#define POST_MSG(m) {(m).time = __rdtsc(); bool prev = this_thread_data.startup; this_thread_data.startup = true; this_thread_data.dbg_queue.push(m); this_thread_data.startup = prev;}
-#else
-#error "Fix this"
-#endif
+ #define POST_MSG(m) {(m).time = __rdtsc(); 				\
+ 					 bool prev = this_thread_data.startup;	\
+ 					 this_thread_data.startup = true; 		\
+					 this_thread_data.dbg_queue.push(m);	\
+ 					 this_thread_data.startup = prev;}
 
-#ifndef __clang__
-	#ifdef PROFILE
+#ifdef PROFILE
 	
 	struct func_scope {
 		func_scope(code_context context, string name = {});
@@ -25,11 +23,11 @@ extern dbg_manager* global_dbg;
 	#define PROF_FUNC 	  func_scope __f(CONTEXT);
 	#define PROF_SCOPE(n) func_scope __s(CONTEXT, n);
 
-	#else
+#else
 
 	#define PROF_FUNC
 	#define PROF_SCOPE(n)
-	#endif
+
 #endif
 
 #define BEGIN_FRAME() { \
@@ -439,17 +437,17 @@ T dbg_value_store::get_var(string path) {
 			path = path.substring((u32)slash + 1, path.len);
 		} else {
 			key = path;
-			value = value->children.try_get(key);
+			value = value->sec.children.try_get(key);
 			break;
 		}
 
-		value = value->children.try_get(key);
+		value = value->sec.children.try_get(key);
 		if(!value) return null;
 	}
 
-	LOG_DEBUG_ASSERT(value->type == dbg_value_class::value);
-	LOG_DEBUG_ASSERT(value->info == TYPEINFO(T));
-	return *(T*)value->value;
+	LOG_DEBUG_ASSERT(value->type == dbg_value_class::view || value->type == dbg_value_class::edit);
+	LOG_DEBUG_ASSERT(value->edit.id == TYPEINFO(T));
+	return *(T*)value->edit.value;
 }
 
 

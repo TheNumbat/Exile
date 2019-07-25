@@ -62,7 +62,7 @@ struct log_out {
 	log_out_type type  = log_out_type::plaintext;
 	bool 		 flush_on_message = false;
 	union {
-		buffer<platform_file,4096> file;			// TODO(max): sizeof(buffer) dependent on parameter - don't do this for union?
+		buffer<platform_file,4096> file;
 		struct {
 			func_ptr<void, log_message*, void*> write;
 			void * param;
@@ -161,7 +161,7 @@ struct log_manager {
 #endif
 
 i32 log_proc(void* data_);
-void do_msg(log_thread_param* data, log_message msg);
+bool do_msg(log_thread_param* data, log_message msg);
 
 #include "util/threadstate.h"
 
@@ -169,11 +169,11 @@ void do_msg(log_thread_param* data, log_message msg);
 #include "ds/vector.inl"
 #include "ds/buffer.inl"
 #include "ds/stack.inl"
-#include "ds/queue.inl"
+#include "ds/heap.inl"
 #include "ds/map.inl"
+#include "ds/queue.inl"
 #include "ds/string.inl"
 #include "ds/array.inl"
-#include "ds/heap.inl"
 
 template<typename... Targs> 
 void log_manager::msgf(string fmt, log_level level, code_context context, Targs... args) { 
@@ -203,18 +203,17 @@ void log_manager::msgf(string fmt, log_level level, code_context context, Targs.
 
 #ifdef BLOCK_OR_EXIT_ON_ERROR
 		if(level == log_level::error) {
-
+			global_api->join_thread(&logging_thread, -1);
 			if(global_api->is_debugging()) {
 				global_api->debug_break();
 			}
-			global_api->join_thread(&logging_thread, -1);
 		}
 #endif
 		if(level == log_level::fatal) {
+			global_api->join_thread(&logging_thread, -1);
 			if(global_api->is_debugging()) {
 				global_api->debug_break();
 			}
-			global_api->join_thread(&logging_thread, -1);
 		}
 
 	} POP_ALLOC();

@@ -51,6 +51,36 @@ void threadpool::renew_priorities(f32 (*eval)(super_job*, void*), void* param) {
 	jobs.renew(eval, param);
 }
 
+template<>
+void heap<super_job*>::renew(f32 (*eval)(super_job*, void*), void* param) { 
+
+	heap<super_job*> h = heap<super_job*>::make(capacity);
+
+	FORHEAP_LINEAR(it, *this) {
+
+		super_job* j = *it;
+
+		j->priority = eval(j, param);
+
+		if(j->priority > -FLT_MAX) {
+			h.push(j);
+		} else {
+			
+			if(j->cancel)
+				j->cancel(j->data);
+
+			// NOTE(max): only works because the elements are allocated with the same allocator passed to the heap (in threadpool)
+			PUSH_ALLOC(alloc) {
+				free(j, j->my_size);
+			} POP_ALLOC();
+		}
+	}
+   
+	_memcpy(h.memory, memory, h.size * sizeof(super_job*));
+	size = h.size;
+	h.destroy();
+}
+
 void threadpool::queue_job(job_work<void> work, void* data, f32 priority, i32 priority_class, _FPTR* cancel) {
 
 	PUSH_ALLOC(alloc);

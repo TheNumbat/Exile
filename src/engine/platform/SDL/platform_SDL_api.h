@@ -1,5 +1,5 @@
 
-#ifndef __clang__
+#ifndef RUNNING_META
 #include <SDL2/SDL.h>
 #endif
 #include <sys/stat.h>

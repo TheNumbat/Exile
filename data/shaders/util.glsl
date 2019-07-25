@@ -2,8 +2,7 @@
 uniform float near; 
 
 vec3 calc_pos(vec3 view, float depth) {
-	float linear = near / depth;
-	return view * linear;
+	return view * near / depth;
 }
 
 vec3 pack_norm(vec3 norm, float val) {
@@ -19,6 +18,10 @@ vec3 unpack_norm(vec3 pack) {
 vec3 scalar_to_color(float f) {
 	vec3 c = vec3(4.0f * f - 2.0f, 4.0f * f + min(0.0f, 4.0f - 8.0f * f), 1.0f + 4.0f * (0.24f - f));
 	return clamp(c, 0.0f, 1.0f);
+}
+
+float max3(vec3 v) {
+	return max(max(v.x,v.y),v.z);
 }
 
 flat in vec3 f_lcol;
@@ -37,6 +40,11 @@ vec3 calculate_light_dynamic(vec3 pos, vec3 norm, float shine) {
 		
 		vec3 l = f_lpos-pos;
 		float dist = length(l);
+
+		if(dist > 8.0f * max3(f_lcol)) {
+			discard;
+		}
+
 		l = normalize(l);
 		
 		vec3 h = normalize(l + v);
@@ -50,6 +58,9 @@ vec3 calculate_light_dynamic(vec3 pos, vec3 norm, float shine) {
    		float spec = energy * pow(max(dot(norm, h), 0.0), shine);
 
 		light_gather += spec * f_lcol * a;
+	} else {
+
+		discard;
 	}
 
 	return max(light_gather, 0.0f);

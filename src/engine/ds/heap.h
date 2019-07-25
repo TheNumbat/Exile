@@ -6,7 +6,7 @@
 
 #define FORHEAP_LINEAR(it,v) for(auto it = (v).memory; it != (v).memory + (v).size; it++)
 
-template<typename T, bool(comp)(T,T) = gt>
+template<typename T>
 struct heap {
 
 	T* memory = null;
@@ -16,7 +16,7 @@ struct heap {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-	static heap<T, comp> make(u32 capacity = 8, allocator* alloc = null);
+	static heap<T> make(u32 capacity = 8, allocator* alloc = null);
 	void destroy();
 
 	void clear();
@@ -32,18 +32,18 @@ struct heap {
 	void reheap_down(u32 root = 0);
 
 	// specialized
-	void renew(float (*eval)(T,void*), void* param) {};
+	void renew(float (*eval)(T,void*), void* param);
 };
 
-template<typename T, bool(comp)(T,T) = gt>
-struct locking_heap : public heap<T, comp> {
+template<typename T>
+struct locking_heap : public heap<T> {
 
 	platform_mutex 		mut;
 	platform_semaphore 	sem;
 
 ///////////////////////////////////////////////////////////////////////////////
 
-	static locking_heap<T, comp> make(u32 capacity = 8, allocator* alloc = null);
+	static locking_heap<T> make(u32 capacity = 8, allocator* alloc = null);
 	void destroy();
 
 	void push(T value);

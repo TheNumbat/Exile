@@ -4,7 +4,7 @@
 
 platform_api* global_api = null;
 
-EXPORT engine* start_up(platform_api* api) { 
+DLL_EXPORT engine* start_up(platform_api* api) { 
 
 	engine* state = new(api->heap_alloc(sizeof(engine))) engine;
 	state->func_state.this_dll = api->your_dll;
@@ -93,7 +93,7 @@ EXPORT engine* start_up(platform_api* api) {
 	return state;
 }
 
-EXPORT bool main_loop(engine* state) {
+DLL_EXPORT bool main_loop(engine* state) {
 
 	BEGIN_FRAME();
 
@@ -143,7 +143,7 @@ EXPORT bool main_loop(engine* state) {
 	return state->running;
 }
 
-EXPORT void shut_down(engine* state) { 
+DLL_EXPORT void shut_down(engine* state) { 
 
 	BEGIN_FRAME();
 	LOG_INFO("Beginning shutdown..."_);
@@ -184,7 +184,7 @@ EXPORT void shut_down(engine* state) {
 	global_api = null;
 }
 
-EXPORT void on_reload(platform_api* api, engine* state) { 
+DLL_EXPORT void on_reload(platform_api* api, engine* state) { 
 
 	global_api = api;
 	global_log = &state->log;
@@ -207,7 +207,7 @@ EXPORT void on_reload(platform_api* api, engine* state) {
 	reload_game(state, state->game_state);
 }
 
-EXPORT void on_unload(engine* state) {
+DLL_EXPORT void on_unload(engine* state) {
 	
 	LOG_INFO("Begin reloading game code"_);
 

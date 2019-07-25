@@ -99,7 +99,7 @@ namespace ImGui {
 				} else if(info->size == 4) {
 					Text("%u", *(u32*)val);
 				} else if(info->size == 8) {
-					Text("%llu", *(u64*)val);
+					Text("%lu", *(u64*)val);
 				}
 			}
 		} break;
@@ -173,6 +173,8 @@ namespace ImGui {
 		case Type::_string: {
 			Text("\"%s\"", (*(string*)val).c_str);
 		} break;
+
+		default: break;
 		}
 	}
 
@@ -275,6 +277,8 @@ namespace ImGui {
 			string s = *(string*)val;
 			InputText(label, s.c_str, s.cap);
 		} break;
+
+		default: break;
 		}
 	}
 }

@@ -93,7 +93,7 @@ string string_literal(const char* literal) {
 
 i32 string_last_slash(string str) {
 
-	for(u32 i = str.len; i >= 0; i--) {
+	for(u32 i = str.len - 1; i >= 0; i--) {
 		if(str.c_str[i] == '\\' || str.c_str[i] == '/') {
 			return i;
 		}

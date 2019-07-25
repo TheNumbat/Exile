@@ -499,10 +499,10 @@ void dbg_console::UI(platform_window* window) { PROF_FUNC
 
 				ImVec4 col = ImGui::GetStyleColorVec4(ImGuiCol_Text);
 				switch(it->lvl) {
-				case log_level::debug: col = col * 0.7f; break;
 				case log_level::console: col = ImColor(1.0f,0.78f,0.58f,1.0f); break;
 				case log_level::warn: col = ImColor(1.0f,0.4f,0.4f,1.0f); break;
 				case log_level::error: col = ImColor(1.0f,0.0f,0.0f,1.0f); break;
+				default: col = col * 0.7f; break;
 				}
 
 				ImGui::PushStyleColor(ImGuiCol_Text, col);
@@ -679,7 +679,7 @@ void dbg_profiler::UI(platform_window* window) { PROF_FUNC
 	
 	global_api->aquire_mutex(&thread->mut);
 
-	ImGui::PushID(thread->name);
+	ImGui::PushID((const char*)thread->name);
 	ImGui::SliderInt("Buffer Position: "_, &thread->selected_frame, 1, thread->frame_buf_size);
 
 	if(thread->frames.len()) {
@@ -730,6 +730,7 @@ void dbg_profiler::UI(platform_window* window) { PROF_FUNC
 						case dbg_msg_type::free: {
 							ImGui::Text(string::makef("free @ %:%"_, msg->context.file(), msg->context.line));
 						} break;
+						default: break;
 						}
 					}
 					ImGui::TreePop();
@@ -954,6 +955,8 @@ void dbg_profiler::collate_timings() {
 					process_frame_alloc_msg(frame, msg);
 
 				} break;
+
+				default: break;
 				}
 			} POP_ALLOC();
 		}
@@ -1004,6 +1007,7 @@ void dbg_profiler::process_frame_alloc_msg(frame_profile* frame, dbg_msg* msg) {
 	case dbg_msg_type::allocate: 	a = msg->allocate.alloc; break;
 	case dbg_msg_type::reallocate: 	a = msg->reallocate.alloc; break;
 	case dbg_msg_type::free: 		a = msg->free.alloc; break;
+	default: break;
 	}
 
 	alloc_frame_profile* file = frame->allocations.try_get(a);
@@ -1022,6 +1026,7 @@ void dbg_profiler::process_alloc_msg(dbg_msg* msg) {
 	case dbg_msg_type::allocate: 	a = msg->allocate.alloc; break;
 	case dbg_msg_type::reallocate: 	a = msg->reallocate.alloc; break;
 	case dbg_msg_type::free: 		a = msg->free.alloc; break;
+	default: break;
 	}
 	
 	global_api->aquire_mutex(&alloc_map_mut);
@@ -1105,6 +1110,8 @@ void dbg_profiler::process_alloc_msg(dbg_msg* msg) {
 		}
 		
 	} break;
+
+	default: break;
 	}
 	global_api->release_mutex(&ile->mut);
 }
