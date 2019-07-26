@@ -73,9 +73,6 @@ private:
 
 	static shader_include make(string path, allocator* a);
 	void destroy();
-	void gl_destroy();
-	void recreate();
-
 	bool try_refresh();
 };
 

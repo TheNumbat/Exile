@@ -1,8 +1,6 @@
 
 #version 330 core
 
-#extension GL_ARB_shading_language_include : enable
-
 flat in uint f_t, f_ql, f_qs;
 flat in vec4 f_ao;
 flat in vec4 f_l, f_s;
@@ -23,7 +21,11 @@ uniform bool ambient_occlusion;
 
 uniform int debug_show;
 
-#include </shaders/util.glsl>
+vec3 pack_norm(vec3 norm, float val) {
+	vec2 xy = normalize(norm).xy;
+	float sign = 2.0f * step(0.0f, norm.z) - 1.0f;
+	return vec3(xy, sign * val);
+}
 
 vec3 calculate_light_base(vec3 light) {
 

@@ -7,15 +7,17 @@ uniform int num_samples;
 uniform int num_textures;
 uniform sampler2DMS textures[8];
 
-vec4 texture_ms(int idx, ivec2 coord) {
+vec4 texture_ms(sampler2DMS tex, ivec2 coord) {
 
 	vec4 color = vec4(0);
 
 	for(int i = 0; i < num_samples; i++)
-		color += texelFetch(textures[idx], coord, i);
+		color += texelFetch(tex, coord, i);
 
 	return color / float(num_samples);
 }
+
+#define blend(i) {vec4 next = texture_ms(textures[i], coord); col = mix(col, next, next.a);}
 
 void main() {
 
@@ -23,12 +25,17 @@ void main() {
 
 	ivec2 coord = ivec2(gl_FragCoord.xy);
 	
-	vec4 col = texture_ms(0, coord);
+	vec4 col = texture_ms(textures[0], coord);
 
-	for(int i = 1; i < num_textures; i++) {
-
-		vec4 next = texture_ms(i, coord);
-		col = mix(col, next, next.a);
+	switch(num_textures){
+	case 8: blend(1);
+	case 7: blend(2);
+	case 6: blend(3);
+	case 5: blend(4);
+	case 4: blend(5);
+	case 3: blend(6);
+	case 2: blend(7);
+	default:;
 	}
 
 	color = col;

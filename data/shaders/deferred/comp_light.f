@@ -1,8 +1,6 @@
 
 #version 330 core
 
-#extension GL_ARB_shading_language_include : enable
-
 in vec2 f_uv;
 in vec3 f_view;
 out vec4 color;
@@ -14,11 +12,14 @@ uniform sampler2D env_tex;
 uniform sampler2D norm_tex;
 
 uniform float render_distance;
+uniform float near;
 uniform bool sky_fog;
 
 uniform int debug_show;
 
-#include </shaders/util.glsl>
+vec3 calc_pos(vec3 view, float depth) {
+	return view * near / depth;
+}
 
 void main() {
 

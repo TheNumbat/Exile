@@ -47,7 +47,9 @@ Working To-Do:
 		water shaders
 
 		[performance/structure]
-		shaders as assets
+		shaders asset & include system
+			definitions + code
+			but how do we continue hot reloading? add source paths and regenerate asset pack?
 		look at sample rate shading again; marking pixels as complex
 		reduce state changes
 			diff state instead of setting everything

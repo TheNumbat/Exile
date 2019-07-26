@@ -96,36 +96,18 @@ shader_include shader_include::make(string path, allocator* a) {
 	ret.source = shader_source::make(path, a);
 	ret.name = string::makef("/%"_, a, path);
 
-    ret.recreate();
-
     return ret;
 }
 
 void shader_include::destroy() {
 
-	gl_destroy();
 	name.destroy(source.alloc);
 	source.destroy();
 }
 
-void shader_include::gl_destroy() {
-
-	glDeleteNamedStringARB(-1, name.c_str);
-}
-
-void shader_include::recreate() {
-
-	glNamedStringARB(gl_named_string_arb::shader_include, -1, name.c_str, -1, source.source.c_str);
-}
-
 bool shader_include::try_refresh() {
 
-	if(source.try_refresh()) {
-		gl_destroy();
-		recreate();		
-		return true;
-	}
-	return false;
+	return source.try_refresh();
 }
 
 shader_program shader_program::make(string vert, string frag, string geom, _FPTR* uniforms, allocator* a) { 
@@ -273,9 +255,6 @@ void ogl_manager::gl_begin_reload() {
 	FORMAP(it, textures) {
 		it->value.gl_destroy();
 	}
-	FORVEC(it, shader_includes) {
-		it->gl_destroy();
-	}
 
 	info.destroy();
 	check_leaked_handles();
@@ -298,9 +277,6 @@ void ogl_manager::gl_end_reload() {
 	}
 	FORMAP(it, framebuffers) {
 		it->value.recreate();
-	}
-	FORVEC(it, shader_includes) {
-		it->recreate();
 	}
 }
 
@@ -366,10 +342,6 @@ ogl_manager ogl_manager::make(platform_window* win, allocator* a) {
 	ret.load_global_funcs();
 	ret.info = ogl_info::make(ret.alloc);
 	LOG_DEBUG_F("GL %.% %"_, ret.info.major, ret.info.minor, ret.info.renderer);
-
-	if(!ret.info.extensions.find("GL_ARB_shading_language_include"_)) {
-		LOG_FATAL("Failed to load extension GL_ARB_shading_language_include! This won't work."_);
-	}
 
 	ret.dbg_shader = shader_program::make("shaders/dbg.v"_,"shaders/dbg.f"_, {}, FPTR(uniforms_dbg), a);
 
@@ -1187,14 +1159,14 @@ draw_cmd_id ogl_manager::add_command(_FPTR* run, _FPTR* uniforms, string v, stri
 
 	draw_context d;
 
+	if(g)
+		LOG_DEBUG_F("Loading shader from %, %, %"_, v, g, f);
+	else 
+		LOG_DEBUG_F("Loading shader from %, %"_, v, f);
+
 	d.run.set(run);
 	d.shader = shader_program::make(v, f, g, uniforms, alloc);
 	
-	if(g)
-		LOG_DEBUG_F("Loaded shader from %, %, %"_, v, g, f);
-	else 
-		LOG_DEBUG_F("Loaded shader from %, %"_, v, f);
-
 	commands.insert(next_draw_cmd_id, d);
 	return next_draw_cmd_id++;
 }

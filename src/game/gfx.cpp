@@ -382,7 +382,7 @@ void exile_renderer::check_recreate() {
 
 void exile_renderer::generate_commands() { 
 
-	exile->eng->ogl.add_include("shaders/util.glsl"_);
+	// exile->eng->ogl.add_include("shaders/util.glsl"_);
 	
 #define reg(cmdn, name, path) cmd_##cmdn = exile->eng->ogl.add_command(FPTR(run_##name), FPTR(uniforms_##name), \
 										   "shaders/" path #cmdn ".v"_, "shaders/" path #cmdn ".f"_);
@@ -456,12 +456,20 @@ void exile_renderer::destroy() {
 CALLBACK void uniforms_composite(shader_program* prog, render_command* cmd) {
 
 	i32 textures = 0;
+
 	DO(8) {
 		if(cmd->info.textures[__i]) {
-			glUniform1i(prog->location(string::makef("textures[%]"_, __i)), __i);
 			textures++;
 		}
 	}	
+
+	LOG_ASSERT(cmd->info.textures[0]);
+	glUniform1i(prog->location("textures[0]"_), 0);
+
+	DO(textures - 1) {
+		glUniform1i(prog->location(string::makef("textures[%]"_, 9 - textures + __i)), __i + 1);
+	}
+
 	glUniform1i(prog->location("num_textures"_), textures);
 }
 
