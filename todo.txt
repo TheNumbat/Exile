@@ -1,10 +1,8 @@
 
 Working To-Do:
 
-	- Want to finish all rendering features + at least explore the performance/structure enhancements by August
-		when this is done, write really really long post about everything in the graphics pipe
-	- Want to finish world interaction upgrades before going back to school
-	- By the end of first semester, finish general polish for releasable demo.
+	- Want to finish all rendering features + explore the performance/structure enhancements by school
+	- when this is done, write really really long post about everything in the graphics pipe
 
 	Future: iterate on world and QoL features, and begin actual game-play
 		Really want to learn networking/support multi-player
