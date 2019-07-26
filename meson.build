@@ -60,6 +60,8 @@ if host_system == 'windows'
 elif host_system == 'linux'
 	all_cpp_args += ['-fdeclspec', '-Wno-format-security', '-Wno-non-pod-varargs', 
 					 '-Wno-unused-function', '-Wno-unused-const-variable', 
+					 '-Wno-gnu-anonymous-struct', '-Wno-nested-anon-types',
+					 '-Wno-gnu-zero-variadic-macro-arguments', '-Wno-unused-parameter',
 					 '-Wno-format', '-Wno-invalid-offsetof', '-msse4.1']
 endif
 

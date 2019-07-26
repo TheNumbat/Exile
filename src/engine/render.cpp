@@ -1167,6 +1167,8 @@ draw_cmd_id ogl_manager::add_command(_FPTR* run, _FPTR* uniforms, string v, stri
 	d.run.set(run);
 	d.shader = shader_program::make(v, f, g, uniforms, alloc);
 	
+	LOG_DEBUG_F("Loaded shader to ID %"_, d.shader.handle);
+
 	commands.insert(next_draw_cmd_id, d);
 	return next_draw_cmd_id++;
 }

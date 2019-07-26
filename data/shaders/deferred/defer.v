@@ -7,6 +7,7 @@ layout (location = 1) in vec3 v_lpos;
 layout (location = 2) in vec3 v_lcol;
 
 out vec3 f_view;
+out vec2 f_uv;
 flat out vec3 f_lpos;
 flat out vec3 f_lcol;
 flat out int instance_id;
@@ -24,6 +25,7 @@ void main() {
 	gl_Position = ndc;
 
 	f_view = (ivp * vec4(ndc.xy,1.0f,1.0f)).xyz;
+	f_uv = ndc.xy / 2.0f + 0.5f;
 
 	f_lpos = v_lpos;
 	f_lcol = v_lcol;

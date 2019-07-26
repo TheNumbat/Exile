@@ -1691,7 +1691,7 @@ void world::init_blocks(asset_store* store) {
 		{true, true, true, true, true, true}, true,
 		{tex_idx, tex_idx, tex_idx, tex_idx, tex_idx, tex_idx},
 		{true, true, true, true, true, true},
-		0, true, true, false
+		0, true, true, false, {null}
 	};
 
 
@@ -1704,7 +1704,7 @@ void world::init_blocks(asset_store* store) {
 		{true, true, true, true, true, true}, true,
 		{tex_idx, tex_idx, tex_idx, tex_idx, tex_idx, tex_idx},
 		{true, true, true, true, true, true},
-		0, true, true, false
+		0, true, true, false, {null}
 	};
 
 
@@ -1719,7 +1719,7 @@ void world::init_blocks(asset_store* store) {
 		{true, true, true, true, true, true}, true,
 		{tex_idx, tex_idx + 1, tex_idx, tex_idx, tex_idx + 2, tex_idx},
 		{true, true, true, true, true, true},
-		0, true, true, false
+		0, true, true, false, {null}
 	};	
 
 

@@ -201,7 +201,7 @@ void exile_renderer::end_frame() {
 		render_command cmd = render_command::make((draw_cmd_id)draw_cmd::blit_fb);
 		cmd.blit.src = world_target.get_fb();
 		cmd.blit.mask = (GLbitfield)gl_clear::color_buffer_bit;
-		cmd.blit.filter = gl_tex_filter::scaled_resolve_fastest;
+		cmd.blit.filter = gl_tex_filter::linear;
 		world_tasks.add_command(cmd);
  	}
 	{
