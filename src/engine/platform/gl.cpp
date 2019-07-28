@@ -66,7 +66,6 @@ glBindSampler_t				glBindSampler;
 glBindVertexArray_t    		glBindVertexArray; 		
 glDeleteVertexArrays_t 		glDeleteVertexArrays;
 glGenVertexArrays_t    		glGenVertexArrays;
-glBlendEquation_t			glBlendEquation;
 glBindBuffer_t				glBindBuffer;
 glDeleteBuffers_t			glDeleteBuffers;
 glGenBuffers_t				glGenBuffers;
@@ -76,6 +75,9 @@ glVertexAttribPointer_t		glVertexAttribPointer;
 glVertexAttribIPointer_t	glVertexAttribIPointer;
 glEnableVertexAttribArray_t glEnableVertexAttribArray;
 glDrawElementsBaseVertex_t	glDrawElementsBaseVertex;
+
+glBlendEquation_t	  glBlendEquation;
+glStencilOpSeparate_t glStencilOpSeparate;
 
 glGenRenderbuffers_t				glGenRenderbuffers;
 glBindRenderbuffer_t				glBindRenderbuffer;

@@ -310,6 +310,17 @@ enum class blend_mode : u8 {
 	add
 };
 
+enum class stencil_test : u8 {
+	none,
+	always,
+	not_zero
+};
+
+enum class stencil_mode : u8 {
+	none,
+	incr_decr
+};
+
 enum class render_setting : u8 {
 	none,
 	wireframe,
@@ -317,6 +328,8 @@ enum class render_setting : u8 {
 	aa_lines,
 	blend,
 	depth,
+	stencil_test,
+	stencil_mode,
 	poly_offset,
 	dither,
 	scissor,
@@ -335,14 +348,16 @@ struct cmd_settings {
 	bool line_smooth = true;
 	bool dither = true;
 	bool scissor = true;
-	bool cull_backface = false;
 	bool multisample = true;
 	bool sample_shading = false;
 	bool depth_mask = true;
 	bool point_size = true;
 	bool output_srgb = false;
 	blend_mode blend = blend_mode::alpha;
+	stencil_test stencil_t = stencil_test::none;
+	stencil_mode stencil_m = stencil_mode::none;
 	gl_depth_factor depth = gl_depth_factor::greater;
+	gl_face cull = gl_face::back;
 };
 
 struct ogl_settings {

@@ -485,7 +485,7 @@ void world::render_chunks() { PROF_FUNC
 			m4 view = p.camera.view_pos_origin();
 			m4 proj = p.camera.proj((f32)exile->eng->window.settings.w / (f32)exile->eng->window.settings.h);
 
-			exile->ren.world_chunk(this, c, block_textures, env.sky_texture, model, view, proj);
+			exile->ren.world_chunk(c, block_textures, env.sky_texture, model, view, proj);
 		}
 	}
 
@@ -748,7 +748,7 @@ void chunk::do_gen() { PROF_FUNC
 				blocks[x][z][y] = block_id::stone;
 			}
 
-			if(x == 0 && z == 0 && pos.x == 0 && pos.z == 0) {
+			if(x % 16 == 0 && z % 16 == 0) {
 				blocks[x][z][height] = block_id::torch;
 				place_light(iv3(x, height, z), 16);
 			} else {

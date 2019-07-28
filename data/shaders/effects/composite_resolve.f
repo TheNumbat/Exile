@@ -35,7 +35,7 @@ void main() {
 	case 4: blend(5);
 	case 3: blend(6);
 	case 2: blend(7);
-	default:;
+	default: break;
 	}
 
 	color = col;

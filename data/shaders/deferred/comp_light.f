@@ -46,7 +46,7 @@ void main() {
 		vec3 norm = texture(norm_tex, f_uv).xyz;
 		norm.z = sign(norm.z) * sqrt(1.0f - dot(norm.xy, norm.xy));
 		color = vec4(abs(norm), 1.0f);
-	} else if(debug_show == 10) {
+	} else if(debug_show == 9) {
 		color = vec4(vec3(sqrt(texture(depth_tex, f_uv).x)), 1.0f);
 	} else {
 		color = vec4(light, 1.0f);

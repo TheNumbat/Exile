@@ -1273,9 +1273,11 @@ void ogl_manager::_cmd_set_setting(render_command_setting setting) {
 	case render_setting::aa_lines: set->line_smooth = setting.data; break;
 	case render_setting::blend: set->blend = (blend_mode)setting.data; break;
 	case render_setting::depth: set->depth = (gl_depth_factor)setting.data; break;
+	case render_setting::stencil_test: set->stencil_t = (stencil_test)setting.data; break;
+	case render_setting::stencil_mode: set->stencil_m = (stencil_mode)setting.data; break;
 	case render_setting::dither: set->dither = setting.data; break;
 	case render_setting::scissor: set->scissor = setting.data; break;
-	case render_setting::cull: set->cull_backface = setting.data; break;
+	case render_setting::cull: set->cull = (gl_face)setting.data; break;
 	case render_setting::msaa: set->multisample = setting.data; break;
 	case render_setting::aa_shading: set->sample_shading = setting.data; break;
 	case render_setting::write_depth: set->depth_mask = setting.data; break;
@@ -1316,12 +1318,11 @@ void ogl_manager::_cmd_apply_settings() {
 
 	cmd_settings* set = command_settings.top();
 
-	set->polygon_line 	? glPolygonMode(gl_poly::front_and_back, gl_poly_mode::line) : glPolygonMode(gl_poly::front_and_back, gl_poly_mode::fill);
+	set->polygon_line 	? glPolygonMode(gl_face::front_and_back, gl_poly_mode::line) : glPolygonMode(gl_face::front_and_back, gl_poly_mode::fill);
 	set->depth_test 	? glEnable(gl_capability::depth_test) : glDisable(gl_capability::depth_test);
 	set->line_smooth 	? glEnable(gl_capability::line_smooth) : glDisable(gl_capability::line_smooth);
 	set->dither 		? glEnable(gl_capability::dither) : glDisable(gl_capability::dither);
 	set->scissor 		? glEnable(gl_capability::scissor_test) : glDisable(gl_capability::scissor_test);
-	set->cull_backface 	? glEnable(gl_capability::cull_face) : glDisable(gl_capability::cull_face);
 	set->multisample 	? glEnable(gl_capability::multisample) : glDisable(gl_capability::multisample);
 	set->sample_shading	? glEnable(gl_capability::sample_shading) : glDisable(gl_capability::sample_shading);
 	set->point_size		? glEnable(gl_capability::program_point_size) : glDisable(gl_capability::program_point_size);
@@ -1340,6 +1341,27 @@ void ogl_manager::_cmd_apply_settings() {
 	case blend_mode::add:	glEnable(gl_capability::blend); 
 							glBlendFunc(gl_blend_factor::src_alpha, gl_blend_factor::dst_alpha);
 							break;
+	}
+
+	switch(set->stencil_t) {
+	case stencil_test::none:     glDisable(gl_capability::stencil_test); break;
+	case stencil_test::always:   glEnable(gl_capability::stencil_test);
+							     glStencilFunc(gl_stencil_func::always, 0, 0); break;
+	case stencil_test::not_zero: glEnable(gl_capability::stencil_test);
+								 glStencilFunc(gl_stencil_func::notequal, 0, 0xff); break;
+	}
+
+	switch(set->stencil_m) {
+	case stencil_mode::none: 	  glStencilMask(0); break;
+	case stencil_mode::incr_decr: glStencilMask(0xff);
+								  glStencilOpSeparate(gl_face::back, gl_stencil_op::keep, gl_stencil_op::incr_wrap, gl_stencil_op::keep);
+								  glStencilOpSeparate(gl_face::front, gl_stencil_op::keep, gl_stencil_op::decr_wrap, gl_stencil_op::keep); break;
+	}
+
+	switch(set->cull) {
+	case gl_face::none: glDisable(gl_capability::cull_face); break;
+	default:			glEnable(gl_capability::cull_face);
+						glCullFace(set->cull); break;	
 	}
 
 	if(set->sample_shading && info.check_version(4,0)) {
@@ -1669,6 +1691,7 @@ void ogl_manager::load_global_funcs() {
 	GL_LOAD(glNamedStringARB);
 	GL_LOAD(glDeleteNamedStringARB);
 	GL_LOAD(glCompileShaderIncludeARB);
+	GL_LOAD(glStencilOpSeparate);
 
 	GL_LOAD(glGetStringi);
 	GL_LOAD(glGetInteger64v);

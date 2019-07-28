@@ -12,8 +12,6 @@ uniform sampler2D textures[8];
 
 void main() {
 
-	//TODO(max): this is totally not the right way to blend
-
 	vec4 col = texture(textures[0], f_uv);
 
 	switch(num_textures){
@@ -24,7 +22,7 @@ void main() {
 	case 4: blend(5);
 	case 3: blend(6);
 	case 2: blend(7);
-	default:;
+	default: break;
 	}
 
 	color = col;

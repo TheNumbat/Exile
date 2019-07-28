@@ -580,7 +580,7 @@ void imgui_manager::end_frame() { PROF_FUNC
 	glDisable(gl_capability::cull_face);
 	glDisable(gl_capability::depth_test);
 	glEnable(gl_capability::scissor_test);
-	glPolygonMode(gl_poly::front_and_back, gl_poly_mode::fill);
+	glPolygonMode(gl_face::front_and_back, gl_poly_mode::fill);
 
 	glViewport(0, 0, (GLsizei)fb_width, (GLsizei)fb_height);
 	m4 mat = ortho(0, (f32)fb_width, (f32)fb_height, 0, -1, 1);

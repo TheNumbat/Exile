@@ -1,23 +1,23 @@
 
 #version 400 core
 
-flat in int instance_id;
+in vec2 f_uv;
 in vec3 f_view;
 
 out vec4 light;
 
-flat in vec3 f_lcol;
-flat in vec3 f_lpos;
+uniform vec3 lcol;
+uniform vec3 lpos;
 
 uniform sampler2DMS norm_tex;
 uniform sampler2DMS depth_tex;
 
-uniform int num_instances;
-uniform int debug_show;
-
 uniform float near;
-
+uniform int debug_show;
 uniform bool dynamic_light;
+
+uniform vec2 screen_dim;
+uniform mat4 ivp;
 
 const float PI = 3.14159265f;
 
@@ -45,12 +45,8 @@ vec3 calculate_light_dynamic(vec3 pos, vec3 norm, float shine) {
 	if(dynamic_light) {
 		vec3 v = normalize(-pos);
 		
-		vec3 l = f_lpos-pos;
+		vec3 l = lpos-pos;
 		float dist = length(l);
-
-		if(dist > 8.0f * max3(f_lcol)) {
-			discard;
-		}
 
 		l = normalize(l);
 		
@@ -59,12 +55,12 @@ vec3 calculate_light_dynamic(vec3 pos, vec3 norm, float shine) {
 		float a = min(1.0f / pow(dist,3), 1.0f);
 
 		float diff = max(dot(norm,l), 0.0f);
-		light_gather += diff * f_lcol * a;
+		light_gather += diff * lcol * a;
 			
 		float energy = (8.0f + shine) / (8.0f * PI); 
    		float spec = energy * pow(max(dot(norm, h), 0.0), shine);
 
-		light_gather += spec * f_lcol * a;
+		light_gather += spec * lcol * a;
 	} else {
 
 		discard;
@@ -86,13 +82,13 @@ void main() {
 	float shine = 1.0f / abs(norm_packed.z);
 	vec3 norm = unpack_norm(norm_packed);
 
-	vec3 pos = calc_pos(f_view, depth);
+	vec2 ndc = (gl_FragCoord.xy / screen_dim) * 2.0f - 1.0f;
+	vec3 view = (ivp * vec4(ndc, 1.0f, 1.0f)).xyz;
+
+	vec3 pos = calc_pos(view, depth);
 	vec3 result = calculate_light_dynamic(pos, norm, shine);
 
-	if(debug_show == 9) {
-		vec3 quad = scalar_to_color(float(instance_id) / float(num_instances));
-		light = vec4(quad, 1.0f / float(num_instances));
-	} else if(debug_show != 5 && debug_show != 6 && debug_show != 7) {
+	if(debug_show != 5 && debug_show != 6 && debug_show != 7) {
 		light = vec4(result, 1.0f);
 	}
 }

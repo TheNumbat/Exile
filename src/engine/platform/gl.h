@@ -693,11 +693,8 @@ enum class gl_get : GLenum {
 	max_element_index                         = 0x8D6B
 };	
 
-enum class gl_poly : GLenum {
-	front_and_back = 0x0408
-};
-
-enum class gl_cull_mode : GLenum {
+enum class gl_face : GLenum {
+	none 		   = 0,
 	front 		   = 0x0404,
 	back 		   = 0x0405,
 	front_and_back = 0x0408
@@ -726,6 +723,21 @@ enum class gl_depth_factor : GLenum {
 	notequal = 0x0205,
 	gequal   = 0x0206,
 	always   = 0x0207
+};
+
+enum class gl_stencil_func : GLenum {
+	always   = 0x0207,
+	notequal = 0x0205
+};
+
+enum class gl_stencil_op : GLenum {
+	keep      = 0x1E00,
+	replace   = 0x1E01,
+	incr      = 0x1E02,
+	decr      = 0x1E03,
+	invert    = 0x150A,
+	incr_wrap = 0x8507,
+	decr_wrap = 0x8508
 };
 
 enum class gl_pix_store : GLenum {
@@ -785,7 +797,10 @@ DLL_IMPORT void glGenTextures(GLsizei n, GLuint* textures);
 DLL_IMPORT void glPolygonOffset(GLfloat factor, GLfloat units);
 DLL_IMPORT void glBlendFunc(gl_blend_factor sfactor, gl_blend_factor dfactor);
 DLL_IMPORT void glDepthFunc(gl_depth_factor factor);
+DLL_IMPORT void glStencilFunc(gl_stencil_func func, GLint ref, GLuint mask);
+DLL_IMPORT void glStencilMask(GLuint mask);
 typedef void (*glBlendEquation_t)(gl_blend_mode mode);
+typedef void (*glStencilOpSeparate_t)(gl_face face, gl_stencil_op sfail, gl_stencil_op dpfail, gl_stencil_op dppass);
 
 DLL_IMPORT void glEnable(gl_capability cap);
 DLL_IMPORT void glDisable(gl_capability cap);
@@ -800,8 +815,8 @@ DLL_IMPORT void glDrawArrays(gl_draw_mode mode, GLint first, GLsizei count);
 DLL_IMPORT void glDrawElements(gl_draw_mode mode, GLsizei count, gl_index_type type, const GLvoid *indices);
 
 DLL_IMPORT void glScissor(GLint x, GLint y, GLsizei width, GLsizei height);
-DLL_IMPORT void glCullFace(gl_cull_mode mode);
-DLL_IMPORT void glPolygonMode(gl_poly face, gl_poly_mode mode);
+DLL_IMPORT void glCullFace(gl_face mode);
+DLL_IMPORT void glPolygonMode(gl_face face, gl_poly_mode mode);
 DLL_IMPORT void glLineWidth(GLfloat width);
 DLL_IMPORT void glPointSize(GLfloat width);
 
@@ -980,7 +995,6 @@ extern glBindSampler_t				glBindSampler;
 extern glBindVertexArray_t    		glBindVertexArray; 		
 extern glDeleteVertexArrays_t 		glDeleteVertexArrays;
 extern glGenVertexArrays_t    		glGenVertexArrays;
-extern glBlendEquation_t			glBlendEquation;
 extern glBindBuffer_t				glBindBuffer;
 extern glDeleteBuffers_t			glDeleteBuffers;
 extern glGenBuffers_t				glGenBuffers;
@@ -990,6 +1004,9 @@ extern glVertexAttribPointer_t		glVertexAttribPointer;
 extern glVertexAttribIPointer_t		glVertexAttribIPointer;
 extern glEnableVertexAttribArray_t 	glEnableVertexAttribArray;
 extern glDrawElementsBaseVertex_t	glDrawElementsBaseVertex;
+
+extern glBlendEquation_t     glBlendEquation;
+extern glStencilOpSeparate_t glStencilOpSeparate;
 
 extern glGenRenderbuffers_t					glGenRenderbuffers;
 extern glBindRenderbuffer_t					glBindRenderbuffer;

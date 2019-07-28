@@ -284,7 +284,6 @@ enum class exile_component_view : i32 {
 	sun,
 	ao,
 	dynamic,
-	light_quad,
 	depth
 };
 
@@ -315,7 +314,8 @@ struct render_settings {
 
 struct world_buffers {
 	texture_id col_buf, norm_buf, light_buf, depth_buf;
-	render_target col_buf_target, depth_buf_target, norm_buf_target, light_buf_target;
+	render_target col_buf_target, depth_buf_target, stencil_buf_target;
+	render_target norm_buf_target, light_buf_target;
 	
 	framebuffer_id chunk_target = 0;
 	framebuffer_id light_target = 0;
@@ -337,17 +337,14 @@ struct world_target_info {
 	// NOTE(max): only the buffers + textures use GPU memory,
 	// the rest are reference objects
 
-	world_buffers  world_info;
-	effect_buffers effect_info;
+	world_buffers  w;
+	effect_buffers e;
 
 	bool msaa = false;
 	bool current0 = true;
 
 	void init(iv2 dim, i32 samples);
 	void destroy();
-	
-	// transfers scene to current effect buffer
-	void resolve(render_command_list* list);
 	
 	void flip_fb();
 	framebuffer_id world_fb();
@@ -382,10 +379,10 @@ struct exile_renderer {
                 cmd_2D_tex_col       = 0, cmd_3D_tex      = 0,
                 cmd_3D_tex_instanced = 0, cmd_lines       = 0;
 
-	draw_cmd_id cmd_pointcloud       = 0, cmd_cubemap     = 0,
-                cmd_chunk            = 0, cmd_skydome     = 0,
-                cmd_skyfar           = 0, cmd_defer_light = 0,
-                cmd_defer_light_ms	 = 0;
+	draw_cmd_id cmd_pointcloud       = 0, cmd_cubemap       = 0,
+                cmd_chunk            = 0, cmd_skydome       = 0,
+                cmd_skyfar           = 0, cmd_defer_light   = 0,
+                cmd_defer_light_ms	 = 0, cmd_defer_stencil = 0;
 
 	render_settings settings;
 
@@ -413,8 +410,10 @@ struct exile_renderer {
 	
 	void world_begin_chunks(world* w, bool offset);
 	// NOTE(max): this assumes the chunk mesh object is long-lived
-	void world_chunk(world* w, chunk* c, texture_id blocks, texture_id sky, m4 model, m4 view, m4 proj);
+	void world_chunk(chunk* c, texture_id blocks, texture_id sky, m4 model, m4 view, m4 proj);
 	void world_finish_chunks();
+
+	void resolve_lighting();
 
 	void generate_commands();
 	void generate_targets();
@@ -457,3 +456,4 @@ CALLBACK void uniforms_comp_resolve_light(shader_program* prog, render_command* 
 
 CALLBACK void run_defer(render_command* cmd, gpu_object* gpu);
 CALLBACK void uniforms_defer(shader_program* prog, render_command* cmd);
+CALLBACK void uniforms_defer_stencil(shader_program* prog, render_command* cmd);
