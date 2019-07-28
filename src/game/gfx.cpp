@@ -186,7 +186,7 @@ void effect_pass::effect(render_command_list* list) {
 	list->add_command(cmd);
 }
 
-void exile_renderer::end_frame() {
+void exile_renderer::end_frame() { PROF_FUNC
 
 	resolve_lighting();
 
@@ -204,12 +204,12 @@ void exile_renderer::end_frame() {
 		cmd.blit.filter = gl_tex_filter::linear;
 		world_tasks.add_command(cmd);
  	}
-	{
+	{PROF_SCOPE("Execute world"_);
 		exile->eng->ogl.execute_command_list(&world_tasks);
 		world_tasks.clear();
 		lights.clear();
 	}
-	{
+	{PROF_SCOPE("Execute HUD"_);
 		exile->eng->ogl.execute_command_list(&hud_tasks);
 		hud_tasks.clear();
 	}
@@ -289,7 +289,7 @@ void world_target_info::init(iv2 dim, i32 samples) {
 	exile->eng->ogl.commit_framebuffer(e.effect1_fb);
 }
 
-void exile_renderer::resolve_lighting() {
+void exile_renderer::resolve_lighting() { PROF_FUNC
 	
 	FORVEC(it, lights.lights) { 
 		{

@@ -690,8 +690,12 @@ void texture::set_params() {
 
 	if(type == texture_type::target) {
 		if(target_info.samples == 1) {
-			glTexImage2D(gl_type, 0, target_info.format, target_info.dim.x, target_info.dim.y, 0, 
-						 target_info.pixel, gl_pixel_data_type::unsigned_byte, 0);
+			if(target_info.pixel == gl_pixel_data_format::depth_stencil)
+				glTexImage2D(gl_type, 0, target_info.format, target_info.dim.x, target_info.dim.y, 0, 
+						 	 target_info.pixel, gl_pixel_data_type::float_32_unsigned_int_24_8_rev, 0);
+			else
+				glTexImage2D(gl_type, 0, target_info.format, target_info.dim.x, target_info.dim.y, 0, 
+						 	 target_info.pixel, gl_pixel_data_type::unsigned_byte, 0);
 		} else {
 			glTexImage2DMultisample(gl_type, target_info.samples, target_info.format, target_info.dim.x, target_info.dim.y, gl_bool::_true);
 			return;

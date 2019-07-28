@@ -186,25 +186,26 @@ enum class gl_pixel_data_format : GLenum {
 };
 
 enum class gl_pixel_data_type : GLenum {
-	unsigned_byte            	= 0x1401,
-	byte                     	= 0x1400,
-	unsigned_short           	= 0x1403,
-	_short                    	= 0x1402,
-	unsigned_int				= 0x1405,
-	_int						= 0x1404,
-	_float						= 0x1406,
-	unsigned_byte_3_3_2        	= 0x8032,
-	unsigned_byte_2_3_3_rev    	= 0x8362,
-	unsigned_short_5_6_5       	= 0x8363,
-	unsigned_short_5_6_5_rev   	= 0x8364,
-	unsigned_short_4_4_4_4     	= 0x8033,
-	unsigned_short_4_4_4_4_rev 	= 0x8365,
-	unsigned_short_5_5_5_1     	= 0x8034,
-	unsigned_short_1_5_5_5_rev 	= 0x8366,
-	unsigned_int_8_8_8_8       	= 0x8035,
-	unsigned_int_8_8_8_8_rev   	= 0x8367,
-	unsigned_int_10_10_10_2    	= 0x8036,
-	unsigned_int_2_10_10_10_rev	= 0x8368
+	unsigned_byte            	   = 0x1401,
+	byte                     	   = 0x1400,
+	unsigned_short           	   = 0x1403,
+	_short                    	   = 0x1402,
+	unsigned_int				   = 0x1405,
+	_int						   = 0x1404,
+	_float						   = 0x1406,
+	unsigned_byte_3_3_2        	   = 0x8032,
+	unsigned_byte_2_3_3_rev    	   = 0x8362,
+	unsigned_short_5_6_5       	   = 0x8363,
+	unsigned_short_5_6_5_rev   	   = 0x8364,
+	unsigned_short_4_4_4_4     	   = 0x8033,
+	unsigned_short_4_4_4_4_rev 	   = 0x8365,
+	unsigned_short_5_5_5_1     	   = 0x8034,
+	unsigned_short_1_5_5_5_rev 	   = 0x8366,
+	unsigned_int_8_8_8_8       	   = 0x8035,
+	unsigned_int_8_8_8_8_rev   	   = 0x8367,
+	unsigned_int_10_10_10_2    	   = 0x8036,
+	unsigned_int_2_10_10_10_rev	   = 0x8368,
+	float_32_unsigned_int_24_8_rev = 0x8DAD
 };
 
 enum class gl_blend_factor : GLenum {

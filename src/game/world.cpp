@@ -748,7 +748,7 @@ void chunk::do_gen() { PROF_FUNC
 				blocks[x][z][y] = block_id::stone;
 			}
 
-			if(x % 16 == 0 && z % 16 == 0) {
+			if(x % 4 == 0 && z % 4 == 0) {
 				blocks[x][z][height] = block_id::torch;
 				place_light(iv3(x, height, z), 16);
 			} else {

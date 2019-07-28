@@ -284,7 +284,8 @@ enum class exile_component_view : i32 {
 	sun,
 	ao,
 	dynamic,
-	depth
+	depth,
+	light_volume
 };
 
 struct render_settings {

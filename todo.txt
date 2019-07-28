@@ -12,8 +12,7 @@ Working To-Do:
 	Rendering:
 		[features]
 		dynamic lights
-			swap to light volumes + stencil trick
-				LOD tesselation of sphere?
+			LOD tesselation of sphere?
 			
 			flashlight (spotlights)
 			sunlight (directional)

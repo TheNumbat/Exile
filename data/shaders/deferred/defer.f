@@ -1,8 +1,8 @@
 
 #version 330 core
 
-in vec2 f_uv;
-in vec3 f_view;
+noperspective in vec2 f_uv;
+noperspective in vec3 f_view;
 
 out vec4 light;
 

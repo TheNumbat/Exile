@@ -82,8 +82,10 @@ void main() {
 	vec3 pos = calc_pos(f_view, depth);
 	vec3 result = calculate_light_dynamic(pos, norm, shine);
 
-	if(debug_show != 5 && debug_show != 6 && debug_show != 7) {
+	if(debug_show == 10) {
+		light = vec4(1.0f);
+	} else if(debug_show != 5 && debug_show != 6 && debug_show != 7) {
 		light = vec4(result, 1.0f);
-	}
+	} 
 }
 
