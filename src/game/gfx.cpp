@@ -587,7 +587,6 @@ CALLBACK void uniforms_defer(shader_program* prog, render_command* cmd) {
 	glUniformMatrix4fv(prog->location("vp"_), 1, gl_bool::_false, ren->proj_info.vp.a);
 	glUniformMatrix4fv(prog->location("ivp"_), 1, gl_bool::_false, ren->proj_info.ivp.a);
 
-	glUniform2f(prog->location("screen_dim"_), (f32)ren->prev_dim.x, (f32)ren->prev_dim.y);
 	glUniform1f(prog->location("near"_), ren->proj_info.near);
 	glUniform1i(prog->location("debug_show"_), (i32)set->view);
 	glUniform1i(prog->location("dynamic_light"_), set->dynamic_light);

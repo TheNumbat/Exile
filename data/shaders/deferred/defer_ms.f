@@ -1,9 +1,7 @@
 
 #version 400 core
 
-in vec2 f_uv;
-in vec3 f_view;
-
+noperspective in vec3 f_view;
 out vec4 light;
 
 uniform vec3 lcol;
@@ -16,7 +14,6 @@ uniform float near;
 uniform int debug_show;
 uniform bool dynamic_light;
 
-uniform vec2 screen_dim;
 uniform mat4 ivp;
 
 const float PI = 3.14159265f;
@@ -82,10 +79,7 @@ void main() {
 	float shine = 1.0f / abs(norm_packed.z);
 	vec3 norm = unpack_norm(norm_packed);
 
-	vec2 ndc = (gl_FragCoord.xy / screen_dim) * 2.0f - 1.0f;
-	vec3 view = (ivp * vec4(ndc, 1.0f, 1.0f)).xyz;
-
-	vec3 pos = calc_pos(view, depth);
+	vec3 pos = calc_pos(f_view, depth);
 	vec3 result = calculate_light_dynamic(pos, norm, shine);
 
 	if(debug_show != 5 && debug_show != 6 && debug_show != 7) {
