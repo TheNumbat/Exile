@@ -10,8 +10,6 @@ Working To-Do:
 		Demo survival a-la Minecraft beta (but with really nice looking graphics) would be great
 
 	Rendering:
-		sky-dome is broken somehow; wrong-facing triangles?
-		
 		[features]
 		dynamic lights			
 			flashlight (spotlights)

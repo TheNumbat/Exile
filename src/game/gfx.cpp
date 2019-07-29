@@ -1439,7 +1439,6 @@ void mesh_3d_tex::push_dome(v3 center, f32 r, i32 divisions) {
 
 			vertices.push(center + point);
 			texCoords.push(v2(th / (2.0f * PI32), (0.5f * cp) + 0.5f));
-			// texCoords.push(v2(th / (2.0f * PI32), ph / (1.0f * PI32)));
 
 			ph += (PI32 * 2.0f) / divisions;
 		}
@@ -1457,7 +1456,7 @@ void mesh_3d_tex::push_dome(v3 center, f32 r, i32 divisions) {
 			i32 idxp1 = (idx + p_divisions + 1);
 
 			elements.push(uv3(idx, idx1, idxp));
-			elements.push(uv3(idx1, idxp, idxp1));
+			elements.push(uv3(idxp1, idxp, idx1));
 		}
 	}
 
