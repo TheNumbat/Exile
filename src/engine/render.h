@@ -111,6 +111,7 @@ struct texture_array_info {
 	array<asset_pair> assets;
 
 	void push(GLuint handle, asset_store* store, string name);
+	void finalize(GLuint handle);
 };
 
 struct texture_bmp_info {
@@ -134,6 +135,15 @@ struct texture_target_info {
 	iv2 dim;
 };
 
+enum texture_sampler {
+	nearest,
+	nearest_mipmap_linear,
+	nearest_mipmap_nearest,
+	linear_mipmap_nearest,
+	linear_mipmap_linear,
+	linear_mipmap_linear_nearest
+};
+
 struct texture {
 
 	friend struct ogl_manager;
@@ -151,11 +161,11 @@ private:
 	texture_type type   = texture_type::none;
 	GLuint handle 		= 0;
 	
-	gl_tex_target gl_type = gl_tex_target::_2D;
-	texture_wrap wrap     = texture_wrap::repeat;
-	bool pixelated        = false;
-	bool srgb 			  = false;
-	f32 anisotropy 		  = 1.0f;
+	texture_sampler sampler = texture_sampler::linear_mipmap_linear;
+	gl_tex_target gl_type   = gl_tex_target::_2D;
+	texture_wrap wrap       = texture_wrap::repeat;
+	bool srgb 			    = false;
+	f32 anisotropy 		    = 1.0f;
 
 	union {	
 		texture_rf_info     rf_info;
@@ -165,11 +175,11 @@ private:
 		texture_target_info target_info;
 	};
 
-	static texture make_cube(texture_wrap wrap, bool pixelated, bool srgb, f32 aniso);
-	static texture make_rf(texture_wrap wrap, bool pixelated, bool srgb, f32 aniso);
-	static texture make_bmp(texture_wrap wrap, bool pixelated, bool srgb, f32 aniso);
-	static texture make_array(iv3 dim, u32 idx_offset, texture_wrap wrap, bool pixelated, bool srgb, f32 aniso, allocator* a);
-	static texture make_target(iv2 dim, i32 samples, gl_tex_format format, gl_pixel_data_format pixel, bool pixelated);
+	static texture make_cube(texture_wrap wrap, texture_sampler sampler, bool srgb, f32 aniso);
+	static texture make_rf(texture_wrap wrap, texture_sampler sampler, bool srgb, f32 aniso);
+	static texture make_bmp(texture_wrap wrap, texture_sampler sampler, bool srgb, f32 aniso);
+	static texture make_array(iv3 dim, u32 idx_offset, texture_wrap wrap, texture_sampler sampler, bool srgb, f32 aniso, allocator* a);
+	static texture make_target(iv2 dim, i32 samples, gl_tex_format format, gl_pixel_data_format pixel, texture_sampler sampler);
 	void destroy(allocator* a);
 	void gl_destroy();
 
@@ -361,7 +371,7 @@ struct cmd_settings {
 };
 
 struct ogl_settings {
-	f32 anisotropy = 1.0f;
+	f32 anisotropy = 1.0f; // gets set to maximum
 };
 
 struct render_command_custom {
@@ -530,13 +540,15 @@ struct ogl_manager {
 	void add_include(string path);
 
  	// Textures
-	texture_id add_cubemap(asset_store* as, string name, bool srgb);
- 	texture_id add_texture_target(iv2 dim, i32 samples, gl_tex_format format, gl_pixel_data_format pixel, bool pixelated = true);
-	texture_id add_texture(asset_store* as, string name, texture_wrap wrap = texture_wrap::repeat, bool pixelated = false, bool srgb = true);
-	texture_id add_texture_from_font(asset_store* as, string name, texture_wrap wrap = texture_wrap::repeat, bool pixelated = false, bool srgb = false);
+	texture_id add_cubemap(asset_store* as, string name, texture_sampler sampler = texture_sampler::linear_mipmap_linear, bool srgb = true);
+ 	texture_id add_texture_target(iv2 dim, i32 samples, gl_tex_format format, gl_pixel_data_format pixel, texture_sampler sampler = texture_sampler::nearest);
+	texture_id add_texture(asset_store* as, string name, texture_wrap wrap = texture_wrap::repeat, texture_sampler sampler = texture_sampler::linear_mipmap_linear, bool srgb = true);
+	texture_id add_texture_from_font(asset_store* as, string name, texture_wrap wrap = texture_wrap::repeat, texture_sampler sampler = texture_sampler::linear_mipmap_linear, bool srgb = false);
 
-	texture_id begin_tex_array(iv3 dim, texture_wrap wrap = texture_wrap::repeat, bool pixelated = false, bool srgb = true, u32 offset = 0);
+	texture_id begin_tex_array(iv3 dim, texture_wrap wrap = texture_wrap::repeat, texture_sampler sampler = texture_sampler::linear_mipmap_linear, bool srgb = true, u32 offset = 0);
 	void push_tex_array(texture_id tex, asset_store* as, string name);
+	void end_tex_array(texture_id tex);
+
 	i32 get_layers(texture_id tex);
 
  	void destroy_texture(texture_id id);

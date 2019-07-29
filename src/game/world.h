@@ -217,6 +217,7 @@ struct world_settings {
 	i32 max_light_propogation = 1;
 	bool respect_cam = true;
 	bool draw_chunk_corners = false;
+	texture_sampler block_sampler = texture_sampler::linear_mipmap_linear_nearest;
 };
 
 struct world_time {
@@ -268,7 +269,8 @@ struct world {
 
 	threadpool thread_pool;
 	allocator* alloc = null;
-	
+
+	asset_store* store = null;
 	texture_id block_textures = -1;
 
 	world_time time;
@@ -278,7 +280,7 @@ struct world {
 	mesh_2d_col player_hud;
 
 	void init(asset_store* store, allocator* a);
-	void init_blocks(asset_store* store);
+	void regen_blocks();
 	block_meta* get_info(block_id id);
 
 	void destroy();

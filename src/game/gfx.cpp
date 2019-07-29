@@ -157,20 +157,18 @@ void exile_renderer::hud_2D(gpu_object_id gpu_id) {
 
 void exile_renderer::world_clear() {
 
-	{
-		render_command cmd = render_command::make((draw_cmd_id)draw_cmd::clear);
-		
-		cmd.clear.components = (GLbitfield)gl_clear::color_buffer_bit;
+	render_command cmd = render_command::make((draw_cmd_id)draw_cmd::clear);
+	
+	cmd.clear.components = (GLbitfield)gl_clear::color_buffer_bit;
 
-		cmd.clear.fb_id = world_target.get_fb();
-		world_tasks.add_command(cmd);
+	cmd.clear.fb_id = world_target.get_fb();
+	world_tasks.add_command(cmd);
 
-		cmd.clear.components |= (GLbitfield)gl_clear::depth_buffer_bit;
+	cmd.clear.components |= (GLbitfield)gl_clear::depth_buffer_bit;
 
-		cmd.clear.fb_id = world_target.world_fb();
-		cmd.clear.depth = 0.0f;
-		world_tasks.add_command(cmd);
-	}
+	cmd.clear.fb_id = world_target.world_fb();
+	cmd.clear.depth = 0.0f;
+	world_tasks.add_command(cmd);
 }
 
 void effect_pass::effect(render_command_list* list) {
@@ -204,6 +202,7 @@ void exile_renderer::end_frame() { PROF_FUNC
 		cmd.blit.filter = gl_tex_filter::linear;
 		world_tasks.add_command(cmd);
  	}
+ 	
 	{PROF_SCOPE("Execute world"_);
 		exile->eng->ogl.execute_command_list(&world_tasks);
 		world_tasks.clear();

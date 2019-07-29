@@ -15,6 +15,10 @@ CALLBACK void world_debug_ui(world* w) {
 	if(ImGui::SmallButton("Reset")) {
 		w->p.reset();
 	}
+
+	if(ImGui::SmallButton("Regenerate Block Info")) {
+		w->regen_blocks();
+	}
 }
 
 void world::regenerate() { 
@@ -38,16 +42,17 @@ block_id world::block_at(iv3 pos) {
 	return node.owner->block_at(node.pos);
 }
 
-void world::init(asset_store* store, allocator* a) { PROF_FUNC
+void world::init(asset_store* s, allocator* a) { PROF_FUNC
 
 	alloc = a;
+	store = s;
 
 	p.reset();
 
 	LOG_INFO_F("units_per_voxel: %"_, chunk::units_per_voxel);
 
 	env.init(store, a);
-	init_blocks(store);
+	regen_blocks();
 
 	{
 		LOG_DEBUG_F("% logical cores % physical cores"_, global_api->get_num_cpus(), global_api->get_phys_cpus());
@@ -1673,10 +1678,15 @@ CALLBACK void torch_model(mesh_chunk* m, block_meta* info, i32 dir, iv3 v__0, iv
 	}
 }
 
-void world::init_blocks(asset_store* store) {
+void world::regen_blocks() {
+
+	block_info.destroy();
+	if(block_textures != -1) {
+		exile->eng->ogl.destroy_texture(block_textures);
+	}
 
 	block_info = vector<block_meta>::make((u32)block_id::total_blocks, alloc);
-	block_textures = exile->eng->ogl.begin_tex_array(iv3(32, 32, exile->eng->ogl.info.max_texture_layers), texture_wrap::repeat, true, true, 1);
+	block_textures = exile->eng->ogl.begin_tex_array(iv3(32, 32, exile->eng->ogl.info.max_texture_layers), texture_wrap::repeat, settings.block_sampler, true, 1);
 
 	texture_id tex = block_textures;
 	i32 tex_idx = exile->eng->ogl.get_layers(tex);
@@ -1750,5 +1760,7 @@ void world::init_blocks(asset_store* store) {
 		{false, false, false, false, false, false},
 		16, true, false, true, FPTR(torch_model)
 	};	
+
+	exile->eng->ogl.end_tex_array(tex);
 }
 

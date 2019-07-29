@@ -341,6 +341,7 @@ ogl_manager ogl_manager::make(platform_window* win, allocator* a) {
 
 	ret.load_global_funcs();
 	ret.info = ogl_info::make(ret.alloc);
+	ret.settings.anisotropy = ret.info.max_anisotropy;
 	LOG_DEBUG_F("GL %.% %"_, ret.info.major, ret.info.minor, ret.info.renderer);
 
 	ret.dbg_shader = shader_program::make("shaders/dbg.v"_,"shaders/dbg.f"_, {}, FPTR(uniforms_dbg), a);
@@ -460,9 +461,9 @@ void ogl_manager::destroy() {
 	check_leaked_handles();
 } 
 
-texture_id ogl_manager::add_texture_from_font(asset_store* as, string name, texture_wrap wrap, bool pixelated, bool srgb) { 
+texture_id ogl_manager::add_texture_from_font(asset_store* as, string name, texture_wrap wrap, texture_sampler sampler, bool srgb) { 
 
-	texture t = texture::make_rf(wrap, pixelated, false, settings.anisotropy);
+	texture t = texture::make_rf(wrap, sampler, false, settings.anisotropy);
 
 	t.rf_info.load(t.handle, as, name, srgb);
 
@@ -473,9 +474,9 @@ texture_id ogl_manager::add_texture_from_font(asset_store* as, string name, text
 	return next_texture_id++;
 }
 
-texture_id ogl_manager::add_texture_target(iv2 dim, i32 samples, gl_tex_format format, gl_pixel_data_format pixel, bool pixelated) { 
+texture_id ogl_manager::add_texture_target(iv2 dim, i32 samples, gl_tex_format format, gl_pixel_data_format pixel, texture_sampler sampler) { 
 
-	texture t = texture::make_target(dim, samples, format, pixel, pixelated);
+	texture t = texture::make_target(dim, samples, format, pixel, sampler);
 
 	textures.insert(next_texture_id, t);
 
@@ -484,9 +485,9 @@ texture_id ogl_manager::add_texture_target(iv2 dim, i32 samples, gl_tex_format f
 	return next_texture_id++;
 }
 
-texture_id ogl_manager::add_texture(asset_store* as, string name, texture_wrap wrap, bool pixelated, bool srgb) { 
+texture_id ogl_manager::add_texture(asset_store* as, string name, texture_wrap wrap, texture_sampler sampler, bool srgb) { 
 
-	texture t = texture::make_bmp(wrap, pixelated, srgb, settings.anisotropy);
+	texture t = texture::make_bmp(wrap, sampler, srgb, settings.anisotropy);
 
 	t.bmp_info.load(t.handle, as, name, srgb);
 
@@ -497,9 +498,9 @@ texture_id ogl_manager::add_texture(asset_store* as, string name, texture_wrap w
 	return next_texture_id++;
 }
 
-texture_id ogl_manager::add_cubemap(asset_store* as, string name, bool srgb) {
+texture_id ogl_manager::add_cubemap(asset_store* as, string name, texture_sampler sampler, bool srgb) {
 
-	texture t = texture::make_cube(texture_wrap::repeat, false, srgb, settings.anisotropy);
+	texture t = texture::make_cube(texture_wrap::repeat, sampler, srgb, settings.anisotropy);
 
 	t.cube_info.load_single(t.handle, as, name, srgb);
 
@@ -520,9 +521,19 @@ i32 ogl_manager::get_layers(texture_id tex) {
 	return t->array_info.current_layer;
 }
 
-texture_id ogl_manager::begin_tex_array(iv3 dim, texture_wrap wrap, bool pixelated, bool srgb, u32 offset) { 
+void ogl_manager::end_tex_array(texture_id tex) {
 
-	texture t = texture::make_array(dim, offset, wrap, pixelated, srgb, settings.anisotropy, alloc);
+	texture* t = textures.try_get(tex);
+
+	LOG_DEBUG_ASSERT(t);
+	LOG_DEBUG_ASSERT(t->type == texture_type::array);
+
+	t->array_info.finalize(t->handle);
+}
+
+texture_id ogl_manager::begin_tex_array(iv3 dim, texture_wrap wrap, texture_sampler sampler, bool srgb, u32 offset) { 
+
+	texture t = texture::make_array(dim, offset, wrap, sampler, srgb, settings.anisotropy, alloc);
 
 	textures.insert(next_texture_id, t);
 
@@ -539,8 +550,6 @@ void ogl_manager::push_tex_array(texture_id tex, asset_store* as, string name) {
 	LOG_DEBUG_ASSERT(t->type == texture_type::array);
 
 	t->array_info.push(t->handle, as, name);
-
-	return;
 }
 
 void ogl_manager::destroy_texture(texture_id id) { 
@@ -592,7 +601,7 @@ void ogl_manager::select_textures(render_command* cmd) {
 	}
 }
 
-texture texture::make_bmp(texture_wrap wrap, bool pixelated, bool srgb, f32 aniso) { 
+texture texture::make_bmp(texture_wrap wrap, texture_sampler sampler, bool srgb, f32 aniso) { 
 
 	texture ret;
 
@@ -600,7 +609,7 @@ texture texture::make_bmp(texture_wrap wrap, bool pixelated, bool srgb, f32 anis
 	ret.gl_type = gl_tex_target::_2D;
 	ret.wrap = wrap;
 	ret.srgb = srgb;
-	ret.pixelated = pixelated;
+	ret.sampler = sampler;
 	ret.anisotropy = aniso;
 	glGenTextures(1, &ret.handle);
 
@@ -609,7 +618,7 @@ texture texture::make_bmp(texture_wrap wrap, bool pixelated, bool srgb, f32 anis
 	return ret;
 }
 
-texture texture::make_cube(texture_wrap wrap, bool pixelated, bool srgb, f32 aniso) { 
+texture texture::make_cube(texture_wrap wrap, texture_sampler sampler, bool srgb, f32 aniso) { 
 
 	texture ret;
 
@@ -618,7 +627,7 @@ texture texture::make_cube(texture_wrap wrap, bool pixelated, bool srgb, f32 ani
 	ret.anisotropy = aniso;
 	ret.wrap = wrap;
 	ret.srgb = srgb;
-	ret.pixelated = pixelated;
+	ret.sampler = sampler;
 
 	glGenTextures(1, &ret.handle);
 
@@ -627,7 +636,7 @@ texture texture::make_cube(texture_wrap wrap, bool pixelated, bool srgb, f32 ani
 	return ret;	
 }
 
-texture texture::make_rf(texture_wrap wrap, bool pixelated, bool srgb, f32 aniso) { 
+texture texture::make_rf(texture_wrap wrap, texture_sampler sampler, bool srgb, f32 aniso) { 
 
 	texture ret;
 
@@ -635,7 +644,7 @@ texture texture::make_rf(texture_wrap wrap, bool pixelated, bool srgb, f32 aniso
 	ret.gl_type = gl_tex_target::_2D;
 	ret.wrap = wrap;
 	ret.srgb = srgb;
-	ret.pixelated = pixelated;
+	ret.sampler = sampler;
 	ret.anisotropy = aniso;
 	glGenTextures(1, &ret.handle);
 
@@ -644,7 +653,7 @@ texture texture::make_rf(texture_wrap wrap, bool pixelated, bool srgb, f32 aniso
 	return ret;
 }
 
-texture texture::make_array(iv3 dim, u32 offset, texture_wrap wrap, bool pixelated, bool srgb, f32 aniso, allocator* a) { 
+texture texture::make_array(iv3 dim, u32 offset, texture_wrap wrap, texture_sampler sampler, bool srgb, f32 aniso, allocator* a) { 
 
 	texture ret;
 
@@ -652,7 +661,7 @@ texture texture::make_array(iv3 dim, u32 offset, texture_wrap wrap, bool pixelat
 	ret.gl_type = gl_tex_target::_2D_array;
 	ret.wrap = wrap;
 	ret.srgb = srgb;
-	ret.pixelated = pixelated;
+	ret.sampler = sampler;
 	ret.array_info.dim = dim;
 	ret.array_info.layer_offset = offset;
 	ret.array_info.current_layer = offset;
@@ -666,12 +675,12 @@ texture texture::make_array(iv3 dim, u32 offset, texture_wrap wrap, bool pixelat
 	return ret;
 }
 
-texture texture::make_target(iv2 dim, i32 samples, gl_tex_format format, gl_pixel_data_format pixel, bool pixelated) {
+texture texture::make_target(iv2 dim, i32 samples, gl_tex_format format, gl_pixel_data_format pixel, texture_sampler sampler) {
 
 	texture ret;
 	ret.type = texture_type::target;
 	ret.gl_type = samples == 1 ? gl_tex_target::_2D : gl_tex_target::_2D_multisample;
-	ret.pixelated = pixelated;
+	ret.sampler = sampler;
 
 	ret.target_info.dim = dim;
 	ret.target_info.samples = samples;
@@ -706,6 +715,7 @@ void texture::set_params() {
 		glTexParameteri(gl_type, gl_tex_param::wrap_r, (GLint)gl_tex_wrap::clamp_to_edge);
 		glTexParameteri(gl_type, gl_tex_param::wrap_s, (GLint)gl_tex_wrap::clamp_to_edge);
 		glTexParameteri(gl_type, gl_tex_param::wrap_t, (GLint)gl_tex_wrap::clamp_to_edge);
+		glTexParameterf(gl_type, gl_tex_param::max_anisotropy, anisotropy);
 		glBindTexture(gl_type, 0);
 		return;
 	}
@@ -714,13 +724,31 @@ void texture::set_params() {
 		glTexStorage3D(gl_type, 1, srgb ? gl_tex_format::srgb8_alpha8 : gl_tex_format::rgba8, array_info.dim.x, array_info.dim.y, array_info.dim.z);
 	}
 
-	if (pixelated) {
+	switch(sampler) {
+	case texture_sampler::linear_mipmap_nearest: {
+		glTexParameteri(gl_type, gl_tex_param::min_filter, (GLint)gl_tex_filter::linear_mipmap_nearest);
+		glTexParameteri(gl_type, gl_tex_param::mag_filter, (GLint)gl_tex_filter::nearest);
+	} break;
+	case texture_sampler::nearest_mipmap_linear: {
+		glTexParameteri(gl_type, gl_tex_param::min_filter, (GLint)gl_tex_filter::nearest_mipmap_linear);
+		glTexParameteri(gl_type, gl_tex_param::mag_filter, (GLint)gl_tex_filter::nearest);
+	} break;
+	case texture_sampler::nearest_mipmap_nearest: {
+		glTexParameteri(gl_type, gl_tex_param::min_filter, (GLint)gl_tex_filter::nearest_mipmap_nearest);
+		glTexParameteri(gl_type, gl_tex_param::mag_filter, (GLint)gl_tex_filter::nearest);
+	} break;
+	case texture_sampler::nearest: {
 		glTexParameteri(gl_type, gl_tex_param::min_filter, (GLint)gl_tex_filter::nearest);
 		glTexParameteri(gl_type, gl_tex_param::mag_filter, (GLint)gl_tex_filter::nearest);
-	}
-	else {
+	} break;
+	case texture_sampler::linear_mipmap_linear_nearest: {
+		glTexParameteri(gl_type, gl_tex_param::min_filter, (GLint)gl_tex_filter::linear_mipmap_linear);
+		glTexParameteri(gl_type, gl_tex_param::mag_filter, (GLint)gl_tex_filter::nearest);
+	} break;
+	case texture_sampler::linear_mipmap_linear: {
 		glTexParameteri(gl_type, gl_tex_param::min_filter, (GLint)gl_tex_filter::linear_mipmap_linear);
 		glTexParameteri(gl_type, gl_tex_param::mag_filter, (GLint)gl_tex_filter::linear);
+	} break;
 	}
 
 	switch(wrap) {
@@ -744,7 +772,7 @@ void texture::set_params() {
 		break;
 	}
 
-	if(anisotropy) {
+	if(anisotropy && type != texture_type::target) {
 		glTexParameterf(gl_type, gl_tex_param::max_anisotropy, anisotropy);
 	}
 
@@ -822,6 +850,12 @@ void texture_bmp_info::load(GLuint handle, asset_store* as, string name, bool sr
 	glGenerateMipmap(gl_tex_target::_2D);
 
 	glBindTexture(gl_tex_target::_2D, 0);
+}
+
+void texture_array_info::finalize(GLuint handle) {
+	glBindTexture(gl_tex_target::_2D_array, handle);
+	glGenerateMipmap(gl_tex_target::_2D_array);
+	glBindTexture(gl_tex_target::_2D_array, 0);
 }
 
 void texture_array_info::push(GLuint handle, asset_store* as, string name) {
@@ -1308,8 +1342,13 @@ void ogl_manager::apply_settings() {
 		if(settings.anisotropy > info.max_anisotropy) settings.anisotropy = info.max_anisotropy;
 
 		FORMAP(it, textures) {
-			it->value.anisotropy = settings.anisotropy;
-			it->value.set_params();
+			if(it->value.type != texture_type::target) {
+				it->value.anisotropy = settings.anisotropy;
+
+				glBindTexture(it->value.gl_type, it->value.handle);
+				glTexParameterf(it->value.gl_type, gl_tex_param::max_anisotropy, it->value.anisotropy);
+				glBindTexture(it->value.gl_type, 0);
+			}
 		}
 
 		LOG_DEBUG_F("Applied % anisotropy"_, settings.anisotropy);
