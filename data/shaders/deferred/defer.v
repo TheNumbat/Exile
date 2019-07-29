@@ -11,14 +11,15 @@ noperspective out vec2 f_uv;
 
 flat out vec3 f_lpos, f_lcol;
 flat out int instance_id;
+flat out float f_r;
 
 uniform mat4 vp, ivp;
 
 void main() {
 
-	float r = max(v_lcol.x,max(v_lcol.y,v_lcol.z));	
+	float r = 6.0f * max(v_lcol.x,max(v_lcol.y,v_lcol.z));	
 
-	vec3 vert = 2.0f * r * v_vert + v_lpos;
+	vec3 vert = r * v_vert + v_lpos;
 
 	vec4 clip = vp * vec4(vert, 1.0f);
 	vec2 ndc = clip.xy / clip.w;
@@ -30,5 +31,6 @@ void main() {
 	f_uv = ndc / 2.0f + 0.5f;
 	f_lpos = v_lpos;
 	f_lcol = v_lcol;
+	f_r = r;
 	instance_id = gl_InstanceID;
 }

@@ -4,6 +4,7 @@
 noperspective in vec3 f_view;
 flat in vec3 f_lpos, f_lcol;
 flat in int instance_id;
+flat in float f_r;
 
 out vec4 light;
 
@@ -69,17 +70,19 @@ vec3 calculate_light_dynamic(vec3 pos, vec3 norm, float shine) {
 void main() {
 
 	ivec2 coord = ivec2(gl_FragCoord.xy);
-
 	int i = gl_SampleID;
-			gl_SampleMask[0] = 1 << i;
+
+	float depth = texelFetch(depth_tex, coord, i).x;
+
+	vec3 pos = calc_pos(f_view, depth);
+	if(length(pos - f_lpos) > f_r) discard;
+
+	gl_SampleMask[0] = 1 << i;
 	
 	vec3 norm_packed = texelFetch(norm_tex, coord, i).xyz;
-	float depth = texelFetch(depth_tex, coord, i).x;
-	
 	float shine = 1.0f / abs(norm_packed.z);
 	vec3 norm = unpack_norm(norm_packed);
 
-	vec3 pos = calc_pos(f_view, depth);
 	vec3 result = calculate_light_dynamic(pos, norm, shine);
 
 	if(debug_show == 10) {

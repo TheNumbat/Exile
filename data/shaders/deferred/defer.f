@@ -5,6 +5,7 @@ noperspective in vec2 f_uv;
 noperspective in vec3 f_view;
 flat in vec3 f_lpos, f_lcol;
 flat in int instance_id;
+flat in float f_r;
 
 out vec4 light;
 
@@ -67,13 +68,16 @@ vec3 calculate_light_dynamic(vec3 pos, vec3 norm, float shine) {
 
 void main() {
 
-	vec3 norm_packed = texture(norm_tex, f_uv).xyz;
 	float depth = texture(depth_tex, f_uv).x;
+
+	vec3 pos = calc_pos(f_view, depth);
+	if(length(pos - f_lpos) > f_r) discard;
+
+	vec3 norm_packed = texture(norm_tex, f_uv).xyz;
 	
 	float shine = 1.0f / abs(norm_packed.z);
 	vec3 norm = unpack_norm(norm_packed);
 
-	vec3 pos = calc_pos(f_view, depth);
 	vec3 result = calculate_light_dynamic(pos, norm, shine);
 
 	if(debug_show == 10) {

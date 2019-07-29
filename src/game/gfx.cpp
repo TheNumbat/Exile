@@ -122,7 +122,7 @@ void exile_renderer::world_chunk(chunk* c, texture_id blocks, texture_id sky, m4
 	cmd.callback_data = c;
 
 	FORVEC(it, c->lights) {
-		lights.push(it->pos + c->pos.offset() - c->w->p.camera.pos, it->col / 16.0f);
+		lights.push(it->pos + c->pos.offset() - c->w->p.camera.pos, it->col / 32.0f);
 	}
 
 	world_tasks.add_command(cmd);
@@ -301,7 +301,6 @@ void exile_renderer::resolve_lighting() { PROF_FUNC
 		// Cull front faces because we only want one side of the volume, and we want the faces to be seen
 		// when we are inside the volume
 		world_tasks.set_setting(render_setting::cull, (u32)gl_face::front); 
-		world_tasks.set_setting(render_setting::write_depth, false);
 		world_tasks.set_setting(render_setting::aa_shading, true);
 		world_tasks.set_setting(render_setting::blend, (u32)blend_mode::add);
 		world_tasks.add_command(cmd);
