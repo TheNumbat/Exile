@@ -3,11 +3,9 @@
 
 noperspective in vec2 f_uv;
 noperspective in vec3 f_view;
+flat in vec3 f_lpos, f_lcol;
 
 out vec4 light;
-
-uniform vec3 lcol;
-uniform vec3 lpos;
 
 uniform sampler2D norm_tex;
 uniform sampler2D depth_tex;
@@ -42,7 +40,7 @@ vec3 calculate_light_dynamic(vec3 pos, vec3 norm, float shine) {
 	if(dynamic_light) {
 		vec3 v = normalize(-pos);
 		
-		vec3 l = lpos-pos;
+		vec3 l = f_lpos-pos;
 		float dist = length(l);
 
 		l = normalize(l);
@@ -52,12 +50,12 @@ vec3 calculate_light_dynamic(vec3 pos, vec3 norm, float shine) {
 		float a = min(1.0f / pow(dist,3), 1.0f);
 
 		float diff = max(dot(norm,l), 0.0f);
-		light_gather += diff * lcol * a;
+		light_gather += diff * f_lcol * a;
 			
 		float energy = (8.0f + shine) / (8.0f * PI); 
    		float spec = energy * pow(max(dot(norm, h), 0.0), shine);
 
-		light_gather += spec * lcol * a;
+		light_gather += spec * f_lcol * a;
 	} else {
 
 		discard;

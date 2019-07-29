@@ -315,7 +315,7 @@ struct render_settings {
 
 struct world_buffers {
 	texture_id col_buf, norm_buf, light_buf, depth_buf;
-	render_target col_buf_target, depth_buf_target, stencil_buf_target;
+	render_target col_buf_target, depth_buf_target;
 	render_target norm_buf_target, light_buf_target;
 	
 	framebuffer_id chunk_target = 0;

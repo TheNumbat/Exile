@@ -258,9 +258,8 @@ void world_target_info::init(iv2 dim, i32 samples) {
 	w.light_buf = exile->eng->ogl.add_texture_target(dim, samples, gl_tex_format::rgb16f, gl_pixel_data_format::rgb);
 	w.light_buf_target = exile->eng->ogl.make_target(gl_draw_target::color_2, w.light_buf);
 
-	w.depth_buf = exile->eng->ogl.add_texture_target(dim, samples, gl_tex_format::depth32f_stencil8, gl_pixel_data_format::depth_stencil);
+	w.depth_buf = exile->eng->ogl.add_texture_target(dim, samples, gl_tex_format::depth32f, gl_pixel_data_format::depth_component);
 	w.depth_buf_target = exile->eng->ogl.make_target(gl_draw_target::depth, w.depth_buf);
-	w.stencil_buf_target = exile->eng->ogl.make_target(gl_draw_target::stencil, w.depth_buf);
 
 	w.chunk_target = exile->eng->ogl.add_framebuffer();
 	exile->eng->ogl.add_target(w.chunk_target, w.col_buf_target);
@@ -271,8 +270,6 @@ void world_target_info::init(iv2 dim, i32 samples) {
 
 	w.light_target = exile->eng->ogl.add_framebuffer();
 	exile->eng->ogl.add_target(w.light_target, w.light_buf_target);
-	exile->eng->ogl.add_target(w.light_target, w.depth_buf_target);
-	exile->eng->ogl.add_target(w.light_target, w.stencil_buf_target);
 	exile->eng->ogl.commit_framebuffer(w.light_target);
 
 	e.effect0 = exile->eng->ogl.add_texture_target(dim, 1, gl_tex_format::rgb16f, gl_pixel_data_format::rgb);
@@ -291,49 +288,24 @@ void world_target_info::init(iv2 dim, i32 samples) {
 
 void exile_renderer::resolve_lighting() { PROF_FUNC
 	
-	FORVEC(it, lights.lights) { 
-		{
-		    render_command cmd = render_command::make((draw_cmd_id)draw_cmd::clear);
-			
-			cmd.clear.components = (GLbitfield)gl_clear::stencil_buffer_bit;
+	{
+		render_command cmd = render_command::make_cst(world_target.msaa ? cmd_defer_light_ms : cmd_defer_light, lights.gpu);
 
-			cmd.clear.fb_id = world_target.w.light_target;
-			world_tasks.push_settings();
-			world_tasks.set_setting(render_setting::stencil_mode, (u32)stencil_mode::incr_decr);
-			world_tasks.add_command(cmd);
-		}
-		{
-			render_command cmd = render_command::make_cst(cmd_defer_stencil, lights.gpu);
+		cmd.info.fb_id = world_target.w.light_target;
+		cmd.info.textures[0] = world_target.w.norm_buf;
+		cmd.info.textures[1] = world_target.w.depth_buf;
+		cmd.info.user_data0 = this;
+		cmd.info.num_tris = lights.lights.size;
 
-			cmd.info.fb_id = world_target.w.light_target;
-			cmd.info.user_data0 = this;
-			cmd.info.user_data1 = (void*)(uptr)__it;
-
-			world_tasks.set_setting(render_setting::cull, (u32)gl_face::none);
-			world_tasks.set_setting(render_setting::write_depth, false);
-			world_tasks.set_setting(render_setting::stencil_test, (u32)stencil_test::always);
-			world_tasks.add_command(cmd);
-			world_tasks.pop_settings();
-		}
-		{
-			render_command cmd = render_command::make_cst(world_target.msaa ? cmd_defer_light_ms : cmd_defer_light, lights.gpu);
-
-			cmd.info.fb_id = world_target.w.light_target;
-			cmd.info.textures[0] = world_target.w.norm_buf;
-			cmd.info.textures[1] = world_target.w.depth_buf;
-			cmd.info.user_data0 = this;
-			cmd.info.user_data1 = (void*)(uptr)__it;
-
-			world_tasks.push_settings();
-			world_tasks.set_setting(render_setting::stencil_test, (u32)stencil_test::not_zero);
-			world_tasks.set_setting(render_setting::cull, (u32)gl_face::front);
-			world_tasks.set_setting(render_setting::write_depth, false);
-			world_tasks.set_setting(render_setting::depth_test, false);
-			world_tasks.set_setting(render_setting::aa_shading, true);
-			world_tasks.set_setting(render_setting::blend, (u32)blend_mode::add);
-			world_tasks.add_command(cmd);
-			world_tasks.pop_settings();
-		}
+		world_tasks.push_settings();
+		// Cull front faces because we only want one side of the volume, and we want the faces to be seen
+		// when we are inside the volume
+		world_tasks.set_setting(render_setting::cull, (u32)gl_face::front); 
+		world_tasks.set_setting(render_setting::write_depth, false);
+		world_tasks.set_setting(render_setting::aa_shading, true);
+		world_tasks.set_setting(render_setting::blend, (u32)blend_mode::add);
+		world_tasks.add_command(cmd);
+		world_tasks.pop_settings();
 	}
 
 	{ // Composite and resolve albedo + accumulated light to effect buffer
@@ -389,7 +361,7 @@ void world_target_info::destroy() {
 	exile->eng->ogl.destroy_framebuffer(w.chunk_target);
 	exile->eng->ogl.destroy_framebuffer(w.light_target);
 
-	w.depth_buf_target = w.col_buf_target = w.stencil_buf_target =
+	w.depth_buf_target = w.col_buf_target =
 		w.norm_buf_target = w.light_buf_target = {};
 	w.depth_buf = w.col_buf = w.norm_buf = 
 		w.light_buf = w.chunk_target = w.light_target = 0;
@@ -433,7 +405,7 @@ void exile_renderer::generate_commands() {
 #undef reg
 
 	cmd_defer_stencil = exile->eng->ogl.add_command(FPTR(run_defer), FPTR(uniforms_defer_stencil), 
-													"shaders/deferred/defer_stencil.v"_, "shaders/deferred/defer_stencil.f"_);
+													"shaders/deferred/defer_stencil.v"_, "shaders/deferred/noop.f"_);
 	
 	cmd_defer_light = exile->eng->ogl.add_command(FPTR(run_defer), FPTR(uniforms_defer), "shaders/deferred/defer.v"_, "shaders/deferred/defer.f"_);
 	cmd_defer_light_ms = exile->eng->ogl.add_command(FPTR(run_defer), FPTR(uniforms_defer), "shaders/deferred/defer.v"_, "shaders/deferred/defer_ms.f"_);
@@ -555,18 +527,12 @@ CALLBACK void uniforms_resolve(shader_program* prog, render_command* cmd) {
 
 CALLBACK void run_defer(render_command* cmd, gpu_object* gpu) {
 
-	glDrawElements(gl_draw_mode::triangles, mesh_light_list::nelems, gl_index_type::unsigned_int, null);
+	glDrawElementsInstanced(gl_draw_mode::triangles, mesh_light_list::nelems, gl_index_type::unsigned_int, null, cmd->info.num_tris);
 }
 
 CALLBACK void uniforms_defer_stencil(shader_program* prog, render_command* cmd) {
 
 	exile_renderer* ren = (exile_renderer*)cmd->info.user_data0;
-	u32 idx = (u32)(uptr)cmd->info.user_data1;
-
-	light_data data = ren->lights.lights[idx];
-
-	glUniform3fv(prog->location("lpos"_), 1, data.pos.a);
-	glUniform3fv(prog->location("lcol"_), 1, data.col.a);
 	glUniformMatrix4fv(prog->location("vp"_), 1, gl_bool::_false, ren->proj_info.vp.a);
 }
 
@@ -574,12 +540,6 @@ CALLBACK void uniforms_defer(shader_program* prog, render_command* cmd) {
 
 	exile_renderer* ren = (exile_renderer*)cmd->info.user_data0;
 	render_settings* set = &ren->settings;
-	u32 idx = (u32)(uptr)cmd->info.user_data1;
-
-	light_data data = ren->lights.lights[idx];
-
-	glUniform3fv(prog->location("lpos"_), 1, data.pos.a);
-	glUniform3fv(prog->location("lcol"_), 1, data.col.a);
 
 	glUniform1i(prog->location("norm_tex"_), 0);
 	glUniform1i(prog->location("depth_tex"_), 1);
@@ -644,12 +604,24 @@ CALLBACK void setup_mesh_light_list(gpu_object* obj) {
 	glEnableVertexAttribArray(0);
 
 	glBindBuffer(gl_buf_target::element_array, obj->vbos[1]);
+
+	glBindBuffer(gl_buf_target::array, obj->vbos[2]);
+
+	glVertexAttribPointer(1, 3, gl_vert_attrib_type::_float, gl_bool::_false, sizeof(light_data), (GLvoid*)0);
+	glVertexAttribDivisor(1, 1);
+	glEnableVertexAttribArray(1);
+
+	glVertexAttribPointer(2, 3, gl_vert_attrib_type::_float, gl_bool::_false, sizeof(light_data), (GLvoid*)(sizeof(v3)));
+	glVertexAttribDivisor(2, 1);
+	glEnableVertexAttribArray(2);
 }
 
 CALLBACK void update_mesh_light_list(gpu_object* obj, void* data, bool force) {
 
 	mesh_light_list* m = (mesh_light_list*)data;
 	if(!force && !m->dirty) return;
+
+	glNamedBufferData(obj->vbos[2], m->lights.size * sizeof(light_data), m->lights.size ? m->lights.memory : null, gl_buf_usage::dynamic_draw);
 
 	if(force) {
 		glNamedBufferData(obj->vbos[0], sizeof(m->verts), m->verts, gl_buf_usage::static_draw);
