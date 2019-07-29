@@ -3,6 +3,7 @@
 
 noperspective in vec3 f_view;
 flat in vec3 f_lpos, f_lcol;
+flat in int instance_id;
 
 out vec4 light;
 
@@ -10,7 +11,7 @@ uniform sampler2DMS norm_tex;
 uniform sampler2DMS depth_tex;
 
 uniform float near;
-uniform int debug_show;
+uniform int debug_show, num_instances;
 uniform bool dynamic_light;
 
 uniform mat4 ivp;
@@ -82,7 +83,7 @@ void main() {
 	vec3 result = calculate_light_dynamic(pos, norm, shine);
 
 	if(debug_show == 10) {
-		light = vec4(1.0f);
+		light = vec4(scalar_to_color(float(instance_id) / float(num_instances)), 1.0f);
 	} else if(debug_show != 5 && debug_show != 6 && debug_show != 7) {
 		light = vec4(result, 1.0f);
 	} 

@@ -10,6 +10,7 @@ noperspective out vec3 f_view;
 noperspective out vec2 f_uv;
 
 flat out vec3 f_lpos, f_lcol;
+flat out int instance_id;
 
 uniform mat4 vp, ivp;
 
@@ -29,4 +30,5 @@ void main() {
 	f_uv = ndc / 2.0f + 0.5f;
 	f_lpos = v_lpos;
 	f_lcol = v_lcol;
+	instance_id = gl_InstanceID;
 }
