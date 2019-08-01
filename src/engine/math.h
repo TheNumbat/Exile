@@ -76,6 +76,7 @@ f32 clamp(f32 val, f32 min, f32 max);
 u32 last_pow_two(u32 val);
 u32 next_pow_two(u32 val);
 
+f32 smoothstep(f32 e0, f32 e1, f32 x);
 f32 perlin(f32 x, f32 y, f32 z, i32 x_wrap, i32 y_wrap, i32 z_wrap);
 f32 perlin_grad(i32 hash, f32 x, f32 y, f32 z);
 

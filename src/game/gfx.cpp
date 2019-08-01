@@ -8,7 +8,8 @@
 
 void exile_renderer::init(allocator* a) {
 	
-	exile->eng->dbg.store.add_var("render"_, &settings);
+	exile->eng->dbg.store.add_var("render/settings"_, &settings);
+	exile->eng->dbg.store.add_var("render/sun"_, &lights.dir);
 	
 	generate_commands();
 	generate_targets();
@@ -51,10 +52,15 @@ void exile_renderer::world_stars(gpu_object_id gpu_id, world_time* time, m4 view
 void exile_renderer::world_begin_chunks(world* w, bool offset) {
 
 	// TODO(max): move this somewhere else?
-	f32 ar = (f32)exile->eng->window.settings.w / (f32)exile->eng->window.settings.h;
-	proj_info.vp = w->p.camera.proj(ar) * w->p.camera.view_pos_origin();
-	proj_info.ivp = inverse(proj_info.vp);
-	proj_info.near = w->p.camera.near;
+	{
+		f32 ar = (f32)exile->eng->window.settings.w / (f32)exile->eng->window.settings.h;
+		proj_info.vp = w->p.camera.proj(ar) * w->p.camera.view_pos_origin();
+		proj_info.ivp = inverse(proj_info.vp);
+		proj_info.near = w->p.camera.near;
+
+		lights.dir.dir = -v3(0.0f, sin(w->time.day_pi()), cos(w->time.day_pi()));
+		lights.dir.diffuse = v3(w->time.day_factor() / 5.0f);
+	}
 
 	world_tasks.push_settings();
 	if(settings.wireframe)
@@ -118,10 +124,11 @@ void exile_renderer::hud_2D(gpu_object_id gpu_id) {
 	render_command cmd = render_command::make_cst(cmd_2D_col, gpu_id);
 	
 	f32 w = (f32)exile->eng->window.settings.w, h = (f32)exile->eng->window.settings.h;
-	cmd.info.proj = ortho(0, w, h, 0, -1, 1);
+	cmd.info.proj = ortho(0, w, h, 0, 1, -1);
 
 	hud_tasks.push_settings();
 	hud_tasks.set_setting(render_setting::depth_test, false);
+	hud_tasks.set_setting(render_setting::write_depth, false);
 	hud_tasks.add_command(cmd);
 	hud_tasks.pop_settings();
 }
@@ -259,21 +266,36 @@ void world_target_info::init(iv2 dim, i32 samples) {
 void exile_renderer::resolve_lighting() { PROF_FUNC
 	
 	if(settings.dynamic_light) {
-		render_command cmd = render_command::make_cst(world_target.msaa ? cmd_point_light_ms : cmd_point_light, lights.gpu);
-
-		cmd.info.fb_id = world_target.w.light_target;
-		cmd.info.textures[0] = world_target.w.norm_buf;
-		cmd.info.textures[1] = world_target.w.depth_buf;
-		cmd.info.user_data0 = this;
-		cmd.info.num_tris = lights.lights.size;
-
+		
 		world_tasks.push_settings();
-		// Cull front faces because we only want one side of the volume, and we want the faces to be seen
-		// when we are inside the volume
-		world_tasks.set_setting(render_setting::cull, (u32)gl_face::front); 
 		world_tasks.set_setting(render_setting::aa_shading, true);
 		world_tasks.set_setting(render_setting::blend, (u32)blend_mode::add);
-		world_tasks.add_command(cmd);
+
+		// Cull front faces because we only want one side of the volume, and we want the faces to be seen
+		// when we are inside the volume
+		world_tasks.set_setting(render_setting::cull, (u32)gl_face::front);
+		{
+			render_command cmd = render_command::make_cst(world_target.msaa ? cmd_point_light_ms : cmd_point_light, lights.gpu);
+
+			cmd.info.fb_id = world_target.w.light_target;
+			cmd.info.textures[0] = world_target.w.norm_buf;
+			cmd.info.textures[1] = world_target.w.depth_buf;
+			cmd.info.user_data0 = this;
+			cmd.info.num_tris = lights.lights.size;
+
+			world_tasks.add_command(cmd);
+		}
+		world_tasks.set_setting(render_setting::cull, (u32)gl_face::back);
+		{
+			render_command cmd = render_command::make_cst(world_target.msaa ? cmd_dir_light_ms : cmd_dir_light, the_quad.gpu);
+
+			cmd.info.fb_id = world_target.w.light_target;
+			cmd.info.textures[0] = world_target.w.norm_buf;
+			cmd.info.textures[1] = world_target.w.depth_buf;
+			cmd.info.user_data0 = this;
+
+			world_tasks.add_command(cmd);
+		}
 		world_tasks.pop_settings();
 	}
 
@@ -373,11 +395,11 @@ void exile_renderer::generate_commands() {
 
 #undef reg
 
-	cmd_defer_stencil = exile->eng->ogl.add_command(FPTR(run_defer), FPTR(uniforms_defer_stencil), 
-													"shaders/deferred/stencil.v"_, "shaders/deferred/noop.f"_);
+	cmd_point_light = exile->eng->ogl.add_command(FPTR(run_point), FPTR(uniforms_point), "shaders/deferred/point.v"_, "shaders/deferred/point.f"_);
+	cmd_point_light_ms = exile->eng->ogl.add_command(FPTR(run_point), FPTR(uniforms_point), "shaders/deferred/point.v"_, "shaders/deferred/point_ms.f"_);
 	
-	cmd_point_light = exile->eng->ogl.add_command(FPTR(run_defer), FPTR(uniforms_defer), "shaders/deferred/light.v"_, "shaders/deferred/light.f"_);
-	cmd_point_light_ms = exile->eng->ogl.add_command(FPTR(run_defer), FPTR(uniforms_defer), "shaders/deferred/light.v"_, "shaders/deferred/light_ms.f"_);
+	cmd_dir_light = exile->eng->ogl.add_command(FPTR(run_effect), FPTR(uniforms_dir), "shaders/deferred/compose.v"_, "shaders/deferred/dir.f"_);
+	cmd_dir_light_ms = exile->eng->ogl.add_command(FPTR(run_effect), FPTR(uniforms_dir), "shaders/deferred/compose.v"_, "shaders/deferred/dir_ms.f"_);
 
 	comp_light.init(FPTR(uniforms_comp_light), "deferred/compose.v"_, "deferred/compose.f"_);
 	comp_resolve_light.init(FPTR(uniforms_comp_resolve_light), "deferred/compose.v"_, "deferred/compose_ms.f"_);
@@ -405,8 +427,9 @@ void exile_renderer::destroy() {
 	rem(cmd_skydome);
 	rem(cmd_skyfar);
 	rem(cmd_point_light);
-	rem(cmd_defer_stencil);
 	rem(cmd_point_light_ms);
+	rem(cmd_dir_light);
+	rem(cmd_dir_light_ms);
 
 #undef rem
 
@@ -494,18 +517,27 @@ CALLBACK void uniforms_resolve(shader_program* prog, render_command* cmd) {
 	glUniform1i(prog->location("num_samples"_), set->prev_samples);
 }
 
-CALLBACK void run_defer(render_command* cmd, gpu_object* gpu) {
+CALLBACK void run_point(render_command* cmd, gpu_object* gpu) {
 
 	glDrawElementsInstanced(gl_draw_mode::triangles, mesh_light_list::nelems, gl_index_type::unsigned_int, null, cmd->info.num_tris);
 }
 
-CALLBACK void uniforms_defer_stencil(shader_program* prog, render_command* cmd) {
+CALLBACK void uniforms_dir(shader_program* prog, render_command* cmd) {
 
 	exile_renderer* ren = (exile_renderer*)cmd->info.user_data0;
-	glUniformMatrix4fv(prog->location("vp"_), 1, gl_bool::_false, ren->proj_info.vp.a);
+
+	glUniform1i(prog->location("norm_tex"_), 0);
+	glUniform1i(prog->location("depth_tex"_), 1);
+
+	glUniform1f(prog->location("near"_), ren->proj_info.near);
+	glUniformMatrix4fv(prog->location("ivp"_), 1, gl_bool::_false, ren->proj_info.ivp.a);
+
+	glUniform3fv(prog->location("ldir"_), 1, ren->lights.dir.dir.a);
+	glUniform3fv(prog->location("ldiff"_), 1, ren->lights.dir.diffuse.a);
+	glUniform3fv(prog->location("lspec"_), 1, ren->lights.dir.specular.a);
 }
 
-CALLBACK void uniforms_defer(shader_program* prog, render_command* cmd) {
+CALLBACK void uniforms_point(shader_program* prog, render_command* cmd) {
 
 	exile_renderer* ren = (exile_renderer*)cmd->info.user_data0;
 	render_settings* set = &ren->settings;
@@ -519,7 +551,6 @@ CALLBACK void uniforms_defer(shader_program* prog, render_command* cmd) {
 	glUniform1f(prog->location("near"_), ren->proj_info.near);
 	glUniform1i(prog->location("debug_show"_), (i32)set->view);
 	glUniform1i(prog->location("num_instances"_), cmd->info.num_tris);
-	glUniform1i(prog->location("dynamic_light"_), set->dynamic_light);
 }
 
 CALLBACK void uniforms_invert(shader_program* prog, render_command* cmd) {
@@ -682,7 +713,7 @@ CALLBACK void uniforms_mesh_chunk(shader_program* prog, render_command* cmd) {
 	glUniform1i(prog->location("smooth_light"_), set->smooth_light);
 	glUniform1f(prog->location("units_per_voxel"_), (f32)chunk::units_per_voxel);
 
-	glUniform1f(prog->location("day_01"_), w->time.day_01());
+	glUniform1f(prog->location("day_factor"_), w->time.day_factor());
 	glUniform1i(prog->location("debug_show"_), (i32)set->view);
 	glUniform1f(prog->location("ambient"_), set->ambient_factor);
 	glUniform1i(prog->location("block_light"_), set->block_light);
@@ -1232,7 +1263,7 @@ void mesh_2d_col::push_rect(r2 r, color c) {
 
 	DO(4) colors.push(c.to_f());
 
-	elements.push(uv3(idx, idx + 1, idx + 2));
+	elements.push(uv3(idx + 2, idx + 1, idx));
 	elements.push(uv3(idx + 1, idx + 2, idx + 3));
 
 	dirty = true;

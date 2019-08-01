@@ -90,8 +90,15 @@ struct point_light {
 	v3 specular;
 };
 
+struct dir_light {
+	v3 dir;
+	v3 diffuse;
+	v3 specular;
+};
+
 struct mesh_light_list {
 	vector<point_light> lights;
+	dir_light dir;
 	
 	const f32 t = (1.0f + sqrtf(5.0f)) / 2.0f;
 	static const i32 nelems = 60;
@@ -384,7 +391,8 @@ struct exile_renderer {
 	draw_cmd_id cmd_pointcloud       = 0, cmd_cubemap       = 0,
                 cmd_chunk            = 0, cmd_skydome       = 0,
                 cmd_skyfar           = 0, cmd_point_light   = 0,
-                cmd_point_light_ms	 = 0, cmd_defer_stencil = 0;
+                cmd_dir_light_ms 	 = 0, cmd_dir_light 	= 0,
+                cmd_point_light_ms	 = 0;
 
 	render_settings settings;
 
@@ -457,6 +465,7 @@ CALLBACK void uniforms_comp_light(shader_program* prog, render_command* cmd);
 CALLBACK void uniforms_composite_resolve(shader_program* prog, render_command* cmd);
 CALLBACK void uniforms_comp_resolve_light(shader_program* prog, render_command* cmd);
 
-CALLBACK void run_defer(render_command* cmd, gpu_object* gpu);
-CALLBACK void uniforms_defer(shader_program* prog, render_command* cmd);
-CALLBACK void uniforms_defer_stencil(shader_program* prog, render_command* cmd);
+CALLBACK void run_dir(render_command* cmd, gpu_object* gpu);
+CALLBACK void run_point(render_command* cmd, gpu_object* gpu);
+CALLBACK void uniforms_dir(shader_program* prog, render_command* cmd);
+CALLBACK void uniforms_point(shader_program* prog, render_command* cmd);

@@ -142,8 +142,16 @@ v3 world::raymarch(v3 pos3, v3 dir3, f32 max) {
 }
 
 f32 world_time::day_01() {  
-
 	return (hour + (minute / 60.0f)) / 24.0f;
+}
+
+f32 world_time::day_pi() {
+	return PI32 * day_01();
+}
+
+f32 world_time::day_factor() {
+	f32 t = day_01();
+	return 1.0f - (smoothstep(0.32f, 0.17f, t) + smoothstep(0.75f, 0.9f, t));
 }
 
 void world_time::update(u64 now) { PROF_FUNC

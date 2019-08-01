@@ -13,10 +13,8 @@ Working To-Do:
 		[features]
 		dynamic lights
 			flashlight (spotlights)
-			sunlight   (directional)
-			change light falloff - see UE4 doc
-
 			gonna need some chunk culling
+
 			specular textures (e.g. ore)
 			normal map/heightmap textures
 			reflective textures / screen space reflections

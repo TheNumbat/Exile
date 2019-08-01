@@ -100,6 +100,11 @@ u32 next_pow_two(u32 val) {
 	return last_pow_two(val) << 1;
 }
 
+f32 smoothstep(f32 e0, f32 e1, f32 x) {
+	f32 t = clamp((x - e0) / (e1 - e0), 0.0f, 1.0f);
+    return t * t * (3.0f - 2.0f * t);
+}
+
 f32 perlin(f32 x, f32 y, f32 z, i32 x_wrap, i32 y_wrap, i32 z_wrap) {
 	static u8 perlin_random[512] = {
 	   23, 125, 161, 52, 103, 117, 70, 37, 247, 101, 203, 169, 124, 126, 44, 123, 

@@ -239,6 +239,8 @@ struct world_time {
 
 	void update(u64 now);
 	f32 day_01();
+	f32 day_pi();
+	f32 day_factor();
 };
 
 struct world_environment {

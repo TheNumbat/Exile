@@ -11,7 +11,7 @@ uniform mat4 ivp;
 
 void main() {
 
-	gl_Position = vec4(v_pos, 0.0f, 1.0f);
+	gl_Position = vec4(v_pos, 1.0f, 1.0f);
 	
 	f_uv = v_uv;
 	f_view = (ivp * vec4(v_pos, 1.0f, 1.0f)).xyz;

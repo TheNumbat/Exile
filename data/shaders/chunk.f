@@ -13,7 +13,7 @@ layout (location = 2) out vec4 out_light;
 
 uniform sampler2DArray blocks_tex;
 
-uniform float day_01;
+uniform float day_factor;
 uniform float ambient;
 uniform bool smooth_light;
 uniform bool block_light;
@@ -32,8 +32,7 @@ vec3 calculate_light_base(vec3 light) {
 	vec3 result = vec3(0.0f);
 
 	if(block_light) {
-		float day_factor = 1.0f - (smoothstep(0.32f, 0.17f, day_01) + smoothstep(0.75f, 0.9f, day_01));
-		float l = max(light.x, light.y * day_factor);
+		float l = max(light.x, light.y * day_factor); // TODO(max): this should be added!! needs HDR
 		result += vec3(pow(l,3));
 	}
 
