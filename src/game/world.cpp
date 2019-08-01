@@ -695,7 +695,9 @@ void chunk::place_light(iv3 p, u8 i) {
 
 	dynamic_torch t;
 	t.pos = p.to_f() + v3(0.5f, 0.5f, 0.5f);
-	t.col = v3((f32)i);
+
+	v3 col = v3((f32)i);
+	t.diffuse = t.specular = col;
 
 	lights.push(t);
 }
@@ -754,6 +756,7 @@ void chunk::do_gen() { PROF_FUNC
 			}
 
 			if(x % 4 == 0 && z % 4 == 0) {
+			// if(x == 0 && z == 0 && pos.x == 0 && pos.z == 0) {
 				blocks[x][z][height] = block_id::torch;
 				place_light(iv3(x, height, z), 16);
 			} else {

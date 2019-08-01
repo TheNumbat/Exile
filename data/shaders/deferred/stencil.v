@@ -9,8 +9,8 @@ uniform mat4 vp;
 
 void main() {
 
-	float r = max(lcol.x,max(lcol.y,lcol.z));	
-
-	vec3 vert = 2.0f * r * v_vert + lpos;
+	float r = 6.0f * max(lcol.x,max(lcol.y,lcol.z));	
+	
+	vec3 vert = r * v_vert + lpos;
 	gl_Position = vp * vec4(vert, 1.0f);
 }

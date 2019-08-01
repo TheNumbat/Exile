@@ -11,22 +11,24 @@ Working To-Do:
 
 	Rendering:
 		[features]
-		dynamic lights			
+		dynamic lights
 			flashlight (spotlights)
-			sunlight (directional)
-			gonna need some chunk culling
-
+			sunlight   (directional)
 			change light falloff - see UE4 doc
+
+			gonna need some chunk culling
 			specular textures (e.g. ore)
 			normal map/heightmap textures
 			reflective textures / screen space reflections
 			randomized textures / procedural specular/normal/reflective textures
 
+		[next week]
 		dynamic shadows
 			spotlight shadows
 			point light shadows
 			directional light shadows
 			
+		[final week]
 		better fog (e.g. fog undergound should be dark -- apply lighting to fog)
 			http://www.sea-of-memes.com/LetsCode37/LetsCode37.html
 		bloom

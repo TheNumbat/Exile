@@ -136,7 +136,7 @@ struct light_rem_node {
 
 struct dynamic_torch {
 	v3 pos;
-	v3 col;
+	v3 diffuse, specular;
 };
 
 static iv3 g_directions[] = {{-1, 0, 0}, {0, -1, 0}, {0, 0, -1}, {1, 0, 0}, {0, 1, 0}, {0, 0, 1}};
@@ -215,6 +215,9 @@ struct world_settings {
 	f32 gravity = 0.0f;
 	i32 view_distance = 1;
 	i32 max_light_propogation = 1;
+
+	v3 torch_atten = v3(16.0f, 16.0f, 48.0f);
+
 	bool respect_cam = true;
 	bool draw_chunk_corners = false;
 	texture_sampler block_sampler = texture_sampler::linear_mipmap_linear_nearest;

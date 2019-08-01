@@ -83,13 +83,15 @@ struct mesh_cubemap {
 	void destroy();
 };
 
-struct light_data {
-	v3 pos;
-	v3 col;
+struct point_light {
+	v4 atten;    // c l q r 
+	v3 pos; 
+	v3 diffuse; 
+	v3 specular;
 };
 
 struct mesh_light_list {
-	vector<light_data> lights;
+	vector<point_light> lights;
 	
 	const f32 t = (1.0f + sqrtf(5.0f)) / 2.0f;
 	static const i32 nelems = 60;
@@ -136,7 +138,6 @@ struct mesh_light_list {
 	void init(allocator* alloc = null);
 	void destroy();
 	void clear();
-	void push(v3 pos, v3 col);
 };
 CALLBACK void setup_mesh_light_list(gpu_object* obj);
 CALLBACK void update_mesh_light_list(gpu_object* obj, void* data, bool force);
@@ -305,7 +306,7 @@ struct render_settings {
 
 	exile_component_view view =  exile_component_view::none;
 
-	f32 light_radius = 2.0f;
+	f32 light_cutoff = 10.0f;
 
 	i32 num_samples = 4;
 	f32 gamma = 2.1f;
@@ -382,8 +383,8 @@ struct exile_renderer {
 
 	draw_cmd_id cmd_pointcloud       = 0, cmd_cubemap       = 0,
                 cmd_chunk            = 0, cmd_skydome       = 0,
-                cmd_skyfar           = 0, cmd_defer_light   = 0,
-                cmd_defer_light_ms	 = 0, cmd_defer_stencil = 0;
+                cmd_skyfar           = 0, cmd_point_light   = 0,
+                cmd_point_light_ms	 = 0, cmd_defer_stencil = 0;
 
 	render_settings settings;
 
@@ -414,6 +415,7 @@ struct exile_renderer {
 	void world_chunk(chunk* c, texture_id blocks, texture_id sky, m4 model, m4 view, m4 proj);
 	void world_finish_chunks();
 
+	void push_point_light(v3 p, v3 d, v3 s, v3 a);
 	void resolve_lighting();
 
 	void generate_commands();

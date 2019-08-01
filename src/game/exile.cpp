@@ -88,25 +88,21 @@ void exile_state::update() { PROF_FUNC
 
 void exile_state::render() { PROF_FUNC
 
-	ImGuiIO& io = ImGui::GetIO();
-
 	const ImGuiWindowFlags flags = ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_AlwaysAutoResize;
+	ImGui::SetNextWindowPos({0.0f, 0.0f});
+	ImGui::Begin("Help"_, null, flags);
+
 	if(!exile->eng->dbg.show_ui) {
-		ImGui::SetNextWindowPos({0.0f, 0.0f});
-		ImGui::Begin("Help"_, null, flags);
 		ImGui::Text("GRAVE : show debug UI");
 		ImGui::Text("W/A/S/D/Space/Shift : move");
-		ImGui::Text("FPS: %.2f (%.2gms)", io.Framerate, io.Framerate ? 1000.0f / io.Framerate : 0.0f);
-		ImGui::End();
 	} else {
-		ImGui::SetNextWindowPos({0.0f, 0.0f});
-		ImGui::Begin("Help"_, null, flags);
 		ImGui::Text("GRAVE : hide debug UI");
 		ImGui::Text("P : toggle profiler");
 		ImGui::Text("O : toggle debug vars");
-		ImGui::Text("FPS: %.2f (%.2gms)", io.Framerate, io.Framerate ? 1000.0f / io.Framerate : 0.0f);
-		ImGui::End();
 	}
+
+	ImGui::Text("FPS: %.2f (%.2gms)", 1.0f / eng->dbg.profiler.last_frame_time, 1000.0f * eng->dbg.profiler.last_frame_time);
+	ImGui::End();
 
 	// NOTE(max): engine IMGUI-based debug UI is rendered on top of everything, separately
 	w.render();

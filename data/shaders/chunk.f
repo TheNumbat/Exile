@@ -35,7 +35,7 @@ vec3 calculate_light_base(vec3 light) {
 		float day_factor = 1.0f - (smoothstep(0.32f, 0.17f, day_01) + smoothstep(0.75f, 0.9f, day_01));
 		float l = max(light.x, light.y * day_factor);
 		result += vec3(pow(l,3));
-	} 
+	}
 
 	if(ambient_occlusion) {
 		result *= abs(light.z);
@@ -50,7 +50,7 @@ void main() {
 	
 	out_color = texture(blocks_tex, uvt);
 
-	float shiny = 1.0f / 32.0f; // TODO(max): materials
+	float shiny = 1.0f / 4.0f; // TODO(max): materials
 	out_norm = vec4(pack_norm(f_n, shiny), 1.0f);
 	
 	float ao0 = mix(f_ao.x, f_ao.y, fract(f_uv.x));
