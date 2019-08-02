@@ -45,6 +45,8 @@ if get_option('buildtype') != 'release'
 	if get_option('leak_check') 
 		main_cpp_args += '-DCHECK_NO_LEAKS' 
 	endif
+else
+	game_cpp_args += '-DRELEASE'
 endif
 
 if get_option('platform') == 'win32'
