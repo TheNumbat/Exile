@@ -3,15 +3,19 @@
 
 layout (location = 0) in vec3 v_vert;
 
-layout (location = 1) in vec4 v_lattn;
-layout (location = 2) in vec3 v_lpos;
+// TODO(max): kind of a bruh
+layout (location = 1) in vec3 v_lpos;
+layout (location = 2) in vec3 v_ldir;
 layout (location = 3) in vec3 v_ldiff;
 layout (location = 4) in vec3 v_lspec;
+layout (location = 5) in vec2 v_lcut;
+layout (location = 6) in vec4 v_lattn;
 
 noperspective out vec3 f_view;
 noperspective out vec2 f_uv;
 
-flat out vec3 f_lpos, f_ldiff, f_lspec, f_lattn;
+flat out vec3 f_lpos, f_ldir, f_ldiff, f_lspec, f_lattn;
+flat out vec2 f_lcut;
 flat out float f_r;
 
 flat out vec3 instance_col;
@@ -40,8 +44,10 @@ void main() {
 	instance_col = scalar_to_color(float(gl_InstanceID) / float(num_instances));
 
 	f_lpos = v_lpos;
+	f_ldir = v_ldir;
 	f_ldiff = v_ldiff;
 	f_lspec = v_lspec;
 	f_lattn = v_lattn.xyz;
+	f_lcut = v_lcut;
 	f_r = v_lattn.w;
 }

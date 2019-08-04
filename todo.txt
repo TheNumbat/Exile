@@ -12,14 +12,10 @@ Working To-Do:
 	Rendering:
 		[features]
 		dynamic lights
-			flashlight (spotlights)
-			gonna need some chunk culling
-
 			specular textures (e.g. ore)
 			normal map/heightmap textures
 			reflective textures / screen space reflections
 			randomized textures / procedural specular/normal/reflective textures
-
 		[next week]
 		dynamic shadows
 			spotlight shadows
@@ -36,7 +32,9 @@ Working To-Do:
 			make sun way brighter than torches and have auto exposure drown them out
 			https://learnopengl.com/Advanced-Lighting/HDR
 		optional FXAA/SMAA effects
-		
+
+		!! gonna need some chunk culling
+		!! instance cones for long spot lights instead of wasting the entire sphere		
 		transparent blocks
 		animated blocks (e.g. waving foliage)
 		water shaders
@@ -51,7 +49,7 @@ Working To-Do:
 			set up sorting system for commands based on state
 			uniform buffers
 			multidrawindirect for chunks; begin_chunks finish_chunks generate one command together
-		!!!! chunk culling / visibility / draw optimizations
+		!! chunk culling / visibility / draw optimizations
 			try cpu frustum + occlusion queries
 			defer the queries a few frames?
 			removing chunk gpu data when it is not being drawn 

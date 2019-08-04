@@ -175,6 +175,12 @@ CALLBACK bool camera_evt_handle(void* param, platform_event evt) {
 
 			} return true;
 
+			case platform_keycode::f: {
+
+				p.flashlight.enable = !p.flashlight.enable;
+				
+			} return true;
+
 			default: return false;
 			}
 		}

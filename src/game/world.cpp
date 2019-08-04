@@ -72,11 +72,7 @@ void world::init(asset_store* s, allocator* a) { PROF_FUNC
 		exile->eng->dbg.store.add_var("world/time"_, &time);
 		exile->eng->dbg.store.add_ele("world/ui"_, FPTR(world_debug_ui), this);
 
-		exile->eng->dbg.store.add_var("player/cam"_, &p.camera);
-		exile->eng->dbg.store.add_var("player/speed"_, &p.speed);
-		exile->eng->dbg.store.add_var("player/enable"_, &p.enable);
-		exile->eng->dbg.store.add_var("player/noclip"_, &p.noclip);
-		exile->eng->dbg.store.add_ele("player/info"_, FPTR(player_debug_ui), this);
+		exile->eng->dbg.store.add_var("player"_, &p);
 	}
 
 	{
@@ -763,7 +759,8 @@ void chunk::do_gen() { PROF_FUNC
 				blocks[x][z][y] = block_id::stone;
 			}
 
-			if(x % 4 == 0 && z % 4 == 0) {
+			if(x % 16 == 0 && z % 16 == 0) {
+			// if(x % 4 == 0 && z % 4 == 0) {
 			// if(x == 0 && z == 0 && pos.x == 0 && pos.z == 0) {
 				blocks[x][z][height] = block_id::torch;
 				place_light(iv3(x, height, z), 16);

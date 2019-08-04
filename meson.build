@@ -1,5 +1,5 @@
 
-project('exile', 'cpp', default_options : ['cpp_std=c++14'])
+project('exile', 'cpp', default_options : ['cpp_std=c++17'])
 
 # Linux deps : libclang-dev, libsdl2-dev
 

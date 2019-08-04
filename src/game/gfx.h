@@ -83,24 +83,28 @@ struct mesh_cubemap {
 	void destroy();
 };
 
-struct point_light {
-	v4 atten;    // c l q r 
-	v3 pos; 
-	v3 diffuse; 
+#pragma pack(push, 1)
+struct light {
+	v3 position;
+	v3 direction; 
+	v3 diffuse;
 	v3 specular;
+	v2 cutoff;
+	v4 atten;    // constant linear quadratic radius
 };
+#pragma pack(pop)
 
-struct dir_light {
-	v3 dir;
+struct sun_light {
+	v3 direction;
 	v3 diffuse;
 	v3 specular;
 };
 
 struct mesh_light_list {
-	vector<point_light> lights;
-	dir_light dir;
+	vector<light> lights;
 	
-	const f32 t = (1.0f + sqrtf(5.0f)) / 2.0f;
+	inline static const f32 R_MAX = 1000.0f;
+	inline static const f32 t = (1.0f + sqrtf(5.0f)) / 2.0f;
 	static const i32 nelems = 60;
 	const v3 verts[12] = {
 		{-1.0f,  t,  0.0f},
@@ -142,6 +146,10 @@ struct mesh_light_list {
 	gpu_object_id gpu = -1;
 	bool dirty = false;
 
+	void push_point(v3 pos, v3 diff, v3 spec, v3 attn);
+	void push_spot(v3 pos, v3 dir, v3 diff, v3 spec, v2 cut, v3 attn);
+	static f32 calc_r(v3 diff, v3 spec, v3 attn, f32 cut);
+	
 	void init(allocator* alloc = null);
 	void destroy();
 	void clear();
@@ -313,7 +321,8 @@ struct render_settings {
 
 	exile_component_view view =  exile_component_view::none;
 
-	f32 light_cutoff = 10.0f;
+	f32 torch_cutoff = 5.0f;
+	f32 spot_cutoff = 2.0f;
 
 	i32 num_samples = 4;
 	f32 gamma = 2.1f;
@@ -388,17 +397,19 @@ struct exile_renderer {
                 cmd_2D_tex_col       = 0, cmd_3D_tex      = 0,
                 cmd_3D_tex_instanced = 0, cmd_lines       = 0;
 
-	draw_cmd_id cmd_pointcloud       = 0, cmd_cubemap       = 0,
-                cmd_chunk            = 0, cmd_skydome       = 0,
-                cmd_skyfar           = 0, cmd_point_light   = 0,
-                cmd_dir_light_ms 	 = 0, cmd_dir_light 	= 0,
-                cmd_point_light_ms	 = 0;
+	draw_cmd_id cmd_pointcloud = 0, cmd_cubemap = 0,
+                cmd_chunk      = 0, cmd_skydome = 0,
+                cmd_skyfar     = 0, cmd_light   = 0,
+                cmd_light_ms   = 0, cmd_dlight  = 0,
+                cmd_dlight_ms  = 0;
 
 	render_settings settings;
 
 	// NOTE(max): these should be static, but hot reloading
 	mesh_cubemap the_cubemap;
 	mesh_quad 	 the_quad;
+	
+	sun_light sun;
 	mesh_light_list lights;
 
 	effect_pass invert, gamma;
@@ -423,7 +434,7 @@ struct exile_renderer {
 	void world_chunk(chunk* c, texture_id blocks, texture_id sky, m4 model, m4 view, m4 proj);
 	void world_finish_chunks();
 
-	void push_point_light(v3 p, v3 d, v3 s, v3 a);
+	// void push_point_light(v3 p, v3 d, v3 s, v3 a);
 	void resolve_lighting();
 
 	void generate_commands();
@@ -466,6 +477,6 @@ CALLBACK void uniforms_composite_resolve(shader_program* prog, render_command* c
 CALLBACK void uniforms_comp_resolve_light(shader_program* prog, render_command* cmd);
 
 CALLBACK void run_dir(render_command* cmd, gpu_object* gpu);
-CALLBACK void run_point(render_command* cmd, gpu_object* gpu);
+CALLBACK void run_light(render_command* cmd, gpu_object* gpu);
 CALLBACK void uniforms_dir(shader_program* prog, render_command* cmd);
-CALLBACK void uniforms_point(shader_program* prog, render_command* cmd);
+CALLBACK void uniforms_light(shader_program* prog, render_command* cmd);

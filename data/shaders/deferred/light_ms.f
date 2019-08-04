@@ -3,7 +3,8 @@
 
 noperspective in vec3 f_view;
 
-flat in vec3 f_lpos, f_ldiff, f_lspec, f_lattn;
+flat in vec3 f_lpos, f_ldir, f_ldiff, f_lspec, f_lattn;
+flat in vec2 f_lcut;
 flat in float f_r;
 flat in vec3 instance_col;
 
@@ -32,21 +33,24 @@ vec3 calculate_light_dynamic(vec3 pos, vec3 norm, float shine) {
 	vec3 light_gather = vec3(0.0f);
 
 	vec3 v = normalize(-pos);
-	
 	vec3 l = f_lpos-pos;
-	float dist = length(l);
 
+	float dist = length(l);
 	l = normalize(l);
-	
+
 	vec3 h = normalize(l + v);
 
 	float a = 1.0f / (f_lattn.x + f_lattn.y * dist + f_lattn.z * dist * dist);
+	
+	if(length(f_ldir) > 0.0f) {
+		a *= smoothstep(f_lcut.y, f_lcut.x, dot(l,-f_ldir));
+	}
 
 	float diff = max(dot(norm,l), 0.0f);
 	light_gather += diff * f_ldiff * a;
 		
 	float energy = (8.0f + shine) / (8.0f * PI); 
-		float spec = energy * pow(max(dot(norm, h), 0.0), shine);
+	float spec = energy * pow(max(dot(norm, h), 0.0), shine);
 
 	light_gather += spec * f_lspec * a;
 	return max(light_gather, 0.0f);

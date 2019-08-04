@@ -196,9 +196,18 @@ struct chunk {
 	mesh_face build_face(block_id t, iv3 p, i32 dir);
 };
 
+struct player_light {
+	bool enable = true;
+	v3 specular = v3(0.0f);
+	v3 diffuse = v3(5.0f);
+	v2 cutoff = v2(15.0f,30.0f);
+	v3 atten = v3(1.0f,0.5f,0.75f);
+};
+
 struct player {
 
 	render_camera camera;
+	player_light flashlight;
 
 	f32 speed = 5.0f;
 	v3  velocity;

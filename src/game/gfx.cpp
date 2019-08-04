@@ -9,7 +9,7 @@
 void exile_renderer::init(allocator* a) {
 	
 	exile->eng->dbg.store.add_var("render/settings"_, &settings);
-	exile->eng->dbg.store.add_var("render/sun"_, &lights.dir);
+	exile->eng->dbg.store.add_var("render/sun"_, &sun);
 	
 	generate_commands();
 	generate_targets();
@@ -58,8 +58,14 @@ void exile_renderer::world_begin_chunks(world* w, bool offset) {
 		proj_info.ivp = inverse(proj_info.vp);
 		proj_info.near = w->p.camera.near;
 
-		lights.dir.dir = -v3(0.0f, sin(w->time.day_pi()), cos(w->time.day_pi()));
-		lights.dir.diffuse = v3(w->time.day_factor() / 5.0f);
+		sun.direction = -v3(0.0f, sin(w->time.day_pi()), cos(w->time.day_pi()));
+		sun.diffuse = v3(w->time.day_factor() / 5.0f);
+		sun.specular = v3(w->time.day_factor() / 5.0f);
+
+		if(w->p.flashlight.enable) 
+			lights.push_spot(v3{}, w->p.camera.front, w->p.flashlight.diffuse,
+						 	 w->p.flashlight.specular, w->p.flashlight.cutoff,
+						 	 w->p.flashlight.atten);
 	}
 
 	world_tasks.push_settings();
@@ -98,7 +104,7 @@ void exile_renderer::world_chunk(chunk* c, texture_id blocks, texture_id sky, m4
 
 	if(settings.dynamic_light) {
 		FORVEC(it, c->lights) {
-			push_point_light(it->pos + c->pos.offset() - c->w->p.camera.pos, it->diffuse, it->specular, c->w->settings.torch_atten);
+			lights.push_point(it->pos + c->pos.offset() - c->w->p.camera.pos, it->diffuse, it->specular, c->w->settings.torch_atten);
 		}
 	}
 
@@ -266,7 +272,7 @@ void world_target_info::init(iv2 dim, i32 samples) {
 void exile_renderer::resolve_lighting() { PROF_FUNC
 	
 	if(settings.dynamic_light) {
-		
+
 		world_tasks.push_settings();
 		world_tasks.set_setting(render_setting::aa_shading, true);
 		world_tasks.set_setting(render_setting::blend, (u32)blend_mode::add);
@@ -275,7 +281,7 @@ void exile_renderer::resolve_lighting() { PROF_FUNC
 		// when we are inside the volume
 		world_tasks.set_setting(render_setting::cull, (u32)gl_face::front);
 		{
-			render_command cmd = render_command::make_cst(world_target.msaa ? cmd_point_light_ms : cmd_point_light, lights.gpu);
+			render_command cmd = render_command::make_cst(world_target.msaa ? cmd_light_ms : cmd_light, lights.gpu);
 
 			cmd.info.fb_id = world_target.w.light_target;
 			cmd.info.textures[0] = world_target.w.norm_buf;
@@ -287,7 +293,7 @@ void exile_renderer::resolve_lighting() { PROF_FUNC
 		}
 		world_tasks.set_setting(render_setting::cull, (u32)gl_face::back);
 		{
-			render_command cmd = render_command::make_cst(world_target.msaa ? cmd_dir_light_ms : cmd_dir_light, the_quad.gpu);
+			render_command cmd = render_command::make_cst(world_target.msaa ? cmd_dlight_ms : cmd_dlight, the_quad.gpu);
 
 			cmd.info.fb_id = world_target.w.light_target;
 			cmd.info.textures[0] = world_target.w.norm_buf;
@@ -395,11 +401,11 @@ void exile_renderer::generate_commands() {
 
 #undef reg
 
-	cmd_point_light = exile->eng->ogl.add_command(FPTR(run_point), FPTR(uniforms_point), "shaders/deferred/point.v"_, "shaders/deferred/point.f"_);
-	cmd_point_light_ms = exile->eng->ogl.add_command(FPTR(run_point), FPTR(uniforms_point), "shaders/deferred/point.v"_, "shaders/deferred/point_ms.f"_);
+	cmd_light = exile->eng->ogl.add_command(FPTR(run_light), FPTR(uniforms_light), "shaders/deferred/light.v"_, "shaders/deferred/light.f"_);
+	cmd_light_ms = exile->eng->ogl.add_command(FPTR(run_light), FPTR(uniforms_light), "shaders/deferred/light.v"_, "shaders/deferred/light_ms.f"_);
 	
-	cmd_dir_light = exile->eng->ogl.add_command(FPTR(run_effect), FPTR(uniforms_dir), "shaders/deferred/compose.v"_, "shaders/deferred/dir.f"_);
-	cmd_dir_light_ms = exile->eng->ogl.add_command(FPTR(run_effect), FPTR(uniforms_dir), "shaders/deferred/compose.v"_, "shaders/deferred/dir_ms.f"_);
+	cmd_dlight = exile->eng->ogl.add_command(FPTR(run_effect), FPTR(uniforms_dir), "shaders/deferred/compose.v"_, "shaders/deferred/dir.f"_);
+	cmd_dlight_ms = exile->eng->ogl.add_command(FPTR(run_effect), FPTR(uniforms_dir), "shaders/deferred/compose.v"_, "shaders/deferred/dir_ms.f"_);
 
 	comp_light.init(FPTR(uniforms_comp_light), "deferred/compose.v"_, "deferred/compose.f"_);
 	comp_resolve_light.init(FPTR(uniforms_comp_resolve_light), "deferred/compose.v"_, "deferred/compose_ms.f"_);
@@ -426,10 +432,10 @@ void exile_renderer::destroy() {
 	rem(cmd_chunk);
 	rem(cmd_skydome);
 	rem(cmd_skyfar);
-	rem(cmd_point_light);
-	rem(cmd_point_light_ms);
-	rem(cmd_dir_light);
-	rem(cmd_dir_light_ms);
+	rem(cmd_light);
+	rem(cmd_light_ms);
+	rem(cmd_dlight);
+	rem(cmd_dlight_ms);
 
 #undef rem
 
@@ -517,7 +523,7 @@ CALLBACK void uniforms_resolve(shader_program* prog, render_command* cmd) {
 	glUniform1i(prog->location("num_samples"_), set->prev_samples);
 }
 
-CALLBACK void run_point(render_command* cmd, gpu_object* gpu) {
+CALLBACK void run_light(render_command* cmd, gpu_object* gpu) {
 
 	glDrawElementsInstanced(gl_draw_mode::triangles, mesh_light_list::nelems, gl_index_type::unsigned_int, null, cmd->info.num_tris);
 }
@@ -532,12 +538,12 @@ CALLBACK void uniforms_dir(shader_program* prog, render_command* cmd) {
 	glUniform1f(prog->location("near"_), ren->proj_info.near);
 	glUniformMatrix4fv(prog->location("ivp"_), 1, gl_bool::_false, ren->proj_info.ivp.a);
 
-	glUniform3fv(prog->location("ldir"_), 1, ren->lights.dir.dir.a);
-	glUniform3fv(prog->location("ldiff"_), 1, ren->lights.dir.diffuse.a);
-	glUniform3fv(prog->location("lspec"_), 1, ren->lights.dir.specular.a);
+	glUniform3fv(prog->location("ldir"_), 1, ren->sun.direction.a);
+	glUniform3fv(prog->location("ldiff"_), 1, ren->sun.diffuse.a);
+	glUniform3fv(prog->location("lspec"_), 1, ren->sun.specular.a);
 }
 
-CALLBACK void uniforms_point(shader_program* prog, render_command* cmd) {
+CALLBACK void uniforms_light(shader_program* prog, render_command* cmd) {
 
 	exile_renderer* ren = (exile_renderer*)cmd->info.user_data0;
 	render_settings* set = &ren->settings;
@@ -570,21 +576,39 @@ CALLBACK void run_effect(render_command* cmd, gpu_object* gpu) {
 	glDrawArrays(gl_draw_mode::triangles, 0, 6);
 }
 
-void exile_renderer::push_point_light(v3 p, v3 d, v3 s, v3 a) {
+f32 mesh_light_list::calc_r(v3 d, v3 s, v3 a, f32 cut) {
 
 	f32 max = max(max(d.x,d.y),max(max(d.z,s.x),max(s.y,s.z)));
-	f32 r = (-a.y + sqrtf(a.y * a.y - 4.0f * a.z * (a.x - (255.0f / settings.light_cutoff) * max))) / (2 * a.z);
+	if(a.y == 0.0f && a.z == 0.0f) {
+		return R_MAX;
+	} else if(a.z == 0) {
+		return ((255.0f / cut) * max - a.x) / a.y;
+	} else {
+		return (-a.y + sqrtf(a.y * a.y - 4.0f * a.z * (a.x - (255.0f / cut) * max))) / (2 * a.z);
+	}
+}
 
-	point_light l = {v4(a,r),p,d,s};
-	lights.lights.push(l);
-	lights.dirty = true;
+void mesh_light_list::push_spot(v3 pos, v3 dir, v3 diff, v3 spec, v2 cut, v3 attn) {
+
+	f32 r = calc_r(diff, spec, attn, exile->ren.settings.spot_cutoff);
+	light l = {pos,dir,diff,spec,v2(cos(RADIANS(cut.x)),cos(RADIANS(cut.y))),v4(attn,r)};
+	lights.push(l);
+	dirty = true;	
+}
+
+void mesh_light_list::push_point(v3 pos, v3 diff, v3 spec, v3 attn) {
+
+	f32 r = calc_r(diff, spec, attn, exile->ren.settings.torch_cutoff);
+	light l = {pos,v3{},diff,spec,v2{},v4(attn,r)};
+	lights.push(l);
+	dirty = true;
 }
 
 void mesh_light_list::init(allocator* alloc) {
 
 	if(!alloc) alloc = CURRENT_ALLOC();
 
-	lights = vector<point_light>::make(512, alloc);
+	lights = vector<light>::make(512, alloc);
 
 	gpu = exile->eng->ogl.add_object(FPTR(setup_mesh_light_list), FPTR(update_mesh_light_list), this);	
 	exile->eng->ogl.object_trigger_update(gpu, this, true);
@@ -612,21 +636,29 @@ CALLBACK void setup_mesh_light_list(gpu_object* obj) {
 
 	glBindBuffer(gl_buf_target::array, obj->vbos[2]);
 
-	glVertexAttribPointer(1, 4, gl_vert_attrib_type::_float, gl_bool::_false, sizeof(point_light), (GLvoid*)0);
+	glVertexAttribPointer(1, 3, gl_vert_attrib_type::_float, gl_bool::_false, sizeof(light), (GLvoid*)offsetof(light,position));
 	glVertexAttribDivisor(1, 1);
 	glEnableVertexAttribArray(1);
 
-	glVertexAttribPointer(2, 3, gl_vert_attrib_type::_float, gl_bool::_false, sizeof(point_light), (GLvoid*)(sizeof(v4)));
+	glVertexAttribPointer(2, 3, gl_vert_attrib_type::_float, gl_bool::_false, sizeof(light), (GLvoid*)offsetof(light,direction));
 	glVertexAttribDivisor(2, 1);
 	glEnableVertexAttribArray(2);
 
-	glVertexAttribPointer(3, 3, gl_vert_attrib_type::_float, gl_bool::_false, sizeof(point_light), (GLvoid*)(sizeof(v4) + sizeof(v3)));
+	glVertexAttribPointer(3, 3, gl_vert_attrib_type::_float, gl_bool::_false, sizeof(light), (GLvoid*)offsetof(light,diffuse));
 	glVertexAttribDivisor(3, 1);
 	glEnableVertexAttribArray(3);
 
-	glVertexAttribPointer(4, 3, gl_vert_attrib_type::_float, gl_bool::_false, sizeof(point_light), (GLvoid*)(sizeof(v4) + 2 * sizeof(v3)));
+	glVertexAttribPointer(4, 3, gl_vert_attrib_type::_float, gl_bool::_false, sizeof(light), (GLvoid*)(offsetof(light,specular)));
 	glVertexAttribDivisor(4, 1);
 	glEnableVertexAttribArray(4);
+
+	glVertexAttribPointer(5, 2, gl_vert_attrib_type::_float, gl_bool::_false, sizeof(light), (GLvoid*)(offsetof(light,cutoff)));
+	glVertexAttribDivisor(5, 1);
+	glEnableVertexAttribArray(5);
+
+	glVertexAttribPointer(6, 4, gl_vert_attrib_type::_float, gl_bool::_false, sizeof(light), (GLvoid*)(offsetof(light,atten)));
+	glVertexAttribDivisor(6, 1);
+	glEnableVertexAttribArray(6);
 }
 
 CALLBACK void update_mesh_light_list(gpu_object* obj, void* data, bool force) {
@@ -634,7 +666,7 @@ CALLBACK void update_mesh_light_list(gpu_object* obj, void* data, bool force) {
 	mesh_light_list* m = (mesh_light_list*)data;
 	if(!force && !m->dirty) return;
 
-	glNamedBufferData(obj->vbos[2], m->lights.size * sizeof(point_light), m->lights.size ? m->lights.memory : null, gl_buf_usage::dynamic_draw);
+	glNamedBufferData(obj->vbos[2], m->lights.size * sizeof(light), m->lights.size ? m->lights.memory : null, gl_buf_usage::dynamic_draw);
 
 	if(force) {
 		glNamedBufferData(obj->vbos[0], sizeof(m->verts), m->verts, gl_buf_usage::static_draw);
