@@ -84,12 +84,12 @@ void exile_renderer::world_finish_chunks() {
 	world_tasks.pop_settings();
 }
 
-void exile_renderer::world_chunk(chunk* c, texture_id blocks, texture_id sky, m4 model, m4 view, m4 proj) {
+void exile_renderer::world_chunk(chunk* c, block_textures block_tex, texture_id sky, m4 model, m4 view, m4 proj) {
 
 	render_command cmd = render_command::make_cst(cmd_chunk, c->mesh.gpu);
 
 	cmd.info.fb_id = world_target.world_fb();
-	cmd.info.textures[0] = blocks;
+	cmd.info.textures[0] = block_tex.diffuse;
 	cmd.info.textures[1] = sky;
 	cmd.info.num_tris = c->mesh_faces;
 	cmd.info.user_data0 = c->w;

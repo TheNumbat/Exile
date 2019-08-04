@@ -4,7 +4,7 @@ build/
 x64/
 Debug/
 
-*.asset
+*.exile
 bin/*.db
 bin/.vs
 bin/*.opendb

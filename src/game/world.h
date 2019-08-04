@@ -5,9 +5,10 @@
 #include <engine/util/fptr.h>
 #include <engine/threads.h>
 #include <engine/ds/queue.h>
-#include "gfx.h"
+#include "gfx_mesh.h"
 
 struct chunk;
+struct world;
 
 // -x is east, +x is west
 
@@ -22,6 +23,7 @@ enum class block_id : u16 {
 	total_blocks
 };
 
+struct mesh_chunk;
 struct block_meta {
 	block_id type;
 
@@ -114,9 +116,6 @@ struct light_work {
 	};
 };
 
-struct chunk;
-struct world;
-
 struct block_node {
 	iv3 pos;
 	chunk* owner = null;
@@ -197,7 +196,7 @@ struct chunk {
 };
 
 struct player_light {
-	bool enable = true;
+	bool enable = false;
 	v3 specular = v3(0.0f);
 	v3 diffuse = v3(5.0f);
 	v2 cutoff = v2(15.0f,30.0f);
@@ -254,7 +253,7 @@ struct world_time {
 
 struct world_environment {
 
-	texture_id sky_texture = -1, env_texture = -1;
+	texture_id sky_texture = -1;
 	
 	mesh_3d_tex sky;
 	mesh_pointcloud stars;
@@ -264,6 +263,18 @@ struct world_environment {
 
 	void render(player* p, world_time* t);
 	void build_sun_moon(f32 day_01);
+};
+
+struct block_textures {
+	texture_id diffuse = -1, specular = -1;
+	
+	void init();
+	void destroy();
+	void recreate();
+	
+	i32 get_layers();
+	void push(asset_store* store, string name);
+	void finish();
 };
 
 struct world {
@@ -285,7 +296,7 @@ struct world {
 	allocator* alloc = null;
 
 	asset_store* store = null;
-	texture_id block_textures = -1;
+	block_textures block_tex;
 
 	world_time time;
 	world_environment env;

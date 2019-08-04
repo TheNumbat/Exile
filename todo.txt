@@ -9,6 +9,12 @@ Working To-Do:
 		Maybe modding, but first a from-scratch playable multi-player core 
 		Demo survival a-la Minecraft beta (but with really nice looking graphics) would be great
 
+	Asset System:
+		shaders asset & include system
+			definitions + code
+		but how do we continue hot reloading? add source paths and regenerate asset pack?
+		probably just move hot reloading out to the asset level
+
 	Rendering:
 		[features]
 		dynamic lights
@@ -16,6 +22,7 @@ Working To-Do:
 			normal map/heightmap textures
 			reflective textures / screen space reflections
 			randomized textures / procedural specular/normal/reflective textures
+			need some kind of spatial reference for lights, to add/remove
 		[next week]
 		dynamic shadows
 			spotlight shadows
@@ -40,9 +47,6 @@ Working To-Do:
 		water shaders
 
 		[performance/structure]
-		shaders asset & include system
-			definitions + code
-			but how do we continue hot reloading? add source paths and regenerate asset pack?
 		look at sample rate shading again; marking pixels as complex
 		reduce state changes
 			diff state instead of setting everything
@@ -91,17 +95,12 @@ Working To-Do:
 	optimizations, chunk culling, openGL bindless/UBO/etc.
 
 Relatively unimportant bugs:
-	something may be wrong with light/sunlight propagation or smooth calculation that causes AO
-
 	SDL layer resets the cursor to pointer on every mouse move
 	There is still some inconsistency in code reloading
 		IMGUI window data persisting between code reloads occasionally doesn't work?
 		threads.cpp:233 log allocations don't get cataloged, but the frees do...maybe something to do with registering a new thread?
 
-
 Large-Scale Improvements | Changes for Future Projects
-	rewrite metaprogram for robustness, possibly as a library/outputting a data format
-		don't output through pointers? maybe
 	less callbacks? good, but also not really, they're quite useful. I wish closures didn't need STL and they didn't heap allocate
 	probably don't use the futures pattern for the thread pool, go back to event loop
 	asset store can be more meta file + data files for hot/cold loading etc. Not sure if necessary though

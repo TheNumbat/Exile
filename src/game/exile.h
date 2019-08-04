@@ -5,6 +5,7 @@
 #include <engine/events.h>
 
 #include "world.h"
+#include "gfx.h"
 
 struct exile_state {
 

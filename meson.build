@@ -74,12 +74,12 @@ asset_builder = executable('asset', 'src/tools/asset_builder.cpp',
 							native : true, cpp_args : all_cpp_args)
 
 custom_target('assets',
-  			   output : 'game.asset',
-  			   input : 'data/assets/game.txt',
+  			   output : 'pack.exile',
+  			   input : 'data/assets/exile.json',
   			   build_by_default: true,
   			   command : [asset_builder, '@INPUT@', '@OUTPUT@'])
 
-run_command('cp', 'build/game.asset', 'data/game.asset')
+run_command('cp', 'build/pack.exile', 'data/pack.exile')
 
 # Build meta-program
 

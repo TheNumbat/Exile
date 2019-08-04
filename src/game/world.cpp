@@ -442,8 +442,6 @@ void world_environment::init(asset_store* store, allocator* a) { PROF_FUNC
 	sky.push_dome({}, 1.0f, 64);
 	sky_texture = exile->eng->ogl.add_texture(store, "sky"_, texture_wrap::mirror);
 
-	env_texture = exile->eng->ogl.add_texture(store, "env"_);
-
 	stars.init(a);
 	stars.push_points({}, 1.0f, 5000, 0.1f);
 }
@@ -494,7 +492,7 @@ void world::render_chunks() { PROF_FUNC
 			m4 view = p.camera.view_pos_origin();
 			m4 proj = p.camera.proj((f32)exile->eng->window.settings.w / (f32)exile->eng->window.settings.h);
 
-			exile->ren.world_chunk(c, block_textures, env.sky_texture, model, view, proj);
+			exile->ren.world_chunk(c, block_tex, env.sky_texture, model, view, proj);
 		}
 	}
 
@@ -1686,22 +1684,49 @@ CALLBACK void torch_model(mesh_chunk* m, block_meta* info, i32 dir, iv3 v__0, iv
 	}
 }
 
+void block_textures::init() {
+	diffuse = exile->eng->ogl.begin_tex_array(iv3(32, 32, exile->eng->ogl.info.max_texture_layers), 
+											  texture_wrap::repeat, exile->w.settings.block_sampler, true, 1);
+	specular = exile->eng->ogl.begin_tex_array(iv3(32, 32, exile->eng->ogl.info.max_texture_layers), 
+											   texture_wrap::repeat, exile->w.settings.block_sampler, true, 1);
+}
+
+void block_textures::destroy() {
+	if(diffuse != -1) {
+		exile->eng->ogl.destroy_texture(diffuse);
+		exile->eng->ogl.destroy_texture(specular);
+	}
+	diffuse = specular = -1;
+}
+
+void block_textures::recreate() {
+	destroy();
+	init();
+}
+
+i32 block_textures::get_layers() {
+	return exile->eng->ogl.get_layers(diffuse);
+}
+
+void block_textures::push(asset_store* store, string name) {
+	exile->eng->ogl.push_tex_array(diffuse, store, name);
+}
+
+void block_textures::finish() {
+	exile->eng->ogl.end_tex_array(diffuse);
+	exile->eng->ogl.end_tex_array(specular);
+}
+
 void world::regen_blocks() {
 
 	block_info.destroy();
-	if(block_textures != -1) {
-		exile->eng->ogl.destroy_texture(block_textures);
-	}
-
 	block_info = vector<block_meta>::make((u32)block_id::total_blocks, alloc);
-	block_textures = exile->eng->ogl.begin_tex_array(iv3(32, 32, exile->eng->ogl.info.max_texture_layers), texture_wrap::repeat, settings.block_sampler, true, 1);
 
-	texture_id tex = block_textures;
-	i32 tex_idx = exile->eng->ogl.get_layers(tex);
-	
+	block_tex.recreate();
+	i32 tex_idx = 0;
 
-	tex_idx = exile->eng->ogl.get_layers(tex);
-	exile->eng->ogl.push_tex_array(tex, store, "bedrock"_);
+	tex_idx = block_tex.get_layers();
+	block_tex.push(store, "bedrock"_);
 
 	block_meta* bedrock = get_info(block_id::bedrock);
 	*bedrock = {
@@ -1713,8 +1738,8 @@ void world::regen_blocks() {
 	};
 
 
-	tex_idx = exile->eng->ogl.get_layers(tex);
-	exile->eng->ogl.push_tex_array(tex, store, "stone"_);
+	tex_idx = block_tex.get_layers();
+	block_tex.push(store, "stone"_);
 
 	block_meta* stone = get_info(block_id::stone);
 	*stone = {
@@ -1726,10 +1751,10 @@ void world::regen_blocks() {
 	};
 
 
-	tex_idx = exile->eng->ogl.get_layers(tex);
-	exile->eng->ogl.push_tex_array(tex, store, "path_side"_);
-	exile->eng->ogl.push_tex_array(tex, store, "dirt"_);
-	exile->eng->ogl.push_tex_array(tex, store, "path_top"_);
+	tex_idx = block_tex.get_layers();
+	block_tex.push(store, "path_side"_);
+	block_tex.push(store, "dirt"_);
+	block_tex.push(store, "path_top"_);
 	
 	block_meta* path = get_info(block_id::path);
 	*path = {
@@ -1741,9 +1766,9 @@ void world::regen_blocks() {
 	};	
 
 
-	tex_idx = exile->eng->ogl.get_layers(tex);
-	exile->eng->ogl.push_tex_array(tex, store, "slab_side"_);
-	exile->eng->ogl.push_tex_array(tex, store, "slab_top"_);
+	tex_idx = block_tex.get_layers();
+	block_tex.push(store, "slab_side"_);
+	block_tex.push(store, "slab_top"_);
 
 	block_meta* stone_slab = get_info(block_id::stone_slab);
 	*stone_slab = {
@@ -1755,10 +1780,10 @@ void world::regen_blocks() {
 	};	
 
 
-	tex_idx = exile->eng->ogl.get_layers(tex);
-	exile->eng->ogl.push_tex_array(tex, store, "torch_side"_);
-	exile->eng->ogl.push_tex_array(tex, store, "torch_bot"_);
-	exile->eng->ogl.push_tex_array(tex, store, "torch_top"_);
+	tex_idx = block_tex.get_layers();
+	block_tex.push(store, "torch_side"_);
+	block_tex.push(store, "torch_bot"_);
+	block_tex.push(store, "torch_top"_);
 
 	block_meta* torch = get_info(block_id::torch);
 	*torch = {
@@ -1769,6 +1794,6 @@ void world::regen_blocks() {
 		16, true, false, true, FPTR(torch_model)
 	};	
 
-	exile->eng->ogl.end_tex_array(tex);
+	block_tex.finish();
 }
 
