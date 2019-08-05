@@ -18,7 +18,6 @@ Working To-Do:
 	Rendering:
 		[features]
 		dynamic lights
-			specular textures (e.g. ore)
 			normal map/heightmap textures
 			reflective textures / screen space reflections
 			randomized textures / procedural specular/normal/reflective textures

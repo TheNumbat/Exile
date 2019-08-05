@@ -699,8 +699,7 @@ void chunk::place_light(iv3 p, u8 i) {
 	t.pos = p.to_f() + v3(0.5f, 0.5f, 0.5f);
 
 	v3 col = v3((f32)i);
-	t.diffuse = col;
-	t.specular = col * 4.0f;
+	t.diffuse = t.specular = col;
 
 	lights.push(t);
 }
