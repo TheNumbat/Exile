@@ -592,7 +592,7 @@ f32 mesh_light_list::calc_r(v3 d, v3 s, v3 a, f32 cut) {
 void mesh_light_list::push_spot(v3 pos, v3 dir, v3 diff, v3 spec, v2 cut, v3 attn) {
 
 	f32 r = calc_r(diff, spec, attn, exile->ren.settings.spot_cutoff);
-	light l = {pos,dir,diff,spec,v2(cos(RADIANS(cut.x)),cos(RADIANS(cut.y))),v4(attn,r)};
+	light l = {pos,dir,diff,spec,v2(cos(RADIANS(cut.x)),cos(RADIANS(cut.y))),attn,r};
 	lights.push(l);
 	dirty = true;	
 }
@@ -600,7 +600,7 @@ void mesh_light_list::push_spot(v3 pos, v3 dir, v3 diff, v3 spec, v2 cut, v3 att
 void mesh_light_list::push_point(v3 pos, v3 diff, v3 spec, v3 attn) {
 
 	f32 r = calc_r(diff, spec, attn, exile->ren.settings.torch_cutoff);
-	light l = {pos,v3{},diff,spec,v2{},v4(attn,r)};
+	light l = {pos,v3{},diff,spec,v2{},attn,r};
 	lights.push(l);
 	dirty = true;
 }

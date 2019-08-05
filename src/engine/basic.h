@@ -20,10 +20,12 @@
 	#define __FUNCNAME__ __FUNCTION__
 	#define DLL_EXPORT EXTERNC __declspec(dllexport)
 	#define DLL_IMPORT EXTERNC __declspec(dllimport)
+	#define PACKED
 #elif defined(__clang__)
 	#define __FUNCNAME__ __func__
 	#define DLL_EXPORT EXTERNC __attribute__((visibility("default")))
 	#define DLL_IMPORT EXTERNC
+	#define PACKED __attribute__((packed))
 #else
 	#error Unsupported compiler
 #endif

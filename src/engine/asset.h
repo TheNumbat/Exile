@@ -35,7 +35,7 @@ struct file_glyph_data {
 	f32 advance   = 0;
 	f32 xoff2     = 0;
 	f32 yoff2     = 0;
-};
+} PACKED;
 
 struct file_asset_raster_font {
 	u32 num_glyphs = 0;
@@ -46,24 +46,24 @@ struct file_asset_raster_font {
 	f32 linedist   = 0;
 	i32 width      = 0;
 	i32 height     = 0;
-};
+} PACKED;
 
-struct file_asset_ttf_font {};
+struct file_asset_ttf_font {} PACKED;
 
 struct file_asset_bitmap {
 	i32 width 	= 0;
 	i32 height 	= 0;
-};
+} PACKED;
 
 struct file_asset_header {
 	u8 type 		= 0;
 	char name[128] 	= {};
 	u64 next 		= 0; // byte offset from start of file_asset
-};
+} PACKED;
 
 struct asset_file_header {
 	u32 num_assets = 0;
-};
+} PACKED;
 #pragma pack(pop)
 
 enum class asset_type : u8 {

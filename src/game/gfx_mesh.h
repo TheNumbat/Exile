@@ -83,16 +83,15 @@ struct mesh_cubemap {
 	void destroy();
 };
 
-#pragma pack(push, 1)
 struct light {
 	v3 position;
 	v3 direction; 
 	v3 diffuse;
 	v3 specular;
 	v2 cutoff;
-	v4 atten;    // constant linear quadratic radius
+	v3 atten;    // constant linear quadratic
+	f32 r;
 };
-#pragma pack(pop)
 
 struct sun_light {
 	v3 direction;
