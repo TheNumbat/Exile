@@ -16,9 +16,9 @@ enum class block_id : u16 {
 	none,
 	bedrock,
 	stone,
-	path,
 	stone_slab,
 	torch,
+	iron_ore,
 
 	total_blocks
 };

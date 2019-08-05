@@ -76,7 +76,7 @@ asset_builder = executable('asset', 'src/tools/asset_builder.cpp',
 custom_target('assets',
   			   output : 'pack.exile',
   			   input : 'data/assets/exile.json',
-  			   build_by_default: true,
+  			   build_by_default: true, build_always_stale : true,
   			   command : [asset_builder, '@INPUT@', '@OUTPUT@'])
 
 run_command('cp', 'build/pack.exile', 'data/pack.exile')

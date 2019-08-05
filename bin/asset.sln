@@ -3,12 +3,13 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29009.5
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{911E67C6-3D85-4FCE-B560-20A9C3E3FF48}") = "main", "..\build\main.exe", "{A7ED15C8-F972-45B6-A205-63000BF71150}"
+Project("{911E67C6-3D85-4FCE-B560-20A9C3E3FF48}") = "asset", "..\build\asset.exe", "{6818F446-6E9F-4988-9F7C-65F2E09C0B77}"
 	ProjectSection(DebuggerProjectSystem) = preProject
 		PortSupplier = 00000000-0000-0000-0000-000000000000
-		Executable = C:\Users\Max\Code\exile\build\main.exe
+		Executable = C:\Users\Max\Code\exile\build\asset.exe
 		RemoteMachine = NUMBAT-DESKTOP
-		StartingDirectory = C:\Users\Max\Code\exile\data
+		StartingDirectory = C:\Users\Max\Code\exile\build
+		Arguments = ..\data\assets\exile.json pack.exile
 		Environment = Default
 		LaunchingEngine = 00000000-0000-0000-0000-000000000000
 		UseLegacyDebugEngines = No
@@ -21,12 +22,12 @@ Global
 		Release|x64 = Release|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{A7ED15C8-F972-45B6-A205-63000BF71150}.Release|x64.ActiveCfg = Release|x64
+		{6818F446-6E9F-4988-9F7C-65F2E09C0B77}.Release|x64.ActiveCfg = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {668A98E8-6714-4EDC-9D9B-2FA741166A3E}
+		SolutionGuid = {09B0A355-3BBE-468D-9A4C-CED69A55698C}
 	EndGlobalSection
 EndGlobal

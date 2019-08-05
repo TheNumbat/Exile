@@ -699,7 +699,8 @@ void chunk::place_light(iv3 p, u8 i) {
 	t.pos = p.to_f() + v3(0.5f, 0.5f, 0.5f);
 
 	v3 col = v3((f32)i);
-	t.diffuse = t.specular = col;
+	t.diffuse = col;
+	t.specular = col * 4.0f;
 
 	lights.push(t);
 }
@@ -754,7 +755,11 @@ void chunk::do_gen() { PROF_FUNC
 
 			blocks[x][z][0] = block_id::bedrock;
 			for(u32 y = 1; y < height; y++) {
-				blocks[x][z][y] = block_id::stone;
+				if(randi() % 12 == 0) {
+					blocks[x][z][y] = block_id::iron_ore;
+				} else {
+					blocks[x][z][y] = block_id::stone;
+				}
 			}
 
 			if(x % 16 == 0 && z % 16 == 0) {
@@ -1709,7 +1714,8 @@ i32 block_textures::get_layers() {
 }
 
 void block_textures::push(asset_store* store, string name) {
-	exile->eng->ogl.push_tex_array(diffuse, store, name);
+	exile->eng->ogl.push_tex_array(diffuse, store, string::makef("%_diff"_,name));
+	exile->eng->ogl.push_tex_array(specular, store, string::makef("%_spec"_,name));
 }
 
 void block_textures::finish() {
@@ -1750,22 +1756,6 @@ void world::regen_blocks() {
 		0, true, true, false, {null}
 	};
 
-
-	tex_idx = block_tex.get_layers();
-	block_tex.push(store, "path_side"_);
-	block_tex.push(store, "dirt"_);
-	block_tex.push(store, "path_top"_);
-	
-	block_meta* path = get_info(block_id::path);
-	*path = {
-		block_id::path,
-		{true, true, true, true, true, true}, true,
-		{tex_idx, tex_idx + 1, tex_idx, tex_idx, tex_idx + 2, tex_idx},
-		{true, true, true, true, true, true},
-		0, true, true, false, {null}
-	};	
-
-
 	tex_idx = block_tex.get_layers();
 	block_tex.push(store, "slab_side"_);
 	block_tex.push(store, "slab_top"_);
@@ -1779,10 +1769,9 @@ void world::regen_blocks() {
 		0, true, false, true, FPTR(slab_model)
 	};	
 
-
 	tex_idx = block_tex.get_layers();
+	// block_tex.push(store, "torch_bot"_);
 	block_tex.push(store, "torch_side"_);
-	block_tex.push(store, "torch_bot"_);
 	block_tex.push(store, "torch_top"_);
 
 	block_meta* torch = get_info(block_id::torch);
@@ -1793,6 +1782,34 @@ void world::regen_blocks() {
 		{false, false, false, false, false, false},
 		16, true, false, true, FPTR(torch_model)
 	};	
+
+	tex_idx = block_tex.get_layers();
+	block_tex.push(store, "iron_ore"_);
+
+	block_meta* iron_ore = get_info(block_id::iron_ore);
+	*iron_ore = {
+		block_id::iron_ore,
+		{true, true, true, true, true, true}, true,
+		{tex_idx, tex_idx, tex_idx, tex_idx, tex_idx, tex_idx},
+		{true, true, true, true, true, true},
+		0, true, true, false, {null}
+	};
+
+#if 0
+	tex_idx = block_tex.get_layers();
+	block_tex.push(store, "path_side"_);
+	block_tex.push(store, "dirt"_);
+	block_tex.push(store, "path_top"_);
+	
+	block_meta* path = get_info(block_id::path);
+	*path = {
+		block_id::path,
+		{true, true, true, true, true, true}, true,
+		{tex_idx, tex_idx + 1, tex_idx, tex_idx, tex_idx + 2, tex_idx},
+		{true, true, true, true, true, true},
+		0, true, true, false, {null}
+	};	
+#endif
 
 	block_tex.finish();
 }

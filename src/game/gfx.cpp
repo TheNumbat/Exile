@@ -90,7 +90,7 @@ void exile_renderer::world_chunk(chunk* c, block_textures block_tex, texture_id 
 
 	cmd.info.fb_id = world_target.world_fb();
 	cmd.info.textures[0] = block_tex.diffuse;
-	cmd.info.textures[1] = sky;
+	cmd.info.textures[1] = block_tex.specular;
 	cmd.info.num_tris = c->mesh_faces;
 	cmd.info.user_data0 = c->w;
 	cmd.info.user_data1 = &settings;
@@ -741,7 +741,9 @@ CALLBACK void uniforms_mesh_chunk(shader_program* prog, render_command* cmd) {
 	m4 m = w->p.camera.offset() * cmd->info.model;
 	m4 mvp = cmd->info.proj * cmd->info.view * cmd->info.model;
 
-	glUniform1i(prog->location("blocks_tex"_), 0);
+	glUniform1i(prog->location("block_diffuse"_), 0);
+	glUniform1i(prog->location("block_specular"_), 1);
+
 	glUniform1i(prog->location("smooth_light"_), set->smooth_light);
 	glUniform1f(prog->location("units_per_voxel"_), (f32)chunk::units_per_voxel);
 

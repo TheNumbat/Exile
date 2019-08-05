@@ -87,8 +87,8 @@ void output_image(picojson::value def) {
 	file_asset_bitmap asset_bitmap;
 
 	// load bitmap
-	i32 width, height;
-	u8* bitmap = stbi_load((rel_path + file).c_str(), &width, &height, nullptr, 4);
+	i32 width, height, planes;
+	u8* bitmap = stbi_load((rel_path + file).c_str(), &width, &height, &planes, 4);
 
 	u32 pixel_stride = width * 4;
 	u32 pixel_size = pixel_stride * height;

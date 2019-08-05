@@ -11,7 +11,8 @@ layout (location = 0) out vec4 out_color;
 layout (location = 1) out vec4 out_norm;
 layout (location = 2) out vec4 out_light;
 
-uniform sampler2DArray blocks_tex;
+uniform sampler2DArray block_diffuse;
+uniform sampler2DArray block_specular;
 
 uniform float day_factor;
 uniform float ambient;
@@ -24,7 +25,7 @@ uniform int debug_show;
 vec3 pack_norm(vec3 norm, float val) {
 	vec2 xy = normalize(norm).xy;
 	float sign = 2.0f * step(0.0f, norm.z) - 1.0f;
-	return vec3(xy, sign * val);
+	return vec3(xy, sign * min(val, 1.0f));
 }
 
 vec3 calculate_light_base(vec3 light) {
@@ -47,9 +48,9 @@ void main() {
 
 	vec3 uvt = vec3(f_uv, f_t);
 	
-	out_color = texture(blocks_tex, uvt);
+	out_color = texture(block_diffuse, uvt);
 
-	float shiny = 1.0f / 4.0f; // TODO(max): materials
+	float shiny = 1.0f / (texture(block_specular, uvt).r * 256.0f);
 	out_norm = vec4(pack_norm(f_n, shiny), 1.0f);
 	
 	float ao0 = mix(f_ao.x, f_ao.y, fract(f_uv.x));
