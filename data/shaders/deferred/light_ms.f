@@ -50,7 +50,7 @@ vec3 calculate_light_dynamic(vec3 pos, vec3 norm, float shine) {
 	light_gather += max(diff * f_ldiff * a, 0.0f);
 		
 	float energy = (8.0f + shine) / (8.0f * PI); 
-	float spec = 2.0f * energy * pow(max(dot(norm, h), 0.0f), shine);
+	float spec = shine * energy * pow(max(dot(norm, h), 0.0f), 16.0f);
 
 	light_gather += max(spec * f_lspec * a, 0.0f);
 

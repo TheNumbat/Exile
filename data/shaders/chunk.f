@@ -50,7 +50,7 @@ void main() {
 	
 	out_color = texture(block_diffuse, uvt);
 
-	float shiny = 1.0f / (texture(block_specular, uvt).r * 256.0f);
+	float shiny = 1.0f / (texture(block_specular, uvt).r * 32.0f);
 	out_norm = vec4(pack_norm(f_n, shiny), 1.0f);
 	
 	float ao0 = mix(f_ao.x, f_ao.y, fract(f_uv.x));
