@@ -20,15 +20,19 @@ uniform mat4 ivp;
 
 const float PI = 3.14159265f;
 
-vec3 unpack_norm(vec3 pack) {
+vec3 unpack_norm(vec4 pack) {
 	return vec3(pack.xy, sign(pack.z) * sqrt(1.0f - dot(pack.xy, pack.xy)));
 }	
+
+vec2 unpack_spec(vec4 pack) {
+	return vec2(abs(pack.z), pack.w);
+}
 
 vec3 calc_pos(vec3 view, float depth) {
 	return view * near / depth;
 }
 
-vec3 calculate_light_dynamic(vec3 pos, vec3 norm, float shine) {
+vec3 calculate_light_dynamic(vec3 pos, vec3 norm, vec2 mspec) {
 
 	vec3 light_gather = vec3(0.0f);
 
@@ -49,10 +53,10 @@ vec3 calculate_light_dynamic(vec3 pos, vec3 norm, float shine) {
 	float diff = max(dot(norm,l), 0.0f);
 	light_gather += max(diff * f_ldiff * a, 0.0f);
 		
-	float energy = (8.0f + shine) / (8.0f * PI); 
-	float spec = shine * energy * pow(max(dot(norm, h), 0.0f), 16.0f);
+	float energy = (8.0f + mspec.y) / (8.0f * PI); 
+	float spec = energy * pow(max(dot(norm, h), 0.0f), mspec.y * 32.0f);
 
-	light_gather += max(spec * f_lspec * a, 0.0f);
+	light_gather += max(spec * f_lspec * a * mspec.x * 8.0f, 0.0f);
 
 	return light_gather;
 }
@@ -69,11 +73,11 @@ void main() {
 
 	gl_SampleMask[0] = 1 << i;
 	
-	vec3 norm_packed = texelFetch(norm_tex, coord, i).xyz;
-	float shine = 1.0f / abs(norm_packed.z);
+	vec4 norm_packed = texelFetch(norm_tex, coord, i);
 	vec3 norm = unpack_norm(norm_packed);
+	vec2 spec = unpack_spec(norm_packed);
 
-	vec3 result = calculate_light_dynamic(pos, norm, shine);
+	vec3 result = calculate_light_dynamic(pos, norm, spec);
 
 	if(debug_show == 10) {
 		light = vec4(instance_col, 1.0f);

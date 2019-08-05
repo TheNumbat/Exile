@@ -22,10 +22,10 @@ uniform bool ambient_occlusion;
 
 uniform int debug_show;
 
-vec3 pack_norm(vec3 norm, float val) {
+vec4 pack_norm(vec3 norm, vec2 val) {
 	vec2 xy = normalize(norm).xy;
 	float sign = 2.0f * step(0.0f, norm.z) - 1.0f;
-	return vec3(xy, sign * min(val, 1.0f));
+	return vec4(xy, sign * val.x, val.y);
 }
 
 vec3 calculate_light_base(vec3 light) {
@@ -50,8 +50,8 @@ void main() {
 	
 	out_color = texture(block_diffuse, uvt);
 
-	float shiny = 1.0f / (texture(block_specular, uvt).r * 32.0f);
-	out_norm = vec4(pack_norm(f_n, shiny), 1.0f);
+	vec2 specular = texture(block_specular, uvt).rb;
+	out_norm = pack_norm(f_n, specular);
 	
 	float ao0 = mix(f_ao.x, f_ao.y, fract(f_uv.x));
 	float ao1 = mix(f_ao.z, f_ao.w, fract(f_uv.x));

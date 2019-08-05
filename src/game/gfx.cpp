@@ -77,6 +77,7 @@ void exile_renderer::world_begin_chunks(world* w, bool offset) {
 		world_tasks.set_setting(render_setting::aa_shading, true);
 	if(offset)
 		world_tasks.set_setting(render_setting::poly_offset, true);
+	world_tasks.set_setting(render_setting::blend, (u32)blend_mode::none);
 }
 
 void exile_renderer::world_finish_chunks() {
@@ -235,7 +236,7 @@ void world_target_info::init(iv2 dim, i32 samples) {
 	w.col_buf = exile->eng->ogl.add_texture_target(dim, samples, gl_tex_format::rgb8, gl_pixel_data_format::rgb);
 	w.col_buf_target = exile->eng->ogl.make_target(gl_draw_target::color_0, w.col_buf);
 
-	w.norm_buf = exile->eng->ogl.add_texture_target(dim, samples, gl_tex_format::rgb16_snorm, gl_pixel_data_format::rgb);
+	w.norm_buf = exile->eng->ogl.add_texture_target(dim, samples, gl_tex_format::rgba16_snorm, gl_pixel_data_format::rgba);
 	w.norm_buf_target = exile->eng->ogl.make_target(gl_draw_target::color_1, w.norm_buf);
 
 	w.light_buf = exile->eng->ogl.add_texture_target(dim, samples, gl_tex_format::rgb16f, gl_pixel_data_format::rgb);

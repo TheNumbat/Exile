@@ -18,6 +18,7 @@ enum class block_id : u16 {
 	stone,
 	stone_slab,
 	torch,
+	iron_block,
 	iron_ore,
 
 	total_blocks
@@ -266,7 +267,10 @@ struct world_environment {
 };
 
 struct block_textures {
-	texture_id diffuse = -1, specular = -1;
+	
+	static const i32 TEX_DIM = 128;
+
+	texture_id diffuse = -1, specular = -1, normal = -1;
 	
 	void init();
 	void destroy();

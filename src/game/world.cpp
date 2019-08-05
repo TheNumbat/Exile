@@ -755,7 +755,7 @@ void chunk::do_gen() { PROF_FUNC
 			blocks[x][z][0] = block_id::bedrock;
 			for(u32 y = 1; y < height; y++) {
 				if(randi() % 12 == 0) {
-					blocks[x][z][y] = block_id::iron_ore;
+					blocks[x][z][y] = block_id::iron_block;
 				} else {
 					blocks[x][z][y] = block_id::stone;
 				}
@@ -765,7 +765,7 @@ void chunk::do_gen() { PROF_FUNC
 			// if(x % 16 == 0 && z % 16 == 0) {
 			// if(x % 4 == 0 && z % 4 == 0) {
 			// if(x == 0 && z == 0 && pos.x == 0 && pos.z == 0) {
-				blocks[x][z][height] = block_id::torch;
+				// blocks[x][z][height] = block_id::torch;
 				place_light(iv3(x, height, z), 16);
 			} else {
 				// blocks[x][z][height] = block_id::stone_slab;
@@ -1690,18 +1690,21 @@ CALLBACK void torch_model(mesh_chunk* m, block_meta* info, i32 dir, iv3 v__0, iv
 }
 
 void block_textures::init() {
-	diffuse = exile->eng->ogl.begin_tex_array(iv3(32, 32, exile->eng->ogl.info.max_texture_layers), 
+	diffuse = exile->eng->ogl.begin_tex_array(iv3(TEX_DIM, TEX_DIM, exile->eng->ogl.info.max_texture_layers), 
 											  texture_wrap::repeat, exile->w.settings.block_sampler, true, 1);
-	specular = exile->eng->ogl.begin_tex_array(iv3(32, 32, exile->eng->ogl.info.max_texture_layers), 
+	specular = exile->eng->ogl.begin_tex_array(iv3(TEX_DIM, TEX_DIM, exile->eng->ogl.info.max_texture_layers), 
 											   texture_wrap::repeat, exile->w.settings.block_sampler, true, 1);
+	normal = exile->eng->ogl.begin_tex_array(iv3(TEX_DIM, TEX_DIM, exile->eng->ogl.info.max_texture_layers), 
+											  texture_wrap::repeat, exile->w.settings.block_sampler, true, 1);
 }
 
 void block_textures::destroy() {
 	if(diffuse != -1) {
 		exile->eng->ogl.destroy_texture(diffuse);
 		exile->eng->ogl.destroy_texture(specular);
+		exile->eng->ogl.destroy_texture(normal);
 	}
-	diffuse = specular = -1;
+	diffuse = specular = normal = -1;
 }
 
 void block_textures::recreate() {
@@ -1714,13 +1717,15 @@ i32 block_textures::get_layers() {
 }
 
 void block_textures::push(asset_store* store, string name) {
-	exile->eng->ogl.push_tex_array(diffuse, store, string::makef("%_diff"_,name));
-	exile->eng->ogl.push_tex_array(specular, store, string::makef("%_spec"_,name));
+	exile->eng->ogl.push_tex_array(diffuse, store, string::makef("%"_,name));
+	exile->eng->ogl.push_tex_array(specular, store, string::makef("%_s"_,name));
+	exile->eng->ogl.push_tex_array(normal, store, string::makef("%_n"_,name));
 }
 
 void block_textures::finish() {
 	exile->eng->ogl.end_tex_array(diffuse);
 	exile->eng->ogl.end_tex_array(specular);
+	exile->eng->ogl.end_tex_array(normal);
 }
 
 void world::regen_blocks() {
@@ -1732,24 +1737,36 @@ void world::regen_blocks() {
 	i32 tex_idx = 0;
 
 	tex_idx = block_tex.get_layers();
-	block_tex.push(store, "bedrock"_);
+	block_tex.push(store, "stone"_);
 
-	block_meta* bedrock = get_info(block_id::bedrock);
-	*bedrock = {
-		block_id::bedrock,
+	block_meta* stone = get_info(block_id::stone);
+	*stone = {
+		block_id::stone,
 		{true, true, true, true, true, true}, true,
 		{tex_idx, tex_idx, tex_idx, tex_idx, tex_idx, tex_idx},
 		{true, true, true, true, true, true},
 		0, true, true, false, {null}
 	};
 
-
 	tex_idx = block_tex.get_layers();
-	block_tex.push(store, "stone"_);
+	block_tex.push(store, "iron_block"_);
 
-	block_meta* stone = get_info(block_id::stone);
-	*stone = {
-		block_id::stone,
+	block_meta* iron_ore = get_info(block_id::iron_block);
+	*iron_ore = {
+		block_id::iron_ore,
+		{true, true, true, true, true, true}, true,
+		{tex_idx, tex_idx, tex_idx, tex_idx, tex_idx, tex_idx},
+		{true, true, true, true, true, true},
+		0, true, true, false, {null}
+	};
+
+#if 0
+	tex_idx = block_tex.get_layers();
+	block_tex.push(store, "bedrock"_);
+
+	block_meta* bedrock = get_info(block_id::bedrock);
+	*bedrock = {
+		block_id::bedrock,
 		{true, true, true, true, true, true}, true,
 		{tex_idx, tex_idx, tex_idx, tex_idx, tex_idx, tex_idx},
 		{true, true, true, true, true, true},
@@ -1795,7 +1812,6 @@ void world::regen_blocks() {
 		0, true, true, false, {null}
 	};
 
-#if 0
 	tex_idx = block_tex.get_layers();
 	block_tex.push(store, "path_side"_);
 	block_tex.push(store, "dirt"_);
