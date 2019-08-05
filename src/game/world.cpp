@@ -761,7 +761,8 @@ void chunk::do_gen() { PROF_FUNC
 				}
 			}
 
-			if(x % 16 == 0 && z % 16 == 0) {
+			if(x % 8 == 0 && z % 8 == 0) {
+			// if(x % 16 == 0 && z % 16 == 0) {
 			// if(x % 4 == 0 && z % 4 == 0) {
 			// if(x == 0 && z == 0 && pos.x == 0 && pos.z == 0) {
 				blocks[x][z][height] = block_id::torch;

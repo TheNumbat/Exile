@@ -24,7 +24,7 @@ enum class exile_component_view : i32 {
 struct render_settings {
 	
 	float ambient_factor = 0.005f;
-	v4 ao_curve = v4(0.6f, 0.7f, 0.8f, 1.0f);
+	v4 ao_curve = v4(0.25f, 0.4f, 0.6f, 0.9f);
 
 	bool wireframe = false;
 	bool cull_backface = true;

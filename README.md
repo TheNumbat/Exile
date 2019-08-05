@@ -47,8 +47,8 @@ cd data
 ..\build\main.exe
 ```
 ### Screenshots
-![shot1](https://i.imgur.com/rZDhSEM.png)
-![shot1](https://i.imgur.com/hirAEHY.png)
+![shot0](https://i.imgur.com/trQ4E0s.png)
+![shot1](https://i.imgur.com/ckmEU0W.png)
 
 ### Tools
 - Engine & Game:
