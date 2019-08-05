@@ -79,8 +79,6 @@ custom_target('assets',
   			   build_by_default: true, build_always_stale : true,
   			   command : [asset_builder, '@INPUT@', '@OUTPUT@'])
 
-run_command('cp', 'build/pack.exile', 'data/pack.exile')
-
 # Build meta-program
 
 libclang = []

@@ -1770,8 +1770,8 @@ void world::regen_blocks() {
 	};	
 
 	tex_idx = block_tex.get_layers();
-	// block_tex.push(store, "torch_bot"_);
 	block_tex.push(store, "torch_side"_);
+	block_tex.push(store, "torch_bot"_);
 	block_tex.push(store, "torch_top"_);
 
 	block_meta* torch = get_info(block_id::torch);
@@ -1794,22 +1794,6 @@ void world::regen_blocks() {
 		{true, true, true, true, true, true},
 		0, true, true, false, {null}
 	};
-
-#if 0
-	tex_idx = block_tex.get_layers();
-	block_tex.push(store, "path_side"_);
-	block_tex.push(store, "dirt"_);
-	block_tex.push(store, "path_top"_);
-	
-	block_meta* path = get_info(block_id::path);
-	*path = {
-		block_id::path,
-		{true, true, true, true, true, true}, true,
-		{tex_idx, tex_idx + 1, tex_idx, tex_idx, tex_idx + 2, tex_idx},
-		{true, true, true, true, true, true},
-		0, true, true, false, {null}
-	};	
-#endif
 
 	block_tex.finish();
 }
