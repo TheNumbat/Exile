@@ -38,8 +38,8 @@ struct render_settings {
 
 	exile_component_view view =  exile_component_view::none;
 
-	f32 torch_cutoff = 5.0f;
-	f32 spot_cutoff = 2.0f;
+	f32 torch_cutoff = 3.5f;
+	f32 spot_cutoff = 0.5f;
 
 	i32 num_samples = 4;
 	f32 gamma = 2.1f;

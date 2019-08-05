@@ -200,7 +200,7 @@ struct player_light {
 	v3 specular = v3(5.0f);
 	v3 diffuse = v3(5.0f);
 	v2 cutoff = v2(15.0f,30.0f);
-	v3 atten = v3(1.0f,0.5f,0.75f);
+	v3 atten = v3(1.0f,0.5f,1.0f);
 };
 
 struct player {

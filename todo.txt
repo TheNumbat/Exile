@@ -14,6 +14,7 @@ Working To-Do:
 			definitions + code
 		but how do we continue hot reloading? add source paths and regenerate asset pack?
 		probably just move hot reloading out to the asset level
+		!! texture editor 
 
 	Rendering:
 		[features]
