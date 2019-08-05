@@ -266,7 +266,9 @@ struct world_environment {
 };
 
 struct block_textures {
-	texture_id diffuse = -1, specular = -1;
+	static const i32 TEX_DIM = 32;
+
+	texture_id diffuse = -1, specular = -1, normal = -1;
 	
 	void init();
 	void destroy();

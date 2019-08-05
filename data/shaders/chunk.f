@@ -13,6 +13,7 @@ layout (location = 2) out vec4 out_light;
 
 uniform sampler2DArray block_diffuse;
 uniform sampler2DArray block_specular;
+uniform sampler2DArray block_normal;
 
 uniform float day_factor;
 uniform float ambient;
