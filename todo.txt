@@ -18,16 +18,15 @@ Working To-Do:
 
 	Rendering:
 		[features]
+		[week]
 		dynamic lights
 			normal map/heightmap textures
-			reflective textures / screen space reflections
-			randomized textures / procedural specular/normal/reflective textures
+			randomized textures
 			need some kind of spatial reference for lights, to add/remove
-		[next week]
 		dynamic shadows
+			directional light shadows
 			spotlight shadows
 			point light shadows
-			directional light shadows
 			
 		[final week]
 		better fog (e.g. fog undergound should be dark -- apply lighting to fog)
