@@ -742,7 +742,7 @@ bool operator==(uv3 l, uv3 r) {
 bool operator==(v4 l, v4 r) {
 	__m128 cmp = _mm_cmpeq_ps(l.packed, r.packed);
 	i32 test = _mm_movemask_ps(cmp);
-	return test == 0x0000000f;
+	return test == 0xf;
 }
 bool operator==(bv4 l, bv4 r) {
 	return l.x == r.x && l.y == r.y && l.z == r.z && l.w == r.w;
@@ -756,7 +756,7 @@ bool operator==(m4 l, m4 r) {
 bool operator==(r2 l, r2 r) {
 	__m128 cmp = _mm_cmpeq_ps(l.packed, r.packed);
 	i32 test = _mm_movemask_ps(cmp);
-	return test == 0x0000000f;
+	return test == 0xf;
 }
 bool operator==(ur2 l, ur2 r) {
 	return l.x == r.x && l.y == r.y && l.w == r.w && l.h == r.h;

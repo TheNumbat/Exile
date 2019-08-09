@@ -123,7 +123,7 @@ void main() {
 	// Output
 
 	gl_Position = mvp * vec4(v0, 1.0);
-
+	
 	f_n = cross(v2 - v1, v3 - v1);
 	f_uv = q.uv * vec2(comp1[gl_VertexID], comp2[gl_VertexID]);
 	

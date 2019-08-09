@@ -19,17 +19,14 @@ Working To-Do:
 	Rendering:
 		[features]
 		dynamic lights
-			normal map/heightmap textures
-			reflective textures / screen space reflections
-			randomized textures / procedural specular/normal/reflective textures
+			change specular maps to have intensity + power
+			normal maps
 			need some kind of spatial reference for lights, to add/remove
-		[next week]
+			randomized textures / procedural specular/normal/reflective textures
 		dynamic shadows
 			spotlight shadows
 			point light shadows
 			directional light shadows
-			
-		[final week]
 		better fog (e.g. fog undergound should be dark -- apply lighting to fog)
 			http://www.sea-of-memes.com/LetsCode37/LetsCode37.html
 		bloom

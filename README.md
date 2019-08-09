@@ -70,8 +70,15 @@ See todo.txt for plans.
 - Game
   - World generation 
     - Parallelized chunk generation, updates, and voxel lighting
-  - Hybrid voxel terrain meshing
-  - Voxel face rendering pipeline
+  - Rendering
+    - Hybrid voxel terrain meshing
+    - Static voxel-based light propagation
+    - Dynamic directional/spot/point lights 
+    - Modern OpenGL deferred renderer with light volumes
+    - Effect pipeline, gamma
+    - Diffuse, specular, and normal block textures
+    - MSAA 
+    - Future: dynamic shadow mapping, bloom, HDR, screen-space AA
   - Time and environment assets
   - Block data framework
   - Player movement
