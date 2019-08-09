@@ -20,13 +20,14 @@ Working To-Do:
 		[features]
 		dynamic lights
 			change specular maps to have intensity + power
-			normal maps
+			use normal from normal map texture
+			randomized textures
 			need some kind of spatial reference for lights, to add/remove
-			randomized textures / procedural specular/normal/reflective textures
 		dynamic shadows
+			directional light shadows
 			spotlight shadows
 			point light shadows
-			directional light shadows
+
 		better fog (e.g. fog undergound should be dark -- apply lighting to fog)
 			http://www.sea-of-memes.com/LetsCode37/LetsCode37.html
 		bloom
