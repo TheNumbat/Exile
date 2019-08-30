@@ -1,9 +1,6 @@
 
 Working To-Do:
 
-	- Want to finish all rendering features + explore the performance/structure enhancements by school
-	- when this is done, write really really long post about everything in the graphics pipe
-
 	Future: iterate on world and QoL features, and begin actual game-play
 		Really want to learn networking/support multi-player
 		Maybe modding, but first a from-scratch playable multi-player core 
