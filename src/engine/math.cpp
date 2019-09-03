@@ -747,12 +747,6 @@ bool operator==(v4 l, v4 r) {
 bool operator==(bv4 l, bv4 r) {
 	return l.x == r.x && l.y == r.y && l.z == r.z && l.w == r.w;
 }
-bool operator==(m4 l, m4 r) {
-	for(i32 i = 0; i < 4; i++)
-		if(l.columns[i] != r.columns[i])
-			return false;
-	return true;
-}
 bool operator==(r2 l, r2 r) {
 	__m128 cmp = _mm_cmpeq_ps(l.packed, r.packed);
 	i32 test = _mm_movemask_ps(cmp);
@@ -794,9 +788,6 @@ bool operator!=(v4 l, v4 r) {
 bool operator!=(bv4 l, bv4 r) {
 	return !(l == r);
 }
-bool operator!=(m4 l, m4 r) {
-	return !(l == r);
-}
 bool operator!=(r2 l, r2 r) {
 	return !(l == r);
 }
@@ -828,18 +819,45 @@ bool fudge(v4 l, v4 r) {
 	return fudge(l.x,r.x) && fudge(l.y,r.y) && fudge(l.z,r.z) && fudge(l.w,r.w);
 }
 
+bool operator==(m4 l, m4 r) {
+	return l.columns[0] == r.columns[0] &&
+		   l.columns[1] == r.columns[1] &&
+		   l.columns[2] == r.columns[2] &&
+		   l.columns[3] == r.columns[3];
+}
+bool operator!=(m4 l, m4 r) {
+	return l.columns[0] != r.columns[0] ||
+		   l.columns[1] != r.columns[1] ||
+		   l.columns[2] != r.columns[2] ||
+		   l.columns[3] != r.columns[3];
+}
+
+m4 transpose(m4 m) {
+	m4 ret;
+	for(i32 i = 0; i < 4; i++)
+		for(u8 j = 0; j < 4; j++)
+			ret[i][j] = m[j][i];
+	return ret;
+}
+
 m4 operator+(m4 l, m4 r) {
 	m4 ret;
-	for(i32 i = 0; i < 4; i++)
-		ret.packed[i] = _mm_add_ps(l.packed[i], r.packed[i]);
+	ret.packed[0] = _mm_add_ps(l.packed[0], r.packed[0]);
+	ret.packed[1] = _mm_add_ps(l.packed[1], r.packed[1]);
+	ret.packed[2] = _mm_add_ps(l.packed[2], r.packed[2]);
+	ret.packed[3] = _mm_add_ps(l.packed[3], r.packed[3]);
 	return ret;
 }
+
 m4 operator-(m4 l, m4 r) {
 	m4 ret;
-	for(i32 i = 0; i < 4; i++)
-		ret.packed[i] = _mm_sub_ps(l.packed[i], r.packed[i]);
+	ret.packed[0] = _mm_sub_ps(l.packed[0], r.packed[0]);
+	ret.packed[1] = _mm_sub_ps(l.packed[1], r.packed[1]);
+	ret.packed[2] = _mm_sub_ps(l.packed[2], r.packed[2]);
+	ret.packed[3] = _mm_sub_ps(l.packed[3], r.packed[3]);
 	return ret;
 }
+
 m4 operator*(m4 l, m4 r) {
 	m4 ret;
     for(i32 i = 0; i < 4; i++) {
@@ -853,32 +871,32 @@ m4 operator*(m4 l, m4 r) {
     }
     return ret;
 }
+
 v4 operator*(m4 l, v4 r) {
-    v4 ret;
-    m4 lt = transpose(l);
-    for(i32 i = 0; i < 4; i++)
-        ret[i] = dot(lt.columns[i], r);
-    return ret;
+    return (r.x * l.columns[0] + r.y * l.columns[1]) +
+    	   (r.z * l.columns[2] + r.w * l.columns[3]);
 }
+
 m4 operator*(m4 l, f32 r) {
 	m4 ret;
-	for(i32 i = 0; i < 4; i++)
-		ret.packed[i] = _mm_mul_ps(l.packed[i], _mm_set1_ps(r));
+	__m128 mul = _mm_set1_ps(r);
+	ret.packed[0] = _mm_mul_ps(l.packed[0], mul);
+	ret.packed[1] = _mm_mul_ps(l.packed[1], mul);
+	ret.packed[2] = _mm_mul_ps(l.packed[2], mul);
+	ret.packed[3] = _mm_mul_ps(l.packed[3], mul);
 	return ret;
 }
+
 m4 operator/(m4 l, f32 r) {
 	m4 ret;
-	for(i32 i = 0; i < 4; i++)
-		ret.packed[i] = _mm_div_ps(l.packed[i], _mm_set1_ps(r));
+	__m128 mul = _mm_set1_ps(r);
+	ret.packed[0] = _mm_div_ps(l.packed[0], mul);
+	ret.packed[1] = _mm_div_ps(l.packed[1], mul);
+	ret.packed[2] = _mm_div_ps(l.packed[2], mul);
+	ret.packed[3] = _mm_div_ps(l.packed[3], mul);
 	return ret;
 }
-m4 transpose(m4 m) {
-	m4 ret;
-	for(i32 i = 0; i < 4; i++)
-		for(u8 j = 0; j < 4; j++)
-			ret[i][j] = m[j][i];
-	return ret;
-}
+
 m4 ortho(f32 l, f32 r, f32 b, f32 t, f32 n, f32 f) {
     m4 ret;
     ret[0][0] = 2.0f / (r - l);
