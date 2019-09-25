@@ -3,7 +3,7 @@
 
 #include "basic.h"
 
-struct string {
+struct norefl string {
 	char* c_str = null;
 	u32 cap	    = 0;
 	u32 len		= 0;

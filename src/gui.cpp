@@ -1,8 +1,8 @@
 
-#include <imgui.h>
-#include <imgui_impl_sdl.h>
-#include <imgui_impl_opengl3.h>
-#include <SDL2/SDL.h>
+#include <imgui/imgui.h>
+#include <imgui/imgui_impl_sdl.h>
+#include <imgui/imgui_impl_opengl3.h>
+#include <sdl/SDL.h>
 #include <glad/glad.h>
 
 #include "gui.h"

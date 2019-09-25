@@ -22,7 +22,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <glad.h>
+#include <glad/glad.h>
 
 #ifdef _MSC_VER
 #pragma warning(push)

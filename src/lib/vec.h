@@ -77,7 +77,7 @@ struct vec {
 		return data + size;
 	}
 
-	struct split {
+	struct norefl split {
 		const vec<T> l, r;
 	};
 
