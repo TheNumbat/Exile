@@ -1,14 +1,9 @@
-.vscode
 build/
 .vs/
 x64/
 Debug/
-
-*.exile
 bin/*.db
 bin/.vs
 bin/*.opendb
-bin/project.sublime-workspace
-data/log_*
-log_*
 imgui.ini
+data/imgui.ini
