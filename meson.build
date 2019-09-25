@@ -25,7 +25,7 @@ meta_compiler = executable('meta', 'src/meta.cpp',
 
 gen_src = custom_target('meta_output',
                         input : 'src/meta_input.h',
-                        output : 'meta_types.cpp',
+                        output : 'meta_types.h',
                         build_by_default : true, build_always_stale : true,
                         command : [meta_compiler, '@INPUT@', '@OUTPUT@', '-I../src/', '-I../deps/', '-xc++', '-DRUNNING_META'])
 
@@ -39,12 +39,12 @@ sources = [
 	'deps/imgui/imgui_impl_opengl3.cpp',
 	'deps/glad/glad.cpp',
 	'src/lib/string.cpp',
-	'src/lib/reflect.cpp',
 	'src/lib/alloc.cpp',
 	'src/platform.cpp',
 	'src/engine.cpp',
 	'src/gui.cpp',
-	'src/main.cpp']
+	'src/main.cpp',
+	gen_src]
 
 link = []
 args = []

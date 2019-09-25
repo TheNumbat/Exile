@@ -3,70 +3,100 @@
 
 #include "basic.h"
 #include "string.h"
+#include <stdio.h>
 
 typedef u64 type_id;
 
-enum class Type : u8 {
-    void_ = 0,
-	int_,
-	float_,
-	bool_,
-	string_,
-	ptr_,
-	func_,
-	array_,
-	struct_,
-	enum_
+enum class Type_Type : u8 {
+    void_,
+    int_,
+    float_,
+    bool_,
+    string_,
+    array_
 };
 
-struct Type_Void {};
-struct Type_Int {
-	bool is_signed = false;
+template<typename T, typename... Ts>
+struct Type_List {
+    using head = T;
+    using tail = Type_List<Ts...>;
 };
-struct Type_Float {};
-struct Type_Bool {};
-struct Type_Ptr {
-	type_id to = 0;
+template<typename T>
+struct Type_List<T> {
+    using head = T;
+    using tail = void;
 };
-struct Type_Func {
-	string 		signature;
-	type_id 	return_type			= 0;
-	type_id 	param_types[16] 	= {};
-	u32 		param_count 		= 0;
-};
-struct Type_Array {
-	type_id of 		= 0;
-	u64 	length 	= 0;
-};
-struct Type_Struct {
-	type_id		member_types[96]	= {};
-	string 		member_names[96];
-	u32 		member_offsets[96]	= {};
-	u32 		member_count		= 0;
-};
-struct Type_Enum {
-	type_id 	base_type			= 0;
-	string 		member_names[256];
-	i64			member_values[256] 	= {};
-	u32 		member_count		= 0;
-};
-struct Type_String {};
 
-struct Type_Info {
-	Type type	 = Type::void_;
-	type_id hash = 0;
-	u32 size 	 = 0;
-	string name;
-	union {
-		Type_Void	void_;
-		Type_Int    int_;
-		Type_Float  float_;
-		Type_Bool   bool_;
-		Type_Ptr    ptr_;
-		Type_Func 	func_;
-		Type_Array	array_;
-		Type_Struct struct_;
-		Type_Enum   enum_;
-		Type_String string_;
-	};
+template<typename T> struct Type_Info;
+#include "../build/meta_types.h"
+
+template<typename E, Type_Type T>
+struct print_type {};
+
+template<typename T> 
+void print(T first);
+template<typename T, typename... Ts> 
+void print(T first, Ts... args);
+
+template<>
+struct print_type<void, Type_Type::void_> {
+    static void print() {
+        puts("void");
+    }
 };
+
+template<typename E>
+struct print_type<E, Type_Type::int_> {
+    static void print(E val) {
+        printf("%d", val);
+    }
+};
+
+template<typename E>
+struct print_type<E, Type_Type::float_> {
+    static void print(E val) {
+        printf("%f", val);
+    }
+};
+
+template<typename E>
+struct print_type<E, Type_Type::bool_> {
+    static void print(E val) {
+        val ? puts("true") : puts("false");
+    }
+};
+
+template<typename E>
+struct print_type<E, Type_Type::string_> {
+    static void print(E val) {
+        puts(val.c_str);
+    }
+};
+
+template<typename E>
+struct print_type<E, Type_Type::array_> {
+    static void print(E val) {
+        puts("[");
+        for(usize i = 0; i < Type_Info<E>::len; i++) {
+            ::print(val[i]);
+            if(i != Type_Info<E>::len - 1) {
+                puts(", ");
+            }
+        }
+        puts("]");
+    }
+};
+
+template<typename T>
+void print(T first) {
+    print_type<T, Type_Info<T>::type>::print(first);
+}
+template<typename T, typename... Ts>
+void print(T first, Ts... args) {
+
+    print_type<T, Type_Info<T>::type>::print(first);
+    puts(", ");
+	print(args...);
+}
+
+

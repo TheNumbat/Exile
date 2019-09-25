@@ -405,23 +405,23 @@ void print_record(CXType type, bool just_print = false) {
 		log_out << "WARN: struct " << type_name << " has too many fields, skipping!" << std::endl;
 	}
 
-	fout << "\t[]() -> void {" << std::endl
-		 << "\t\t_type_info this_type_info;" << std::endl
-		 << "\t\tthis_type_info.type_type = Type::_struct;" << std::endl
-		 << "\t\tthis_type_info.size = sizeof(" << type_name << ");" << std::endl
-		 << "\t\tthis_type_info.name = \"" << name << "\"_;" << std::endl
-		 << "\t\tthis_type_info.hash = (type_id)typeid(" << type_name << ").hash_code();" << std::endl;
+	// fout << "\t[]() -> void {" << std::endl
+	// 	 << "\t\t_type_info this_type_info;" << std::endl
+	// 	 << "\t\tthis_type_info.type_type = Type::_struct;" << std::endl
+	// 	 << "\t\tthis_type_info.size = sizeof(" << type_name << ");" << std::endl
+	// 	 << "\t\tthis_type_info.name = \"" << name << "\"_;" << std::endl
+	// 	 << "\t\tthis_type_info.hash = (type_id)typeid(" << type_name << ").hash_code();" << std::endl;
 
-	field_client data;
-	data.outer = type_name;
-	data.unexposed = type.kind == CXType_Unexposed;
+	// field_client data;
+	// data.outer = type_name;
+	// data.unexposed = type.kind == CXType_Unexposed;
 
-	clang_Type_visitFields_NotBroken(type, print_field, &data);
+	// clang_Type_visitFields_NotBroken(type, print_field, &data);
 	
-	fout << "\t\tthis_type_info._struct.member_count = " << data.i << ";" << std::endl
-		 << "\t\t_type_info* val = type_table.get_or_insert_blank(this_type_info.hash);" << std::endl
-		 << "\t\t*val = this_type_info;" << std::endl
-		 << "\t}();" << std::endl << std::endl;
+	// fout << "\t\tthis_type_info._struct.member_count = " << data.i << ";" << std::endl
+	// 	 << "\t\t_type_info* val = type_table.get_or_insert_blank(this_type_info.hash);" << std::endl
+	// 	 << "\t\t*val = this_type_info;" << std::endl
+	// 	 << "\t}();" << std::endl << std::endl;
 }
 
 void print_func_pointer(CXType type, bool just_print = false) {
@@ -445,27 +445,27 @@ void print_func_pointer(CXType type, bool just_print = false) {
 		log_out << "WARN: function pointer " << func_type_name << " has too many arguments, skipping!" << std::endl;
 	}
 
-	fout << "\t[]() -> void {" << std::endl
-		 << "\t\t_type_info this_type_info;" << std::endl
-		 << "\t\tthis_type_info.type_type = Type::_func;" << std::endl
-		 << "\t\tthis_type_info.size = sizeof(" << ptr_type_name << ");" << std::endl
-		 << "\t\tthis_type_info.hash = (type_id)typeid(" << ptr_type_name << ").hash_code();" << std::endl
-		 << "\t\tthis_type_info.name = \"" << func_type_name << "\"_;" << std::endl
-		 << "\t\tthis_type_info._func.signature = \"" << func_type_name << "\"_;" << std::endl
-		 << "\t\tthis_type_info._func.return_type = TYPEINFO_GET_HASH(" << return_type_name << ");" << std::endl
-		 << "\t\tthis_type_info._func.param_count = " << clang_getNumArgTypes(func) << ";" << std::endl;
+	// fout << "\t[]() -> void {" << std::endl
+	// 	 << "\t\t_type_info this_type_info;" << std::endl
+	// 	 << "\t\tthis_type_info.type_type = Type::_func;" << std::endl
+	// 	 << "\t\tthis_type_info.size = sizeof(" << ptr_type_name << ");" << std::endl
+	// 	 << "\t\tthis_type_info.hash = (type_id)typeid(" << ptr_type_name << ").hash_code();" << std::endl
+	// 	 << "\t\tthis_type_info.name = \"" << func_type_name << "\"_;" << std::endl
+	// 	 << "\t\tthis_type_info._func.signature = \"" << func_type_name << "\"_;" << std::endl
+	// 	 << "\t\tthis_type_info._func.return_type = TYPEINFO_GET_HASH(" << return_type_name << ");" << std::endl
+	// 	 << "\t\tthis_type_info._func.param_count = " << clang_getNumArgTypes(func) << ";" << std::endl;
 
-	for(int i = 0; i < clang_getNumArgTypes(func); i++) {
+	// for(int i = 0; i < clang_getNumArgTypes(func); i++) {
 		
-		CXType param = clang_getArgType(func, i);
-		std::string param_type_name = to_string(clang_getTypeSpelling(param));
+	// 	CXType param = clang_getArgType(func, i);
+	// 	std::string param_type_name = to_string(clang_getTypeSpelling(param));
 
-		fout << "\t\tthis_type_info._func.param_types[" << i << "] = TYPEINFO_GET_HASH(" << param_type_name << ");" << std::endl;
-	}
+	// 	fout << "\t\tthis_type_info._func.param_types[" << i << "] = TYPEINFO_GET_HASH(" << param_type_name << ");" << std::endl;
+	// }
 
-	fout << "\t\t_type_info* val = type_table.get_or_insert_blank(this_type_info.hash);" << std::endl
-		 << "\t\t*val = this_type_info;" << std::endl
-		 << "\t}();" << std::endl << std::endl;	
+	// fout << "\t\t_type_info* val = type_table.get_or_insert_blank(this_type_info.hash);" << std::endl
+	// 	 << "\t\t*val = this_type_info;" << std::endl
+	// 	 << "\t}();" << std::endl << std::endl;	
 }
 
 void print_pointer(CXType type, bool just_print = false) {
@@ -489,16 +489,16 @@ void print_pointer(CXType type, bool just_print = false) {
 	std::string type_name = to_string(clang_getTypeSpelling(type));
 	std::string to_name = to_string(clang_getTypeSpelling(to));
 
-	fout << "\t[]() -> void {" << std::endl
-		 << "\t\t_type_info this_type_info;" << std::endl
-		 << "\t\tthis_type_info.type_type = Type::_ptr;" << std::endl
-		 << "\t\tthis_type_info.size = sizeof(" << type_name << ");" << std::endl
-		 << "\t\tthis_type_info.name = \"" << to_name << "\"_;" << std::endl
-		 << "\t\tthis_type_info.hash = (type_id)typeid(" << type_name << ").hash_code();" << std::endl
-		 << "\t\tthis_type_info._ptr.to = TYPEINFO_GET_HASH(" << to_name << ");" << std::endl
-		 << "\t\t_type_info* val = type_table.get_or_insert_blank(this_type_info.hash);" << std::endl
-		 << "\t\t*val = this_type_info;" << std::endl
-		 << "\t}();" << std::endl << std::endl;
+	// fout << "\t[]() -> void {" << std::endl
+	// 	 << "\t\t_type_info this_type_info;" << std::endl
+	// 	 << "\t\tthis_type_info.type_type = Type::_ptr;" << std::endl
+	// 	 << "\t\tthis_type_info.size = sizeof(" << type_name << ");" << std::endl
+	// 	 << "\t\tthis_type_info.name = \"" << to_name << "\"_;" << std::endl
+	// 	 << "\t\tthis_type_info.hash = (type_id)typeid(" << type_name << ").hash_code();" << std::endl
+	// 	 << "\t\tthis_type_info._ptr.to = TYPEINFO_GET_HASH(" << to_name << ");" << std::endl
+	// 	 << "\t\t_type_info* val = type_table.get_or_insert_blank(this_type_info.hash);" << std::endl
+	// 	 << "\t\t*val = this_type_info;" << std::endl
+	// 	 << "\t}();" << std::endl << std::endl;
 }
 
 void print_array(CXType type, bool just_print = false) {
@@ -513,17 +513,16 @@ void print_array(CXType type, bool just_print = false) {
 	std::string type_name = to_string(clang_getTypeSpelling(type));
 	std::string base_type_name = to_string(clang_getTypeSpelling(underlying));
 
-	fout << "\t[]() -> void {" << std::endl
-		 << "\t\t_type_info this_type_info;" << std::endl
-		 << "\t\tthis_type_info.type_type = Type::_array;" << std::endl
-		 << "\t\tthis_type_info.size = sizeof(" << type_name << ");" << std::endl
-		 << "\t\tthis_type_info.name = \"" << type_name << "\"_;" << std::endl
-		 << "\t\tthis_type_info.hash = (type_id)typeid(" << type_name << ").hash_code();" << std::endl
-		 << "\t\tthis_type_info._array.of = TYPEINFO_GET_HASH(" << base_type_name << ");" << std::endl
-		 << "\t\tthis_type_info._array.length = " << length << ";" << std::endl
-		 << "\t\t_type_info* val = type_table.get_or_insert_blank(this_type_info.hash);" << std::endl
-		 << "\t\t*val = this_type_info;" << std::endl
-		 << "\t}();" << std::endl << std::endl;
+	static int count = 0;
+	fout << "typedef " << type_name << " _" << count << ";" << std::endl
+		 << "template<> struct Type_Info<const _" << count << "&>" << std::endl
+		 << "\tstatic constexpr char name[] = \"" << type_name << "\";" << std::endl
+		 << "\tstatic constexpr usize size = sizeof(" << type_name << ");" << std::endl
+		 << "\tstatic constexpr Type_Type type = Type_Type::array_;" << std::endl
+		 << "\tstatic constexpr usize len = " << length << ";" << std::endl
+		 << "\tusing underlying = " << base_type_name << ";" << std::endl
+		 << "};" << std::endl;
+	count++;
 }
 
 bool type_is_not_specified(CXType type) {
@@ -635,131 +634,85 @@ void print_results() {
 void print_basic_types() {
 
 	fout << R"STR(
-	{
-		_type_info void_t;
-		void_t.type_type 		= Type::_void;
-		void_t.size				= 0;
-		void_t.name 			= "void"_;
-		void_t._int.is_signed 	= true;
-		void_t.hash = (type_id)typeid(void).hash_code();
-		type_table.insert(void_t.hash, void_t, false);
-	}
-	{
-		_type_info char_t;
-		char_t.type_type 		= Type::_int;
-		char_t.size				= sizeof(char);
-		char_t.name 			= "char"_;
-		char_t._int.is_signed 	= true;
-		char_t.hash = (type_id)typeid(char).hash_code();
-		type_table.insert(char_t.hash, char_t, false);
-	}
-	{
-		_type_info u8_t;
-		u8_t.type_type 		= Type::_int;
-		u8_t.size			= sizeof(u8);
-		u8_t.name 			= "u8"_;
-		u8_t._int.is_signed = false;
-		u8_t.hash = (type_id)typeid(u8).hash_code();
-		type_table.insert(u8_t.hash, u8_t, false);
-	}
-	{
-		_type_info i8_t;
-		i8_t.type_type 		= Type::_int;
-		i8_t.size			= sizeof(i8);
-		i8_t.name 			= "i8"_;
-		i8_t._int.is_signed = true;
-		i8_t.hash = (type_id)typeid(i8).hash_code();
-		type_table.insert(i8_t.hash, i8_t, false);
-	}
-	{
-		_type_info u16_t;
-		u16_t.type_type 		= Type::_int;
-		u16_t.size				= sizeof(u16);
-		u16_t.name 				= "u16"_;
-		u16_t._int.is_signed 	= false;
-		u16_t.hash = (type_id)typeid(u16).hash_code();
-		type_table.insert(u16_t.hash, u16_t, false);
-	}
-	{
-		_type_info i16_t;
-		i16_t.type_type 		= Type::_int;
-		i16_t.size				= sizeof(i16);
-		i16_t.name 				= "i16"_;
-		i16_t._int.is_signed 	= true;
-		i16_t.hash = (type_id)typeid(i16).hash_code();
-		type_table.insert(i16_t.hash, i16_t, false);
-	}
-	{
-		_type_info u32_t;
-		u32_t.type_type 		= Type::_int;
-		u32_t.size				= sizeof(u32);
-		u32_t.name 				= "u32"_;
-		u32_t._int.is_signed 	= false;
-		u32_t.hash = (type_id)typeid(u32).hash_code();
-		type_table.insert(u32_t.hash, u32_t, false);
-	}
-	{
-		_type_info i32_t;
-		i32_t.type_type 		= Type::_int;
-		i32_t.size				= sizeof(i32);
-		i32_t.name 				= "i32"_;
-		i32_t._int.is_signed 	= true;
-		i32_t.hash = (type_id)typeid(i32).hash_code();
-		type_table.insert(i32_t.hash, i32_t, false);
-	}
-	{
-		_type_info u64_t;
-		u64_t.type_type 		= Type::_int;
-		u64_t.size				= sizeof(u64);
-		u64_t.name 				= "u64"_;
-		u64_t._int.is_signed 	= false;
-		u64_t.hash = (type_id)typeid(u64).hash_code();
-		type_table.insert(u64_t.hash, u64_t, false);
-	}
-	{
-		_type_info i64_t;
-		i64_t.type_type 		= Type::_int;
-		i64_t.size				= sizeof(i64);
-		i64_t.name 				= "i64"_;
-		i64_t._int.is_signed 	= true;
-		i64_t.hash = (type_id)typeid(i64).hash_code();
-		type_table.insert(i64_t.hash, i64_t, false);
-	}
-	{
-		_type_info f32_t;
-		f32_t.type_type 		= Type::_float;
-		f32_t.size				= sizeof(f32);
-		f32_t.name 				= "f32"_;
-		f32_t._int.is_signed 	= true;
-		f32_t.hash = (type_id)typeid(f32).hash_code();
-		type_table.insert(f32_t.hash, f32_t, false);
-	}
-	{
-		_type_info f64_t;
-		f64_t.type_type 		= Type::_float;
-		f64_t.size				= sizeof(f64);
-		f64_t.name 				= "f64"_;
-		f64_t._int.is_signed 	= true;
-		f64_t.hash = (type_id)typeid(f64).hash_code();
-		type_table.insert(f64_t.hash, f64_t, false);
-	}
-	{
-		_type_info bool_t;
-		bool_t.type_type 		= Type::_bool;
-		bool_t.size				= sizeof(bool);
-		bool_t.name 			= "bool"_;
-		bool_t._int.is_signed 	= true;
-		bool_t.hash = (type_id)typeid(bool).hash_code();
-		type_table.insert(bool_t.hash, bool_t, false);
-	}
-	{
-		_type_info string_t;
-		string_t.type_type 		= Type::_string;
-		string_t.size			= sizeof(string);
-		string_t.name 			= "string"_;
-		string_t.hash = (type_id)typeid(string).hash_code();
-		type_table.insert(string_t.hash, string_t, false);
-	}
+template<> struct Type_Info<void> {
+	static constexpr char name[] = "void";
+	static constexpr usize size = 0u;
+	static constexpr Type_Type type = Type_Type::void_;
+};
+template<> struct Type_Info<char> {
+	static constexpr char name[] = "char";
+	static constexpr usize size = sizeof(char);
+	static constexpr bool sgn = true;
+	static constexpr Type_Type type = Type_Type::int_;
+};
+template<> struct Type_Info<i8> {
+	static constexpr char name[] = "i8";
+	static constexpr usize size = sizeof(i8);
+	static constexpr bool sgn = true;
+	static constexpr Type_Type type = Type_Type::int_;
+};
+template<> struct Type_Info<u8> {
+	static constexpr char name[] = "u8";
+	static constexpr usize size = sizeof(u8);
+	static constexpr bool sgn = false;
+	static constexpr Type_Type type = Type_Type::int_;
+};
+template<> struct Type_Info<i16> {
+	static constexpr char name[] = "i16";
+	static constexpr usize size = sizeof(i16);
+	static constexpr bool sgn = true;
+	static constexpr Type_Type type = Type_Type::int_;
+};
+template<> struct Type_Info<u16> {
+	static constexpr char name[] = "u16";
+	static constexpr usize size = sizeof(u16);
+	static constexpr bool sgn = false;
+	static constexpr Type_Type type = Type_Type::int_;
+};
+template<> struct Type_Info<i32> {
+	static constexpr char name[] = "i32";
+	static constexpr usize size = sizeof(i32);
+	static constexpr bool sgn = true;
+	static constexpr Type_Type type = Type_Type::int_;
+};
+template<> struct Type_Info<u32> {
+	static constexpr char name[] = "u32";
+	static constexpr usize size = sizeof(u32);
+	static constexpr bool sgn = false;
+	static constexpr Type_Type type = Type_Type::int_;
+};
+template<> struct Type_Info<i64> {
+	static constexpr char name[] = "i64";
+	static constexpr usize size = sizeof(i64);
+	static constexpr bool sgn = true;
+	static constexpr Type_Type type = Type_Type::int_;
+};
+template<> struct Type_Info<u64> {
+	static constexpr char name[] = "u64";
+	static constexpr usize size = sizeof(u64);
+	static constexpr bool sgn = false;
+	static constexpr Type_Type type = Type_Type::int_;
+};
+template<> struct Type_Info<f32> {
+	static constexpr char name[] = "f32";
+	static constexpr usize size = sizeof(f32);
+	static constexpr Type_Type type = Type_Type::float_;
+};
+template<> struct Type_Info<f64> {
+	static constexpr char name[] = "f64";
+	static constexpr usize size = sizeof(f64);
+	static constexpr Type_Type type = Type_Type::float_;
+};
+template<> struct Type_Info<bool> {
+	static constexpr char name[] = "bool";
+	static constexpr usize size = sizeof(bool);
+	static constexpr Type_Type type = Type_Type::bool_;
+};
+template<> struct Type_Info<string> {
+	static constexpr char name[] = "string";
+	static constexpr usize size = sizeof(string);
+	static constexpr Type_Type type = Type_Type::string_;
+};
 	)STR" << std::endl;
 }
 
@@ -772,9 +725,7 @@ template <typename T, typename M> T get_class_type(M T::*);
 template <typename T, typename R, R T::*M>
 constexpr u64 offset_of() {
     return reinterpret_cast<u64>(&(((T*)0)->*M));
-})STR"
-	<< std::endl << std::endl
-	<< "void make_meta_info() {  " << std::endl;
+})STR" << std::endl;
 }
 
 int main(int argc, char** argv) {
@@ -815,8 +766,6 @@ int main(int argc, char** argv) {
 			print_header(in_file);
 			print_basic_types();
 			print_results();
-
-			fout << "}" << std::endl << std::endl;
 		}
 
 		clang_disposeTranslationUnit(unit);
