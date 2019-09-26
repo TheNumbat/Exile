@@ -4,6 +4,8 @@
 #include "alloc.h"
 #include <string.h>
 
+thread_local string g_scratch_buf = string::make(1024);
+
 string::string() {}
 
 string::string(const char* lit) {
@@ -44,7 +46,7 @@ string string::take(string& src) {
 string string::literal(const char* lit) {
     string ret;
     ret.c_str = (char*)lit;
-    ret.cap = ret.len = strlen(lit);
+    ret.cap = ret.len = strlen(lit) + 1;
     return ret;
 }
 
@@ -54,13 +56,35 @@ void string::destroy() {
     len = cap = 0;
 }
 
-string string::sub_end(u32 s) {
-    assert(s < len);
+char string::operator[](u32 idx) const {
+    assert(idx < len);
+    return c_str[idx];
+}
+
+char& string::operator[](u32 idx) {
+    assert(idx < len);
+    return c_str[idx];
+}
+
+const string string::sub_end(u32 s) const {
+    assert(s <= len);
     string ret;
     ret.c_str = c_str + s;
     ret.cap = cap - s;
     ret.len = len - s;
     return ret;
+}
+
+u32 string::write(u32 idx, string cpy) {
+    assert(cap && idx + cpy.len - 1 < len);
+    memcpy(c_str + idx, cpy.c_str, cpy.len - 1);
+    return cpy.len - 1;
+}
+
+u32 string::write(u32 idx, char cpy) {
+    assert(cap && idx < len);
+    c_str[idx] = cpy;
+    return 1;
 }
 
 string last_file(string path) {

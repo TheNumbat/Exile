@@ -12,6 +12,10 @@ extern "C" {
 
 void gl_debug_proc(GLenum glsource, GLenum gltype, GLuint id, GLenum severity, GLsizei length, const GLchar* glmessage, const void* up);
 
+string glString(GLenum name) {
+	return string::literal((const char*)glGetString(name));
+}
+
 void Platform::init() {
 
 	SDL_Init(SDL_INIT_EVERYTHING);
@@ -43,10 +47,10 @@ void Platform::init() {
 	}
 	info("Loaded OpenGL functions.");
 
-	info("GL version: %s", glGetString(GL_VERSION));
-	info("GL renderer: %s", glGetString(GL_RENDERER));
-	info("GL vendor: %s", glGetString(GL_VENDOR));
-	info("GL shading: %s", glGetString(GL_SHADING_LANGUAGE_VERSION));
+	info("GL version: %", glString(GL_VERSION));
+	info("GL renderer: %", glString(GL_RENDERER));
+	info("GL vendor: %", glString(GL_VENDOR));
+	info("GL shading: %", glString(GL_SHADING_LANGUAGE_VERSION));
 
 	glEnable(GL_DEBUG_OUTPUT);
 	glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
@@ -65,7 +69,7 @@ void Platform::destroy() {
 
 void Platform::gl_validate() {
 	
-	#define GL_CHECK(type) if(glIs##type && glIs##type(i)) { warn("Leaked OpenGL handle %d of type %s", i, #type); leaked = true;}
+	#define GL_CHECK(type) if(glIs##type && glIs##type(i)) { warn("Leaked OpenGL handle % of type %", i, string::literal(#type)); leaked = true;}
 
 	bool leaked = false;
 	for(GLuint i = 0; i < 100000; i++) {
@@ -87,7 +91,7 @@ void Platform::gl_validate() {
 			GLchar* shader = (GLchar*)galloc(shader_len);
 			glGetShaderSource(i, shader_len, null, shader);
 
-			warn("Leaked OpenGL shader %d, source %s", i, shader); 
+			warn("Leaked OpenGL shader %, source %", i, string::literal((const char*)shader)); 
 
 			gfree(shader);
 		}
@@ -160,10 +164,10 @@ void gl_debug_proc(GLenum glsource, GLenum gltype, GLuint id, GLenum severity, G
 	case GL_DEBUG_SEVERITY_HIGH:
 	case GL_DEBUG_SEVERITY_MEDIUM:
 	case GL_DEBUG_SEVERITY_LOW:
-		warn("OpenGL: %s SOURCE: %s TYPE: %s", message.c_str, source.c_str, type.c_str);
+		warn("OpenGL: % SOURCE: % TYPE: %", message, source, type);
 		break;
 	case GL_DEBUG_SEVERITY_NOTIFICATION:
-		info("OpenGL: %s SOURCE: %s TYPE: %s", message.c_str, source.c_str, type.c_str);
+		info("OpenGL: % SOURCE: % TYPE: %", message, source, type);
 		break;
 	}
 }

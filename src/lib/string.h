@@ -23,7 +23,15 @@ struct norefl string {
 	operator const char*();
 	operator char*();
 
-	string sub_end(u32 s);
+	char operator[](u32 idx) const;
+	char& operator[](u32 idx);
+
+	const string sub_end(u32 s) const;
+	
+	u32 write(u32 idx, string cpy);
+	u32 write(u32 idx, char cpy);
 };
+
+extern thread_local string g_scratch_buf;
 
 string last_file(string path);

@@ -6,8 +6,9 @@
 
 i32 main(i32 argc, char **argv) {
 
-	u32 test[5] = {1,2,3,4,5};
-	print<u32[5]>(test);
+	f32 test0 = 1;
+	i32 test1 = 1;
+	info("test: %, %", test0, test1);
 
 	Engine eng;
 	eng.init();
@@ -18,3 +19,5 @@ i32 main(i32 argc, char **argv) {
 
 	return 0;
 }
+
+//test: [1, 2, 3, 4, 5]

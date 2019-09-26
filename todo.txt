@@ -4,7 +4,10 @@ Framework re-write:
         integrate to data structures
     String
         basic functions, iterator
+    
     Replace reflection system
-        integrate to strings + logging
+        finish moving over records, enums
+        integrate to IMGUI
+
     Logging
         make thread-safe

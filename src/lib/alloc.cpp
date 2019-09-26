@@ -21,7 +21,7 @@ void gfree(void* mem) {
 
 void mem_validate() {
     if(allocs != 0) {
-        warn("Unbalanced allocations: %lld", allocs.load());
+        warn("Unbalanced allocations: %", allocs.load());
     } else {
         info("No memory leaked.");
     }
