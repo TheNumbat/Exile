@@ -23,7 +23,7 @@ meta_compiler = executable('meta', 'src/meta.cpp',
 							dependencies : libclang, 
 							native : true)
 
-gen_src = custom_target('meta_output',
+gen_src = custom_target('meta_output',	
                         input : 'src/meta_input.h',
                         output : 'meta_types.h',
                         build_by_default : true, build_always_stale : true,

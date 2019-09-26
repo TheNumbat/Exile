@@ -514,8 +514,7 @@ void print_array(CXType type, bool just_print = false) {
 	std::string base_type_name = to_string(clang_getTypeSpelling(underlying));
 
 	static int count = 0;
-	fout << "typedef " << type_name << " _" << count << ";" << std::endl
-		 << "template<> struct Type_Info<const _" << count << "&>" << std::endl
+	fout << "template<> struct Type_Info<" << type_name << "> {" << std::endl
 		 << "\tstatic constexpr char name[] = \"" << type_name << "\";" << std::endl
 		 << "\tstatic constexpr usize size = sizeof(" << type_name << ");" << std::endl
 		 << "\tstatic constexpr Type_Type type = Type_Type::array_;" << std::endl
@@ -618,7 +617,7 @@ void print_data_type(CXType type) {
 
 	print_data_type_help(type, type);
 	clear_in_progress_out();
-	resolve_patches();
+	// resolve_patches();
 }
 
 void print_results() {
