@@ -32,3 +32,20 @@ typedef double f64;
 typedef size_t usize;
 
 #define null nullptr
+
+template <typename F>
+struct Defer {
+    F f;
+    Defer(F f) : f(f) {}
+    ~Defer() { f(); }
+};
+
+template <typename F>
+Defer<F> make_defer(F f) {
+    return Defer<F>(f);
+}
+
+#define DEFER1(x, y) x##y
+#define DEFER2(x, y) DEFER1(x, y)
+#define DEFER3(x)    DEFER2(x, __COUNTER__)
+#define defer(code)  auto DEFER3(_defer_) = make_defer([&](){code;})

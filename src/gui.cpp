@@ -1,9 +1,11 @@
 
+#ifndef RUNNING_META
 #include <imgui/imgui.h>
 #include <imgui/imgui_impl_sdl.h>
 #include <imgui/imgui_impl_opengl3.h>
 #include <sdl/SDL.h>
 #include <glad/glad.h>
+#endif
 
 #include "gui.h"
 

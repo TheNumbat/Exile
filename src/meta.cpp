@@ -19,6 +19,13 @@ std::ostream& operator<<(std::ostream& stream, const CXString& str) {
 	return stream;
 }
 
+std::string remove_const(std::string name) {
+	if(name.rfind("const ", 0) != std::string::npos) {
+		return name.substr(6, name.size() - 6);
+	}
+	return name;
+}
+
 std::string to_string(CXString cx_str) {
 	std::string str(clang_getCString(cx_str));
 	clang_disposeString(cx_str);
@@ -295,10 +302,6 @@ void print_enum(CXType type) {
 	std::string type_name = to_string(clang_getTypeSpelling(type));
 	std::string underlying_name = to_string(clang_getTypeSpelling(underlying));
 
-	if(count_enum_fields(type) > 256) {
-		log_out << "WARN: enum " << type_name << " has too many fields, skipping!" << std::endl;
-	}
-
 	std::vector<enum_field> members;
 
 	clang_visitChildren(decl, print_enum_field, &members);
@@ -307,7 +310,6 @@ void print_enum(CXType type) {
 		 << "\tstatic constexpr char name[] = \"" << type_name << "\";" << std::endl
 		 << "\tstatic constexpr usize size = sizeof(" << type_name << ");" << std::endl
 		 << "\tstatic constexpr Type_Type type = Type_Type::enum_;" << std::endl
-		 << "\tstatic constexpr usize count = " << members.size() << ";" << std::endl
 		 << "\tusing underlying = " << underlying_name << ";" << std::endl;
 
 	std::string member_str;
@@ -319,36 +321,6 @@ void print_enum(CXType type) {
 
 	fout << "\tusing members = Type_List<" << member_str << ">;" << std::endl
 	 	 << "};" << std::endl;
-}
-
-struct field_client {
-	int i = 0;
-	std::string outer;
-	bool unexposed = false;
-};
-
-CXVisitorResult print_field(CXCursor c, CXClientData client_data) {
-
-	field_client* data = (field_client*)client_data;
-
-	CXType type = clang_getCursorType(c);
-
-	std::string name  = to_string(clang_getCursorSpelling(c));
-	std::string type_name = to_string(clang_getTypeSpelling(type));
-
-	std::string total = "&" + data->outer + "::" + name;
-
-	fout << "\t\tthis_type_info._struct.member_names[" << data->i << "] = \"" << name << "\"_;" << std::endl;
-
-	if(data->unexposed)
-		fout << "\t\tthis_type_info._struct.member_types[" << data->i << "] = TYPEINFO_GET_HASH(decltype(get_member_type(" << total << ")));" << std::endl
-			 << "\t\tthis_type_info._struct.member_offsets[" << data->i << "] = (u32)offset_of<decltype(get_class_type(" << total << ")),decltype(get_member_type(" << total << "))," << total << ">();" << std::endl;
-	else
-		fout << "\t\tthis_type_info._struct.member_types[" << data->i << "] = TYPEINFO_GET_HASH(" << type_name << ");" << std::endl
-			 << "\t\tthis_type_info._struct.member_offsets[" << data->i << "] = offsetof(" << data->outer << ", " << name << ");" << std::endl;
-
-	data->i++;
-	return CXVisit_Continue;
 }
 
 CXChildVisitResult check_noreflect(CXCursor c, CXCursor parent, CXClientData client_data) {
@@ -377,6 +349,38 @@ int count_fields(CXType type) {
 		return CXVisit_Continue;
 	}, &num);
 	return num;
+}
+
+struct record_field {
+	std::string type, offset, name;
+};
+
+struct field_client {
+	int i = 0;
+	std::string outer;
+	bool unexposed = false;
+	std::vector<record_field> fields;
+};
+
+CXVisitorResult print_field(CXCursor c, CXClientData client_data) {
+
+	field_client* data = (field_client*)client_data;
+
+	CXType type = clang_getCursorType(c);
+
+	std::string name  = to_string(clang_getCursorSpelling(c));
+	std::string type_name = to_string(clang_getTypeSpelling(type));
+	std::string total = "&" + data->outer + "::" + name;
+
+	record_field field;
+	field.type = "decltype(get_member_type(" + total + "))";
+	field.offset = "offsetof(" + data->outer + ", " + name + ")";
+	field.name = name;
+
+	data->fields.push_back(field);
+
+	data->i++;
+	return CXVisit_Continue;
 }
 
 void print_record(CXType type, bool just_print = false) {
@@ -409,27 +413,25 @@ void print_record(CXType type, bool just_print = false) {
 	std::string name = to_string(clang_getCursorSpelling(decl));
 	std::string type_name = to_string(clang_getTypeSpelling(type));
 
-	if(count_fields(type) > 96) {
-		log_out << "WARN: struct " << type_name << " has too many fields, skipping!" << std::endl;
+	field_client data;
+	data.outer = remove_const(type_name);
+	data.unexposed = type.kind == CXType_Unexposed;
+	clang_Type_visitFields_NotBroken(type, print_field, &data);
+
+	fout << "template<> struct Type_Info<" << type_name << "> {" << std::endl
+		 << "\tstatic constexpr char name[] = \"" << type_name << "\";" << std::endl
+		 << "\tstatic constexpr usize size = sizeof(" << type_name << ");" << std::endl
+		 << "\tstatic constexpr Type_Type type = Type_Type::record_;" << std::endl;
+
+	std::string member_str;
+	for(int i = 0; i < data.fields.size(); i++) {
+		fout << "\tstatic constexpr char __" << i << "[] = \"" << data.fields[i].name << "\";" << std::endl; 
+		member_str += "Record_Field<" + data.fields[i].type + ", " + data.fields[i].offset + ", __" + std::to_string(i) + ">";
+		if(i != data.fields.size() - 1) member_str += ", ";
 	}
 
-	// fout << "\t[]() -> void {" << std::endl
-	// 	 << "\t\t_type_info this_type_info;" << std::endl
-	// 	 << "\t\tthis_type_info.type_type = Type::_struct;" << std::endl
-	// 	 << "\t\tthis_type_info.size = sizeof(" << type_name << ");" << std::endl
-	// 	 << "\t\tthis_type_info.name = \"" << name << "\"_;" << std::endl
-	// 	 << "\t\tthis_type_info.hash = (type_id)typeid(" << type_name << ").hash_code();" << std::endl;
-
-	// field_client data;
-	// data.outer = type_name;
-	// data.unexposed = type.kind == CXType_Unexposed;
-
-	// clang_Type_visitFields_NotBroken(type, print_field, &data);
-	
-	// fout << "\t\tthis_type_info._struct.member_count = " << data.i << ";" << std::endl
-	// 	 << "\t\t_type_info* val = type_table.get_or_insert_blank(this_type_info.hash);" << std::endl
-	// 	 << "\t\t*val = this_type_info;" << std::endl
-	// 	 << "\t}();" << std::endl << std::endl;
+	fout << "\tusing members = Type_List<" << (data.fields.size() ? member_str : std::string("void")) << ">;" << std::endl
+	 	 << "};" << std::endl;
 }
 
 void print_func_pointer(CXType type, bool just_print = false) {
@@ -449,38 +451,30 @@ void print_func_pointer(CXType type, bool just_print = false) {
 	std::string func_type_name = to_string(clang_getTypeSpelling(func));
 	std::string return_type_name = to_string(clang_getTypeSpelling(ret));
 
-	if(clang_getNumArgTypes(func) > 16) {
-		log_out << "WARN: function pointer " << func_type_name << " has too many arguments, skipping!" << std::endl;
+	fout << "template<> struct Type_Info<" << ptr_type_name << "> {" << std::endl
+		 << "\tstatic constexpr char name[] = \"" << func_type_name << "\";" << std::endl
+		 << "\tstatic constexpr usize size = sizeof(" << ptr_type_name << ");" << std::endl
+		 << "\tstatic constexpr Type_Type type = Type_Type::fptr_;" << std::endl
+		 << "\tusing returned = " << return_type_name << ";" << std::endl;
+
+	std::string member_str;
+	for(int i = 0; i < clang_getNumArgTypes(func); i++) {
+		
+		CXType param = clang_getArgType(func, i);
+		std::string param_type_name = to_string(clang_getTypeSpelling(param));
+		member_str += param_type_name;
+		if(i != clang_getNumArgTypes(func) - 1) member_str += ", ";
 	}
 
-	// fout << "\t[]() -> void {" << std::endl
-	// 	 << "\t\t_type_info this_type_info;" << std::endl
-	// 	 << "\t\tthis_type_info.type_type = Type::_func;" << std::endl
-	// 	 << "\t\tthis_type_info.size = sizeof(" << ptr_type_name << ");" << std::endl
-	// 	 << "\t\tthis_type_info.hash = (type_id)typeid(" << ptr_type_name << ").hash_code();" << std::endl
-	// 	 << "\t\tthis_type_info.name = \"" << func_type_name << "\"_;" << std::endl
-	// 	 << "\t\tthis_type_info._func.signature = \"" << func_type_name << "\"_;" << std::endl
-	// 	 << "\t\tthis_type_info._func.return_type = TYPEINFO_GET_HASH(" << return_type_name << ");" << std::endl
-	// 	 << "\t\tthis_type_info._func.param_count = " << clang_getNumArgTypes(func) << ";" << std::endl;
-
-	// for(int i = 0; i < clang_getNumArgTypes(func); i++) {
-		
-	// 	CXType param = clang_getArgType(func, i);
-	// 	std::string param_type_name = to_string(clang_getTypeSpelling(param));
-
-	// 	fout << "\t\tthis_type_info._func.param_types[" << i << "] = TYPEINFO_GET_HASH(" << param_type_name << ");" << std::endl;
-	// }
-
-	// fout << "\t\t_type_info* val = type_table.get_or_insert_blank(this_type_info.hash);" << std::endl
-	// 	 << "\t\t*val = this_type_info;" << std::endl
-	// 	 << "\t}();" << std::endl << std::endl;	
+	fout << "\tusing members = Type_List<" << member_str << ">;" << std::endl
+	 	 << "};" << std::endl;
 }
 
 void print_pointer(CXType type, bool just_print = false) {
 
 	CXType to = clang_getPointeeType(type);
 
-	if(clang_getNumArgTypes(type) != -1) {
+	if(clang_getNumArgTypes(to) != -1) {
 		print_func_pointer(type, just_print);
 		return;
 	}
@@ -493,6 +487,8 @@ void print_pointer(CXType type, bool just_print = false) {
 			if(no_reflect) return;
 		}
 	}
+
+	return;
 
 	std::string type_name = to_string(clang_getTypeSpelling(type));
 	std::string to_name = to_string(clang_getTypeSpelling(to));
@@ -735,13 +731,9 @@ template<> struct Type_Info<string> {
 void print_header(std::string in_file) {
 
 fout << "#define COMPILING_META_TYPES" << std::endl
-				 << "#include \"" << in_file << "\"" << std::endl << std::endl
+				 << "#include \"" << in_file << "\"" << std::endl
 				 << R"STR(template <typename T, typename M> M get_member_type(M T::*);
-template <typename T, typename M> T get_class_type(M T::*);
-template <typename T, typename R, R T::*M>
-constexpr u64 offset_of() {
-    return reinterpret_cast<u64>(&(((T*)0)->*M));
-})STR" << std::endl;
+)STR" << std::endl;
 }
 
 int main(int argc, char** argv) {

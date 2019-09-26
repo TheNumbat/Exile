@@ -2,6 +2,7 @@
 #pragma once
 
 #include "reflect.h"
+#include <string.h>
 
 template<typename... Ts>
 string scratch_format(string fmt, Ts... args);
@@ -10,7 +11,7 @@ template<typename E, Type_Type T>
 struct format_type {};
 
 template<>
-struct format_type<void, Type_Type::void_> {
+struct norefl format_type<void, Type_Type::void_> {
     static u32 write(string out, u32 idx) {
         out.write(idx, "void");
     }
@@ -145,12 +146,28 @@ struct format_type<E, Type_Type::ptr_> {
 };
 
 template<>
-struct format_type<decltype(nullptr), Type_Type::ptr_> {
+struct norefl format_type<decltype(nullptr), Type_Type::ptr_> {
     static u32 write(string out, u32 idx, decltype(nullptr) val) {
         return out.write(idx, "(null)");
     }
     static u32 size(decltype(nullptr) val) {
         return 6;
+    }
+};
+
+template<typename E>
+struct format_type<E, Type_Type::fptr_> {
+    static u32 write(string out, u32 idx, E val) {
+        u32 start = idx;
+        idx += out.write(idx, '(');
+        if(val) idx += out.write(idx, Type_Info<E>::name);
+        else idx += out.write(idx, "null");
+        idx += out.write(idx, ')');
+        return idx - start;
+    }
+    static u32 size(E val) {
+        if(val) return 2 + strlen(Type_Info<E>::name);
+        else return 6;
     }
 };
 
@@ -179,6 +196,16 @@ struct format_member<E, H, void> {
 };
 
 template<typename E>
+struct format_member<E, void, void> {
+    static u32 write(string out, u32 idx, E val) {
+        return 0;
+    }
+    static u32 size(E val) {
+        return 0;
+    }
+};
+
+template<typename E>
 struct format_type<E, Type_Type::enum_> {
     using underlying = typename Type_Info<E>::underlying;
     using members = typename Type_Info<E>::members;
@@ -199,6 +226,79 @@ struct format_type<E, Type_Type::enum_> {
     }
 };
 
+template<typename E, typename H, typename T>
+struct format_field {
+    using member = typename H::type;
+    static u32 write(string out, u32 idx, E val) {
+        u32 start = idx;
+        idx += out.write(idx, H::name);
+        idx += out.write(idx, " : ");
+        idx += format_type<member, Type_Info<member>::type>::write(out, idx, *(member*)((char*)&val + H::offset));
+        idx += out.write(idx, ", ");
+        idx += format_field<E, T::head, T::tail>::write(out, idx, val);
+        return idx - start;
+    }
+    static u32 size(E val) {
+        u32 idx = 0;
+        idx += strlen(H::name);
+        idx += 3;
+        idx += format_type<member, Type_Info<member>::type>::size(*(member*)((char*)&val + H::offset));
+        idx += 2;
+        idx += format_field<E, T::head, T::tail>::size(val);
+        return idx;
+    }
+};
+
+template<typename E, typename H>
+struct format_field<E, H, void> {
+    using member = typename H::type;
+    static u32 write(string out, u32 idx, E val) {
+        u32 start = idx;
+        idx += out.write(idx, H::name);
+        idx += out.write(idx, " : ");
+        idx += format_type<member, Type_Info<member>::type>::write(out, idx, *(member*)((char*)&val + H::offset));
+        return idx - start;
+    }
+    static u32 size(E val) {
+        u32 idx = 0;
+        idx += strlen(H::name);
+        idx += 3;
+        idx += format_type<member, Type_Info<member>::type>::size(*(member*)((char*)&val + H::offset));
+        return idx;
+    }
+};
+
+template<typename E>
+struct format_field<E, void, void> {
+    static u32 write(string out, u32 idx) {
+        return 0;
+    }
+    static u32 size() {
+        return 0;
+    }
+};
+
+template<typename E>
+struct format_type<E, Type_Type::record_> {
+    using members = typename Type_Info<E>::members;
+
+    static u32 write(string out, u32 idx, E val) {
+        u32 start = idx;
+        idx += out.write(idx, Type_Info<E>::name);
+        idx += out.write(idx, '{');
+        idx += format_field<E, members::head, members::tail>::write(out, idx, val);
+        idx += out.write(idx, '}');
+        return idx - start;
+    }
+    static u32 size(E val) {
+        u32 idx = 0;
+        idx += strlen(Type_Info<E>::name);
+        idx += 1;
+        idx += format_field<E, members::head, members::tail>::size(val);
+        return idx + 1;
+    }
+};
+
 template<typename... Ts>
 u32 sprint(string out, string fmt, u32 idx) {
     return out.write(idx, fmt);
@@ -213,7 +313,7 @@ u32 sprint(string out, string fmt, u32 idx, T first, Ts... args) {
         idx += out.write(idx, fmt[used]);
         used += 1;
 
-        if(idx == fmt.len) {
+        if(used == fmt.len) {
             warn("Too few format specifiers in format string!");
             return idx - start;
         }
@@ -238,7 +338,7 @@ u32 sprint_size(string fmt, u32 idx, T first, Ts... args) {
         idx += 1;
         used += 1;
 
-        if(idx == fmt.len) {
+        if(used == fmt.len) {
             warn("Too few format specifiers in format string!");
             return idx - start;
         }

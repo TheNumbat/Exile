@@ -1,5 +1,7 @@
 
+#ifndef RUNNING_META
 #include <imgui/imgui.h>
+#endif
 
 #include "engine.h"
 

@@ -19,6 +19,7 @@ struct norefl string {
 	// no allocate
 	static string take(string& src);
 	static string literal(const char* lit);
+	static string from(const char* arr, u32 cap);
 
 	operator const char*();
 	operator char*();

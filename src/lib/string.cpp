@@ -4,7 +4,8 @@
 #include "alloc.h"
 #include <string.h>
 
-thread_local string g_scratch_buf = string::make(1024);
+thread_local char g_scratch_buf_underlying[1024];
+thread_local string g_scratch_buf = string::from(g_scratch_buf_underlying, 1024);
 
 string::string() {}
 
@@ -40,6 +41,13 @@ string string::take(string& src) {
     string ret = src;
     src.c_str = null;
     src.cap = src.len = 0;
+    return ret;
+}
+
+string string::from(const char* arr, u32 cap) {
+    string ret;
+    ret.c_str = (char*)arr;
+    ret.cap = cap;
     return ret;
 }
 

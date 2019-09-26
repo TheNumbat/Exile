@@ -13,4 +13,6 @@ struct Engine {
 private:
     Platform plt;
     Gui imgui;
+
+    template<typename T> friend struct Type_Info;
 };
