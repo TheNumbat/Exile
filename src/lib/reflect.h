@@ -13,7 +13,8 @@ enum class Type_Type : u8 {
     float_,
     bool_,
     string_,
-    array_
+    array_,
+    ptr_,
 };
 
 template<typename T, typename... Ts>

@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
+#include <unordered_set>
 #include <algorithm>
 
 #include <clang-c/Index.h>
@@ -54,6 +55,7 @@ bool operator==(const CXType& l, const CXType& r) {
 
 std::unordered_map<CXType, type_data> types;
 std::vector<CXType> back_patches;
+std::unordered_set<CXType> done;
 std::ofstream log_out, fout;
 
 void print_data_type_help(CXType type, CXType parent);
@@ -489,16 +491,12 @@ void print_pointer(CXType type, bool just_print = false) {
 	std::string type_name = to_string(clang_getTypeSpelling(type));
 	std::string to_name = to_string(clang_getTypeSpelling(to));
 
-	// fout << "\t[]() -> void {" << std::endl
-	// 	 << "\t\t_type_info this_type_info;" << std::endl
-	// 	 << "\t\tthis_type_info.type_type = Type::_ptr;" << std::endl
-	// 	 << "\t\tthis_type_info.size = sizeof(" << type_name << ");" << std::endl
-	// 	 << "\t\tthis_type_info.name = \"" << to_name << "\"_;" << std::endl
-	// 	 << "\t\tthis_type_info.hash = (type_id)typeid(" << type_name << ").hash_code();" << std::endl
-	// 	 << "\t\tthis_type_info._ptr.to = TYPEINFO_GET_HASH(" << to_name << ");" << std::endl
-	// 	 << "\t\t_type_info* val = type_table.get_or_insert_blank(this_type_info.hash);" << std::endl
-	// 	 << "\t\t*val = this_type_info;" << std::endl
-	// 	 << "\t}();" << std::endl << std::endl;
+	fout << "template<> struct Type_Info<" << type_name << "> {" << std::endl
+		 << "\tstatic constexpr char name[] = \"" << to_name << "*\";" << std::endl
+		 << "\tstatic constexpr usize size = sizeof(" << type_name << ");" << std::endl
+		 << "\tstatic constexpr Type_Type type = Type_Type::ptr_;" << std::endl
+		 << "\tusing to = " << to_name << ";" << std::endl
+		 << "};" << std::endl;
 }
 
 void print_array(CXType type, bool just_print = false) {
@@ -513,7 +511,6 @@ void print_array(CXType type, bool just_print = false) {
 	std::string type_name = to_string(clang_getTypeSpelling(type));
 	std::string base_type_name = to_string(clang_getTypeSpelling(underlying));
 
-	static int count = 0;
 	fout << "template<> struct Type_Info<" << type_name << "> {" << std::endl
 		 << "\tstatic constexpr char name[] = \"" << type_name << "\";" << std::endl
 		 << "\tstatic constexpr usize size = sizeof(" << type_name << ");" << std::endl
@@ -521,7 +518,6 @@ void print_array(CXType type, bool just_print = false) {
 		 << "\tstatic constexpr usize len = " << length << ";" << std::endl
 		 << "\tusing underlying = " << base_type_name << ";" << std::endl
 		 << "};" << std::endl;
-	count++;
 }
 
 bool type_is_not_specified(CXType type) {
@@ -586,7 +582,7 @@ void print_data_type_help(CXType type, CXType parent) {
 	case CXType_Unexposed:
 	case CXType_Record: print_record(type); break;
 	case CXType_ConstantArray: print_array(type); break;
-	case CXType_Pointer: print_pointer(type); break;
+	// case CXType_Pointer: print_pointer(type); break;
 
 	case CXType_Elaborated: {
 		CXType named = clang_Type_getNamedType(type);
@@ -615,9 +611,14 @@ void resolve_patches() {
 
 void print_data_type(CXType type) {
 
+	if(done.find(type) != done.end()) return;
+	if(done.find(clang_getCanonicalType(type)) != done.end()) return;
+
 	print_data_type_help(type, type);
 	clear_in_progress_out();
 	// resolve_patches();
+
+	done.insert(type);
 }
 
 void print_results() {
