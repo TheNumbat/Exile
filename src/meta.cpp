@@ -204,24 +204,6 @@ CXChildVisitResult traversal(CXCursor c, CXCursor parent, CXClientData client_da
 	return CXChildVisit_Recurse;
 }
 
-CXChildVisitResult print_enum_field(CXCursor c, CXCursor parent, CXClientData client_data) {
-
-	int* i = (int*)client_data;
-
-	if(c.kind == CXCursor_EnumConstantDecl) {
-
-		uint64_t value = clang_getEnumConstantDeclUnsignedValue(c);
-		std::string name = to_string(clang_getCursorSpelling(c));
-
-		fout << "\t\tthis_type_info._enum.member_names[" << *i << "] = \"" << name << "\"_;" << std::endl
-			 << "\t\tthis_type_info._enum.member_values[" << *i << "] = " << value << ";" << std::endl;
-
-		(*i)++;
-	}
-
-	return CXChildVisit_Continue;
-}
-
 bool type_is_unexposed_help(CXType type) {
 
 	ensure_deps_in_graph(type);
@@ -284,6 +266,26 @@ int count_enum_fields(CXType type) {
 	return num;
 }
 
+struct enum_field {
+	std::string name;
+	uint64_t val;
+};
+
+CXChildVisitResult print_enum_field(CXCursor c, CXCursor parent, CXClientData client_data) {
+
+	std::vector<enum_field>* m = (std::vector<enum_field>*)client_data;
+
+	if(c.kind == CXCursor_EnumConstantDecl) {
+
+		uint64_t value = clang_getEnumConstantDeclUnsignedValue(c);
+		std::string name = to_string(clang_getCursorSpelling(c));
+
+		m->push_back({name, value});
+	}
+
+	return CXChildVisit_Continue;
+}
+
 void print_enum(CXType type) {
 
 	CXCursor decl = clang_getTypeDeclaration(type);
@@ -297,22 +299,26 @@ void print_enum(CXType type) {
 		log_out << "WARN: enum " << type_name << " has too many fields, skipping!" << std::endl;
 	}
 
-	fout << "\t[]() -> void {" << std::endl
-		 << "\t\t_type_info this_type_info;" << std::endl
-		 << "\t\tthis_type_info.type_type = Type::_enum;" << std::endl
-		 << "\t\tthis_type_info.size = sizeof(" << type_name << ");" << std::endl
-		 << "\t\tthis_type_info.name = \"" << name << "\"_;" << std::endl
-		 << "\t\tthis_type_info.hash = (type_id)typeid(" << type_name << ").hash_code();" << std::endl
-		 << "\t\tthis_type_info._enum.base_type = TYPEINFO_GET_HASH(" << underlying_name << ");" << std::endl;
+	std::vector<enum_field> members;
 
-	int i = 0;
+	clang_visitChildren(decl, print_enum_field, &members);
 
-	clang_visitChildren(decl, print_enum_field, &i);
-	
-	fout << "\t\tthis_type_info._enum.member_count = " << i << ";" << std::endl
-		 << "\t\t_type_info* val = type_table.get_or_insert_blank(this_type_info.hash);" << std::endl
-		 << "\t\t*val = this_type_info;" << std::endl
-		 << "\t}();" << std::endl << std::endl;		 
+	fout << "template<> struct Type_Info<" << type_name << "> {" << std::endl
+		 << "\tstatic constexpr char name[] = \"" << type_name << "\";" << std::endl
+		 << "\tstatic constexpr usize size = sizeof(" << type_name << ");" << std::endl
+		 << "\tstatic constexpr Type_Type type = Type_Type::enum_;" << std::endl
+		 << "\tstatic constexpr usize count = " << members.size() << ";" << std::endl
+		 << "\tusing underlying = " << underlying_name << ";" << std::endl;
+
+	std::string member_str;
+	for(int i = 0; i < members.size(); i++) {
+		fout << "\tstatic constexpr char __" << i << "[] = \"" << members[i].name << "\";" << std::endl; 
+		member_str += "Enum_Field<" + std::to_string(members[i].val) + ", __" + std::to_string(i) + ">";
+		if(i != members.size() - 1) member_str += ", ";
+	}
+
+	fout << "\tusing members = Type_List<" << member_str << ">;" << std::endl
+	 	 << "};" << std::endl;
 }
 
 struct field_client {
@@ -491,6 +497,9 @@ void print_pointer(CXType type, bool just_print = false) {
 	std::string type_name = to_string(clang_getTypeSpelling(type));
 	std::string to_name = to_string(clang_getTypeSpelling(to));
 
+	// dumb workaround
+	if(to_name == "unsigned char") return;
+
 	fout << "template<> struct Type_Info<" << type_name << "> {" << std::endl
 		 << "\tstatic constexpr char name[] = \"" << to_name << "*\";" << std::endl
 		 << "\tstatic constexpr usize size = sizeof(" << type_name << ");" << std::endl
@@ -582,7 +591,7 @@ void print_data_type_help(CXType type, CXType parent) {
 	case CXType_Unexposed:
 	case CXType_Record: print_record(type); break;
 	case CXType_ConstantArray: print_array(type); break;
-	// case CXType_Pointer: print_pointer(type); break;
+	case CXType_Pointer: print_pointer(type); break;
 
 	case CXType_Elaborated: {
 		CXType named = clang_Type_getNamedType(type);
@@ -619,6 +628,7 @@ void print_data_type(CXType type) {
 	// resolve_patches();
 
 	done.insert(type);
+	done.insert(clang_getCanonicalType(type));
 }
 
 void print_results() {
@@ -638,6 +648,12 @@ template<> struct Type_Info<void> {
 	static constexpr char name[] = "void";
 	static constexpr usize size = 0u;
 	static constexpr Type_Type type = Type_Type::void_;
+};
+template<> struct Type_Info<decltype(nullptr)> {
+	static constexpr char name[] = "nullptr";
+	static constexpr usize size = sizeof(nullptr);
+	static constexpr Type_Type type = Type_Type::ptr_;
+	using to = void;
 };
 template<> struct Type_Info<char> {
 	static constexpr char name[] = "char";

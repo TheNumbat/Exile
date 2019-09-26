@@ -15,6 +15,20 @@ enum class Type_Type : u8 {
     string_,
     array_,
     ptr_,
+    enum_
+};
+
+template<usize V, const char* N>
+struct Enum_Field {
+    static constexpr char const* name = N;
+    static constexpr usize val = V;
+};
+
+template<typename T, usize O, char... N>
+struct Record_Field {
+    static constexpr const char* name = N;
+    static constexpr usize offset = O;
+    using type = T;
 };
 
 template<typename T, typename... Ts>

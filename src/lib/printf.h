@@ -90,7 +90,7 @@ struct format_type<E, Type_Type::string_> {
         return out.write(idx, val);
     }
     static u32 size(E val) {
-        return val.len;
+        return val.len - 1;
     }
 };
 
@@ -122,6 +122,80 @@ struct format_type<E, Type_Type::array_> {
             }
         }
         return idx + 1;
+    }
+};
+
+template<typename E>
+struct format_type<E, Type_Type::ptr_> {
+    using to = typename Type_Info<E>::to;
+    using format_to = format_type<to, Type_Info<to>::type>;
+
+    static u32 write(string out, u32 idx, E val) {
+        u32 start = idx;
+        idx += out.write(idx, '(');
+        if(val) idx += format_to::write(out, idx, *val);
+        else idx += out.write(idx, "null");
+        idx += out.write(idx, ')');
+        return idx - start;
+    }
+    static u32 size(E val) {
+        if(val) return 2 + format_to::size(*val);
+        else return 6;
+    }
+};
+
+template<>
+struct format_type<decltype(nullptr), Type_Type::ptr_> {
+    static u32 write(string out, u32 idx, decltype(nullptr) val) {
+        return out.write(idx, "(null)");
+    }
+    static u32 size(decltype(nullptr) val) {
+        return 6;
+    }
+};
+
+template<typename E, typename H, typename T>
+struct format_member {
+    static u32 write(string out, u32 idx, E val) {
+        if((usize)val == H::val) return out.write(idx, H::name);
+        else return format_member<E, T::head, T::tail>::write(out, idx, val);
+    }
+    static u32 size(E val) {
+        if((usize)val == H::val) return strlen(H::name);
+        else return format_member<E, T::head, T::tail>::size(val);
+    }
+};
+
+template<typename E, typename H>
+struct format_member<E, H, void> {
+    static u32 write(string out, u32 idx, E val) {
+        if((usize)val == H::val) return out.write(idx, H::name);
+        else return out.write(idx, "NONE");
+    }
+    static u32 size(E val) {
+        if((usize)val == H::val) return strlen(H::name);
+        else return 4;
+    }
+};
+
+template<typename E>
+struct format_type<E, Type_Type::enum_> {
+    using underlying = typename Type_Info<E>::underlying;
+    using members = typename Type_Info<E>::members;
+
+    static u32 write(string out, u32 idx, E val) {
+        u32 start = idx;
+        idx += out.write(idx, Type_Info<E>::name);
+        idx += out.write(idx, "::");
+        idx += format_member<E, members::head, members::tail>::write(out, idx, val);
+        return idx - start;
+    }
+    static u32 size(E val) {
+        u32 idx = 0;
+        idx += strlen(Type_Info<E>::name);
+        idx += 2;
+        idx += format_member<E, members::head, members::tail>::size(val);
+        return idx;
     }
 };
 
@@ -192,9 +266,14 @@ template<typename... Ts>
 string scratch_format(string fmt, Ts... args) {
 
     u32 len = sprint_size<Ts...>(fmt, 0, args...);
+    
     assert(len < g_scratch_buf.cap);
     g_scratch_buf.len = len + 1;
 
-    sprint<Ts...>(g_scratch_buf, fmt, 0, args...);
+    u32 written = sprint<Ts...>(g_scratch_buf, fmt, 0, args...);
+    assert(len == written);
+
+    g_scratch_buf[len] = 0;
+
     return g_scratch_buf;
 }
