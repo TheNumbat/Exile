@@ -49,7 +49,6 @@ struct Type_List<void> {
     using tail = void;
 };
 
-
 template<typename T> struct Type_Info;
 
 template<typename T> 
