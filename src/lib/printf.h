@@ -13,7 +13,7 @@ struct format_type {};
 template<>
 struct norefl format_type<void, Type_Type::void_> {
     static u32 write(string out, u32 idx) {
-        out.write(idx, "void");
+        return out.write(idx, "void");
     }
     static u32 size() {
         return 4;

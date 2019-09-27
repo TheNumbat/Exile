@@ -5,10 +5,12 @@
 #include "lib/alloc.h"
 #include "platform.h"
 
+#ifdef WIN32
 extern "C" {
 	__declspec(dllexport) bool NvOptimusEnablement = true;
 	__declspec(dllexport) bool AmdPowerXpressRequestHighPerformance = true;
 }
+#endif
 
 void gl_debug_proc(GLenum glsource, GLenum gltype, GLuint id, GLenum severity, GLsizei length, const GLchar* glmessage, const void* up);
 
