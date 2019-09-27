@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include <sdl/SDL.h>
+#include <SDL2/SDL.h>
 #include "lib/basic.h"
 
 struct Platform {

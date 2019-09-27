@@ -5,6 +5,7 @@
 #include <float.h>
 #include <limits.h>
 #include <stddef.h>
+#include <stdlib.h>
 #include <typeinfo>
 #include <new>
 

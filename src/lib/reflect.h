@@ -59,4 +59,4 @@ struct Type_Info<T*> {
     static constexpr Type_Type type = Type_Type::ptr_;
 };
 
-#include "../build/meta_types.h"
+#include <meta_types.h>

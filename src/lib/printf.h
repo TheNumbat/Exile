@@ -175,11 +175,11 @@ template<typename E, typename H, typename T>
 struct format_member {
     static u32 write(string out, u32 idx, E val) {
         if((usize)val == H::val) return out.write(idx, H::name);
-        else return format_member<E, T::head, T::tail>::write(out, idx, val);
+        else return format_member<E, typename T::head, typename T::tail>::write(out, idx, val);
     }
     static u32 size(E val) {
         if((usize)val == H::val) return strlen(H::name);
-        else return format_member<E, T::head, T::tail>::size(val);
+        else return format_member<E, typename T::head, typename T::tail>::size(val);
     }
 };
 
@@ -214,14 +214,14 @@ struct format_type<E, Type_Type::enum_> {
         u32 start = idx;
         idx += out.write(idx, Type_Info<E>::name);
         idx += out.write(idx, "::");
-        idx += format_member<E, members::head, members::tail>::write(out, idx, val);
+        idx += format_member<E, typename members::head, typename members::tail>::write(out, idx, val);
         return idx - start;
     }
     static u32 size(E val) {
         u32 idx = 0;
         idx += strlen(Type_Info<E>::name);
         idx += 2;
-        idx += format_member<E, members::head, members::tail>::size(val);
+        idx += format_member<E, typename members::head, typename members::tail>::size(val);
         return idx;
     }
 };
@@ -235,7 +235,7 @@ struct format_field {
         idx += out.write(idx, " : ");
         idx += format_type<member, Type_Info<member>::type>::write(out, idx, *(member*)((char*)&val + H::offset));
         idx += out.write(idx, ", ");
-        idx += format_field<E, T::head, T::tail>::write(out, idx, val);
+        idx += format_field<E, typename T::head, typename T::tail>::write(out, idx, val);
         return idx - start;
     }
     static u32 size(E val) {
@@ -244,7 +244,7 @@ struct format_field {
         idx += 3;
         idx += format_type<member, Type_Info<member>::type>::size(*(member*)((char*)&val + H::offset));
         idx += 2;
-        idx += format_field<E, T::head, T::tail>::size(val);
+        idx += format_field<E, typename T::head, typename T::tail>::size(val);
         return idx;
     }
 };
@@ -286,7 +286,7 @@ struct format_type<E, Type_Type::record_> {
         u32 start = idx;
         idx += out.write(idx, Type_Info<E>::name);
         idx += out.write(idx, '{');
-        idx += format_field<E, members::head, members::tail>::write(out, idx, val);
+        idx += format_field<E, typename members::head, typename members::tail>::write(out, idx, val);
         idx += out.write(idx, '}');
         return idx - start;
     }
@@ -294,7 +294,7 @@ struct format_type<E, Type_Type::record_> {
         u32 idx = 0;
         idx += strlen(Type_Info<E>::name);
         idx += 1;
-        idx += format_field<E, members::head, members::tail>::size(val);
+        idx += format_field<E, typename members::head, typename members::tail>::size(val);
         return idx + 1;
     }
 };
