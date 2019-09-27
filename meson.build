@@ -68,6 +68,7 @@ if host_system == 'windows'
 	configure_file(input: 'deps/SDL2/lib/SDL2.dll', output: 'SDL2.dll', copy : true)
 elif host_system == 'linux'
 	dependencies += dependency('sdl2')
+	dependencies += cc.find_library('dl')
 endif
 
 executable('exile', sources,
