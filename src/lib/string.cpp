@@ -64,6 +64,15 @@ void string::destroy() {
     len = cap = 0;
 }
 
+char* string::begin() const {
+    return c_str;
+}
+
+char* string::end() const {
+    if(len) return c_str + len - 1;
+    else return c_str;
+}
+
 char string::operator[](u32 idx) const {
     assert(idx < len);
     return c_str[idx];

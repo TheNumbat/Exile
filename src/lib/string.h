@@ -27,6 +27,9 @@ struct norefl string {
 	char operator[](u32 idx) const;
 	char& operator[](u32 idx);
 
+	char* begin() const;
+	char* end() const;
+
 	const string sub_end(u32 s) const;
 	
 	u32 write(u32 idx, string cpy);

@@ -655,7 +655,7 @@ template<> struct Type_Info<char> {
 	static constexpr char name[] = "char";
 	static constexpr usize size = sizeof(char);
 	static constexpr bool sgn = true;
-	static constexpr Type_Type type = Type_Type::int_;
+	static constexpr Type_Type type = Type_Type::char_;
 };
 template<> struct Type_Info<i8> {
 	static constexpr char name[] = "i8";

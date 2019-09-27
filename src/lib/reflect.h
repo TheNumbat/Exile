@@ -9,6 +9,7 @@ typedef u64 type_id;
 
 enum class Type_Type : u8 {
     void_,
+    char_,
     int_,
     float_,
     bool_,

@@ -86,6 +86,16 @@ struct format_type<E, Type_Type::bool_> {
 };
 
 template<typename E>
+struct format_type<E, Type_Type::char_> {
+    static u32 write(string out, u32 idx, E val) {
+        return out.write(idx, val);
+    }
+    static u32 size(E val) {
+        return 1;
+    }
+};
+
+template<typename E>
 struct format_type<E, Type_Type::string_> {
     static u32 write(string out, u32 idx, E val) {
         return out.write(idx, val);
