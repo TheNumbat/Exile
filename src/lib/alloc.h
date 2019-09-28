@@ -11,9 +11,9 @@ void base_free(void* mem);
 
 void mem_validate();
 
-template<const char* name>
+template<const char* tname>
 struct Mallocator {
-    static constexpr const char* name = name;
+    static constexpr const char* name = tname;
 
     template<typename T> 
     static T* make(usize n = 1) {
@@ -31,10 +31,10 @@ struct Mallocator {
     }
 };
 
-template<const char* name, usize N>
+template<const char* tname, usize N>
 struct Marena {
 
-    static constexpr const char* name = name;
+    static constexpr const char* name = tname;
     static inline u8 mem[N] = {};
     static inline usize used = 0;
 
@@ -63,7 +63,7 @@ struct Marena {
     }
 };
 
-template<const char* name, typename T, typename Base>
+template<const char* tname, typename T, typename Base>
 struct Free_List {
     
     union norefl Free_Node {
@@ -71,7 +71,7 @@ struct Free_List {
         Free_Node* next = null;
     };
     
-    static constexpr const char* name = name;
+    static constexpr const char* name = tname;
     static inline Free_Node* list = null;
 
     static T* make() {
