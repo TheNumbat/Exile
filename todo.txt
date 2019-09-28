@@ -1,9 +1,5 @@
 
 Framework re-write:
-    Static allocators
-        integrate to data structures
-        string
-
     Debugging systems
         Time profiling
         Allocator profiling
@@ -13,9 +9,10 @@ Framework re-write:
         map
         stack/queue
         heap
+        allocator integration
+        print rules
 
     Reflection
-        print rules for data structures
         integrate to IMGUI
     Logging
         make thread-safe

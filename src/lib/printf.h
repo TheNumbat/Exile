@@ -2,6 +2,7 @@
 #pragma once
 
 #include "reflect.h"
+#include "string.h"
 #include <string.h>
 
 template<typename... Ts>

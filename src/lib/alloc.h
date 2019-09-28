@@ -2,8 +2,6 @@
 #pragma once
 
 #include "basic.h"
-#include "string.h"
-#include "log.h"
 
 // Convention: memory returned by alloc is zero'd
 // Convention: we don't use destructors
@@ -50,7 +48,7 @@ struct Marena {
         uptr here = (uptr)mem + used;
         uptr offset = here % align;
         uptr next = here + (offset ? align - offset : 0);
-        assert(next + size - (uptr)mem < N);
+        // assert(next + size - (uptr)mem < N);
         T* ret = (T*)next;
         used = offset + size;
         return ret;
