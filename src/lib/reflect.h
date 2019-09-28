@@ -50,13 +50,23 @@ struct Type_List<void> {
     using tail = void;
 };
 
+template<typename T>
+struct No_Const {
+    using type = T;
+};
+
+template<typename T>
+struct No_Const<const T> {
+    using type = T;
+};
+
 template<typename T> struct Type_Info;
 
 template<typename T> 
 struct Type_Info<T*> {
-    using to = T;
+    using to = typename No_Const<T>::type;
     decltype(Type_Info<to>::name) name = Type_Info<to>::name;
-    static constexpr usize size = sizeof(T*);
+    static constexpr usize size = sizeof(typename No_Const<T>::type*);
     static constexpr Type_Type type = Type_Type::ptr_;
 };
 

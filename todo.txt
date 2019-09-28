@@ -2,12 +2,20 @@
 Framework re-write:
     Static allocators
         integrate to data structures
-    String
-        basic functions, iterator
-    
-    Replace reflection system
+        string
+
+    Debugging systems
+        Time profiling
+        Allocator profiling
+
+    Data structure ports
+        finish vec
+        map
+        stack/queue
+        heap
+
+    Reflection
         print rules for data structures
         integrate to IMGUI
-
     Logging
         make thread-safe

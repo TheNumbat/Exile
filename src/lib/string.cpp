@@ -23,14 +23,14 @@ string::operator char*() {
 
 string string::make(u32 cap) {
     string ret;
-    ret.c_str = (char*)galloc(cap);
+    ret.c_str = (char*)base_alloc(cap);
     ret.cap = cap;
     return ret;
 }
 
 string string::copy(string src) {
     string ret;
-    ret.c_str = (char*)galloc(src.cap);
+    ret.c_str = (char*)base_alloc(src.cap);
     ret.cap = src.cap;
     ret.len = src.len;
     memcpy(ret.c_str, src.c_str, src.len);
@@ -59,7 +59,7 @@ string string::literal(const char* lit) {
 }
 
 void string::destroy() {
-    gfree(c_str);
+    base_free(c_str);
     c_str = null;
     len = cap = 0;
 }

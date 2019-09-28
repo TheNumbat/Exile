@@ -7,3 +7,4 @@ bin/.vs
 bin/*.opendb
 imgui.ini
 data/imgui.ini
+settings.json

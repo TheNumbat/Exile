@@ -95,6 +95,16 @@ struct format_type<E, Type_Type::char_> {
     }
 };
 
+template<>
+struct norefl format_type<char const*, Type_Type::ptr_> {
+    static u32 write(string out, u32 idx, char const* val) {
+        return out.write(idx, string::literal(val));
+    }
+    static u32 size(char const* val) {
+        return strlen(val);
+    }
+};
+
 template<typename E>
 struct format_type<E, Type_Type::string_> {
     static u32 write(string out, u32 idx, E val) {

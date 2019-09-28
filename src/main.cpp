@@ -15,5 +15,3 @@ i32 main(i32 argc, char **argv) {
 
 	return 0;
 }
-
-//test: [1, 2, 3, 4, 5]

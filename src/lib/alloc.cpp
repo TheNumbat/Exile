@@ -7,14 +7,14 @@
 
 std::atomic<i64> allocs = 0;
 
-u8* galloc(usize sz) {
+u8* base_alloc(usize sz) {
     u8* ret = (u8*)calloc(sz, 1);
     assert(ret);
     allocs++;
     return ret;
 }
 
-void gfree(void* mem) {
+void base_free(void* mem) {
     free(mem);
     allocs--;
 }
