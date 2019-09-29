@@ -9,9 +9,9 @@ build_dir    = meson.current_build_dir()
 cc = meson.get_compiler('cpp')
 host_system = host_machine.system()
 
-inc_dir = include_directories('deps/all', 'build')
+inc_dir = include_directories('deps', 'build')
 if host_system == 'windows'
-    inc_dir += include_directories('deps/win_deps')
+    inc_dir = include_directories('deps', 'build', 'deps/win')
 endif
 
 if host_system == 'linux'
@@ -50,12 +50,12 @@ gen_src = custom_target('meta_output',
                         command : [meta_compiler, '@INPUT@', '@OUTPUT@', '-I../src/', '-I../deps/', '-xc++', '-DRUNNING_META'])
 
 sources = [
-	'deps/all/imgui/imgui.cpp',
-	'deps/all/imgui/imgui_draw.cpp',
-	'deps/all/imgui/imgui_widgets.cpp',
-	'deps/all/imgui/imgui_impl_sdl.cpp',
-	'deps/all/imgui/imgui_impl_opengl3.cpp',
-	'deps/all/glad/glad.cpp',
+	'deps/imgui/imgui.cpp',
+	'deps/imgui/imgui_draw.cpp',
+	'deps/imgui/imgui_widgets.cpp',
+	'deps/imgui/imgui_impl_sdl.cpp',
+	'deps/imgui/imgui_impl_opengl3.cpp',
+	'deps/glad/glad.cpp',
 	'src/lib/alloc.cpp',
 	'src/platform.cpp',
 	'src/engine.cpp',
@@ -65,10 +65,10 @@ sources = [
 dependencies = [declare_dependency(sources : gen_src)]
 
 if host_system == 'windows'
-	sdl_dir = join_paths(project_dir, 'deps/windows/SDL2/lib')
+	sdl_dir = join_paths(project_dir, 'deps/win/SDL2/lib')
 	dependencies += cc.find_library('SDL2', dirs : sdl_dir)
 	dependencies += cc.find_library('SDL2main', dirs : sdl_dir)
-	configure_file(input: 'deps/windows/SDL2/lib/SDL2.dll', output: 'SDL2.dll', copy : true)
+	configure_file(input: 'deps/win/SDL2/lib/SDL2.dll', output: 'SDL2.dll', copy : true)
 elif host_system == 'linux'
 	dependencies += cc.find_library('dl')
 	dependencies += cc.find_library('SDL2')
