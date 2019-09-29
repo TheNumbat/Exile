@@ -14,11 +14,20 @@
     fflush(stdout), \
     exit(__LINE__), 0)
 
-#define fail_assert(msg, file, line) ( \
+#ifdef _WIN32
+#define fail_assert(msg, file, line) (void)( \
     printf("\033[1;31m%s:%u [ASSERT] " msg "\033[0m\n", file, line), \
     fflush(stdout),\
     __debugbreak(), \
     exit(__LINE__), 0)
+#elif defined(__linux__)
+#include <signal.h>
+#define fail_assert(msg, file, line) (void)( \
+    printf("\033[1;31m%s:%u [ASSERT] " msg "\033[0m\n", file, line), \
+    fflush(stdout),\
+    raise(SIGTRAP), \
+    exit(__LINE__), 0)
+#endif
 
 #undef assert
 #define assert(expr) (void)(                               \
