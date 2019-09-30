@@ -1,3 +1,28 @@
+
+#pragma once
+
+template<typename M>
+struct format_type<vec<M>, Type_Type::record_> {
+    static u32 write(string out, u32 idx, vec<M> val) {
+        u32 start = idx;
+        idx += out.write(idx, '[');
+        for(u32 i = 0; i < val.size; i++) {
+            idx += format_type<M, Type_Info<M>::type>::write(out, idx, val[i]);
+            if(i != val.size - 1) idx += out.write(idx, ", ");
+        }
+        idx += out.write(idx, ']');
+        return idx - start;
+    }
+    static u32 size(vec<M> val) {
+        u32 idx = 1;
+        for(u32 i = 0; i < val.size; i++) {
+            idx += format_type<M, Type_Info<M>::type>::size(val[i]);
+            if(i != val.size - 1) idx += 2;
+        }
+        return idx + 1;
+    }
+};
+
 template<typename T, typename... Ts>
 u32 sprint(string out, string fmt, u32 idx, T first, Ts... args) {
 

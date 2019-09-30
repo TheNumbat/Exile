@@ -6,7 +6,8 @@
 #include <limits.h>
 #include <stddef.h>
 #include <stdlib.h>
-#include <typeinfo>
+#include <string.h>
+#include <stdio.h>
 #include <new>
 
 #ifdef RUNNING_META

@@ -1,3 +1,6 @@
+
+#pragma once
+
 #define info(fmt, ...) (void)( \
     printf("%s:%u [info] %s\n", last_file(__FILE__).c_str, __LINE__, scratch_format(string::literal(fmt), ##__VA_ARGS__).c_str), \
     fflush(stdout), 0)

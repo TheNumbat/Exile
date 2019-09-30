@@ -1,3 +1,6 @@
+
+#pragma once
+
 #ifndef RUNNING_META
 template<typename A>
 #endif
@@ -65,20 +68,9 @@ struct norefl astring {
 	u32 write(u32 idx, char cpy);
 };
 
-static constexpr char Mdefault_name[] = "Mdefault";
-using Mdefault = Mallocator<Mdefault_name>;
-
 using string = astring<Mdefault>;
 
-inline thread_local char g_scratch_buf_underlying[1024];
-inline thread_local string g_scratch_buf = string::from(g_scratch_buf_underlying, 1024);
+static thread_local char g_scratch_buf_underlying[1024];
+static thread_local string g_scratch_buf = string::from(g_scratch_buf_underlying, 1024);
 
-string last_file(string path) {
-    u32 loc = path.len - 1;
-    for(; loc >= 0; loc--) {
-		if(path.c_str[loc] == '\\' || path.c_str[loc] == '/') {
-			break;
-		}
-	}
-    return path.sub_end(loc + 1);
-}
+string last_file(string path);

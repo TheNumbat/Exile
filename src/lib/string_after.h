@@ -1,3 +1,6 @@
+
+#pragma once
+
 template<typename A>
 char astring<A>::operator[](u32 idx) const {
     assert(idx < len);
@@ -31,4 +34,14 @@ u32 astring<A>::write(u32 idx, char cpy) {
     assert(cap && idx < len);
     c_str[idx] = cpy;
     return 1;
+}
+
+string last_file(string path) {
+    u32 loc = path.len - 1;
+    for(; loc >= 0; loc--) {
+		if(path.c_str[loc] == '\\' || path.c_str[loc] == '/') {
+			break;
+		}
+	}
+    return path.sub_end(loc + 1);
 }

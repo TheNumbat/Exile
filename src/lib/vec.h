@@ -1,8 +1,6 @@
 
 #pragma once
 
-#include "basic.h"
-
 template<typename T>
 struct vec {
 	T* data 	 = nullptr;

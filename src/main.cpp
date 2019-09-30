@@ -1,6 +1,5 @@
 
-#include "lib/basic.h"
-#include "lib/everything.h"
+#include "lib/lib.h"
 #include "engine.h"
 
 i32 main(i32 argc, char **argv) {

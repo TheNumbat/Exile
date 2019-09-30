@@ -1,8 +1,6 @@
 
-#include "everything.h"
-
+#include "lib.h"
 #include <atomic>
-#include <string.h>
 
 std::atomic<i64> allocs = 0;
 

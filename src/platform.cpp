@@ -1,7 +1,6 @@
 
 #include <glad/glad.h>
-
-#include "lib/everything.h"
+#include "lib/lib.h"
 #include "platform.h"
 
 #ifdef WIN32

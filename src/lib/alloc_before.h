@@ -1,3 +1,6 @@
+
+#pragma once
+
 u8* base_alloc(usize sz);
 void base_free(void* mem);
 
@@ -86,3 +89,6 @@ struct Free_List {
         }
     }
 };
+
+static constexpr char Mdefault_name[] = "Mdefault";
+using Mdefault = Mallocator<Mdefault_name>;
