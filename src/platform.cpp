@@ -89,12 +89,12 @@ void Platform::gl_validate() {
 			GLint shader_len = 0;
 			glGetShaderiv(i, GL_SHADER_SOURCE_LENGTH, &shader_len);
 
-			GLchar* shader = (GLchar*)base_alloc(shader_len);
+			GLchar* shader = Mdefault::alloc<GLchar>(shader_len);
 			glGetShaderSource(i, shader_len, null, shader);
 
 			warn("Leaked OpenGL shader %, source %", i, string::literal((const char*)shader)); 
 
-			base_free(shader);
+			Mdefault::dealloc(shader);
 		}
 	}
 
