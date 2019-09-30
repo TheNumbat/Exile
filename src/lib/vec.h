@@ -1,36 +1,39 @@
 
 #pragma once
 
-template<typename T>
+template<typename T, typename A = Mdefault>
 struct vec {
-	T* data 	 = nullptr;
+	T* data 	 = null;
 	u32 size 	 = 0;
 	u32 capacity = 0;
 
 	static vec<T> make(u32 capacity = 8) {
-		return {new T[capacity], 0, capacity};
+		return {A::template make<T>(capacity), 0, capacity};
 	}
 	static vec<T> copy(vec<T> source) {
-		vec<T> ret = {new T[source.capacity], source.size, source.capacity};
-		memcpy(ret.data,source.data,sizeof(T)*source.size);
+		vec<T> ret = {A::template make<T>(source.capacity), source.size, source.capacity};
+		memcpy(ret.data, source.data, sizeof(T) * source.size);
 		return ret;
 	}
 	static vec<T> take(vec<T>& source) {
 		vec<T> ret = source;
-		source = {nullptr, 0, 0};
+		source = {null, 0, 0};
 		return ret;
 	}
 
 	void destroy() {
-		delete[] data;
-		data = nullptr;
+		A::dealloc(data);
+		data = null;
 		size = capacity = 0;
 	}
 	
 	void grow() {
 		u32 new_capacity = capacity ? 2 * capacity : 8;
-		T* new_data = new T[new_capacity];
-		memcpy(new_data,data,sizeof(T)*capacity);
+		
+		T* new_data = A::template make<T>(new_capacity);
+		memcpy(new_data, data, sizeof(T) * capacity);
+		A::dealloc(data);
+		
 		capacity = new_capacity;
 		data = new_data;
 	}
@@ -45,11 +48,11 @@ struct vec {
 		return size == capacity;
 	}
 
-	T* push(T value) {
+	T& push(T value) {
 		if(full()) grow();
 		assert(size < capacity);
 		data[size] = value;
-		return &data[size++];
+		return data[size++];
 	}
 	T pop() {
 		assert(size > 0);
@@ -64,10 +67,7 @@ struct vec {
 		assert(idx >= 0 && idx < size);
 		return data[idx];
 	}
-	T* at(u32 idx) const {
-		assert(idx >= 0 && idx < size);
-		return data + idx;
-	}
+
 	T* begin() const {
 		return data;
 	}
