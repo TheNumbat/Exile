@@ -1,10 +1,3 @@
-
-#pragma once
-
-#include "basic.h"
-#include "string.h"
-#include <stdio.h>
-
 typedef u64 type_id;
 
 enum class Type_Type : u8 {

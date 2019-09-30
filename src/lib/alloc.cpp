@@ -1,6 +1,7 @@
 
-#include "alloc.h"
-#include "log.h"
+//#include "alloc.h"
+//#include "log.h"
+#include "everything.h"
 
 #include <atomic>
 #include <string.h>

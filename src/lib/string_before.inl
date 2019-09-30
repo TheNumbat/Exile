@@ -1,10 +1,3 @@
-
-#pragma once
-
-#include "basic.h"
-#include "alloc.h"
-#include <string.h>
-
 #ifndef RUNNING_META
 template<typename A>
 #endif
@@ -57,14 +50,8 @@ struct norefl astring {
 	operator const char*() {return c_str;}
 	operator char*() {return c_str;}
 
-	char operator[](u32 idx) const {
-		// assert(idx < len);
-    	return c_str[idx];
-	}
-	char& operator[](u32 idx) {
-		// assert(idx < len);
-    	return c_str[idx];
-	}
+	char operator[](u32 idx) const;
+	char& operator[](u32 idx);
 
 	char* begin() {return c_str;}
 	char* end() {
@@ -72,26 +59,14 @@ struct norefl astring {
 		return c_str;
 	}
 
-	const astring sub_end(u32 s) const {
-		// assert(s <= len);
-		astring ret;
-		ret.c_str = c_str + s;
-		ret.cap = cap - s;
-		ret.len = len - s;
-		return ret;
-	}
+	const astring sub_end(u32 s) const;
 	
-	u32 write(u32 idx, astring cpy) {
-		// assert(cap && idx + cpy.len - 1 < len);
-		memcpy(c_str + idx, cpy.c_str, cpy.len - 1);
-		return cpy.len - 1;
-	}
-	u32 write(u32 idx, char cpy) {
-		// assert(cap && idx < len);
-		c_str[idx] = cpy;
-		return 1;
-	}
+	u32 write(u32 idx, astring cpy);
+	u32 write(u32 idx, char cpy);
 };
+
+static constexpr char Mdefault_name[] = "Mdefault";
+using Mdefault = Mallocator<Mdefault_name>;
 
 using string = astring<Mdefault>;
 

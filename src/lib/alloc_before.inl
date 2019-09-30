@@ -1,11 +1,3 @@
-
-#pragma once
-
-#include "basic.h"
-
-// Convention: memory returned by alloc is zero'd
-// Convention: we don't use destructors
-
 u8* base_alloc(usize sz);
 void base_free(void* mem);
 
@@ -44,15 +36,7 @@ struct Marena {
     }
 
     template<typename T>
-    static T* alloc(usize size, usize align = 1) {
-        uptr here = (uptr)mem + used;
-        uptr offset = here % align;
-        uptr next = here + (offset ? align - offset : 0);
-        // assert(next + size - (uptr)mem < N);
-        T* ret = (T*)next;
-        used = offset + size;
-        return ret;
-    }
+    static T* alloc(usize size, usize align = 1);
 
     template<typename T>
     static void dealloc(T* mem) {}
@@ -102,6 +86,3 @@ struct Free_List {
         }
     }
 };
-
-static constexpr char Mdefault_name[] = "Mdefault";
-using Mdefault = Mallocator<Mdefault_name>;

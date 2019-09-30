@@ -1,7 +1,6 @@
 
 #include "lib/basic.h"
-#include "lib/alloc.h"
-#include "lib/printf.h"
+#include "lib/everything.h"
 #include "engine.h"
 
 i32 main(i32 argc, char **argv) {

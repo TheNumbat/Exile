@@ -16,7 +16,7 @@ void Engine::loop() {
 	while(running) {
 	
 		imgui.begin_frame(plt);
-		ImGuiIO& io = ImGui::GetIO();
+		//ImGuiIO& io = ImGui::GetIO(); sorry lol the warning is annoying :)
 
 		SDL_Event e;
 		while(imgui.get_event(e)) {

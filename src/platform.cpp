@@ -1,8 +1,7 @@
 
 #include <glad/glad.h>
 
-#include "lib/log.h"
-#include "lib/alloc.h"
+#include "lib/everything.h"
 #include "platform.h"
 
 #ifdef WIN32
