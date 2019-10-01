@@ -142,7 +142,8 @@ void ensure_deps_in_graph_help(CXType type) {
 
 	switch(type.kind) {
 	case CXType_Pointer: ensure_deps_in_graph_help(clang_getPointeeType(type)); break;
-	case CXType_ConstantArray: ensure_deps_in_graph_help(clang_getArrayElementType(type)); break;
+	case CXType_ConstantArray: 
+	case CXType_DependentSizedArray: ensure_deps_in_graph_help(clang_getArrayElementType(type)); break;
 	case CXType_Record: {
 		clang_Type_visitFields_NotBroken(type, [](CXCursor c, CXClientData data) -> CXVisitorResult {
 			ensure_deps_in_graph_help(clang_getCursorType(c));
@@ -226,6 +227,7 @@ bool type_is_unexposed_help(CXType type) {
 		entry->second.unexposed = type_is_unexposed_help(clang_getPointeeType(type)); 
 	} break;
 
+	case CXType_DependentSizedArray:
 	case CXType_ConstantArray: {
 		entry->second.unexposed = type_is_unexposed_help(clang_getArrayElementType(type));
 	} break;
@@ -370,11 +372,14 @@ CXVisitorResult print_field(CXCursor c, CXClientData client_data) {
 
 	std::string name  = to_string(clang_getCursorSpelling(c));
 	std::string type_name = to_string(clang_getTypeSpelling(type));
-	std::string total = "&" + data->outer + "::" + name;
+	
+	std::string total;
+	if(type.kind == CXType_ConstantArray) total = data->outer + "::" + name;
+	else total = "&" + data->outer + "::" + name;
 
 	record_field field;
-	field.type = "decltype(get_member_type(" + total + "))";
-	field.offset = "offsetof(" + data->outer + ", " + name + ")";
+	field.type = "typename No_Ref<decltype(get_member_type(" + total + "))>::type";
+	field.offset = total;//"offset_of<" + data->outer + ", " + field.type + ", " + total + ">()";
 	field.name = name;
 
 	data->fields.push_back(field);
@@ -403,6 +408,9 @@ void print_record(CXType type, bool just_print = false) {
 			
 			CXType field = clang_getCursorType(c);
 			CXCursor decl = clang_getTypeDeclaration(field);
+			
+			log_out << "bruh: " << clang_getTypeKindSpelling(field.kind) << ", " << clang_getTypeSpelling(clang_getCanonicalType(field)) << std::endl;
+
 			if(!(field.kind == CXType_Record && clang_Cursor_isAnonymous(decl))) {
 				print_dep_type(field, *(CXType*)data);
 			}
@@ -426,7 +434,7 @@ void print_record(CXType type, bool just_print = false) {
 	std::string member_str;
 	for(int i = 0; i < data.fields.size(); i++) {
 		fout << "\tstatic constexpr char __" << i << "[] = \"" << data.fields[i].name << "\";" << std::endl; 
-		member_str += "Record_Field<" + data.fields[i].type + ", " + data.fields[i].offset + ", __" + std::to_string(i) + ">";
+		member_str += "Record_Field<" + type_name + ", " + data.fields[i].type + ", " + data.fields[i].offset + ", __" + std::to_string(i) + ">";
 		if(i != data.fields.size() - 1) member_str += ", ";
 	}
 
@@ -586,7 +594,8 @@ void print_data_type_help(CXType type, CXType parent) {
 	case CXType_Enum: print_enum(type); break;
 	case CXType_Unexposed:
 	case CXType_Record: print_record(type); break;
-	case CXType_ConstantArray: print_array(type); break;
+	case CXType_ConstantArray:
+	case CXType_DependentSizedArray: print_array(type); break;
 	case CXType_Pointer: print_pointer(type); break;
 
 	case CXType_Elaborated: {
@@ -606,7 +615,8 @@ void resolve_patches() {
 	for(CXType type : back_patches) {
 		switch(type.kind) {
 		case CXType_Record: print_record(type, true); break;
-		case CXType_ConstantArray: print_array(type, true); break;
+		case CXType_ConstantArray:
+		case CXType_DependentSizedArray: print_array(type, true); break;
 		case CXType_Pointer: print_pointer(type, true); break;
 		default: break;
 		}
@@ -732,7 +742,8 @@ void print_header(std::string in_file) {
 
 fout << "#define COMPILING_META_TYPES" << std::endl
 				 << "#include \"" << in_file << "\"" << std::endl
-				 << R"STR(template <typename T, typename M> M get_member_type(M T::*);
+				 << R"STR(template <typename T, typename M> M& get_member_type(M T::*);
+template <typename T, typename M, usize N> auto get_member_type(M (T::*)[N]) -> M(&)[N];
 )STR" << std::endl;
 }
 

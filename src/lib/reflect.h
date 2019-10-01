@@ -23,10 +23,10 @@ struct Enum_Field {
     static constexpr usize val = V;
 };
 
-template<typename T, usize O, const char* N>
+template<typename S, typename T, T S::*M, const char* N>
 struct Record_Field {
     static constexpr char const* name = N;
-    static constexpr usize offset = O;
+    static constexpr decltype(M) mem = M;
     using type = T;
 };
 
@@ -50,9 +50,17 @@ template<typename T>
 struct No_Const {
     using type = T;
 };
-
 template<typename T>
 struct No_Const<const T> {
+    using type = T;
+};
+
+template<typename T>
+struct No_Ref {
+    using type = T;
+};
+template<typename T>
+struct No_Ref<T&> {
     using type = T;
 };
 

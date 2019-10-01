@@ -7,16 +7,17 @@ struct vec {
 	u32 size 	 = 0;
 	u32 capacity = 0;
 
-	static vec<T> make(u32 capacity = 8) {
+	// note that a just-declared (i.e. zero'd) vec is already a valid vec
+	static vec<T,A> make(u32 capacity) {
 		return {A::template make<T>(capacity), 0, capacity};
 	}
-	static vec<T> copy(vec<T> source) {
-		vec<T> ret = {A::template make<T>(source.capacity), source.size, source.capacity};
+	static vec<T,A> copy(vec<T,A> source) {
+		vec<T,A> ret = {A::template make<T>(source.capacity), source.size, source.capacity};
 		memcpy(ret.data, source.data, sizeof(T) * source.size);
 		return ret;
 	}
-	static vec<T> take(vec<T>& source) {
-		vec<T> ret = source;
+	static vec<T,A> take(vec<T,A>& source) {
+		vec<T,A> ret = source;
 		source = {null, 0, 0};
 		return ret;
 	}
@@ -68,21 +69,27 @@ struct vec {
 		return data[idx];
 	}
 
-	T* begin() const {
+	const T* begin() const {
 		return data;
 	}
-	T* end() const {
+	const T* end() const {
+		return data + size;
+	}
+	T* begin() {
+		return data;
+	}
+	T* end() {
 		return data + size;
 	}
 
 	struct norefl split {
-		const vec<T> l, r;
+		const vec<T,A> l, r;
 	};
 
 	split halves() const {
 		assert(size > 1);
-		i32 r_s = size / 2;
-		i32 l_s = r_s + size % 2;
+		i32 r_s = size >> 1;
+		i32 l_s = r_s + size & 1;
 		return {{data, l_s, l_s}, {data + l_s, r_s, r_s}};
 	}
 };

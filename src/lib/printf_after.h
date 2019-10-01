@@ -1,9 +1,9 @@
 
 #pragma once
 
-template<typename M>
-struct format_type<vec<M>, Type_Type::record_> {
-    static u32 write(string out, u32 idx, vec<M> val) {
+template<typename M, typename A>
+struct format_type<vec<M,A>, Type_Type::record_> {
+    static u32 write(string out, u32 idx, vec<M,A> val) {
         u32 start = idx;
         idx += out.write(idx, '[');
         for(u32 i = 0; i < val.size; i++) {
@@ -13,7 +13,7 @@ struct format_type<vec<M>, Type_Type::record_> {
         idx += out.write(idx, ']');
         return idx - start;
     }
-    static u32 size(vec<M> val) {
+    static u32 size(vec<M,A> val) {
         u32 idx = 1;
         for(u32 i = 0; i < val.size; i++) {
             idx += format_type<M, Type_Info<M>::type>::size(val[i]);
