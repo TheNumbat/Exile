@@ -4,7 +4,9 @@
 
 i32 main(i32 argc, char **argv) {
 
-	array<i32,3> test;
+	vec<i32> test;
+	test.push(0);
+	test.push(2);
 	for(i32 i : test) {
 		i = 1;
 	}

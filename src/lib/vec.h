@@ -82,14 +82,14 @@ struct vec {
 		return data + size;
 	}
 
-	struct norefl split {
-		const vec<T,A> l, r;
-	};
+	// struct norefl split {
+	// 	const vec<T,A> l, r;
+	// };
 
-	split halves() const {
-		assert(size > 1);
-		i32 r_s = size >> 1;
-		i32 l_s = r_s + size & 1;
-		return {{data, l_s, l_s}, {data + l_s, r_s, r_s}};
-	}
+	// split halves() const {
+	// 	assert(size > 1);
+	// 	i32 r_s = size >> 1;
+	// 	i32 l_s = r_s + size & 1;
+	// 	return {{data, l_s, l_s}, {data + l_s, r_s, r_s}};
+	// }
 };

@@ -5,9 +5,11 @@ Framework re-write:
         Allocator profiling
 
     Data structure ports
+        fix garbage c++ stuff
         map
         queue
         heap
+        destroy contained members
         print rules
         thread safe ones
 

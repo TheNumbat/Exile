@@ -27,10 +27,16 @@ struct stack {
 		return data.pop();
 	}
 
-	T* begin() const {
+	const T* begin() const {
 		return data.begin();
 	}
-	T* end() const {
+	const T* end() const {
+		return data.end();
+	}
+	T* begin() {
+		return data.begin();
+	}
+	T* end() {
 		return data.end();
 	}
 };

@@ -142,8 +142,7 @@ void ensure_deps_in_graph_help(CXType type) {
 
 	switch(type.kind) {
 	case CXType_Pointer: ensure_deps_in_graph_help(clang_getPointeeType(type)); break;
-	case CXType_ConstantArray: 
-	case CXType_DependentSizedArray: ensure_deps_in_graph_help(clang_getArrayElementType(type)); break;
+	case CXType_ConstantArray: ensure_deps_in_graph_help(clang_getArrayElementType(type)); break;
 	case CXType_Record: {
 		clang_Type_visitFields_NotBroken(type, [](CXCursor c, CXClientData data) -> CXVisitorResult {
 			ensure_deps_in_graph_help(clang_getCursorType(c));
@@ -227,7 +226,6 @@ bool type_is_unexposed_help(CXType type) {
 		entry->second.unexposed = type_is_unexposed_help(clang_getPointeeType(type)); 
 	} break;
 
-	case CXType_DependentSizedArray:
 	case CXType_ConstantArray: {
 		entry->second.unexposed = type_is_unexposed_help(clang_getArrayElementType(type));
 	} break;
@@ -409,8 +407,6 @@ void print_record(CXType type, bool just_print = false) {
 			CXType field = clang_getCursorType(c);
 			CXCursor decl = clang_getTypeDeclaration(field);
 			
-			log_out << "bruh: " << clang_getTypeKindSpelling(field.kind) << ", " << clang_getTypeSpelling(clang_getCanonicalType(field)) << std::endl;
-
 			if(!(field.kind == CXType_Record && clang_Cursor_isAnonymous(decl))) {
 				print_dep_type(field, *(CXType*)data);
 			}
@@ -594,8 +590,7 @@ void print_data_type_help(CXType type, CXType parent) {
 	case CXType_Enum: print_enum(type); break;
 	case CXType_Unexposed:
 	case CXType_Record: print_record(type); break;
-	case CXType_ConstantArray:
-	case CXType_DependentSizedArray: print_array(type); break;
+	case CXType_ConstantArray: print_array(type); break;
 	case CXType_Pointer: print_pointer(type); break;
 
 	case CXType_Elaborated: {
@@ -615,8 +610,7 @@ void resolve_patches() {
 	for(CXType type : back_patches) {
 		switch(type.kind) {
 		case CXType_Record: print_record(type, true); break;
-		case CXType_ConstantArray:
-		case CXType_DependentSizedArray: print_array(type, true); break;
+		case CXType_ConstantArray: print_array(type, true); break;
 		case CXType_Pointer: print_pointer(type, true); break;
 		default: break;
 		}

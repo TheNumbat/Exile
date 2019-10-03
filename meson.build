@@ -47,7 +47,7 @@ gen_src = custom_target('meta_output',
                         input : 'src/meta_input.h',
                         output : 'meta_types.h',
                         build_by_default : true, build_always_stale : true,
-                        command : [meta_compiler, '@INPUT@', '@OUTPUT@', '-I../src/', '-I../deps/', '-xc++', '-DRUNNING_META'])
+                        command : [meta_compiler, '@INPUT@', '@OUTPUT@', '-I../src/', '-I../deps/', '-xc++', '-std=c++17', '-DRUNNING_META'])
 
 sources = [
 	'deps/imgui/imgui.cpp',
