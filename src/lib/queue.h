@@ -3,35 +3,35 @@
 
 template<typename T, typename A = Mdefault>
 struct queue {
-	T* data = null;
+    T* data = null;
     // end points past the last element. size is the number of elements preceeding it (may wrap around)
     u32 size = 0, last = 0, capacity = 0;
 
     // note that a just-declared (i.e. zero'd) queue is already a valid queue
-	static queue<T> make(u32 capacity) {
+    static queue<T> make(u32 capacity) {
         return {A::template make<T>(capacity), 0, 0, capacity};
-	}
-	static queue<T> copy(queue<T> source) {
+    }
+    static queue<T> copy(queue<T> source) {
         queue<T> ret = {A::template make<T>(source.capacity), source.start, source.last, source.capacity};
         memcpy(ret.data, source.data, sizeof(T) * capacity);
         return ret;
-	}
-	static queue<T> take(queue<T>& source) {
+    }
+    static queue<T> take(queue<T>& source) {
         queue<T> ret = source;
         source = {null, 0, 0, 0};
         return ret;
-	}
+    }
 
-	void destroy() {
+    void destroy() {
         A::dealloc(data);
         data = null;
         size = last = capacity = 0;
-	}
+    }
 
     void grow() {
         u32 new_capacity = capacity ? 2 * capacity : 8;
 
-		T* new_data = A::template make<T>(new_capacity);
+        T* new_data = A::template make<T>(new_capacity);
         
         T* start = data + last - size;
 
@@ -47,28 +47,28 @@ struct queue {
         data = new_data;
     }
 
-	void push(T value) {
+    void push(T value) {
         if(size == capacity) grow();
 
         data[last] = value;
         size++;
         last = last == capacity - 1 ? 0 : last + 1;
-	}
-	T pop() {
+    }
+    T pop() {
         assert(size > 0);
         size--;
         last = last == 0 ? capacity - 1 : last - 1;
         return data[last];
-	}
+    }
     void clear() {
         size = last = 0;
     }
 
-	T* begin() const {
+    T* begin() const {
         
-	}
-	T* end() const {
-	}
+    }
+    T* end() const {
+    }
 
     template<typename E>
     struct itr {

@@ -11,9 +11,9 @@
 #include <new>
 
 #ifdef RUNNING_META
-	#define norefl __attribute__((annotate("noreflect")))
+    #define norefl __attribute__((annotate("noreflect")))
 #else
-	#define norefl
+    #define norefl
 #endif
 
 typedef uint8_t 	u8;

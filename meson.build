@@ -11,7 +11,7 @@ host_system = host_machine.system()
 
 inc_dir = include_directories('deps', 'build')
 if host_system == 'windows'
-    inc_dir = include_directories('deps', 'build', 'deps/win')
+	inc_dir = include_directories('deps', 'build', 'deps/win')
 endif
 
 if host_system == 'linux'
@@ -22,7 +22,7 @@ cpp_args = []
 
 if host_system == 'windows'
 	cpp_args += ['-fp:fast', '-GR-', '-EHa-', '-Oi', 
-			     '-MP', '-FC', '-D_HAS_EXCEPTIONS=0']
+				 '-MP', '-FC', '-D_HAS_EXCEPTIONS=0']
 elif host_system == 'linux'
 	cpp_args += ['-msse4.1', '-Wno-format', '-Wno-unknown-pragmas']
 endif
@@ -44,10 +44,10 @@ meta_compiler = executable('meta', 'src/tools/meta.cpp',
 							native : true, cpp_args : cpp_args)
 
 gen_src = custom_target('meta_output',
-                        input : 'src/meta_input.h',
-                        output : 'meta_types.h',
-                        build_by_default : true, build_always_stale : true,
-                        command : [meta_compiler, '@INPUT@', '@OUTPUT@', '-I../src/', '-I../deps/', '-xc++', '-std=c++17', '-DRUNNING_META'])
+						input : 'src/meta_input.h',
+						output : 'meta_types.h',
+						build_by_default : true, build_always_stale : true,
+						command : [meta_compiler, '@INPUT@', '@OUTPUT@', '-I../src/', '-I../deps/', '-xc++', '-std=c++17', '-DRUNNING_META'])
 
 sources = [
 	'deps/imgui/imgui.cpp',

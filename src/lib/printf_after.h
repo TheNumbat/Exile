@@ -41,7 +41,7 @@ u32 sprint(string out, string fmt, u32 idx, T first, Ts... args) {
 
     idx += format_type<T, Type_Info<T>::type>::write(out, idx, first);
 
-	return idx - start + sprint(out, fmt.sub_end(used + 1), idx, args...);
+    return idx - start + sprint(out, fmt.sub_end(used + 1), idx, args...);
 }
 
 template<typename T, typename... Ts>
@@ -62,7 +62,7 @@ u32 sprint_size(string fmt, u32 idx, T first, Ts... args) {
 
     idx += format_type<T, Type_Info<T>::type>::size(first);
 
-	return idx - start + sprint_size(fmt.sub_end(used + 1), idx, args...);
+    return idx - start + sprint_size(fmt.sub_end(used + 1), idx, args...);
 }
 
 template<typename... Ts>

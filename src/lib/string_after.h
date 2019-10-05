@@ -39,9 +39,9 @@ u32 astring<A>::write(u32 idx, char cpy) {
 string last_file(string path) {
     u32 loc = path.len - 1;
     for(; loc >= 0; loc--) {
-		if(path.c_str[loc] == '\\' || path.c_str[loc] == '/') {
-			break;
-		}
-	}
+        if(path.c_str[loc] == '\\' || path.c_str[loc] == '/') {
+            break;
+        }
+    }
     return path.sub_end(loc + 1);
 }
