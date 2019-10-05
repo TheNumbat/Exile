@@ -42,6 +42,8 @@ struct queue {
             memcpy(new_data + first, data, sizeof(T) * last);
         }
 
+        A::dealloc(data);
+
         last = size;
         capacity = new_capacity;
         data = new_data;
@@ -56,41 +58,57 @@ struct queue {
     }
     T pop() {
         assert(size > 0);
+        u32 idx = size <= last ? last - size : last - size + capacity;
         size--;
-        last = last == 0 ? capacity - 1 : last - 1;
-        return data[last];
+        return data[idx];
     }
     void clear() {
         size = last = 0;
     }
 
-    T* begin() const {
-        
-    }
-    T* end() const {
-    }
 
     template<typename E>
     struct itr {
-        // typedef iterator self_type;
-        // typedef T value_type;
-        // typedef T& reference;
-        // typedef T* pointer;
-        // typedef std::forward_iterator_tag iterator_category;
-        // typedef int difference_type;
-        
-        iterator(queue<T,A>& _q) : q(_q), place(0) {}
+        itr(queue<T,A>& _q, u32 idx, u32 cons) : q(_q), place(idx), consumed(cons) {}
 
-        itr operator++() { itr i = *this; place = place == q.capacity - 1 ? 0 : place + 1; return i; }
-        itr operator++(int) { place = place == q.capacity - 1 ? 0 : place + 1; return *this; }
+        itr operator++() { itr i = *this; place = place == q.capacity - 1 ? 0 : place + 1; consumed++; return i; }
+        itr operator++(int) { place = place == q.capacity - 1 ? 0 : place + 1; consumed++; return *this; }
         E& operator*() { return q.data[place]; }
         E* operator->() { return &q.data[place]; }
-        bool operator==(const itr& rhs) { return &q == &rhs.q && place == rhs.place; }
-        bool operator!=(const itr& rhs) { return &q != &rhs.q || place != rhs.place; }
+        bool operator==(const itr& rhs) { return &q == &rhs.q && place == rhs.place && consumed == rhs.consumed; }
+        bool operator!=(const itr& rhs) { return &q != &rhs.q || place != rhs.place || consumed != rhs.consumed; }
         
         queue<T,A>& q;
-        u32 place;
+        u32 place, consumed;
     };
     typedef itr<T> iterator;
     typedef itr<const T> const_iterator;
+
+    u32 start_idx() const {
+        return size <= last ? last - size : last - size + capacity;
+    }
+    const_iterator begin() const {   
+        return const_iterator(*this, start_idx(), 0);
+    }
+    const_iterator end() const {
+        return const_iterator(*this, last, size);
+    }
+    iterator begin() {   
+        return iterator(*this, start_idx(), 0);
+    }
+    iterator end() {
+        return iterator(*this, last, size);
+    }
+};
+
+template<typename T, typename A> 
+struct Type_Info<queue<T,A>> {
+	static constexpr char name[] = "queue";
+	static constexpr usize size = sizeof(queue<T,A>);
+	static constexpr Type_Type type = Type_Type::record_;
+    static constexpr char _data[] = "data";
+    static constexpr char _size[] = "size";
+    static constexpr char _last[] = "last";
+    static constexpr char _capacity[] = "capacity";
+	using members = Type_List<Record_Field<T*,0,_data>,Record_Field<u32,8,_size>,Record_Field<u32,16,_last>,Record_Field<u32,16,_capacity>>;
 };

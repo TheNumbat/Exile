@@ -112,12 +112,12 @@ struct format_type<E, Type_Type::string_> {
     }
 };
 
-template<typename E, usize N>
-struct format_type<E(&)[N], Type_Type::array_> {
+template<typename E>
+struct format_type<E, Type_Type::array_> {
     using underlying = typename Type_Info<E>::underlying;
     using format_underlying = format_type<underlying, Type_Info<underlying>::type>;
 
-    static u32 write(string out, u32 idx, E (&val)[N]) {
+    static u32 write(string out, u32 idx, E val) {
         u32 start = idx;
         idx += out.write(idx, "[");
         
@@ -131,7 +131,7 @@ struct format_type<E(&)[N], Type_Type::array_> {
         idx += out.write(idx, "]");
         return idx - start;
     }
-    static u32 size(E (&val)[N]) {
+    static u32 size(E val) {
         u32 idx = 1;
         for(usize i = 0; i < Type_Info<E>::len; i++) {
             idx += format_underlying::size(val[i]);

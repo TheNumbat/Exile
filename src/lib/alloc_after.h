@@ -1,5 +1,5 @@
-#pragma once
 
+#pragma once
 
 template<const char* tname, usize N>
 template<typename T>

@@ -82,14 +82,25 @@ struct vec {
         return data + size;
     }
 
-    // struct norefl split {
-    // 	const vec<T,A> l, r;
-    // };
+    struct split {
+    	const vec<T,A> l, r;
+    };
 
-    // split halves() const {
-    // 	assert(size > 1);
-    // 	i32 r_s = size >> 1;
-    // 	i32 l_s = r_s + size & 1;
-    // 	return {{data, l_s, l_s}, {data + l_s, r_s, r_s}};
-    // }
+    split halves() const {
+    	assert(size > 1);
+    	i32 r_s = size >> 1;
+    	i32 l_s = r_s + size & 1;
+    	return {{data, l_s, l_s}, {data + l_s, r_s, r_s}};
+    }
+};
+
+template<typename T, typename A> 
+struct Type_Info<vec<T,A>> {
+	static constexpr char name[] = "vec";
+	static constexpr usize size = sizeof(vec<T,A>);
+	static constexpr Type_Type type = Type_Type::record_;
+    static constexpr char _data[] = "data";
+    static constexpr char _size[] = "size";
+    static constexpr char _capacity[] = "capacity";
+	using members = Type_List<Record_Field<T*,0,_data>,Record_Field<u32,8,_size>,Record_Field<u32,12,_capacity>>;
 };

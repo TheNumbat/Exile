@@ -1,16 +1,18 @@
 
 Framework re-write:
+
     Debugging systems
         Time profiling
         Allocator profiling
 
     Data structure ports
-        fix garbage c++ stuff
+        
         map
         queue
         heap
+
+        finish print rules        
         destroy contained members
-        print rules
         thread safe ones
 
     Reflection

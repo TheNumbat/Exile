@@ -1,7 +1,20 @@
 
 #pragma once
 
-typedef u64 type_id;
+/*
+    NOTE(max):
+
+    Technically the reflection system can work with literally anything, but the current meta-program
+    doesn't handle nested template instantiation/defaulted template parameters/etc. very well. Thanks libclang! 
+    I don't want to _again_ re-write the meta-program (this time as a true clang-tool) to be truly robust, 
+    so instead just assume that no reflection code for template data structures will be generated. 
+
+    99% of the templated structures we will want to reflect are just my standard library ones,
+    so I will provide custom print/UI/serial/etc. code for all of the standard data structures.
+
+    NOTE(max): I still can't get constexpr offset_of to work. The compiler doesn't accept it as a compile
+    time constant, even if it literally confirms reduction to a literal. Maybe once we switch to clang...
+*/
 
 enum class Type_Type : u8 {
     void_,
@@ -23,10 +36,10 @@ struct Enum_Field {
     static constexpr usize val = V;
 };
 
-template<typename S, typename T, T S::*M, const char* N>
+template<typename T, usize O, const char* N>
 struct Record_Field {
     static constexpr char const* name = N;
-    static constexpr decltype(M) mem = M;
+    static constexpr usize offset = O;
     using type = T;
 };
 
@@ -50,17 +63,9 @@ template<typename T>
 struct No_Const {
     using type = T;
 };
-template<typename T>
-struct No_Const<const T> {
-    using type = T;
-};
 
 template<typename T>
-struct No_Ref {
-    using type = T;
-};
-template<typename T>
-struct No_Ref<T&> {
+struct No_Const<const T> {
     using type = T;
 };
 
@@ -73,5 +78,3 @@ struct Type_Info<T*> {
     static constexpr usize size = sizeof(typename No_Const<T>::type*);
     static constexpr Type_Type type = Type_Type::ptr_;
 };
-
-#include <meta_types.h>

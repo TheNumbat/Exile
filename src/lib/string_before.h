@@ -1,9 +1,7 @@
 
 #pragma once
 
-#ifndef RUNNING_META
 template<typename A>
-#endif
 struct norefl astring {
     char* c_str = null;
     u32 cap	    = 0;

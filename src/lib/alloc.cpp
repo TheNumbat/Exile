@@ -12,8 +12,10 @@ u8* base_alloc(usize sz) {
 }
 
 void base_free(void* mem) {
-    free(mem);
-    allocs--;
+    if(mem) {
+        free(mem);
+        allocs--;
+    }
 }
 
 void mem_validate() {

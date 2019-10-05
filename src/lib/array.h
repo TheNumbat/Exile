@@ -34,3 +34,12 @@ struct array {
         return data + N;
     }
 };
+
+template<typename T, u32 N> 
+struct Type_Info<array<T,N>> {
+	static constexpr char name[] = "array";
+	static constexpr usize size = sizeof(T [N]);
+	static constexpr Type_Type type = Type_Type::array_;
+	static constexpr usize len = N;
+	using underlying = T;
+};

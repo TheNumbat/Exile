@@ -23,6 +23,50 @@ struct format_type<vec<M,A>, Type_Type::record_> {
     }
 };
 
+template<typename M, typename A>
+struct format_type<stack<M,A>, Type_Type::record_> {
+    static u32 write(string out, u32 idx, stack<M,A> val) {
+        u32 start = idx;
+        idx += out.write(idx, "stack[");
+        for(u32 i = 0; i < val.data.size; i++) {
+            idx += format_type<M, Type_Info<M>::type>::write(out, idx, val.data[i]);
+            if(i != val.data.size - 1) idx += out.write(idx, ", ");
+        }
+        idx += out.write(idx, ']');
+        return idx - start;
+    }
+    static u32 size(stack<M,A> val) {
+        u32 idx = 6;
+        for(u32 i = 0; i < val.data.size; i++) {
+            idx += format_type<M, Type_Info<M>::type>::size(val.data[i]);
+            if(i != val.data.size - 1) idx += 2;
+        }
+        return idx + 1;
+    }
+};
+
+template<typename M, typename A>
+struct format_type<queue<M,A>, Type_Type::record_> {
+    static u32 write(string out, u32 idx, queue<M,A> val) {
+        u32 start = idx, i = 0;
+        idx += out.write(idx, "queue[");
+        for(auto item : val) {
+            idx += format_type<M, Type_Info<M>::type>::write(out, idx, item);
+            if(i++ != val.size - 1) idx += out.write(idx, ", ");
+        }
+        idx += out.write(idx, ']');
+        return idx - start;
+    }
+    static u32 size(queue<M,A> val) {
+        u32 idx = 6, i = 0;
+        for(auto item : val) {
+            idx += format_type<M, Type_Info<M>::type>::size(item);
+            if(i++ != val.size - 1) idx += 2;
+        }
+        return idx + 1;
+    }
+};
+
 template<typename T, typename... Ts>
 u32 sprint(string out, string fmt, u32 idx, T first, Ts... args) {
 
