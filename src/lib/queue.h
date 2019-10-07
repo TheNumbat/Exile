@@ -11,7 +11,7 @@ struct queue {
     static queue<T> make(u32 capacity) {
         return {A::template make<T>(capacity), 0, 0, capacity};
     }
-    static queue<T> copy(queue<T> source) {
+    queue<T> copy(queue<T> source) {
         queue<T> ret = {A::template make<T>(source.capacity), source.start, source.last, source.capacity};
         memcpy(ret.data, source.data, sizeof(T) * capacity);
         return ret;

@@ -318,14 +318,54 @@ struct format_type<E, Type_Type::record_> {
 
 template<typename... Ts>
 u32 sprint(string out, string fmt, u32 idx) {
-    return out.write(idx, fmt);
+
+    u32 start = idx;
+    u32 used = 0;
+
+    while (used < fmt.len) {
+        if (fmt[used] == '%') {
+            if (used + 1 < fmt.len) {
+                if (fmt[used + 1] == '%') {
+                    used += 1;
+                } else {
+                    warn("Too many format specifiers in format string!");
+                    break;
+                }
+            }
+        }
+
+        idx += out.write(idx, fmt[used]);
+        used += 1;
+    }
+
+    return idx - start;
 }
 template<typename T, typename... Ts>
 u32 sprint(string out, string fmt, u32 idx, T first, Ts... args);
 
 template<typename... Ts>
 u32 sprint_size(string fmt, u32 idx) {
-    return fmt.len - 1;
+
+    u32 start = idx;
+    u32 used = 0;
+
+    while (used < fmt.len) {
+        if (fmt[used] == '%') {
+            if (used + 1 < fmt.len) {
+                if (fmt[used + 1] == '%') {
+                    used += 1;
+                } else {
+                    warn("Too many format specifiers in format string!");
+                    break;
+                }
+            }
+        }
+
+        idx += 1;
+        used += 1;
+    }
+
+    return idx - start;
 }
 template<typename T, typename... Ts>
 u32 sprint_size(string fmt, u32 idx, T first, Ts... args);

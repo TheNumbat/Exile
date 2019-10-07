@@ -68,7 +68,7 @@ struct norefl astring {
 
 using string = astring<Mdefault>;
 
-static thread_local char g_scratch_buf_underlying[1024];
-static thread_local string g_scratch_buf = string::from(g_scratch_buf_underlying, 1024);
+static thread_local char g_scratch_buf_underlying[4096];
+static thread_local string g_scratch_buf = string::from(g_scratch_buf_underlying, 4096);
 
 string last_file(string path);

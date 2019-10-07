@@ -73,11 +73,19 @@ u32 sprint(string out, string fmt, u32 idx, T first, Ts... args) {
     u32 start = idx;
     u32 used = 0;
 
-    while(fmt[used] != '%') {
+    while(true) {
+        if (fmt[used] == '%') {
+            if (used + 1 < fmt.len && fmt[used + 1] == '%') {
+                used += 1;
+            } else {
+                break;
+            }
+        }
+
         idx += out.write(idx, fmt[used]);
         used += 1;
 
-        if(used == fmt.len) {
+        if (used == fmt.len) {
             warn("Too few format specifiers in format string!");
             return idx - start;
         }
@@ -94,11 +102,19 @@ u32 sprint_size(string fmt, u32 idx, T first, Ts... args) {
     u32 start = idx;
     u32 used = 0;
 
-    while(fmt[used] != '%') {
+    while(true) {
+        if (fmt[used] == '%') {
+            if (used + 1 < fmt.len && fmt[used + 1] == '%') {
+                used += 1;
+            } else {
+                break;
+            }
+        }
+
         idx += 1;
         used += 1;
 
-        if(used == fmt.len) {
+        if (used == fmt.len) {
             warn("Too few format specifiers in format string!");
             return idx - start;
         }
