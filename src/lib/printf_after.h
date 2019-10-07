@@ -86,7 +86,7 @@ u32 sprint(string out, string fmt, u32 idx, T first, Ts... args) {
         used += 1;
 
         if (used == fmt.len) {
-            warn("Too few format specifiers in format string!");
+            die("Too few format specifiers in format string!");
             return idx - start;
         }
     }
@@ -115,7 +115,7 @@ u32 sprint_size(string fmt, u32 idx, T first, Ts... args) {
         used += 1;
 
         if (used == fmt.len) {
-            warn("Too few format specifiers in format string!");
+            die("Too few format specifiers in format string!");
             return idx - start;
         }
     }

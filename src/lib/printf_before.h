@@ -328,7 +328,7 @@ u32 sprint(string out, string fmt, u32 idx) {
                 if (fmt[used + 1] == '%') {
                     used += 1;
                 } else {
-                    warn("Too many format specifiers in format string!");
+                    die("Too many format specifiers in format string!");
                     break;
                 }
             }
@@ -355,7 +355,7 @@ u32 sprint_size(string fmt, u32 idx) {
                 if (fmt[used + 1] == '%') {
                     used += 1;
                 } else {
-                    warn("Too many format specifiers in format string!");
+                    die("Too many format specifiers in format string!");
                     break;
                 }
             }
