@@ -9,7 +9,7 @@ struct norefl map_element {
     K key;
     V value;
     u32 bucket() {return _bucket >> 1;}
-    u32 valid() {return _bucket & 1;}
+    bool valid() {return _bucket & 1;}
 private: u32 _bucket; // low bit set if valid
 };
 
