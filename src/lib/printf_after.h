@@ -1,9 +1,19 @@
 
 #pragma once
 
-template<typename M, typename A>
-struct format_type<vec<M,A>, Type_Type::record_> {
-    static u32 write(string out, u32 idx, vec<M,A> val) {
+template<typename A, typename SA>
+struct format_type<A, astring<SA>, Type_Type::string_> {
+    static u32 write(astring<A> out, u32 idx, astring<SA> val) {
+        return out.write(idx, val);
+    }
+    static u32 size(astring<SA> val) {
+        return val.len - 1;
+    }
+};
+
+template<typename A, typename M, typename VA>
+struct format_type<A, vec<M,VA>, Type_Type::record_> {
+    static u32 write(astring<A> out, u32 idx, vec<M,VA> val) {
         u32 start = idx;
         idx += out.write(idx, '[');
         for(u32 i = 0; i < val.size; i++) {
@@ -13,7 +23,7 @@ struct format_type<vec<M,A>, Type_Type::record_> {
         idx += out.write(idx, ']');
         return idx - start;
     }
-    static u32 size(vec<M,A> val) {
+    static u32 size(vec<M,VA> val) {
         u32 idx = 1;
         for(u32 i = 0; i < val.size; i++) {
             idx += format_type<M, Type_Info<M>::type>::size(val[i]);
@@ -23,9 +33,9 @@ struct format_type<vec<M,A>, Type_Type::record_> {
     }
 };
 
-template<typename M, typename A>
-struct format_type<stack<M,A>, Type_Type::record_> {
-    static u32 write(string out, u32 idx, stack<M,A> val) {
+template<typename A, typename M, typename VA>
+struct format_type<A, stack<M,VA>, Type_Type::record_> {
+    static u32 write(astring<A> out, u32 idx, stack<M,VA> val) {
         u32 start = idx;
         idx += out.write(idx, "stack[");
         for(u32 i = 0; i < val.data.size; i++) {
@@ -35,7 +45,7 @@ struct format_type<stack<M,A>, Type_Type::record_> {
         idx += out.write(idx, ']');
         return idx - start;
     }
-    static u32 size(stack<M,A> val) {
+    static u32 size(stack<M,VA> val) {
         u32 idx = 6;
         for(u32 i = 0; i < val.data.size; i++) {
             idx += format_type<M, Type_Info<M>::type>::size(val.data[i]);
@@ -45,9 +55,9 @@ struct format_type<stack<M,A>, Type_Type::record_> {
     }
 };
 
-template<typename M, typename A>
-struct format_type<queue<M,A>, Type_Type::record_> {
-    static u32 write(string out, u32 idx, queue<M,A> val) {
+template<typename A, typename M, typename QA>
+struct format_type<A, queue<M,QA>, Type_Type::record_> {
+    static u32 write(astring<A> out, u32 idx, queue<M,QA> val) {
         u32 start = idx, i = 0;
         idx += out.write(idx, "queue[");
         for(auto item : val) {
@@ -57,7 +67,7 @@ struct format_type<queue<M,A>, Type_Type::record_> {
         idx += out.write(idx, ']');
         return idx - start;
     }
-    static u32 size(queue<M,A> val) {
+    static u32 size(queue<M,QA> val) {
         u32 idx = 6, i = 0;
         for(auto item : val) {
             idx += format_type<M, Type_Info<M>::type>::size(item);
@@ -67,8 +77,8 @@ struct format_type<queue<M,A>, Type_Type::record_> {
     }
 };
 
-template<typename T, typename... Ts>
-u32 sprint(string out, string fmt, u32 idx, T first, Ts... args) {
+template<typename A, typename T, typename... Ts>
+u32 sprint(astring<A> out, literal fmt, u32 idx, T first, Ts... args) {
 
     u32 start = idx;
     u32 used = 0;
@@ -91,13 +101,13 @@ u32 sprint(string out, string fmt, u32 idx, T first, Ts... args) {
         }
     }
 
-    idx += format_type<T, Type_Info<T>::type>::write(out, idx, first);
+    idx += format_type<A, T, Type_Info<T>::type>::write(out, idx, first);
 
     return idx - start + sprint(out, fmt.sub_end(used + 1), idx, args...);
 }
 
 template<typename T, typename... Ts>
-u32 sprint_size(string fmt, u32 idx, T first, Ts... args) {
+u32 sprint_size(literal fmt, u32 idx, T first, Ts... args) {
 
     u32 start = idx;
     u32 used = 0;
@@ -120,17 +130,17 @@ u32 sprint_size(string fmt, u32 idx, T first, Ts... args) {
         }
     }
 
-    idx += format_type<T, Type_Info<T>::type>::size(first);
+    idx += format_type<void, T, Type_Info<T>::type>::size(first);
 
     return idx - start + sprint_size(fmt.sub_end(used + 1), idx, args...);
 }
 
-template<typename... Ts>
-string format(string fmt, Ts... args) {
+template<typename A, typename... Ts>
+astring<A> format(literal fmt, Ts... args) {
 
     u32 len = sprint_size<Ts...>(fmt, 0, args...);
     
-    string ret = string::make(len + 1);
+    astring<A> ret = astring<A>::make(len + 1);
     ret.len = len + 1;
 
     u32 written = sprint<Ts...>(ret, fmt, 0, args...);
@@ -139,14 +149,14 @@ string format(string fmt, Ts... args) {
 }
 
 template<typename... Ts>
-string scratch_format(string fmt, Ts... args) {
+string scratch_format(literal fmt, Ts... args) {
 
     u32 len = sprint_size<Ts...>(fmt, 0, args...);
     
     assert(len < g_scratch_buf.cap);
     g_scratch_buf.len = len + 1;
 
-    u32 written = sprint<Ts...>(g_scratch_buf, fmt, 0, args...);
+    u32 written = sprint<Mdefault, Ts...>(g_scratch_buf, fmt, 0, args...);
     assert(len == written);
 
     g_scratch_buf[len] = 0;

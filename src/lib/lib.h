@@ -5,14 +5,17 @@
 // order matters!
 
 #include "alloc_before.h"
-#include "string_before.h"
 #include "reflect.h"
+#include "string_before.h"
 
 #include "log.h"
 #include "vec.h"
 #include "array.h"
 #include "stack.h"
 #include "queue.h"
+
+#include "hash.h"
+#include "map.h"
 
 #include "printf_before.h"
 #include "alloc_after.h"

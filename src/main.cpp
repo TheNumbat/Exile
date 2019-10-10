@@ -4,6 +4,8 @@
 
 i32 main(i32 argc, char **argv) {
 
+    map<i32,i32> m;
+
     Engine eng;
     eng.init();
     eng.loop();

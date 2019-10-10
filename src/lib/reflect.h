@@ -69,6 +69,11 @@ struct No_Const<const T> {
     using type = T;
 };
 
+template<typename T, typename U> 
+constexpr size_t offset_of(U T::*member) {
+    return (char*)&((T*)null->*member) - (char*)null;
+}
+
 template<typename T> struct Type_Info;
 
 template<typename T> 

@@ -8,7 +8,6 @@ Framework re-write:
     Data structure ports
         
         map
-        queue
         heap
 
         finish print rules        

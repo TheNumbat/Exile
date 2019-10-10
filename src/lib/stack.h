@@ -47,5 +47,5 @@ struct Type_Info<stack<T,A>> {
 	static constexpr usize size = sizeof(stack<T,A>);
 	static constexpr Type_Type type = Type_Type::record_;
     static constexpr char _data[] = "data";
-	using members = Type_List<Record_Field<vec<T,A>,0,_data>>;
+	using members = Type_List<Record_Field<vec<T,A>,offset_of(&stack<T,A>::data),_data>>;
 };

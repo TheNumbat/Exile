@@ -8,7 +8,7 @@ struct norefl astring {
     u32 len		= 0;
 
     astring() {}
-    astring(const char* lit) {*this = literal(lit);}
+    astring(const char* lit) {*this = from_c(lit);}
 
     static astring make(u32 cap) {
         astring ret;
@@ -30,7 +30,7 @@ struct norefl astring {
         src.cap = src.len = 0;
         return ret;
     }
-    static astring literal(const char* lit) {
+    static astring from_c(const char* lit) {
         astring ret;
         ret.c_str = (char*)lit;
         ret.cap = ret.len = strlen(lit) + 1;
@@ -62,13 +62,55 @@ struct norefl astring {
 
     const astring sub_end(u32 s) const;
     
-    u32 write(u32 idx, astring cpy);
+    template<typename SA>
+    u32 write(u32 idx, astring<SA> cpy);
     u32 write(u32 idx, char cpy);
 };
 
+// Non-modifiable string, kind of like a string_view.
+// Should be used to represent string literals or more generally views into
+// memory that is not owned by this string.
+template<>
+struct norefl astring<void> {
+    const char* c_str = null;
+    const u32 cap	  = 0;
+    const u32 len     = 0;
+
+    astring() {}
+    astring(const char* lit) : c_str(lit), cap(strlen(lit) + 1), len(cap) {}
+    astring(const char* arr, u32 c) : c_str(arr), cap(c), len(cap) {}
+
+    static astring literal(const char* lit) {
+        return {lit};
+    }
+    static astring from(const char* arr, u32 cap) {
+        return {arr, cap};
+    }
+
+    operator const char*() {return c_str;}
+
+    char operator[](u32 idx) const;
+    astring sub_end(u32 s) const;
+
+    const char* begin() {return c_str;}
+    const char* end() {
+        if(cap) return c_str + cap - 1;
+        return c_str;
+    }
+};
+
 using string = astring<Mdefault>;
+using literal = astring<void>;
 
 static thread_local char g_scratch_buf_underlying[4096];
 static thread_local string g_scratch_buf = string::from(g_scratch_buf_underlying, 4096);
 
-string last_file(string path);
+template<typename A>
+astring<A> last_file(astring<A> path);
+
+template<typename A> 
+struct Type_Info<astring<A>> {
+	static constexpr char name[] = "string";
+	static constexpr usize size = sizeof(astring<A>);
+	static constexpr Type_Type type = Type_Type::string_;
+};

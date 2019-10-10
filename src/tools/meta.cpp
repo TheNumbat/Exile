@@ -578,9 +578,9 @@ void print_data_type_help(CXType type, CXType parent) {
 		log_out << "\ttype is unexposed" << std::endl;
 		if(type_is_not_specified(type)) {
 			log_out << "\ttype is not instantiated, continuing" << std::endl;
-			data.done = true;
-			return;
 		}
+		data.done = true;
+		return;
 	}
 
 	switch(type.kind) {
@@ -721,11 +721,6 @@ template<> struct Type_Info<bool> {
 	static constexpr char name[] = "bool";
 	static constexpr usize size = sizeof(bool);
 	static constexpr Type_Type type = Type_Type::bool_;
-};
-template<> struct Type_Info<string> {
-	static constexpr char name[] = "string";
-	static constexpr usize size = sizeof(string);
-	static constexpr Type_Type type = Type_Type::string_;
 };
 	)STR" << std::endl;
 }

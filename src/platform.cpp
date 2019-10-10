@@ -12,8 +12,8 @@ extern "C" {
 
 void gl_debug_proc(GLenum glsource, GLenum gltype, GLuint id, GLenum severity, GLsizei length, const GLchar* glmessage, const void* up);
 
-string glString(GLenum name) {
-    return string::literal((const char*)glGetString(name));
+literal glString(GLenum name) {
+    return literal((const char*)glGetString(name));
 }
 
 void Platform::init() {
@@ -69,7 +69,7 @@ void Platform::destroy() {
 
 void Platform::gl_validate() {
     
-    #define GL_CHECK(type) if(glIs##type && glIs##type(i)) { warn("Leaked OpenGL handle % of type %", i, string::literal(#type)); leaked = true;}
+    #define GL_CHECK(type) if(glIs##type && glIs##type(i)) { warn("Leaked OpenGL handle % of type %", i, literal(#type)); leaked = true;}
 
     bool leaked = false;
     for(GLuint i = 0; i < 100000; i++) {
@@ -91,7 +91,7 @@ void Platform::gl_validate() {
             GLchar* shader = Mdefault::alloc<GLchar>(shader_len);
             glGetShaderSource(i, shader_len, null, shader);
 
-            warn("Leaked OpenGL shader %, source %", i, string::literal((const char*)shader)); 
+            warn("Leaked OpenGL shader %, source %", i, literal((const char*)shader)); 
 
             Mdefault::dealloc(shader);
         }

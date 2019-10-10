@@ -2,14 +2,14 @@
 #pragma once
 
 template<typename... Ts>
-string scratch_format(string fmt, Ts... args);
+string scratch_format(literal fmt, Ts... args);
 
-template<typename E, Type_Type T>
+template<typename A, typename E, Type_Type T>
 struct format_type {};
 
-template<>
-struct norefl format_type<void, Type_Type::void_> {
-    static u32 write(string out, u32 idx) {
+template<typename A>
+struct norefl format_type<A, void, Type_Type::void_> {
+    static u32 write(astring<A> out, u32 idx) {
         return out.write(idx, "void");
     }
     static u32 size() {
@@ -20,9 +20,9 @@ struct norefl format_type<void, Type_Type::void_> {
 #pragma warning(push)
 #pragma warning(disable : 4477)
 
-template<typename E>
-struct format_type<E, Type_Type::int_> {
-    static u32 write(string out, u32 idx, E val) {
+template<typename A, typename E>
+struct format_type<A, E, Type_Type::int_> {
+    static u32 write(astring<A> out, u32 idx, E val) {
         if(Type_Info<E>::sgn) {
             switch(Type_Info<E>::size) {
             case 1: return sprintf(out.c_str + idx, "%hhd", val);
@@ -62,9 +62,9 @@ struct format_type<E, Type_Type::int_> {
 
 #pragma warning(pop)
 
-template<typename E>
-struct format_type<E, Type_Type::float_> {
-    static u32 write(string out, u32 idx, E val) {
+template<typename A, typename E>
+struct format_type<A, E, Type_Type::float_> {
+    static u32 write(astring<A> out, u32 idx, E val) {
         return sprintf(out.c_str + idx, "%f", val);
     }
     static u32 size(E val) {
@@ -72,9 +72,9 @@ struct format_type<E, Type_Type::float_> {
     }
 };
 
-template<typename E>
-struct format_type<E, Type_Type::bool_> {
-    static u32 write(string out, u32 idx, E val) {
+template<typename A, typename E>
+struct format_type<A, E, Type_Type::bool_> {
+    static u32 write(astring<A> out, u32 idx, E val) {
         return val ? out.write(idx, "true") : out.write(idx, "false");
     }
     static u32 size(E val) {
@@ -82,9 +82,9 @@ struct format_type<E, Type_Type::bool_> {
     }
 };
 
-template<typename E>
-struct format_type<E, Type_Type::char_> {
-    static u32 write(string out, u32 idx, E val) {
+template<typename A, typename E>
+struct format_type<A, E, Type_Type::char_> {
+    static u32 write(astring<A> out, u32 idx, E val) {
         return out.write(idx, val);
     }
     static u32 size(E val) {
@@ -92,32 +92,22 @@ struct format_type<E, Type_Type::char_> {
     }
 };
 
-template<>
-struct norefl format_type<char const*, Type_Type::ptr_> {
-    static u32 write(string out, u32 idx, char const* val) {
-        return out.write(idx, string::literal(val));
+template<typename A>
+struct format_type<A, char const*, Type_Type::ptr_> {
+    static u32 write(astring<A> out, u32 idx, char const* val) {
+        return out.write(idx, literal(val));
     }
     static u32 size(char const* val) {
         return strlen(val);
     }
 };
 
-template<typename E>
-struct format_type<E, Type_Type::string_> {
-    static u32 write(string out, u32 idx, E val) {
-        return out.write(idx, val);
-    }
-    static u32 size(E val) {
-        return val.len - 1;
-    }
-};
-
-template<typename E>
-struct format_type<E, Type_Type::array_> {
+template<typename A, typename E>
+struct format_type<A, E, Type_Type::array_> {
     using underlying = typename Type_Info<E>::underlying;
-    using format_underlying = format_type<underlying, Type_Info<underlying>::type>;
+    using format_underlying = format_type<A, underlying, Type_Info<underlying>::type>;
 
-    static u32 write(string out, u32 idx, E val) {
+    static u32 write(astring<A> out, u32 idx, E val) {
         u32 start = idx;
         idx += out.write(idx, "[");
         
@@ -143,12 +133,12 @@ struct format_type<E, Type_Type::array_> {
     }
 };
 
-template<typename E>
-struct format_type<E, Type_Type::ptr_> {
+template<typename A, typename E>
+struct format_type<A, E, Type_Type::ptr_> {
     using to = typename Type_Info<E>::to;
-    using format_to = format_type<to, Type_Info<to>::type>;
+    using format_to = format_type<A, to, Type_Info<to>::type>;
 
-    static u32 write(string out, u32 idx, E val) {
+    static u32 write(astring<A> out, u32 idx, E val) {
         u32 start = idx;
         idx += out.write(idx, '(');
         if(val) idx += format_to::write(out, idx, *val);
@@ -162,9 +152,9 @@ struct format_type<E, Type_Type::ptr_> {
     }
 };
 
-template<>
-struct norefl format_type<decltype(nullptr), Type_Type::ptr_> {
-    static u32 write(string out, u32 idx, decltype(nullptr) val) {
+template<typename A>
+struct format_type<A, decltype(nullptr), Type_Type::ptr_> {
+    static u32 write(astring<A> out, u32 idx, decltype(nullptr) val) {
         return out.write(idx, "(null)");
     }
     static u32 size(decltype(nullptr) val) {
@@ -172,9 +162,9 @@ struct norefl format_type<decltype(nullptr), Type_Type::ptr_> {
     }
 };
 
-template<typename E>
-struct format_type<E, Type_Type::fptr_> {
-    static u32 write(string out, u32 idx, E val) {
+template<typename A, typename E>
+struct format_type<A, E, Type_Type::fptr_> {
+    static u32 write(astring<A> out, u32 idx, E val) {
         u32 start = idx;
         idx += out.write(idx, '(');
         if(val) idx += out.write(idx, Type_Info<E>::name);
@@ -188,9 +178,9 @@ struct format_type<E, Type_Type::fptr_> {
     }
 };
 
-template<typename E, typename H, typename T>
+template<typename A, typename E, typename H, typename T>
 struct format_member {
-    static u32 write(string out, u32 idx, E val) {
+    static u32 write(astring<A> out, u32 idx, E val) {
         if((usize)val == H::val) return out.write(idx, H::name);
         else return format_member<E, typename T::head, typename T::tail>::write(out, idx, val);
     }
@@ -200,9 +190,9 @@ struct format_member {
     }
 };
 
-template<typename E, typename H>
-struct format_member<E, H, void> {
-    static u32 write(string out, u32 idx, E val) {
+template<typename A, typename E, typename H>
+struct format_member<A, E, H, void> {
+    static u32 write(astring<A> out, u32 idx, E val) {
         if((usize)val == H::val) return out.write(idx, H::name);
         else return out.write(idx, "NONE");
     }
@@ -212,9 +202,9 @@ struct format_member<E, H, void> {
     }
 };
 
-template<typename E>
-struct format_member<E, void, void> {
-    static u32 write(string out, u32 idx, E val) {
+template<typename A, typename E>
+struct format_member<A, E, void, void> {
+    static u32 write(astring<A> out, u32 idx, E val) {
         return 0;
     }
     static u32 size(E val) {
@@ -222,12 +212,12 @@ struct format_member<E, void, void> {
     }
 };
 
-template<typename E>
-struct format_type<E, Type_Type::enum_> {
+template<typename A, typename E>
+struct format_type<A, E, Type_Type::enum_> {
     using underlying = typename Type_Info<E>::underlying;
     using members = typename Type_Info<E>::members;
 
-    static u32 write(string out, u32 idx, E val) {
+    static u32 write(astring<A> out, u32 idx, E val) {
         u32 start = idx;
         idx += out.write(idx, Type_Info<E>::name);
         idx += out.write(idx, "::");
@@ -243,10 +233,10 @@ struct format_type<E, Type_Type::enum_> {
     }
 };
 
-template<typename E, typename H, typename T>
+template<typename A, typename E, typename H, typename T>
 struct format_field {
     using member = typename H::type;
-    static u32 write(string out, u32 idx, E val) {
+    static u32 write(astring<A> out, u32 idx, E val) {
         u32 start = idx;
         idx += out.write(idx, H::name);
         idx += out.write(idx, " : ");
@@ -266,10 +256,10 @@ struct format_field {
     }
 };
 
-template<typename E, typename H>
-struct format_field<E, H, void> {
+template<typename A, typename E, typename H>
+struct format_field<A, E, H, void> {
     using member = typename H::type;
-    static u32 write(string out, u32 idx, E val) {
+    static u32 write(astring<A> out, u32 idx, E val) {
         u32 start = idx;
         idx += out.write(idx, H::name);
         idx += out.write(idx, " : ");
@@ -285,9 +275,9 @@ struct format_field<E, H, void> {
     }
 };
 
-template<typename E>
-struct format_field<E, void, void> {
-    static u32 write(string out, u32 idx) {
+template<typename A, typename E>
+struct format_field<A, E, void, void> {
+    static u32 write(astring<A> out, u32 idx) {
         return 0;
     }
     static u32 size() {
@@ -295,11 +285,11 @@ struct format_field<E, void, void> {
     }
 };
 
-template<typename E>
-struct format_type<E, Type_Type::record_> {
+template<typename A, typename E>
+struct format_type<A, E, Type_Type::record_> {
     using members = typename Type_Info<E>::members;
 
-    static u32 write(string out, u32 idx, E val) {
+    static u32 write(astring<A> out, u32 idx, E val) {
         u32 start = idx;
         idx += out.write(idx, Type_Info<E>::name);
         idx += out.write(idx, '{');
@@ -316,8 +306,8 @@ struct format_type<E, Type_Type::record_> {
     }
 };
 
-template<typename... Ts>
-u32 sprint(string out, string fmt, u32 idx) {
+template<typename A, typename... Ts>
+u32 sprint(astring<A> out, literal fmt, u32 idx) {
 
     u32 start = idx;
     u32 used = 0;
@@ -340,11 +330,11 @@ u32 sprint(string out, string fmt, u32 idx) {
 
     return idx - start;
 }
-template<typename T, typename... Ts>
-u32 sprint(string out, string fmt, u32 idx, T first, Ts... args);
+template<typename A, typename T, typename... Ts>
+u32 sprint(astring<A> out, literal fmt, u32 idx, T first, Ts... args);
 
 template<typename... Ts>
-u32 sprint_size(string fmt, u32 idx) {
+u32 sprint_size(literal fmt, u32 idx) {
 
     u32 start = idx;
     u32 used = 0;
@@ -368,10 +358,10 @@ u32 sprint_size(string fmt, u32 idx) {
     return idx - start;
 }
 template<typename T, typename... Ts>
-u32 sprint_size(string fmt, u32 idx, T first, Ts... args);
+u32 sprint_size(literal fmt, u32 idx, T first, Ts... args);
+
+template<typename A, typename... Ts>
+astring<A> format(literal fmt, Ts... args);
 
 template<typename... Ts>
-string format(string fmt, Ts... args);
-
-template<typename... Ts>
-string scratch_format(string fmt, Ts... args);
+string scratch_format(literal fmt, Ts... args);
