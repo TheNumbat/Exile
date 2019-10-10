@@ -11,6 +11,14 @@ struct array {
         memcpy(ret.data, source.data, sizeof(T) * N);
         return ret;
     }
+
+    void destroy() {
+        if constexpr(is_Destroy<T>()) {
+            for(T& v : *this) {
+                v.destroy();
+            }
+        }
+    }
     
     T& operator[](u32 idx) {
         assert(idx >= 0 && idx < N);

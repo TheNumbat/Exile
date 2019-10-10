@@ -23,6 +23,11 @@ struct vec {
     }
 
     void destroy() {
+        if constexpr(is_Destroy<T>()) {
+            for(T& v : *this) {
+                v.destroy();
+            }
+        }
         A::dealloc(data);
         data = null;
         size = capacity = 0;

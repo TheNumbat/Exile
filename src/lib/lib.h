@@ -9,6 +9,14 @@
 #include "string_before.h"
 
 #include "log.h"
+#include "printf_before.h"
+
+struct test {
+    void destroy() {
+        info("destroyed");
+    }   
+};
+
 #include "vec.h"
 #include "array.h"
 #include "stack.h"
@@ -17,7 +25,6 @@
 #include "hash.h"
 #include "map.h"
 
-#include "printf_before.h"
 #include "alloc_after.h"
 #include "string_after.h"
 #include "printf_after.h"

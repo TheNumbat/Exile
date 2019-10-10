@@ -11,9 +11,6 @@
 
     99% of the templated structures we will want to reflect are just my standard library ones,
     so I will provide custom print/UI/serial/etc. code for all of the standard data structures.
-
-    NOTE(max): I still can't get constexpr offset_of to work. The compiler doesn't accept it as a compile
-    time constant, even if it literally confirms reduction to a literal. Maybe once we switch to clang...
 */
 
 enum class Type_Type : u8 {
@@ -72,6 +69,15 @@ struct No_Const<const T> {
 template<typename T, typename U> 
 constexpr size_t offset_of(U T::*member) {
     return (char*)&((T*)null->*member) - (char*)null;
+}
+
+template<typename T>
+constexpr auto is_Destroy() -> decltype(std::declval<T>().destroy(), bool()) {
+    return true;
+}
+template<typename T>
+constexpr bool is_Destroy(...) {
+    return false;
 }
 
 template<typename T> struct Type_Info;
