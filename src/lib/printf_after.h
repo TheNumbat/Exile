@@ -33,6 +33,28 @@ struct format_type<A, vec<M,VA>, Type_Type::record_> {
     }
 };
 
+template<typename A, typename M, typename HA>
+struct format_type<A, heap<M,HA>, Type_Type::record_> {
+    static u32 write(astring<A> out, u32 idx, heap<M,HA> val) {
+        u32 start = idx, i = 0;
+        idx += out.write(idx, "heap[");
+        for(auto& item : val) {
+            idx += format_type<A, M, Type_Info<M>::type>::write(out, idx, item);
+            if(i++ != val.size - 1) idx += out.write(idx, ", ");
+        }
+        idx += out.write(idx, ']');
+        return idx - start;
+    }
+    static u32 size(heap<M,HA> val) {
+        u32 idx = 6, i = 0;
+        for(auto& item : val) {
+            idx += format_type<A, M, Type_Info<M>::type>::size(item);
+            if(i++ != val.size - 1) idx += 2;
+        }
+        return idx;
+    }
+};
+
 template<typename A, typename K, typename V, Hash<K> H, typename MA>
 struct format_type<A, map<K,V,H,MA>, Type_Type::record_> {
     static u32 write(astring<A> out, u32 idx, map<K,V,H,MA> val) {

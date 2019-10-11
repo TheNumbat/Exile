@@ -37,7 +37,7 @@ struct vec {
         u32 new_capacity = capacity ? 2 * capacity : 8;
         
         T* new_data = A::template make<T>(new_capacity);
-        memcpy(new_data, data, sizeof(T) * capacity);
+        memcpy(new_data, data, sizeof(T) * size);
         A::dealloc(data);
         
         capacity = new_capacity;

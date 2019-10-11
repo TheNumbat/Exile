@@ -4,13 +4,8 @@ Framework re-write:
     Debugging systems
         Time profiling
         Allocator profiling
-
     Data structure ports
-        heap
-        print rule
-        destroy rule
-        thread safe ones
-
+        thread safety
     Reflection
         integrate to IMGUI
     Logging

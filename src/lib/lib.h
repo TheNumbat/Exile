@@ -16,6 +16,7 @@
 #include "array.h"
 #include "stack.h"
 #include "queue.h"
+#include "heap.h"
 
 #include "hash.h"
 #include "map.h"
