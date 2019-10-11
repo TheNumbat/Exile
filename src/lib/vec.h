@@ -8,16 +8,16 @@ struct vec {
     u32 capacity = 0;
 
     // note that a just-declared (i.e. zero'd) vec is already a valid vec
-    static vec<T,A> make(u32 capacity) {
+    static vec make(u32 capacity) {
         return {A::template make<T>(capacity), 0, capacity};
     }
-    static vec<T,A> copy(vec<T,A> source) {
-        vec<T,A> ret = {A::template make<T>(source.capacity), source.size, source.capacity};
+    static vec copy(vec source) {
+        vec ret = {A::template make<T>(source.capacity), source.size, source.capacity};
         memcpy(ret.data, source.data, sizeof(T) * source.size);
         return ret;
     }
-    static vec<T,A> take(vec<T,A>& source) {
-        vec<T,A> ret = source;
+    static vec take(vec& source) {
+        vec ret = source;
         source = {null, 0, 0};
         return ret;
     }
@@ -88,7 +88,7 @@ struct vec {
     }
 
     struct split {
-    	const vec<T,A> l, r;
+    	const vec l, r;
     };
 
     split halves() const {

@@ -6,8 +6,8 @@ struct array {
     T data[N] 	 = {};
     static constexpr u32 capacity = N;
 
-    static array<T,N> copy(array<T,N> source) {
-        array<T,N> ret;
+    static array copy(array source) {
+        array ret;
         memcpy(ret.data, source.data, sizeof(T) * N);
         return ret;
     }

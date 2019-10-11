@@ -6,12 +6,9 @@ Framework re-write:
         Allocator profiling
 
     Data structure ports
-        map
         heap
-
-        print rules for the above
-        destroy rule for the above
-
+        print rule
+        destroy rule
         thread safe ones
 
     Reflection

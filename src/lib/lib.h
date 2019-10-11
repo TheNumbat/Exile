@@ -10,12 +10,7 @@
 
 #include "log.h"
 #include "printf_before.h"
-
-struct test {
-    void destroy() {
-        info("destroyed");
-    }   
-};
+#include "math.h"
 
 #include "vec.h"
 #include "array.h"

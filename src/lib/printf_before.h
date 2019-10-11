@@ -312,7 +312,7 @@ u32 sprint(astring<A> out, literal fmt, u32 idx) {
     u32 start = idx;
     u32 used = 0;
 
-    while (used < fmt.len) {
+    while (used < fmt.len - 1) {
         if (fmt[used] == '%') {
             if (used + 1 < fmt.len) {
                 if (fmt[used + 1] == '%') {
@@ -339,7 +339,7 @@ u32 sprint_size(literal fmt, u32 idx) {
     u32 start = idx;
     u32 used = 0;
 
-    while (used < fmt.len) {
+    while (used < fmt.len - 1) {
         if (fmt[used] == '%') {
             if (used + 1 < fmt.len) {
                 if (fmt[used + 1] == '%') {
@@ -362,6 +362,9 @@ u32 sprint_size(literal fmt, u32 idx, T first, Ts... args);
 
 template<typename A, typename... Ts>
 astring<A> format(literal fmt, Ts... args);
+
+template<typename... Ts>
+string format(literal fmt, Ts... args);
 
 template<typename... Ts>
 string scratch_format(literal fmt, Ts... args);

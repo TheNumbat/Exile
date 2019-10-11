@@ -42,6 +42,13 @@ u32 astring<A>::write(u32 idx, astring<SA> cpy) {
 }
 
 template<typename A>
+u32 astring<A>::write(u32 idx, astring<void> cpy) {
+    assert(cap && idx + cpy.len - 1 < len);
+    memcpy(c_str + idx, cpy.c_str, cpy.len - 1);
+    return cpy.len - 1;
+}
+
+template<typename A>
 u32 astring<A>::write(u32 idx, char cpy) {
     assert(cap && idx < len);
     c_str[idx] = cpy;

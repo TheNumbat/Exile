@@ -8,16 +8,16 @@ struct queue {
     u32 size = 0, last = 0, capacity = 0;
 
     // note that a just-declared (i.e. zero'd) queue is already a valid queue
-    static queue<T> make(u32 capacity) {
+    static queue make(u32 capacity) {
         return {A::template make<T>(capacity), 0, 0, capacity};
     }
-    queue<T> copy(queue<T> source) {
-        queue<T> ret = {A::template make<T>(source.capacity), source.start, source.last, source.capacity};
+    queue copy(queue source) {
+        queue ret = {A::template make<T>(source.capacity), source.start, source.last, source.capacity};
         memcpy(ret.data, source.data, sizeof(T) * capacity);
         return ret;
     }
-    static queue<T> take(queue<T>& source) {
-        queue<T> ret = source;
+    static queue take(queue& source) {
+        queue ret = source;
         source = {null, 0, 0, 0};
         return ret;
     }
@@ -71,19 +71,18 @@ struct queue {
         size = last = 0;
     }
 
-
     template<typename E>
     struct itr {
-        itr(queue<T,A>& _q, u32 idx, u32 cons) : q(_q), place(idx), consumed(cons) {}
+        itr(queue& _q, u32 idx, u32 cons) : q(_q), place(idx), consumed(cons) {}
 
-        itr operator++() { itr i = *this; place = place == q.capacity - 1 ? 0 : place + 1; consumed++; return i; }
-        itr operator++(int) { place = place == q.capacity - 1 ? 0 : place + 1; consumed++; return *this; }
+        itr operator++() { place = place == q.capacity - 1 ? 0 : place + 1; consumed++; return *this; }
+        itr operator++(int) { itr i = *this; place = place == q.capacity - 1 ? 0 : place + 1; consumed++; return i; }
         E& operator*() { return q.data[place]; }
         E* operator->() { return &q.data[place]; }
         bool operator==(const itr& rhs) { return &q == &rhs.q && place == rhs.place && consumed == rhs.consumed; }
         bool operator!=(const itr& rhs) { return &q != &rhs.q || place != rhs.place || consumed != rhs.consumed; }
         
-        queue<T,A>& q;
+        queue& q;
         u32 place, consumed;
     };
     typedef itr<T> iterator;

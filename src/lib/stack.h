@@ -6,13 +6,13 @@ struct stack {
     vec<T,A> data;
 
     // note that a just-declared (i.e. zero'd) stack is already a valid stack
-    static stack<T,A> make(u32 capacity) {
+    static stack make(u32 capacity) {
         return {vec<T,A>::make(capacity)};
     }
-    static stack<T,A> copy(stack<T,A> source) {
+    static stack copy(stack source) {
         return {vec<T,A>::copy(source.data)};
     }
-    static stack<T,A> take(stack<T,A>& source) {
+    static stack take(stack& source) {
         return {vec<T,A>::take(source.data)};
     }
 
