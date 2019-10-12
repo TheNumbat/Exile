@@ -19,13 +19,6 @@ std::ostream& operator<<(std::ostream& stream, const CXString& str) {
 	return stream;
 }
 
-std::string remove_const(std::string name) {
-	if(name.rfind("const ", 0) != std::string::npos) {
-		return name.substr(6, name.size() - 6);
-	}
-	return name;
-}
-
 std::string to_string(CXString cx_str) {
 	std::string str(clang_getCString(cx_str));
 	clang_disposeString(cx_str);
@@ -195,7 +188,7 @@ CXChildVisitResult traversal(CXCursor c, CXCursor parent, CXClientData client_da
 	}
 
 	if(c.kind == CXCursor_StructDecl || c.kind == CXCursor_UnionDecl || 
-	   c.kind == CXCursor_ClassDecl) {
+	   c.kind == CXCursor_ClassDecl || c.kind == CXCursor_EnumDecl) {
 
 		if(clang_isCursorDefinition(c)) {
 			
@@ -302,6 +295,8 @@ void print_enum(CXType type) {
 	std::string type_name = to_string(clang_getTypeSpelling(type));
 	std::string underlying_name = to_string(clang_getTypeSpelling(underlying));
 
+	// type_name = "No_Const<" + type_name + ">::type";
+
 	std::vector<enum_field> members;
 
 	clang_visitChildren(decl, print_enum_field, &members);
@@ -310,12 +305,13 @@ void print_enum(CXType type) {
 		 << "\tstatic constexpr char name[] = \"" << type_name << "\";" << std::endl
 		 << "\tstatic constexpr usize size = sizeof(" << type_name << ");" << std::endl
 		 << "\tstatic constexpr Type_Type type = Type_Type::enum_;" << std::endl
-		 << "\tusing underlying = " << underlying_name << ";" << std::endl;
+		 << "\tusing underlying = " << underlying_name << ";" << std::endl
+		 << "\tstatic constexpr usize count = " << members.size() << ";" << std::endl;
 
 	std::string member_str;
 	for(int i = 0; i < members.size(); i++) {
 		fout << "\tstatic constexpr char __" << i << "[] = \"" << members[i].name << "\";" << std::endl; 
-		member_str += "Enum_Field<" + std::to_string(members[i].val) + ", __" + std::to_string(i) + ">";
+		member_str += "Enum_Field<" + type_name + ", No_Const<" + type_name + ">::type::" + members[i].name + ", __" + std::to_string(i) + ">";
 		if(i != members.size() - 1) member_str += ", ";
 	}
 
@@ -416,7 +412,7 @@ void print_record(CXType type, bool just_print = false) {
 	std::string type_name = to_string(clang_getTypeSpelling(type));
 
 	field_client data;
-	data.outer = remove_const(type_name);
+	data.outer = "No_Const<" + type_name + ">::type";
 	data.unexposed = type.kind == CXType_Unexposed;
 	clang_Type_visitFields_NotBroken(type, print_field, &data);
 

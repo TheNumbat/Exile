@@ -121,9 +121,3 @@ bool operator==(astring<L> l, astring<R> r) {
 template<typename A>
 astring<A> last_file(astring<A> path);
 
-template<typename A> 
-struct Type_Info<astring<A>> {
-	static constexpr char name[] = "string";
-	static constexpr usize size = sizeof(astring<A>);
-	static constexpr Type_Type type = Type_Type::string_;
-};

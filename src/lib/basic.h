@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <intrin.h>
 #include <new>
+#include <functional>
 
 #ifdef RUNNING_META
     #define norefl __attribute__((annotate("noreflect")))

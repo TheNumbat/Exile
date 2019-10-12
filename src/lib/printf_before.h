@@ -181,11 +181,11 @@ struct format_type<A, E, Type_Type::fptr_> {
 template<typename A, typename E, typename H, typename T>
 struct format_member {
     static u32 write(astring<A> out, u32 idx, E val) {
-        if((usize)val == H::val) return out.write(idx, H::name);
+        if(val == H::val) return out.write(idx, H::name);
         else return format_member<A, E, typename T::head, typename T::tail>::write(out, idx, val);
     }
     static u32 size(E val) {
-        if((usize)val == H::val) return strlen(H::name);
+        if(val == H::val) return strlen(H::name);
         else return format_member<A, E, typename T::head, typename T::tail>::size(val);
     }
 };
@@ -193,11 +193,11 @@ struct format_member {
 template<typename A, typename E, typename H>
 struct format_member<A, E, H, void> {
     static u32 write(astring<A> out, u32 idx, E val) {
-        if((usize)val == H::val) return out.write(idx, H::name);
+        if(val == H::val) return out.write(idx, H::name);
         else return out.write(idx, "NONE");
     }
     static u32 size(E val) {
-        if((usize)val == H::val) return strlen(H::name);
+        if(val == H::val) return strlen(H::name);
         else return 4;
     }
 };

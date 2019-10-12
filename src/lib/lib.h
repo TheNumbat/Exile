@@ -5,8 +5,8 @@
 // order matters!
 
 #include "alloc_before.h"
-#include "reflect.h"
 #include "string_before.h"
+#include "reflect.h"
 
 #include "log.h"
 #include "printf_before.h"

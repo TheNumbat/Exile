@@ -1,6 +1,13 @@
 
 #pragma once
 
+template<typename A> 
+struct Type_Info<astring<A>> {
+	static constexpr char name[] = "string";
+	static constexpr usize size = sizeof(astring<A>);
+	static constexpr Type_Type type = Type_Type::string_;
+};
+
 template<typename A>
 char astring<A>::operator[](u32 idx) const {
     assert(idx < len);

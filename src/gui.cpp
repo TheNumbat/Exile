@@ -8,6 +8,9 @@
 #endif
 
 #include "gui.h"
+#include "imgui_ext.h"
+
+#include "lib/lib.h"
 
 void Gui::init(const Platform& plt) {
 
@@ -39,6 +42,16 @@ void Gui::begin_frame(const Platform& plt) {
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplSDL2_NewFrame(plt.window);
     ImGui::NewFrame();
+
+    static Type_Type test;
+    ImGui::Begin("0");
+    ImGui::Combo("1: ", &test);
+    ImGui::Combo("2: ", &test);
+    ImGui::Combo("3: ", &test);
+    ImGui::Combo("4: ", &test);
+    ImGui::Combo("5: ", &test);
+    ImGui::Combo("6: ", &test);
+    ImGui::End();
 }
 
 bool Gui::get_event(SDL_Event& e) {

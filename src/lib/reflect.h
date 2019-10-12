@@ -27,10 +27,10 @@ enum class Type_Type : u8 {
     record_
 };
 
-template<usize V, const char* N>
+template<typename E, E V, const char* N>
 struct Enum_Field {
     static constexpr char const* name = N;
-    static constexpr usize val = V;
+    static constexpr E val = V;
 };
 
 template<typename T, usize O, const char* N>
@@ -81,6 +81,37 @@ constexpr bool is_Destroy(...) {
 }
 
 template<typename T> struct Type_Info;
+
+template<typename E, typename H, typename T>
+struct enum_iterator {
+    static void traverse(std::function<void(E,literal)> f) {
+        f(H::val, H::name);
+        enum_iterator<E, typename T::head, typename T::tail>::traverse(f);
+    }
+};
+template<typename E, typename H>
+struct enum_iterator<E, H, void> {
+    static void traverse(std::function<void(E,literal)> f) {
+        f(H::val, H::name);
+    }
+};
+template<typename E>
+struct enum_iterator<E, void, void> {
+    static void traverse(std::function<void(E,literal)>) {}
+};
+template<typename E>
+void enum_iterate(std::function<void(E,literal)> f) {
+    enum_iterator<E, typename Type_Info<E>::members::head, 
+                     typename Type_Info<E>::members::tail>::traverse(f);
+}
+template<typename E>
+literal enum_name(E val) {
+    const char* name = null;
+    enum_iterate<E>([&name, val](E cval, literal cname) {
+        if(cval == val) name = cname.c_str;
+    });
+    return name ? name : "???";
+}
 
 template<typename T> 
 struct Type_Info<T*> {
