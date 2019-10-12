@@ -120,6 +120,8 @@ struct format_type<A, queue<M,QA>, Type_Type::record_> {
     }
 };
 
+// TODO(max): math types
+
 template<typename A, typename T, typename... Ts>
 u32 sprint(astring<A> out, literal fmt, u32 idx, T first, Ts... args) {
 

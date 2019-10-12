@@ -66,6 +66,16 @@ struct No_Const<const T> {
     using type = T;
 };
 
+template<typename T>
+struct No_Ptr {
+    using type = T;
+};
+
+template<typename T>
+struct No_Ptr<T*> {
+    using type = T;
+};
+
 template<typename T, typename U> 
 constexpr size_t offset_of(U T::*member) {
     return (char*)&((T*)null->*member) - (char*)null;
@@ -119,4 +129,85 @@ struct Type_Info<T*> {
     decltype(Type_Info<to>::name) name = Type_Info<to>::name;
     static constexpr usize size = sizeof(typename No_Const<T>::type*);
     static constexpr Type_Type type = Type_Type::ptr_;
+};
+
+template<> struct Type_Info<void> {
+	static constexpr char name[] = "void";
+	static constexpr usize size = 0u;
+	static constexpr Type_Type type = Type_Type::void_;
+};
+template<> struct Type_Info<decltype(nullptr)> {
+	static constexpr char name[] = "nullptr";
+	static constexpr usize size = sizeof(nullptr);
+	static constexpr Type_Type type = Type_Type::ptr_;
+	using to = void;
+};
+template<> struct Type_Info<char> {
+	static constexpr char name[] = "char";
+	static constexpr usize size = sizeof(char);
+	static constexpr bool sgn = true;
+	static constexpr Type_Type type = Type_Type::char_;
+};
+template<> struct Type_Info<i8> {
+	static constexpr char name[] = "i8";
+	static constexpr usize size = sizeof(i8);
+	static constexpr bool sgn = true;
+	static constexpr Type_Type type = Type_Type::int_;
+};
+template<> struct Type_Info<u8> {
+	static constexpr char name[] = "u8";
+	static constexpr usize size = sizeof(u8);
+	static constexpr bool sgn = false;
+	static constexpr Type_Type type = Type_Type::int_;
+};
+template<> struct Type_Info<i16> {
+	static constexpr char name[] = "i16";
+	static constexpr usize size = sizeof(i16);
+	static constexpr bool sgn = true;
+	static constexpr Type_Type type = Type_Type::int_;
+};
+template<> struct Type_Info<u16> {
+	static constexpr char name[] = "u16";
+	static constexpr usize size = sizeof(u16);
+	static constexpr bool sgn = false;
+	static constexpr Type_Type type = Type_Type::int_;
+};
+template<> struct Type_Info<i32> {
+	static constexpr char name[] = "i32";
+	static constexpr usize size = sizeof(i32);
+	static constexpr bool sgn = true;
+	static constexpr Type_Type type = Type_Type::int_;
+};
+template<> struct Type_Info<u32> {
+	static constexpr char name[] = "u32";
+	static constexpr usize size = sizeof(u32);
+	static constexpr bool sgn = false;
+	static constexpr Type_Type type = Type_Type::int_;
+};
+template<> struct Type_Info<i64> {
+	static constexpr char name[] = "i64";
+	static constexpr usize size = sizeof(i64);
+	static constexpr bool sgn = true;
+	static constexpr Type_Type type = Type_Type::int_;
+};
+template<> struct Type_Info<u64> {
+	static constexpr char name[] = "u64";
+	static constexpr usize size = sizeof(u64);
+	static constexpr bool sgn = false;
+	static constexpr Type_Type type = Type_Type::int_;
+};
+template<> struct Type_Info<f32> {
+	static constexpr char name[] = "f32";
+	static constexpr usize size = sizeof(f32);
+	static constexpr Type_Type type = Type_Type::float_;
+};
+template<> struct Type_Info<f64> {
+	static constexpr char name[] = "f64";
+	static constexpr usize size = sizeof(f64);
+	static constexpr Type_Type type = Type_Type::float_;
+};
+template<> struct Type_Info<bool> {
+	static constexpr char name[] = "bool";
+	static constexpr usize size = sizeof(bool);
+	static constexpr Type_Type type = Type_Type::bool_;
 };

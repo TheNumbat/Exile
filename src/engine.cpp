@@ -7,7 +7,7 @@
 
 void Engine::init() {
     plt.init();
-    imgui.init(plt);
+    gui.init(plt);
 }
 
 void Engine::loop() {
@@ -15,10 +15,8 @@ void Engine::loop() {
     bool running = true;
     while(running) {
     
-        imgui.begin_frame(plt);
-
         SDL_Event e;
-        while(imgui.get_event(e)) {
+        while(gui.get_event(e)) {
 
             switch(e.type) {
             case SDL_QUIT: {
@@ -32,11 +30,13 @@ void Engine::loop() {
             }
         }
 
-        imgui.end_frame(plt);
+        gui.begin_frame(plt);
+
+        gui.end_frame(plt);
     }
 }
 
 void Engine::destroy() {
-    imgui.destroy();
+    gui.destroy();
     plt.destroy();
 }

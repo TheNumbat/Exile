@@ -4,6 +4,8 @@
 
 i32 main(i32 argc, char **argv) {
 
+    info("%", "hes");
+
     Engine eng;
     eng.init();
     eng.loop();

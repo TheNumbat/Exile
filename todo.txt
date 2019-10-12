@@ -1,12 +1,18 @@
 
 Framework re-write:
 
+    GUI
+        finish reflection integration
+        data structure reflection rules
+        imgui allocator
+    Math library
+        rewrite
+        print + imgui rules
+
+    Logging
+        make thread-safe
+    Thread Pool
+        data structures thread safety
     Debugging systems
         Time profiling
         Allocator profiling
-    Data structure ports
-        thread safety
-    Reflection
-        integrate to IMGUI
-    Logging
-        make thread-safe

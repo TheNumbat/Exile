@@ -635,92 +635,6 @@ void print_results() {
 	}
 }
 
-void print_basic_types() {
-
-	fout << R"STR(
-template<> struct Type_Info<void> {
-	static constexpr char name[] = "void";
-	static constexpr usize size = 0u;
-	static constexpr Type_Type type = Type_Type::void_;
-};
-template<> struct Type_Info<decltype(nullptr)> {
-	static constexpr char name[] = "nullptr";
-	static constexpr usize size = sizeof(nullptr);
-	static constexpr Type_Type type = Type_Type::ptr_;
-	using to = void;
-};
-template<> struct Type_Info<char> {
-	static constexpr char name[] = "char";
-	static constexpr usize size = sizeof(char);
-	static constexpr bool sgn = true;
-	static constexpr Type_Type type = Type_Type::char_;
-};
-template<> struct Type_Info<i8> {
-	static constexpr char name[] = "i8";
-	static constexpr usize size = sizeof(i8);
-	static constexpr bool sgn = true;
-	static constexpr Type_Type type = Type_Type::int_;
-};
-template<> struct Type_Info<u8> {
-	static constexpr char name[] = "u8";
-	static constexpr usize size = sizeof(u8);
-	static constexpr bool sgn = false;
-	static constexpr Type_Type type = Type_Type::int_;
-};
-template<> struct Type_Info<i16> {
-	static constexpr char name[] = "i16";
-	static constexpr usize size = sizeof(i16);
-	static constexpr bool sgn = true;
-	static constexpr Type_Type type = Type_Type::int_;
-};
-template<> struct Type_Info<u16> {
-	static constexpr char name[] = "u16";
-	static constexpr usize size = sizeof(u16);
-	static constexpr bool sgn = false;
-	static constexpr Type_Type type = Type_Type::int_;
-};
-template<> struct Type_Info<i32> {
-	static constexpr char name[] = "i32";
-	static constexpr usize size = sizeof(i32);
-	static constexpr bool sgn = true;
-	static constexpr Type_Type type = Type_Type::int_;
-};
-template<> struct Type_Info<u32> {
-	static constexpr char name[] = "u32";
-	static constexpr usize size = sizeof(u32);
-	static constexpr bool sgn = false;
-	static constexpr Type_Type type = Type_Type::int_;
-};
-template<> struct Type_Info<i64> {
-	static constexpr char name[] = "i64";
-	static constexpr usize size = sizeof(i64);
-	static constexpr bool sgn = true;
-	static constexpr Type_Type type = Type_Type::int_;
-};
-template<> struct Type_Info<u64> {
-	static constexpr char name[] = "u64";
-	static constexpr usize size = sizeof(u64);
-	static constexpr bool sgn = false;
-	static constexpr Type_Type type = Type_Type::int_;
-};
-template<> struct Type_Info<f32> {
-	static constexpr char name[] = "f32";
-	static constexpr usize size = sizeof(f32);
-	static constexpr Type_Type type = Type_Type::float_;
-};
-template<> struct Type_Info<f64> {
-	static constexpr char name[] = "f64";
-	static constexpr usize size = sizeof(f64);
-	static constexpr Type_Type type = Type_Type::float_;
-};
-template<> struct Type_Info<bool> {
-	static constexpr char name[] = "bool";
-	static constexpr usize size = sizeof(bool);
-	static constexpr Type_Type type = Type_Type::bool_;
-};
-	)STR" << std::endl;
-}
-
 void print_header(std::string in_file) {
 
 fout << "#define COMPILING_META_TYPES" << std::endl
@@ -765,7 +679,6 @@ int main(int argc, char** argv) {
 
 		{ // Do output 
 			print_header(in_file);
-			print_basic_types();
 			print_results();
 		}
 

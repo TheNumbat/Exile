@@ -43,14 +43,23 @@ void Gui::begin_frame(const Platform& plt) {
     ImGui_ImplSDL2_NewFrame(plt.window);
     ImGui::NewFrame();
 
-    static Type_Type test;
     ImGui::Begin("0");
-    ImGui::Combo("1: ", &test);
-    ImGui::Combo("2: ", &test);
-    ImGui::Combo("3: ", &test);
-    ImGui::Combo("4: ", &test);
-    ImGui::Combo("5: ", &test);
-    ImGui::Combo("6: ", &test);
+    static u8 u8_; ImGui::Edit("u8",u8_);
+    static i8 i8_; ImGui::Edit("i8", i8_);
+    static u16 u16_; ImGui::Edit("u16",u16_);
+    static i16 i16_; ImGui::Edit("i16", i16_);
+    static u32 u32_; ImGui::Edit("u32",u32_);
+    static i32 i32_; ImGui::Edit("i32", i32_);
+    static u64 u64_; ImGui::Edit("u64",u64_);
+    static i64 i64_; ImGui::Edit("i64", i64_);
+    static f32 f32_; ImGui::Edit("f32", f32_);
+    static f64 f64_; ImGui::Edit("f64", f64_);
+    static bool bool_; ImGui::Edit("bool", bool_);
+    static char char_; ImGui::Edit("char", char_);
+    ImGui::View("const char*");
+    static i32 iarr_[10]; ImGui::Edit("i32[]", iarr_);
+    static char carr_[10]; ImGui::Edit("char[]", carr_);
+    ImGui::View(carr_);
     ImGui::End();
 }
 

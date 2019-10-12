@@ -122,14 +122,14 @@ struct format_type<A, E, Type_Type::array_> {
         return idx - start;
     }
     static u32 size(E val) {
-        u32 idx = 1;
+        u32 idx = 2;
         for(usize i = 0; i < Type_Info<E>::len; i++) {
             idx += format_underlying::size(val[i]);
             if(i != Type_Info<E>::len - 1) {
                 idx += 2;
             }
         }
-        return idx + 1;
+        return idx;
     }
 };
 
@@ -194,21 +194,21 @@ template<typename A, typename E, typename H>
 struct format_member<A, E, H, void> {
     static u32 write(astring<A> out, u32 idx, E val) {
         if(val == H::val) return out.write(idx, H::name);
-        else return out.write(idx, "NONE");
+        else return out.write(idx, "???");
     }
     static u32 size(E val) {
         if(val == H::val) return strlen(H::name);
-        else return 4;
+        else return 3;
     }
 };
 
 template<typename A, typename E>
 struct format_member<A, E, void, void> {
     static u32 write(astring<A> out, u32 idx, E val) {
-        return 0;
+        return out.write(idx, "???");
     }
     static u32 size(E val) {
-        return 0;
+        return 3;
     }
 };
 
@@ -225,9 +225,8 @@ struct format_type<A, E, Type_Type::enum_> {
         return idx - start;
     }
     static u32 size(E val) {
-        u32 idx = 0;
+        u32 idx = 2;
         idx += strlen(Type_Info<E>::name);
-        idx += 2;
         idx += format_member<A, E, typename members::head, typename members::tail>::size(val);
         return idx;
     }
@@ -246,11 +245,9 @@ struct format_field {
         return idx - start;
     }
     static u32 size(E val) {
-        u32 idx = 0;
+        u32 idx = 5;
         idx += strlen(H::name);
-        idx += 3;
         idx += format_type<A, member, Type_Info<member>::type>::size(*(member*)((char*)&val + H::offset));
-        idx += 2;
         idx += format_field<A, E, typename T::head, typename T::tail>::size(val);
         return idx;
     }
@@ -267,9 +264,8 @@ struct format_field<A, E, H, void> {
         return idx - start;
     }
     static u32 size(E val) {
-        u32 idx = 0;
+        u32 idx = 3;
         idx += strlen(H::name);
-        idx += 3;
         idx += format_type<A, member, Type_Info<member>::type>::size(*(member*)((char*)&val + H::offset));
         return idx;
     }
@@ -298,11 +294,10 @@ struct format_type<A, E, Type_Type::record_> {
         return idx - start;
     }
     static u32 size(E val) {
-        u32 idx = 0;
+        u32 idx = 2;
         idx += strlen(Type_Info<E>::name);
-        idx += 1;
         idx += format_field<A, E, typename members::head, typename members::tail>::size(val);
-        return idx + 1;
+        return idx;
     }
 };
 
