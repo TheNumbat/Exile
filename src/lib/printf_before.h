@@ -178,6 +178,8 @@ struct format_type<A, E, Type_Type::fptr_> {
     }
 };
 
+// NOTE(max): format_member could be replaced with the new enum_iterate, but too lazy at the moment.
+
 template<typename A, typename E, typename H, typename T>
 struct format_member {
     static u32 write(astring<A> out, u32 idx, E val) {

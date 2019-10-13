@@ -21,15 +21,13 @@ namespace ImGui {
     }
 
 	template<typename E> 
-    void Combo(string label, E* val, ImGuiComboFlags flags = 0) {
+    void Combo(literal label, E& val, ImGuiComboFlags flags = 0) {
 		
-        using info = Type_Info<E>;
+		if(BeginCombo(label, enum_name(val), flags)) {
 
-		if(BeginCombo(label, enum_name(*val), flags)) {
-
-            enum_iterate<E>([val](E cval, literal cname) {
-				bool selected = *val == cval;
-				if(Selectable(cname, selected)) *val = cval;
+            enum_iterate<E>([&val](E cval, literal cname) {
+				bool selected = val == cval;
+				if(Selectable(cname, selected)) val = cval;
 				if(selected) SetItemDefaultFocus();
             });
 
@@ -38,17 +36,17 @@ namespace ImGui {
     }
 
 	template<typename V, typename A> 
-    void Combo(literal label, map<astring<A>,V> options, V* val, ImGuiComboFlags flags = 0) {
+    void Combo(literal label, map<astring<A>,V> options, V& val, ImGuiComboFlags flags = 0) {
 
         astring<A> preview;
         for(auto& opt : options) {
-            if(opt.value == *val) preview = opt.key;
+            if(opt.value == val) preview = opt.key;
         }
 
         if(BeginCombo(label, preview, flags)) {
             for(auto& opt : options) {
-                bool selected = *val == opt.value;
-                if(Selectable(opt.key, selected)) *val = opt.value;
+                bool selected = val == opt.value;
+                if(Selectable(opt.key, selected)) val = opt.value;
                 if(selected) SetItemDefaultFocus();
             }
         }
@@ -145,22 +143,6 @@ namespace ImGui {
         }
     };
 
-    template<>
-    struct norefl gui_type<char const*, Type_Type::ptr_> {
-        static void view(char const* val, bool open) {
-            Text(val);
-        }
-    };
-    template<>
-    struct norefl gui_type<char*, Type_Type::ptr_> {
-        static void view(char* val, bool open) {
-            Text(val);
-        }
-        static void edit(literal label, char* val, bool open) {
-            InputScalar(label, ImGuiDataType_S8, val);
-        }
-    };
-
     template<typename S>
     struct gui_type<S, Type_Type::array_> {
         using underlying = typename Type_Info<S>::underlying;
@@ -197,12 +179,108 @@ namespace ImGui {
         }
     };
 
+    template<typename S>
+    struct gui_type<S, Type_Type::ptr_> {
+        static void view(S val, bool open) {
+            if(val) gui_type<No_Ptr<S>, Type_Info<No_Ptr<S>::type>::type>::view(*val, open);
+            else Text("(null)");
+        }
+        static void edit(literal label, S& val, bool open) {
+            if(val) gui_type<No_Ptr<S>::type, Type_Info<No_Ptr<S>::type>::type>::edit(label, *val, open);
+            else Text("(null)");
+        }
+    };
+    template<>
+    struct norefl gui_type<char const*, Type_Type::ptr_> {
+        static void view(char const* val, bool open) {
+            Text(val);
+        }
+    };
+    template<>
+    struct norefl gui_type<decltype(nullptr), Type_Type::ptr_> {
+        static void view(char const* val, bool open) {}
+        static void edit(literal label, char* val, bool open) {}
+    };
+    template<>
+    struct norefl gui_type<char*, Type_Type::ptr_> {
+        static void view(char* val, bool open) {
+            Text(val);
+        }
+        static void edit(literal label, char* val, bool open) {
+            InputScalar(label, ImGuiDataType_S8, val);
+        }
+    };
+
+    template<typename S>
+    struct gui_type<S, Type_Type::fptr_> {
+        static void view(S val, bool open) {
+            if(val) Text(Type_Info<S>::name);
+            else Text("(null)");
+        }
+        static void edit(literal label, S& val, bool open) {
+            if(val) Text(Type_Info<S>::name);
+            else Text("(null)");
+        }
+    };    
+
+    template<typename S>
+    struct gui_type<S, Type_Type::enum_> {
+        static void view(S val, bool open) {
+            Text(scratch_format("%", val));
+        }
+        static void edit(literal label, S& val, bool open) {
+            Combo(label, val);
+        }
+    };
+
+    template<typename S, typename H, typename T>
+    struct gui_field {
+        using member = typename H::type;
+        static void view(S val, bool open) {
+            Text(H::name); SameLine();
+            gui_type<member, Type_Info<member>::type>::view(*(member*)((char*)&val + H::offset), open);
+            gui_field<S, typename T::head, typename T::tail>::view(val, open);
+        }
+        static void edit(S val, bool open) {
+            gui_type<member, Type_Info<member>::type>::edit(H::name, *(member*)((char*)&val + H::offset), open);
+            gui_field<S, typename T::head, typename T::tail>::edit(val, open);
+        }
+    };
+    template<typename S, typename H>
+    struct gui_field<S, H, void> {
+        using member = typename H::type;
+        static void view(S val, bool open) {
+            Text(H::name); SameLine();
+            gui_type<member, Type_Info<member>::type>::view(*(member*)((char*)&val + H::offset), open);
+        }
+        static void edit(S val, bool open) {
+            gui_type<member, Type_Info<member>::type>::edit(H::name, *(member*)((char*)&val + H::offset), open);
+        }
+    };
+    template<typename S>
+    struct gui_field<S, void, void> {
+        static void view(S val, bool open) {}
+        static void edit(S val, bool open) {}
+    };
+
+    template<typename S>
+    struct gui_type<S, Type_Type::record_> {
+        using members = typename Type_Info<S>::members;
+        static void view(S val, bool open) {
+            if(TreeNodeEx(Type_Info<S>::name, open ? ImGuiTreeNodeFlags_DefaultOpen : 0)) {
+                gui_field<S, typename members::head, typename members::tail>::view(val, open);
+                TreePop();
+            }
+        }
+        static void edit(literal label, S& val, bool open) {
+            if(TreeNodeEx(label, open ? ImGuiTreeNodeFlags_DefaultOpen : 0)) {
+                gui_field<S, typename members::head, typename members::tail>::edit(val, open);
+                TreePop();
+            }
+        }
+    };
+
     // TODO(max):
-    // ptr_
-    // decltype(nullptr)
-    // fptr_
-    // enum_
-    // record_
     // astring
     // vec
     // heap

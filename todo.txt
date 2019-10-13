@@ -2,9 +2,8 @@
 Framework re-write:
 
     GUI
-        finish reflection integration
-        data structure reflection rules
         imgui allocator
+        data structure reflection rules
     Math library
         rewrite
         print + imgui rules

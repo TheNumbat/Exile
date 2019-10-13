@@ -34,6 +34,9 @@ void Gui::end_frame(const Platform& plt) {
     SDL_GL_SwapWindow(plt.window);
 }
 
+i32 test(i32 v) {return 0;}
+
+
 void Gui::begin_frame(const Platform& plt) {
 
     glClearColor(0.6f, 0.65f, 0.7f, 1.0f);
@@ -59,7 +62,19 @@ void Gui::begin_frame(const Platform& plt) {
     ImGui::View("const char*");
     static i32 iarr_[10]; ImGui::Edit("i32[]", iarr_);
     static char carr_[10]; ImGui::Edit("char[]", carr_);
+    i32* p0 = null;
+    i32* p1 = &iarr_[0];
+    i32 (*f0)(i32) = test;
+    ImGui::Edit("p0", p0);
+    ImGui::Edit("p1", p1);
+    ImGui::Edit("f0", f0);
+    static Type_Type e0 = Type_Type(100);
+    ImGui::Edit("e0", e0);
+    ImGui::View(e0);
     ImGui::View(carr_);
+    static test1 r0;
+    ImGui::Edit("r0", r0);
+    ImGui::View(r0);
     ImGui::End();
 }
 
