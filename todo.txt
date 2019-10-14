@@ -1,7 +1,9 @@
 
 Framework re-write:
 
+    virtual arenas
     GUI
+        fix struct not persistent
         imgui allocator
         data structure reflection rules
     Math library
