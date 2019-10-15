@@ -4,14 +4,12 @@
 
 i32 main(i32 argc, char **argv) {
 
-    info("%", "hes");
+    atexit(mem_validate);
 
     Engine eng;
     eng.init();
     eng.loop();
     eng.destroy();
-
-    mem_validate();
 
     return 0;
 }

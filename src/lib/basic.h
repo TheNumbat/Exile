@@ -8,7 +8,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+
 #include <new>
+#include <atomic>
 #include <functional>
 
 #ifdef RUNNING_META

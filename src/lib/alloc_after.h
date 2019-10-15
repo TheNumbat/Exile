@@ -1,6 +1,8 @@
 
 #pragma once
 
+extern std::atomic<i64> vallocs;
+
 template<const char* tname>
 template<typename T>
 T* Mallocator<tname>::alloc(usize size, usize align) {
@@ -11,18 +13,46 @@ T* Mallocator<tname>::alloc(usize size, usize align) {
 
 template<const char* tname, usize N>
 template<typename T>
-T* Marena<tname, N>::alloc(usize size, usize align) {
+T* MSarena<tname, N>::alloc(usize size, usize align) {
     uptr here = (uptr)mem + used;
     uptr offset = here % align;
     uptr next = here + (offset ? align - offset : 0);
     assert(next + size - (uptr)mem < N);
     T* ret = (T*)next;
-    used = offset + size;
+    used += offset + size;
+    high_water = _MAX(high_water, used);
     return ret;
+}
+
+template<const char* tname, usize N>
+template<typename T>
+T* MVarena<tname, N>::alloc(usize size, usize align) {
+    if(!mem) init();
+    uptr here = (uptr)mem + used;
+    uptr offset = here % align;
+    uptr next = here + (offset ? align - offset : 0);
+    assert(next + size - (uptr)mem < N);
+    T* ret = (T*)next;
+    used += offset + size;
+    high_water = _MAX(high_water, used);
+    return ret;
+}
+
+template<const char* tname, usize N>
+void MVarena<tname, N>::init() {
+    mem = Mvirtual::alloc<u8>(N, 0);
+    atexit(destroy);
+}
+template<const char* tname, usize N>
+void MVarena<tname, N>::destroy() {
+    Mvirtual::dealloc(mem);
+    mem = null;
+    used = high_water = 0;
 }
 
 template<typename T>
 T* Mvirtual::alloc(usize size, usize align) {
+    vallocs++;
 #ifdef _WIN32
     T* ret = (T*)VirtualAlloc(null, size, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
     assert(ret);
@@ -35,6 +65,8 @@ T* Mvirtual::alloc(usize size, usize align) {
 
 template<typename T>
 void Mvirtual::dealloc(T* mem) {
+    if(!mem) return;
+    vallocs--;
 #ifdef _WIN32
     VirtualFree(mem, 0, MEM_RELEASE);
 #elif defined(__linux__) 

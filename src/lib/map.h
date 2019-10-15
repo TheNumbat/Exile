@@ -107,7 +107,7 @@ struct map {
                 }
                 distance++;
                 idx = idx == data.capacity ? 0 : idx + 1;
-                probe = max(probe, distance);
+                probe = _MAX(probe, distance);
             } else {
                 here = new_slot;
                 size++;

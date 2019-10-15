@@ -1,6 +1,9 @@
 
 #pragma once
 
+#define _MAX(a,b) ((a) > (b) ? (a) : (b))
+#define _MIN(a,b) ((a) < (b) ? (a) : (b))
+
 inline u32 prev_pow2(u32 val) {
 
 	u32 pos = 0;

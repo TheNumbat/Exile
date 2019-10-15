@@ -35,11 +35,12 @@ struct Mvirtual {
 };
 
 template<const char* tname, usize N>
-struct Marena {
+struct MSarena {
 
     static constexpr const char* name = tname;
     static inline u8 mem[N] = {};
     static inline usize used = 0;
+    static inline usize high_water = 0;
 
     template<typename T> 
     static T* make(usize n = 1) {
@@ -56,6 +57,31 @@ struct Marena {
         used = 0;
         memset(mem, 0, N);
     }
+};
+
+template<const char* tname, usize N>
+struct MVarena {
+
+    static constexpr const char* name = tname;
+    static inline u8* mem = null;
+    static inline usize used = 0;
+    static inline usize high_water = 0;
+
+    static void init();
+    static void destroy();
+
+    template<typename T> 
+    static T* make(usize n = 1) {
+        return new (alloc<T>(sizeof(T) * n, alignof(T))) T[n];
+    }
+
+    template<typename T>
+    static T* alloc(usize size, usize align = 1);
+
+    template<typename T>
+    static void dealloc(T* mem) {}
+
+    static void reset() {destroy();}
 };
 
 template<const char* tname, typename T, typename Base>
