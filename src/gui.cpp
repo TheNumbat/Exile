@@ -12,12 +12,23 @@
 
 #include "lib/lib.h"
 
+using alloc = Mallocator<Type_Info<Gui>::name>;
+
+static void* imgui_alloc(usize sz, void*) {
+    return alloc::alloc<u8>(sz);
+}
+
+static void imgui_free(void* mem, void*) {
+    alloc::dealloc(mem);
+}
+
 void Gui::init(const Platform& plt) {
 
     ImGui::CreateContext();
     ImGui_ImplSDL2_InitForOpenGL(plt.window, plt.gl_context);
     ImGui_ImplOpenGL3_Init();
 
+    ImGui::SetAllocatorFunctions(imgui_alloc, imgui_free, null);
     ImGui::StyleColorsDark();
 }
 
@@ -72,9 +83,6 @@ void Gui::begin_frame(const Platform& plt) {
     ImGui::Edit("e0", e0);
     ImGui::View(e0);
     ImGui::View(carr_);
-    static test1 r0;
-    ImGui::Edit("r0", r0);
-    ImGui::View(r0);
     ImGui::End();
 }
 

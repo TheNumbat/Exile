@@ -1,8 +1,10 @@
 
 Framework re-write:
 
+    fix meta include order
+    fix unbalanced imgui allocs
+
     GUI
-        imgui allocator
         data structure reflection rules
     Math library
         rewrite

@@ -51,7 +51,7 @@ struct Type_List<T> {
     using tail = void;
 };
 template<>
-struct Type_List<void> {
+struct norefl Type_List<void> {
     using head = void;
     using tail = void;
 };
@@ -106,7 +106,7 @@ struct enum_iterator<E, H, void> {
     }
 };
 template<typename E>
-struct enum_iterator<E, void, void> {
+struct norefl enum_iterator<E, void, void> {
     static void traverse(std::function<void(E,literal)>) {}
 };
 template<typename E>
@@ -131,82 +131,82 @@ struct Type_Info<T*> {
     static constexpr Type_Type type = Type_Type::ptr_;
 };
 
-template<> struct Type_Info<void> {
+template<> struct norefl Type_Info<void> {
 	static constexpr char name[] = "void";
 	static constexpr usize size = 0u;
 	static constexpr Type_Type type = Type_Type::void_;
 };
-template<> struct Type_Info<decltype(nullptr)> {
+template<> struct norefl Type_Info<decltype(nullptr)> {
 	static constexpr char name[] = "nullptr";
 	static constexpr usize size = sizeof(nullptr);
 	static constexpr Type_Type type = Type_Type::ptr_;
 	using to = void;
 };
-template<> struct Type_Info<char> {
+template<> struct norefl Type_Info<char> {
 	static constexpr char name[] = "char";
 	static constexpr usize size = sizeof(char);
 	static constexpr bool sgn = true;
 	static constexpr Type_Type type = Type_Type::char_;
 };
-template<> struct Type_Info<i8> {
+template<> struct norefl Type_Info<i8> {
 	static constexpr char name[] = "i8";
 	static constexpr usize size = sizeof(i8);
 	static constexpr bool sgn = true;
 	static constexpr Type_Type type = Type_Type::int_;
 };
-template<> struct Type_Info<u8> {
+template<> struct norefl Type_Info<u8> {
 	static constexpr char name[] = "u8";
 	static constexpr usize size = sizeof(u8);
 	static constexpr bool sgn = false;
 	static constexpr Type_Type type = Type_Type::int_;
 };
-template<> struct Type_Info<i16> {
+template<> struct norefl Type_Info<i16> {
 	static constexpr char name[] = "i16";
 	static constexpr usize size = sizeof(i16);
 	static constexpr bool sgn = true;
 	static constexpr Type_Type type = Type_Type::int_;
 };
-template<> struct Type_Info<u16> {
+template<> struct norefl Type_Info<u16> {
 	static constexpr char name[] = "u16";
 	static constexpr usize size = sizeof(u16);
 	static constexpr bool sgn = false;
 	static constexpr Type_Type type = Type_Type::int_;
 };
-template<> struct Type_Info<i32> {
+template<> struct norefl Type_Info<i32> {
 	static constexpr char name[] = "i32";
 	static constexpr usize size = sizeof(i32);
 	static constexpr bool sgn = true;
 	static constexpr Type_Type type = Type_Type::int_;
 };
-template<> struct Type_Info<u32> {
+template<> struct norefl Type_Info<u32> {
 	static constexpr char name[] = "u32";
 	static constexpr usize size = sizeof(u32);
 	static constexpr bool sgn = false;
 	static constexpr Type_Type type = Type_Type::int_;
 };
-template<> struct Type_Info<i64> {
+template<> struct norefl Type_Info<i64> {
 	static constexpr char name[] = "i64";
 	static constexpr usize size = sizeof(i64);
 	static constexpr bool sgn = true;
 	static constexpr Type_Type type = Type_Type::int_;
 };
-template<> struct Type_Info<u64> {
+template<> struct norefl Type_Info<u64> {
 	static constexpr char name[] = "u64";
 	static constexpr usize size = sizeof(u64);
 	static constexpr bool sgn = false;
 	static constexpr Type_Type type = Type_Type::int_;
 };
-template<> struct Type_Info<f32> {
+template<> struct norefl Type_Info<f32> {
 	static constexpr char name[] = "f32";
 	static constexpr usize size = sizeof(f32);
 	static constexpr Type_Type type = Type_Type::float_;
 };
-template<> struct Type_Info<f64> {
+template<> struct norefl Type_Info<f64> {
 	static constexpr char name[] = "f64";
 	static constexpr usize size = sizeof(f64);
 	static constexpr Type_Type type = Type_Type::float_;
 };
-template<> struct Type_Info<bool> {
+template<> struct norefl Type_Info<bool> {
 	static constexpr char name[] = "bool";
 	static constexpr usize size = sizeof(bool);
 	static constexpr Type_Type type = Type_Type::bool_;
