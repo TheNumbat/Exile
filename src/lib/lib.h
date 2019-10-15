@@ -16,13 +16,13 @@
 
 // order matters!
 
+#include "log.h"
+#include "math.h"
+
 #include "alloc_before.h"
 #include "string_before.h"
 #include "reflect.h"
-
-#include "log.h"
 #include "printf_before.h"
-#include "math.h"
 
 #include "vec.h"
 #include "array.h"

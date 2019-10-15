@@ -59,16 +59,16 @@ struct MSarena {
     }
 };
 
-template<const char* tname, usize N>
+template<const char* tname, usize N = GB(1)>
 struct MVarena {
 
+    static u8* init(bool first);
+    static void reset();
+
     static constexpr const char* name = tname;
-    static inline u8* mem = null;
+    static inline u8* mem = init(true);
     static inline usize used = 0;
     static inline usize high_water = 0;
-
-    static void init();
-    static void destroy();
 
     template<typename T> 
     static T* make(usize n = 1) {
@@ -80,8 +80,6 @@ struct MVarena {
 
     template<typename T>
     static void dealloc(T* mem) {}
-
-    static void reset() {destroy();}
 };
 
 template<const char* tname, typename T, typename Base>

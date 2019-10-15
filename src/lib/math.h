@@ -4,6 +4,10 @@
 #define _MAX(a,b) ((a) > (b) ? (a) : (b))
 #define _MIN(a,b) ((a) < (b) ? (a) : (b))
 
+#define KB(x) (1024 * x)
+#define MB(x) (1024 * KB(x))
+#define GB(x) (1024 * MB(x))
+
 inline u32 prev_pow2(u32 val) {
 
 	u32 pos = 0;

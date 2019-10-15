@@ -27,7 +27,7 @@ T* MSarena<tname, N>::alloc(usize size, usize align) {
 template<const char* tname, usize N>
 template<typename T>
 T* MVarena<tname, N>::alloc(usize size, usize align) {
-    if(!mem) init();
+    if(!mem) init(false);
     uptr here = (uptr)mem + used;
     uptr offset = here % align;
     uptr next = here + (offset ? align - offset : 0);
@@ -39,15 +39,16 @@ T* MVarena<tname, N>::alloc(usize size, usize align) {
 }
 
 template<const char* tname, usize N>
-void MVarena<tname, N>::init() {
+u8* MVarena<tname, N>::init(bool first) {
     mem = Mvirtual::alloc<u8>(N, 0);
-    atexit(destroy);
+    if(first) atexit(reset);
+    return mem;
 }
 template<const char* tname, usize N>
-void MVarena<tname, N>::destroy() {
+void MVarena<tname, N>::reset() {
     Mvirtual::dealloc(mem);
     mem = null;
-    used = high_water = 0;
+    used = 0;
 }
 
 template<typename T>

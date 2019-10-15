@@ -2,9 +2,10 @@
 #include "lib/lib.h"
 #include "engine.h"
 
-i32 main(i32 argc, char **argv) {
+// This should run before the atexit in MVarena::init
+static i32 __memcheck = atexit(mem_validate);
 
-    atexit(mem_validate);
+i32 main(i32 argc, char **argv) {
 
     Engine eng;
     eng.init();
