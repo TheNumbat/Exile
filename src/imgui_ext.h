@@ -241,7 +241,7 @@ namespace ImGui {
             gui_type<member, Type_Info<member>::type>::view(*(member*)((char*)&val + H::offset), open);
             gui_field<S, typename T::head, typename T::tail>::view(val, open);
         }
-        static void edit(S val, bool open) {
+        static void edit(S& val, bool open) {
             gui_type<member, Type_Info<member>::type>::edit(H::name, *(member*)((char*)&val + H::offset), open);
             gui_field<S, typename T::head, typename T::tail>::edit(val, open);
         }
@@ -253,14 +253,14 @@ namespace ImGui {
             Text(H::name); SameLine();
             gui_type<member, Type_Info<member>::type>::view(*(member*)((char*)&val + H::offset), open);
         }
-        static void edit(S val, bool open) {
+        static void edit(S& val, bool open) {
             gui_type<member, Type_Info<member>::type>::edit(H::name, *(member*)((char*)&val + H::offset), open);
         }
     };
     template<typename S>
     struct gui_field<S, void, void> {
         static void view(S val, bool open) {}
-        static void edit(S val, bool open) {}
+        static void edit(S& val, bool open) {}
     };
 
     template<typename S>

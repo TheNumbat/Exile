@@ -2,7 +2,6 @@
 Framework re-write:
 
     GUI
-        fix struct not persistent
         imgui allocator
         data structure reflection rules
     Math library
