@@ -1,7 +1,10 @@
 
 Framework re-write:
 
-    virtual arenas
+    Memory
+        virtual vec
+        static vs. virtual arena
+        arena high_water
     GUI
         fix struct not persistent
         imgui allocator

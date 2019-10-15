@@ -2,6 +2,18 @@
 
 #include "basic.h"
 
+#ifdef _WIN32
+    #ifndef WIN32_LEAN_AND_MEAN
+    #define WIN32_LEAN_AND_MEAN
+    #endif
+    #include <intrin.h>
+    #include <windows.h>
+    #undef max
+    #undef min
+#elif defined(__linux__)
+    #include <sys/mman.h>
+#endif
+
 // order matters!
 
 #include "alloc_before.h"

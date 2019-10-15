@@ -13,7 +13,7 @@ struct queue {
     }
     static queue copy(queue source) {
         queue ret = {A::template make<T>(source.capacity), source.start, source.last, source.capacity};
-        memcpy(ret.data, source.data, sizeof(T) * capacity);
+        memcpy(ret.data, source.data, sizeof(T) * source.capacity);
         return ret;
     }
     static queue take(queue& source) {

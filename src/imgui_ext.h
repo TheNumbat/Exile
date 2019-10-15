@@ -182,11 +182,11 @@ namespace ImGui {
     template<typename S>
     struct gui_type<S, Type_Type::ptr_> {
         static void view(S val, bool open) {
-            if(val) gui_type<No_Ptr<S>, Type_Info<No_Ptr<S>::type>::type>::view(*val, open);
+            if(val) gui_type<typename No_Ptr<S>::type, Type_Info<typename No_Ptr<S>::type>::type>::view(*val, open);
             else Text("(null)");
         }
         static void edit(literal label, S& val, bool open) {
-            if(val) gui_type<No_Ptr<S>::type, Type_Info<No_Ptr<S>::type>::type>::edit(label, *val, open);
+            if(val) gui_type<typename No_Ptr<S>::type, Type_Info<typename No_Ptr<S>::type>::type>::edit(label, *val, open);
             else Text("(null)");
         }
     };

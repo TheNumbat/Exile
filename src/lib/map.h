@@ -24,7 +24,7 @@ private:
 
     u32 _bucket = 0; // low bit set if valid
 
-    template<typename K, typename V, Hash<K> H, typename A>
+    template<typename _K, typename _V, Hash<K> _H, typename _A>
     friend struct map;
 };
 

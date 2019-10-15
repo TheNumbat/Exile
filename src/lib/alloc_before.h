@@ -16,14 +16,22 @@ struct Mallocator {
     }
 
     template<typename T>
-    static T* alloc(usize size, usize align = 1) {
-        return (T*)base_alloc(size);
-    }
+    static T* alloc(usize size, usize align = 1);
 
     template<typename T>
     static void dealloc(T* mem) {
         base_free(mem);
     }
+};
+
+struct Mvirtual {
+    static constexpr const char* name = "Mvirtual";
+
+    template<typename T>
+    static T* alloc(usize size, usize align = 1);
+
+    template<typename T>
+    static void dealloc(T* mem);
 };
 
 template<const char* tname, usize N>
