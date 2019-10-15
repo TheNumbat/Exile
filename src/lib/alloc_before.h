@@ -62,11 +62,11 @@ struct MSarena {
 template<const char* tname, usize N = MB(128)>
 struct MVarena {
 
-    static u8* init(bool first);
+    static u8* init();
     static void reset();
 
     static constexpr const char* name = tname;
-    static inline u8* mem = init(true);
+    static inline u8* mem = (atexit(reset), init());
     static inline usize used = 0;
     static inline usize high_water = 0;
 
