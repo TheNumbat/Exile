@@ -74,7 +74,7 @@ struct map {
         prev.destroy();
     }
     void clear() {
-        for(auto& e : data) e.set_valid(false);
+        for(auto& e : data) {e.destroy(); e.set_valid(false);}
         size = probe = 0;
     }
 

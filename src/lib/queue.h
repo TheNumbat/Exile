@@ -68,6 +68,11 @@ struct queue {
         return data[idx];
     }
     void clear() {
+        if constexpr(is_Destroy<T>()) {
+            for(T& v : *this) {
+                v.destroy();
+            }
+        }
         size = last = 0;
     }
 

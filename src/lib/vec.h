@@ -44,6 +44,11 @@ struct vec {
         data = new_data;
     }
     void clear() {
+        if constexpr(is_Destroy<T>()) {
+            for(T& v : *this) {
+                v.destroy();
+            }
+        }
         size = 0;
     }
 

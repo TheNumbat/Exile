@@ -1,8 +1,6 @@
 
 Framework re-write:
 
-    Memory
-        virtual vec
     GUI
         fix struct not persistent
         imgui allocator

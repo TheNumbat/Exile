@@ -59,7 +59,7 @@ struct MSarena {
     }
 };
 
-template<const char* tname, usize N = GB(1)>
+template<const char* tname, usize N = MB(128)>
 struct MVarena {
 
     static u8* init(bool first);

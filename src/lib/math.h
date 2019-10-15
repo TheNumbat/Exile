@@ -4,7 +4,7 @@
 #define _MAX(a,b) ((a) > (b) ? (a) : (b))
 #define _MIN(a,b) ((a) < (b) ? (a) : (b))
 
-#define KB(x) (1024 * x)
+#define KB(x) (1024 * (x))
 #define MB(x) (1024 * KB(x))
 #define GB(x) (1024 * MB(x))
 

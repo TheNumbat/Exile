@@ -27,6 +27,10 @@ struct stack {
         return data.pop();
     }
 
+    void clear() {
+        data.clear();
+    }
+
     const T* begin() const {
         return data.begin();
     }

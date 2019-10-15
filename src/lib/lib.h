@@ -25,6 +25,7 @@
 #include "printf_before.h"
 
 #include "vec.h"
+#include "v_vec.h"
 #include "array.h"
 #include "stack.h"
 #include "queue.h"
