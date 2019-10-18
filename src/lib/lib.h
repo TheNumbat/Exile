@@ -24,6 +24,7 @@
 #include "reflect.h"
 #include "printf_before.h"
 
+#include "vect.h"
 #include "vec.h"
 #include "v_vec.h"
 #include "array.h"

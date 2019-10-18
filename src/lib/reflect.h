@@ -78,6 +78,15 @@ constexpr bool is_Destroy(...) {
     return false;
 }
 
+template <template<typename> class Trait, typename Head, typename ...Tail> 
+struct All_Of {
+  static constexpr bool value = Trait<Head>::value && All_Of<Trait, Tail...>::value;
+};
+template <template<typename> class Trait, typename Head>
+struct All_Of<Trait, Head> {
+  static constexpr bool value = Trait<Head>::value;
+};
+
 template<typename T> struct Type_Info;
 
 template<typename E, typename H, typename T>
