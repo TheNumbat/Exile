@@ -1,6 +1,66 @@
 
 #pragma once
 
+template<typename T, typename... Ts>
+struct Type_List {
+    using head = T;
+    using tail = Type_List<Ts...>;
+};
+template<typename T>
+struct Type_List<T> {
+    using head = T;
+    using tail = void;
+};
+template<>
+struct Type_List<void> {
+    using head = void;
+    using tail = void;
+};
+
+template<typename T>
+struct No_Const {using type = T;};
+template<typename T>
+struct No_Const<const T> {using type = T;};
+
+template<typename T>
+struct No_Ptr {using type = T;};
+template<typename T>
+struct No_Ptr<T*> {using type = T;};
+
+template<bool b, typename T, typename F>
+struct Conditional {};
+template<typename T, typename F>
+struct Conditional<true, T, F> {using type = T;};
+template<typename T, typename F>
+struct Conditional<false, T, F> {using type = F;};
+
+template<typename L, typename R>
+struct Is_Same {static constexpr bool value = false;};
+template<typename T>
+struct Is_Same<T,T> {static constexpr bool value = true;};
+
+template<typename T>
+struct Is_Float {static constexpr bool value = false;};
+template<>
+struct Is_Float<f32> {static constexpr bool value = true;};
+template<>
+struct Is_Float<f64> {static constexpr bool value = true;};
+
+
+template<typename T, typename U> 
+constexpr size_t offset_of(U T::*member) {
+    return (char*)&((T*)null->*member) - (char*)null;
+}
+
+template<typename T>
+constexpr auto is_Destroy() -> decltype(std::declval<T>().destroy(), bool()) {
+    return true;
+}
+template<typename T>
+constexpr bool is_Destroy(...) {
+    return false;
+}
+
 enum class Type_Type : u8 {
     void_,
     char_,
@@ -20,71 +80,11 @@ struct Enum_Field {
     static constexpr char const* name = N;
     static constexpr E val = V;
 };
-
 template<typename T, usize O, const char* N>
 struct Record_Field {
     static constexpr char const* name = N;
     static constexpr usize offset = O;
     using type = T;
-};
-
-template<typename T, typename... Ts>
-struct Type_List {
-    using head = T;
-    using tail = Type_List<Ts...>;
-};
-template<typename T>
-struct Type_List<T> {
-    using head = T;
-    using tail = void;
-};
-template<>
-struct Type_List<void> {
-    using head = void;
-    using tail = void;
-};
-
-template<typename T>
-struct No_Const {
-    using type = T;
-};
-
-template<typename T>
-struct No_Const<const T> {
-    using type = T;
-};
-
-template<typename T>
-struct No_Ptr {
-    using type = T;
-};
-
-template<typename T>
-struct No_Ptr<T*> {
-    using type = T;
-};
-
-template<typename T, typename U> 
-constexpr size_t offset_of(U T::*member) {
-    return (char*)&((T*)null->*member) - (char*)null;
-}
-
-template<typename T>
-constexpr auto is_Destroy() -> decltype(std::declval<T>().destroy(), bool()) {
-    return true;
-}
-template<typename T>
-constexpr bool is_Destroy(...) {
-    return false;
-}
-
-template <template<typename> class Trait, typename Head, typename ...Tail> 
-struct All_Of {
-  static constexpr bool value = Trait<Head>::value && All_Of<Trait, Tail...>::value;
-};
-template <template<typename> class Trait, typename Head>
-struct All_Of<Trait, Head> {
-  static constexpr bool value = Trait<Head>::value;
 };
 
 template<typename T> struct Type_Info;

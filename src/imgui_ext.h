@@ -416,6 +416,76 @@ namespace ImGui {
 			}
         }
     };
+
+    template<typename T, usize N>
+    struct gui_type<vect<T,N>, Type_Type::record_> {
+        static void view(vect<T,N> val, bool open) {
+			gui_type<T[N], Type_Type::array_>::view(val.data, open);
+        }
+        static void edit(literal label, vect<T,N>& val, bool open) {
+			gui_type<T[N], Type_Type::array_>::edit(label, val.data, open);
+        }
+    };
+
+    template<>
+    struct gui_type<v2, Type_Type::record_> {
+        static void view(v2 val, bool open) {
+			Text("[%f,%f]", val.x, val.y);
+        }
+        static void edit(literal label, v2& val, bool open) {
+			InputFloat2(label, val.data);
+        }
+    };
+
+    template<>
+    struct gui_type<v3, Type_Type::record_> {
+        static void view(v3 val, bool open) {
+			Text("[%f,%f,%f]", val.x, val.y, val.z);
+        }
+        static void edit(literal label, v3& val, bool open) {
+			InputFloat3(label, val.data);
+        }
+    };
+
+    template<>
+    struct gui_type<v4, Type_Type::record_> {
+        static void view(v4 val, bool open) {
+			Text("[%f,%f,%f,%f]", val.x, val.y, val.z, val.w);
+        }
+        static void edit(literal label, v4& val, bool open) {
+			InputFloat4(label, val.data);
+        }
+    };
+
+    template<>
+    struct gui_type<v2i, Type_Type::record_> {
+        static void view(v2i val, bool open) {
+			Text("[%d,%d]", val.x, val.y);
+        }
+        static void edit(literal label, v2i& val, bool open) {
+			InputInt2(label, val.data);
+        }
+    };
+
+    template<>
+    struct gui_type<v3i, Type_Type::record_> {
+        static void view(v3i val, bool open) {
+			Text("[%d,%d,%d]", val.x, val.y, val.z);
+        }
+        static void edit(literal label, v3i& val, bool open) {
+			InputInt3(label, val.data);
+        }
+    };
+
+    template<>
+    struct gui_type<v4i, Type_Type::record_> {
+        static void view(v4i val, bool open) {
+			Text("[%d,%d,%d,%d]", val.x, val.y, val.z, val.w);
+        }
+        static void edit(literal label, v4i& val, bool open) {
+			InputInt4(label, val.data);
+        }
+    };
 }
 
 
