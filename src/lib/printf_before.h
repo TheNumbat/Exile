@@ -8,7 +8,7 @@ template<typename A, typename E, Type_Type T>
 struct format_type {};
 
 template<typename A>
-struct norefl format_type<A, void, Type_Type::void_> {
+struct format_type<A, void, Type_Type::void_> {
     static u32 write(astring<A> out, u32 idx) {
         return out.write(idx, "void");
     }

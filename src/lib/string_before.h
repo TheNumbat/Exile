@@ -8,7 +8,7 @@ struct astring;
 // Should be used to represent string literals or more generally views into
 // memory that is not owned by this string.
 template<>
-struct norefl astring<void> {
+struct astring<void> {
     const char* c_str = null;
     const u32 cap	  = 0;
     const u32 len     = 0;

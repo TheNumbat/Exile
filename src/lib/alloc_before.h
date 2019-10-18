@@ -1,8 +1,11 @@
 
 #pragma once
 
-u8* base_alloc(usize sz);
+void* base_alloc(usize sz);
 void base_free(void* mem);
+
+void* virt_alloc(usize sz);
+void virt_free(void* mem);
 
 void mem_validate();
 
@@ -16,7 +19,9 @@ struct Mallocator {
     }
 
     template<typename T>
-    static T* alloc(usize size, usize align = 1);
+    static T* alloc(usize size) {
+        return (T*)base_alloc(size);
+    }
 
     template<typename T>
     static void dealloc(T* mem) {
@@ -28,10 +33,14 @@ struct Mvirtual {
     static constexpr const char* name = "Mvirtual";
 
     template<typename T>
-    static T* alloc(usize size, usize align = 1);
+    static T* alloc(usize size) {
+        return (T*)virt_alloc(size);
+    }
 
     template<typename T>
-    static void dealloc(T* mem);
+    static void dealloc(T* mem) {
+        virt_free(mem);
+    }
 };
 
 template<const char* tname, usize N>
@@ -62,8 +71,15 @@ struct MSarena {
 template<const char* tname, usize N = MB(128)>
 struct MVarena {
 
-    static u8* init();
-    static void reset();
+    static u8* init() {
+        mem = Mvirtual::alloc<u8>(N, 0);
+        return mem;
+    }
+    static void reset() {
+        Mvirtual::dealloc(mem);
+        mem = null;
+        used = 0;
+    }
 
     static constexpr const char* name = tname;
     static inline u8* mem = (atexit(reset), init());
@@ -85,7 +101,7 @@ struct MVarena {
 template<const char* tname, typename T, typename Base>
 struct Free_List {
     
-    union norefl Free_Node {
+    union Free_Node {
         T value;
         Free_Node* next = null;
     };

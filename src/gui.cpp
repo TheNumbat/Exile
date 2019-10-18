@@ -1,34 +1,31 @@
 
-#ifndef RUNNING_META
 #include <imgui/imgui.h>
 #include <imgui/imgui_impl_sdl.h>
 #include <imgui/imgui_impl_opengl3.h>
 #include <SDL2/SDL.h>
 #include <glad/glad.h>
-#endif
 
 #include "gui.h"
 #include "imgui_ext.h"
 
 #include "lib/lib.h"
 
-using alloc = Mallocator<Type_Info<Gui>::name>;
-
 static void* imgui_alloc(usize sz, void*) {
-    return alloc::alloc<u8>(sz);
+    return Gui::alloc::alloc<u8>(sz);
 }
 
 static void imgui_free(void* mem, void*) {
-    alloc::dealloc(mem);
+    Gui::alloc::dealloc(mem);
 }
 
 void Gui::init(const Platform& plt) {
 
+    ImGui::SetAllocatorFunctions(imgui_alloc, imgui_free, null);
     ImGui::CreateContext();
+    
     ImGui_ImplSDL2_InitForOpenGL(plt.window, plt.gl_context);
     ImGui_ImplOpenGL3_Init();
 
-    ImGui::SetAllocatorFunctions(imgui_alloc, imgui_free, null);
     ImGui::StyleColorsDark();
 }
 
@@ -44,9 +41,6 @@ void Gui::end_frame(const Platform& plt) {
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
     SDL_GL_SwapWindow(plt.window);
 }
-
-i32 test(i32 v) {return 0;}
-
 
 void Gui::begin_frame(const Platform& plt) {
 
@@ -75,13 +69,8 @@ void Gui::begin_frame(const Platform& plt) {
     static char carr_[10]; ImGui::Edit("char[]", carr_);
     i32* p0 = null;
     i32* p1 = &iarr_[0];
-    i32 (*f0)(i32) = test;
     ImGui::Edit("p0", p0);
     ImGui::Edit("p1", p1);
-    ImGui::Edit("f0", f0);
-    static Type_Type e0 = Type_Type(100);
-    ImGui::Edit("e0", e0);
-    ImGui::View(e0);
     ImGui::View(carr_);
     ImGui::End();
 }

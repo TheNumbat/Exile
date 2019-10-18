@@ -37,5 +37,3 @@
 #include "alloc_after.h"
 #include "string_after.h"
 #include "printf_after.h"
-
-#include <meta_types.h>

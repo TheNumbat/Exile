@@ -13,12 +13,6 @@
 #include <atomic>
 #include <functional>
 
-#ifdef RUNNING_META
-    #define norefl __attribute__((annotate("noreflect")))
-#else
-    #define norefl
-#endif
-
 typedef uint8_t 	u8;
 typedef int8_t 		i8;
 typedef uint16_t 	u16;

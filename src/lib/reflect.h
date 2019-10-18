@@ -1,18 +1,6 @@
 
 #pragma once
 
-/*
-    NOTE(max):
-
-    Technically the reflection system can work with literally anything, but the current meta-program
-    doesn't handle nested template instantiation/defaulted template parameters/etc. very well. Thanks libclang! 
-    I don't want to _again_ re-write the meta-program (this time as a true clang-tool) to be truly robust, 
-    so instead just assume that no reflection code for template data structures will be generated. 
-
-    99% of the templated structures we will want to reflect are just my standard library ones,
-    so I will provide custom print/UI/serial/etc. code for all of the standard data structures.
-*/
-
 enum class Type_Type : u8 {
     void_,
     char_,
@@ -51,7 +39,7 @@ struct Type_List<T> {
     using tail = void;
 };
 template<>
-struct norefl Type_List<void> {
+struct Type_List<void> {
     using head = void;
     using tail = void;
 };
@@ -106,7 +94,7 @@ struct enum_iterator<E, H, void> {
     }
 };
 template<typename E>
-struct norefl enum_iterator<E, void, void> {
+struct enum_iterator<E, void, void> {
     static void traverse(std::function<void(E,literal)>) {}
 };
 template<typename E>
@@ -131,82 +119,91 @@ struct Type_Info<T*> {
     static constexpr Type_Type type = Type_Type::ptr_;
 };
 
-template<> struct norefl Type_Info<void> {
+template<typename T, usize N> 
+struct Type_Info<T[N]> {
+	using underlying = T;
+    decltype(Type_Info<T>::name) name = Type_Info<T>::name;
+    static constexpr usize size = sizeof(T[N]);
+	static constexpr usize len = N;
+    static constexpr Type_Type type = Type_Type::array_;
+};
+
+template<> struct Type_Info<void> {
 	static constexpr char name[] = "void";
 	static constexpr usize size = 0u;
 	static constexpr Type_Type type = Type_Type::void_;
 };
-template<> struct norefl Type_Info<decltype(nullptr)> {
+template<> struct Type_Info<decltype(nullptr)> {
 	static constexpr char name[] = "nullptr";
 	static constexpr usize size = sizeof(nullptr);
 	static constexpr Type_Type type = Type_Type::ptr_;
 	using to = void;
 };
-template<> struct norefl Type_Info<char> {
+template<> struct Type_Info<char> {
 	static constexpr char name[] = "char";
 	static constexpr usize size = sizeof(char);
 	static constexpr bool sgn = true;
 	static constexpr Type_Type type = Type_Type::char_;
 };
-template<> struct norefl Type_Info<i8> {
+template<> struct Type_Info<i8> {
 	static constexpr char name[] = "i8";
 	static constexpr usize size = sizeof(i8);
 	static constexpr bool sgn = true;
 	static constexpr Type_Type type = Type_Type::int_;
 };
-template<> struct norefl Type_Info<u8> {
+template<> struct Type_Info<u8> {
 	static constexpr char name[] = "u8";
 	static constexpr usize size = sizeof(u8);
 	static constexpr bool sgn = false;
 	static constexpr Type_Type type = Type_Type::int_;
 };
-template<> struct norefl Type_Info<i16> {
+template<> struct Type_Info<i16> {
 	static constexpr char name[] = "i16";
 	static constexpr usize size = sizeof(i16);
 	static constexpr bool sgn = true;
 	static constexpr Type_Type type = Type_Type::int_;
 };
-template<> struct norefl Type_Info<u16> {
+template<> struct Type_Info<u16> {
 	static constexpr char name[] = "u16";
 	static constexpr usize size = sizeof(u16);
 	static constexpr bool sgn = false;
 	static constexpr Type_Type type = Type_Type::int_;
 };
-template<> struct norefl Type_Info<i32> {
+template<> struct Type_Info<i32> {
 	static constexpr char name[] = "i32";
 	static constexpr usize size = sizeof(i32);
 	static constexpr bool sgn = true;
 	static constexpr Type_Type type = Type_Type::int_;
 };
-template<> struct norefl Type_Info<u32> {
+template<> struct Type_Info<u32> {
 	static constexpr char name[] = "u32";
 	static constexpr usize size = sizeof(u32);
 	static constexpr bool sgn = false;
 	static constexpr Type_Type type = Type_Type::int_;
 };
-template<> struct norefl Type_Info<i64> {
+template<> struct Type_Info<i64> {
 	static constexpr char name[] = "i64";
 	static constexpr usize size = sizeof(i64);
 	static constexpr bool sgn = true;
 	static constexpr Type_Type type = Type_Type::int_;
 };
-template<> struct norefl Type_Info<u64> {
+template<> struct Type_Info<u64> {
 	static constexpr char name[] = "u64";
 	static constexpr usize size = sizeof(u64);
 	static constexpr bool sgn = false;
 	static constexpr Type_Type type = Type_Type::int_;
 };
-template<> struct norefl Type_Info<f32> {
+template<> struct Type_Info<f32> {
 	static constexpr char name[] = "f32";
 	static constexpr usize size = sizeof(f32);
 	static constexpr Type_Type type = Type_Type::float_;
 };
-template<> struct norefl Type_Info<f64> {
+template<> struct Type_Info<f64> {
 	static constexpr char name[] = "f64";
 	static constexpr usize size = sizeof(f64);
 	static constexpr Type_Type type = Type_Type::float_;
 };
-template<> struct norefl Type_Info<bool> {
+template<> struct Type_Info<bool> {
 	static constexpr char name[] = "bool";
 	static constexpr usize size = sizeof(bool);
 	static constexpr Type_Type type = Type_Type::bool_;

@@ -1,9 +1,7 @@
 
 #pragma once
 
-#ifndef RUNNING_META
 #include <imgui/imgui.h>
-#endif
 
 #include "lib/lib.h"
 
@@ -191,18 +189,18 @@ namespace ImGui {
         }
     };
     template<>
-    struct norefl gui_type<char const*, Type_Type::ptr_> {
+    struct gui_type<char const*, Type_Type::ptr_> {
         static void view(char const* val, bool open) {
             Text(val);
         }
     };
     template<>
-    struct norefl gui_type<decltype(nullptr), Type_Type::ptr_> {
+    struct gui_type<decltype(nullptr), Type_Type::ptr_> {
         static void view(char const* val, bool open) {}
         static void edit(literal label, char* val, bool open) {}
     };
     template<>
-    struct norefl gui_type<char*, Type_Type::ptr_> {
+    struct gui_type<char*, Type_Type::ptr_> {
         static void view(char* val, bool open) {
             Text(val);
         }

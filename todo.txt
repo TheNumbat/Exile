@@ -1,9 +1,6 @@
 
 Framework re-write:
 
-    fix meta include order
-    fix unbalanced imgui allocs
-
     GUI
         data structure reflection rules
     Math library

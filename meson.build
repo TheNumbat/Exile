@@ -1,7 +1,7 @@
 
 project('exile', 'cpp', default_options : ['cpp_std=c++17'])
 
-# Linux deps : libclang-dev, libsdl2-dev
+# Linux deps : libsdl2-dev
 
 project_dir  = meson.current_source_dir() 
 build_dir    = meson.current_build_dir() 
@@ -27,28 +27,6 @@ elif host_system == 'linux'
 	cpp_args += ['-msse4.1', '-Wno-format', '-Wno-unknown-pragmas']
 endif
 
-# Build meta-program
-
-libclang = []
-
-clang_dir = join_paths(project_dir, 'deps/clang-c')
-libclang = cc.find_library('libclang', dirs : clang_dir)
-
-if host_system == 'windows'
-	configure_file(input: 'deps/clang-c/libclang.dll', output: 'libclang.dll', copy : true)
-endif
-
-meta_compiler = executable('meta', 'src/tools/meta.cpp', 
-							include_directories : inc_dir, 
-							dependencies : libclang, 
-							native : true, cpp_args : cpp_args)
-
-gen_src = custom_target('meta_output',
-						input : 'src/meta_input.h',
-						output : 'meta_types.h',
-						build_by_default : true, build_always_stale : true,
-						command : [meta_compiler, '@INPUT@', '@OUTPUT@', '-I../src/', '-I../deps/', '-xc++', '-std=c++17', '-DRUNNING_META'])
-
 sources = [
 	'deps/imgui/imgui.cpp',
 	'deps/imgui/imgui_draw.cpp',
@@ -62,7 +40,7 @@ sources = [
 	'src/gui.cpp',
 	'src/main.cpp']
 
-dependencies = [declare_dependency(sources : gen_src)]
+dependencies = []
 
 if host_system == 'windows'
 	sdl_dir = join_paths(project_dir, 'deps/win/SDL2/lib')

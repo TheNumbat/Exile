@@ -2,8 +2,12 @@
 #pragma once
 
 #include "platform.h"
+#include "lib/lib.h"
 
 struct Gui {
+
+    static constexpr char a_name[] = "imgui";
+    using alloc = Mallocator<a_name>;
 
     void init(const Platform& plt);
     void destroy();
