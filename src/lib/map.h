@@ -16,7 +16,7 @@ struct map_slot {
         _bucket = 0;
     }
 
-private:
+// private:
     u32 bucket() {return _bucket >> 1;}
     bool valid() {return _bucket & 1;}
     void set_valid(bool v) {_bucket |= (u32)(!!v);}
@@ -24,11 +24,11 @@ private:
 
     u32 _bucket = 0; // low bit set if valid
 
-    template<typename _K, typename _V, Hash<K> _H, typename _A>
-    friend struct map;
+    // template<typename _K, typename _V, typename _A, Hash<K> _H>
+    // friend struct map;
 };
 
-template<typename K, typename V, Hash<K> H = hash, typename A = Mdefault>
+template<typename K, typename V, typename A = Mdefault, Hash<K> H = hash>
 struct map {
 
     static const inline f32 max_load_factor = 0.9f;
@@ -214,17 +214,17 @@ struct Type_Info<map_slot<K,V>> {
                               Record_Field<u32,offset_of(&map_slot<K,V>::_bucket),_bucket>>;
 };
 
-template<typename K, typename V, Hash<K> H, typename A> 
-struct Type_Info<map<K,V,H,A>> {
+template<typename K, typename V, typename A,  Hash<K> H> 
+struct Type_Info<map<K,V,A,H>> {
 	static constexpr char name[] = "map";
-	static constexpr usize size = sizeof(map<K,V,H,A>);
+	static constexpr usize size = sizeof(map<K,V,A,H>);
 	static constexpr Type_Type type = Type_Type::record_;
     static constexpr char _data[] = "data";
     static constexpr char _size[] = "size";
     static constexpr char _probe[] = "probe";
     static constexpr char _usable[] = "usable";
-	using members = Type_List<Record_Field<vec<map_slot<K,V>, A>,offset_of(&map<K,V,H,A>::data),_data>,
-                              Record_Field<u32,offset_of(&map<K,V,H,A>::size),_size>,
-                              Record_Field<u32,offset_of(&map<K,V,H,A>::probe),_probe>,
-                              Record_Field<u32,offset_of(&map<K,V,H,A>::usable),_usable>>;
+	using members = Type_List<Record_Field<vec<map_slot<K,V>, A>,offset_of(&map<K,V,A,H>::data),_data>,
+                              Record_Field<u32,offset_of(&map<K,V,A,H>::size),_size>,
+                              Record_Field<u32,offset_of(&map<K,V,A,H>::probe),_probe>,
+                              Record_Field<u32,offset_of(&map<K,V,A,H>::usable),_usable>>;
 };

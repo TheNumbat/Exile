@@ -76,6 +76,13 @@ struct queue {
         size = last = 0;
     }
 
+    bool empty() {
+        return size == 0;
+    }
+    bool full() {
+        return size == capacity;
+    }
+
     template<typename E>
     struct itr {
         itr(queue& _q, u32 idx, u32 cons) : q(_q), place(idx), consumed(cons) {}

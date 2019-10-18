@@ -1,12 +1,9 @@
 
 Framework re-write:
 
-    GUI
-        data structure reflection rules
     Math library
         rewrite
         print + imgui rules
-
     Logging
         make thread-safe
     Thread Pool

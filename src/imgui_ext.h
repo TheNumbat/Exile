@@ -155,7 +155,7 @@ namespace ImGui {
 			if(TreeNodeEx(Type_Info<S>::name, open ? ImGuiTreeNodeFlags_DefaultOpen : 0)) {
 				for(usize i = 0; i < len; i++) {
 					PushID(i);
-					View("", &val[i]);
+					View(val[i]);
 					PopID();
 				}
 				TreePop();
@@ -278,14 +278,144 @@ namespace ImGui {
         }
     };
 
-    // TODO(max):
-    // astring
-    // vec
-    // heap
-    // map
-    // stack
-    // queue
-    // math types
+    template<typename A>
+    struct gui_type<astring<A>, Type_Type::string_> {
+        static void view(astring<A> val, bool open) {
+            Text(val);
+        }
+        static void edit(literal label, astring<A>& val, bool open) {
+            InputText(label, val);
+        }
+    };
+
+    template<typename T, typename A>
+    struct gui_type<vec<T,A>, Type_Type::record_> {
+        static void view(vec<T,A> val, bool open) {
+			if(TreeNodeEx(Type_Info<T>::name, open ? ImGuiTreeNodeFlags_DefaultOpen : 0)) {
+				for(usize i = 0; i < val.size; i++) {
+					PushID(i);
+					View(val[i]);
+					PopID();
+				}
+				TreePop();
+			}
+        }
+        static void edit(literal label, vec<T,A>& val, bool open) {
+			if(TreeNodeEx(label, open ? ImGuiTreeNodeFlags_DefaultOpen : 0)) {
+				for(usize i = 0; i < val.size; i++) {
+					PushID(i);
+					Edit("", val[i]);
+					PopID();
+				}
+                if(SmallButton("+")) {
+                    val.push(T());
+                }
+                SameLine();
+                if(SmallButton("-") && !val.empty()) {
+                    val.pop();
+                }
+				TreePop();
+			}
+        }
+    };
+
+    template<typename T, typename A>
+    struct gui_type<stack<T,A>, Type_Type::record_> {
+        static void view(stack<T,A> val, bool open) {
+            gui_type<vec<T,A>, Type_Type::record_>::view(val.data, open);
+        }
+        static void edit(literal label, stack<T,A>& val, bool open) {
+            gui_type<vec<T,A>, Type_Type::record_>::edit(label, val.data, open);
+        }
+    };
+
+    template<typename T, typename A>
+    struct gui_type<queue<T,A>, Type_Type::record_> {
+        static void view(queue<T,A> val, bool open) {
+			if(TreeNodeEx(Type_Info<T>::name, open ? ImGuiTreeNodeFlags_DefaultOpen : 0)) {
+				usize i = 0;
+                for(auto& v : val) {
+					PushID(i++);
+					View(v);
+					PopID();
+				}
+				TreePop();
+			}
+        }
+        static void edit(literal label, queue<T,A>& val, bool open) {
+			if(TreeNodeEx(Type_Info<T>::name, open ? ImGuiTreeNodeFlags_DefaultOpen : 0)) {
+				usize i = 0;
+                for(auto& v : val) {
+					PushID(i++);
+					Edit(label, v);
+					PopID();
+				}
+                if(SmallButton("+")) {
+                    val.push(T());
+                }
+                SameLine();
+                if(SmallButton("-") && !val.empty()) {
+                    val.pop();
+                }
+				TreePop();
+			}
+        }
+    };
+
+    template<typename T, typename A>
+    struct gui_type<heap<T,A>, Type_Type::record_> {
+        static void view(heap<T,A> val, bool open) {
+			if(TreeNodeEx(Type_Info<T>::name, open ? ImGuiTreeNodeFlags_DefaultOpen : 0)) {
+				usize i = 0;
+                for(auto& v : val) {
+					PushID(i++);
+					View(v);
+					PopID();
+				}
+				TreePop();
+			}
+        }
+        // NOTE(max): could add heap editing with reheap on edit, but don't need it for the forseeable future.
+    };
+
+    template<typename K, typename V, typename A, Hash<K> H>
+    struct gui_type<map<K,V,A,H>, Type_Type::record_> {
+        static void view(map<K,V,A,H> val, bool open) {
+			if(TreeNodeEx(Type_Info<map<K,V,A,H>>::name, open ? ImGuiTreeNodeFlags_DefaultOpen : 0)) {
+				usize i = 0;
+				Columns(2);
+                for(auto& v : val) {
+					PushID(i++);
+					View(v.key);
+                    PopID();
+                    NextColumn();
+                    PushID(i++);
+					View(v.value);
+					PopID();
+                    NextColumn();
+				}
+				TreePop();
+			}
+        }
+        static void edit(literal label, map<K,V,A,H>& val, bool open) {
+			if(TreeNodeEx(Type_Info<map<K,V,A,H>>::name, open ? ImGuiTreeNodeFlags_DefaultOpen : 0)) {
+				usize i = 0;
+				Columns(2);
+                for(auto& v : val) {
+					PushID(i++);
+					Edit("", v.key);
+                    PopID();
+                    NextColumn();
+                    PushID(i++);
+					Edit("", v.value);
+					PopID();
+                    NextColumn();
+				}
+                Columns();
+				TreePop();
+			}
+        }
+    };
 }
 
 

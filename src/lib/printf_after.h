@@ -55,9 +55,9 @@ struct format_type<A, heap<M,HA>, Type_Type::record_> {
     }
 };
 
-template<typename A, typename K, typename V, Hash<K> H, typename MA>
-struct format_type<A, map<K,V,H,MA>, Type_Type::record_> {
-    static u32 write(astring<A> out, u32 idx, map<K,V,H,MA> val) {
+template<typename A, typename K, typename V, typename MA, Hash<K> H>
+struct format_type<A, map<K,V,MA,H>, Type_Type::record_> {
+    static u32 write(astring<A> out, u32 idx, map<K,V,MA,H> val) {
         u32 start = idx, i = 0;
         idx += out.write(idx, '[');
         for(auto& item : val) {
@@ -71,7 +71,7 @@ struct format_type<A, map<K,V,H,MA>, Type_Type::record_> {
         idx += out.write(idx, ']');
         return idx - start;
     }
-    static u32 size(map<K,V,H,MA> val) {
+    static u32 size(map<K,V,MA,H> val) {
         u32 idx = 2, i = 0;
         for(auto& item : val) {
             idx += 5;

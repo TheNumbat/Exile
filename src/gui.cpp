@@ -8,8 +8,6 @@
 #include "gui.h"
 #include "imgui_ext.h"
 
-#include "lib/lib.h"
-
 static void* imgui_alloc(usize sz, void*) {
     return Gui::alloc::alloc<u8>(sz);
 }
@@ -50,29 +48,6 @@ void Gui::begin_frame(const Platform& plt) {
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplSDL2_NewFrame(plt.window);
     ImGui::NewFrame();
-
-    ImGui::Begin("0");
-    static u8 u8_; ImGui::Edit("u8",u8_);
-    static i8 i8_; ImGui::Edit("i8", i8_);
-    static u16 u16_; ImGui::Edit("u16",u16_);
-    static i16 i16_; ImGui::Edit("i16", i16_);
-    static u32 u32_; ImGui::Edit("u32",u32_);
-    static i32 i32_; ImGui::Edit("i32", i32_);
-    static u64 u64_; ImGui::Edit("u64",u64_);
-    static i64 i64_; ImGui::Edit("i64", i64_);
-    static f32 f32_; ImGui::Edit("f32", f32_);
-    static f64 f64_; ImGui::Edit("f64", f64_);
-    static bool bool_; ImGui::Edit("bool", bool_);
-    static char char_; ImGui::Edit("char", char_);
-    ImGui::View("const char*");
-    static i32 iarr_[10]; ImGui::Edit("i32[]", iarr_);
-    static char carr_[10]; ImGui::Edit("char[]", carr_);
-    i32* p0 = null;
-    i32* p1 = &iarr_[0];
-    ImGui::Edit("p0", p0);
-    ImGui::Edit("p1", p1);
-    ImGui::View(carr_);
-    ImGui::End();
 }
 
 bool Gui::get_event(SDL_Event& e) {

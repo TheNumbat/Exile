@@ -15,7 +15,7 @@ struct Mallocator {
 
     template<typename T> 
     static T* make(usize n = 1) {
-        return new (alloc<T>(sizeof(T) * n, alignof(T))) T[n];
+        return new (alloc<T>(sizeof(T) * n)) T[n];
     }
 
     template<typename T>
