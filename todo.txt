@@ -1,12 +1,13 @@
 
 Framework re-write:
 
-    Math library
-        randomness
     Logging
         make thread-safe
-    Thread Pool
-        data structures thread safety
     Debugging systems
         Time profiling
         Allocator profiling
+    Thread Pool
+        data structures thread safety
+
+    Math library
+        randomness

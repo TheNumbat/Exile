@@ -28,13 +28,9 @@ elif host_system == 'linux'
 endif
 
 sources = [
-	'deps/imgui/imgui.cpp',
-	'deps/imgui/imgui_draw.cpp',
-	'deps/imgui/imgui_widgets.cpp',
-	'deps/imgui/imgui_impl_sdl.cpp',
-	'deps/imgui/imgui_impl_opengl3.cpp',
+	'deps/imgui/imgui_compile.cpp',
 	'deps/glad/glad.cpp',
-	'src/lib/alloc.cpp',
+
 	'src/platform.cpp',
 	'src/engine.cpp',
 	'src/gui.cpp',
