@@ -1,8 +1,6 @@
 
 Framework re-write:
 
-    Logging
-        make thread-safe
     Debugging systems
         Time profiling
         Allocator profiling
