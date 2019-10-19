@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include <stdio.h>
+
 #define info(fmt, ...) (void)( \
     printf("%s:%u [info] %s\n", last_file(literal(__FILE__)).c_str, __LINE__, scratch_format(fmt, ##__VA_ARGS__).c_str), \
     fflush(stdout), 0)

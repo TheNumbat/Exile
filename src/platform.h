@@ -2,7 +2,7 @@
 #pragma once
 
 #include <SDL2/SDL.h>
-#include "lib/basic.h"
+#include "lib/lib.h"
 
 struct Platform {
 

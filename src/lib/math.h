@@ -3,8 +3,18 @@
 
 #include <math.h>
 
+#ifdef _WIN32
+#include <intrin.h>
+#endif
+
+#define PI32 3.14159265358979323846264338327950288f
+#define PI64 3.14159265358979323846264338327950288
+
 #define _MAX(a,b) ((a) > (b) ? (a) : (b))
 #define _MIN(a,b) ((a) < (b) ? (a) : (b))
+
+#define Radians(v) (v * (PI32 / 180.0f)) 
+#define Degrees(v) (v * (180.0f / PI32)) 
 
 #define KB(x) (1024 * (x))
 #define MB(x) (1024 * KB(x))

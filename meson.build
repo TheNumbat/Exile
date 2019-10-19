@@ -24,7 +24,7 @@ if host_system == 'windows'
 	cpp_args += ['-fp:fast', '-GR-', '-EHa-', '-Oi', 
 				 '-MP', '-FC', '-D_HAS_EXCEPTIONS=0']
 elif host_system == 'linux'
-	cpp_args += ['-msse4.1', '-Wno-format', '-Wno-unknown-pragmas']
+	cpp_args += ['-msse4.1', '-Wno-format', '-Wno-unknown-pragmas', '-Wno-missing-braces']
 endif
 
 sources = [

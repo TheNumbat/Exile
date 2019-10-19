@@ -486,6 +486,28 @@ namespace ImGui {
 			InputInt4(label, val.data);
         }
     };
+
+    template<>
+    struct gui_type<m4, Type_Type::record_> {
+
+        // NOTE(max): WARNING - This is displayed COLUMN-MAJOR, as it is stored in memory
+        // most displays are row major; don't get mixed up!
+
+        static void view(m4 val, bool open) {
+			Text("[[%d,%d,%d,%d]\n [%d,%d,%d,%d]\n [%d,%d,%d,%d]\n [%d,%d,%d,%d]]",
+                 val.data[0], val.data[1], val.data[2], val.data[3], val.data[4], 
+                 val.data[5], val.data[6], val.data[7], val.data[8], val.data[9], 
+                 val.data[10], val.data[11], val.data[12], val.data[13], val.data[14], val.data[15]);
+        }
+        static void edit(literal label, m4& val, bool open) {
+            PushID(label);
+			InputFloat4(label, val.col[0].data);
+            InputFloat4("##1", val.col[1].data);
+            InputFloat4("##2", val.col[2].data);
+            InputFloat4("##3", val.col[3].data);
+            PopID();
+        }
+    };
 }
 
 

@@ -48,6 +48,11 @@ void Gui::begin_frame(const Platform& plt) {
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplSDL2_NewFrame(plt.window);
     ImGui::NewFrame();
+
+    ImGui::Begin("test");
+    static m4 v;
+    ImGui::Edit("v", v);
+    ImGui::End();
 }
 
 bool Gui::get_event(SDL_Event& e) {

@@ -2,10 +2,7 @@
 Framework re-write:
 
     Math library
-        matrix 
         randomness
-        print + imgui rules
-
     Logging
         make thread-safe
     Thread Pool

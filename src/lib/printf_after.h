@@ -142,6 +142,28 @@ struct format_type<A, vect<T,N>, Type_Type::record_> {
     }
 };
 
+template<typename A>
+struct format_type<A, m4, Type_Type::record_> {
+    static u32 write(astring<A> out, u32 idx, m4 val) {
+        u32 start = idx, i = 0;
+        idx += out.write(idx, "[");
+        for(auto& item : val) {
+            idx += format_type<A, v4, Type_Info<v4>::type>::write(out, idx, item);
+            if(i++ != 3) idx += out.write(idx, ", ");
+        }
+        idx += out.write(idx, ']');
+        return idx - start;
+    }
+    static u32 size(m4 val) {
+        u32 idx = 2, i = 0;
+        for(auto& item : val) {
+            idx += format_type<A, v4, Type_Info<v4>::type>::size(item);
+            if(i++ != 3) idx += 2;
+        }
+        return idx;
+    }
+};
+
 // TODO(max): math types
 
 template<typename A, typename T, typename... Ts>

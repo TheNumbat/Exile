@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include <new>
+
 void* base_alloc(usize sz);
 void base_free(void* mem);
 
@@ -72,7 +74,7 @@ template<const char* tname, usize N = MB(128)>
 struct MVarena {
 
     static u8* init() {
-        mem = Mvirtual::alloc<u8>(N, 0);
+        mem = Mvirtual::alloc<u8>(N);
         return mem;
     }
     static void reset() {

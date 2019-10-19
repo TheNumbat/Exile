@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include <functional>
+
 template<typename T, typename... Ts>
 struct Type_List {
     using head = T;
@@ -48,7 +50,7 @@ struct Is_Float<f64> {static constexpr bool value = true;};
 
 
 template<typename T, typename U> 
-constexpr size_t offset_of(U T::*member) {
+constexpr usize offset_of(U T::*member) {
     return (char*)&((T*)null->*member) - (char*)null;
 }
 

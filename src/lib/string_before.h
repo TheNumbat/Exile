@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include <string.h>
+
 template<typename A>
 struct astring;
 
