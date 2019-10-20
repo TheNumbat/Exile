@@ -1,11 +1,8 @@
 
-#include <imgui/imgui.h>
-
 #include "engine.h"
 
 void Engine::init() {
-    plt.init();
-    gui.init(plt);
+    wnd.init();
 }
 
 void Engine::loop() {
@@ -14,7 +11,7 @@ void Engine::loop() {
     while(running) {
     
         SDL_Event e;
-        while(gui.get_event(e)) {
+        while(wnd.get_event(e)) {
 
             switch(e.type) {
             case SDL_QUIT: {
@@ -28,13 +25,12 @@ void Engine::loop() {
             }
         }
 
-        gui.begin_frame(plt);
+        wnd.begin_frame();
 
-        gui.end_frame(plt);
+        wnd.end_frame();
     }
 }
 
 void Engine::destroy() {
-    gui.destroy();
-    plt.destroy();
+    wnd.destroy();
 }

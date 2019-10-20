@@ -1,8 +1,7 @@
 
 #pragma once
 
-#include "platform.h"
-#include "gui.h"
+#include "window.h"
 
 struct Engine {
 
@@ -11,8 +10,5 @@ struct Engine {
     void destroy();
 
 private:
-    Platform plt;
-    Gui gui;
-
-    template<typename T> friend struct Type_Info;
+    Window wnd;
 };

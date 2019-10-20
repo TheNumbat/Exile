@@ -4,6 +4,9 @@ Framework re-write:
     Debugging systems
         Time profiling
         Allocator profiling
+        console view
+        profiler view
+
     Thread Pool
         data structures thread safety
 

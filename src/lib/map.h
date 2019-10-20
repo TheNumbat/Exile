@@ -16,7 +16,7 @@ struct map_slot {
         _bucket = 0;
     }
 
-// private:
+private:
     u32 bucket() {return _bucket >> 1;}
     bool valid() {return _bucket & 1;}
     void set_valid(bool v) {_bucket |= (u32)(!!v);}
@@ -24,8 +24,8 @@ struct map_slot {
 
     u32 _bucket = 0; // low bit set if valid
 
-    // template<typename _K, typename _V, typename _A, Hash<K> _H>
-    // friend struct map;
+    template<typename _K, typename _V, typename _A, Hash<K> _H>
+    friend struct map;
 };
 
 template<typename K, typename V, typename A = Mdefault, Hash<K> H = hash>
