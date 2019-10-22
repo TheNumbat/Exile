@@ -42,11 +42,11 @@ Defer<F> make_defer(F f) {
 #define DEFER3(x)    DEFER2(x, __COUNTER__)
 #define defer(code)  auto DEFER3(_defer_) = make_defer([&](){code;})
 
+#include "math.h"
 #include "alloc_before.h"
 #include "string_before.h"
 #include "log_before.h"
 
-#include "math.h"
 #include "reflect.h"
 #include "printf_before.h"
 

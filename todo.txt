@@ -4,11 +4,15 @@ Framework re-write:
     Debugging systems
         Time profiling
         Allocator profiling
-        console view
-        profiler view
+        Console view
+        Profiler view
 
-    Thread Pool
-        data structures thread safety
+    Reflection
+        Value range tags for GUI
+        Versioning tags for serialization
+        No-Serialize/No-Display for everything
 
-    Math library
-        randomness
+    Lib
+        Thread pool
+        Thread-Safe data structures
+        Randomness

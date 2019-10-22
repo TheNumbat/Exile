@@ -15,9 +15,9 @@
 inline std::atomic<i64> allocs = 0;
 inline std::atomic<i64> vallocs = 0;
 
-template<const char* tname, usize N>
+template<usize N>
 template<typename T>
-T* MSarena<tname, N>::alloc(usize size, usize align) {
+T* Marena<N>::alloc(usize size, usize align) {
     uptr here = (uptr)mem + used;
     uptr offset = here % align;
     uptr next = here + (offset ? align - offset : 0);
@@ -28,9 +28,9 @@ T* MSarena<tname, N>::alloc(usize size, usize align) {
     return ret;
 }
 
-template<const char* tname, usize N>
+template<usize N>
 template<typename T>
-T* MVarena<tname, N>::alloc(usize size, usize align) {
+T* Varena<N>::alloc(usize size, usize align) {
     if(!mem) init();
     uptr here = (uptr)mem + used;
     uptr offset = here % align;
