@@ -8,12 +8,12 @@ struct v_vec {
 
     // note that the new virtual memory is zero-initialized, not constructed!!
     static v_vec make() {
-        return {Mvirtual::alloc<T>(N), 0};
+        return {Mvirtual::template alloc<T>(N), 0};
     }
     template<usize SN>
     static v_vec copy(v_vec<T,SN> source) {
         static_assert(N == SN, "Trying to copy to a different sized v_vec!");
-        v_vec ret = {Mvirtual::alloc<T>(source.capacity), source.size};
+        v_vec ret = {Mvirtual::template alloc<T>(source.capacity), source.size};
         memcpy(ret.data, source.data, sizeof(T) * source.size);
         return ret;
     }

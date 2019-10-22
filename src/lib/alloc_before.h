@@ -34,15 +34,19 @@ struct Mallocator {
     }
 };
 
-struct Mvirtual {
-    static constexpr const char* name = "Mvirtual";
+template<const char* tname>
+struct Mvallocator {
+    static constexpr const char* name = tname;
+
+    // NOTE(max): make() does not make sense here because if we are
+    // creating a virtual allocation, we do not want to initalize it.
 
     template<typename T>
     static T* alloc(usize size) {
         return (T*)virt_alloc(size);
     }
-
     template<typename T>
+
     static void dealloc(T* mem) {
         virt_free(mem);
     }
