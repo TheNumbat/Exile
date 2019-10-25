@@ -4,35 +4,11 @@
 template<typename K>
 using Hash = u32 (K);
 
-template<typename K, typename V>
-struct map_slot {
-    K key;
-    V value;
-
-    void destroy() {
-        if(!valid()) return;
-        if constexpr(is_Destroy<K>()) key.destroy();
-        if constexpr(is_Destroy<V>()) value.destroy();
-        _bucket = 0;
-    }
-
-private:
-    u32 bucket() {return _bucket >> 1;}
-    bool valid() {return _bucket & 1;}
-    void set_valid(bool v) {_bucket |= (u32)(!!v);}
-    void set_bucket(u32 b) {_bucket = (b << 1) | (b & 1);}
-
-    u32 _bucket = 0; // low bit set if valid
-
-    template<typename _K, typename _V, typename _A, Hash<K> _H>
-    friend struct map;
-};
-
 template<typename K, typename V, typename A = Mdefault, Hash<K> H = hash>
 struct map {
 
+    struct slot;
     static const inline f32 max_load_factor = 0.9f;
-    using slot = map_slot<K,V>;
 
     // capacity should always be a power of 2
     vec<slot, A> data;
@@ -158,6 +134,19 @@ struct map {
         if(!try_erase(key)) die("Failed to erase key %!", key);
     }
 
+    const_iterator begin() const {   
+        return const_iterator(*this, 0);
+    }
+    const_iterator end() const {
+        return const_iterator(*this, data.capacity);
+    }
+    iterator begin() {   
+        return iterator(*this, 0);
+    }
+    iterator end() {
+        return iterator(*this, data.capacity);
+    }
+
     template<typename S>
     struct itr {
         itr(map& _m, u32 idx) : m(_m) {
@@ -187,34 +176,28 @@ struct map {
     typedef itr<slot> iterator;
     typedef itr<const slot> const_iterator;
 
-    const_iterator begin() const {   
-        return const_iterator(*this, 0);
-    }
-    const_iterator end() const {
-        return const_iterator(*this, data.capacity);
-    }
-    iterator begin() {   
-        return iterator(*this, 0);
-    }
-    iterator end() {
-        return iterator(*this, data.capacity);
-    }
+private:
+    struct slot {
+        K key;
+        V value;
+
+        void destroy() {
+            if(!valid()) return;
+            if constexpr(is_Destroy<K>()) key.destroy();
+            if constexpr(is_Destroy<V>()) value.destroy();
+            _bucket = 0;
+        }
+
+        u32 bucket() {return _bucket >> 1;}
+        bool valid() {return _bucket & 1;}
+        void set_valid(bool v) {_bucket |= (u32)(!!v);}
+        void set_bucket(u32 b) {_bucket = (b << 1) | (b & 1);}
+
+        u32 _bucket = 0; // low bit set if valid
+    };
 };
 
-template<typename K, typename V> 
-struct Type_Info<map_slot<K,V>> {
-	static constexpr char name[] = "map_slot";
-	static constexpr usize size = sizeof(map_slot<K,V>);
-	static constexpr Type_Type type = Type_Type::record_;
-    static constexpr char _key[] = "key";
-    static constexpr char _value[] = "value";
-    static constexpr char _bucket[] = "_bucket";
-	using members = Type_List<Record_Field<K,offset_of(&map_slot<K,V>::key),_key>,
-                              Record_Field<V,offset_of(&map_slot<K,V>::value),_value>,
-                              Record_Field<u32,offset_of(&map_slot<K,V>::_bucket),_bucket>>;
-};
-
-template<typename K, typename V, typename A,  Hash<K> H> 
+template<typename K, typename V, typename A, Hash<K> H> 
 struct Type_Info<map<K,V,A,H>> {
 	static constexpr char name[] = "map";
 	static constexpr usize size = sizeof(map<K,V,A,H>);
@@ -223,7 +206,7 @@ struct Type_Info<map<K,V,A,H>> {
     static constexpr char _size[] = "size";
     static constexpr char _probe[] = "probe";
     static constexpr char _usable[] = "usable";
-	using members = Type_List<Record_Field<vec<map_slot<K,V>, A>,offset_of(&map<K,V,A,H>::data),_data>,
+	using members = Type_List<Record_Field<vec<typename map<K,V,A,H>::slot, A>,offset_of(&map<K,V,A,H>::data),_data>,
                               Record_Field<u32,offset_of(&map<K,V,A,H>::size),_size>,
                               Record_Field<u32,offset_of(&map<K,V,A,H>::probe),_probe>,
                               Record_Field<u32,offset_of(&map<K,V,A,H>::usable),_usable>>;

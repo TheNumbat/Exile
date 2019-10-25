@@ -7,8 +7,8 @@
 
 struct Profiler {
 
-    void init();
-    void destroy();
+    static void destroy();
+    static void init_this_thread();
 
     static void begin_frame();
     static void end_frame();
@@ -22,12 +22,14 @@ struct Profiler {
 
 private:
 
+    using thread_id = std::thread::id;
+
     struct allocation {
 
     };
 
     struct alloc_profile {
-
+        void destroy();
     };
 
     struct timing_node {
@@ -35,19 +37,17 @@ private:
     };
 
     struct frame_profile {
-
-        void init();
-        void destroy();
-        
+        void destroy();        
         Varena<> arnea;
         timing_node root;
         vec_view<allocation> allocations;
     };
 
     struct thread_profile {
+        void destroy();
         queue<frame_profile> frames;
     };
 
-    map<std::thread::id, thread_profile> threads;
-    map<literal, alloc_profile> allocators;
+    static map<thread_id, thread_profile> threads;
+    static map<literal, alloc_profile> allocators;
 };
