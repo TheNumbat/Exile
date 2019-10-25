@@ -54,12 +54,15 @@ struct queue {
         data = new_data;
     }
 
-    void push(T value) {
+    T* push(T value) {
         if(size == capacity) grow();
 
         data[last] = value;
+        T* ret = &data[last];
+
         size++;
         last = last == capacity - 1 ? 0 : last + 1;
+        return ret;
     }
     T pop() {
         assert(size > 0);

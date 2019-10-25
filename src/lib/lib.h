@@ -5,6 +5,7 @@
 #include <float.h>
 #include <stddef.h>
 #include <limits.h>
+#include <thread>
 
 typedef uint8_t 	u8;
 typedef int8_t 		i8;

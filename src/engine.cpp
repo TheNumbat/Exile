@@ -1,11 +1,15 @@
 
 #include "engine.h"
+#include "profiler.h"
 
 void Engine::init() {
+    Profiler::start_thread();
     wnd.init();
 }
 
 void Engine::loop() {
+
+    Profiler::begin_frame();
 
     bool running = true;
     while(running) {
@@ -29,8 +33,12 @@ void Engine::loop() {
 
         wnd.end_frame();
     }
+
+    Profiler::end_frame();
 }
 
 void Engine::destroy() {
     wnd.destroy();
+    Profiler::end_thread();
+    Profiler::destroy();
 }

@@ -11,6 +11,16 @@ struct format_type<A, astring<SA>, Type_Type::string_> {
     }
 };
 
+template<typename A>
+struct format_type<A, std::thread::id, Type_Type::int_> {
+    static u32 write(astring<A> out, u32 idx, std::thread::id val) {
+        return format_type<A,u32,Type_Type::int_>::write(out, idx, hash(val));
+    }
+    static u32 size(std::thread::id val) {
+        return format_type<A,u32,Type_Type::int_>::size(hash(val));
+    }
+};
+
 template<typename A, typename M, typename T>
 struct vec_printer {
     static u32 write(astring<A> out, u32 idx, T val) {

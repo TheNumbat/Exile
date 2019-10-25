@@ -18,6 +18,7 @@ struct array {
                 v.destroy();
             }
         }
+        memset(data, 0, sizeof(T) * N);
     }
     
     T& operator[](u32 idx) {

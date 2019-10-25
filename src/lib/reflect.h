@@ -55,11 +55,11 @@ constexpr usize offset_of(U T::*member) {
 }
 
 template<typename T>
-constexpr auto is_Destroy() -> decltype(std::declval<T>().destroy(), bool()) {
+constexpr auto is_Destroy() -> decltype(T::destroy(), bool()) {
     return true;
 }
 template<typename T>
-constexpr bool is_Destroy(...) {
+constexpr bool is_Destroy() {
     return false;
 }
 
@@ -149,6 +149,11 @@ template<> struct Type_Info<decltype(nullptr)> {
 	static constexpr usize size = sizeof(nullptr);
 	static constexpr Type_Type type = Type_Type::ptr_;
 	using to = void;
+};
+template<> struct Type_Info<std::thread::id> {
+	static constexpr char name[] = "thread_id";
+	static constexpr usize size = sizeof(std::thread::id);
+	static constexpr Type_Type type = Type_Type::int_;
 };
 template<> struct Type_Info<char> {
 	static constexpr char name[] = "char";

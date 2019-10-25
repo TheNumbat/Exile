@@ -125,6 +125,11 @@ struct vec_view {
         return {data, size, cap};
     }
 
+    void destroy() {
+        data = null;
+        size = capacity = 0;
+    }
+
     void clear() {
         if constexpr(is_Destroy<T>()) {
             for(T& v : *this) {

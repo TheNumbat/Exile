@@ -1,8 +1,6 @@
 
 #pragma once
 
-#include <thread>
-
 inline u32 hash(u32 key) { 
     key = (key ^ 61) ^ (key >> 16);
     key = key + (key << 3);
@@ -22,7 +20,6 @@ inline u32 hash(u64 key) {
 	key = key + (key << 31);
 	return key >> 32;
 }
-
 
 inline u32 hash(std::thread::id id) {
 	static std::hash<std::thread::id> h;

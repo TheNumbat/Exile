@@ -6,8 +6,8 @@ using Hash = u32 (K);
 
 template<typename K, typename V, typename A = Mdefault, Hash<K> H = hash>
 struct map {
+    private: struct slot; public:
 
-    struct slot;
     static const inline f32 max_load_factor = 0.9f;
 
     // capacity should always be a power of 2
@@ -111,7 +111,7 @@ struct map {
         for(;;) {
             slot& s = data[idx];
             if(s.valid() && s.key == key) {
-                s.set_valid(false);
+                s.destroy();
                 size--;
                 return true;
             }
