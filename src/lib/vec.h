@@ -121,8 +121,13 @@ struct vec_view {
     static vec_view view(vec<T,A> v) {
         return {v.data, v.size, v.capacity};
     }
-    static vec_view make(T* data, u32 cap, u32 size = 0) {
-        return {data, size, cap};
+    template<usize N>
+    static vec_view make(Marena<N> arena, u32 cap) {
+        return {arena.alloc<T>(cap), 0, cap};
+    }
+    template<typename U, usize N>
+    static vec_view make(Varena<U,N> arena, u32 cap) {
+        return {arena.alloc<T>(cap), 0, cap};
     }
 
     void destroy() {

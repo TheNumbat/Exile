@@ -9,10 +9,9 @@ void Engine::init() {
 
 void Engine::loop() {
 
-    Profiler::begin_frame();
-
     bool running = true;
     while(running) {
+        Profiler::begin_frame();
     
         SDL_Event e;
         while(wnd.get_event(e)) {
@@ -32,9 +31,8 @@ void Engine::loop() {
         wnd.begin_frame();
 
         wnd.end_frame();
+        Profiler::end_frame();
     }
-
-    Profiler::end_frame();
 }
 
 void Engine::destroy() {

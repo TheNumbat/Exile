@@ -56,6 +56,8 @@ void Profiler::frame_profile::begin() {
     root = arena.make<timing_node>();
     current = root;
     root->begin = timestamp();
+    allocations = vec_view<allocation>::make(arena, max_allocs);
+    root->children = vec_view<timing_node>::make(arena, max_children);
 }
 
 void Profiler::frame_profile::end() {
@@ -105,7 +107,11 @@ void Profiler::dealloc() {
 
 }
 
-void Profiler::enter() {
+void Profiler::enter(literal l) {
+
+}
+
+void Profiler::enter(Location l) {
 
 }
 

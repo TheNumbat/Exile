@@ -7,6 +7,10 @@
 #include <limits.h>
 #include <thread>
 
+#ifdef _MSC_VER
+	#define __func__ __FUNCTION__
+#endif
+
 typedef uint8_t 	u8;
 typedef int8_t 		i8;
 typedef uint16_t 	u16;

@@ -5,6 +5,8 @@
 
 #include "lib/lib.h"
 
+#define Context (Profiler::Location{__func__, __FILE__, (usize)__LINE__})
+
 struct Profiler {
 
     static void start_thread();
@@ -17,10 +19,17 @@ struct Profiler {
 
     static void alloc();
     static void dealloc();
-    static void enter();
+
+    struct Location {
+        literal func, file;
+        usize line = 0;
+    };
+
+    static void enter(Location l);
+    static void enter(literal l);
     static void exit();
 
-    // TODO(max): thread sychrononization profiling?
+    static u64 timestamp();
 
 private:
 
@@ -28,8 +37,6 @@ private:
     static constexpr char prof_vname[] = "VProfiler";
     using prof_alloc = Mallocator<prof_name>;
     using prof_valloc = Mvallocator<prof_vname>;
-
-    static u64 timestamp();
 
     using thread_id = std::thread::id;
 
@@ -56,6 +63,9 @@ private:
     };
 
     struct frame_profile {
+        static constexpr usize max_allocs = 4096;
+        static constexpr usize max_children = 16;
+
         void begin();
         void end();
         void destroy();   
