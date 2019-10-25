@@ -115,8 +115,10 @@ struct vec_view {
     u32 size = 0;
     u32 capacity = 0;
 
+    // NOTE(max): dangerous! this references memory owned by another vec, implying that 
+    // it could be invalided by that vec growing / getting destroyed.
     template<typename A>
-    static vec_view from(vec<T,A> v) {
+    static vec_view view(vec<T,A> v) {
         return {v.data, v.size, v.capacity};
     }
     static vec_view make(T* data, u32 cap, u32 size = 0) {

@@ -134,19 +134,6 @@ struct map {
         if(!try_erase(key)) die("Failed to erase key %!", key);
     }
 
-    const_iterator begin() const {   
-        return const_iterator(*this, 0);
-    }
-    const_iterator end() const {
-        return const_iterator(*this, data.capacity);
-    }
-    iterator begin() {   
-        return iterator(*this, 0);
-    }
-    iterator end() {
-        return iterator(*this, data.capacity);
-    }
-
     template<typename S>
     struct itr {
         itr(map& _m, u32 idx) : m(_m) {
@@ -175,6 +162,19 @@ struct map {
     };
     typedef itr<slot> iterator;
     typedef itr<const slot> const_iterator;
+
+    const_iterator begin() const {   
+        return const_iterator(*this, 0);
+    }
+    const_iterator end() const {
+        return const_iterator(*this, data.capacity);
+    }
+    iterator begin() {   
+        return iterator(*this, 0);
+    }
+    iterator end() {
+        return iterator(*this, data.capacity);
+    }
 
 private:
     struct slot {

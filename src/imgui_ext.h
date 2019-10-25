@@ -288,9 +288,9 @@ namespace ImGui {
         }
     };
 
-    template<typename T, typename A>
-    struct gui_type<vec<T,A>, Type_Type::record_> {
-        static void view(vec<T,A> val, bool open) {
+    template<typename T, typename V>
+    struct vec_guier {
+        static void view(V val, bool open) {
 			if(TreeNodeEx(Type_Info<T>::name, open ? ImGuiTreeNodeFlags_DefaultOpen : 0)) {
 				for(usize i = 0; i < val.size; i++) {
 					PushID(i);
@@ -300,7 +300,7 @@ namespace ImGui {
 				TreePop();
 			}
         }
-        static void edit(literal label, vec<T,A>& val, bool open) {
+        static void edit(literal label, V& val, bool open) {
 			if(TreeNodeEx(label, open ? ImGuiTreeNodeFlags_DefaultOpen : 0)) {
 				for(usize i = 0; i < val.size; i++) {
 					PushID(i);
@@ -308,6 +308,50 @@ namespace ImGui {
 					PopID();
 				}
                 if(SmallButton("+")) {
+                    val.push(T());
+                }
+                SameLine();
+                if(SmallButton("-") && !val.empty()) {
+                    val.pop();
+                }
+				TreePop();
+			}
+        }
+    };
+
+    template<typename T, typename A>
+    struct gui_type<vec<T,A>, Type_Type::record_> {
+        static void view(vec<T,A> val, bool open) {
+            vec_guier<T,vec<T,A>>::view(val, open);
+        }
+        static void edit(literal label, vec<T,A>& val, bool open) {
+            vec_guier<T,vec<T,A>>::edit(label, val, open);
+        }
+    };
+    
+    template<typename T>
+    struct gui_type<v_vec<T>, Type_Type::record_> {
+        static void view(v_vec<T> val, bool open) {
+            vec_guier<T,v_vec<T>>::view(val, open);
+        }
+        static void edit(literal label, v_vec<T>& val, bool open) {
+            vec_guier<T,v_vec<T>>::edit(label, val, open);
+        }
+    };
+
+    template<typename T>
+    struct gui_type<vec_view<T>, Type_Type::record_> {
+        static void view(vec_view<T> val, bool open) {
+            vec_guier<T,vec_view<T>>::view(val, open);
+        }
+        static void edit(literal label, vec_view<T>& val, bool open) {
+			if(TreeNodeEx(label, open ? ImGuiTreeNodeFlags_DefaultOpen : 0)) {
+				for(usize i = 0; i < val.size; i++) {
+					PushID(i);
+					Edit("", val[i]);
+					PopID();
+				}
+                if(SmallButton("+") && !val.full()) {
                     val.push(T());
                 }
                 SameLine();
