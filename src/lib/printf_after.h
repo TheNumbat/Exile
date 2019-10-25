@@ -11,9 +11,9 @@ struct format_type<A, astring<SA>, Type_Type::string_> {
     }
 };
 
-template<typename A, typename M, typename VA>
-struct format_type<A, vec<M,VA>, Type_Type::record_> {
-    static u32 write(astring<A> out, u32 idx, vec<M,VA> val) {
+template<typename A, typename M, typename T>
+struct vec_printer {
+    static u32 write(astring<A> out, u32 idx, T val) {
         u32 start = idx, i = 0;
         idx += out.write(idx, '[');
         for(auto& item : val) {
@@ -23,13 +23,44 @@ struct format_type<A, vec<M,VA>, Type_Type::record_> {
         idx += out.write(idx, ']');
         return idx - start;
     }
-    static u32 size(vec<M,VA> val) {
+    static u32 size(T val) {
         u32 idx = 2, i = 0;
         for(auto& item : val) {
             idx += format_type<A, M, Type_Info<M>::type>::size(item);
             if(i++ != val.size - 1) idx += 2;
         }
         return idx;
+    }
+};
+
+template<typename A, typename M, typename VA>
+struct format_type<A, vec<M,VA>, Type_Type::record_> {
+
+    static u32 write(astring<A> out, u32 idx, vec<M,VA> val) {
+        return vec_printer<A,M,vec<M,VA>>::write(out, idx, val);
+    }
+    static u32 size(vec<M,VA> val) {
+        return vec_printer<A,M,vec<M,VA>>::size(val);
+    }
+};
+
+template<typename A, typename M>
+struct format_type<A, vec_view<M>, Type_Type::record_> {
+    static u32 write(astring<A> out, u32 idx, vec_view<M> val) {
+        return vec_printer<A,M,vec_view<M>>::write(out, idx, val);
+    }
+    static u32 size(vec_view<M> val) {
+        return vec_printer<A,M,vec_view<M>>::size(val);
+    }
+};
+
+template<typename A, typename M>
+struct format_type<A, v_vec<M>, Type_Type::record_> {
+    static u32 write(astring<A> out, u32 idx, v_vec<M> val) {
+        return vec_printer<A,M,v_vec<M>>::write(out, idx, val);
+    }
+    static u32 size(v_vec<M> val) {
+        return vec_printer<A,M,v_vec<M>>::size(val);
     }
 };
 

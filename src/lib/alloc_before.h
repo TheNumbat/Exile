@@ -93,7 +93,7 @@ struct static_Marena {
     static void reset() {arena.reset();};
 };
 
-template<usize N>
+template<usize N = MB(16)>
 struct Varena {
     u8* mem = null;
     usize used = 0;
@@ -182,3 +182,5 @@ struct Free_List {
 
 static constexpr char Mdefault_name[] = "Mdefault";
 using Mdefault = Mallocator<Mdefault_name>;
+static constexpr char Mvirtual_name[] = "Mvirtual";
+using Mvirtual = Mallocator<Mvirtual_name>;

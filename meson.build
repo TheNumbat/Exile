@@ -33,6 +33,7 @@ sources = [
 
 	'src/window.cpp',
 	'src/engine.cpp',
+	'src/profiler.cpp',
 	'src/main.cpp']
 
 dependencies = []

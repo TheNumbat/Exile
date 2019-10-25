@@ -31,17 +31,17 @@ private:
     };
 
     struct timing_node {
-        vec<timing_node*,Mframe> children;
+        vec_view<timing_node> children;
     };
 
     struct frame_profile {
-        static constexpr char a_name[] = "frame_profiles";
-        using Mframe = MVarena<a_name>;
 
         void init();
         void destroy();
+        
+        Varena<> arnea;
         timing_node root;
-        vec<allocation,Mframe> allocations;
+        vec_view<allocation> allocations;
     };
 
     struct thread_profile {
