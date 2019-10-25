@@ -31,7 +31,6 @@ void Profiler::end_thread() {
     assert(threads_view.try_get(id));
 
     threads_view.erase(id);
-
     this_thread_profile.destroy();
 }
 
@@ -54,8 +53,25 @@ void Profiler::frame_profile::destroy() {
 }
 
 void Profiler::frame_profile::begin() {
-    current = &root;
-    root.begin = timestamp();
+    root = arena.make<timing_node>();
+    current = root;
+    root->begin = timestamp();
+}
+
+void Profiler::frame_profile::end() {
+    assert(current == root);
+    root->end = timestamp();
+    root->compute_times();
+}
+
+void Profiler::timing_node::compute_times() {
+    u64 child_time = 0;
+    for(auto& c : children) {
+        c.compute_times();
+        child_time += c.heir_time;
+    }
+    heir_time = end - begin;
+    self_time = heir_time - child_time;
 }
 
 void Profiler::begin_frame() {
@@ -74,6 +90,11 @@ void Profiler::begin_frame() {
 void Profiler::end_frame() {
 
     thread_profile& prof = this_thread_profile;
+
+    assert(!prof.frames.empty());
+    
+    frame_profile* this_frame = prof.frames.back();
+    this_frame->end();
 }
 
 void Profiler::alloc() {

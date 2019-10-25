@@ -24,6 +24,11 @@ struct Profiler {
 
 private:
 
+    static constexpr char prof_name[] = "Profiler";
+    static constexpr char prof_vname[] = "VProfiler";
+    using prof_alloc = Mallocator<prof_name>;
+    using prof_valloc = Mvallocator<prof_vname>;
+
     static u64 timestamp();
 
     using thread_id = std::thread::id;
@@ -37,6 +42,7 @@ private:
     };
 
     struct timing_node {
+        void compute_times();
         u64 begin = 0, end = 0;
         u64 self_time = 0, heir_time = 0;
         u64 calls = 0;
@@ -52,22 +58,22 @@ private:
     struct frame_profile {
         void begin();
         void end();
-        void destroy();        
+        void destroy();   
 
-        Varena<> arena;
-        timing_node root;
+        Varena<prof_valloc> arena;
+        timing_node* root = null;
         timing_node* current = null;
         vec_view<allocation> allocations;
     };
 
     struct thread_profile {
         void destroy();
-        queue<frame_profile> frames;
+        queue<frame_profile,prof_alloc> frames;
     };
 
     static inline std::mutex threads_view_lock;
     static inline thread_local thread_profile this_thread_profile;
 
-    static inline map<thread_id, thread_profile*> threads_view;
-    static inline map<literal, alloc_profile> allocators;
+    static inline map<thread_id, thread_profile*, prof_alloc> threads_view;
+    static inline map<literal, alloc_profile, prof_alloc> allocators;
 };

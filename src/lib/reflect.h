@@ -55,11 +55,11 @@ constexpr usize offset_of(U T::*member) {
 }
 
 template<typename T>
-constexpr auto is_Destroy() -> decltype(T::destroy(), bool()) {
+constexpr auto is_Destroy() -> decltype(std::declval<T>().destroy(), bool()) {
     return true;
 }
 template<typename T>
-constexpr bool is_Destroy() {
+constexpr bool is_Destroy(...) {
     return false;
 }
 

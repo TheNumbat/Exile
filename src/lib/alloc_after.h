@@ -28,9 +28,9 @@ T* Marena<N>::alloc(usize size, usize align) {
     return ret;
 }
 
-template<usize N>
+template<typename U, usize N>
 template<typename T>
-T* Varena<N>::alloc(usize size, usize align) {
+T* Varena<U,N>::alloc(usize size, usize align) {
     if(!mem) init();
     uptr here = (uptr)mem + used;
     uptr offset = here % align;

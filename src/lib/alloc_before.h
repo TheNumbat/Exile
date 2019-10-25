@@ -52,6 +52,11 @@ struct Mvallocator {
     }
 };
 
+static constexpr char Mdefault_name[] = "Mdefault";
+using Mdefault = Mallocator<Mdefault_name>;
+static constexpr char Mvirtual_name[] = "Mvirtual";
+using Mvirtual = Mallocator<Mvirtual_name>;
+
 template<usize N>
 struct Marena {
     u8 mem[N] = {};
@@ -93,7 +98,7 @@ struct static_Marena {
     static void reset() {arena.reset();};
 };
 
-template<usize N = MB(16)>
+template<typename U = Mvirtual, usize N = MB(16)>
 struct Varena {
     u8* mem = null;
     usize used = 0;
@@ -111,12 +116,12 @@ struct Varena {
     void dealloc(T* mem) {}
 
     Varena init() {
-        mem = (u8*)virt_alloc(N);
+        mem = U::template alloc<u8>(N);
         return *this;
     }
     void reset() {
         used = 0;
-        virt_free(mem);
+        U::dealloc(mem);
         mem = null;
     }    
 };
@@ -124,11 +129,11 @@ struct Varena {
 template<const char* tname, usize N = MB(128)>
 struct static_Varena {
 
-    static Varena<N> init() {return arena.init();}
+    static Varena<Mvirtual, N> init() {return arena.init();}
     static void reset() {arena.reset();}
 
     static constexpr const char* name = tname;
-    static inline Varena<N> arena = (atexit(reset), init());
+    static inline Varena<Mvirtual, N> arena = (atexit(reset), init());
 
     template<typename T> 
     static T* make(usize n = 1) {return arena.template make<T>(n);}
@@ -179,8 +184,3 @@ struct Free_List {
         }
     }
 };
-
-static constexpr char Mdefault_name[] = "Mdefault";
-using Mdefault = Mallocator<Mdefault_name>;
-static constexpr char Mvirtual_name[] = "Mvirtual";
-using Mvirtual = Mallocator<Mvirtual_name>;

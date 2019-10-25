@@ -79,6 +79,14 @@ struct queue {
         size = last = 0;
     }
 
+    T* front() {
+        assert(!empty());
+        return &data[start_idx()];
+    }
+    T* back() {
+        assert(!empty());
+        return &data[end_idx()];
+    }
     bool empty() {
         return size == 0;
     }
@@ -105,6 +113,9 @@ struct queue {
 
     u32 start_idx() const {
         return size <= last ? last - size : last - size + capacity;
+    }
+    u32 end_idx() const {
+        return last == 0 ? capacity - 1 : last - 1;
     }
     const_iterator begin() const {   
         return const_iterator(*this, start_idx(), 0);
