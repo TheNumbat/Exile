@@ -5,7 +5,13 @@
 #include <float.h>
 #include <stddef.h>
 #include <limits.h>
+#include <stdarg.h>
+
+#include <new>
+#include <mutex>
 #include <thread>
+#include <atomic>
+#include <functional>
 
 #ifdef _MSC_VER
 	#define __func__ __FUNCTION__
@@ -66,6 +72,8 @@ Defer<F> make_defer(F f) {
 
 #include "hash.h"
 #include "map.h"
+
+#include "profiler.h"
 
 #include "log_after.h"
 #include "alloc_after.h"

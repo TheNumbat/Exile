@@ -1,8 +1,6 @@
 
 #pragma once
 
-#include <functional>
-
 template<typename T, typename... Ts>
 struct Type_List {
     using head = T;

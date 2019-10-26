@@ -2,10 +2,8 @@
 Framework re-write:
 
     Debugging systems
-        Time profiling
-        Allocator profiling
+        Profiler front-end
         Console view
-        Profiler view
 
     Reflection
         Value range tags for GUI

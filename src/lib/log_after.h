@@ -1,9 +1,6 @@
 
 #pragma once
 
-#include <mutex>
-#include <stdarg.h>
-
 inline std::mutex printf_lock;
 
 inline void log(literal fmt, ...) {

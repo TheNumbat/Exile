@@ -71,6 +71,11 @@ struct map {
         for(;;) {
             slot& here = data[idx];
             if(here.valid()) {
+                if(here.key == key) {
+                    here.destroy();
+                    here = new_slot;
+                    return here.value;
+                }
                 i32 here_dist = idx > here.bucket() ? idx - here.bucket() : idx + data.capacity - here.bucket();
                 if((u32)here_dist < distance) {
                     if(!placement) placement = &here;
@@ -80,7 +85,7 @@ struct map {
                     distance = here_dist;
                 }
                 distance++;
-                idx = idx == data.capacity ? 0 : idx + 1;
+                idx = idx == data.capacity - 1 ? 0 : idx + 1;
                 probe = _MAX(probe, distance);
             } else {
                 here = new_slot;
@@ -100,7 +105,7 @@ struct map {
             if(s.valid() && s.key == key) return &s.value;
             distance++;
             if(distance > probe) return null;
-            idx = idx == data.capacity ? 0 : idx + 1;
+            idx = idx == data.capacity - 1 ? 0 : idx + 1;
         }
     }
     bool try_erase(K key) {
@@ -115,7 +120,7 @@ struct map {
             }
             distance++;
             if(distance > probe) return false;
-            idx = idx == data.capacity ? 0 : idx + 1;
+            idx = idx == data.capacity - 1 ? 0 : idx + 1;
         }
     }
     

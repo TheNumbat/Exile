@@ -11,13 +11,21 @@ struct astring;
 // memory that is not owned by this string.
 template<>
 struct astring<void> {
-    const char* c_str = null;
-    const u32 cap	  = 0;
-    const u32 len     = 0;
+    char* c_str = null;
+    u32 cap	  = 0;
+    u32 len     = 0;
 
     astring() {}
-    astring(const char* lit) : c_str(lit), cap(strlen(lit) + 1), len(cap) {}
-    astring(const char* arr, u32 c) : c_str(arr), cap(c), len(cap) {}
+    astring(const char* lit) {
+        c_str  = (char*)lit;
+        cap = strlen(lit) + 1;
+        len = cap;
+    }
+    astring(const char* arr, u32 c) {
+        c_str  = (char*)arr;
+        cap = c;
+        len = c;
+    }
 
     static astring literal(const char* lit) {
         return {lit};

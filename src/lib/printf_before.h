@@ -102,6 +102,16 @@ struct format_type<A, char const*, Type_Type::ptr_> {
     }
 };
 
+template<typename A>
+struct format_type<A, void*, Type_Type::ptr_> {
+    static u32 write(astring<A> out, u32 idx, void* val) {
+        return sprintf(out.c_str + idx, "%p", val);
+    }
+    static u32 size(void* val) {
+        return snprintf(null, 0, "%p", val);
+    }
+};
+
 template<typename A, typename E>
 struct format_type<A, E, Type_Type::array_> {
     using underlying = typename Type_Info<E>::underlying;

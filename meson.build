@@ -31,9 +31,9 @@ sources = [
 	'deps/imgui/imgui_compile.cpp',
 	'deps/glad/glad.cpp',
 
+	'src/lib/profiler.cpp',
 	'src/window.cpp',
 	'src/engine.cpp',
-	'src/profiler.cpp',
 	'src/main.cpp']
 
 dependencies = []

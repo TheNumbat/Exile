@@ -1,6 +1,5 @@
 
 #include "engine.h"
-#include "profiler.h"
 
 void Engine::init() {
     Profiler::start_thread();
@@ -38,5 +37,4 @@ void Engine::loop() {
 void Engine::destroy() {
     wnd.destroy();
     Profiler::end_thread();
-    Profiler::destroy();
 }

@@ -10,10 +10,39 @@
     #include <sys/mman.h>
 #endif
 
-#include <atomic>
+inline std::atomic<i64> allocs;
+inline std::atomic<i64> vallocs;
 
-inline std::atomic<i64> allocs = 0;
-inline std::atomic<i64> vallocs = 0;
+template<const char* tname, bool log>
+template<typename T>
+T* Mallocator<tname,log>::alloc(usize size) {
+    T* ret = (T*)base_alloc(size);
+    if constexpr(log) Profiler::alloc({tname, ret, size});
+    return ret;
+}
+
+template<const char* tname, bool log>
+template<typename T>
+void Mallocator<tname,log>::dealloc(T* mem) {
+    if(!mem) return;
+    if constexpr(log) Profiler::alloc({tname, mem, 0});
+    base_free(mem);
+}
+
+template<const char* tname>
+template<typename T>
+T* Mvallocator<tname>::alloc(usize size) {
+    T* ret = (T*)virt_alloc(size);
+    Profiler::alloc({tname, ret, size});
+    return ret;
+}
+
+template<const char* tname>
+template<typename T>
+void Mvallocator<tname>::dealloc(T* mem) {
+    Profiler::alloc({tname, mem, 0});
+    virt_free(mem);
+}
 
 template<usize N>
 template<typename T>
@@ -84,3 +113,4 @@ inline void mem_validate() {
         info("No memory leaked.");
     }
 }
+inline u32 __validator = atexit(mem_validate);

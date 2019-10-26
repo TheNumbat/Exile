@@ -1,8 +1,6 @@
 
 #pragma once
 
-#include <new>
-
 // NOTE(max):
 //      Remember to .reset() a non-static Varena when you are done with it.
 
@@ -14,7 +12,7 @@ void virt_free(void* mem);
 
 void mem_validate();
 
-template<const char* tname>
+template<const char* tname, bool log = true>
 struct Mallocator {
     static constexpr const char* name = tname;
 
@@ -24,14 +22,10 @@ struct Mallocator {
     }
 
     template<typename T>
-    static T* alloc(usize size) {
-        return (T*)base_alloc(size);
-    }
+    static T* alloc(usize size);
 
     template<typename T>
-    static void dealloc(T* mem) {
-        base_free(mem);
-    }
+    static void dealloc(T* mem);
 };
 
 template<const char* tname>
@@ -42,18 +36,16 @@ struct Mvallocator {
     // creating a virtual allocation, we do not want to initalize it.
 
     template<typename T>
-    static T* alloc(usize size) {
-        return (T*)virt_alloc(size);
-    }
-    template<typename T>
+    static T* alloc(usize size);
 
-    static void dealloc(T* mem) {
-        virt_free(mem);
-    }
+    template<typename T>
+    static void dealloc(T* mem);
 };
 
 static constexpr char Mdefault_name[] = "Mdefault";
 using Mdefault = Mallocator<Mdefault_name>;
+static constexpr char Mhidden_name[] = "Mhidden";
+using Mhidden = Mallocator<Mhidden_name, false>;
 static constexpr char Mvirtual_name[] = "Mvirtual";
 using Mvirtual = Mallocator<Mvirtual_name>;
 
