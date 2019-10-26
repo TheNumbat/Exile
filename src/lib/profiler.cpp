@@ -1,16 +1,21 @@
 
 #include "lib.h"
+#include <SDL2/SDL.h>
 
-#ifdef __clang__
-#include <x86intrin.h>
-#endif
+u32 hash(Location l) {
+    return hash(l.func) ^ hash(l.file) ^ hash(l.line);
+}
 
-bool operator==(const Profiler::Location& l, const Profiler::Location& r) {
+bool operator==(const Location& l, const Location& r) {
     return l.line == r.line && l.file == r.file && l.func == r.func;
 }
 
 u64 Profiler::timestamp() {
-    return __rdtsc();
+    return (u64)SDL_GetPerformanceCounter();
+}
+
+f64 Profiler::ms(u64 cnt) {
+    return cnt / (f64)SDL_GetPerformanceFrequency();
 }
 
 void Profiler::destroy() {
@@ -38,39 +43,41 @@ void Profiler::end_thread() {
     this_thread.destroy();
 }
 
-void Profiler::alloc_profile::destroy() {
+void Profiler::Alloc_Profile::destroy() {
     current_set.destroy();
     allocates = 0, frees = 0;
     allocate_size = 0, free_size = 0;
     current_set_size = 0;
 } 
 
-void Profiler::thread_profile::destroy() {
+void Profiler::Thread_Profile::destroy() {
     frames.destroy();
 }
 
-void Profiler::frame_profile::destroy() {
+void Profiler::Frame_Profile::destroy() {
     arena.reset();
     current = null;
     root = {};
     allocations.destroy();
 }
 
-void Profiler::frame_profile::begin() {
-    root = arena.make<timing_node>();
+void Profiler::Frame_Profile::begin() {
+    root = arena.make<Timing_Node>();
     current = root;
     root->begin = timestamp();
+    root->loc = {"Main Loop", "", 0};
     allocations = vec_view<Alloc>::make(arena, max_allocs);
-    root->children = vec_view<timing_node>::make(arena, max_children);
+    root->children = vec_view<Timing_Node>::make(arena, max_children);
 }
 
-void Profiler::frame_profile::end() {
+void Profiler::Frame_Profile::end() {
     assert(current == root);
     root->end = timestamp();
+    root->heir_time = root->end - root->begin;
     root->compute_times();
 }
 
-void Profiler::timing_node::compute_times() {
+void Profiler::Timing_Node::compute_times() {
     u64 child_time = 0;
     for(auto& c : children) {
         c.compute_times();
@@ -81,29 +88,29 @@ void Profiler::timing_node::compute_times() {
 
 void Profiler::begin_frame() {
 
-    thread_profile& prof = this_thread;
+    Thread_Profile& prof = this_thread;
 
     if(!prof.frames.empty() && prof.frames.full()) {
-        frame_profile f = prof.frames.pop();
+        Frame_Profile f = prof.frames.pop();
         f.destroy();
     }
 
-    frame_profile* new_frame = prof.frames.push({});
+    Frame_Profile* new_frame = prof.frames.push({});
     new_frame->begin();
 
-    during_frame = true;
+    prof.during_frame = true;
 }
 
 void Profiler::end_frame() {
 
-    thread_profile& prof = this_thread;
+    Thread_Profile& prof = this_thread;
 
     assert(!prof.frames.empty());
     
-    frame_profile* this_frame = prof.frames.back();
+    Frame_Profile* this_frame = prof.frames.back();
     this_frame->end();
 
-    during_frame = false;
+    prof.during_frame = false;
 }
 
 void Profiler::enter(literal l) {
@@ -118,7 +125,7 @@ void Profiler::enter(Location l) {
 #endif
 }
 
-void Profiler::frame_profile::enter(Location l) {
+void Profiler::Frame_Profile::enter(Location l) {
 
     bool repeat = false;
     for(auto& n : current->children) {
@@ -130,9 +137,9 @@ void Profiler::frame_profile::enter(Location l) {
 
     if(!repeat) {
         assert(!current->children.full());
-        timing_node& new_child = current->children.push({});
+        Timing_Node& new_child = current->children.push({});
         new_child.parent = current;
-        new_child.children = vec_view<timing_node>::make(arena, max_children);
+        new_child.children = vec_view<Timing_Node>::make(arena, max_children);
         current = &new_child;
     }
 
@@ -144,10 +151,10 @@ void Profiler::exit() {
     this_thread.frames.back()->exit();
 }
 
-void Profiler::frame_profile::exit() {
+void Profiler::Frame_Profile::exit() {
 
-    frame_profile* frame = this_thread.frames.back();
-    timing_node* current = frame->current;
+    Frame_Profile* frame = this_thread.frames.back();
+    Timing_Node* current = frame->current;
 
     current->end = timestamp();
     current->heir_time += current->end - current->begin;
@@ -160,29 +167,24 @@ void Profiler::alloc(Alloc a) {
     return;
 #endif
 
-    if(during_frame) this_thread.frames.back()->allocations.push(a);
+    if(this_thread.during_frame) this_thread.frames.back()->allocations.push(a);
 
     std::lock_guard lock(allocs_lock);
+    Alloc_Profile& prof = allocs.get_or_insert(a.name);
 
     if(a.size) {
-        
-        alloc_profile* prof = allocs.try_get(a.name);
-        if(!prof) {
-            prof = &allocs.insert(a.name, {});
-        }
 
-        if(prof->current_set.try_get(a.addr)) {
-            i64* monkas = prof->current_set.try_get(a.addr);
+        if(prof.current_set.try_get(a.addr)) {
+            i64* monkas = prof.current_set.try_get(a.addr);
         }
-        prof->current_set.insert(a.addr, a.size);
+        prof.current_set.insert(a.addr, a.size);
 
-        prof->allocate_size += a.size;
-        prof->allocates++;
-        prof->current_set_size += a.size;
+        prof.allocate_size += a.size;
+        prof.allocates++;
+        prof.current_set_size += a.size;
 
     } else {
         
-        alloc_profile& prof = allocs.get(a.name);
         i64 size = prof.current_set.get(a.addr);
         prof.current_set.erase(a.addr);
 
@@ -190,4 +192,29 @@ void Profiler::alloc(Alloc a) {
         prof.frees++;
         prof.current_set_size -= size;
     }
+}
+
+void Profiler::Timing_Node::visit(std::function<void(Timing_Node)> f) {
+    f(*this);
+    for(auto& n : children) n.visit(f);
+}
+
+void Profiler::iterate_timings(std::function<void(thread_id, Timing_Node)> f) {
+
+    std::lock_guard lock(threads_lock);
+
+    for(auto& entry : threads) {
+
+        thread_id id = entry.key;
+        Thread_Profile* tp = entry.value;
+
+        Frame_Profile* fp = null;
+        if(tp->during_frame && tp->frames.size > 1) {
+            fp = tp->frames.penultimate();
+        } else if(!tp->during_frame && tp->frames.empty()) {
+            fp = tp->frames.back();
+        } else continue;
+
+        fp->root->visit([&f, id](Timing_Node n) {return f(id, n);});
+    }    
 }

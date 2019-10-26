@@ -1,8 +1,10 @@
 
 Framework re-write:
 
+    FIX: arena over-writing map in dbg_gui
+
     Debugging systems
-        Profiler front-end
+        more profiler front-end
         Console view
 
     Reflection

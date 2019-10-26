@@ -1,6 +1,9 @@
 
 #pragma once
 
+struct Location;
+u32 hash(Location l);
+
 inline u32 hash(u32 key) { 
     key = (key ^ 61) ^ (key >> 16);
     key = key + (key << 3);

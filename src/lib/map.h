@@ -126,7 +126,7 @@ struct map {
     
     V& get_or_insert(K key, V default_value = V()) {
         V* value = try_get(key);
-        return value ? value : insert(key, default_value);
+        return value ? *value : insert(key, default_value);
     }
     V& get(K key) {
         V* value = try_get(key);

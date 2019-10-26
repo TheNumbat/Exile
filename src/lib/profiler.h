@@ -8,6 +8,11 @@
 
 #define Here (Profiler::Location{__func__, last_file(literal(__FILE__)), (usize)__LINE__})
 
+struct Location {
+    literal func, file;
+    usize line = 0;
+};
+
 struct Profiler {
 
     static void start_thread();
@@ -16,15 +21,25 @@ struct Profiler {
     static void begin_frame();
     static void end_frame();
 
-    struct Location {
-        literal func, file;
-        usize line = 0;
-    };
+    using thread_id = std::thread::id;
 
     struct Alloc {
         literal name;
         void* addr = null;
         usize size = 0; // 0 implies free
+    };
+
+    struct Timing_Node {
+        Location loc;
+        
+        void compute_times();
+        u64 begin = 0, end = 0;
+        u64 self_time = 0, heir_time = 0;
+        u64 calls = 0;
+        
+        void visit(std::function<void(Timing_Node)> f);
+        vec_view<Timing_Node> children;
+        Timing_Node* parent = null;
     };
 
     static void enter(Location l);
@@ -34,6 +49,9 @@ struct Profiler {
     static void alloc(Alloc a);
 
     static u64 timestamp();
+    static f64 ms(u64 cnt);
+
+    static void iterate_timings(std::function<void(thread_id, Timing_Node)> f);
     
     // called atexit
     static void destroy();
@@ -42,9 +60,7 @@ private:
     static constexpr char prof_vname[] = "VProfiler";
     using prof_valloc = Mvallocator<prof_vname>;
 
-    using thread_id = std::thread::id;
-
-    struct alloc_profile {
+    struct Alloc_Profile {
         void destroy();
         i64 allocates = 0, frees = 0;
         i64 allocate_size = 0, free_size = 0;
@@ -52,19 +68,7 @@ private:
         map<void*, i64, Mhidden> current_set;
     };
 
-    struct timing_node {
-        Location loc;
-        
-        void compute_times();
-        u64 begin = 0, end = 0;
-        u64 self_time = 0, heir_time = 0;
-        u64 calls = 0;
-        
-        vec_view<timing_node> children;
-        timing_node* parent = null;
-    };
-
-    struct frame_profile {
+    struct Frame_Profile {
         static constexpr usize max_allocs = 4096;
         static constexpr usize max_children = 16;
 
@@ -75,25 +79,55 @@ private:
         void destroy();
 
         Varena<prof_valloc> arena;
-        timing_node* root = null;
-        timing_node* current = null;
+        Timing_Node* root = null;
+        Timing_Node* current = null;
         vec_view<Alloc> allocations;
     };
 
-    struct thread_profile {
+    struct Thread_Profile {
         void destroy();
-        queue<frame_profile, Mhidden> frames;
+
+        bool during_frame = false;
+        queue<Frame_Profile, Mhidden> frames;
     };
+
+    friend struct DbgGui;
 
     static inline std::mutex threads_lock;
     static inline std::mutex allocs_lock;
-    static inline thread_local thread_profile this_thread;
+    static inline thread_local Thread_Profile this_thread;
 
-    static inline bool during_frame = false;
-    static inline map<thread_id, thread_profile*, Mhidden> threads;
-    static inline map<literal, alloc_profile, Mhidden> allocs;
+    static inline map<thread_id, Thread_Profile*, Mhidden> threads;
+    static inline map<literal, Alloc_Profile, Mhidden> allocs;
 };
 
 static inline u32 __prof_destroy = atexit(Profiler::destroy);
 
-bool operator==(const Profiler::Location& l, const Profiler::Location& r);
+u32 hash(const Location& l);
+bool operator==(const Location& l, const Location& r);
+
+template<>
+struct Type_Info<Location> {
+	static constexpr char name[] = "Location";
+	static constexpr usize size = sizeof(Location);
+	static constexpr Type_Type type = Type_Type::record_;
+    static constexpr char _func[] = "func";
+    static constexpr char _file[] = "file";
+    static constexpr char _line[] = "line";
+	using members = Type_List<Record_Field<literal,offset_of(&Location::func),_func>,
+                              Record_Field<literal,offset_of(&Location::file),_file>,
+                              Record_Field<usize,offset_of(&Location::line),_line>>;
+};
+
+template<>
+struct Type_Info<Profiler::Alloc> {
+	static constexpr char name[] = "Alloc";
+	static constexpr usize size = sizeof(Profiler::Alloc);
+	static constexpr Type_Type type = Type_Type::record_;
+    static constexpr char _name[] = "name";
+    static constexpr char _addr[] = "addr";
+    static constexpr char _size[] = "size";
+	using members = Type_List<Record_Field<literal,offset_of(&Profiler::Alloc::name),_name>,
+                              Record_Field<void*,offset_of(&Profiler::Alloc::addr),_addr>,
+                              Record_Field<usize,offset_of(&Profiler::Alloc::size),_size>>;
+};

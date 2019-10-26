@@ -32,6 +32,7 @@ sources = [
 	'deps/glad/glad.cpp',
 
 	'src/lib/profiler.cpp',
+	'src/dbg_gui.cpp',
 	'src/window.cpp',
 	'src/engine.cpp',
 	'src/main.cpp']

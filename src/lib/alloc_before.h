@@ -90,6 +90,9 @@ struct static_Marena {
     static void reset() {arena.reset();};
 };
 
+static constexpr char Mframe_name[] = "Mframe";
+using Mframe = static_Marena<Mframe_name, MB(64)>;
+
 template<typename U = Mvirtual, usize N = MB(16)>
 struct Varena {
     u8* mem = null;

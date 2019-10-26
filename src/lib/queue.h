@@ -87,6 +87,11 @@ struct queue {
         assert(!empty());
         return &data[end_idx()];
     }
+    T* penultimate() {
+        assert(size > 1);
+        u32 idx = last == 0 ? capacity - 2 : last == 1 ? capacity - 1 : last - 2;
+        return &data[idx];
+    }
     bool empty() {
         return size == 0;
     }

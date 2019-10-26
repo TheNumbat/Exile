@@ -1,5 +1,6 @@
 
 #include "engine.h"
+#include "dbg_gui.h"
 
 void Engine::init() {
     Profiler::start_thread();
@@ -28,6 +29,8 @@ void Engine::loop() {
         }
 
         wnd.begin_frame();
+
+        DbgGui::Profiler();
 
         wnd.end_frame();
         Profiler::end_frame();
