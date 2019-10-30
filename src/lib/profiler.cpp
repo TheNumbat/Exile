@@ -174,9 +174,7 @@ void Profiler::alloc(Alloc a) {
 
     if(a.size) {
 
-        if(prof.current_set.try_get(a.addr)) {
-            i64* monkas = prof.current_set.try_get(a.addr);
-        }
+        assert(!prof.current_set.try_get(a.addr));
         prof.current_set.insert(a.addr, a.size);
 
         prof.allocate_size += a.size;
