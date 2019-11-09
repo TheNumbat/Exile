@@ -46,11 +46,7 @@ struct Is_Float<f32> {static constexpr bool value = true;};
 template<>
 struct Is_Float<f64> {static constexpr bool value = true;};
 
-
-template<typename T, typename U> 
-constexpr usize offset_of(U T::*member) {
-    return (char*)&((T*)null->*member) - (char*)null;
-}
+#define offset_of(mem, ...) offsetof(__VA_ARGS__, mem)
 
 template<typename T>
 constexpr auto is_Destroy() -> decltype(std::declval<T>().destroy(), bool()) {

@@ -83,6 +83,6 @@ struct Type_Info<v_vec<T,N>> {
 	static constexpr Type_Type type = Type_Type::record_;
     static constexpr char _data[] = "data";
     static constexpr char _size[] = "size";
-	using members = Type_List<Record_Field<T*,offset_of(&v_vec<T,N>::data),_data>,
-                              Record_Field<u32,offset_of(&v_vec<T,N>::size),_size>>;
+	using members = Type_List<Record_Field<T*,offset_of(data, v_vec<T,N>),_data>,
+                              Record_Field<u32,offset_of(size, v_vec<T,N>),_size>>;
 };

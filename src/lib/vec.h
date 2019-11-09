@@ -192,9 +192,9 @@ struct Type_Info<vec<T,A>> {
     static constexpr char _data[] = "data";
     static constexpr char _size[] = "size";
     static constexpr char _capacity[] = "capacity";
-	using members = Type_List<Record_Field<T*,offset_of(&vec<T,A>::data),_data>,
-                              Record_Field<u32,offset_of(&vec<T,A>::size),_size>,
-                              Record_Field<u32,offset_of(&vec<T,A>::capacity),_capacity>>;
+	using members = Type_List<Record_Field<T*,offset_of(data, vec<T,A>),_data>,
+                              Record_Field<u32,offset_of(size, vec<T,A>),_size>,
+                              Record_Field<u32,offset_of(capacity, vec<T,A>),_capacity>>;
 };
 
 template<typename T> 
@@ -205,7 +205,7 @@ struct Type_Info<vec_view<T>> {
     static constexpr char _data[] = "data";
     static constexpr char _size[] = "size";
     static constexpr char _capacity[] = "capacity";
-	using members = Type_List<Record_Field<T*,offset_of(&vec_view<T>::data),_data>,
-                              Record_Field<u32,offset_of(&vec_view<T>::size),_size>,
-                              Record_Field<u32,offset_of(&vec_view<T>::capacity),_capacity>>;
+	using members = Type_List<Record_Field<T*,offset_of(data, vec_view<T>),_data>,
+                              Record_Field<u32,offset_of(size, vec_view<T>),_size>,
+                              Record_Field<u32,offset_of(capacity, vec_view<T>),_capacity>>;
 };

@@ -42,8 +42,7 @@ struct map {
         size = probe = 0;
         usable = (u32)floorf(next.capacity * max_load_factor);
         for(auto& e : prev) {
-            insert(e.key, e.value);
-            e.set_valid(false);
+            if(e.valid()) insert(e.key, e.value);
         }
         prev.destroy();
     }
