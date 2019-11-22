@@ -34,6 +34,8 @@ void Engine::loop() {
 
         wnd.end_frame();
         Profiler::end_frame();
+
+        Mframe::reset();
     }
 }
 

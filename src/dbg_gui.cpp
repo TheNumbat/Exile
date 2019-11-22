@@ -12,7 +12,7 @@ void DbgGui::Profiler() {
         t.endTime += Profiler::ms(n.self_time);
     });
 
-    vec<LegitProfiler::Task,Mframe> data = vec<LegitProfiler::Task,Mframe>::make(accum.size);
+    vec<LegitProfiler::Task,Mframe> data = vec<LegitProfiler::Task,Mframe>::make(3);
     
     for(auto& t : accum) data.push(t.value);
     

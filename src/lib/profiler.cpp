@@ -209,7 +209,7 @@ void Profiler::iterate_timings(std::function<void(thread_id, Timing_Node)> f) {
         Frame_Profile* fp = null;
         if(tp->during_frame && tp->frames.size > 1) {
             fp = tp->frames.penultimate();
-        } else if(!tp->during_frame && tp->frames.empty()) {
+        } else if(!tp->during_frame && !tp->frames.empty()) {
             fp = tp->frames.back();
         } else continue;
 

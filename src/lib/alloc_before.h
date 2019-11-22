@@ -61,15 +61,15 @@ struct Marena {
     }
 
     template<typename T>
-    T* alloc(usize size, usize align = 1);
-
-    template<typename T>
     void dealloc(T* mem) {}
 
     void reset() {
         used = 0;
-        memset(mem, 0, N);
     }    
+
+private:
+    template<typename T>
+    T* alloc(usize size, usize align = 1);
 };
 
 template<const char* tname, usize N>

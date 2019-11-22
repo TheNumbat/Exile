@@ -6,7 +6,7 @@
 // data structures will be allocated.
 #define PROFILE 1
 
-#define Here (Profiler::Location{__func__, last_file(literal(__FILE__)), (usize)__LINE__})
+#define Here (Location{__func__, last_file(literal(__FILE__)), (usize)__LINE__})
 
 struct Location {
     literal func, file;

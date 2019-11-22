@@ -29,8 +29,8 @@ static void imgui_free(void* mem, void*) {
 
 static void gl_debug_proc(GLenum glsource, GLenum gltype, GLuint id, GLenum severity, GLsizei length, const GLchar* glmessage, const void* up) {
 
-    string message = glmessage;
-    string source, type;
+    literal message = glmessage;
+    literal source, type;
 
     switch(glsource) {
     case GL_DEBUG_SOURCE_API:
