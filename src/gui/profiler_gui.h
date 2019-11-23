@@ -1,8 +1,14 @@
 
 #pragma once
 
+// Code based on LegitProfiler by Alexander Sannikov
+// https://github.com/Raikiri/LegitProfiler
+
 #include <imgui/imgui.h>
 #include "../lib/lib.h"
+
+static constexpr char MProfGui_name[] = "MProfGui";
+using MProfGui = Mallocator<MProfGui_name>;
 
 #define RGBA_LE(col) (((col & 0xff000000) >> (3 * 8)) + ((col & 0x00ff0000) >> (1 * 8)) + ((col & 0x0000ff00) << (1 * 8)) + ((col & 0x000000ff) << (3 * 8)))
 enum class Profile_Color : u32 {
@@ -36,9 +42,6 @@ struct Graph_Entry {
         return endTime - startTime;
     }
 };
-
-static constexpr char MProfGui_name[] = "MProfGui";
-using MProfGui = Mallocator<MProfGui_name>;
 
 struct Profiler_Graph {
 

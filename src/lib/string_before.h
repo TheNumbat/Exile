@@ -109,7 +109,10 @@ struct astring {
         return c_str;
     }
 
-    const astring sub_end(u32 s) const;
+    void cut(u32 s);
+
+    astring first(u32 s) const;
+    astring sub_end(u32 s) const;
     
     template<typename SA>
     u32 write(u32 idx, astring<SA> cpy);

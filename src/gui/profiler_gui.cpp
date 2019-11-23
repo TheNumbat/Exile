@@ -2,19 +2,16 @@
 #include <algorithm>
 #include "profiler_gui.h"
 
-// Code based on LegitProfiler by Alexander Sannikov
-// https://github.com/Raikiri/LegitProfiler
-
 #undef max
 #undef min
 
 static const Profile_Color color_order[] = {
-        Profile_Color::alizarin, Profile_Color::greenSea, Profile_Color::pumpkin, 
-        Profile_Color::silver, Profile_Color::turqoise, Profile_Color::belizeHole, 
-        Profile_Color::nephritis, Profile_Color::clouds, Profile_Color::pomegranate, 
-        Profile_Color::peterRiver, Profile_Color::sunFlower, Profile_Color::amethyst, 
-        Profile_Color::carrot, Profile_Color::wisteria, Profile_Color::orange, 
-        Profile_Color::emerald
+    Profile_Color::alizarin, Profile_Color::greenSea, Profile_Color::pumpkin, 
+    Profile_Color::silver, Profile_Color::turqoise, Profile_Color::belizeHole, 
+    Profile_Color::nephritis, Profile_Color::clouds, Profile_Color::pomegranate, 
+    Profile_Color::peterRiver, Profile_Color::sunFlower, Profile_Color::amethyst, 
+    Profile_Color::carrot, Profile_Color::wisteria, Profile_Color::orange, 
+    Profile_Color::emerald
 };
 static const u32 num_colors = sizeof(color_order)/sizeof(color_order[0]);
 
@@ -191,7 +188,10 @@ void Profiler_Graph::render_legend(ImDrawList* drawList, v2 legendPos, v2 legend
 
         f32 taskTimeMs = f32(task.endTime - task.startTime);
 
-        text(drawList, markerRightRectMax + textMargin, textColor, scratch_format("[% ", taskTimeMs * 1000.0f).c_str);
+        string label = scratch_format("[% ", taskTimeMs * 1000.0f);
+        label.cut(6);
+
+        text(drawList, markerRightRectMax + textMargin, textColor, label.c_str);
         text(drawList, markerRightRectMax + textMargin + v2(nameOffset, 0.0f), textColor, scratch_format("ms] %", task.name).c_str);
     }
 }
@@ -235,7 +235,7 @@ void Profiler_Window::init() {
 }
 
 void Profiler_Window::destroy() {
-        cpuGraph.destroy();
+    cpuGraph.destroy();
 }
 
 void Profiler_Window::render() {

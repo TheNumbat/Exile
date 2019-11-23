@@ -25,8 +25,26 @@ inline char literal::operator[](u32 idx) const {
     return c_str[idx];
 }
 
+
 template<typename A>
-const astring<A> astring<A>::sub_end(u32 s) const {
+void astring<A>::cut(u32 s) {
+    assert(s <= len);
+    len = cap = s;
+    c_str[len-1] = 0;
+}
+
+template<typename A>
+astring<A> astring<A>::first(u32 s) const {
+    assert(s < len);
+    astring ret;
+    ret.c_str = c_str;
+    ret.cap = s;
+    ret.len = s;
+    return ret;
+}
+
+template<typename A>
+astring<A> astring<A>::sub_end(u32 s) const {
     assert(s <= len);
     astring ret;
     ret.c_str = c_str + s;
