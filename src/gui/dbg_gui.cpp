@@ -1,18 +1,20 @@
 
 #include "dbg_gui.h"
 
+#include <algorithm>
+
 void DbgGui::Profiler() {
 
-    map<Location,LegitProfiler::Task,Mframe> accum;
+    map<Location,Graph_Entry,Mframe> accum;
     
     Profiler::iterate_timings([&accum](Profiler::thread_id id, Profiler::Timing_Node n) {
         if(id != std::this_thread::get_id()) return;
-        LegitProfiler::Task& t = accum.get_or_insert(n.loc);
+        Graph_Entry& t = accum.get_or_insert(n.loc);
         t.name = n.loc.func;
         t.endTime += Profiler::ms(n.self_time);
     });
 
-    vec<LegitProfiler::Task,Mframe> data = vec<LegitProfiler::Task,Mframe>::make(3);
+    vec<Graph_Entry,Mframe> data = vec<Graph_Entry,Mframe>::make(accum.size);
     
     for(auto& t : accum) data.push(t.value);
     
@@ -22,8 +24,9 @@ void DbgGui::Profiler() {
 
     for(u32 i = 1; i < data.size; i++) {
         data[i].startTime = data[i-1].endTime;
+        data[i].endTime += data[i].startTime;
     }
 
-    profiler.cpuGraph.LoadFrameData(data.data, data.size);
-    profiler.Render();
+    profiler.cpuGraph.load_frame_data(data.data, data.size);
+    profiler.render();
 }

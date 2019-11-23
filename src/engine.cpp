@@ -1,6 +1,6 @@
 
 #include "engine.h"
-#include "dbg_gui.h"
+#include "gui/dbg_gui.h"
 
 void Engine::init() {
     Profiler::start_thread();
@@ -14,6 +14,7 @@ void Engine::loop() {
         Profiler::begin_frame();
     
         SDL_Event e;
+        Profiler::enter("Events");
         while(wnd.get_event(e)) {
 
             switch(e.type) {
@@ -27,12 +28,14 @@ void Engine::loop() {
             } break;
             }
         }
+        Profiler::exit();
 
         wnd.begin_frame();
 
         DbgGui::Profiler();
 
         wnd.end_frame();
+
         Profiler::end_frame();
 
         Mframe::reset();

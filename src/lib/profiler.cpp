@@ -62,11 +62,11 @@ void Profiler::Frame_Profile::destroy() {
 }
 
 void Profiler::Frame_Profile::begin() {
+    allocations = vec_view<Alloc>::make(arena, max_allocs);
     root = arena.make<Timing_Node>();
     current = root;
     root->begin = timestamp();
     root->loc = {"Main Loop", "", 0};
-    allocations = vec_view<Alloc>::make(arena, max_allocs);
     root->children = vec_view<Timing_Node>::make(arena, max_children);
 }
 
@@ -139,6 +139,7 @@ void Profiler::Frame_Profile::enter(Location l) {
         assert(!current->children.full());
         Timing_Node& new_child = current->children.push({});
         new_child.parent = current;
+        new_child.loc = l;
         new_child.children = vec_view<Timing_Node>::make(arena, max_children);
         current = &new_child;
     }

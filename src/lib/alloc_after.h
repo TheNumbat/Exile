@@ -29,18 +29,19 @@ void Mallocator<tname,log>::dealloc(T* mem) {
     base_free(mem);
 }
 
-template<const char* tname>
+template<const char* tname, bool log>
 template<typename T>
-T* Mvallocator<tname>::alloc(usize size) {
+T* Mvallocator<tname, log>::alloc(usize size) {
     T* ret = (T*)virt_alloc(size);
-    Profiler::alloc({tname, ret, size});
+    if constexpr(log) Profiler::alloc({tname, ret, size});
     return ret;
 }
 
-template<const char* tname>
+template<const char* tname, bool log>
 template<typename T>
-void Mvallocator<tname>::dealloc(T* mem) {
-    Profiler::alloc({tname, mem, 0});
+void Mvallocator<tname, log>::dealloc(T* mem) {
+    if(!mem) return;
+    if constexpr(log) Profiler::alloc({tname, mem, 0});
     virt_free(mem);
 }
 

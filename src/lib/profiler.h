@@ -58,7 +58,7 @@ struct Profiler {
 private:
 
     static constexpr char prof_vname[] = "VProfiler";
-    using prof_valloc = Mvallocator<prof_vname>;
+    using prof_valloc = Mvallocator<prof_vname, false>;
 
     struct Alloc_Profile {
         void destroy();

@@ -28,7 +28,7 @@ struct Mallocator {
     static void dealloc(T* mem);
 };
 
-template<const char* tname>
+template<const char* tname, bool log = true>
 struct Mvallocator {
     static constexpr const char* name = tname;
 
@@ -57,7 +57,11 @@ struct Marena {
 
     template<typename T> 
     T* make(usize n = 1) {
-        return new (alloc<T>(sizeof(T) * n, alignof(T))) T[n];
+        T* ret = alloc<T>(sizeof(T) * n, alignof(T));
+        for(usize i = 0; i < n; i++) {
+            new (ret + i) T;
+        }
+        return ret;
     }
 
     template<typename T>
@@ -101,7 +105,11 @@ struct Varena {
 
     template<typename T> 
     T* make(usize n = 1) {
-        return new (alloc<T>(sizeof(T) * n, alignof(T))) T[n];
+        T* ret = alloc<T>(sizeof(T) * n, alignof(T));
+        for(usize i = 0; i < n; i++) {
+            new (ret + i) T;
+        }
+        return ret;
     }
 
     template<typename T>
