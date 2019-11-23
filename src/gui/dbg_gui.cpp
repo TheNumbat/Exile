@@ -3,7 +3,15 @@
 
 #include <algorithm>
 
-void DbgGui::Profiler() {
+void Dbg_Gui::init() {
+    prof_window.init();
+}
+
+void Dbg_Gui::destroy() {
+    prof_window.destroy();
+}
+
+void Dbg_Gui::profiler() {
 
     map<Location,Graph_Entry,Mframe> accum;
     
@@ -27,6 +35,6 @@ void DbgGui::Profiler() {
         data[i].endTime += data[i].startTime;
     }
 
-    profiler.cpuGraph.load_frame_data(data.data, data.size);
-    profiler.render();
+    prof_window.cpuGraph.load_frame_data(data.data, data.size);
+    prof_window.render();
 }

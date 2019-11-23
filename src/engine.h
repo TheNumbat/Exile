@@ -2,6 +2,7 @@
 #pragma once
 
 #include "window.h"
+#include "gui/dbg_gui.h"
 
 struct Engine {
 
@@ -11,4 +12,5 @@ struct Engine {
 
 private:
     Window wnd;
+    Dbg_Gui dbg_gui;
 };

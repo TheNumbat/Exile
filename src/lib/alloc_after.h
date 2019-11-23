@@ -16,6 +16,7 @@ inline std::atomic<i64> vallocs;
 template<const char* tname, bool log>
 template<typename T>
 T* Mallocator<tname,log>::alloc(usize size) {
+    if(!size) return null;
     T* ret = (T*)base_alloc(size);
     if constexpr(log) Profiler::alloc({tname, ret, size});
     return ret;
@@ -32,6 +33,7 @@ void Mallocator<tname,log>::dealloc(T* mem) {
 template<const char* tname, bool log>
 template<typename T>
 T* Mvallocator<tname, log>::alloc(usize size) {
+    if(!size) return null;
     T* ret = (T*)virt_alloc(size);
     if constexpr(log) Profiler::alloc({tname, ret, size});
     return ret;
@@ -48,6 +50,7 @@ void Mvallocator<tname, log>::dealloc(T* mem) {
 template<usize N>
 template<typename T>
 T* Marena<N>::alloc(usize size, usize align) {
+    if(!size) return null;
     uptr here = (uptr)mem + used;
     uptr offset = here % align;
     uptr next = here + (offset ? align - offset : 0);
@@ -61,6 +64,7 @@ T* Marena<N>::alloc(usize size, usize align) {
 template<typename U, usize N>
 template<typename T>
 T* Varena<U,N>::alloc(usize size, usize align) {
+    if(!size) return null;
     if(!mem) init();
     uptr here = (uptr)mem + used;
     uptr offset = here % align;

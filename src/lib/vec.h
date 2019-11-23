@@ -70,6 +70,15 @@ struct vec {
         return data[size--];
     }
 
+    T& front() {
+        assert(size > 0);
+        return data[0];
+    }
+    T& back() {
+        assert(size > 0);
+        return data[size-1];
+    }
+
     T& operator[](u32 idx) {
         assert(idx >= 0 && idx < size);
         return data[idx];
@@ -122,11 +131,11 @@ struct vec_view {
         return {v.data, v.size, v.capacity};
     }
     template<usize N>
-    static vec_view make(Marena<N> arena, u32 cap) {
+    static vec_view make(Marena<N>& arena, u32 cap) {
         return {arena.alloc<T>(cap), 0, cap};
     }
     template<typename U, usize N>
-    static vec_view make(Varena<U,N> arena, u32 cap) {
+    static vec_view make(Varena<U,N>& arena, u32 cap) {
         return {arena.alloc<T>(cap), 0, cap};
     }
 

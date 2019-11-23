@@ -91,8 +91,6 @@ private:
         queue<Frame_Profile, Mhidden> frames;
     };
 
-    friend struct DbgGui;
-
     static inline std::mutex threads_lock;
     static inline std::mutex allocs_lock;
     static inline thread_local Thread_Profile this_thread;

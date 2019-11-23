@@ -5,6 +5,7 @@
 void Engine::init() {
     Profiler::start_thread();
     wnd.init();
+    dbg_gui.init();
 }
 
 void Engine::loop() {
@@ -32,7 +33,7 @@ void Engine::loop() {
 
         wnd.begin_frame();
 
-        DbgGui::Profiler();
+        dbg_gui.profiler();
 
         wnd.end_frame();
 
@@ -44,5 +45,6 @@ void Engine::loop() {
 
 void Engine::destroy() {
     wnd.destroy();
+    dbg_gui.destroy();
     Profiler::end_thread();
 }

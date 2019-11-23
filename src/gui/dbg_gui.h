@@ -4,9 +4,12 @@
 #include "../lib/lib.h"
 #include "profiler_gui.h"
 
-struct DbgGui {
+struct Dbg_Gui {
 
-    static void Profiler();
+    void init();
+    void destroy();
 
-    static inline Profiler_Window profiler;
+    void profiler();
+
+    Profiler_Window prof_window;
 };

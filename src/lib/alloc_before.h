@@ -118,9 +118,8 @@ struct Varena {
     template<typename T>
     void dealloc(T* mem) {}
 
-    Varena init() {
+    void init() {
         mem = U::template alloc<u8>(N);
-        return *this;
     }
     void reset() {
         used = 0;

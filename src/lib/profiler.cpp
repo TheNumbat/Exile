@@ -19,9 +19,10 @@ f64 Profiler::ms(u64 cnt) {
 }
 
 void Profiler::destroy() {
-    std::lock_guard lock(threads_lock);
-    threads.destroy();
-    allocs.destroy();
+    {std::lock_guard lock(threads_lock);
+    threads.destroy();}
+    {std::lock_guard lock(allocs_lock);
+    allocs.destroy();}
 }
 
 void Profiler::start_thread() {
@@ -149,7 +150,9 @@ void Profiler::Frame_Profile::enter(Location l) {
 }
 
 void Profiler::exit() {
+#if PROFILE == 1
     this_thread.frames.back()->exit();
+#endif
 }
 
 void Profiler::Frame_Profile::exit() {
