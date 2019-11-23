@@ -12,7 +12,6 @@ void Dbg_Gui::destroy() {
 }
 
 void Dbg_Gui::profiler() {
-
     if(!prof_window.stopProfiling) {
 
         map<Location,Graph_Entry,Mframe> accum;

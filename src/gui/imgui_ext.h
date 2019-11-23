@@ -58,7 +58,7 @@ namespace ImGui {
         gui_type<S, Type_Info<S>::type>::view(val, open);
     }
 	template<typename S, usize N>
-    void view(S(&val)[N], bool open = false) {
+    void View(S(&val)[N], bool open = false) {
         gui_type<S[N], Type_Info<S[N]>::type>::view(val, open);
     }
 
