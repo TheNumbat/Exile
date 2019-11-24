@@ -7,13 +7,6 @@
 #include "lib/lib.h"
 #include "window.h"
 
-#ifdef _WIN32
-extern "C" {
-    __declspec(dllexport) bool NvOptimusEnablement = true;
-    __declspec(dllexport) bool AmdPowerXpressRequestHighPerformance = true;
-}
-#endif
-
 static void* imgui_alloc(usize sz, void*) {
     return Window::gui_alloc::alloc<u8>(sz);
 }
@@ -31,6 +24,7 @@ void Window::begin_frame() {
 
 void Window::end_frame() {
 
+    assert(!"unimplemented");
     VkCommandBuffer buf = 0;
     ImGui::Render();
     ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), buf);
@@ -57,7 +51,10 @@ void Window::init() {
     
     ImGui::SetAllocatorFunctions(imgui_alloc, imgui_free, null);
     ImGui::CreateContext();
-    
+
+    vk.init(window);
+
+    assert(!"unimplemented");
     ImGui_ImplVulkan_InitInfo init = {};
     VkRenderPass pass = 0;
 
@@ -71,6 +68,7 @@ void Window::destroy() {
     ImGui_ImplVulkan_Shutdown();
     ImGui_ImplSDL2_Shutdown();
     ImGui::DestroyContext();
+    vk.destroy();
     SDL_DestroyWindow(window);
     window = null;
     SDL_Quit();	

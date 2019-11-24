@@ -14,8 +14,9 @@ void Engine::loop() {
     while(running) {
         Profiler::begin_frame();
     
-        SDL_Event e;
+        // actual event handling system
         Profiler::enter("Events");
+        SDL_Event e;
         while(wnd.get_event(e)) {
 
             switch(e.type) {
@@ -33,12 +34,11 @@ void Engine::loop() {
 
         wnd.begin_frame();
 
+        // actual frame stuff
+
         dbg_gui.profiler();
-
         wnd.end_frame();
-
         Profiler::end_frame();
-
         Mframe::reset();
     }
 }

@@ -30,6 +30,7 @@ endif
 sources = [
 	'deps/imgui/imgui_compile.cpp',
 	'src/lib/profiler.cpp',
+	'src/render/vulkan.cpp',
 	'src/gui/dbg_gui.cpp',
 	'src/gui/profiler_gui.cpp',
 	'src/window.cpp',

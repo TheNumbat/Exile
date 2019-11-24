@@ -3,6 +3,7 @@
 
 #include <SDL2/SDL.h>
 #include "lib/lib.h"
+#include "render/vulkan.h"
 
 struct Window {
 
@@ -19,4 +20,6 @@ struct Window {
 
 private:
     SDL_Window* window = null;
+    Vulkan vk;
 };
+
