@@ -18,8 +18,5 @@ struct Window {
     using gui_alloc = Mallocator<gui_name>;
 
 private:
-    void gl_validate();
-
     SDL_Window* window = null;
-    SDL_GLContext gl_context = null;
 };

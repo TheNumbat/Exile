@@ -29,8 +29,6 @@ endif
 
 sources = [
 	'deps/imgui/imgui_compile.cpp',
-	'deps/glad/glad.cpp',
-
 	'src/lib/profiler.cpp',
 	'src/gui/dbg_gui.cpp',
 	'src/gui/profiler_gui.cpp',
@@ -38,7 +36,7 @@ sources = [
 	'src/engine.cpp',
 	'src/main.cpp']
 
-dependencies = []
+dependencies = [dependency('vulkan')]
 
 if host_system == 'windows'
 	sdl_dir = join_paths(project_dir, 'deps/win/SDL2/lib')
