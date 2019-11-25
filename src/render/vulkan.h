@@ -2,6 +2,7 @@
 #pragma once
 
 #include <SDL2/SDL.h>
+#include <vulkan/vulkan.h>
 #include "../lib/lib.h"
 
 struct Vulkan {
@@ -10,11 +11,15 @@ struct Vulkan {
     void destroy();
 
     static constexpr char vk_name[] = "Vulkan";
-    using vk_alloc = Mallocator<vk_name>;
+    using vk_alloc_t = Mallocator<vk_name>;
 
 private:
-    void create_instance();
-	void create_surface(SDL_Window* window);
+	vec<const char*> instExt, devExt, layers;
+
+	VkInstance instance = {};
+	VkSurfaceKHR surface = {};
+
+    void create_instance(SDL_Window* window);
 	void enumerate_physical_devices();
 	void select_physical_device();
 	void create_logical_device_and_queues();

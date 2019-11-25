@@ -45,7 +45,7 @@ void Window::init() {
 
     window = SDL_CreateWindow("Exile", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 1280, 720, SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE);
     if(!window) {
-        die("Failed to create SDL window!");
+        die("Failed to create SDL window: %", SDL_GetError());
     }
     info("Created SDL window.");
     

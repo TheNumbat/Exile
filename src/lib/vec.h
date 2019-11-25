@@ -35,13 +35,7 @@ struct vec {
     
     void grow() {
         u32 new_capacity = capacity ? 2 * capacity : 8;
-        
-        T* new_data = A::template make<T>(new_capacity);
-        memcpy(new_data, data, sizeof(T) * size);
-        A::dealloc(data);
-        
-        capacity = new_capacity;
-        data = new_data;
+        reserve(new_capacity);
     }
     void clear() {
         if constexpr(is_Destroy<T>()) {
@@ -50,6 +44,16 @@ struct vec {
             }
         }
         size = 0;
+    }
+    void reserve(u32 sz) {
+        if(sz > capacity) {
+            T* new_data = A::template make<T>(sz);
+            memcpy(new_data, data, sizeof(T) * size);
+            A::dealloc(data);
+            
+            capacity = sz;
+            data = new_data;
+        }
     }
 
     bool empty() const {
