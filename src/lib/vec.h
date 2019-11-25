@@ -55,6 +55,10 @@ struct vec {
             data = new_data;
         }
     }
+    void extend(u32 sz) {
+        reserve(sz);
+        size = sz;
+    }
 
     bool empty() const {
         return size == 0;

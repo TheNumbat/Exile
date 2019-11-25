@@ -75,52 +75,52 @@ void Vulkan::init(SDL_Window* window) {
 }
 
 void Vulkan::destroy() {
-	instExt.destroy();
-	devExt.destroy();
+	inst_ext.destroy();
+	dev_ext.destroy();
 	layers.destroy();
+	phys_devices.destroy();
 }
 
 void Vulkan::create_instance(SDL_Window* window) {
 
-    VkApplicationInfo appInfo = {};
-    appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-    appInfo.pApplicationName = "Exile";
-    appInfo.applicationVersion = 1;
-    appInfo.pEngineName = "Exile 0.2";
-    appInfo.engineVersion = 2;
-    appInfo.apiVersion = VK_MAKE_VERSION(1, 1, VK_HEADER_VERSION);
+    VkApplicationInfo app_info = {};
+    app_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+    app_info.pApplicationName = "Exile";
+    app_info.applicationVersion = 1;
+    app_info.pEngineName = "Exile 0.2";
+    app_info.engineVersion = 2;
+    app_info.apiVersion = VK_MAKE_VERSION(1, 1, VK_HEADER_VERSION);
 
-    VkInstanceCreateInfo createInfo = {};
-    createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-    createInfo.pApplicationInfo = &appInfo;
+    VkInstanceCreateInfo create_info = {};
+    create_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+    create_info.pApplicationInfo = &app_info;
 	
-	instExt.clear(); devExt.clear(); layers.clear();
+	inst_ext.clear(); dev_ext.clear(); layers.clear();
 	
-	instExt.push(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
-	devExt.push(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+	inst_ext.push(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
+	dev_ext.push(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
 	layers.push("VK_LAYER_LUNARG_standard_validation");
 
 	u32 sdl_count;
 	if(!SDL_Vulkan_GetInstanceExtensions(window, &sdl_count, null)) {
 		die("Failed to get required SDL vk instance extensions: %", SDL_GetError());
 	}
-	instExt.reserve(instExt.size + sdl_count);
-	if(!SDL_Vulkan_GetInstanceExtensions(window, &sdl_count, instExt.data + instExt.size)) {
+	inst_ext.extend(inst_ext.size + sdl_count);
+	if(!SDL_Vulkan_GetInstanceExtensions(window, &sdl_count, inst_ext.data + inst_ext.size - sdl_count)) {
 		die("Failed to get required SDL vk instance extensions: %", SDL_GetError());
 	}
-	instExt.size += sdl_count;
 
-	createInfo.enabledExtensionCount = instExt.size;
-	createInfo.ppEnabledExtensionNames = instExt.data;
-	createInfo.enabledLayerCount = layers.size;
-	createInfo.ppEnabledLayerNames = layers.data;
+	create_info.enabledExtensionCount = inst_ext.size;
+	create_info.ppEnabledExtensionNames = inst_ext.data;
+	create_info.enabledLayerCount = layers.size;
+	create_info.ppEnabledLayerNames = layers.data;
 
 	VkAllocationCallbacks allocator = {};
 	allocator.pfnAllocation = vk_alloc;
 	allocator.pfnFree = vk_free;
 	allocator.pfnReallocation = vk_realloc;
 
-	VkResult res = vkCreateInstance(&createInfo, &allocator, &instance);
+	VkResult res = vkCreateInstance(&create_info, &allocator, &instance);
 	if(res != VK_SUCCESS) {
 		die("Failed to create VkInstance: %", vk_err_str(res));
 	}
@@ -128,10 +128,61 @@ void Vulkan::create_instance(SDL_Window* window) {
 	if(!SDL_Vulkan_CreateSurface(window, instance, &surface)) {
 		die("Failed to create SDL VkSurface: %", SDL_GetError());
 	}
+
+	info("Created Vulkan instance and surface.");
 }
 
 void Vulkan::enumerate_physical_devices() {
 
+	u32 devices = 0;
+	VkResult res = vkEnumeratePhysicalDevices(instance, &devices, null);
+	if(res != VK_SUCCESS) {
+		die("Failed to enumerate physical devices: %", vk_err_str(res));
+	}
+	if(devices <= 0) {
+		die("Found no physical devices.");
+	}
+
+	vec<VkPhysicalDevice, vk_alloc_t> phys_list;
+	defer(phys_list.destroy());
+	phys_list.extend(devices);
+
+	res = vkEnumeratePhysicalDevices(instance, &devices, phys_list.data);
+	if(res != VK_SUCCESS) {
+		die("Failed to enumerate physical devices: %", vk_err_str(res));
+	}
+	if(devices <= 0) {
+		die("Found no physical devices.");
+	}
+
+	phys_devices.clear();
+	phys_devices.extend(devices);
+	for(u32 i = 0; i < devices; i++) {
+		phys_device_info& info = phys_devices[i];
+		info.device = phys_list[i];
+	
+		{
+			// vkGetPhysicalDeviceQueueFamilyProperties()
+		}
+		{
+			// vkEnumerateDeviceExtensionProperties()
+		}
+		{
+			// vkGetPhysicalDeviceSurfaceCapabilitiesKHR()
+		}
+		{
+			// vkGetPhysicalDeviceSurfaceFormatsKHR()
+		}
+		{
+			// vkGetPhysicalDeviceSurfacePresentModesKHR()
+		}
+		{
+			// vkGetPhysicalDeviceMemoryProperties()
+		}
+		{
+			// vkGetPhysicalDeviceProperties()
+		}
+	}
 }
 
 void Vulkan::select_physical_device() {
