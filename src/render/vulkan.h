@@ -11,24 +11,45 @@ struct Vulkan {
     void destroy();
 
     static constexpr char vk_name[] = "Vulkan";
-    using vk_alloc_t = Mallocator<vk_name>;
+    using alloc = Mallocator<vk_name>;
 
 private:
 
-	struct phys_device_info {
-		VkPhysicalDevice device;
-		vec<VkQueueFamilyProperties, vk_alloc_t> queue_families;
+	struct GPU {
+		VkPhysicalDevice device = {};
+		VkSurfaceCapabilitiesKHR surf_caps = {};
+		VkPhysicalDeviceProperties dev_prop = {};
+		VkPhysicalDeviceMemoryProperties mem_prop = {};
+		vec<VkQueueFamilyProperties, alloc> queue_families;
+		vec<VkExtensionProperties, alloc> exts;
+		vec<VkSurfaceFormatKHR, alloc> fmts;
+		vec<VkPresentModeKHR, alloc> modes;
+
+		void destroy() {
+			queue_families.destroy();
+			modes.destroy();
+			exts.destroy();
+			fmts.destroy();
+		}
 	};
 
-	vec<const char*, vk_alloc_t> inst_ext, dev_ext, layers;
-	vec<phys_device_info, vk_alloc_t> phys_devices;
+	vec<const char*, alloc> inst_ext, dev_ext, layers;
+	vec<GPU, alloc> gpus;
+	vec<VkExtensionProperties, alloc> extensions;
 
 	VkInstance instance = {};
 	VkSurfaceKHR surface = {};
+	GPU* gpu = null;
+
+	VkDebugReportCallbackEXT debug_callback_info = {};
 
     void create_instance(SDL_Window* window);
-	void enumerate_physical_devices();
-	void select_physical_device();
+	void enumerate_gpus();
+	void select_gpu();
+
+	void init_debug_callback();
+	void destroy_debug_callback();
+
 	void create_logical_device_and_queues();
 	void create_semaphores();
 	void create_commandPool();

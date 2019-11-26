@@ -41,16 +41,16 @@ static literal vk_err_str(VkResult errorCode) {
 }
 
 static void* vk_alloc(void*, usize sz, usize, VkSystemAllocationScope) {
-    return Vulkan::vk_alloc_t::alloc<u8>(sz);
+    return Vulkan::alloc::alloc<u8>(sz);
 }
 
 static void* vk_realloc(void*, void* mem, usize sz, usize, VkSystemAllocationScope) {
-	Vulkan::vk_alloc_t::dealloc(mem);
-	return Vulkan::vk_alloc_t::alloc<u8>(sz);
+	Vulkan::alloc::dealloc(mem);
+	return Vulkan::alloc::alloc<u8>(sz);
 }
 
 static void vk_free(void*, void* mem) {
-    Vulkan::vk_alloc_t::dealloc(mem);
+    Vulkan::alloc::dealloc(mem);
 }
 
 void Vulkan::init(SDL_Window* window) {
@@ -58,27 +58,78 @@ void Vulkan::init(SDL_Window* window) {
     assert(window);
 
     create_instance(window);
-	enumerate_physical_devices();
-	select_physical_device();
+	init_debug_callback();
+
+	enumerate_gpus();
+	select_gpu();
+
 	create_logical_device_and_queues();
 	create_semaphores();
 	create_commandPool();
 	create_commandBuffer();
+
 	// vulkanAllocator.Init();
 	// stagingManager.Init();
+
 	create_swap_chain();
 	create_render_targets();
 	create_render_pass();
 	create_pipeline_cache();
 	create_frame_buffers();
+
 	// renderProgManager.Init();
 }
 
 void Vulkan::destroy() {
+	destroy_debug_callback();
 	inst_ext.destroy();
 	dev_ext.destroy();
 	layers.destroy();
-	phys_devices.destroy();
+	gpus.destroy();
+	extensions.destroy();
+}
+
+static VkBool32 debug_callback( 
+	VkDebugReportFlagsEXT flags, 
+	VkDebugReportObjectTypeEXT obj_type, 
+	u64 obj, usize loc, i32 code,
+	const char* layerPrefix, const char* msg, void* userData) {
+
+	switch(flags) {
+	case VK_DEBUG_REPORT_INFORMATION_BIT_EXT:
+	case VK_DEBUG_REPORT_DEBUG_BIT_EXT:
+		info("VK (type=% obj=% loc=% code=%): %", obj_type, obj, loc, code, msg);
+		break;
+	case VK_DEBUG_REPORT_WARNING_BIT_EXT:
+	case VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT:
+		warn("VK (type=% obj=% loc=% code=%): %", obj_type, obj, loc, code, msg);
+		break;
+	case VK_DEBUG_REPORT_ERROR_BIT_EXT:
+		die("VK (type=% obj=% loc=% code=%): %", obj_type, obj, loc, code, msg);
+		break;
+	}
+	return VK_FALSE;
+}
+
+void Vulkan::init_debug_callback() {
+
+	VkDebugReportCallbackCreateInfoEXT callback_info = {};
+	callback_info.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CREATE_INFO_EXT;
+	callback_info.flags = VK_DEBUG_REPORT_INFORMATION_BIT_EXT | VK_DEBUG_REPORT_DEBUG_BIT_EXT | 
+						  VK_DEBUG_REPORT_WARNING_BIT_EXT | VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT | 
+						  VK_DEBUG_REPORT_ERROR_BIT_EXT;
+	callback_info.pfnCallback = (PFN_vkDebugReportCallbackEXT) &debug_callback;
+
+	PFN_vkCreateDebugReportCallbackEXT func = (PFN_vkCreateDebugReportCallbackEXT) vkGetInstanceProcAddr(instance, "vkCreateDebugReportCallbackEXT");
+	if(!func) die("Could not find vkCreateDebugReportCallbackEXT");
+	VK_CHECK(func( instance, &callback_info, null, &debug_callback_info));
+}
+
+void Vulkan::destroy_debug_callback() {
+
+	PFN_vkDestroyDebugReportCallbackEXT func = (PFN_vkDestroyDebugReportCallbackEXT) vkGetInstanceProcAddr( instance, "vkDestroyDebugReportCallbackEXT" );
+	if(!func) die("Could not find vkDestroyDebugReportCallbackEXT");
+	func(instance, debug_callback_info, null);
 }
 
 void Vulkan::create_instance(SDL_Window* window) {
@@ -86,9 +137,9 @@ void Vulkan::create_instance(SDL_Window* window) {
     VkApplicationInfo app_info = {};
     app_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
     app_info.pApplicationName = "Exile";
-    app_info.applicationVersion = 1;
+    app_info.applicationVersion = VK_MAKE_VERSION(0, 0, 2);
     app_info.pEngineName = "Exile 0.2";
-    app_info.engineVersion = 2;
+    app_info.engineVersion = VK_MAKE_VERSION(0, 0, 2);
     app_info.apiVersion = VK_MAKE_VERSION(1, 1, VK_HEADER_VERSION);
 
     VkInstanceCreateInfo create_info = {};
@@ -130,63 +181,85 @@ void Vulkan::create_instance(SDL_Window* window) {
 	}
 
 	info("Created Vulkan instance and surface.");
+
+	u32 total_extensions = 0;
+	VK_CHECK(vkEnumerateInstanceExtensionProperties(null, &total_extensions, null));
+	extensions.clear();
+	extensions.extend(total_extensions);
+	VK_CHECK(vkEnumerateInstanceExtensionProperties(null, &total_extensions, extensions.data));
+
+	info("Available extensions:");
+	for(auto& ext : extensions) {
+		info("\t%", literal(ext.extensionName));
+	}
 }
 
-void Vulkan::enumerate_physical_devices() {
+void Vulkan::enumerate_gpus() {
 
 	u32 devices = 0;
-	VkResult res = vkEnumeratePhysicalDevices(instance, &devices, null);
-	if(res != VK_SUCCESS) {
-		die("Failed to enumerate physical devices: %", vk_err_str(res));
-	}
+	VK_CHECK(vkEnumeratePhysicalDevices(instance, &devices, null));
 	if(devices <= 0) {
-		die("Found no physical devices.");
+		die("Found no GPUs.");
 	}
 
-	vec<VkPhysicalDevice, vk_alloc_t> phys_list;
+	vec<VkPhysicalDevice, alloc> phys_list;
 	defer(phys_list.destroy());
 	phys_list.extend(devices);
+	VK_CHECK(vkEnumeratePhysicalDevices(instance, &devices, phys_list.data));
 
-	res = vkEnumeratePhysicalDevices(instance, &devices, phys_list.data);
-	if(res != VK_SUCCESS) {
-		die("Failed to enumerate physical devices: %", vk_err_str(res));
-	}
-	if(devices <= 0) {
-		die("Found no physical devices.");
-	}
-
-	phys_devices.clear();
-	phys_devices.extend(devices);
+	gpus.clear();
+	gpus.extend(devices);
 	for(u32 i = 0; i < devices; i++) {
-		phys_device_info& info = phys_devices[i];
-		info.device = phys_list[i];
-	
+		GPU& gpu = gpus[i];
+		gpu.device = phys_list[i];
+		
 		{
-			// vkGetPhysicalDeviceQueueFamilyProperties()
+			u32 num_queues = 0;
+			vkGetPhysicalDeviceQueueFamilyProperties(gpu.device, &num_queues, null);
+			if(num_queues <= 0) warn("Found no device queues.");
+			gpu.queue_families.extend(num_queues);
+			vkGetPhysicalDeviceQueueFamilyProperties(gpu.device, &num_queues, gpu.queue_families.data);
 		}
 		{
-			// vkEnumerateDeviceExtensionProperties()
+			u32 num_exts = 0;
+			VK_CHECK(vkEnumerateDeviceExtensionProperties(gpu.device, null, &num_exts, null));
+			if(num_exts <= 0) warn("Found no device extensions.");
+			gpu.exts.extend(num_exts);
+			VK_CHECK(vkEnumerateDeviceExtensionProperties(gpu.device, null, &num_exts, gpu.exts.data));
 		}
 		{
-			// vkGetPhysicalDeviceSurfaceCapabilitiesKHR()
+			VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(gpu.device, surface, &gpu.surf_caps));
 		}
 		{
-			// vkGetPhysicalDeviceSurfaceFormatsKHR()
+			u32 num_fmts = 0;
+			VK_CHECK(vkGetPhysicalDeviceSurfaceFormatsKHR(gpu.device, surface, &num_fmts, null));
+			if(num_fmts <= 0) warn("Found no device surface formats.");
+			gpu.fmts.extend(num_fmts);
+			VK_CHECK(vkGetPhysicalDeviceSurfaceFormatsKHR(gpu.device, surface, &num_fmts, gpu.fmts.data));
 		}
 		{
-			// vkGetPhysicalDeviceSurfacePresentModesKHR()
+			u32 num_modes = 0;
+			VK_CHECK(vkGetPhysicalDeviceSurfacePresentModesKHR(gpu.device, surface, &num_modes, null));
+			if(num_modes <= 0) warn("Found no device present modes.");
+			gpu.modes.extend(num_modes);
+			VK_CHECK(vkGetPhysicalDeviceSurfacePresentModesKHR(gpu.device, surface, &num_modes, gpu.modes.data));
 		}
 		{
-			// vkGetPhysicalDeviceMemoryProperties()
+			vkGetPhysicalDeviceMemoryProperties(gpu.device, &gpu.mem_prop);
 		}
 		{
-			// vkGetPhysicalDeviceProperties()
+			vkGetPhysicalDeviceProperties(gpu.device, &gpu.dev_prop);
 		}
 	}
 }
 
-void Vulkan::select_physical_device() {
+void Vulkan::select_gpu() {
 
+	for(GPU& gpu : gpus) {
+		
+		i32 graphics_idx = -1, present_idx = -1;
+	
+	}
 }
 
 void Vulkan::create_logical_device_and_queues() {
