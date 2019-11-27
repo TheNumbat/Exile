@@ -65,28 +65,47 @@ void Vulkan::init(SDL_Window* window) {
 
 	create_logical_device_and_queues();
 	create_semaphores();
-	create_commandPool();
-	create_commandBuffer();
-
-	// vulkanAllocator.Init();
-	// stagingManager.Init();
-
+	create_command_pool();
+	create_command_buffers();
 	create_swap_chain();
 	create_render_targets();
 	create_render_pass();
 	create_pipeline_cache();
 	create_frame_buffers();
-
-	// renderProgManager.Init();
 }
 
 void Vulkan::destroy() {
+	
+	for(i32 i = 0; i < BUF_FRAMES; i++) {
+		vkDestroySemaphore(device, aquire_sem[i], &allocator);
+		vkDestroySemaphore(device, complete_sem[i], &allocator);
+		vkDestroyFence(device, buf_fence[i], &allocator);
+	}
+	vkDestroyDevice(device, &allocator);
+	vkDestroySurfaceKHR(instance, surface, &allocator);
+	vkDestroyInstance(instance, &allocator);
+
 	destroy_debug_callback();
 	inst_ext.destroy();
 	dev_ext.destroy();
 	layers.destroy();
 	gpus.destroy();
 	extensions.destroy();
+
+	gpu = null;
+	device = {};
+	instance = {};
+	surface = {};
+	graphics_queue = {}, present_queue = {};
+	command_pool = {};
+	for(i32 i = 0; i < BUF_FRAMES; i++) {
+		command_buffer[i] = {};
+		buf_fence[i] = {};
+		aquire_sem[i] = {};
+		complete_sem[i] = {};
+	}
+	allocator = {};
+	debug_callback_info = {};
 }
 
 static VkBool32 debug_callback( 
@@ -98,14 +117,14 @@ static VkBool32 debug_callback(
 	switch(flags) {
 	case VK_DEBUG_REPORT_INFORMATION_BIT_EXT:
 	case VK_DEBUG_REPORT_DEBUG_BIT_EXT:
-		info("VK (type=% obj=% loc=% code=%): %", obj_type, obj, loc, code, msg);
+		info("VK (type=% obj=% loc=% code=%): %", (i64)obj_type, obj, loc, code, msg);
 		break;
 	case VK_DEBUG_REPORT_WARNING_BIT_EXT:
 	case VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT:
-		warn("VK (type=% obj=% loc=% code=%): %", obj_type, obj, loc, code, msg);
+		warn("VK (type=% obj=% loc=% code=%): %", (i64)obj_type, obj, loc, code, msg);
 		break;
 	case VK_DEBUG_REPORT_ERROR_BIT_EXT:
-		die("VK (type=% obj=% loc=% code=%): %", obj_type, obj, loc, code, msg);
+		die("VK (type=% obj=% loc=% code=%): %", (i64)obj_type, obj, loc, code, msg);
 		break;
 	}
 	return VK_FALSE;
@@ -115,9 +134,8 @@ void Vulkan::init_debug_callback() {
 
 	VkDebugReportCallbackCreateInfoEXT callback_info = {};
 	callback_info.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CREATE_INFO_EXT;
-	callback_info.flags = VK_DEBUG_REPORT_INFORMATION_BIT_EXT | VK_DEBUG_REPORT_DEBUG_BIT_EXT | 
-						  VK_DEBUG_REPORT_WARNING_BIT_EXT | VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT | 
-						  VK_DEBUG_REPORT_ERROR_BIT_EXT;
+	callback_info.flags = VK_DEBUG_REPORT_DEBUG_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT |
+						  VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT;
 	callback_info.pfnCallback = (PFN_vkDebugReportCallbackEXT) &debug_callback;
 
 	PFN_vkCreateDebugReportCallbackEXT func = (PFN_vkCreateDebugReportCallbackEXT) vkGetInstanceProcAddr(instance, "vkCreateDebugReportCallbackEXT");
@@ -166,7 +184,6 @@ void Vulkan::create_instance(SDL_Window* window) {
 	create_info.enabledLayerCount = layers.size;
 	create_info.ppEnabledLayerNames = layers.data;
 
-	VkAllocationCallbacks allocator = {};
 	allocator.pfnAllocation = vk_alloc;
 	allocator.pfnFree = vk_free;
 	allocator.pfnReallocation = vk_realloc;
@@ -180,15 +197,13 @@ void Vulkan::create_instance(SDL_Window* window) {
 		die("Failed to create SDL VkSurface: %", SDL_GetError());
 	}
 
-	info("Created Vulkan instance and surface.");
-
 	u32 total_extensions = 0;
 	VK_CHECK(vkEnumerateInstanceExtensionProperties(null, &total_extensions, null));
 	extensions.clear();
 	extensions.extend(total_extensions);
 	VK_CHECK(vkEnumerateInstanceExtensionProperties(null, &total_extensions, extensions.data));
 
-	info("Available extensions:");
+	info("Created Vulkan instance and surface. Extensions:");
 	for(auto& ext : extensions) {
 		info("\t%", literal(ext.extensionName));
 	}
@@ -251,31 +266,168 @@ void Vulkan::enumerate_gpus() {
 			vkGetPhysicalDeviceProperties(gpu.device, &gpu.dev_prop);
 		}
 	}
+
+	info("Enumerated Vulkan devices:");
+	for(GPU& gpu : gpus) {
+		info("\t%", literal(gpu.dev_prop.deviceName));
+	}
+}
+
+bool Vulkan::GPU::supports(const vec<const char*, Vulkan::alloc>& extensions) {
+
+	i32 matched = 0;
+
+	for(auto e : extensions) {
+		for(auto& p : exts) {
+			if(strcmp(e, p.extensionName) == 0) {
+				matched++;
+				break;
+			}
+		}
+	}
+
+	return matched == extensions.size;
 }
 
 void Vulkan::select_gpu() {
 
 	for(GPU& gpu : gpus) {
 		
-		i32 graphics_idx = -1, present_idx = -1;
-	
+		literal name = gpu.dev_prop.deviceName;
+		gpu.graphics_idx = -1;
+		gpu.present_idx = -1;
+
+		if(!gpu.supports(dev_ext)) {
+			info("Device % does not support device extensions.", name);
+			continue;
+		}
+
+		if(!gpu.fmts.size) {
+			warn("Device % has no available surface formats.", name);
+			continue;
+		}
+		if(!gpu.modes.size) {
+			warn("Device % has no available present modes.", name);
+			continue;
+		}
+
+		for(i32 i = 0; i < gpu.queue_families.size; i++) {
+			auto& family = gpu.queue_families[i];
+			if(!family.queueCount) continue;
+			if(family.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
+				gpu.graphics_idx = i;
+			}
+		}
+
+		for(i32 i = 0; i < gpu.queue_families.size; i++) {
+			auto& family = gpu.queue_families[i];
+			if(!family.queueCount) continue;
+
+			VkBool32 supports_present = VK_FALSE;
+			VK_CHECK(vkGetPhysicalDeviceSurfaceSupportKHR(gpu.device, i, surface, &supports_present));
+			if(supports_present) {
+				gpu.present_idx = i;
+			}
+		}
+
+		if(gpu.graphics_idx >= 0 && gpu.present_idx >= 0) {
+			info("Selecting GPU: %", name);
+			this->gpu = &gpu;
+			return;
+		}
+
+		info("Device % does not have a suitable graphics and present queue.", name);
 	}
+
+	die("Failed to find compatible Vulkan device.");
 }
 
 void Vulkan::create_logical_device_and_queues() {
 
+	static const float priority = 1.0f;
+	vec<VkDeviceQueueCreateInfo, alloc> q_info;
+
+	{
+		VkDeviceQueueCreateInfo qinfo = {};
+		qinfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+		qinfo.queueFamilyIndex = gpu->graphics_idx;
+		qinfo.queueCount = 1;
+		qinfo.pQueuePriorities = &priority;
+		q_info.push(qinfo);
+	}
+	if(gpu->present_idx != gpu->graphics_idx) {
+		VkDeviceQueueCreateInfo qinfo = {};
+		qinfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+		qinfo.queueFamilyIndex = gpu->present_idx;
+		qinfo.queueCount = 1;
+		qinfo.pQueuePriorities = &priority;
+		q_info.push(qinfo);
+	}
+
+	// TODO(max): figure out what device features we need to enable
+	VkPhysicalDeviceFeatures features = {};
+	
+	VkDeviceCreateInfo info = {};
+	info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+	info.queueCreateInfoCount = q_info.size;
+	info.pQueueCreateInfos = q_info.data;
+	info.pEnabledFeatures = &features;
+	info.enabledExtensionCount = dev_ext.size;
+	info.ppEnabledExtensionNames = dev_ext.data;
+	info.enabledLayerCount = layers.size;
+	info.ppEnabledLayerNames = layers.data;
+
+	VK_CHECK(vkCreateDevice(gpu->device, &info, &allocator, &device));
+
+	vkGetDeviceQueue(device, gpu->graphics_idx, 0, &graphics_queue);
+	vkGetDeviceQueue(device, gpu->present_idx, 0, &present_queue);
+
+	info("Created device queues.");
 }
 
 void Vulkan::create_semaphores() {
 
+	VkSemaphoreCreateInfo info = {};
+	info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+
+	for(i32 i = 0; i < BUF_FRAMES; i++) {
+		VK_CHECK(vkCreateSemaphore(device, &info, &allocator, &aquire_sem[i]));
+		VK_CHECK(vkCreateSemaphore(device, &info, &allocator, &complete_sem[i]));
+	}
+
+	info("Created semaphores.");
 }
 
-void Vulkan::create_commandPool() {
+void Vulkan::create_command_pool() {
 
+	VkCommandPoolCreateInfo info = {};
+	info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+	info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+	info.queueFamilyIndex = gpu->graphics_idx;
+
+	VK_CHECK(vkCreateCommandPool(device, &info, &allocator, &command_pool));
+
+	info("Created command pool.");
 }
 
-void Vulkan::create_commandBuffer() {
+void Vulkan::create_command_buffers() {
 
+	VkCommandBufferAllocateInfo info = {};
+	info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+	info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+	info.commandPool = command_pool;
+	info.commandBufferCount = BUF_FRAMES;
+
+	VK_CHECK(vkAllocateCommandBuffers(device, &info, command_buffer));
+
+	VkFenceCreateInfo fence_info = {};
+	fence_info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+
+	for (i32 i = 0; i < BUF_FRAMES; i++) {
+		VK_CHECK(vkCreateFence(device, &fence_info, &allocator, &buf_fence[i]));
+	}
+
+	info("Created command buffers and fences.");
 }
 
 void Vulkan::create_swap_chain() {

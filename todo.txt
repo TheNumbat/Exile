@@ -1,11 +1,14 @@
 
 Framework re-write:
 
-    FIX: arena over-writing map in dbg_gui
+    Vulkan
+        fix device extension not working
+        confirm code with vulkan-tutorial.com 
+        finish setup code
 
     Debugging systems
-        more profiler front-end
-        Console view
+        allocations view
+        console view
 
     Reflection
         Value range tags for GUI

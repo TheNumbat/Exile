@@ -24,7 +24,9 @@ private:
 		vec<VkExtensionProperties, alloc> exts;
 		vec<VkSurfaceFormatKHR, alloc> fmts;
 		vec<VkPresentModeKHR, alloc> modes;
+		i32 graphics_idx = 0, present_idx = 0;
 
+		bool supports(const vec<const char*, alloc>& extensions);
 		void destroy() {
 			queue_families.destroy();
 			modes.destroy();
@@ -33,14 +35,26 @@ private:
 		}
 	};
 
+	// NOTE(max): double buffering
+	static const i32 BUF_FRAMES = 2;
+
 	vec<const char*, alloc> inst_ext, dev_ext, layers;
 	vec<GPU, alloc> gpus;
 	vec<VkExtensionProperties, alloc> extensions;
 
+	GPU* gpu = null;
+	VkDevice device = {};
 	VkInstance instance = {};
 	VkSurfaceKHR surface = {};
-	GPU* gpu = null;
+	VkQueue graphics_queue = {}, present_queue = {};
+	
+	VkCommandPool command_pool = {};
+	VkCommandBuffer command_buffer[BUF_FRAMES] = {};
+	
+	VkFence buf_fence[BUF_FRAMES] = {};
+	VkSemaphore aquire_sem[BUF_FRAMES] = {}, complete_sem[BUF_FRAMES] = {};
 
+	VkAllocationCallbacks allocator = {};
 	VkDebugReportCallbackEXT debug_callback_info = {};
 
     void create_instance(SDL_Window* window);
@@ -52,16 +66,13 @@ private:
 
 	void create_logical_device_and_queues();
 	void create_semaphores();
-	void create_commandPool();
-	void create_commandBuffer();
-	// void vulkanAllocator.Init();
-	// void stagingManager.Init();
+	void create_command_pool();
+	void create_command_buffers();
 	void create_swap_chain();
 	void create_render_targets();
 	void create_render_pass();
 	void create_pipeline_cache();
 	void create_frame_buffers();
-	// void renderProgManager.Init();
 };
 
 
