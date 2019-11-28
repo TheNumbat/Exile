@@ -145,8 +145,9 @@ struct Type_Info<queue<T,A>> {
     static constexpr char _size[] = "size";
     static constexpr char _last[] = "last";
     static constexpr char _capacity[] = "capacity";
-	using members = Type_List<Record_Field<T*,offset_of(data, queue<T,A>),_data>,
-                              Record_Field<u32,offset_of(size, queue<T,A>),_size>,
-                              Record_Field<u32,offset_of(last, queue<T,A>),_last>,
-                              Record_Field<u32,offset_of(capacity, queue<T,A>),_capacity>>;
+    typedef queue<T,A> __offset;
+	using members = Type_List<Record_Field<T*,offsetof(__offset, data),_data>,
+                              Record_Field<u32,offsetof(__offset, size),_size>,
+                              Record_Field<u32,offsetof(__offset, last),_last>,
+                              Record_Field<u32,offsetof(__offset, capacity),_capacity>>;
 };

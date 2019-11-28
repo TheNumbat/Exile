@@ -140,11 +140,11 @@ struct vec_view {
     }
     template<usize N>
     static vec_view make(Marena<N>& arena, u32 cap) {
-        return {arena.alloc<T>(cap), 0, cap};
+        return {arena.template alloc<T>(cap), 0, cap};
     }
     template<typename U, usize N>
     static vec_view make(Varena<U,N>& arena, u32 cap) {
-        return {arena.alloc<T>(cap), 0, cap};
+        return {arena.template alloc<T>(cap), 0, cap};
     }
 
     void destroy() {
@@ -209,9 +209,10 @@ struct Type_Info<vec<T,A>> {
     static constexpr char _data[] = "data";
     static constexpr char _size[] = "size";
     static constexpr char _capacity[] = "capacity";
-	using members = Type_List<Record_Field<T*,offset_of(data, vec<T,A>),_data>,
-                              Record_Field<u32,offset_of(size, vec<T,A>),_size>,
-                              Record_Field<u32,offset_of(capacity, vec<T,A>),_capacity>>;
+    typedef vec<T,A> __offset;
+	using members = Type_List<Record_Field<T*,offsetof(__offset, data),_data>,
+                              Record_Field<u32,offsetof(__offset, size),_size>,
+                              Record_Field<u32,offsetof(__offset, capacity),_capacity>>;
 };
 
 template<typename T> 
@@ -222,7 +223,7 @@ struct Type_Info<vec_view<T>> {
     static constexpr char _data[] = "data";
     static constexpr char _size[] = "size";
     static constexpr char _capacity[] = "capacity";
-	using members = Type_List<Record_Field<T*,offset_of(data, vec_view<T>),_data>,
-                              Record_Field<u32,offset_of(size, vec_view<T>),_size>,
-                              Record_Field<u32,offset_of(capacity, vec_view<T>),_capacity>>;
+	using members = Type_List<Record_Field<T*,offsetof(vec_view<T>, data),_data>,
+                              Record_Field<u32,offsetof(vec_view<T>, size),_size>,
+                              Record_Field<u32,offsetof(vec_view<T>, capacity),_capacity>>;
 };

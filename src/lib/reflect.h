@@ -46,7 +46,7 @@ struct Is_Float<f32> {static constexpr bool value = true;};
 template<>
 struct Is_Float<f64> {static constexpr bool value = true;};
 
-#define offset_of(mem, ...) offsetof(__VA_ARGS__, mem)
+#ifdef _MSC_VER
 
 template<typename T>
 constexpr auto is_Destroy() -> decltype(std::declval<T>().destroy(), bool()) {
@@ -56,6 +56,20 @@ template<typename T>
 constexpr bool is_Destroy(...) {
     return false;
 }
+
+#elif defined(__clang__)
+
+#include <experimental/type_traits>
+
+template<typename T>
+using isDestroy_t = decltype(std::declval<T&>().destroy());
+
+template<typename T>
+constexpr bool is_Destroy() {
+	return std::experimental::is_detected_v<isDestroy_t, T>;
+}
+
+#endif
 
 enum class Type_Type : u8 {
     void_,

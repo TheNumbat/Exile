@@ -208,8 +208,9 @@ struct Type_Info<map<K,V,A,H>> {
     static constexpr char _size[] = "size";
     static constexpr char _probe[] = "probe";
     static constexpr char _usable[] = "usable";
-	using members = Type_List<Record_Field<vec<typename map<K,V,A,H>::slot, A>,offset_of(data, map<K,V,A,H>),_data>,
-                              Record_Field<u32,offset_of(size, map<K,V,A,H>),_size>,
-                              Record_Field<u32,offset_of(probe, map<K,V,A,H>),_probe>,
-                              Record_Field<u32,offset_of(usable, map<K,V,A,H>),_usable>>;
+    typedef map<K,V,A,H> __offset;
+	using members = Type_List<Record_Field<vec<typename map<K,V,A,H>::slot, A>,offsetof(__offset, data),_data>,
+                              Record_Field<u32,offsetof(__offset, size),_size>,
+                              Record_Field<u32,offsetof(__offset, probe),_probe>,
+                              Record_Field<u32,offsetof(__offset, usable),_usable>>;
 };

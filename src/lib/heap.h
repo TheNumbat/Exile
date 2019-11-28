@@ -138,7 +138,8 @@ struct Type_Info<heap<T,A>> {
     static constexpr char _data[] = "data";
     static constexpr char _size[] = "size";
     static constexpr char _capacity[] = "capacity";
-	using members = Type_List<Record_Field<T*,offset_of(data, heap<T,A>),_data>,
-                              Record_Field<u32,offset_of(size, heap<T,A>),_size>,
-                              Record_Field<u32,offset_of(capacity, heap<T,A>),_capacity>>;
+    typedef heap<T,A> __offset;
+	using members = Type_List<Record_Field<T*,offsetof(__offset, data),_data>,
+                              Record_Field<u32,offsetof(__offset, size),_size>,
+                              Record_Field<u32,offsetof(__offset, capacity),_capacity>>;
 };

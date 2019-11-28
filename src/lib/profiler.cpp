@@ -31,6 +31,7 @@ void Profiler::start_thread() {
     thread_id id = std::this_thread::get_id();
     assert(!threads.try_get(id));
 
+    this_thread.during_frame = false;
     threads.insert(id, &this_thread);
 }
 

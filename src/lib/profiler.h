@@ -87,7 +87,7 @@ private:
     struct Thread_Profile {
         void destroy();
 
-        bool during_frame = false;
+        bool during_frame;
         queue<Frame_Profile, Mhidden> frames;
     };
 
@@ -112,9 +112,9 @@ struct Type_Info<Location> {
     static constexpr char _func[] = "func";
     static constexpr char _file[] = "file";
     static constexpr char _line[] = "line";
-	using members = Type_List<Record_Field<literal,offset_of(func, Location),_func>,
-                              Record_Field<literal,offset_of(file, Location),_file>,
-                              Record_Field<usize,offset_of(line, Location),_line>>;
+	using members = Type_List<Record_Field<literal,offsetof(Location, func),_func>,
+                              Record_Field<literal,offsetof(Location, file),_file>,
+                              Record_Field<usize,offsetof(Location, line),_line>>;
 };
 
 template<>
@@ -125,7 +125,7 @@ struct Type_Info<Profiler::Alloc> {
     static constexpr char _name[] = "name";
     static constexpr char _addr[] = "addr";
     static constexpr char _size[] = "size";
-	using members = Type_List<Record_Field<literal,offset_of(name, Profiler::Alloc),_name>,
-                              Record_Field<void*,offset_of(addr, Profiler::Alloc),_addr>,
-                              Record_Field<usize,offset_of(size, Profiler::Alloc),_size>>;
+	using members = Type_List<Record_Field<literal,offsetof(Profiler::Alloc, name),_name>,
+                              Record_Field<void*,offsetof(Profiler::Alloc, addr),_addr>,
+                              Record_Field<usize,offsetof(Profiler::Alloc, size),_size>>;
 };

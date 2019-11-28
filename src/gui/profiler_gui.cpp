@@ -263,7 +263,6 @@ void Profiler_Window::render() {
     cpuGraph.render_timings(graphWidth, legendWidth, graphHeight, frameOffset);
     if (graphHeight + sizeMargin + sizeMargin < canvasSize.y) {
         ImGui::Columns(2);
-        usize textSize = 50;
         ImGui::Checkbox("Stop profiling", &stopProfiling);
         ImGui::Checkbox("Colored legend text", &useColoredLegendText);
         ImGui::DragInt("Frame offset", &frameOffset, 1.0f, 0, 400);

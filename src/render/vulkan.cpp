@@ -140,7 +140,7 @@ void Vulkan::init_debug_callback() {
 
 	PFN_vkCreateDebugReportCallbackEXT func = (PFN_vkCreateDebugReportCallbackEXT) vkGetInstanceProcAddr(instance, "vkCreateDebugReportCallbackEXT");
 	if(!func) die("Could not find vkCreateDebugReportCallbackEXT");
-	VK_CHECK(func( instance, &callback_info, null, &debug_callback_info));
+	VK_CHECK(func(instance, &callback_info, null, &debug_callback_info));
 }
 
 void Vulkan::destroy_debug_callback() {
@@ -316,6 +316,7 @@ void Vulkan::select_gpu() {
 			if(!family.queueCount) continue;
 			if(family.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
 				gpu.graphics_idx = i;
+				break;
 			}
 		}
 
@@ -327,6 +328,7 @@ void Vulkan::select_gpu() {
 			VK_CHECK(vkGetPhysicalDeviceSurfaceSupportKHR(gpu.device, i, surface, &supports_present));
 			if(supports_present) {
 				gpu.present_idx = i;
+				break;
 			}
 		}
 
@@ -346,6 +348,7 @@ void Vulkan::create_logical_device_and_queues() {
 
 	static const float priority = 1.0f;
 	vec<VkDeviceQueueCreateInfo, alloc> q_info;
+	defer(q_info.destroy());
 
 	{
 		VkDeviceQueueCreateInfo qinfo = {};
@@ -382,7 +385,7 @@ void Vulkan::create_logical_device_and_queues() {
 	vkGetDeviceQueue(device, gpu->graphics_idx, 0, &graphics_queue);
 	vkGetDeviceQueue(device, gpu->present_idx, 0, &present_queue);
 
-	info("Created device queues.");
+	info("Created device and queues.");
 }
 
 void Vulkan::create_semaphores() {
