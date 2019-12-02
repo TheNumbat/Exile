@@ -7,6 +7,13 @@
 #include "lib/lib.h"
 #include "window.h"
 
+#ifdef _MSC_VER
+extern "C" {
+	__declspec(dllexport) bool NvOptimusEnablement = true;
+	__declspec(dllexport) bool AmdPowerXpressRequestHighPerformance = true;
+}
+#endif
+
 static void* imgui_alloc(usize sz, void*) {
     return Window::gui_alloc::alloc<u8>(sz);
 }
