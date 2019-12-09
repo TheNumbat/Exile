@@ -81,11 +81,13 @@ void Vulkan::destroy() {
 		vkDestroySemaphore(device, complete_sem[i], &allocator);
 		vkDestroyFence(device, buf_fence[i], &allocator);
 	}
+	
 	vkDestroyDevice(device, &allocator);
 	vkDestroySurfaceKHR(instance, surface, &allocator);
+	destroy_debug_callback();
+
 	vkDestroyInstance(instance, &allocator);
 
-	destroy_debug_callback();
 	inst_ext.destroy();
 	dev_ext.destroy();
 	layers.destroy();
@@ -156,9 +158,9 @@ void Vulkan::create_instance(SDL_Window* window) {
     app_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
     app_info.pApplicationName = "Exile";
     app_info.applicationVersion = VK_MAKE_VERSION(0, 0, 2);
-    app_info.pEngineName = "Exile 0.2";
+    app_info.pEngineName = "Exile";
     app_info.engineVersion = VK_MAKE_VERSION(0, 0, 2);
-    app_info.apiVersion = VK_MAKE_VERSION(1, 1, VK_HEADER_VERSION);
+    app_info.apiVersion = VK_API_VERSION_1_1;
 
     VkInstanceCreateInfo create_info = {};
     create_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
@@ -170,11 +172,11 @@ void Vulkan::create_instance(SDL_Window* window) {
 	dev_ext.push(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
 	layers.push("VK_LAYER_LUNARG_standard_validation");
 
-	u32 sdl_count;
+	u32 sdl_count = 0;
 	if(!SDL_Vulkan_GetInstanceExtensions(window, &sdl_count, null)) {
 		die("Failed to get required SDL vk instance extensions: %", SDL_GetError());
 	}
-	inst_ext.extend(inst_ext.size + sdl_count);
+	inst_ext.extend(sdl_count);
 	if(!SDL_Vulkan_GetInstanceExtensions(window, &sdl_count, inst_ext.data + inst_ext.size - sdl_count)) {
 		die("Failed to get required SDL vk instance extensions: %", SDL_GetError());
 	}
@@ -213,7 +215,7 @@ void Vulkan::enumerate_gpus() {
 
 	u32 devices = 0;
 	VK_CHECK(vkEnumeratePhysicalDevices(instance, &devices, null));
-	if(devices <= 0) {
+	if(!devices) {
 		die("Found no GPUs.");
 	}
 
@@ -238,7 +240,7 @@ void Vulkan::enumerate_gpus() {
 		{
 			u32 num_exts = 0;
 			VK_CHECK(vkEnumerateDeviceExtensionProperties(gpu.device, null, &num_exts, null));
-			if(num_exts <= 0) warn("Found no device extensions.");
+			if(!num_exts) warn("Found no device extensions.");
 			gpu.exts.extend(num_exts);
 			VK_CHECK(vkEnumerateDeviceExtensionProperties(gpu.device, null, &num_exts, gpu.exts.data));
 		}
@@ -248,21 +250,20 @@ void Vulkan::enumerate_gpus() {
 		{
 			u32 num_fmts = 0;
 			VK_CHECK(vkGetPhysicalDeviceSurfaceFormatsKHR(gpu.device, surface, &num_fmts, null));
-			if(num_fmts <= 0) warn("Found no device surface formats.");
+			if(!num_fmts) warn("Found no device surface formats.");
 			gpu.fmts.extend(num_fmts);
 			VK_CHECK(vkGetPhysicalDeviceSurfaceFormatsKHR(gpu.device, surface, &num_fmts, gpu.fmts.data));
 		}
 		{
 			u32 num_modes = 0;
 			VK_CHECK(vkGetPhysicalDeviceSurfacePresentModesKHR(gpu.device, surface, &num_modes, null));
-			if(num_modes <= 0) warn("Found no device present modes.");
+			if(!num_modes) warn("Found no device present modes.");
 			gpu.modes.extend(num_modes);
 			VK_CHECK(vkGetPhysicalDeviceSurfacePresentModesKHR(gpu.device, surface, &num_modes, gpu.modes.data));
 		}
 		{
 			vkGetPhysicalDeviceMemoryProperties(gpu.device, &gpu.mem_prop);
-		}
-		{
+			vkGetPhysicalDeviceFeatures(gpu.device, &gpu.features);
 			vkGetPhysicalDeviceProperties(gpu.device, &gpu.dev_prop);
 		}
 	}
@@ -346,7 +347,7 @@ void Vulkan::select_gpu() {
 
 void Vulkan::create_logical_device_and_queues() {
 
-	static const float priority = 1.0f;
+	const float priority = 1.0f;
 	vec<VkDeviceQueueCreateInfo, alloc> q_info;
 	defer(q_info.destroy());
 
@@ -366,7 +367,7 @@ void Vulkan::create_logical_device_and_queues() {
 		qinfo.pQueuePriorities = &priority;
 		q_info.push(qinfo);
 	}
-
+	
 	// TODO(max): figure out what device features we need to enable
 	VkPhysicalDeviceFeatures features = {};
 	

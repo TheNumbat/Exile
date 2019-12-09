@@ -192,8 +192,8 @@ private:
 
         u32 bucket() {return _bucket >> 1;}
         bool valid() {return _bucket & 1;}
-        void set_valid(bool v) {_bucket |= (u32)(!!v);}
-        void set_bucket(u32 b) {_bucket = (b << 1) | (b & 1);}
+        void set_valid(bool v) {_bucket = (_bucket & ~1) | v;}
+        void set_bucket(u32 b) {_bucket = (b << 1) | (_bucket & 1);}
 
         u32 _bucket = 0; // low bit set if valid
     };

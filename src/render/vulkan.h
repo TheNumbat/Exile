@@ -17,13 +17,16 @@ private:
 
 	struct GPU {
 		VkPhysicalDevice device = {};
-		VkSurfaceCapabilitiesKHR surf_caps = {};
 		VkPhysicalDeviceProperties dev_prop = {};
 		VkPhysicalDeviceMemoryProperties mem_prop = {};
-		vec<VkQueueFamilyProperties, alloc> queue_families;
-		vec<VkExtensionProperties, alloc> exts;
+		VkPhysicalDeviceFeatures features = {};
+		VkSurfaceCapabilitiesKHR surf_caps = {};
+
 		vec<VkSurfaceFormatKHR, alloc> fmts;
 		vec<VkPresentModeKHR, alloc> modes;
+		vec<VkQueueFamilyProperties, alloc> queue_families;
+		vec<VkExtensionProperties, alloc> exts;
+		
 		i32 graphics_idx = 0, present_idx = 0;
 
 		bool supports(const vec<const char*, alloc>& extensions);

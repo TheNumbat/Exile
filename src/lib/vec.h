@@ -56,8 +56,8 @@ struct vec {
         }
     }
     void extend(u32 sz) {
-        reserve(sz);
-        size = sz;
+        reserve(size + sz);
+        size += sz;
     }
 
     bool empty() const {

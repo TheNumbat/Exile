@@ -6,7 +6,7 @@
         {
             "type": "shell",
             "label": "build",
-            "command": "ninja -C ${workspaceFolder}\\build",
+            "command": "ninja -C ${workspaceFolder}/build",
             "args": [],
             "problemMatcher": [
                 "$msCompile"
