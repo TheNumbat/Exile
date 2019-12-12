@@ -57,7 +57,6 @@ private:
 	VkFence buf_fence[BUF_FRAMES] = {};
 	VkSemaphore aquire_sem[BUF_FRAMES] = {}, complete_sem[BUF_FRAMES] = {};
 
-	VkAllocationCallbacks allocator = {};
 	VkDebugReportCallbackEXT debug_callback_info = {};
 
     void create_instance(SDL_Window* window);

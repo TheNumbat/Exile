@@ -40,19 +40,6 @@ static literal vk_err_str(VkResult errorCode) {
 	}
 }
 
-static void* vk_alloc(void*, usize sz, usize, VkSystemAllocationScope) {
-    return Vulkan::alloc::alloc<u8>(sz);
-}
-
-static void* vk_realloc(void*, void* mem, usize sz, usize, VkSystemAllocationScope) {
-	Vulkan::alloc::dealloc(mem);
-	return Vulkan::alloc::alloc<u8>(sz);
-}
-
-static void vk_free(void*, void* mem) {
-    Vulkan::alloc::dealloc(mem);
-}
-
 void Vulkan::init(SDL_Window* window) {
     
     assert(window);
@@ -77,16 +64,16 @@ void Vulkan::init(SDL_Window* window) {
 void Vulkan::destroy() {
 	
 	for(i32 i = 0; i < BUF_FRAMES; i++) {
-		vkDestroySemaphore(device, aquire_sem[i], &allocator);
-		vkDestroySemaphore(device, complete_sem[i], &allocator);
-		vkDestroyFence(device, buf_fence[i], &allocator);
+		vkDestroySemaphore(device, aquire_sem[i], null);
+		vkDestroySemaphore(device, complete_sem[i], null);
+		vkDestroyFence(device, buf_fence[i], null);
 	}
 	
-	vkDestroyDevice(device, &allocator);
-	vkDestroySurfaceKHR(instance, surface, &allocator);
+	vkDestroyDevice(device, null);
+	vkDestroySurfaceKHR(instance, surface, null);
 	destroy_debug_callback();
 
-	vkDestroyInstance(instance, &allocator);
+	vkDestroyInstance(instance, null);
 
 	inst_ext.destroy();
 	dev_ext.destroy();
@@ -106,7 +93,6 @@ void Vulkan::destroy() {
 		aquire_sem[i] = {};
 		complete_sem[i] = {};
 	}
-	allocator = {};
 	debug_callback_info = {};
 }
 
@@ -186,11 +172,7 @@ void Vulkan::create_instance(SDL_Window* window) {
 	create_info.enabledLayerCount = layers.size;
 	create_info.ppEnabledLayerNames = layers.data;
 
-	allocator.pfnAllocation = vk_alloc;
-	allocator.pfnFree = vk_free;
-	allocator.pfnReallocation = vk_realloc;
-
-	VkResult res = vkCreateInstance(&create_info, &allocator, &instance);
+	VkResult res = vkCreateInstance(&create_info, null, &instance);
 	if(res != VK_SUCCESS) {
 		die("Failed to create VkInstance: %", vk_err_str(res));
 	}
@@ -334,6 +316,7 @@ void Vulkan::select_gpu() {
 		}
 
 		if(gpu.graphics_idx >= 0 && gpu.present_idx >= 0) {
+			// TODO(max): choose best GPU out of all compatible GPUs (e.g. discrete GPU)
 			info("Selecting GPU: %", name);
 			this->gpu = &gpu;
 			return;
@@ -381,7 +364,7 @@ void Vulkan::create_logical_device_and_queues() {
 	info.enabledLayerCount = layers.size;
 	info.ppEnabledLayerNames = layers.data;
 
-	VK_CHECK(vkCreateDevice(gpu->device, &info, &allocator, &device));
+	VK_CHECK(vkCreateDevice(gpu->device, &info, null, &device));
 
 	vkGetDeviceQueue(device, gpu->graphics_idx, 0, &graphics_queue);
 	vkGetDeviceQueue(device, gpu->present_idx, 0, &present_queue);
@@ -395,8 +378,8 @@ void Vulkan::create_semaphores() {
 	info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
 	for(i32 i = 0; i < BUF_FRAMES; i++) {
-		VK_CHECK(vkCreateSemaphore(device, &info, &allocator, &aquire_sem[i]));
-		VK_CHECK(vkCreateSemaphore(device, &info, &allocator, &complete_sem[i]));
+		VK_CHECK(vkCreateSemaphore(device, &info, null, &aquire_sem[i]));
+		VK_CHECK(vkCreateSemaphore(device, &info, null, &complete_sem[i]));
 	}
 
 	info("Created semaphores.");
@@ -409,7 +392,7 @@ void Vulkan::create_command_pool() {
 	info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 	info.queueFamilyIndex = gpu->graphics_idx;
 
-	VK_CHECK(vkCreateCommandPool(device, &info, &allocator, &command_pool));
+	VK_CHECK(vkCreateCommandPool(device, &info, null, &command_pool));
 
 	info("Created command pool.");
 }
@@ -428,7 +411,7 @@ void Vulkan::create_command_buffers() {
 	fence_info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
 
 	for (i32 i = 0; i < BUF_FRAMES; i++) {
-		VK_CHECK(vkCreateFence(device, &fence_info, &allocator, &buf_fence[i]));
+		VK_CHECK(vkCreateFence(device, &fence_info, null, &buf_fence[i]));
 	}
 
 	info("Created command buffers and fences.");
