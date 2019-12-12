@@ -53,7 +53,16 @@ private:
 	
 	VkCommandPool command_pool = {};
 	VkCommandBuffer command_buffer[BUF_FRAMES] = {};
-	
+	VkSwapchainKHR swapchain = {};
+	VkSurfaceFormatKHR swapchain_format = {};
+	VkPresentModeKHR present_mode = {};
+	VkExtent2D extent;
+	VkFormat depth_format;
+	VkRenderPass render_pass;
+
+	VkFramebuffer framebuffers[BUF_FRAMES] = {};
+	VkImageView depth_view = {};
+	VkImageView image_views[BUF_FRAMES] = {};
 	VkFence buf_fence[BUF_FRAMES] = {};
 	VkSemaphore aquire_sem[BUF_FRAMES] = {}, complete_sem[BUF_FRAMES] = {};
 
@@ -70,11 +79,12 @@ private:
 	void create_semaphores();
 	void create_command_pool();
 	void create_command_buffers();
-	void create_swap_chain();
+	void create_swap_chain(SDL_Window* window);
 	void create_render_targets();
 	void create_render_pass();
-	void create_pipeline_cache();
-	void create_frame_buffers();
+	void create_frame_buffers(SDL_Window* window);
+
+	VkFormat choose_supported_format(VkFormat* formats, i32 n_formats, VkImageTiling tiling, VkFormatFeatureFlags features);
 };
 
 
