@@ -80,6 +80,7 @@ private:
 	void create_command_pool();
 	void create_command_buffers();
 	void create_swap_chain(SDL_Window* window);
+	void create_shaders();
 	void create_render_targets();
 	void create_render_pass();
 	void create_frame_buffers(SDL_Window* window);

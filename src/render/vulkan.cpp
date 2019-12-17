@@ -55,6 +55,9 @@ void Vulkan::init(SDL_Window* window) {
 	create_command_pool();
 	create_command_buffers();
 	create_swap_chain(window);
+
+	create_shaders();
+
 	create_render_targets();
 	create_render_pass();
 	create_frame_buffers(window);
@@ -554,6 +557,11 @@ void Vulkan::create_swap_chain(SDL_Window* window) {
 	info("Created swapchain and images.");
 }
 
+void Vulkan::create_shaders() {
+
+	
+}
+
 VkFormat Vulkan::choose_supported_format(VkFormat* formats, i32 n_formats, VkImageTiling tiling, VkFormatFeatureFlags features) {
 	
 	for(i32 i = 0; i < n_formats; i++) {
@@ -574,6 +582,8 @@ VkFormat Vulkan::choose_supported_format(VkFormat* formats, i32 n_formats, VkIma
 }
 
 void Vulkan::create_render_targets() {
+
+	assert(!"unimplemented");
 
 	VkFormat formats[] = {
 		VK_FORMAT_D32_SFLOAT_S8_UINT, 
@@ -598,6 +608,8 @@ void Vulkan::create_render_targets() {
 }
 
 void Vulkan::create_render_pass() {
+
+	assert(!"unimplemented");
 
 	vec<VkAttachmentDescription, alloc> attachments;
 	defer(attachments.destroy());
@@ -650,6 +662,8 @@ void Vulkan::create_render_pass() {
 }
 
 void Vulkan::create_frame_buffers(SDL_Window* window) {
+
+	assert(!"unimplemented");
 
 	VkImageView attachments[2] = {};
 
