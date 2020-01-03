@@ -1,5 +1,5 @@
 # Exile
-Handmade-style voxel engine &amp; game.  
+Handmade-style voxel engine &amp; game. Currently working on a partial re-write in the v2 branch.
 
 [Blog](https://thenumbat.github.io/)
 
