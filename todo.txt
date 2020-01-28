@@ -1,6 +1,10 @@
 
 Framework re-write:
 
+    stdlib
+        move to explicit move constructors
+        delete copy constructors; use copy()
+
     Vulkan
         fix device extension not working
         confirm code with vulkan-tutorial.com 
